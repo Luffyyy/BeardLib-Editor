@@ -1,5 +1,3 @@
-local ret, err = pcall(function()
-log("Editor")
 if not _G.BeardLibEditor then
     _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml")
     
@@ -32,8 +30,6 @@ end
 function BeardLibEditor:_init()
     self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
     self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
-    
-    log("init editor")
     
     self:LoadHashlist()
 end
@@ -155,9 +151,3 @@ if not BeardLibEditor.setup then
     BeardLibEditor:_init()
     BeardLibEditor.setup = true
 end
-
-end)
-
---if not ret then 
-log(tostring(err)) 
---then
