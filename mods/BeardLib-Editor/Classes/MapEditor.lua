@@ -12,7 +12,7 @@ function MapEditor:init()
 	self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
 	self._vp:set_camera(self._camera_object)
 	self._camera_pos = self._camera_object:position()
-	self._camera_rot = self._camera_object:rotation()	
+	self._camera_rot = self._camera_object:rotation()
 	self._closed = true
     self._editor_all = World:make_slot_mask(1, 2, 3, 10, 11, 12, 15, 19, 29, 33, 34, 35, 36, 37, 38, 39)
 	self._con =  managers.controller:create_controller("MapEditor", nil, true, 10)
@@ -27,7 +27,7 @@ function MapEditor:init()
 		self._show_con = Input:create_virtual_controller()
 		self._show_con:connect(keyboard, key, Idstring("btn_toggle"))
 		self._show_con:add_trigger(Idstring("btn_toggle"), callback(self, self, "show_key_pressed"))
-	end	
+	end
     self._mission_elements = {
         "ElementAccessCamera",
         "ElementActionMessage",
@@ -83,10 +83,10 @@ function MapEditor:init()
         "ElementJobStageAlternative",
         "ElementJobValue",
         "ElementUnitSequence",
-        "ElementKillZone", 
+        "ElementKillZone",
         "ElementLaserTrigger",
         "ElementLookatTrigger",
-        "ElementLootBag", 
+        "ElementLootBag",
         "ElementLootSecuredTrigger",
         "ElementMandatoryBags",
         "ElementMissionEnd",
@@ -102,7 +102,7 @@ function MapEditor:init()
         "ElementPlayerState",
         "ElementPlaySound",
         "ElementPlayerStyle",
-        "ElementPointOfNoReturn", 
+        "ElementPointOfNoReturn",
         "ElementPreplanning",
         "ElementLogicChance",
         "MissionScriptElement",
@@ -135,7 +135,7 @@ function MapEditor:init()
         "ElementWayPoint",
         "ElementWhisperState",
     }
-    self:create_menu() 
+    self:create_menu()
 end
 
 function MapEditor:mouse_pressed( button, x, y )
@@ -148,7 +148,7 @@ function MapEditor:mouse_pressed( button, x, y )
     end
     if button == Idstring("0") or button == Idstring("1") and not self._menu._openlist and not self._menu._slider_hold and not self._menu._highlighted then
         self:select_unit(button == Idstring("1"))
-    end      
+    end
 end
 function MapEditor:create_menu()
 	self._menu = MenuUI:new({
@@ -159,161 +159,161 @@ function MapEditor:create_menu()
 		create_items = callback(self, self, "create_items"),
 	})
     self._hide_panel = self._menu._fullscreen_ws_pnl:panel({
-        name = "hide_panel", 
+        name = "hide_panel",
         w = 16,
         h = 16,
         y = 16,
-        layer = 25 
-    })  
+        layer = 25
+    })
     self._hide_panel:rect({
-        name = "bg", 
-        halign="grow", 
+        name = "bg",
+        halign="grow",
         valign="grow",
-        color = Color(0.8, 0.8, 0.8), 
-        alpha = 0.8, 
-    })    
+        color = Color(0.8, 0.8, 0.8),
+        alpha = 0.8,
+    })
     self._hide_panel:text({
         name = "text",
         text = "<",
         layer = 20,
         w = 16,
         h = 16,
-        align = "center",      
+        align = "center",
         color = Color.black,
         font = "fonts/font_medium_mf",
         font_size = 16
-    })    
+    })
     self._menu._fullscreen_ws_pnl:rect({
-        name = "crosshair_vertical", 
+        name = "crosshair_vertical",
         w = 2,
         h = 6,
-        alpha = 0.8, 
-        layer = 999 
-    }):set_center(self._menu._fullscreen_ws_pnl:center())        
+        alpha = 0.8,
+        layer = 999
+    }):set_center(self._menu._fullscreen_ws_pnl:center())
     self._menu._fullscreen_ws_pnl:rect({
-        name = "crosshair_horizontal", 
+        name = "crosshair_horizontal",
         w = 6,
         h = 2,
-        alpha = 0.8, 
-        layer = 999 
-    }):set_center(self._menu._fullscreen_ws_pnl:center())    
-    self._hide_panel:set_left(self._menu._panel:right())  
+        alpha = 0.8,
+        layer = 999
+    }):set_center(self._menu._fullscreen_ws_pnl:center())
+    self._hide_panel:set_left(self._menu._panel:right())
 end
 function MapEditor:create_items(menu)
     local selected_unit = menu:NewMenu({
         name = "selected_unit",
         text = "Selected Unit",
         help = "",
-    })          
+    })
     local selected_element = menu:NewMenu({
         name = "selected_element",
         text = "Selected element",
         help = "",
-    })     
+    })
     local prefabs = menu:NewMenu({
         name = "prefabs",
         text = "Prefabs",
         help = "",
-    })      
+    })
     local find = menu:NewMenu({
         name = "find",
         text = "Find",
         help = "",
-    })       
+    })
     local save_options = menu:NewMenu({
         name = "save_options",
         text = "Save",
         help = "",
-    })      
+    })
     local game_options = menu:NewMenu({
         name = "game_options",
         text = "Game",
         help = "",
-    }) 
-    self:create_unit_items(selected_unit)       
-    self:create_selected_element_items(selected_element)       
-    self:create_find_items(find)       
-    self:create_save_options_items(save_options)       
-    self:create_game_items(game_options)       
+    })
+    self:create_unit_items(selected_unit)
+    self:create_selected_element_items(selected_element)
+    self:create_find_items(find)
+    self:create_save_options_items(save_options)
+    self:create_game_items(game_options)
 end
 function MapEditor:create_selected_element_items(menu)
     menu:TextBox({
         name = "element_editor_name",
         text = "Name:",
         help = "",
-        callback = callback(self, self, "set_element_data"),         
-    })           
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:TextBox({
         name = "element_id",
         text = "id:",
         help = "",
-        callback = callback(self, self, "set_element_data"),         
-    })      
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:ComboBox({
         name = "element_class",
         text = "Class:",
         items = self._mission_elements,
         help = "",
-        callback = callback(self, self, "set_element_data"),         
-    })            
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_position_x",
         text = "Position x",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })                         
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_position_y",
         text = "Position y",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })                     
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_position_z",
         text = "Position z",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })                    
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_rotation_y",
         text = "Rotation yaw",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })                      
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_rotation_p",
         text = "Rotation pitch",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })                       
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Slider({
         name = "element_rotation_r",
         text = "Rotation roll",
         help = "",
-        callback = callback(self, self, "set_element_data"), 
-    })      
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Table({
         name = "element_values",
         text = "Values:",
-        callback = callback(self, self, "set_element_data"),         
-    })           
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Table({
         name = "element_on_executed",
         text = "On executed:",
         add = false,
-        callback = callback(self, self, "set_element_data"),         
-    })       
+        callback = callback(self, self, "set_element_data"),
+    })
     menu:Button({
         name = "element_add_to_on_executed",
         text = "Add to element to execute",
         help = "",
         callback = callback(self, self, "show_add_element_dialog"),
-    })           
+    })
     menu:Divider({
         text = "Executors",
         size = 30,
         color = Color.green,
-    })    
+    })
 end
 
 function MapEditor:create_find_items(menu)
@@ -321,25 +321,25 @@ function MapEditor:create_find_items(menu)
     menu:Button({
         name = "units_browser_button",
         text = "Add Unit..",
-        label = "main",        
+        label = "main",
         callback = callback(self, self, "browse")
-    })            
+    })
     menu:Button({
         name = "elements_list_button",
         text = "Add Mission Element..",
-        label = "main",        
+        label = "main",
         callback = callback(self, self, "show_elements_list")
-    })        
+    })
     menu:Button({
         name = "all_mission_elements",
         text = "Mission Elements",
         label = "main",
         callback = callback(self, self, "load_all_mission_elements")
-    })    
+    })
     menu:Button({
         name = "all_units",
         text = "Units",
-        label = "main",       
+        label = "main",
         callback = callback(self, self, "load_all_units")
     })
 end
@@ -349,90 +349,90 @@ function MapEditor:create_unit_items(menu)
         text = "Add to prefabs",
         value = "",
         help = "",
-        callback = callback(self, self, "add_unit_to_prefabs"),         
-    })      
+        callback = callback(self, self, "add_unit_to_prefabs"),
+    })
     menu:TextBox({
         name = "unit_name",
         text = "Name: ",
         value = "",
         help = "",
-        callback = callback(self, self, "set_unit_data"),         
-    })    
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:TextBox({
         name = "unit_id",
         text = "ID: ",
         value = "",
         help = "",
-        callback = callback(self, self, "set_unit_data"),         
-    })             
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:ComboBox({
         name = "unit_mesh_variation",
         text = "Mesh variation: ",
         value = 1,
         items = {},
         help = "",
-        callback = callback(self, self, "set_unit_data"),         
-    })         
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:TextBox({
         name = "unit_path",
         text = "Unit path: ",
         value = "",
         help = "",
-        callback = callback(self, self, "set_unit_data"),                 
-    })     
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "positionx",
         text = "Position x: ",
         value = 0,
         help = "",
-        callback = callback(self, self, "set_unit_data"), 
-    })     
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "positiony",
         text = "Position Y: ",
         value = 0,
         help = "",
-        callback = callback(self, self, "set_unit_data"), 
-    })       
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "positionz",
         text = "Position z: ",
         value = 0,
         help = "",
-        callback = callback(self, self, "set_unit_data"), 
-    })       
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "rotationyaw",
         text = "Rotation yaw: ",
         value = 0,
         help = "",
-        callback = callback(self, self, "set_unit_data"), 
-    })     
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "rotationpitch",
         text = "Rotation pitch: ",
         value = 0,
         help = "",
-        callback = callback(self, self, "set_unit_data"),       
-    })       
+        callback = callback(self, self, "set_unit_data"),
+    })
     menu:Slider({
         name = "rotationroll",
         text = "Rotation roll: ",
         value = 0,
         help = "",
         callback = callback(self, self, "set_unit_data"),
-    })          
+    })
     menu:Button({
         name = "unit_delete_btn",
         text = "Delete unit",
         help = "",
         callback = callback(self, self, "delete_unit"),
-    })         
+    })
     menu:Divider({
         text = "Modifiers",
         size = 30,
         color = Color.green,
-    })      	
+    })
 end
 function MapEditor:create_save_options_items(menu)
     local level =  "/" .. (Global.game_settings.level_id or "")
@@ -441,25 +441,25 @@ function MapEditor:create_save_options_items(menu)
         text = "Save path: ",
         value = BeardLib.MapsPath .. level,
         help = "",
-    })         
+    })
     menu:Divider({
-        name = "continents_div",        
+        name = "continents_div",
         size = 30,
         text = "Continents",
-    })   
+    })
     menu:ComboBox({
         name = "continents_filetype",
         text = "Type: ",
         value = 1,
         items = {"custom_xml", "generic_xml", "json"},
         help = "",
-    })     
+    })
     menu:Button({
         name = "continents_savebtn",
         text = "Save",
         help = "",
         callback = callback(self, self, "save_continents"),
-    })  
+    })
     menu:Divider({
         name = "missions_div",
         size = 30,
@@ -471,77 +471,77 @@ function MapEditor:create_save_options_items(menu)
         value = 2,
         items = {"custom_xml", "generic_xml", "json"},
         help = "",
-    })     
+    })
     menu:Button({
         name = "missions_savebtn",
         text = "Save",
         help = "",
         callback = callback(self, self, "save_missions"),
-    })       	
+    })
     menu:Divider({
         name = "nav_data_div",
         size = 30,
         text = "Navigation",
-    })      
+    })
     menu:Button({
         name = "build_nav",
         text = "Build navdata",
         help = "",
         callback = callback(self, self, "_build_nav_segments"),
-    })        
+    })
     menu:Button({
         name = "save_nav_data",
         text = "Save nav data",
         help = "",
         callback = callback(self, self, "save_nav_data"),
-    })         
+    })
     menu:Button({
         name = "save_cover_data",
         text = "Save cover data",
         help = "",
         callback = callback(self, self, "save_cover_data"),
-    })      
+    })
 end
- 
+
 function MapEditor:set_unit(unit)
     self._selected_unit = unit
     self._selected_units = {}
     self._menu:GetItem("unit_name"):SetValue(alive(unit) and unit:unit_data().name_id or "")
     self._menu:GetItem("unit_path"):SetValue(alive(unit) and unit:unit_data().name or "")
-    self._menu:GetItem("unit_id"):SetValue(alive(unit) and unit:unit_data().unit_id or "") 
+    self._menu:GetItem("unit_id"):SetValue(alive(unit) and unit:unit_data().unit_id or "")
     local mesh_variations = managers.sequence:get_editable_state_sequence_list(alive(unit) and unit:name() or "") or {}
     self._menu:GetItem("unit_mesh_variation"):SetItems(mesh_variations)
-    self._menu:GetItem("unit_mesh_variation"):SetValue(alive(unit) and unit:unit_data().mesh_variation and table.get_key(mesh_variations, unit:unit_data().mesh_variation) or nil) 
+    self._menu:GetItem("unit_mesh_variation"):SetValue(alive(unit) and unit:unit_data().mesh_variation and table.get_key(mesh_variations, unit:unit_data().mesh_variation) or nil)
     self._menu:GetItem("positionx"):SetValue(alive(unit) and unit:position().x or 0)
     self._menu:GetItem("positiony"):SetValue(alive(unit) and unit:position().y or 0)
-    self._menu:GetItem("positionz"):SetValue(alive(unit) and unit:position().z or 0)   
+    self._menu:GetItem("positionz"):SetValue(alive(unit) and unit:position().z or 0)
     self._menu:GetItem("rotationyaw"):SetValue(alive(unit) and unit:rotation():yaw() or 0)
     self._menu:GetItem("rotationpitch"):SetValue(alive(unit) and unit:rotation():pitch() or 0)
     self._menu:GetItem("rotationroll"):SetValue(alive(unit) and unit:rotation():roll() or 0)
 
     local menu = self._menu:GetItem("selected_unit")
-    menu:ClearItems("elements")    
+    menu:ClearItems("elements")
 
     for _, element in pairs(managers.mission:get_modifiers_of_unit(unit)) do
         menu:Button({
-            name = element.editor_name, 
+            name = element.editor_name,
             text = element.editor_name .. " [" .. (element.id or "") .."]",
             label = "elements",
             callback = callback(self, self, "_select_element", element)
-        })                   
+        })
     end
 end
 
 function MapEditor:_build_nav_segments()
-    QuickMenu:new( "Info", "This will disable the player and AI and build the nav data proceed?", 
-    {[1] = {text = "Yes", callback = function() 
+    QuickMenu:new( "Info", "This will disable the player and AI and build the nav data proceed?",
+    {[1] = {text = "Yes", callback = function()
         local settings = {}
         local units = {}
         for _, unit in ipairs(World:find_units_quick("all")) do
             if unit:name() == Idstring("core/units/nav_surface/nav_surface") then
                 table.insert(units, unit)
             end
-        end    
+        end
         for _, unit in ipairs(units) do
             local ray = World:raycast(unit:position() + Vector3(0, 0, 50), unit:position() - Vector3(0, 0, 150), nil, managers.slot:get_mask("all"))
             if ray and ray.position then
@@ -556,7 +556,7 @@ function MapEditor:_build_nav_segments()
         if #settings > 0 then
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:in_slot(managers.slot:get_mask("persons"))   then
-                    unit:set_enabled(false) 
+                    unit:set_enabled(false)
                     if unit:brain() then
                        unit:brain()._current_logic.update = nil
                     end
@@ -564,15 +564,15 @@ function MapEditor:_build_nav_segments()
                     for _, extension in pairs(unit:extensions()) do
                         unit:set_extension_update_enabled(Idstring(extension), false)
                     end
-                end         
-            end    
+                end
+            end
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "_build_visibility_graph"))
         else
             BeardLib:log("No nav surface found.")
-        end      
+        end
     end
-    },[2] = {text = "No", is_cancel_button = true}}, true)    
+    },[2] = {text = "No", is_cancel_button = true}}, true)
 end
 
 function MapEditor:_build_visibility_graph()
@@ -596,20 +596,20 @@ function MapEditor:_finish_visibility_graph(menu, item)
     managers.groupai:set_state("none")
 end
 function MapEditor:show_add_element_dialog(menu, item)
-    local items = {             
+    local items = {
         {
             name = "id",
             text = "id:",
             value = "",
-            filter = "number",             
+            filter = "number",
             type = "TextBox",
-        },      
+        },
         {
             name = "delay",
             text = "Delay:",
             value = "0",
-            filter = "number", 
-            type = "TextBox",           
+            filter = "number",
+            type = "TextBox",
         }
     }
     BeardLib.managers.Dialog:show({
@@ -623,12 +623,12 @@ end
 
 function MapEditor:add_element_callback(items)
     local on_executed = self._menu:GetItem("element_on_executed")
-    local i = (table.size(on_executed.items) / 2) + 1 
+    local i = (table.size(on_executed.items) / 2) + 1
     on_executed:Add(i .. ":" .. "id", items[1].value)
     on_executed:Add(i .. ":" .. "delay", items[2].value)
     if on_executed.callback then
         on_executed.callback(on_executed.parent, on_executed)
-    end              
+    end
 end
 function MapEditor:set_unit_data(menu, item)
     if alive(self._selected_unit) then
@@ -662,10 +662,10 @@ function MapEditor:set_element(element)
     self._selected_element = element
     self._menu:GetItem("element_editor_name"):SetValue(element and element.editor_name or "")
     self._menu:GetItem("element_id"):SetValue(element and element.id or "")
-    self._menu:GetItem("element_class"):SetValue(element and table.get_key(self._mission_elements, element.class) or 1) 
+    self._menu:GetItem("element_class"):SetValue(element and table.get_key(self._mission_elements, element.class) or 1)
     self._menu:GetItem("element_position_x"):SetValue(element and element.values.position and element.values.position.x or 0)
     self._menu:GetItem("element_position_y"):SetValue(element and element.values.position and element.values.position.y or 0)
-    self._menu:GetItem("element_position_z"):SetValue(element and element.values.position and element.values.position.z or 0)   
+    self._menu:GetItem("element_position_z"):SetValue(element and element.values.position and element.values.position.z or 0)
     self._menu:GetItem("element_rotation_y"):SetValue(element and element.values.rotation and element.values.rotation:yaw() or 0)
     self._menu:GetItem("element_rotation_p"):SetValue(element and element.values.rotation and element.values.rotation:pitch() or 0)
     self._menu:GetItem("element_rotation_r"):SetValue(element and element.values.rotation and element.values.rotation:roll() or 0)
@@ -683,24 +683,24 @@ function MapEditor:set_element(element)
                 index = 11,
                 label = "temp",
                 items = v,
-                callback = callback(self, self, "set_element_data"),         
-            })    
+                callback = callback(self, self, "set_element_data"),
+            })
         end
     end
     for _, element in pairs(managers.mission:get_executors_of_element(element)) do
         menu:Button({
-            name = element.editor_name, 
+            name = element.editor_name,
             text = element.editor_name .. " [" .. (element.id or "") .."]",
             label = "temp",
             callback = callback(self, self, "_select_element", element)
-        })                   
+        })
     end
 
 end
 
 function MapEditor:browse()
     local menu = self._menu:GetItem("find")
-    menu:ClearItems()    
+    menu:ClearItems()
     self.current_dir = self.current_dir or self.directory
     BeardLib:log(self.current_dir)
     local folders = file.GetDirectories( self.current_dir )
@@ -709,12 +709,12 @@ function MapEditor:browse()
         name = "back_button",
         text = "Back",
         callback = callback(self, self, "create_find_items")
-    })      
+    })
     menu:Button({
         name = "uplevel_btn",
         text = "^ ( " .. (self.current_dir or self.custom_dir) .. " )",
         callback = callback(self, self, "folder_back"),
-    })    
+    })
     menu:Button({
         name = "search_btn",
         text = "Search",
@@ -742,17 +742,17 @@ function MapEditor:browse()
                     callback = callback(self, self, "file_click"),
                 })
             end
-        end 
+        end
     end
 end
 
 function MapEditor:file_search(menu, item)
     self._is_searching = false
     managers.system_menu:show_keyboard_input({
-        text = "", 
-        title = "Search:", 
+        text = "",
+        title = "Search:",
         callback_func = callback(self, self, "search", self.directory),
-    })  
+    })
 end
 
 function MapEditor:folder_back(menu, item)
@@ -769,8 +769,8 @@ end
 function MapEditor:search(path, success, search)
     if not success then
         return
-    end        
-    local menu = self._menu:GetItem("find") 
+    end
+    local menu = self._menu:GetItem("find")
     if not self._is_searching then
         menu:ClearItems("temp")
         self._is_searching = true
@@ -787,8 +787,8 @@ function MapEditor:search(path, success, search)
                 color = PackageManager:has(Idstring("unit"), Idstring(unit_path)) and Color.green or Color.red,
                 callback = callback(self, self, "file_click"),
             })
-        end         
-    end 
+        end
+    end
 end
 
 function MapEditor:folder_click(menu, item)
@@ -806,7 +806,7 @@ function MapEditor:create_game_items(menu)
         text = "Teleport player",
         help = "",
         callback = callback(self, self, "drop_player"),
-    })      
+    })
     menu:Button({
         name = "position_debug",
         text = "Position debug",
@@ -821,26 +821,26 @@ function MapEditor:create_game_items(menu)
         min = 0,
         step = 0.1,
         value = 2,
-    })   
+    })
     menu:Toggle({
         name = "units_visibility",
         text = "Editor units visibility",
         help = "",
         value = false,
         callback = callback(self, self, "set_editor_units_visible"),
-    })      
+    })
     menu:Toggle({
         name = "units_highlight",
         text = "Highlight all units",
         help = "",
         value = false,
-    })   
+    })
     menu:Toggle({
         name = "show_elements",
         text = "Show elements",
         help = "",
         value = false,
-    })       
+    })
     menu:Toggle({
         name = "draw_nav_segments",
         text = "Draw nav segments",
@@ -854,7 +854,7 @@ function MapEditor:create_game_items(menu)
         add = false,
         remove = false,
         help = "",
-        items = { 
+        items = {
             quads = true,
             doors = true,
             blockers = true,
@@ -873,9 +873,9 @@ function MapEditor:create_game_items(menu)
         help = "",
         value = false,
         callback = callback(self, self, "pause_game")
-    })          
+    })
 end
- 
+
 function MapEditor:load_all_mission_elements(menu, item)
     menu:ClearItems("main")
     menu:ClearItems("select_buttons")
@@ -885,28 +885,28 @@ function MapEditor:load_all_mission_elements(menu, item)
             name = "back_button",
             text = "Back",
             callback = callback(self, self, "create_find_items")
-        })  
+        })
         searchbox = menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "load_all_mission_elements")         
-        }) 
+            callback = callback(self, self, "load_all_mission_elements")
+        })
     else
-        searchbox = self._menu:GetItem("searchbox")    
-    end      
+        searchbox = self._menu:GetItem("searchbox")
+    end
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
-                for i, element in pairs(tbl.elements) do            
+                for i, element in pairs(tbl.elements) do
                     if #menu._items < 120 and (not searchbox.value or searchbox.value == "" or string.match(element.editor_name, searchbox.value) or string.match(element.id, searchbox.value)) or string.match(element.class, searchbox.value) then
                         local _element = managers.mission:get_mission_element(element.id)
                         menu:Button({
-                            name = element.editor_name, 
+                            name = element.editor_name,
                             text = element.editor_name .. " [" .. element.id .."]",
                             label = "select_buttons",
                             color = _element and (_element.values.enabled and Color.green or Color.red) or nil,
                             callback = callback(self, self, "_select_element", element)
-                        })            
+                        })
                     end
                 end
             end
@@ -922,23 +922,23 @@ function MapEditor:show_elements_list(menu, item)
             name = "back_button",
             text = "Back",
             callback = callback(self, self, "create_find_items")
-        })  
+        })
         searchbox = menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "show_elements_list")         
-        }) 
+            callback = callback(self, self, "show_elements_list")
+        })
     else
-        searchbox = self._menu:GetItem("searchbox")    
-    end      
-    for k, element in pairs(self._mission_elements) do 
+        searchbox = self._menu:GetItem("searchbox")
+    end
+    for k, element in pairs(self._mission_elements) do
         if (not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value)) then
             menu:Button({
-                name = element, 
+                name = element,
                 text = element,
                 label = "select_buttons",
                 callback = callback(self, self, "add_element", element)
-            })            
+            })
         end
     end
 end
@@ -951,15 +951,15 @@ function MapEditor:load_all_units(menu, item)
             name = "back_button",
             text = "Back",
             callback = callback(self, self, "create_find_items")
-        })  
+        })
         searchbox = menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "load_all_units")         
-        }) 
+            callback = callback(self, self, "load_all_units")
+        })
     else
-        searchbox = self._menu:GetItem("searchbox")    
-    end      
+        searchbox = self._menu:GetItem("searchbox")
+    end
     for k, unit in pairs(World:find_units_quick("all")) do
         if #menu._items < 120 and unit:unit_data() and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
             menu:Button({
@@ -967,7 +967,7 @@ function MapEditor:load_all_units(menu, item)
                 text = unit:unit_data().name_id .. " [" .. (unit:unit_data().unit_id or "") .."]",
                 label = "select_buttons",
                 callback = callback(self, self, "_select_unit", unit)
-            })            
+            })
         end
     end
 end
@@ -975,14 +975,14 @@ end
 function MapEditor:set_element_data(menu, item)
     if self._selected_element then
         for k,v in pairs(menu:GetItem("element_values").items) do
-            self._selected_element.values[k] = v 
+            self._selected_element.values[k] = v
         end
         self._selected_element.values.on_executed = {}
         for i=1, (table.size(menu:GetItem("element_on_executed").items) / 2) do
             table.insert(self._selected_element.values.on_executed, {})
         end
         for k,v in pairs(menu:GetItem("element_on_executed").items) do
-            local split = string.split(k, ":") 
+            local split = string.split(k, ":")
             local i = tonumber(split[1])
             if #split == 2 then
                 if self._selected_element.values.on_executed[i] then
@@ -1005,23 +1005,23 @@ function MapEditor:_select_element(element, menu, item)
     self:set_element(element)
 end
 function MapEditor:add_element(element, menu, item)
-    self:set_element(managers.mission:add_element(element))    
+    self:set_element(managers.mission:add_element(element))
     self._menu:SwitchMenu(self._menu:GetItem("selected_element"))
 end
- 
- 
+
+
 function MapEditor:delete_unit(menu, item)
 	if alive(self._selected_unit) then
-		managers.worlddefinition:delete_unit(self._selected_unit)		
+		managers.worlddefinition:delete_unit(self._selected_unit)
 		World:delete_unit(self._selected_unit)
 	end
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
-            managers.worlddefinition:delete_unit(unit)        
+            managers.worlddefinition:delete_unit(unit)
             World:delete_unit(unit)
-        end                    
-    end 
-    self:set_unit()    
+        end
+    end
+    self:set_unit()
 end
 function MapEditor:set_editor_units_visible(menu, item)
 	for _, unit in pairs(World:find_units_quick("all")) do
@@ -1044,7 +1044,7 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
         unit = MassUnitManager:spawn_unit(Idstring(unit_path), pos , rot )
     else
         unit = CoreUnit.safe_spawn_unit(unit_path, pos, rot)
-    end 
+    end
     if not unit.unit_data or not unit:unit_data()  then
         BeardLib:log(unit_path .. " has no unit data...")
     else
@@ -1056,17 +1056,17 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
     end
     self:_select_unit(unit)
 
-    managers.worlddefinition:add_unit(unit)   
+    managers.worlddefinition:add_unit(unit)
 end
 function MapEditor:file_click(menu, item)
 	local unit_path = self.current_dir:gsub("assets/extract/", "") .. "/" .. item.name:gsub(".unit", "")
 	local unit_path = item.path
 	if item.color == Color.red then
-		QuickMenu:new( "Warning", "Unit is not loaded, load it? (Might crash)", 
-		{[1] = {text = "Yes", callback = function()	
+		QuickMenu:new( "Warning", "Unit is not loaded, load it? (Might crash)",
+		{[1] = {text = "Yes", callback = function()
 			managers.dyn_resource:load(Idstring("unit"), Idstring(unit_path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, false)
 			self:browse(self._current_menu)
-			self:SpawnUnit(unit_path)			
+			self:SpawnUnit(unit_path)
   		end
   		},[2] = {text = "No", is_cancel_button = true}}, true)
 	else
@@ -1097,7 +1097,7 @@ function MapEditor:save_missions(menu)
 	local path = menu:GetItem("savepath").value
     if not file.DirectoryExists( path ) then
         os.execute("mkdir " .. path:gsub("/" , "\\"))
-    end    
+    end
 	if file.DirectoryExists( path ) then
 		for mission_name, _ in pairs(managers.mission._missions) do
 			if menu:GetItem("mission_" .. mission_name).value then
@@ -1113,25 +1113,25 @@ function MapEditor:save_nav_data(menu)
     local path = menu:GetItem("savepath").value
     if not file.DirectoryExists( path ) then
         os.execute("mkdir " .. path:gsub("/" , "\\"))
-    end    
+    end
     if file.DirectoryExists( path ) then
         if managers.navigation:get_save_data() then
             local file = io.open(path .. "/nav_manager_data.nav_data", "w+")
             file:write(managers.navigation._load_data)
-            file:close() 
+            file:close()
         else
             BeardLib:log("Save data is not ready!")
         end
     else
         BeardLib:log("Directory doesn't exists(Failed to create directory?)")
-    end 
+    end
 end
 
 function MapEditor:save_cover_data(menu)
     local path = menu:GetItem("savepath").value
     if not file.DirectoryExists( path ) then
         os.execute("mkdir " .. path:gsub("/" , "\\"))
-    end    
+    end
     if file.DirectoryExists( path ) then
         local all_cover_units = World:find_units_quick("all", managers.slot:get_mask("cover"))
         local covers = {
@@ -1147,12 +1147,12 @@ function MapEditor:save_cover_data(menu)
             table.insert(covers.rotations, math.round(rot:yaw()))
         end
         local file = io.open(path .. "/cover_data.cover_data", "w+")
-        local new_data = _G.BeardLib.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml")    
+        local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml")    
         file:write(new_data)
-        file:close() 
+        file:close()
     else
         BeardLib:log("Directory doesn't exists(Failed to create directory?)")
-    end 
+    end
 end
 
 function MapEditor:load_continents(continents)
@@ -1163,7 +1163,7 @@ function MapEditor:load_continents(continents)
             help = "",
             index = 5,
             value = true,
-        })    
+        })
     end
 end
 function MapEditor:load_missions(missions)
@@ -1174,7 +1174,7 @@ function MapEditor:load_missions(missions)
 	        help = "",
             index = 8,
 	        value = true,
-	    })    
+	    })
     end
 end
 
@@ -1182,7 +1182,7 @@ function MapEditor:show_key_pressed()
 	if self._closed then
 		self:enable()
 		self._menu:enable()
-	else 
+	else
 		self:disable()
 		self._menu:disable()
 	end
@@ -1234,7 +1234,7 @@ function MapEditor:select_unit(select_more)
 	end
 end
 
- 
+
 function MapEditor:set_unit_enabled(enabled)
 	if self._selected_unit then
 		self._selected_unit:set_enabled(enabled)
@@ -1290,19 +1290,19 @@ function MapEditor:paused_update(t, dt)
 end
 function MapEditor:update(t, dt)
 	local main_t = TimerManager:main():time()
-	local main_dt = TimerManager:main():delta_time()	
+	local main_dt = TimerManager:main():delta_time()
 
 	local brush = Draw:brush(Color(0, 0.5, 0.85))
 	if alive(self._selected_unit) and managers.viewport:get_current_camera() then
-		Application:draw(self._selected_unit, 0, 0.5, 0.85)	
-        brush:sphere(self._selected_unit:position(), 10)        
+		Application:draw(self._selected_unit, 0, 0.5, 0.85)
+        brush:sphere(self._selected_unit:position(), 10)
     	local cam_up = managers.viewport:get_current_camera():rotation():z()
-    	local cam_right = managers.viewport:get_current_camera():rotation():x()		
+    	local cam_right = managers.viewport:get_current_camera():rotation():x()
     	brush:set_font(Idstring("fonts/font_medium"), 32)
     	brush:center_text(self._selected_unit:position() + Vector3(-10, -10, 200), self._selected_unit:unit_data().name_id .. "[ " .. self._selected_unit:editor_id() .. " ]", cam_right, -cam_up)
 	end
     for _, unit in pairs(self._selected_units) do
-        Application:draw(unit, 0, 0.5, 0.85)   
+        Application:draw(unit, 0, 0.5, 0.85)
         local brush = Draw:brush(Color(0, 0.5, 0.85))
         brush:sphere(unit:position(), 5)
     end
@@ -1310,20 +1310,20 @@ function MapEditor:update(t, dt)
 		for _, unit in pairs(World:find_units_quick("all")) do
 			if unit:editor_id() ~= -1 then
                 local cam_up = managers.viewport:get_current_camera():rotation():z()
-                local cam_right = managers.viewport:get_current_camera():rotation():x()                     
+                local cam_right = managers.viewport:get_current_camera():rotation():x()
 				Application:draw(unit, 1, 1,1)
                 brush:set_font(Idstring("fonts/font_medium"), 32)
              --   brush:center_text(unit:position() + Vector3(-10, -10, 200), unit:editor_id(), cam_right, -cam_up) --Sometimes you can't select and can't find the unit..
-			end					
+			end
 		end
-	end	
+	end
 	if self:enabled() then
         if self._selected_unit and Input:keyboard():down(Idstring("left ctrl")) then
             if Input:keyboard():down(Idstring("f")) then
                 self:set_camera(self._selected_unit:position())
             elseif Input:keyboard():down(Idstring("g")) then
                 self:set_camera(self._selected_element.values.position)
-            end 
+            end
         end
 		self:update_camera(main_t, main_dt)
 	end
@@ -1342,7 +1342,7 @@ function MapEditor:update_camera(t, dt)
 	local pos_new = self._camera_pos + move_delta
 	local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * self._turn_speed * TURN_SPEED_BASE
 	local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * self._turn_speed * TURN_SPEED_BASE, PITCH_LIMIT_MIN, PITCH_LIMIT_MAX)
-	local rot_new 
+	local rot_new
 	if Input:keyboard():down(Idstring("left shift")) then
 		rot_new = Rotation(yaw_new, pitch_new, 0)
 	end

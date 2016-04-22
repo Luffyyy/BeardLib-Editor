@@ -28,14 +28,14 @@ function WorldDefinition:init(params)
 	self:create("ai")
 end
 
- 
+
 function WorldDefinition:save_continent(continent, type, path)
-	local new_data = _G.BeardLib.managers.ScriptDataConveter:GetTypeDataTo(self._continent_definitions[continent], type)	 	
+	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._continent_definitions[continent], type)
 	local continent_file = io.open(path .. "/" .. continent .. "." .. type, "w+")
 	_G.BeardLib:log("Saving continent: " .. continent .. " as a " .. type .. " in " .. path)
 	if continent_file then
 	   	continent_file:write(new_data)
-	    continent_file:close()	
+	    continent_file:close()
 	else
 		_G.BeardLib:log("Failed to save continent: " .. continent .. " path: " .. path)
 	end
@@ -46,7 +46,7 @@ function WorldDefinition:set_unit(unit_id, config)
 		for _,static in pairs(continent.statics) do
 			if type(static) == "table" then
 				for _,unit_data in pairs(static) do
-					if unit_data.unit_id == unit_id then 
+					if unit_data.unit_id == unit_id then
 						for k,v in pairs(config) do
 							unit_data[k] = v
 						end
@@ -61,7 +61,7 @@ function WorldDefinition:get_unit_number(name)
 	for _, unit in pairs(World:find_units_quick("all")) do
 		if unit:unit_data() and unit:unit_data().name == name then
 			i = i + 1
-		end 
+		end
 	end
 	return i
 end
@@ -119,7 +119,7 @@ function WorldDefinition:assign_unit_data(unit, data)
 	end
 	if data.continent and is_editor then
 		managers.editor:add_unit_to_continent(data.continent, unit)
-	end	
+	end
 
 	self:_setup_lights(unit, data)
 	self:_setup_variations(unit, data)
@@ -134,8 +134,8 @@ function WorldDefinition:assign_unit_data(unit, data)
 	self:_setup_projection_light(unit, data)
 	self:_setup_ladder(unit, data)
 	self:_setup_zipline(unit, data)
-	self:_project_assign_unit_data(unit, data)	
- 
+	self:_project_assign_unit_data(unit, data)
+
 end
 local is_editor = Application:editor()
 function WorldDefinition:make_unit(data, offset)
@@ -160,14 +160,14 @@ function WorldDefinition:make_unit(data, offset)
 	end
 	if unit then
 		self:assign_unit_data(unit, data)
-	else 
+	else
 		local s = "Failed creating unit " .. tostring(name)
 		log(tostring(s))
 	end
 	if self._termination_counter == 0 then
 		Application:check_termination()
 	end
-	self._termination_counter = (self._termination_counter + 1) % 100	
+	self._termination_counter = (self._termination_counter + 1) % 100
 
 	return unit
 end
