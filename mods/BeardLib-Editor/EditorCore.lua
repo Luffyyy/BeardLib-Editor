@@ -22,8 +22,8 @@ if not _G.BeardLibEditor then
         ["core/lib/managers/mission/coremissionmanager"] = "Coremissionmanager.lua",
         ["core/lib/utils/dev/editor/coreworlddefinition"] = "Coreworlddefinition.lua",
         ["lib/setups/gamesetup"] = "Gamesetup.lua",
-        ["lib/managers/navigationmanager"] = "navigationmanager.lua",      
-        ["lib/managers/navfieldbuilder"] = "navfieldbuilder.lua"
+        ["lib/managers/navigationmanager"] = "Navigationmanager.lua",      
+        ["lib/managers/navfieldbuilder"] = "Navfieldbuilder.lua"
     }
 end
 

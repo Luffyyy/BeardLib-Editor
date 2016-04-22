@@ -20,11 +20,11 @@ function EnvironmentEditorManager:BuildNode(main_node)
             area_bg = "half"
         }
     })
-    
+
     MenuCallbackHandler.BeardLibEditorOpenEnvMenu = function(this, item)
         self:PopulateEnvMenu()
     end
-    
+
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorEnvMenu",
         title = "BeardLibEditorEnvMenu",
@@ -32,23 +32,23 @@ function EnvironmentEditorManager:BuildNode(main_node)
         node = main_node,
         next_node = self.NodeName,
     })
-    
+
     MenuCallbackHandler.EnvEditorClbk = function(this, item)
         self:SetValue(self._active_environment, item._parameters.path_key, item:value(), item._parameters.path, true)
     end
-    
+
     MenuCallbackHandler.EnvEditorVectorXClbk = function(this, item)
         self:SetValue(self._active_environment, item._parameters.path_key, item:value(), item._parameters.path, true, "x")
     end
-    
+
     MenuCallbackHandler.EnvEditorVectorYClbk = function(this, item)
         self:SetValue(self._active_environment, item._parameters.path_key, item:value(), item._parameters.path, true, "y")
     end
-    
+
     MenuCallbackHandler.EnvEditorVectorZClbk = function(this, item)
         self:SetValue(self._active_environment, item._parameters.path_key, item:value(), item._parameters.path, true, "z")
     end
-    
+
     MenuCallbackHandler.EnvEditorStringClbk = function(this, item)
         local split = string.split(item._parameters.path, "/")
         if split[#split] == "underlay" then
@@ -56,7 +56,7 @@ function EnvironmentEditorManager:BuildNode(main_node)
                 managers.dyn_resource:load(Idstring("scene"), Idstring(item._parameters.help_id), managers.dyn_resource.DYN_RESOURCES_PACKAGE, nil)
             end
         end
-        
+
         self:SetValue(self._active_environment, item._parameters.path_key, item._parameters.help_id, item._parameters.path, true)
     end
 end
@@ -71,7 +71,7 @@ function EnvironmentEditorManager:AddHandlerValue(file_key, path_key, value, pat
         handler = EnvironmentEditorHandler:new(file_key)
         self._handlers[file_key] = handler
     end
-    
+
     handler:AddValue(path_key, value, path)
 end
 
@@ -89,7 +89,7 @@ function EnvironmentEditorManager:SetValue(file_key, path_key, value, path, edit
         BeardLibEditor:log("[ERROR] Handler does not exist " .. tostring(file_key))
         return
     end
-    
+
     handler:SetValue(path_key, value, path, editor, vtype)
 end
 
@@ -101,7 +101,7 @@ function EnvironmentEditorManager:ApplyValue(path_key, data)
                 local handler = viewport._env_handler
                 local value = viewport:get_environment_value(path_key)
                 local val_to_save = data.value
-                
+
                 if CoreClass.type_name(value) == "Vector3" then
                     local new_value
                     if CoreClass.type_name(data.value) == "number" then
@@ -114,7 +114,7 @@ function EnvironmentEditorManager:ApplyValue(path_key, data)
                 else
                     handler:editor_set_value(path_key, data.value)
                 end
-                
+
                 if data.editor then
                     editorHandler._current_data[path_key] = {path = data.path, value = val_to_save}
                 end
@@ -144,13 +144,13 @@ function EnvironmentEditorManager:ApplyValues()
                 handler._apply_data[key] = nil
             end)
         end
-    end 
+    end
 end
 
 
 function EnvironmentEditorManager:FilenameEnteredCallback(success, value)
     if success then
-        self.current_filename = value		
+        self.current_filename = value
         managers.system_menu:show_keyboard_input({text = "GeneratedMod" .. self._active_environment, title = "Environment Mod ID", callback_func = callback(self, self, "MODIDEnteredCallback")})
     end
 end
@@ -193,7 +193,7 @@ EnvironmentEditorManager.KeyMinMax = {
 function EnvironmentEditorManager:AddEditorButton(node, key, path, value)
 	local path_split = string.split(path, "/")
     local button_name = path_split[#path_split]
-    
+
 	if tonumber(value) ~= nil then
 		MenuHelperPlus:AddSlider({
 			min = self.KeyMinMax[key] and self.KeyMinMax[key].min or -300,
@@ -287,7 +287,7 @@ function EnvironmentEditorManager:PopulateEnvMenu()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     if node then
         node:clean_items()
-        
+
         MenuCallbackHandler.SaveEnvtable = function(this, item)
             managers.system_menu:show_keyboard_input({text = "EnvModification" .. tostring(self._active_environment) .. ".txt", title = "Environment Mod Filename", callback_func = callback(self, self, "FilenameEnteredCallback")})
         end
@@ -297,7 +297,7 @@ function EnvironmentEditorManager:PopulateEnvMenu()
             callback = "SaveEnvtable",
             node = node
         })
-        
+
         MenuCallbackHandler.ResetEnvEditor = function(this, item)
             local handler = self:GetHandler(self._active_environment)
             if handler then
@@ -306,7 +306,7 @@ function EnvironmentEditorManager:PopulateEnvMenu()
                     self:SetValue(self._active_environment, key, params.value)
                 end
             end
-            
+
             self:PopulateEnvMenu()
             local selected_node = managers.menu:active_menu().logic:selected_node()
             managers.menu:active_menu().renderer:refresh_node(selected_node)
@@ -320,19 +320,19 @@ function EnvironmentEditorManager:PopulateEnvMenu()
             callback = "ResetEnvEditor",
             node = node
         })
-        
+
         local viewport = managers.menu_scene and managers.menu_scene._vp or managers.player and managers.player:player_unit() and managers.player:player_unit():camera() and managers.player:player_unit():camera()._vp or nil
-        
-        if viewport and self._active_environment and self:GetHandler(viewport._env_handler:get_path():key()) then     
+
+        if viewport and self._active_environment and self:GetHandler(viewport._env_handler:get_path():key()) then
             local viewport_path = viewport._env_handler:get_path()
             local envHandler = self:GetHandler(viewport_path:key())
-            
+
             local gui_class = managers.menu:active_menu().renderer
-        
-            BeardLibEditor.path_text = BeardLibEditor.path_text or gui_class.safe_rect_panel:child("BeardLibPathText") or gui_class.safe_rect_panel:text({
+
+            BeardLibEditor.path_text = alive(BeardLibEditor.path_text) and BeardLibEditor.path_text or alive(gui_class.safe_rect_panel:child("BeardLibPathText")) and gui_class.safe_rect_panel:child("BeardLibPathText") or gui_class.safe_rect_panel:text({
                 name = "BeardLibPathText",
                 text = "",
-                font =  tweak_data.menu.pd2_medium_font, 
+                font =  tweak_data.menu.pd2_medium_font,
                 font_size = 25,
                 layer = 20,
                 color = Color.yellow
@@ -342,13 +342,13 @@ function EnvironmentEditorManager:PopulateEnvMenu()
             local x, y, w, h = BeardLibEditor.path_text:text_rect()
             BeardLibEditor.path_text:set_size(w, h)
             BeardLibEditor.path_text:set_position(0, 0)
-            
+
             for key, params in pairs(envHandler:GetEditorValues()) do
                 local value = params.value or viewport:get_environment_value(key)
                 local parts = string.split(params.path, "/")
                 local menu_id = "BeardLibEditor_" .. table.concat(parts, "/", 1, #parts - 1)
                 local new_node = MenuHelperPlus:GetNode(nil, menu_id)
-                
+
                 if not node:item(menu_id .. "button") then
                     MenuHelperPlus:AddButton({
                         id = menu_id .. "button",
@@ -362,7 +362,7 @@ function EnvironmentEditorManager:PopulateEnvMenu()
                         managers.menu:add_back_button(new_node)
                     end
                 end
-                
+
                 if not new_node then
                     new_node = MenuHelperPlus:NewNode(nil, {
                         name = menu_id,
@@ -372,14 +372,14 @@ function EnvironmentEditorManager:PopulateEnvMenu()
                     })
                     managers.menu:add_back_button(new_node)
                 end
-                
-                
+
+
                 if value then
                     self:AddEditorButton(new_node, key, params.path, value)
                 end
             end
         end
-        
+
         managers.menu:add_back_button(node)
     end
 end

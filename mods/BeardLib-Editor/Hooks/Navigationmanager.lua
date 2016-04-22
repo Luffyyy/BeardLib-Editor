@@ -23,7 +23,7 @@ local math_floor = math.floor
 local temp_vec1 = Vector3()
 local temp_vec2 = Vector3()
 function NavigationManager:init()
-	self._debug = SystemInfo:platform() == Idstring("WIN32")  
+	self._debug = SystemInfo:platform() == Idstring("WIN32")
 	self._builder = NavFieldBuilder:new()
 	self._get_room_height_at_pos = self._builder._get_room_height_at_pos
 	self._check_room_overlap_bool = self._builder._check_room_overlap_bool
@@ -78,7 +78,7 @@ function NavigationManager:update(t, dt)
                     self:_draw_doors(progress)
                 end
                 if options.blockers then
-                    self:_draw_nav_blockers()
+                    --self:_draw_nav_blockers() Some crashing issues with this
                 end
                 if options.vis_graph then
                     self:_draw_visibility_groups(progress)
@@ -102,7 +102,7 @@ function NavigationManager:update(t, dt)
 end
 function NavigationManager:build_complete_clbk(draw_options)
 	self:_refresh_data_from_builder()
- 
+
 	self:set_debug_draw_state(draw_options)
 	if self:is_data_ready() then
 		BeardLib:log("Progress: Done!")
