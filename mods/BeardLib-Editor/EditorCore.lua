@@ -1,20 +1,25 @@
 if not _G.BeardLibEditor then
     _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml")
-    
+
     local self = BeardLibEditor
-    
-    self.HooksDirectory = "Hooks/"
-    self.ClassDirectory = "Classes/"
+
+    self.HooksDirectory = self.ModPath .. "Hooks/"
+    self.ClassDirectory = self.ModPath .. "Classes/"
     self.managers = {}
     self._replace_script_data = {}
-    
+
     self.DBPaths = {}
     self.DBEntries = {}
-    
+
     self.classes = {
+        "EditorParts/ElementEditor.lua",
+        "EditorParts/UnitEditor.lua",
+        "EditorParts/GameOptions.lua",
+        "EditorParts/SaveOptions.lua",
+        "EditorParts/SpawnSearch.lua",
         "EnvironmentEditorManager.lua",
-        "EnvironmentEditorHandler.lua",      
-        "ScriptDataConverterManager.lua",          
+        "EnvironmentEditorHandler.lua",
+        "ScriptDataConverterManager.lua",
         "MapEditor.lua"
     }
 
@@ -22,29 +27,37 @@ if not _G.BeardLibEditor then
         ["core/lib/managers/mission/coremissionmanager"] = "Coremissionmanager.lua",
         ["core/lib/utils/dev/editor/coreworlddefinition"] = "Coreworlddefinition.lua",
         ["lib/setups/gamesetup"] = "Gamesetup.lua",
-        ["lib/managers/navigationmanager"] = "Navigationmanager.lua",      
+        ["lib/managers/navigationmanager"] = "Navigationmanager.lua",
         ["lib/managers/navfieldbuilder"] = "Navfieldbuilder.lua"
     }
 end
 
 function BeardLibEditor:_init()
+    self:LoadClasses()
+
     self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
     self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
-    
+
     self:LoadHashlist()
+end
+
+function BeardLibEditor:LoadClasses()
+    for _, clss in pairs(self.classes) do
+        dofile(self.ClassDirectory .. clss)
+    end
 end
 
 function BeardLibEditor:LoadHashlist()
     local file = DB:open("idstring_lookup", "idstring_lookup")
-    
+
     self:log("Loading Hashlist")
-    
+
     local function AddPathEntry(line, typ)
         local path_split = string.split(line, "/")
         local curr_tbl = self.DBEntries
-        
-        local filename = table.remove(path_split, #path_split)
-        
+
+        local filename = table.remove(path_split)
+
         for _, part in pairs(path_split) do
             curr_tbl[part] = curr_tbl[part] or {}
             curr_tbl = curr_tbl[part]
@@ -62,7 +75,7 @@ function BeardLibEditor:LoadHashlist()
         for line in string.gmatch(file:read(), "[%w_/]+%z") do
             --Remove the Zero byte at the end of the path
             line = string.sub(line, 1, #line - 1)
-            
+
             for _, typ in pairs(types) do
                 self.DBPaths[typ] = self.DBPaths[typ] or {}
                 if DB:has(typ, line) then
@@ -75,18 +88,18 @@ function BeardLibEditor:LoadHashlist()
         end
         file:close()
     end
-    
+
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-    
+
     self:log("Hashlist Loaded")
 end
 
 if RequiredScript then
     local requiredScript = RequiredScript:lower()
     if BeardLibEditor.hook_files[requiredScript] then
-        dofile( BeardLibEditor.ModPath .. BeardLibEditor.HooksDirectory .. BeardLibEditor.hook_files[requiredScript] )
+        dofile( BeardLibEditor.HooksDirectory .. BeardLibEditor.hook_files[requiredScript] )
     end
 end
 
@@ -114,11 +127,11 @@ if Hooks then
     Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", function( t, dt )
         BeardLibEditor:update(t, dt)
     end)
-    
+
     Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", function(t, dt)
         BeardLibEditor:paused_update(t, dt)
     end)
-    
+
     Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
         LocalizationManager:add_localized_strings({
             ["BeardLibEditorEnvMenu"] = "Environment Mod Menu",
@@ -134,20 +147,16 @@ if Hooks then
         --Because of GUI manager 3:
         BeardLibEditor.managers.MapEditor = MapEditor:new()
         BeardLibEditor.managers.Dialog = MenuDialog:new()
-    
+
         local main_node = MenuHelperPlus:GetNode(nil, BeardLib.MainMenu)
-        
+
         BeardLibEditor.managers.EnvironmentEditor:BuildNode(main_node)
-        
+
         BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
     end)
 end
 
 if not BeardLibEditor.setup then
-    for _, class in pairs(BeardLibEditor.classes) do
-        dofile(BeardLibEditor.ModPath .. BeardLibEditor.ClassDirectory .. class)
-    end
-    
     BeardLibEditor:_init()
     BeardLibEditor.setup = true
 end

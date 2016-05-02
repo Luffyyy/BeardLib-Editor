@@ -28,33 +28,26 @@ function WorldDefinition:init(params)
 	self:create("ai")
 end
 
+function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
+	local continent_data = self._continent_definitions[old_continent]
+	local new_continent_data = self._continent_definitions[new_continent]
+	local move_continent = (old_continent ~= new_continent)
 
-function WorldDefinition:save_continent(continent, type, path)
-	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._continent_definitions[continent], type)
-	local continent_file = io.open(path .. "/" .. continent .. "." .. type, "w+")
-	_G.BeardLib:log("Saving continent: " .. continent .. " as a " .. type .. " in " .. path)
-	if continent_file then
-	   	continent_file:write(new_data)
-	    continent_file:close()
-	else
-		_G.BeardLib:log("Failed to save continent: " .. continent .. " path: " .. path)
-	end
-end
-
-function WorldDefinition:set_unit(unit_id, config)
-	for continent_name, continent in pairs(self._continent_definitions) do
-		for _,static in pairs(continent.statics) do
-			if type(static) == "table" then
-				for _,unit_data in pairs(static) do
-					if unit_data.unit_id == unit_id then
-						for k,v in pairs(config) do
-							unit_data[k] = v
-						end
-					end
+	for i, static in pairs(continent_data.statics) do
+		if type(static) == "table" then
+			if static.unit_data.unit_id == unit_id then
+				for k,v in pairs(config) do
+					static.unit_data[k] = v
 				end
+				if move_continent then
+					continent_data.statics[i] = nil
+					table.insert(new_continent_data.statics, static)
+				end
+				break
 			end
 		end
 	end
+
 end
 function WorldDefinition:get_unit_number(name)
 	local i = 1
@@ -119,6 +112,8 @@ function WorldDefinition:assign_unit_data(unit, data)
 	end
 	if data.continent and is_editor then
 		managers.editor:add_unit_to_continent(data.continent, unit)
+	elseif data.continent then
+		unit:unit_data().continent = data.continent
 	end
 
 	self:_setup_lights(unit, data)
@@ -170,4 +165,24 @@ function WorldDefinition:make_unit(data, offset)
 	self._termination_counter = (self._termination_counter + 1) % 100
 
 	return unit
+end
+
+function WorldDefinition:_setup_unit_id(unit, data)
+	unit:unit_data().unit_id = data.unit_id
+	unit:set_editor_id(unit:unit_data().unit_id)
+	self._all_units[unit:unit_data().unit_id] = unit
+	self:use_me(unit, Application:editor())
+
+	if data.unit_id then
+		self._largest_id = self._largest_id or 0
+		if data.unit_id > self._largest_id then
+			self._largest_id = data.unit_id
+		end
+	end
+end
+
+function WorldDefinition:GetNewUnitID()
+	self._largest_id = self._largest_id + 1
+
+	return self._largest_id
 end

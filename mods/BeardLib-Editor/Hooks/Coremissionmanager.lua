@@ -161,17 +161,6 @@ function MissionManager:add_element(element_name)
 	return new_element
 end
 
-function MissionManager:save_mission_file(mission, type, path)
-	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._missions[mission], type)
-	local mission_file = io.open(path .. "/" .. mission .. "_mission" .. "." .. type, "w+")
-	_G.BeardLib:log("Saving mission: " .. mission .. " as a " .. type .. " in " .. path)
-	if mission_file then
-		mission_file:write(new_data)
-		mission_file:close()
-	else
-		_G.BeardLib:log("Failed to save mission: " .. mission .. " path: " .. path)
-	end
-end
 function MissionManager:get_executors_of_element(element)
 	local executors = {}
 	if element then
