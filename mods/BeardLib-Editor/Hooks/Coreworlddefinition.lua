@@ -72,19 +72,24 @@ function WorldDefinition:init_done()
 end
 
 function WorldDefinition:delete_unit(unit)
-	for continent_name, continent in pairs(self._continent_definitions) do
-		if unit:unit_data().unit_id ~= 1 then
+	local unit_id = unit:unit_data().unit_id
+	local name_id = unit:unit_data().name_id
+	if unit_id ~= 1 then
+		local continent = self._continent_definitions[unit:unit_data().continent]
+		if continent then
 			for k, static in pairs(continent.statics) do
-				if static.unit_data and (static.unit_data.unit_id == unit:unit_data().unit_id or static.unit_data.name_id == unit:unit_data().name_id) then
-					table.remove(continent.statics, k)
-					log("Removing.. " .. unit:unit_data().name_id .. "[" ..unit:unit_data().unit_id.. "]")
+				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
+					continent.statics[k] = nil
+					log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
+					return
 				end
 			end
 		end
 	end
 end
-function WorldDefinition:add_unit(unit)
-	table.insert(self._continent_definitions["world"].statics, { unit_data = unit:unit_data()})
+
+function WorldDefinition:add_unit(unit, continent)
+	table.insert(self._continent_definitions[continent].statics, { unit_data = unit:unit_data()})
 end
 
 function WorldDefinition:_set_only_visible_in_editor(unit, data)
@@ -110,9 +115,10 @@ function WorldDefinition:assign_unit_data(unit, data)
 	if unit:unit_data().helper_type and unit:unit_data().helper_type ~= "none" then
 		managers.helper_unit:add_unit(unit, unit:unit_data().helper_type)
 	end
-	if data.continent and is_editor then
+	--[[if data.continent and is_editor then
 		managers.editor:add_unit_to_continent(data.continent, unit)
-	elseif data.continent then
+	else]]--
+	if data.continent then
 		unit:unit_data().continent = data.continent
 	end
 

@@ -211,14 +211,15 @@ function MapEditor:mouse_pressed( button, x, y )
         return
     end
 
-    if (button == Idstring("0") or button == Idstring("1")) and not self._menu._panel:inside(x, y) then
-        self.managers.UnitEditor:select_unit(button == Idstring("1"))
+    if button == Idstring("0") and not self._menu._panel:inside(x, y) then
+        self.managers.UnitEditor:select_unit()
     end
 end
 
 function MapEditor:_select_unit(unit, menu, item)
     self._menu:SwitchMenu(self._menu:GetItem("selected_unit"))
-    self.managers.UnitEditor:set_unit(unit)
+	table.insert(self.managers.UnitEditor._selected_units, unit)
+    self.managers.UnitEditor:set_unit()
 end
 function MapEditor:_select_element(element, menu, item)
     self._menu:SwitchMenu(self._menu:GetItem("selected_element"))
@@ -243,18 +244,20 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
     end
     if not unit.unit_data or not unit:unit_data()  then
         BeardLib:log(unit_path .. " has no unit data...")
+		return
     else
 		local unit_id = managers.worlddefinition:GetNewUnitID()
-        unit:unit_data().name_id = split[#split] .."_".. unit_id
+        unit:unit_data().name_id = unit_data.name_id and unit_data.name_id  .."_".. unit_id  or split[#split] .."_".. unit_id
         unit:unit_data().unit_id = unit_id
         unit:unit_data().name = unit_path
-        unit:unit_data().position = unit:position()
-        unit:unit_data().rotation = unit:rotation()
-		unit:unit_data().continent = "world"
+        unit:unit_data().position = unit_data.position or unit:position()
+        unit:unit_data().rotation = unit_data.rotation or unit:rotation()
+		unit:unit_data().continent = unit_data.continent or "world"
+		unit:set_editor_id(unit_id)
     end
-    self:_select_unit(unit)
 
-    managers.worlddefinition:add_unit(unit)
+    managers.worlddefinition:add_unit(unit, unit:unit_data().continent)
+	self:_select_unit(unit)
 end
 
 function MapEditor:load_continents(continents)
@@ -314,6 +317,12 @@ function MapEditor:disable()
     if managers.hud then
         managers.hud:set_enabled()
     end
+
+	for _, manager in pairs(self.managers) do
+		if manager.disabled then
+			manager:disabled()
+		end
+	end
 end
 function MapEditor:enable()
 	local active_vp = managers.viewport:first_active_viewport()
@@ -333,6 +342,12 @@ function MapEditor:enable()
     if managers.hud then
         managers.hud:set_disabled()
     end
+
+	for _, manager in pairs(self.managers) do
+		if manager.enabled then
+			manager:enabled()
+		end
+	end
 end
 
 function MapEditor:paused_update(t, dt)
@@ -348,13 +363,13 @@ function MapEditor:update(t, dt)
 	local brush = Draw:brush(Color(0, 0.5, 0.85))
 
 	if self:enabled() then
-        if self._selected_unit and Input:keyboard():down(Idstring("left ctrl")) then
+        --[[if self._selected_unit and Input:keyboard():down(Idstring("left ctrl")) then
             if Input:keyboard():down(Idstring("f")) then
                 self:set_camera(self._selected_unit:position())
             elseif Input:keyboard():down(Idstring("g")) then
                 self:set_camera(self._selected_element.values.position)
             end
-        end
+        end]]--
 		self:update_camera(t, dt)
 	end
 end

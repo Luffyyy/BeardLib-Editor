@@ -25,6 +25,18 @@ function GameOptions:CreateItems()
         help = "",
         callback = callback(self, self, "position_debug"),
     })
+    self._menu:Button({
+        name = "delete_all_units",
+        text = "Delete All Units",
+        help = "",
+        callback = callback(self, self, "delete_all_units")
+    })
+    self._menu:Button({
+        name = "clear_massunit",
+        text = "Clear MassUnit",
+        help = "",
+        callback = callback(self, self, "clear_massunit")
+    })
     self._menu:Slider({
         name = "camera_speed",
         text = "Camera speed",
@@ -53,6 +65,7 @@ function GameOptions:CreateItems()
         help = "",
         value = false,
     })
+
 	self._menu:Toggle({
         name = "draw_portals",
         text = "Draw Portals",
@@ -117,10 +130,31 @@ end
 function GameOptions:position_debug()
 	local p = self._camera_pos
 	log("Camera Pos: " .. tostring(p))
-    if self._parent.managers.UnitEditor._selected_unit then
-        log("Selected Unit[" .. self._parent.managers.UnitEditor._selected_unit:unit_data().name_id .. "] Pos: " .. tostring(self._parent.managers.UnitEditor._selected_unit:position()))
-        log("Selected Unit[" .. self._parent.managers.UnitEditor._selected_unit:unit_data().name_id .. "] Rot: " .. tostring(self._parent.managers.UnitEditor._selected_unit:rotation()))
-    end
+end
+
+function GameOptions:delete_all_units()
+    QuickMenu:new( "Are you sure you want to continue?", "Are you sure you want to delete all units?",
+        {[1] = {text = "Yes", callback = function()
+            for k, unit in pairs(World:find_units_quick("all")) do
+                if alive(unit) and unit:editor_id() ~= -1 then
+                    managers.worlddefinition:delete_unit(unit)
+                    World:delete_unit(unit)
+                end
+            end
+        end
+        },[2] = {text = "No", is_cancel_button = true}},
+        true
+    )
+end
+
+function GameOptions:clear_massunit()
+    QuickMenu:new( "Are you sure you want to continue?", "Are you sure you want to clear the MassUnit?",
+        {[1] = {text = "Yes", callback = function()
+            MassUnitManager:delete_all_units()
+        end
+        },[2] = {text = "No", is_cancel_button = true}},
+        true
+    )
 end
 
 function GameOptions:update(t, dt)
