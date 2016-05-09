@@ -24,7 +24,7 @@ function MapEditor:init()
 		self._show_con:connect(keyboard, key, Idstring("btn_toggle"))
 		self._show_con:add_trigger(Idstring("btn_toggle"), callback(self, self, "show_key_pressed"))
 	end
-    self._mission_elements = {
+    self._mission_elements = { 
         "ElementAccessCamera",
         "ElementActionMessage",
         "ElementAIArea",
@@ -41,7 +41,6 @@ function MapEditor:init()
         "ElementBlackScreenVariant",
         "ElementBlurZone",
         "ElementCarry",
-        "ElementSequenceTrigger",
         "ElementCharacterOutline",
         "ElementCharacterSequence",
         "ElementCharacterTeam",
@@ -79,10 +78,10 @@ function MapEditor:init()
         "ElementJobStageAlternative",
         "ElementJobValue",
         "ElementUnitSequence",
-        "ElementKillZone",
+        "ElementKillZone", 
         "ElementLaserTrigger",
         "ElementLookatTrigger",
-        "ElementLootBag",
+        "ElementLootBag", 
         "ElementLootSecuredTrigger",
         "ElementMandatoryBags",
         "ElementMissionEnd",
@@ -98,8 +97,8 @@ function MapEditor:init()
         "ElementPlayerState",
         "ElementPlaySound",
         "ElementPlayerStyle",
-        "ElementPointOfNoReturn",
-        "ElementPreplanning",
+        "ElementPointOfNoReturn", 
+        "ElementPrePlanning",
         "ElementLogicChance",
         "MissionScriptElement",
         "ElementPressure",
@@ -130,13 +129,11 @@ function MapEditor:init()
         "ElementVehicleTrigger",
         "ElementWayPoint",
         "ElementWhisperState",
-    }
-
+    }    
 	self.managers = {}
 
     self:create_menu()
 end
-
 
 function MapEditor:create_menu()
 	self._menu = MenuUI:new({
@@ -150,7 +147,7 @@ function MapEditor:create_menu()
         name = "hide_panel",
         w = 16,
         h = 16,
-        y = 16,
+        y = 64,
         layer = 25
     })
     self._hide_panel:rect({
@@ -221,13 +218,13 @@ function MapEditor:_select_unit(unit, menu, item)
 	table.insert(self.managers.UnitEditor._selected_units, unit)
     self.managers.UnitEditor:set_unit()
 end
+
 function MapEditor:_select_element(element, menu, item)
-    self._menu:SwitchMenu(self._menu:GetItem("selected_element"))
     self.managers.ElementEditor:set_element(element)
 end
+
 function MapEditor:add_element(element, menu, item)
-    self.managers.ElementEditor:set_element(managers.mission:add_element(element))
-    self._menu:SwitchMenu(self._menu:GetItem("selected_element"))
+    self.managers.ElementEditor:add_element(element)
 end
 
 function MapEditor:SpawnUnit( unit_path, unit_data )
@@ -243,16 +240,16 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
         unit = CoreUnit.safe_spawn_unit(unit_path, pos, rot)
     end
     if not unit.unit_data or not unit:unit_data()  then
-        BeardLib:log(unit_path .. " has no unit data...")
+        BeardLibEditor:log(unit_path .. " has no unit data...")
 		return
     else
 		local unit_id = managers.worlddefinition:GetNewUnitID()
-        unit:unit_data().name_id = unit_data.name_id and unit_data.name_id  .."_".. unit_id  or split[#split] .."_".. unit_id
+        unit:unit_data().name_id = unit_data and unit_data.name_id and unit_data.name_id  .."_".. unit_id  or split[#split] .."_".. unit_id
         unit:unit_data().unit_id = unit_id
         unit:unit_data().name = unit_path
-        unit:unit_data().position = unit_data.position or unit:position()
-        unit:unit_data().rotation = unit_data.rotation or unit:rotation()
-		unit:unit_data().continent = unit_data.continent or "world"
+        unit:unit_data().position = unit_data and unit_data.position or unit:position()
+        unit:unit_data().rotation = unit_data and unit_data.rotation or unit:rotation()
+		unit:unit_data().continent = unit_data and unit_data.continent or "world"
 		unit:set_editor_id(unit_id)
     end
 
@@ -274,6 +271,7 @@ function MapEditor:load_continents(continents)
     end
 	self.managers.UnitEditor._menu:GetItem("unit_continent"):SetItems(continent_items)
 end
+
 function MapEditor:load_missions(missions)
     for mission_name, _ in pairs(missions) do
 	    self._menu:GetItem("save_options"):Toggle({
@@ -307,6 +305,7 @@ function MapEditor:set_camera(pos, rot)
 		self._camera_rot = rot
 	end
 end
+
 function MapEditor:disable()
 	self._closed = false
 	self._con:disable()
@@ -324,6 +323,7 @@ function MapEditor:disable()
 		end
 	end
 end
+
 function MapEditor:enable()
 	local active_vp = managers.viewport:first_active_viewport()
 	if active_vp then
@@ -353,6 +353,7 @@ end
 function MapEditor:paused_update(t, dt)
     self:update(t, dt)
 end
+
 function MapEditor:update(t, dt)
 	for _, manager in pairs(self.managers) do
 		if manager.update then
@@ -373,8 +374,11 @@ function MapEditor:update(t, dt)
 		self:update_camera(t, dt)
 	end
 end
+
 function MapEditor:update_camera(t, dt)
-	if self._menu._highlighted and not Input:keyboard():down(Idstring("left shift")) then
+	if self._menu._highlighted or not Input:keyboard():down(Idstring("left shift")) then
+        managers.mouse_pointer._mouse:show()  
+        self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()         
 		return
 	end
 	local axis_move = self._con:get_input_axis("freeflight_axis_move")
@@ -390,12 +394,13 @@ function MapEditor:update_camera(t, dt)
 	local rot_new
 	if Input:keyboard():down(Idstring("left shift")) then
 		rot_new = Rotation(yaw_new, pitch_new, 0)
+        managers.mouse_pointer._mouse:hide()  
+        managers.mouse_pointer:set_mouse_world_position(self._mouse_pos_x, self._mouse_pos_y)
 	end
 	if not CoreApp.arg_supplied("-vpslave") then
 		self:set_camera(pos_new, rot_new)
 	end
 end
-
 
 function MapEditor:enabled()
 	return not self._closed

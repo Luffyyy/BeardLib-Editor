@@ -43,124 +43,30 @@ end
 function MissionManager:_load_mission_file(name, file_dir, data)
 	local file_path = file_dir .. data.file
 	local scripts = self:_serialize_to_script("mission", file_path)
-	self._missions[name] = self:_serialize_to_script("mission", file_path)
-	for name, data in pairs(scripts) do
+	self._missions[name] = self:_serialize_to_script("mission", file_path) 
+	for name, data in pairs(scripts) do	
 		data.name = name
 		self:_add_script(data)
 	end
 end
 
-function MissionManager:add_element(element_name)
-	local cam = managers.viewport:get_current_camera()
-	local elements = {
-		all = {
-			position = cam:position() + cam:rotation():y(),
-			rotation = Rotation(0,0,0),
-			enabled = true,
-			execute_on_startup = false,
-			base_delay = 0,
-			trigger_times = 1,
-			on_executed = {},
-		},
-		ElementAreaTrigger = {
-			interval = 0.1,
-			trigger_on = "on_enter",
-			instigator = managers.mission:default_area_instigator(),
-			shape_type = "box",
-			width = 500,
-			depth = 500,
-			height = 500,
-			radius = 250,
-			spawn_unit_elements = {},
-			amount = "1",
-		},
-		ElementAccessCamera = {
-			worldcamera = "none",
-			worldcamera_sequence = "none",
-		},
-		ElementActionMessage = {
-			message_id = "",
-		},
-		ElementInventoryDummy = {
-			slot = 1,
-			category = "primaries",
-		},
-		ElementToggle = {
-			elements = {},
-			set_trigger_times = -1,
-			toggle = "on",
-		},
-		ElementOperator = {
-			elements = {},
-			operation = "add",
-		},
-		ElementLogicChance = {
-			chance = 50,
-		},
-		ElementLogicChanceTrigger = {
-			elements = {},
-			outcome = "success",
-		},
-		ElementLogicChanceOperator = {
-			elements = {},
-			chance = 5,
-			operation = "add_chance",
-		},
-		ElementSpawnEnemyDummy = {
-			accessibility = "any",
-			interval = 5,
-			participate_to_group_ai = true,
-			spawn_action = "none",
-			team = "default",
-			enemy = "units/payday2/characters/ene_swat_1/ene_swat_1",
-		},
-		ElementSpawnEnemyGroup = {
-			interval = 5,
-			participate_to_group_ai = true,
-			ignore_disabled = true,
-			spawn_type = "ordered",
-			team = "default",
-		},
-		ElementEnemyPreferedAdd = {
-			spawn_groups = {},
-		},
-		ElementAiGlobalEvent = {
-			AI_event = "police_called",
-			blame = "empty",
-			wave_mode = "besiege",
-		},
-		ElementGlobalEventTrigger = {
-			global_event = "end_assault",
-		},
-		ElementDifficulty = {
-			diffiuclty = 0.75,
-		},
-		ElementUnitSequence = {
-			trigger_list = {},
-		},
-		ElementUnitSequenceTrigger = {
-			sequence_list = {},
-		},
-		ElementSpawnCivilian = {
-			team = "default",
-			state = "cm_sp_stand_arms_cross",
-			enemy = "units/payday2/characters/civ_female_bank_1/civ_female_bank_1"
-		}
-	}
-	local new_element = {
-		class = element_name,
-		editor_name = "new_element",
-		id = math.random(99999),
-		values = elements.all,
-	}
-	if elements[element_name] then
-		table.merge(new_element.values, elements[element_name])
-	end
-	table.insert(self._missions["world"]["default"].elements, new_element)
-	self._scripts["default"]:create_element(new_element)
-	return new_element
+function MissionManager:add_element(element)
+	table.insert(self._missions["world"]["default"].elements, element)
+	self._scripts["default"]:create_element(element)
+	return element
 end
 
+function MissionManager:save_mission_file(mission, type, path)
+	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._missions[mission], type)	 
+	local mission_file = io.open(path .. "/" .. mission .. "_mission" .. "." .. type, "w+")
+	_G.BeardLib:log("Saving mission: " .. mission .. " as a " .. type .. " in " .. path)
+	if mission_file then
+		mission_file:write(new_data)
+		mission_file:close()	
+	else
+		_G.BeardLib:log("Failed to save mission: " .. mission .. " path: " .. path)
+	end		 
+end
 function MissionManager:get_executors_of_element(element)
 	local executors = {}
 	if element then
@@ -169,7 +75,7 @@ function MissionManager:get_executors_of_element(element)
 				if tbl.elements then
 					for i, script_element in pairs(tbl.elements) do
 						if script_element.values.on_executed then
-							for _, on_executed_element in pairs(script_element.values.on_executed) do
+							for _, on_executed_element in pairs(script_element.values.on_executed) do									
 								if on_executed_element.id == element.id then
 									table.insert(executors, script_element)
 								end
@@ -177,7 +83,7 @@ function MissionManager:get_executors_of_element(element)
 						end
 					end
 				end
-			end
+			end	
 		end
 	end
 	return executors
@@ -212,7 +118,7 @@ function MissionManager:get_modifiers_of_unit(unit)
 						end
 					end
 				end
-			end
+			end	
 		end
 	end
 	return modifiers
@@ -222,7 +128,7 @@ function MissionManager:get_mission_element( id )
 	for _, script in pairs(self._missions) do
 		for _, tbl in pairs(script) do
 			if tbl.elements then
-				for i, element in pairs(tbl.elements) do
+				for i, element in pairs(tbl.elements) do	
 					if element.id == id then
 						return element
 					end
@@ -244,31 +150,35 @@ function MissionManager:print_classes()
 			end
 		end
 	end
-
+	
 end
 function MissionManager:_add_script(data)
 	self._scripts[data.name] = MissionScript:new(data)
 	self._scripts[data.name]:add_updator("_debug_draw", callback(self._scripts[data.name], self._scripts[data.name], "_debug_draw"))
 end
-function MissionScript:_create_elements(elements)
+function MissionScript:_create_elements(elements)	
 	local new_elements = {}
-	for k, element in ipairs(elements) do
-		new_elements[element.id] = self:create_element(element)
+	if elements then
+		for k, element in ipairs(elements) do	
+			new_elements[element.id] = self:create_element(element)
+		end
 	end
 	return new_elements
 end
 
-function MissionScript:create_element( element )
-	local class = element.class
-	local new_element = self:_element_class(element.module, class):new(self, element)
-	if class == "ElementSpawnCivilian" or class == "ElementSpawnEnemyGroup" or class == "ElementSpawnCivilianGroup" or class == "ElementSpawnEnemyDummy" or class == "ElementEnemyDummyTrigger" then
-		--element.values.enabled = false --Comment it if you want civis and enemies to spawn.
+function MissionScript:create_element( element )		
+	if element.id then
+		local class = element.class
+		local new_element = self:_element_class(element.module, class):new(self, element)		
+		if class == "ElementSpawnCivilian" or class == "ElementSpawnEnemyGroup" or class == "ElementSpawnCivilianGroup" or class == "ElementSpawnEnemyDummy" or class == "ElementEnemyDummyTrigger" then 
+			--element.values.enabled = false --Comment it if you want civis and enemies to spawn.
+		end
+		self._elements[element.id] = new_element
+		self._elements[element.id].class = class
+		self._element_groups[class] = self._element_groups[class] or {}
+		table.insert(self._element_groups[class], new_element)
+		return new_element
 	end
-	self._elements[element.id] = new_element
-	self._elements[element.id].class = class
-	self._element_groups[class] = self._element_groups[class] or {}
-	table.insert(self._element_groups[class], new_element)
-	return new_element
 end
 function MissionScript:draw_element(element, color)
 	local brush = Draw:brush(Color.red)
@@ -283,7 +193,7 @@ function MissionScript:draw_element(element, color)
 			local cam_up = managers.viewport:get_current_camera():rotation():z()
 			local cam_right = managers.viewport:get_current_camera():rotation():x()
 			name_brush:center_text(element:value("position") + Vector3(0, 0, 30), utf8.from_latin1(element:editor_name()) .. "[ "..element.class.. " - ".. tostring(element:id()) .." ]", cam_right, -cam_up)
-		end
+		end 
 	end
 	if element:value("rotation") then
 		local rotation = CoreClass.type_name(element:value("rotation")) == "Rotation" and element:value("rotation") or Rotation(element:value("rotation"), 0, 0)
@@ -292,7 +202,7 @@ function MissionScript:draw_element(element, color)
 	end
 	element:debug_draw()
 end
-
+ 
 function MissionScript:_debug_draw(t, dt)
 	local wanted_classes = {"", "ElementSpawnCivilian", "ElementPlayerSpawner"} --Leave as "" if you want all of them to draw.
 	if _G.BeardLibEditor.managers.MapEditor._menu:GetItem("show_elements").value then
@@ -309,6 +219,7 @@ function MissionScript:_debug_draw(t, dt)
 		if element then
 			self:draw_element(element, Color(0, 0.5, 1))
 			element._values = _G.BeardLibEditor.managers.MapEditor._selected_element.values
+			element._editor_name = _G.BeardLibEditor.managers.MapEditor._selected_element.editor_name
 		end
 	end
 end

@@ -80,7 +80,7 @@ function WorldDefinition:delete_unit(unit)
 			for k, static in pairs(continent.statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
 					continent.statics[k] = nil
-					log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
+					_G.BeardLibEditor:log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
 					return
 				end
 			end

@@ -144,7 +144,6 @@ if Hooks then
 
     Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function( menu_manager, nodes )
         --I'm going to leave this here, but I really don't like it being here
-        --Because of GUI manager 3:
         BeardLibEditor.managers.MapEditor = MapEditor:new()
         BeardLibEditor.managers.Dialog = MenuDialog:new()
 

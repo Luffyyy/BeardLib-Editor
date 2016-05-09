@@ -62,6 +62,11 @@ function SpawnSearch:browse()
         text = "^ ( " .. (self.current_dir or self.custom_dir) .. " )",
         callback = callback(self, self, "folder_back"),
     })
+    self._menu:Button({
+        name = "search_btn",
+        text = "Search",
+        callback = callback(self, self, "file_search"),
+    })    
     for key, data in pairs(dir_tbl) do
         if tonumber(key) ~= nil then
             if data.file_type == "unit" then
@@ -91,7 +96,7 @@ function SpawnSearch:file_search(menu, item)
     managers.system_menu:show_keyboard_input({
         text = "",
         title = "Search:",
-        callback_func = callback(self, self, "search", self.directory),
+        callback_func = callback(self, self, "search"),
     })
 end
 
@@ -106,22 +111,21 @@ function SpawnSearch:folder_back(menu, item)
         self:browse()
     end
 end
-function SpawnSearch:search(path, success, search)
+function SpawnSearch:search(success, search)
     if not success then
         return
     end
-    local menu = self._menu:GetItem("find")
     if not self._is_searching then
-        menu:ClearItems("temp")
+        self._menu:ClearItems("temp")
         self._is_searching = true
     end
     for _, unit_path in pairs(BeardLibEditor.DBPaths["unit"]) do
         local split = string.split(unit_path, "/")
         local unit = split[#split]
         if unit:match(search) then
-            menu:Button({
+            self._menu:Button({
                 name = unit,
-                text = unit,
+                text = unit,   
                 path = unit_path,
                 label = "temp",
                 color = PackageManager:has(Idstring("unit"), Idstring(unit_path)) and Color.green or Color.red,
@@ -162,16 +166,18 @@ function SpawnSearch:load_all_mission_elements(menu, item)
         for _, tbl in pairs(script) do
             if tbl.elements then
                 for i, element in pairs(tbl.elements) do
-                    --#menu._items < 120 and
-                    if  (not searchbox.value or searchbox.value == "" or string.match(element.editor_name, searchbox.value) or string.match(element.id, searchbox.value)) or string.match(element.class, searchbox.value) then
-                        local _element = managers.mission:get_mission_element(element.id)
-                        menu:Button({
-                            name = element.editor_name,
-                            text = element.editor_name .. " [" .. element.id .."]",
-                            label = "select_buttons",
-                            color = _element and (_element.values.enabled and Color.green or Color.red) or nil,
-                            callback = callback(self._parent, self._parent, "_select_element", element)
-                        })
+                    --No limit = Slow scroll.
+                    if #menu._items < 200 then
+                        if (not searchbox.value or searchbox.value == "" or string.match(element.editor_name, searchbox.value) or string.match(element.id, searchbox.value)) or string.match(element.class, searchbox.value) then
+                            local _element = managers.mission:get_mission_element(element.id)
+                            menu:Button({
+                                name = element.editor_name,
+                                text = element.editor_name .. " [" .. element.id .."]",
+                                label = "select_buttons",
+                                color = _element and (_element.values.enabled and Color.green or Color.red) or nil,
+                                callback = callback(self._parent, self._parent, "_select_element", element)
+                            })
+                        end
                     end
                 end
             end
@@ -226,14 +232,15 @@ function SpawnSearch:load_all_units(menu, item)
         searchbox = self._menu:GetItem("searchbox")
     end
     for k, unit in pairs(World:find_units_quick("all")) do
-        --#menu._items < 120 and
-        if unit:unit_data() and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
-            menu:Button({
-                name = unit:unit_data().name_id,
-                text = unit:unit_data().name_id .. " [" .. (unit:unit_data().unit_id or "") .."]",
-                label = "select_buttons",
-                callback = callback(self._parent, self._parent, "_select_unit", unit)
-            })
+        if #menu._items < 200 then
+            if unit:unit_data() and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
+                menu:Button({
+                    name = unit:unit_data().name_id,
+                    text = unit:unit_data().name_id .. " [" .. (unit:unit_data().unit_id or "") .."]",
+                    label = "select_buttons",
+                    callback = callback(self._parent, self._parent, "_select_unit", unit)
+                })
+            end
         end
     end
 end

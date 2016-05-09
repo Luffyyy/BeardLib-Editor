@@ -159,7 +159,7 @@ function SaveOptions:save_nav_data(menu)
         os.execute("mkdir " .. path:gsub("/" , "\\"))
     end
     if file.DirectoryExists( path ) then
-        if managers.navigation:get_save_data() then
+        if managers.navigation:get_save_data() and managers.navigation._load_data then
             local file = io.open(path .. "/nav_manager_data.nav_data", "w+")
             file:write(managers.navigation._load_data)
             file:close()

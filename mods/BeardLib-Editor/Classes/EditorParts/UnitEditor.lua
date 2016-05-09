@@ -20,6 +20,7 @@ end
 function UnitEditor:enabled()
     table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring("c"), callback(self, self, "KeyCPressed")))
     table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring("v"), callback(self, self, "KeyVPressed")))
+    table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring("f"), callback(self, self, "KeyFPressed")))
 end
 
 function UnitEditor:disabled()
@@ -188,7 +189,7 @@ function UnitEditor:add_unit_to_prefabs(menu, item)
             self._parent._menu:GetItem("prefabs"):Button({
                 name = unit:unit_data().name_id,
                 text = unit:unit_data().name_id,
-                callback = callback(self._parent, self._parent, "SpawnUnit", unit.name)
+                callback = callback(self._parent, self._parent, "SpawnUnit", unit:unit_data().name)
             })
         end
     end
@@ -349,6 +350,14 @@ function UnitEditor:KeyVPressed(button_index, button_name, controller_index, con
             end
         else
             log(tostring(data))
+        end
+    end
+end
+
+function UnitEditor:KeyFPressed(button_index, button_name, controller_index, controller, trigger_id)
+    if Input:keyboard():down(Idstring("left ctrl")) then
+        if self._selected_units[1] then
+            self._parent:set_camera(self._selected_units[1]:position())
         end
 	end
 end
