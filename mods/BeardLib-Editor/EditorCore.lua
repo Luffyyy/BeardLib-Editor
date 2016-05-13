@@ -153,6 +153,35 @@ if Hooks then
 
         BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
     end)
+
+    function BeardLibEditor:ProcessScriptData(data, path, extension, name)
+        for _, sub_data in ipairs(data) do
+            if sub_data._meta == "param" then
+                local next_data_path = name and name .. "/" .. sub_data.key or sub_data.key
+
+                local next_data_path_key = next_data_path:key()
+                BeardLibEditor.managers.EnvironmentEditor:AddHandlerValue(path:key(), next_data_path_key, sub_data.value, next_data_path)
+            else
+                local next_data_path = name and name .. "/" .. sub_data._meta or sub_data._meta
+                self:ProcessScriptData(sub_data, path, extension, next_data_path)
+            end
+        end
+    end
+
+    Hooks:Add("BeardLibPreProcessScriptData", "BeardLibEditorLoadEnvParams", function(PackManager, filepath, extension, data)
+        if self._extension and self._extension ~= Idstring("environment") then
+            return
+        end
+
+        if not data or (data and not data.data) then
+            return
+        end
+
+        BeardLibEditor:ProcessScriptData(data.data, filepath, extension)
+    end)
+
+
+
 end
 
 if not BeardLibEditor.setup then
