@@ -169,7 +169,7 @@ if Hooks then
     end
 
     Hooks:Add("BeardLibPreProcessScriptData", "BeardLibEditorLoadEnvParams", function(PackManager, filepath, extension, data)
-        if self._extension and self._extension ~= Idstring("environment") then
+        if extension ~= Idstring("environment") then
             return
         end
 
