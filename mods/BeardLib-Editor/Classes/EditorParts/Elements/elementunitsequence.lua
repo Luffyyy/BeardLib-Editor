@@ -31,49 +31,47 @@ function EditorUnitSequence:reload_trigger_list_combo()
 end
 function EditorUnitSequence:modify_selected_unit()
 	local trigger_list = self._elements_menu:GetItem("trigger_list")
-	local unit_id = trigger_list:SelectedItem()		
+	local unit_id = tonumber(trigger_list:SelectedItem())
 	local unit = managers.worlddefinition:get_unit(unit_id)
-	if unit then
-		local trigger_list_unit = self._element.values.trigger_list[trigger_list.value]
-		local sequence_list = managers.sequence:get_editable_state_sequence_list(unit:name() or "")
-	    local items = {             
-	        {
-	            name = "name",
-	            text = "Name:",
-	            value = trigger_list_unit.name,
-	            type = "TextBox",
-	        },        
-	        {
-	            name = "notify_unit_sequence",
-	            text = "Notify Unit Sequence:",
-	            items = sequence_list,
-	            value = table.get_key(sequence_list, trigger_list_unit.notify_unit_sequence),
-	            type = "ComboBox",
-	        },           
-	        {
-	            name = "time",
-	            text = "Time:",
-	            value = trigger_list_unit.time,
-	            filter = "number",
-	            min = 0,
-	            type = "TextBox",
-	        },      
-	    }	
+	local trigger_list_unit = self._element.values.trigger_list[trigger_list.value]
+	local sequence_list = managers.sequence:get_editable_state_sequence_list(unit and unit:name() or "")
+	if trigger_list_unit and unit then
+		local items = {              
+			{
+				name = "name",
+				text = "Name:",
+				value = trigger_list_unit.name,
+				type = "TextBox",
+			},        
+			{
+				name = "notify_unit_sequence",
+				text = "Notify Unit Sequence:",
+				items = sequence_list,
+				value = table.get_key(sequence_list, trigger_list_unit.notify_unit_sequence),
+				type = "ComboBox",
+			},           
+			{
+				name = "time",
+				text = "Time:",
+				value = trigger_list_unit.time,
+				filter = "number",
+				min = 0,
+				type = "TextBox",
+			},      
+		}	
 		BeardLibEditor.managers.Dialog:show({
-	        title = "Modifying " .. unit:unit_data().name_id .. "[" .. unit_id .. "]", 
-	        callback = callback(self, self, "apply_modify_trigger_unit", trigger_list.value),
-	        items = items,
-	        yes = "Apply",
-	        no = "Cancel",
-	    })
+			title = "Modifying " .. (unit and unit:unit_data().name_id or "") .. "[" .. unit_id .. "]", 
+			callback = callback(self, self, "apply_modify_trigger_unit", trigger_list.value),
+			items = items,
+			yes = "Apply",
+			no = "Cancel",
+		})
 		self:reload_trigger_list_combo()   
-	else
-		BeardLibEditor:log("[modify_selected_unit] Error no unit")
 	end
 end
 function EditorUnitSequence:apply_modify_trigger_unit(i, items)
 	self._element.values.trigger_list[i].name = items[1].value
-	self._element.values.trigger_list[i].notify_unit_sequence = items[2]:SelectedItem()
+	self._element.values.trigger_list[i].notify_unit_sequence = tonumber(items[2]:SelectedItem())
 	self._element.values.trigger_list[i].time = tonumber(items[3].value)
 end
 function EditorUnitSequence:add_selected_units(value_name)

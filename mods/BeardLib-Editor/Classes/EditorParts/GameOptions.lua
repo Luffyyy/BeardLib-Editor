@@ -8,7 +8,7 @@ function GameOptions:init(parent, menu)
         text = "Game",
         help = "",
     })
-
+    self._wanted_elements = {}
     self:CreateItems()
 end
 
@@ -65,7 +65,12 @@ function GameOptions:CreateItems()
         help = "",
         value = false,
     })
-
+    self._menu:Button({
+        name = "elements_to_show",
+        text = "Elements to draw",
+        help = "Decide what elements to draw(none = all)",
+        callback = callback(self, self, "show_elements_classes_dialog")
+    })    
 	self._menu:Toggle({
         name = "draw_portals",
         text = "Draw Portals",
@@ -97,14 +102,75 @@ function GameOptions:CreateItems()
         callback = callback(self, self, "draw_nav_segments"),
         value = false,
     })
-
     self._menu:Toggle({
         name = "pause_game",
         text = "Pause game",
         help = "",
         value = false,
         callback = callback(self, self, "pause_game")
+    })    
+end
+
+function GameOptions:show_elements_classes_dialog()
+    BeardLibEditor.managers.Dialog:show({
+        title = "Select what elements to show(none = all)",
+        items = {},
+        yes = "Close",
+        w = 600,
+        h = 600,
     })
+    self:load_all_elements_classes(BeardLibEditor.managers.Dialog._menu)
+end
+ 
+function GameOptions:select_element(id, menu)
+    table.insert(self._wanted_elements, id) 
+    self:load_all_elements_classes(menu)
+end
+
+function GameOptions:unselect_element(id, menu)
+    table.delete(self._wanted_elements, id)
+    self:load_all_elements_classes(menu)
+end
+ 
+function GameOptions:load_all_elements_classes(menu, item)
+    menu:ClearItems("select_buttons")
+    menu:ClearItems("unselect_buttons")
+
+    local searchbox = menu:GetItem("searchbox") or menu:TextBox({
+        name = "searchbox",
+        text = "Search what: ",
+        callback = callback(self, self, "load_all_elements_classes")         
+    })     
+    local selected_divider = menu:GetItem("selected_divider") or menu:Divider({
+        name = "selected_divider",
+        text = "Selected: ",
+        size = 30,    
+    })        
+    local unselected_divider = menu:GetItem("unselected_divider") or menu:Divider({
+        name = "unselected_divider",
+        text = "Unselected: ",
+        size = 30,    
+    })     
+    for _, element in pairs(self._wanted_elements) do
+        local new = menu:GetItem(element) or menu:Button({
+            name = element, 
+            text = element,
+            label = "unselect_buttons",
+            index = menu:GetItem("selected_divider"):Index() + 1,
+            callback = callback(self, self, "unselect_element", element)
+        })      
+    end    
+
+    for _, element in pairs(self._parent._mission_elements) do
+        if not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value) and not table.has(self._wanted_elements, element) then
+            menu:Button({
+                name = element, 
+                text = element,
+                label = "select_buttons",
+                callback = callback(self, self, "select_element", element) 
+            })    
+        end   
+    end
 end
 
 function GameOptions:pause_game(menu, item)
@@ -118,6 +184,7 @@ function GameOptions:set_editor_units_visible(menu, item)
 		end
 	end
 end
+
 function GameOptions:draw_nav_segments( menu, item )
     managers.navigation:set_debug_draw_state(menu:GetItem("draw_nav_segments").value and menu:GetItem("draw_nav_segments_options").items or false )
 end

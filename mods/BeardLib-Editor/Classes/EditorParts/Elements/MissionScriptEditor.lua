@@ -22,7 +22,7 @@ function MissionScriptEditor:create_element()
 	self._element = {}	
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"	
-	self._element.editor_name = "new_element"
+	self._element.editor_name = "NewElement"
 	self._element.id = math.random(99999)
 	self._element.values.position = cam:position() + cam:rotation():y()
 	self._element.values.rotation = Rotation(0,0,0)
@@ -37,6 +37,19 @@ function MissionScriptEditor:_build_panel()
 end
 function MissionScriptEditor:_create_panel()
 	self._elements_menu:ClearItems()
+    self._elements_menu:Divider({
+        text = "Class: " .. tostring(self._element.class),
+    })
+    self._elements_menu:Button({
+        name = "delete_element",
+        text = "Delete element",
+        callback = callback(self, self, "delete_element")
+    })    
+    self._elements_menu:Button({
+        name = "execute_element",
+        text = "Execute element",
+        callback = callback(managers.mission, managers.mission, "execute_element", self._element)
+    })
 	self:_build_value_checkbox("enabled")
 	self._elements_menu:TextBox({
 		name = "editor_name",
@@ -64,14 +77,25 @@ function MissionScriptEditor:_create_panel()
 	combo_items = {}
 	for _, exec_table in pairs(self._element.values.on_executed) do
 		table.insert(combo_items, exec_table.id)
-	end	
+	end	   
 	self:_build_element_list("on_executed", nil, callback(self, self, "select_element_on_executed"))
+end
+function MissionScriptEditor:delete_element()
+    QuickMenu:new( "Warning", "This will delete the element, Continue?",
+        {[1] = {text = "Yes", callback = function()
+            managers.mission:delete_element(self._element)
+            self._elements_menu:ClearItems()
+            self._editor._selected_element = nil
+            self._editor.managers.SpawnSearch:refresh_search()
+        end
+    },[2] = {text = "No", is_cancel_button = true}}, true)
 end
 function MissionScriptEditor:add_help_text(data)
 end
 function MissionScriptEditor:_add_help_text(text)
-	self:add_help_text(help)
+    self:add_help_text(help)
 end
+ 
 function MissionScriptEditor:remove_add_element_dialog(params)
     BeardLibEditor.managers.Dialog:show({
         title = "Add an element to " .. params.value_name .." list",
@@ -210,13 +234,13 @@ function MissionScriptEditor:_build_value_number(value_name, options, tooltip, c
 	})
 	return num
 end
-function MissionScriptEditor:_build_value_text(value_name, options, tooltip, custom_name)
+function MissionScriptEditor:_build_value_text(value_name, tooltip, custom_name)
 	local num = self._elements_menu:TextBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
 	  	help = tooltip,
-	  	value = options.value or self._element.values[value_name],
-	  	callback = options.callback or callback(self, self, "set_element_data", value_name),
+	  	value = self._element.values[value_name],
+	  	callback = callback(self, self, "set_element_data", value_name),
 	})
 	return num
 end

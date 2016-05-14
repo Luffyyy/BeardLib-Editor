@@ -55,7 +55,15 @@ function MissionManager:add_element(element)
 	self._scripts["default"]:create_element(element)
 	return element
 end
+function MissionManager:delete_element(element)	
+	self:delete_executors_of_element(element)
+	self._scripts["default"]:delete_element(element)
+	table.delete(self._missions["world"]["default"].elements, element)
+end
 
+function MissionManager:execute_element(element)
+	self._scripts["default"]:execute_element(element)
+end
 function MissionManager:save_mission_file(mission, type, path)
 	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._missions[mission], type)	 
 	local mission_file = io.open(path .. "/" .. mission .. "_mission" .. "." .. type, "w+")
@@ -80,6 +88,12 @@ function MissionManager:get_executors_of_element(element)
 									table.insert(executors, script_element)
 								end
 							end
+						elseif script_element.values.elements then
+							for _, _element in pairs(script_element.values.elements) do									
+								if _element.id == element.id then
+									table.insert(executors, script_element)
+								end
+							end							
 						end
 					end
 				end
@@ -87,6 +101,31 @@ function MissionManager:get_executors_of_element(element)
 		end
 	end
 	return executors
+end
+function MissionManager:delete_executors_of_element(element)
+	if element then
+		for _, script in pairs(self._missions) do
+			for _, tbl in pairs(script) do
+				if tbl.elements then
+					for i, script_element in pairs(tbl.elements) do
+						if script_element.values.on_executed then
+							for k, on_executed_element in pairs(script_element.values.on_executed) do									
+								if on_executed_element.id == element.id then
+									table.remove(script_element.values.on_executed, k)
+								end
+							end
+						elseif script_element.values.elements then
+							for k, _element in pairs(script_element.values.elements) do									
+								if _element.id == element.id then
+									table.remove(script_element.values.elements, k)
+								end
+							end
+						end
+					end
+				end
+			end	
+		end
+	end
 end
 function MissionManager:get_modifiers_of_unit(unit)
 	local modifiers = {}
@@ -170,8 +209,8 @@ function MissionScript:create_element( element )
 	if element.id then
 		local class = element.class
 		local new_element = self:_element_class(element.module, class):new(self, element)		
-		if class == "ElementSpawnCivilian" or class == "ElementSpawnEnemyGroup" or class == "ElementSpawnCivilianGroup" or class == "ElementSpawnEnemyDummy" or class == "ElementEnemyDummyTrigger" then 
-			--element.values.enabled = false --Comment it if you want civis and enemies to spawn.
+		if class == "MissionScriptElement" then 
+			--element.values.enabled = false --Disables the mission for skae of editing the map we should fix black screen issue when player is not spawned
 		end
 		self._elements[element.id] = new_element
 		self._elements[element.id].class = class
@@ -180,46 +219,64 @@ function MissionScript:create_element( element )
 		return new_element
 	end
 end
-function MissionScript:draw_element(element, color)
+function MissionScript:execute_element(element)
+	self._elements[element.id]:on_executed(managers.player:player_unit())
+end
+function MissionScript:delete_element(element)
+	self._elements[element.id]:set_enabled(false)
+	self._elements[element.id] = nil
+	self._element_groups[element.class] = nil
+end
+function MissionScript:draw_element(element, color, draw_all)
 	local brush = Draw:brush(Color.red)
 	local name_brush = Draw:brush(Color.red)
 	name_brush:set_font(Idstring("fonts/font_medium"), 16)
 	name_brush:set_render_template(Idstring("OverlayVertexColorTextured"))
 	brush:set_color(color or element:enabled() and Color.green or Color.red)
 	name_brush:set_color(color or element:enabled() and Color.green or Color.red)
-	if element:value("position") then
-		brush:sphere(element:value("position"), 5)
-		if managers.viewport:get_current_camera() then
+	if managers.viewport:get_current_camera() then
+		if element:value("position") then
+			brush:sphere(element:value("position"), 5)
 			local cam_up = managers.viewport:get_current_camera():rotation():z()
 			local cam_right = managers.viewport:get_current_camera():rotation():x()
 			name_brush:center_text(element:value("position") + Vector3(0, 0, 30), utf8.from_latin1(element:editor_name()) .. "[ "..element.class.. " - ".. tostring(element:id()) .." ]", cam_right, -cam_up)
-		end 
-	end
-	if element:value("rotation") then
-		local rotation = CoreClass.type_name(element:value("rotation")) == "Rotation" and element:value("rotation") or Rotation(element:value("rotation"), 0, 0)
-		brush:cylinder(element:value("position"), element:value("position") + rotation:y() * 50, 2)
-		brush:cylinder(element:value("position"), element:value("position") + rotation:z() * 25, 1)
+		end
+		if element:value("rotation") then
+			local rotation = CoreClass.type_name(element:value("rotation")) == "Rotation" and element:value("rotation") or Rotation(element:value("rotation"), 0, 0)
+			brush:cylinder(element:value("position"), element:value("position") + rotation:y() * 50, 2)
+			brush:cylinder(element:value("position"), element:value("position") + rotation:z() * 25, 1)
+		end
 	end
 	element:debug_draw()
 end
  
 function MissionScript:_debug_draw(t, dt)
-	local wanted_classes = {"", "ElementSpawnCivilian", "ElementPlayerSpawner"} --Leave as "" if you want all of them to draw.
-	if _G.BeardLibEditor.managers.MapEditor._menu:GetItem("show_elements").value then
+	local Editor = _G.BeardLibEditor.managers.MapEditor
+	local wanted_classes = Editor.managers.GameOptions._wanted_elements
+	if Editor._menu:GetItem("show_elements").value and managers.viewport:get_current_camera() then
 		for id, element in pairs(self._elements) do
-			for _, class in pairs(wanted_classes) do
-				if element.class == class or class == "" then
-					self:draw_element(element)
+			if element:value("position") then
+				local distance = mvector3.distance_sq(element:value("position"), managers.viewport:get_current_camera():position())
+				if distance < 2250000 then
+					if #wanted_classes == 0 then
+						self:draw_element(element)
+					else
+						for _, class in pairs(wanted_classes) do
+							if element.class == class then
+								self:draw_element(element)
+							end
+						end
+					end
 				end
 			end
 		end
 	end
 	if _G.BeardLibEditor.managers.MapEditor._selected_element then
-		local element = self._elements[_G.BeardLibEditor.managers.MapEditor._selected_element.id]
+		local element = self._elements[Editor._selected_element.id]
 		if element then
 			self:draw_element(element, Color(0, 0.5, 1))
-			element._values = _G.BeardLibEditor.managers.MapEditor._selected_element.values
-			element._editor_name = _G.BeardLibEditor.managers.MapEditor._selected_element.editor_name
+			element._values = Editor._selected_element.values
+			element._editor_name = Editor._selected_element.editor_name
 		end
 	end
 end

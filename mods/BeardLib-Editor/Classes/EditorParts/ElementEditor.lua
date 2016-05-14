@@ -68,7 +68,7 @@ function ElementEditor:update(t, dt)
 end
  
 function ElementEditor:KeyGPressed(button_index, button_name, controller_index, controller, trigger_id)
-    if Input:keyboard():down(Idstring("left ctrl")) then
+    if not self._parent._menu._highlighted and Input:keyboard():down(Idstring("left ctrl")) then
         if self._parent._selected_element then
             self._parent:set_camera(self._parent._selected_element.values.position)
         end

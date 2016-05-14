@@ -32,22 +32,24 @@ function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
 	local continent_data = self._continent_definitions[old_continent]
 	local new_continent_data = self._continent_definitions[new_continent]
 	local move_continent = (old_continent ~= new_continent)
-
-	for i, static in pairs(continent_data.statics) do
-		if type(static) == "table" then
-			if static.unit_data.unit_id == unit_id then
-				for k,v in pairs(config) do
-					static.unit_data[k] = v
+	if continent_data then
+		for i, static in pairs(continent_data.statics) do
+			if type(static) == "table" then
+				if static.unit_data.unit_id == unit_id then
+					for k,v in pairs(config) do
+						static.unit_data[k] = v
+					end
+					if move_continent then
+						continent_data.statics[i] = nil
+						table.insert(new_continent_data.statics, static)
+					end
+					break
 				end
-				if move_continent then
-					continent_data.statics[i] = nil
-					table.insert(new_continent_data.statics, static)
-				end
-				break
 			end
 		end
+	else
+		_G.BeardLibEditor:log(tostring(unit_id))
 	end
-
 end
 function WorldDefinition:get_unit_number(name)
 	local i = 1
@@ -79,7 +81,7 @@ function WorldDefinition:delete_unit(unit)
 		if continent then
 			for k, static in pairs(continent.statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
-					continent.statics[k] = nil
+					table.remove(continent.statics, k)
 					_G.BeardLibEditor:log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
 					return
 				end
@@ -118,9 +120,7 @@ function WorldDefinition:assign_unit_data(unit, data)
 	--[[if data.continent and is_editor then
 		managers.editor:add_unit_to_continent(data.continent, unit)
 	else]]--
-	if data.continent then
-		unit:unit_data().continent = data.continent
-	end
+	unit:unit_data().continent = data.continent
 
 	self:_setup_lights(unit, data)
 	self:_setup_variations(unit, data)
@@ -172,7 +172,7 @@ function WorldDefinition:make_unit(data, offset)
 
 	return unit
 end
-
+ 
 function WorldDefinition:_setup_unit_id(unit, data)
 	unit:unit_data().unit_id = data.unit_id
 	unit:set_editor_id(unit:unit_data().unit_id)

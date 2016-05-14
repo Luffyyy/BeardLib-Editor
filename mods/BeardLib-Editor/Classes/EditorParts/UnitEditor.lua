@@ -172,6 +172,7 @@ function UnitEditor:set_unit_data(menu, item)
     else
         for _, unit in pairs(self._selected_units) do
             self:set_position(unit, Vector3(x, y, z), Rotation(yaw, pitch, roll), true)
+            managers.worlddefinition:set_unit( unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent,  unit:unit_data().continent)            
         end
     end
 end
@@ -195,7 +196,7 @@ function UnitEditor:add_unit_to_prefabs(menu, item)
     end
 end
 
-function UnitEditor:select_unit()
+function UnitEditor:select_unit(mouse2)
 	local cam = self._parent._camera_object
 	local ray
 	if self._parent._menu:GetItem("units_visibility").value then
@@ -208,7 +209,7 @@ function UnitEditor:select_unit()
 		--[[if alive(self._selected_unit) then
 			self:set_unit(nil)
 		end]]--
-        if Input:keyboard():down(Idstring("left ctrl")) then
+        if mouse2 then
             if not table.contains(self._selected_units, ray.unit) then
                 table.insert(self._selected_units, ray.unit)
                 self:StorePreviousPosRot()
@@ -342,7 +343,7 @@ function UnitEditor:KeyVPressed(button_index, button_name, controller_index, con
         if ret then
             self._selected_units = {}
             for _, sub_data in pairs(data) do
-                self._parent:SpawnUnit(sub_data.name, sub_data)
+                self._parent:SpawnUnit(sub_data.name, sub_data, true)
             end
 
             if #self._selected_units > 1 then

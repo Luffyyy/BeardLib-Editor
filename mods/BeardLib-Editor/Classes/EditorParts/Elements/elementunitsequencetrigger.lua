@@ -1,7 +1,9 @@
 EditorUnitSequenceTrigger = EditorUnitSequenceTrigger or class(MissionScriptEditor)
 EditorUnitSequenceTrigger.SAVE_UNIT_POSITION = false
 EditorUnitSequenceTrigger.SAVE_UNIT_ROTATION = false
-
+function EditorUnitSequenceTrigger:init(unit)
+	self.super.init(self, unit)
+end
 function EditorUnitSequenceTrigger:create_element()
     self.super.create_element(self)
 	self._element.class = "ElementUnitSequenceTrigger"
@@ -23,37 +25,36 @@ end
 function EditorUnitSequenceTrigger:reload_sequence_list_combo()
 	local sequence_list = {}
 	for _, unit in pairs(self._element.values.sequence_list) do
-		table.insert(sequence_list, unit.notify_unit_id)
+		table.insert(sequence_list, unit.unit_id)
 	end
 	self._elements_menu:GetItem("sequence_list"):SetItems(sequence_list)
 end
 function EditorUnitSequenceTrigger:modify_selected_unit()
-	local sequence_list = self._elements_menu:GetItem("sequence_list")
-	local unit_id = sequence_list:SelectedItem()
-	if unit_id then
-		local sequence_list_unit = self._element.values.sequence_list[sequence_list.value]
-		local unit = managers.worlddefinition:get_unit(unit_id)
+	local sequence_combo = self._elements_menu:GetItem("sequence_list")
+	local unit_id = sequence_combo:SelectedItem()
+	local unit = managers.worlddefinition:get_unit(unit_id)
+	if unit then
+		local sequence_list_unit = self._element.values.sequence_list[sequence_combo.value]
 		local sequence_list = managers.sequence:get_editable_state_sequence_list(unit:name() or "")
-	    local items = {                     
- 	        {
-	            name = "sequence",
-	            text = "Sequence:",
-	            items = sequence_list,
-	            value = table.get_key(sequence_list, sequence_list_unit.sequence),
-	            type = "ComboBox",
-	        },  
-	    }	
 		BeardLibEditor.managers.Dialog:show({
 	        title = "Modifying " .. unit:unit_data().name_id .. "[" .. unit_id .. "]", 
-	        callback = callback(self, self, "apply_modify_sequence_unit", sequence_list.value),
-	        items = items,
+	        callback = callback(self, self, "apply_modify_sequence_unit", sequence_combo.value),
+	        items = {    
+	        	{	            
+	        		name = "sequence",
+		            text = "Sequence:",
+		            items = sequence_list,
+		            value = table.get_key(sequence_list, sequence_list_unit.sequence),
+		            type = "ComboBox",
+	        	}                 
+	        },  
 	        yes = "Apply",
 	        no = "Cancel",
 	    })
 		self:reload_sequence_list_combo()   
 	end
 end
-function EditorUnitSequenceTrigger:apply_modify_sequence_list(i, items)
+function EditorUnitSequenceTrigger:apply_modify_sequence_unit(i, items)
 	self._element.values.sequence_list[i].sequence = items[1]:SelectedItem()
 end
 function EditorUnitSequenceTrigger:add_selected_units(value_name)
@@ -83,11 +84,11 @@ end
 function EditorUnitSequenceTrigger:_build_panel()
 	self:_create_panel()
 	local sequence_list = {}
-	for _, unit in pairs(self._element.values.sequence) do
-		table.insert(sequence_list, unit.notify_unit_id)
+	for _, unit in pairs(self._element.values.sequence_list) do
+		table.insert(sequence_list, unit.unit_id)
 	end
 	self._elements_menu:ComboBox({
-		name = "sequence",
+		name = "sequence_list",
 		text = "Sequence List",
 		help = "Select a unit to modify",
 		items = sequence_list,

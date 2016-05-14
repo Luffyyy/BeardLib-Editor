@@ -26,6 +26,8 @@ function MapEditor:init()
 	end
     self._mission_elements = { 
         "ElementAccessCamera",
+        "ElementAccessCameraOperator",
+        "ElementAccessCameraTrigger",
         "ElementActionMessage",
         "ElementAIArea",
         "ElementAIAttention",
@@ -41,6 +43,7 @@ function MapEditor:init()
         "ElementBlackScreenVariant",
         "ElementBlurZone",
         "ElementCarry",
+        "ElementVariable",
         "ElementCharacterOutline",
         "ElementCharacterSequence",
         "ElementCharacterTeam",
@@ -104,7 +107,7 @@ function MapEditor:init()
         "ElementPressure",
         "ElementProfileFilter",
         "ElementScenarioEvent",
-        "ElementSecurityCmera",
+        "ElementSecurityCamera",
         "ElementSequenceCharacter",
         "ElementSetOutline",
         "ElementSlowMotion",
@@ -122,6 +125,8 @@ function MapEditor:init()
         "ElementSpotter",
         "ElementStatistics",
         "ElementToggle",
+        "ElementRandom",
+        "ElementTimer",
         "ElementTeammateComment",
         "ElementTeamRelation",
         "ElementVehicleOperator",
@@ -207,14 +212,20 @@ function MapEditor:mouse_pressed( button, x, y )
         self._hide_panel:set_left(self._menu._panel:right())
         return
     end
-
-    if button == Idstring("0") and not self._menu._panel:inside(x, y) then
-        self.managers.UnitEditor:select_unit()
+    if not self._menu._panel:inside(x, y) then
+        if button == Idstring("0") then
+            self.managers.UnitEditor:select_unit()
+        elseif button == Idstring("1") then
+            self.managers.UnitEditor:select_unit(true)
+        end
     end
 end
 
-function MapEditor:_select_unit(unit, menu, item)
+function MapEditor:_select_unit(unit, no_reset)
     self._menu:SwitchMenu(self._menu:GetItem("selected_unit"))
+    if not no_reset then
+        self.managers.UnitEditor._selected_units = {}     
+    end   
 	table.insert(self.managers.UnitEditor._selected_units, unit)
     self.managers.UnitEditor:set_unit()
 end
@@ -227,7 +238,7 @@ function MapEditor:add_element(element, menu, item)
     self.managers.ElementEditor:add_element(element)
 end
 
-function MapEditor:SpawnUnit( unit_path, unit_data )
+function MapEditor:SpawnUnit( unit_path, unit_data, no_reset )
     local unit
     local cam = managers.viewport:get_current_camera()
     local pos = unit_data and unit_data.position or cam:position() + cam:rotation():y()
@@ -238,6 +249,10 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
         unit = MassUnitManager:spawn_unit(Idstring(unit_path), pos , rot )
     else
         unit = CoreUnit.safe_spawn_unit(unit_path, pos, rot)
+    end
+    if not unit then 
+        BeardLibEditor:log("Something went wrong while spawning the unit..")
+        return
     end
     if not unit.unit_data or not unit:unit_data()  then
         BeardLibEditor:log(unit_path .. " has no unit data...")
@@ -254,7 +269,7 @@ function MapEditor:SpawnUnit( unit_path, unit_data )
     end
 
     managers.worlddefinition:add_unit(unit, unit:unit_data().continent)
-	self:_select_unit(unit)
+	self:_select_unit(unit, no_reset)
 end
 
 function MapEditor:load_continents(continents)
@@ -364,13 +379,6 @@ function MapEditor:update(t, dt)
 	local brush = Draw:brush(Color(0, 0.5, 0.85))
 
 	if self:enabled() then
-        --[[if self._selected_unit and Input:keyboard():down(Idstring("left ctrl")) then
-            if Input:keyboard():down(Idstring("f")) then
-                self:set_camera(self._selected_unit:position())
-            elseif Input:keyboard():down(Idstring("g")) then
-                self:set_camera(self._selected_element.values.position)
-            end
-        end]]--
 		self:update_camera(t, dt)
 	end
 end

@@ -42,7 +42,10 @@ end
 
 
 function SpawnSearch:browse()
-    self._menu:ClearItems()
+    self._menu:ClearItems("main")
+    self._menu:ClearItems("temp")
+    self._menu:ClearItems("temp2")
+    self._current_menu = nil
     self.current_dir = self.current_dir or ""
     local dir_split = string.split(self.current_dir, "/")
 
@@ -51,25 +54,35 @@ function SpawnSearch:browse()
         dir_tbl = dir_tbl[part]
     end
 
-    BeardLibEditor:log(self.current_dir)
+    BeardLibEditor:log(self.current_dir)   
+    local show_not_loaded = self._menu:GetItem("show_not_loaded") or self._menu:Toggle({
+        name = "show_not_loaded",
+        text = "Show not loaded units",
+        value = false,
+        callback = callback(self, self, "browse"),
+    })    
     self._menu:Button({
         name = "back_button",
         text = "Back",
-        callback = callback(self, self, "CreateItems")
+        callback = callback(self, self, "CreateItems"),
+        label = "temp2"
     })
     self._menu:Button({
         name = "uplevel_btn",
         text = "^ ( " .. (self.current_dir or self.custom_dir) .. " )",
         callback = callback(self, self, "folder_back"),
+        label = "temp2"
     })
     self._menu:Button({
         name = "search_btn",
         text = "Search",
         callback = callback(self, self, "file_search"),
-    })    
+        label = "temp2"
+    })            
+
     for key, data in pairs(dir_tbl) do
         if tonumber(key) ~= nil then
-            if data.file_type == "unit" then
+            if data.file_type == "unit" and (PackageManager:has(Idstring("unit"), Idstring(data.path)) or show_not_loaded.value) then
                 self._menu:Button({
                     name = data.name,
                     text = data.name .. "." .. data.file_type,
@@ -90,6 +103,11 @@ function SpawnSearch:browse()
     end
 end
 
+function SpawnSearch:refresh_search()
+    if self._current_menu then
+        self._current_menu()
+    end
+end
 
 function SpawnSearch:file_search(menu, item)
     self._is_searching = false
@@ -114,7 +132,11 @@ end
 function SpawnSearch:search(success, search)
     if not success then
         return
+    end    
+    if not search or search == "" then
+        return
     end
+
     if not self._is_searching then
         self._menu:ClearItems("temp")
         self._is_searching = true
@@ -122,7 +144,7 @@ function SpawnSearch:search(success, search)
     for _, unit_path in pairs(BeardLibEditor.DBPaths["unit"]) do
         local split = string.split(unit_path, "/")
         local unit = split[#split]
-        if unit:match(search) then
+        if unit:match(search) and (PackageManager:has(Idstring("unit"), Idstring(unit_path)) or self._menu:GetItem("show_not_loaded").value) then
             self._menu:Button({
                 name = unit,
                 text = unit,   
@@ -147,6 +169,7 @@ end
 function SpawnSearch:load_all_mission_elements(menu, item)
     menu:ClearItems("main")
     menu:ClearItems("select_buttons")
+    self._current_menu = callback(self, self, "load_all_mission_elements", menu)
     local searchbox
     if not self._menu:GetItem("searchbox") then
         menu:Button({
@@ -187,6 +210,7 @@ end
 function SpawnSearch:show_elements_list(menu, item)
     menu:ClearItems("main")
     menu:ClearItems("select_buttons")
+    self._current_menu = nil
     local searchbox
     if not self._menu:GetItem("searchbox") then
         menu:Button({
@@ -216,6 +240,7 @@ end
 function SpawnSearch:load_all_units(menu, item)
     menu:ClearItems("main")
     menu:ClearItems("select_buttons")
+    self._current_menu = callback(self, self, "load_all_units", menu)
     local searchbox
     if not self._menu:GetItem("searchbox") then
         menu:Button({
@@ -227,7 +252,7 @@ function SpawnSearch:load_all_units(menu, item)
             name = "searchbox",
             text = "Search what: ",
             callback = callback(self, self, "load_all_units")
-        })
+        })       
     else
         searchbox = self._menu:GetItem("searchbox")
     end
@@ -251,7 +276,6 @@ function SpawnSearch:file_click(menu, item)
 		QuickMenu:new( "Warning", "Unit is not loaded, load it? (Might crash)",
 		{[1] = {text = "Yes", callback = function()
 			managers.dyn_resource:load(Idstring("unit"), Idstring(unit_path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, false)
-			--self:browse(self._current_menu)
 			self._parent:SpawnUnit(unit_path)
   		end
   		},[2] = {text = "No", is_cancel_button = true}}, true)
