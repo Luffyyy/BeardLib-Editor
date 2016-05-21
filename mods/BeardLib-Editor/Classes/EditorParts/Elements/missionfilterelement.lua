@@ -17,9 +17,9 @@ end
 
 function EditorMissionFilter:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox(1, "", "Mission filter 1")
-	self:_build_value_checkbox(2, "", "Mission filter 2")
-	self:_build_value_checkbox(3, "", "Mission filter 3")
-	self:_build_value_checkbox(4, "", "Mission filter 4")
-	self:_build_value_checkbox(5, "", "Mission filter 5")
+	self:_build_value_checkbox(1, "", nil, "Mission filter 1")
+	self:_build_value_checkbox(2, "", nil, "Mission filter 2")
+	self:_build_value_checkbox(3, "", nil, "Mission filter 3")
+	self:_build_value_checkbox(4, "", nil, "Mission filter 4")
+	self:_build_value_checkbox(5, "", nil, "Mission filter 5")
 end

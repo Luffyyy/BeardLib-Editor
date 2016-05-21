@@ -35,21 +35,21 @@ function EditorFeedback:_build_panel()
 		"player_land",
 		"breathing"
 	}, "Select a camera shake effect", "effect")
-	self:_build_value_number("camera_shake_amplitude", {min = -1}, "Amplitude basically decides the strenght of the shake", "amplitude")
-	self:_build_value_number("camera_shake_frequency", {min = -1}, "Changes the frequency of the shake", "frequency")
-	self:_build_value_number("camera_shake_attack", {min = -1}, "Time to reach maximum shake", "attack")
-	self:_build_value_number("camera_shake_sustain", {min = -1}, "Time to sustain maximum shake", "sustain")
-	self:_build_value_number("camera_shake_decay", {min = -1}, "Time to decay from maximum shake to zero", "decay")
+	self:_build_value_number("camera_shake_amplitude", {min = -1}, "Amplitude basically decides the strenght of the shake", nil,"amplitude")
+	self:_build_value_number("camera_shake_frequency", {min = -1}, "Changes the frequency of the shake", nil, "frequency")
+	self:_build_value_number("camera_shake_attack", {min = -1}, "Time to reach maximum shake", nil, "attack")
+	self:_build_value_number("camera_shake_sustain", {min = -1}, "Time to sustain maximum shake", nil, "sustain")
+	self:_build_value_number("camera_shake_decay", {min = -1}, "Time to decay from maximum shake to zero", nil,"decay")
 	self:_build_value_checkbox("use_rumble", "Use rumble")
-	self:_build_value_number("rumble_peak", {min = -1}, "A value to determine the strength of the rumble", "peak")
-	self:_build_value_number("rumble_attack", {min = -1}, "Time to reach maximum rumble", "attack")
-	self:_build_value_number("rumble_sustain", {min = -1}, "Time to sustain maximum rumble", "sustain")
-	self:_build_value_number("rumble_release", {min = -1}, "Time to decay from maximum rumble to zero", "release")
-	self:_build_value_combobox("above_camera_effect", table.list_add({"none"}, self:_effect_options()), "Select and above camera effect", "effect")
+	self:_build_value_number("rumble_peak", {min = -1}, "A value to determine the strength of the rumble", nil, "peak")
+	self:_build_value_number("rumble_attack", {min = -1}, "Time to reach maximum rumble", nil, "attack")
+	self:_build_value_number("rumble_sustain", {min = -1}, "Time to sustain maximum rumble", nil, "sustain")
+	self:_build_value_number("rumble_release", {min = -1}, "Time to decay from maximum rumble to zero", nil, "release")
+	self:_build_value_combobox("above_camera_effect", table.list_add({"none"}, self:_effect_options()), "Select and above camera effect", nil, "effect")
 	self:_build_value_number("above_camera_effect_distance", {
 		min = 0,
 		max = 1
-	}, "A filter value to use with the range. A value of 1 means that the effect will be played whenever inside the range, a lower value means you need to be closer to the position.", "distance filter")
+	}, "A filter value to use with the range. A value of 1 means that the effect will be played whenever inside the range, a lower value means you need to be closer to the position.", nil, "distance filter")
 end
 function EditorFeedback:_effect_options()
 	local effect_options = {}

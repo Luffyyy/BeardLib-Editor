@@ -186,7 +186,9 @@ function GameOptions:set_editor_units_visible(menu, item)
 end
 
 function GameOptions:draw_nav_segments( menu, item )
-    managers.navigation:set_debug_draw_state(menu:GetItem("draw_nav_segments").value and menu:GetItem("draw_nav_segments_options").items or false )
+    if managers.navigation then
+        managers.navigation:set_debug_draw_state(menu:GetItem("draw_nav_segments").value and menu:GetItem("draw_nav_segments_options").items or false )
+    end
 end
 
 function GameOptions:drop_player()

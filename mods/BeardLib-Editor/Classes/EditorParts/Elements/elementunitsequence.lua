@@ -111,11 +111,13 @@ function EditorUnitSequence:_build_panel()
 		name = "trigger_list",
 		text = "Trigger List",
 		help = "Select a unit to modify",
+		group = self._class_group,
 		items = trigger_list,
 	})	
 	self._elements_menu:Button({
 		name = "modify_selected_unit",
 		text = "Modify selected",
+		group = self._class_group,
 		callback = callback(self, self, "modify_selected_unit")
 	})	
 	self:_build_unit_list("trigger_list", callback(self, self, "select_unit_trigger_list"), "notify_unit_id")

@@ -35,21 +35,30 @@ function EditorFilter:_build_panel()
 	self:_check_convertion()
 	self:_create_panel()
 
-	self:_build_text("Difficulty")
-	self:_build_value_checkbox("difficulty_easy", "", "Easy")
-	self:_build_value_checkbox("difficulty_normal", "", "Normal")
-	self:_build_value_checkbox("difficulty_hard", "", "Hard")
-	self:_build_value_checkbox("difficulty_overkill", "", "Very Hard")
-	self:_build_value_checkbox("difficulty_overkill_145", "", "Overkill")
-	self:_build_value_checkbox("difficulty_overkill_290", "", "Death Wish")
+    local difficulty = self._elements_menu:ItemsGroup({
+        name = "difficulty",
+        text = "Difficulty",
+    })	
+	self:_build_value_checkbox("difficulty_easy", "", difficulty, "Easy")
+	self:_build_value_checkbox("difficulty_normal", "", difficulty, "Normal")
+	self:_build_value_checkbox("difficulty_hard", "", difficulty, "Hard")
+	self:_build_value_checkbox("difficulty_overkill", "", difficulty, "Very Hard")
+	self:_build_value_checkbox("difficulty_overkill_145", "", difficulty, "Overkill")
+	self:_build_value_checkbox("difficulty_overkill_290", "", difficulty, "Death Wish")
 
-	self:_build_text("Players")
-	self:_build_value_checkbox("player_1", "", "One Player")
-	self:_build_value_checkbox("player_2", "", "Two Players")
-	self:_build_value_checkbox("player_3", "", "Three Players")
-	self:_build_value_checkbox("player_4", "", "Four Players")
+    local players = self._elements_menu:ItemsGroup({
+        name = "players",
+        text = "Players",
+    })	    
+	self:_build_value_checkbox("player_1", "", players, "One Player")
+	self:_build_value_checkbox("player_2", "", players, "Two Players")
+	self:_build_value_checkbox("player_3", "", players, "Three Players")
+	self:_build_value_checkbox("player_4", "", players, "Four Players")
 
-	self:_build_text("Players")
-	self:_build_value_checkbox("mode_control", "", "Control")
-	self:_build_value_checkbox("mode_assault", "", "Assault")
+	 local mode = self._elements_menu:ItemsGroup({
+		name = "mode",
+		text = "Mode",
+	})	
+	self:_build_value_checkbox("mode_control", "", mode, "Control")
+	self:_build_value_checkbox("mode_assault", "", mode, "Assault")
 end

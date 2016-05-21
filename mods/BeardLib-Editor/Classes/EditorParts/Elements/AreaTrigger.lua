@@ -73,6 +73,7 @@ end
 function EditorAreaTrigger:_build_panel(disable_params)
 	self:_create_panel()
 	self:create_values_ctrlrs(disable_params)
+ 	
 	local shape_type = self:_build_value_combobox("shape_type", {"box", "cylinder"}, "Select shape for area")
 	self._shape_type_params = shape_type
 

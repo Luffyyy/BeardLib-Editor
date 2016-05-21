@@ -16,6 +16,7 @@ if not _G.BeardLibEditor then
         "EditorParts/UnitEditor.lua",
         "EditorParts/GameOptions.lua",
         "EditorParts/SaveOptions.lua",
+        "EditorParts/EditorWidgets.lua",
         "EditorParts/SpawnSearch.lua",
         "EnvironmentEditorManager.lua",
         "EnvironmentEditorHandler.lua",
@@ -34,7 +35,9 @@ end
 
 function BeardLibEditor:_init()
     self:LoadClasses()
-
+    if not PackageManager:loaded("core/packages/editor") then
+        PackageManager:load("core/packages/editor")
+    end
     self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
     self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
 

@@ -36,57 +36,83 @@ function MissionScriptEditor:_build_panel()
 	self:_create_panel()
 end
 function MissionScriptEditor:_create_panel()
-	self._elements_menu:ClearItems()
+	self._elements_menu:ClearItems()    
     self._elements_menu:Divider({
         text = "Class: " .. tostring(self._element.class),
     })
+
+    local quick_buttons = self._elements_menu:ItemsGroup({
+        name = "quick_buttons",
+        text = "Quick actions",
+    })
+    local other = self._elements_menu:ItemsGroup({
+        name = "other",
+        text = "Other",
+    })       
+    local transform = self._elements_menu:ItemsGroup({
+        name = "unit_transform",
+        text = "Transform",
+    })     
+    self._class_group = self._elements_menu:ItemsGroup({
+        name = "class_items",
+        text = string.pretty(tostring(self._element.class):gsub("Element", ""), true),
+    })           
+    self._elements_menu:Button({
+        name = "deselect_element",
+        text = "Deselect element",
+        callback = callback(self, self, "deselect_element"),
+        group = quick_buttons,
+    })     
     self._elements_menu:Button({
         name = "delete_element",
         text = "Delete element",
-        callback = callback(self, self, "delete_element")
+        callback = callback(self, self, "delete_element"),
+        group = quick_buttons,
     })    
     self._elements_menu:Button({
         name = "execute_element",
         text = "Execute element",
-        callback = callback(managers.mission, managers.mission, "execute_element", self._element)
+        callback = callback(managers.mission, managers.mission, "execute_element", self._element),
+        group = quick_buttons,
     })
-	self:_build_value_checkbox("enabled")
+	self:_build_value_checkbox("enabled", "Should the element be enabled", other)
 	self._elements_menu:TextBox({
 		name = "editor_name",
 		text = "Editor Name: ",
 		value = self._element.editor_name,
 		help = "A name for the element(used to find the element more easily)",
-		callback = callback(self, self, "set_element_name")
+		callback = callback(self, self, "set_element_name"),
+        group = other,
 	})
     local position = self._element.values.position
     local rotation = self._element.values.rotation
-	self:_build_value_slider("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element")
-	self:_build_value_slider("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element")
-	self:_build_value_slider("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element")	
-	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element")
-	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element")
-	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element")	
-	self:_build_value_checkbox("execute_on_startup")
-	self:_build_value_number("trigger_times", {min = 0}, "Specifies how many time this element can be executed (0 mean unlimited times)")
-	local base_delay_ctrlr = self:_build_value_number("base_delay", {
-		min = 0,
-	}, "Specifies a base delay that is added to each on executed delay")
-	local base_delay_rand_ctrlr = self:_build_value_number("base_delay_rand", {
-		min = 0,
-	}, "Specifies an additional random time to be added to base delay (delay + rand)", "random")
+    rotation = type(rotation) == "number" and Rotation(0,0,0) or rotation
+	self:_build_value_slider("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
+	self:_build_value_slider("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
+	self:_build_value_slider("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)	
+	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
+	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
+	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
+	self:_build_value_checkbox("execute_on_startup", "should the element execute when game starts", other)
+	self:_build_value_number("trigger_times", {min = 0}, "Specifies how many time this element can be executed (0 mean unlimited times)", other)
+	local base_delay_ctrlr = self:_build_value_number("base_delay", {min = 0,}, "Specifies a base delay that is added to each on executed delay", other)
+	local base_delay_rand_ctrlr = self:_build_value_number("base_delay_rand", {min = 0}, "Specifies an additional random time to be added to base delay (delay + rand)", other, "Random delay")
 	combo_items = {}
 	for _, exec_table in pairs(self._element.values.on_executed) do
 		table.insert(combo_items, exec_table.id)
 	end	   
 	self:_build_element_list("on_executed", nil, callback(self, self, "select_element_on_executed"))
 end
+function MissionScriptEditor:deselect_element()
+    self._editor.managers.ElementEditor:build_default_menu()
+    self._editor._selected_element = nil
+    self._editor.managers.SpawnSearch:refresh_search()    
+end
 function MissionScriptEditor:delete_element()
     QuickMenu:new( "Warning", "This will delete the element, Continue?",
         {[1] = {text = "Yes", callback = function()
+            self:deselect_element()
             managers.mission:delete_element(self._element)
-            self._elements_menu:ClearItems()
-            self._editor._selected_element = nil
-            self._editor.managers.SpawnSearch:refresh_search()
         end
     },[2] = {text = "No", is_cancel_button = true}}, true)
 end
@@ -210,18 +236,19 @@ function MissionScriptEditor:apply_elements(value_name)
 		table.insert(combo_items, type(element) == "number" and element or element.id)
 	end
 end
-function MissionScriptEditor:_build_value_combobox(value_name, options, tooltip, custom_name)
+function MissionScriptEditor:_build_value_combobox(value_name, options, tooltip, group, custom_name)
 	local combo = self._elements_menu:ComboBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
 	  	help = tooltip,
 	  	items = options,
 	  	value = table.get_key(options, self._element.values[value_name]),
+        group = group or self._class_group,    
 	  	callback = callback(self, self, "set_element_data", value_name),
 	})
 	return combo
 end
-function MissionScriptEditor:_build_value_number(value_name, options, tooltip, custom_name)
+function MissionScriptEditor:_build_value_number(value_name, options, tooltip, group, custom_name)
 	local num = self._elements_menu:TextBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
@@ -230,21 +257,23 @@ function MissionScriptEditor:_build_value_number(value_name, options, tooltip, c
 	  	filter = "number",
 		min = options.min,
 		max = options.max,
+        group = group or self._class_group,    
 	  	callback = options.callback or callback(self, self, "set_element_data", value_name),
 	})
 	return num
 end
-function MissionScriptEditor:_build_value_text(value_name, tooltip, custom_name)
+function MissionScriptEditor:_build_value_text(value_name, tooltip, group, custom_name)
 	local num = self._elements_menu:TextBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
 	  	help = tooltip,
 	  	value = self._element.values[value_name],
+        group = group or self._class_group,        
 	  	callback = callback(self, self, "set_element_data", value_name),
 	})
 	return num
 end
-function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, custom_name)
+function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, group, custom_name)
 	local slider = self._elements_menu:Slider({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
@@ -252,16 +281,18 @@ function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, c
 	  	value = options.value or self._element.values[value_name],
 		min = options.min,
 		max = options.max,
+        group = group or self._class_group,
 	  	callback = options.callback or callback(self, self, "set_element_data", value_name),
 	})
 	return slider
 end
-function MissionScriptEditor:_build_value_checkbox(value_name, tooltip, custom_name)
+function MissionScriptEditor:_build_value_checkbox(value_name, tooltip, group, custom_name)
 	local toggle = self._elements_menu:Toggle({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
 		value = self._element.values[value_name],
 	  	help = tooltip or "Click to toggle",
+        group = group or self._class_group,    
 	  	callback = callback(self, self, "set_element_data", value_name),
 	})
 	return toggle
@@ -280,16 +311,19 @@ function MissionScriptEditor:_build_unit_list(value_name, select_callback, id_ke
         name = "remove_add_element",
         text = "Add/Remove an unit to " .. value_name .. " list",
         callback = callback(self, self, "remove_add_units_dialog", {value_name = value_name, select_callback = select_callback, id_key = id_key}),
+        group = self._elements_menu:GetItem("quick_buttons")
     })     	
 	self._elements_menu:Button({
 		name = "add_selected_units",
 		text = "Add selected unit(s) to " .. value_name .. " list",
 		callback = callback(self, self, "add_selected_units", value_name),
+        group = self._elements_menu:GetItem("quick_buttons")    
 	})
 	self._elements_menu:Button({
 		name = "remove_selected_units",
 		text = "Remove selected unit(s) to " .. value_name .. " list",
 		callback = callback(self, self, "remove_selected_units", value_name),
+        group = self._elements_menu:GetItem("quick_buttons")
 	})	
 
 end
@@ -299,6 +333,7 @@ function MissionScriptEditor:_build_element_list(value_name, classes, select_cal
         name = "remove_add_element",
         text = "Add/Remove an element to " .. value_name .. " list" ,
         callback = callback(self, self, "remove_add_element_dialog", {value_name = value_name, classes = classes, select_callback = select_callback}),
+        group = self._elements_menu:GetItem("quick_buttons"),
     })     
 end
 

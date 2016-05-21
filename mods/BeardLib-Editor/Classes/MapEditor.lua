@@ -6,6 +6,41 @@ local TURN_SPEED_BASE = 1
 local PITCH_LIMIT_MIN = -80
 local PITCH_LIMIT_MAX = 80
 function MapEditor:init()
+    self._grid_sizes = {
+        1,
+        25,
+        50,
+        100,
+        400,
+        800,
+        1000,
+        1600,
+        2000,
+        10000
+    }
+    self._grid_size = self._grid_sizes[2]
+    self._snap_rotations = {
+        1,
+        2,
+        5,
+        10,
+        15,
+        30,
+        45,
+        60,
+        90,
+        180
+    }
+    self._widget_bodies = {
+        ["@ID4f01cba97e94239b@"] = "x",
+        ["@IDce15c901d9af3e30@"] = "y",
+        ["@ID1a99fc522e3faad0@"] = "z",
+        ["@IDc126f12c99c8804d@"] = "xy",
+        ["@ID5dac81a18d09497c@"] = "xz",
+        ["@ID0602a12dbeee9c14@"]= "yz"
+    }
+    self._screen_borders = {x = 1280, y = 720}     
+    self._snap_rotation = self._snap_rotations[7]
 	self._camera_object = World:create_camera()
 	self._camera_object:set_far_range(FAR_RANGE_MAX)
 	self._camera_object:set_fov(75)
@@ -17,6 +52,9 @@ function MapEditor:init()
     self._editor_all = World:make_slot_mask(1, 2, 3, 10, 11, 12, 15, 19, 29, 33, 34, 35, 36, 37, 38, 39)
 	self._con =  managers.controller:create_controller("MapEditor", nil, true, 10)
 	self._turn_speed = 5
+    self._move_widget = MoveWidget:new(self)
+    self._rotate_widget = RotationWidget:new(self)
+
 	local keyboard = Input:keyboard()
 	local key = Idstring("f10")
 	if keyboard and keyboard:has_button(key) then
@@ -24,7 +62,7 @@ function MapEditor:init()
 		self._show_con:connect(keyboard, key, Idstring("btn_toggle"))
 		self._show_con:add_trigger(Idstring("btn_toggle"), callback(self, self, "show_key_pressed"))
 	end
-    self._mission_elements = { 
+    self._mission_elements = {
         "ElementAccessCamera",
         "ElementAccessCameraOperator",
         "ElementAccessCameraTrigger",
@@ -81,10 +119,10 @@ function MapEditor:init()
         "ElementJobStageAlternative",
         "ElementJobValue",
         "ElementUnitSequence",
-        "ElementKillZone", 
+        "ElementKillZone",
         "ElementLaserTrigger",
         "ElementLookatTrigger",
-        "ElementLootBag", 
+        "ElementLootBag",
         "ElementLootSecuredTrigger",
         "ElementMandatoryBags",
         "ElementMissionEnd",
@@ -100,7 +138,7 @@ function MapEditor:init()
         "ElementPlayerState",
         "ElementPlaySound",
         "ElementPlayerStyle",
-        "ElementPointOfNoReturn", 
+        "ElementPointOfNoReturn",
         "ElementPrePlanning",
         "ElementLogicChance",
         "MissionScriptElement",
@@ -134,19 +172,40 @@ function MapEditor:init()
         "ElementVehicleTrigger",
         "ElementWayPoint",
         "ElementWhisperState",
-    }    
+    }
 	self.managers = {}
 
     self:create_menu()
 end
-
+function MapEditor:grid_size()
+    return ctrl() and 1 or self._grid_size
+end
+function MapEditor:snap_rotation()
+    return ctrl() and 1 or self._snap_rotation
+end
+function MapEditor:cursor_pos()
+    local x, y = managers.mouse_pointer._mouse:position()
+    return Vector3(x / self._screen_borders.x * 2 - 1, y / self._screen_borders.y * 2 - 1, 0)
+end
+function MapEditor:get_cursor_look_point(dist)
+    return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist))
+end
+function MapEditor:world_to_screen(pos)
+    return self._camera_object:world_to_screen(pos)
+end
+function MapEditor:screen_to_world(pos, dist)
+    return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist))
+end
 function MapEditor:create_menu()
 	self._menu = MenuUI:new({
-		w = 325,
-        tabs = true,
-        background_color = Color(0.8, 0.8, 0.8),
-        mousepressed = callback(self, self, "mouse_pressed"),
-		create_items = callback(self, self, "create_items"),
+      w = 325,
+      tabs = true,
+      highlight_color = Color(0.65, 0.65, 0.65),
+      background_color = Color(0.8, 0.8, 0.8),
+      mousepressed = callback(self, self, "mouse_pressed"),
+      mouserelease = callback(self, self, "mouse_released"),
+      mousemoved = callback(self, self, "mouse_moved"),
+      create_items = callback(self, self, "create_items"),
 	})
     self._hide_panel = self._menu._fullscreen_ws_pnl:panel({
         name = "hide_panel",
@@ -195,7 +254,7 @@ function MapEditor:create_items(menu)
 	self.managers.ElementEditor = ElementEditor:new(self, menu)
 	self.managers.SpawnSearch = SpawnSearch:new(self, menu)
 	self.managers.GameOptions = GameOptions:new(self, menu)
-	self.managers.SaveOptions = SaveOptions:new(self, menu)
+    self.managers.SaveOptions = SaveOptions:new(self, menu)
 
     local prefabs = menu:NewMenu({
         name = "prefabs",
@@ -204,6 +263,25 @@ function MapEditor:create_items(menu)
     })
 end
 
+function MapEditor:reset_widget_values()
+    self._using_widget = false
+    self._move_widget:reset_values()
+    self._rotate_widget:reset_values()
+end
+function MapEditor:use_widgets(value)
+    --self._move_widget:set_enabled(value)
+    --self._rotate_widget:set_enabled(value)
+end
+
+function MapEditor:mouse_moved( x, y )
+    if self._mouse_hold then
+        self.managers.UnitEditor:select_unit(true)
+    end
+end
+function MapEditor:mouse_released( button, x, y )
+    self._mouse_hold = false
+    self:reset_widget_values()
+end
 function MapEditor:mouse_pressed( button, x, y )
     if self._hide_panel:inside(x,y) then
         self._hide_panel:child("text"):set_text(self._hidden and "<" or ">")
@@ -214,9 +292,13 @@ function MapEditor:mouse_pressed( button, x, y )
     end
     if not self._menu._panel:inside(x, y) then
         if button == Idstring("0") then
-            self.managers.UnitEditor:select_unit()
-        elseif button == Idstring("1") then
+            self.managers.UnitEditor:use_grab_info()
+            if not self.managers.UnitEditor:select_widget() then
+                self.managers.UnitEditor:select_unit()
+            end
+        elseif button == Idstring("1") then            
             self.managers.UnitEditor:select_unit(true)
+            self._mouse_hold = true
         end
     end
 end
@@ -224,8 +306,8 @@ end
 function MapEditor:_select_unit(unit, no_reset)
     self._menu:SwitchMenu(self._menu:GetItem("selected_unit"))
     if not no_reset then
-        self.managers.UnitEditor._selected_units = {}     
-    end   
+        self.managers.UnitEditor._selected_units = {}
+    end
 	table.insert(self.managers.UnitEditor._selected_units, unit)
     self.managers.UnitEditor:set_unit()
 end
@@ -238,7 +320,7 @@ function MapEditor:add_element(element, menu, item)
     self.managers.ElementEditor:add_element(element)
 end
 
-function MapEditor:SpawnUnit( unit_path, unit_data, no_reset )
+function MapEditor:SpawnUnit( unit_path, unit_data, no_reset, respawn )
     local unit
     local cam = managers.viewport:get_current_camera()
     local pos = unit_data and unit_data.position or cam:position() + cam:rotation():y()
@@ -250,13 +332,17 @@ function MapEditor:SpawnUnit( unit_path, unit_data, no_reset )
     else
         unit = CoreUnit.safe_spawn_unit(unit_path, pos, rot)
     end
-    if not unit then 
+    if not unit then
         BeardLibEditor:log("Something went wrong while spawning the unit..")
         return
     end
     if not unit.unit_data or not unit:unit_data()  then
         BeardLibEditor:log(unit_path .. " has no unit data...")
 		return
+    elseif respawn then
+        for k, v in pairs(unit_data) do
+            unit:unit_data()[k] = v
+        end
     else
 		local unit_id = managers.worlddefinition:GetNewUnitID()
         unit:unit_data().name_id = unit_data and unit_data.name_id and unit_data.name_id  .."_".. unit_id  or split[#split] .."_".. unit_id
@@ -267,8 +353,8 @@ function MapEditor:SpawnUnit( unit_path, unit_data, no_reset )
 		unit:unit_data().continent = unit_data and unit_data.continent or "world"
 		unit:set_editor_id(unit_id)
     end
-
     managers.worlddefinition:add_unit(unit, unit:unit_data().continent)
+    unit:set_editor_id(unit:unit_data().unit_id)
 	self:_select_unit(unit, no_reset)
 end
 
@@ -284,7 +370,7 @@ function MapEditor:load_continents(continents)
         })
 		table.insert(continent_items, continent_name)
     end
-	self.managers.UnitEditor._menu:GetItem("unit_continent"):SetItems(continent_items)
+	self.managers.UnitEditor._continents = continent_items
 end
 
 function MapEditor:load_missions(missions)
@@ -364,29 +450,68 @@ function MapEditor:enable()
 		end
 	end
 end
+function MapEditor:widget_affect_object()
+    return self.managers.UnitEditor._selected_units[1]
+end
 
+function MapEditor:widget_rot()
+    return self:widget_affect_object():rotation()
+end
+function MapEditor:use_widget_position(pos)
+   self.managers.UnitEditor:set_position(self:widget_affect_object(), pos, self:widget_affect_object():rotation())
+end
+function MapEditor:use_widget_rotation(rot)
+    self.managers.UnitEditor:set_position(self:widget_affect_object(), self:widget_affect_object():position(), rot * self:widget_affect_object():rotation():inverse())
+end
 function MapEditor:paused_update(t, dt)
     self:update(t, dt)
 end
-
 function MapEditor:update(t, dt)
 	for _, manager in pairs(self.managers) do
 		if manager.update then
 			manager:update(t, dt)
 		end
 	end
+    local brush = Draw:brush(Color(0, 0.5, 0.85))
 
-	local brush = Draw:brush(Color(0, 0.5, 0.85))
-
-	if self:enabled() then
-		self:update_camera(t, dt)
-	end
+    if self:enabled() then
+        self:update_camera(t, dt)
+    end
+   if alive(self:widget_affect_object()) then
+        local widget_pos = self:world_to_screen(self:widget_affect_object():position())
+        if widget_pos.z > 100 then
+            widget_pos = widget_pos:with_z(0)
+            local widget_screen_pos = widget_pos
+            widget_pos = self:screen_to_world(widget_pos, 1000)
+            local widget_rot = self:widget_rot()
+            if self._using_widget then
+                if self._move_widget:enabled() then
+                    local result_pos = self._move_widget:calculate(self:widget_affect_object(), widget_rot, widget_pos, widget_screen_pos)
+                    self:use_widget_position(result_pos)
+                end
+                if self._rotate_widget:enabled() then
+                    local result_rot = self._rotate_widget:calculate(self:widget_affect_object(), widget_rot, widget_pos, widget_screen_pos)
+                    self:use_widget_rotation(result_rot)
+                end
+            end
+            if self._move_widget:enabled() then
+                self._move_widget:set_position(widget_pos)
+                self._move_widget:set_rotation(widget_rot)
+                self._move_widget:update(t, dt)
+            end
+            if self._rotate_widget:enabled() then
+                self._rotate_widget:set_position(widget_pos)
+                self._rotate_widget:set_rotation(widget_rot)
+                self._rotate_widget:update(t, dt)
+            end
+        end
+    end
 end
 
 function MapEditor:update_camera(t, dt)
-	if self._menu._highlighted or not Input:keyboard():down(Idstring("left shift")) then
-        managers.mouse_pointer._mouse:show()  
-        self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()         
+	if self._menu._highlighted or not shift() then
+        managers.mouse_pointer._mouse:show()
+        self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()
 		return
 	end
 	local axis_move = self._con:get_input_axis("freeflight_axis_move")
@@ -402,7 +527,7 @@ function MapEditor:update_camera(t, dt)
 	local rot_new
 	if Input:keyboard():down(Idstring("left shift")) then
 		rot_new = Rotation(yaw_new, pitch_new, 0)
-        managers.mouse_pointer._mouse:hide()  
+        managers.mouse_pointer._mouse:hide()
         managers.mouse_pointer:set_mouse_world_position(self._mouse_pos_x, self._mouse_pos_y)
 	end
 	if not CoreApp.arg_supplied("-vpslave") then

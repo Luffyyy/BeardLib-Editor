@@ -9,5 +9,5 @@ function EditorWhisperState:create_element()
 end
 function EditorWhisperState:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "Sets if whisper state should be turned on or off.", "Whisper State")
+	self:_build_value_checkbox("state", "Sets if whisper state should be turned on or off.", nil, "Whisper State")
 end

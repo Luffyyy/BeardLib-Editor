@@ -9,5 +9,5 @@ function EditorBainState:create_element()
 end
 function EditorBainState:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "Sets if bain should speak or not.", "Should bain speak")
+	self:_build_value_checkbox("state", "Sets if bain should speak or not.", nil, "Should bain speak")
 end

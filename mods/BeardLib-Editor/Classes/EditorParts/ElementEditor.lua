@@ -13,6 +13,34 @@ function ElementEditor:init(parent, menu)
         text = "Selected element",
         help = "",
     })
+    self:build_default_menu()
+end
+function ElementEditor:build_default_menu()
+    self._menu:ClearItems()
+    self._menu:Divider({
+        name = "no_element",
+        text = "No element selected",
+    })
+    self._menu:Button({
+        name = "select_exisiting",
+        text = "Select existing element",
+        callback = callback(self, self, "select_exisiting_elmenet")
+    })    
+    self._menu:Button({
+        name = "create_new",
+        text = "Create new element",
+        callback = callback(self, self, "create_new_elmenet")
+    })
+end
+function ElementEditor:select_exisiting_elmenet()
+    local menu = self._parent._menu:GetItem("find")
+    self._parent._menu:SwitchMenu(menu)    
+    self._parent.managers.SpawnSearch:load_all_mission_elements(menu)
+end
+function ElementEditor:create_new_elmenet()
+    local menu = self._parent._menu:GetItem("find")
+    self._parent._menu:SwitchMenu(menu)    
+    self._parent.managers.SpawnSearch:show_elements_list(menu)
 end
 function ElementEditor:enabled()
     table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring("g"), callback(self, self, "KeyGPressed")))
@@ -41,17 +69,15 @@ function ElementEditor:set_element(element, add)
     end
     self._parent._selected_element = selected_element
     local executors = managers.mission:get_executors_of_element(selected_element)
-    if #executors > 0 then
-        self._menu:Divider({
-            text = "Executors",
-            size = 30,
-            color = Color.green,
-        })
-    end
+    local executors_group = self._menu:ItemsGroup({
+        name = "executors",
+        text = "Executors",
+    })
     for _, element in pairs(executors) do
         self._menu:Button({
             name = element.editor_name,
             text = element.editor_name .. " [" .. (element.id or "") .."]",
+            group = executors_group,
             callback = callback(self, self, "set_element", element)
         })
     end    

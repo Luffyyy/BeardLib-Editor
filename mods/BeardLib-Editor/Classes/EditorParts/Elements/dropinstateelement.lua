@@ -9,6 +9,6 @@ function EditorDropinState:create_element()
 end
 function EditorDropinState:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "Sets if drop in should be turned on or off.", "Dropin enabled")
+	self:_build_value_checkbox("state", "Sets if drop in should be turned on or off.", nil, "Dropin enabled")
 	self:add_help_text(help)
 end

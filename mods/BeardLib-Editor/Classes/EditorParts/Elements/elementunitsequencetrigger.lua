@@ -91,12 +91,14 @@ function EditorUnitSequenceTrigger:_build_panel()
 		name = "sequence_list",
 		text = "Sequence List",
 		help = "Select a unit to modify",
+		group = self._class_group,
 		items = sequence_list,
 	})	
 	self._elements_menu:Button({
 		name = "modify_selected_unit",
 		text = "Modify selected",
-		callback = callback(self, self, "modify_selected_unit")
+		callback = callback(self, self, "modify_selected_unit"),
+		group = self._class_group,
 	})	
 	self:_build_unit_list("sequence_list", callback(self, self, "select_unit_sequence_list"), "unit_id")
 end
