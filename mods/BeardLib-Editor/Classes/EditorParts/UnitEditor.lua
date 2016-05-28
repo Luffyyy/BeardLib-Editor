@@ -136,18 +136,19 @@ function UnitEditor:InitItems()
         help = "",
         group = other,
         callback = callback(self, self, "set_unit_data"),
-    })   
+    })
     self._menu:Button({
         name = "select_unit_path",
         text = "Set unit",
         help = "",
         group = other,
         callback = callback(self, self, "select_unit_dialog"),
-    })    
+    })
     self._menu:Slider({
         name = "positionx",
         text = "Position x: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
@@ -156,6 +157,7 @@ function UnitEditor:InitItems()
         name = "positiony",
         text = "Position Y: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
@@ -164,6 +166,7 @@ function UnitEditor:InitItems()
         name = "positionz",
         text = "Position z: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
@@ -172,6 +175,7 @@ function UnitEditor:InitItems()
         name = "rotationyaw",
         text = "Rotation yaw: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
@@ -180,6 +184,7 @@ function UnitEditor:InitItems()
         name = "rotationpitch",
         text = "Rotation pitch: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
@@ -188,10 +193,11 @@ function UnitEditor:InitItems()
         name = "rotationroll",
         text = "Rotation roll: ",
         value = 0,
+        step = 5,
         help = "",
         group = transform,
         callback = callback(self, self, "set_unit_data"),
-    })    
+    })
     self._menu:Button({
         name = "unit_delete_btn",
         text = "Delete unit(s)",

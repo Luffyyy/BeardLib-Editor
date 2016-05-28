@@ -197,7 +197,7 @@ function GameOptions:drop_player()
 end
 
 function GameOptions:position_debug()
-	local p = self._camera_pos
+	local p = self._parent._camera_pos
 	log("Camera Pos: " .. tostring(p))
 end
 
