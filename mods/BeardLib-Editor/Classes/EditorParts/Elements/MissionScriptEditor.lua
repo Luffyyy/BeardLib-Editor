@@ -87,12 +87,12 @@ function MissionScriptEditor:_create_panel()
     local position = self._element.values.position
     local rotation = self._element.values.rotation
     rotation = type(rotation) == "number" and Rotation(0,0,0) or rotation
-	self:_build_value_slider("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
-	self:_build_value_slider("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
-	self:_build_value_slider("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)	
-	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
-	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
-	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
+	self:_build_value_slider("position_x", {value = position and position.x or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
+	self:_build_value_slider("position_y", {value = position and position.y or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
+	self:_build_value_slider("position_z", {value = position and position.z or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)
+	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
+	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
+	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, step = 5, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
 	self:_build_value_checkbox("execute_on_startup", "should the element execute when game starts", other)
 	self:_build_value_number("trigger_times", {min = 0}, "Specifies how many time this element can be executed (0 mean unlimited times)", other)
 	local base_delay_ctrlr = self:_build_value_number("base_delay", {min = 0,}, "Specifies a base delay that is added to each on executed delay", other)
