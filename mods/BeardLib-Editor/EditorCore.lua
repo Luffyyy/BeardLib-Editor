@@ -21,7 +21,8 @@ if not _G.BeardLibEditor then
         "EnvironmentEditorManager.lua",
         "EnvironmentEditorHandler.lua",
         "ScriptDataConverterManager.lua",
-        "MapEditor.lua"
+        "MapEditor.lua",
+        "OptionCallbacks.lua"
     }
 
     self.hook_files = {
@@ -35,6 +36,7 @@ end
 
 function BeardLibEditor:_init()
     self:LoadClasses()
+    self:init_modules()
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
     end

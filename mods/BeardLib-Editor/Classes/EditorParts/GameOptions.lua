@@ -46,6 +46,29 @@ function GameOptions:CreateItems()
         step = 0.1,
         value = 2,
     })
+    local main_slider_speed_option = BeardLibEditor.Options:GetOption("Map/MainSliderSpeed")
+    self._menu:Slider({
+        name = "Map/MainSliderSpeed",
+        text = "Main Slider Speed",
+        help = "",
+        max = main_slider_speed_option.max,
+        min = main_slider_speed_option.min,
+        step = main_slider_speed_option.step,
+        value = main_slider_speed_option.value,
+        callback = callback(self, self, "update_option_value")
+    })
+    local second_slider_speed_option = BeardLibEditor.Options:GetOption("Map/SecondarySliderSpeed")
+    self._menu:Slider({
+        name = "Map/SecondarySliderSpeed",
+        text = "Secondary Slider Speed",
+        help = "",
+        max = second_slider_speed_option.max,
+        min = second_slider_speed_option.min,
+        step = second_slider_speed_option.step,
+        value = second_slider_speed_option.value,
+        callback = callback(self, self, "update_option_value")
+    })
+
     self._menu:Toggle({
         name = "units_visibility",
         text = "Editor units visibility",
@@ -199,6 +222,10 @@ end
 function GameOptions:position_debug()
 	local p = self._parent._camera_pos
 	log("Camera Pos: " .. tostring(p))
+end
+
+function GameOptions:update_option_value(menu, item)
+    BeardLibEditor.Options:SetValue(item.name, item.value)
 end
 
 function GameOptions:delete_all_units()

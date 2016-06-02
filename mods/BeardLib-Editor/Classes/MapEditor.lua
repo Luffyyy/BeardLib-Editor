@@ -62,6 +62,13 @@ function MapEditor:init()
 		self._show_con:connect(keyboard, key, Idstring("btn_toggle"))
 		self._show_con:add_trigger(Idstring("btn_toggle"), callback(self, self, "show_key_pressed"))
 	end
+
+    key = Idstring("left alt")
+    if keyboard and keyboard:has_button(key) then
+		self._show_con:connect(keyboard, key, Idstring("btn_toggle_speed"))
+        self._show_con:add_trigger(Idstring("btn_toggle_speed"), callback(self, self, "toggle_slider_speed_secondary"))
+		self._show_con:add_release_trigger(Idstring("btn_toggle_speed"), callback(self, self, "toggle_slider_speed_main"))
+	end
     self._mission_elements = {
         "ElementAccessCamera",
         "ElementAccessCameraOperator",
@@ -463,6 +470,38 @@ end
 function MapEditor:use_widget_rotation(rot)
     self.managers.UnitEditor:set_position(self:widget_affect_object(), self:widget_affect_object():position(), rot * self:widget_affect_object():rotation():inverse())
 end
+
+function MapEditor:set_slider_speed(speed)
+    local to_modify = {
+        self.managers.UnitEditor._menu:GetItem("positionx"),
+        self.managers.UnitEditor._menu:GetItem("positiony"),
+        self.managers.UnitEditor._menu:GetItem("positionz"),
+        self.managers.UnitEditor._menu:GetItem("rotationyaw"),
+        self.managers.UnitEditor._menu:GetItem("rotationpitch"),
+        self.managers.UnitEditor._menu:GetItem("rotationroll"),
+        self._menu:GetItem("selected_element"):GetItem("position_x"),
+        self._menu:GetItem("selected_element"):GetItem("position_y"),
+        self._menu:GetItem("selected_element"):GetItem("position_z"),
+        self._menu:GetItem("selected_element"):GetItem("rotation_y"),
+        self._menu:GetItem("selected_element"):GetItem("rotation_p"),
+        self._menu:GetItem("selected_element"):GetItem("rotation_r"),
+    }
+
+    for _, item in pairs(to_modify) do
+        item.step = speed
+    end
+end
+
+function MapEditor:toggle_slider_speed_secondary()
+    log("toggle secondary")
+    self:set_slider_speed(BeardLibEditor.Options:GetValue("Map/SecondarySliderSpeed"))
+end
+
+function MapEditor:toggle_slider_speed_main()
+    log("toggle main")
+    self:set_slider_speed(BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"))
+end
+
 function MapEditor:paused_update(t, dt)
     self:update(t, dt)
 end
