@@ -53,6 +53,8 @@ function BeardLibEditor:LoadClasses()
 end
 
 function BeardLibEditor:LoadHashlist()
+	if not DB:has("idstring_lookup", "idstring_lookup") then return end
+
     local file = DB:open("idstring_lookup", "idstring_lookup")
 
     self:log("Loading Hashlist")
