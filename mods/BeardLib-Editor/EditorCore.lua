@@ -52,13 +52,9 @@ function BeardLibEditor:LoadClasses()
     end
 end
 
-function BeardLibEditor:LoadHashlist()
-	if not DB:has("idstring_lookup", "idstring_lookup") then return end
-
-    local file = DB:open("idstring_lookup", "idstring_lookup")
-
+function BeardLibEditor:LoadHashlist()        
     self:log("Loading Hashlist")
-
+    local has_hashlist = DB:has("idstring_lookup", "idstring_lookup") 
     local function AddPathEntry(line, typ)
         local path_split = string.split(line, "/")
         local curr_tbl = self.DBEntries
@@ -77,30 +73,46 @@ function BeardLibEditor:LoadHashlist()
     end
     local types = clone(BeardLib.script_data_types)
     table.insert(types, "unit")
-    if file ~= nil then
-        --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-        for line in string.gmatch(file:read(), "[%w_/]+%z") do
-            --Remove the Zero byte at the end of the path
-            line = string.sub(line, 1, #line - 1)
+	if has_hashlist then 
+        local file = DB:open("idstring_lookup", "idstring_lookup")
+        if file ~= nil then
+            --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
+            for line in string.gmatch(file:read(), "[%w_/]+%z") do
+                --Remove the Zero byte at the end of the path
+                line = string.sub(line, 1, #line - 1)
 
-            for _, typ in pairs(types) do
-                self.DBPaths[typ] = self.DBPaths[typ] or {}
-                if DB:has(typ, line) then
-                    table.insert(self.DBPaths[typ], line)
-                    AddPathEntry(line, typ)
-                    --I wish I could break so we don't have to iterate more than needed, but some files exist with the same name but a different type
-                    --break
+                for _, typ in pairs(types) do
+                    self.DBPaths[typ] = self.DBPaths[typ] or {}
+                    if DB:has(typ, line) then
+                        table.insert(self.DBPaths[typ], line)
+                        AddPathEntry(line, typ)
+                        --I wish I could break so we don't have to iterate more than needed, but some files exist with the same name but a different type
+                        --break
+                    end
                 end
             end
+            file:close()
         end
-        file:close()
-    end
-
+    else
+        local lines = io.lines(self.ModPath .. "list.txt", "r")
+        if lines then
+            for line in lines do
+                for _, typ in pairs(types) do
+                    self.DBPaths[typ] = self.DBPaths[typ] or {}
+                    if DB:has(typ, line) then
+                        table.insert(self.DBPaths[typ], line)
+                        AddPathEntry(line, typ)                    
+                    end
+                end
+            end
+        else
+            self:log("Failed Loading Hashlist.")
+        end
+    end       
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-
-    self:log("Hashlist Loaded")
+    self:log("Hashlist Loaded[Method " .. (has_hashlist and "A" or "B") .. "]" )
 end
 
 if RequiredScript then
