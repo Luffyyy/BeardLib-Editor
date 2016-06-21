@@ -1,10 +1,11 @@
 function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
-    BeardLibEditor:log("Progress: " .. tostring(title))
+    BeardLibEditor:log("Navigation data Progress: " .. tostring(title))
 end
 function NavFieldBuilder:_destroy_progress_bar()
+
 end
 function NavFieldBuilder:_update_progress_bar(percent_complete, text)
-	BeardLibEditor:log("Progress: " .. tostring(text))
+	BeardLibEditor:log("Navigation data Progress: " .. tostring(text))
 end
 function NavFieldBuilder:update(t, dt)
 	if self._building then

@@ -11,6 +11,7 @@ function EditorKillZone:_build_panel()
 	self:_build_value_combobox("type", {
 		"sniper",
 		"gas",
-		"fire"
+		"fire",
+        "kill"
 	})
 end

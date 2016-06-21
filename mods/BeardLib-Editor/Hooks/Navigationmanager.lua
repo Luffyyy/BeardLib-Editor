@@ -105,9 +105,14 @@ function NavigationManager:build_complete_clbk(draw_options)
 
 	self:set_debug_draw_state(draw_options)
 	if self:is_data_ready() then
-		BeardLib:log("Progress: Done!")
 		self._load_data = self:get_save_data()
-	end
+        BeardLibEditor:log("Navigation data Progress: Done!")
+        QuickMenu:new( "Info", "Done building navigation data do you wish to save it?",
+        {[1] = {text = "Yes", callback = function()
+                BeardLibEditor.managers.MapEditor.managers.GameOptions:save_nav_data()
+            end
+        },[2] = {text = "No", is_cancel_button = true}}, true)        
+    end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end

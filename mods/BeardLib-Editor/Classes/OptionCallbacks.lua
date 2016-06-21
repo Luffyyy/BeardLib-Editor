@@ -5,3 +5,4 @@ function BeardLibEditor.callbacks:UpdateSliderSpeed(key, value)
         BeardLibEditor.managers.MapEditor:toggle_slider_speed_main()
     end
 end
+ 

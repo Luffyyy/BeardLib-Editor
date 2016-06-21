@@ -35,11 +35,13 @@ MissionManager = MissionManager or CoreClass.class(CoreEvent.CallbackHandler)
 			self:_load_mission_file(name, file_dir, data)
 		end
 	end
-	_G.BeardLibEditor.managers.MapEditor:load_missions(self._missions)
-
+	if Global.editor_mode then
+		_G.BeardLibEditor.managers.MapEditor:load_missions(self._missions)
+	end
 	self:_activate_mission(activate_mission)
 	return true
 end
+
 function MissionManager:_load_mission_file(name, file_dir, data)
 	local file_path = file_dir .. data.file
 	local scripts = self:_serialize_to_script("mission", file_path)
@@ -51,6 +53,10 @@ function MissionManager:_load_mission_file(name, file_dir, data)
 end
 
 function MissionManager:add_element(element)
+	local module_name = "Core" .. element.class
+	if rawget(_G, "CoreMissionManager")[module_name] then
+		element.module = module_name 	
+	end
 	table.insert(self._missions["world"]["default"].elements, element)
 	self._scripts["default"]:create_element(element)
 	return element
@@ -127,37 +133,33 @@ function MissionManager:delete_executors_of_element(element)
 		end
 	end
 end
-function MissionManager:get_modifiers_of_unit(unit)
+ 
+function MissionManager:get_links( id )	
+	if id <= 0 then
+		return {}
+	end
 	local modifiers = {}
-	if alive(unit) then
-		for _, script in pairs(self._missions) do
-			for _, tbl in pairs(script) do
-				if tbl.elements then
-					for i, element in pairs(tbl.elements) do
-						if element.values.unit_ids then
-							for _, unit_id in pairs(element.values.unit_ids) do
-								if unit_id == unit:unit_data().unit_id then
-									table.insert(modifiers, element)
-								end
-							end
-						end
-						if element.values.trigger_list then
-							for _, trigger in pairs(element.values.trigger_list) do
-								if trigger.notify_unit_id == unit:unit_data().unit_id then
-									table.insert(modifiers, element)
-								end
-							end
-						end
-						if element.values.sequence_list then
-							for _, sequence in pairs(element.values.sequence_list) do
-								if sequence.unit_id == unit:unit_data().unit_id then
-									table.insert(modifiers, element)
-								end
-							end
+	local function search_table( element, tbl )
+		for _, v in pairs(tbl) do
+			if type(v) == "table" then
+				search_table(element, v)
+			elseif v == id then 
+				table.insert(modifiers, element)
+			end
+		end
+	end
+	for _, script in pairs(self._missions) do
+		for _, tbl in pairs(script) do
+			if tbl.elements then
+				for i, element in pairs(tbl.elements) do
+					for k, element_data in pairs(element) do
+						if type(element_data) == "table" and k ~= "id" then
+							search_table(element, element_data)
 						end
 					end
+
 				end
-			end	
+			end
 		end
 	end
 	return modifiers
@@ -177,48 +179,35 @@ function MissionManager:get_mission_element( id )
 	end
 	return nil
 end
-function MissionManager:print_classes()
-	for _, Module in pairs(rawget(_G, "CoreMissionManager")) do
-		if type(Module) == "table" then
-			for k, class in pairs(Module) do
-				if Module.elements and Module:elements() then
-					for k,v in pairs(Module:elements()) do
-						log(tostring(k) .. " = " .. tostring(v))
-					end
-				end
-			end
-		end
-	end
-	
-end
+
 function MissionManager:_add_script(data)
 	self._scripts[data.name] = MissionScript:new(data)
 	self._scripts[data.name]:add_updator("_debug_draw", callback(self._scripts[data.name], self._scripts[data.name], "_debug_draw"))
 end
-function MissionScript:_create_elements(elements)	
+function MissionScript:_create_elements(elements)
 	local new_elements = {}
-	if elements then
-		for k, element in ipairs(elements) do	
-			new_elements[element.id] = self:create_element(element)
+	for _, element in ipairs(elements) do	
+		if element.class == "ElementDisableUnit" then
+		--	element.values.enabled = false
 		end
+		new_elements[element.id] = self:create_element(element)
 	end
 	return new_elements
 end
 
-function MissionScript:create_element( element )		
-	if element.id then
-		local class = element.class
-		local new_element = self:_element_class(element.module, class):new(self, element)		
-		if class == "MissionScriptElement" then 
-			--element.values.enabled = false --Disables the mission for skae of editing the map we should fix black screen issue when player is not spawned
-		end
-		self._elements[element.id] = new_element
-		self._elements[element.id].class = class
-		self._element_groups[class] = self._element_groups[class] or {}
-		table.insert(self._element_groups[class], new_element)
-		return new_element
-	end
+function MissionScript:create_element(element)
+	local class = element.class	
+
+	local new_element = self:_element_class(element.module, class):new(self, element)
+
+	new_element.class = element.class
+	new_element.module = element.module
+	self._elements[element.id] = new_element
+	self._element_groups[class] = self._element_groups[class] or {}
+	table.insert(self._element_groups[class], new_element)
+	return new_element
 end
+
 function MissionScript:execute_element(element)
 	self._elements[element.id]:on_executed(managers.player:player_unit())
 end
@@ -227,10 +216,10 @@ function MissionScript:delete_element(element)
 	self._elements[element.id] = nil
 	self._element_groups[element.class] = nil
 end
-function MissionScript:draw_element(element, color, draw_all)
+function MissionScript:draw_element(element, color)
 	local brush = Draw:brush(Color.red)
 	local name_brush = Draw:brush(Color.red)
-	name_brush:set_font(Idstring("fonts/font_medium"), 16)
+	name_brush:set_font(Idstring("core/fonts/nice_editor_font"), 24)
 	name_brush:set_render_template(Idstring("OverlayVertexColorTextured"))
 	brush:set_color(color or element:enabled() and Color.green or Color.red)
 	name_brush:set_color(color or element:enabled() and Color.green or Color.red)
@@ -253,7 +242,7 @@ end
 function MissionScript:_debug_draw(t, dt)
 	local Editor = _G.BeardLibEditor.managers.MapEditor
 	local wanted_classes = Editor.managers.GameOptions._wanted_elements
-	if Editor._menu:GetItem("show_elements").value and managers.viewport:get_current_camera() then
+	if Editor.managers.GameOptions._menu:GetItem("Map/ShowElements").value and managers.viewport:get_current_camera() then
 		for id, element in pairs(self._elements) do
 			if element:value("position") then
 				local distance = mvector3.distance_sq(element:value("position"), managers.viewport:get_current_camera():position())
@@ -279,4 +268,8 @@ function MissionScript:_debug_draw(t, dt)
 			element._editor_name = Editor._selected_element.editor_name
 		end
 	end
+end
+
+function MissionScript:debug_output(debug, color)
+	_G.BeardLibEditor.managers.MapEditor.managers.Console:LogMission(debug)
 end

@@ -2,10 +2,15 @@
     <modules>
         <OptionModule build_menu="false" auto_load="true">
             <options>
-                <option_group name="Map">
-                    <option type="number" default_value="5" name="MainSliderSpeed" min="0.5" max="50" step="0.5" value_changed="$global$.callbacks:UpdateSliderSpeed"/>
-                    <option type="number" default_value="1" name="SecondarySliderSpeed" min="0.5" max="50" step="0.5" value_changed="$global$.callbacks:UpdateSliderSpeed"/>
+                <option_group name="Map">               
+                    <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>                    
+                    <option type="boolean" default_value="false" name="EditorUnits"/>
+                    <option type="boolean" default_value="false" name="HighlightUnits"/>
+                    <option type="boolean" default_value="false" name="ShowElements"/>
                 </option_group>
+                <option_group name="Prefabs">
+                    <option type="boolean" default_value="false" name="nothing"/> <!-- blt json doesn't like empty tables.. -->
+                </option_group>        
             </options>
         </OptionModule>
     </modules>

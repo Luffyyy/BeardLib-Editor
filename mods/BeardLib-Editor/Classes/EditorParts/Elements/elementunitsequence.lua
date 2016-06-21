@@ -5,6 +5,7 @@ end
 function EditorUnitSequence:create_element()
     self.super.create_element(self)
 	self._element.class = "ElementUnitSequence"
+	self._element.module = "CoreElementUnitSequence"
 	self._element.values.trigger_list = {}
 	self._element.values.only_for_local_player = nil
 end
@@ -20,59 +21,48 @@ function EditorUnitSequence:select_unit_trigger_list(id, params)
 end
 function EditorUnitSequence:apply_units(value_name)
 	self.super.apply_units(self, value_name)
-	self:reload_trigger_list_combo()
+	self:update_selected_sequence()
 end
-function EditorUnitSequence:reload_trigger_list_combo()
+function EditorUnitSequence:set_selected_trigger_sequence(menu, item)
+	local sequence_combo = self._elements_menu:GetItem("trigger_list")	
+	local trigger_list_unit = self._element.values.trigger_list[sequence_combo.value]
+	trigger_list_unit.notify_unit_sequence = item:SelectedItem()
+end
+function EditorUnitSequence:update_selected_sequence()
+	local combo_trigger_list = {}
 	local trigger_list = {}
-	for _, unit in pairs(self._element.values.trigger_list) do
-		table.insert(trigger_list, unit.notify_unit_id)
+	local selected_sequence = self._elements_menu:GetItem("selected_trigger")
+	local sequence_combo = self._elements_menu:GetItem("trigger_list")
+	for _, trigger_unit in pairs(self._element.values.trigger_list) do
+		local unit = managers.worlddefinition:get_unit_on_load(trigger_unit.notify_unit_id)  
+		if alive(unit) then		
+			table.insert(combo_trigger_list, unit:unit_data().name_id .. "[" .. trigger_unit.notify_unit_id .. "]")
+			table.insert(trigger_list, trigger_unit.notify_unit_id)
+		end
+	end		
+	if #sequence_combo.items ~= #combo_trigger_list then
+		sequence_combo:SetValue(1)
 	end
-	self._elements_menu:GetItem("trigger_list"):SetItems(trigger_list)
-end
-function EditorUnitSequence:modify_selected_unit()
-	local trigger_list = self._elements_menu:GetItem("trigger_list")
-	local unit_id = tonumber(trigger_list:SelectedItem())
-	local unit = managers.worlddefinition:get_unit(unit_id)
-	local trigger_list_unit = self._element.values.trigger_list[trigger_list.value]
-	local sequence_list = managers.sequence:get_editable_state_sequence_list(unit and unit:name() or "")
-	if trigger_list_unit and unit then
-		local items = {              
-			{
-				name = "name",
-				text = "Name:",
-				value = trigger_list_unit.name,
-				type = "TextBox",
-			},        
-			{
-				name = "notify_unit_sequence",
-				text = "Notify Unit Sequence:",
-				items = sequence_list,
-				value = table.get_key(sequence_list, trigger_list_unit.notify_unit_sequence),
-				type = "ComboBox",
-			},           
-			{
-				name = "time",
-				text = "Time:",
-				value = trigger_list_unit.time,
-				filter = "number",
-				min = 0,
-				type = "TextBox",
-			},      
-		}	
-		BeardLibEditor.managers.Dialog:show({
-			title = "Modifying " .. (unit and unit:unit_data().name_id or "") .. "[" .. unit_id .. "]", 
-			callback = callback(self, self, "apply_modify_trigger_unit", trigger_list.value),
-			items = items,
-			yes = "Apply",
-			no = "Cancel",
-		})
-		self:reload_trigger_list_combo()   
+	sequence_combo:SetItems(combo_trigger_list)
+	if #trigger_list > 0 and sequence_combo:SelectedItem() then
+		local unit = managers.worlddefinition:get_unit_on_load(trigger_list[sequence_combo.value])   
+		if alive(unit) then
+			local sequences = managers.sequence:get_editable_state_sequence_list(unit:name() or "")
+			table.insert(sequences, "interact")			
+			selected_sequence:SetItems(sequences)
+			local trigger_list_unit = self._element.values.trigger_list[sequence_combo.value]
+			selected_sequence:SetValue(table.get_key(sequences, trigger_list_unit.notify_unit_sequence))
+		end
+	else
+		selected_sequence:SetItems()
 	end
+
 end
 function EditorUnitSequence:apply_modify_trigger_unit(i, items)
 	self._element.values.trigger_list[i].name = items[1].value
-	self._element.values.trigger_list[i].notify_unit_sequence = tonumber(items[2]:SelectedItem())
+	self._element.values.trigger_list[i].notify_unit_sequence = items[2]:SelectedItem()
 	self._element.values.trigger_list[i].time = tonumber(items[3].value)
+	self:update_selected_sequence()
 end
 function EditorUnitSequence:add_selected_units(value_name)
 	for _, unit in pairs(self._editor.managers.UnitEditor._selected_units) do
@@ -86,7 +76,7 @@ function EditorUnitSequence:add_selected_units(value_name)
 			}) 			
 		end
 	end
-	self:reload_trigger_list_combo()
+	self:update_selected_sequence()
 end
 function EditorUnitSequence:remove_selected_units(value_name)
 	for _, unit in pairs(self._editor.managers.UnitEditor._selected_units) do
@@ -98,7 +88,7 @@ function EditorUnitSequence:remove_selected_units(value_name)
 			end
 		end
 	end
-	self:reload_trigger_list_combo()
+	self:update_selected_sequence()
 end
 function EditorUnitSequence:_build_panel()
 	self:_create_panel()
@@ -107,20 +97,24 @@ function EditorUnitSequence:_build_panel()
 	for _, unit in pairs(self._element.values.trigger_list) do
 		table.insert(trigger_list, unit.notify_unit_id)
 	end
-	self._elements_menu:ComboBox({
+	self._elements_menu:ComboBox({	
 		name = "trigger_list",
 		text = "Trigger List",
 		help = "Select a unit to modify",
 		group = self._class_group,
+		callback = callback(self, self, "update_selected_sequence"),
 		items = trigger_list,
 	})	
-	self._elements_menu:Button({
-		name = "modify_selected_unit",
-		text = "Modify selected",
+	self._elements_menu:ComboBox({
+		name = "selected_trigger",
+		text = "Trigger Sequence",
+		help = "Select a sequence for the unit",
 		group = self._class_group,
-		callback = callback(self, self, "modify_selected_unit")
-	})	
-	self:_build_unit_list("trigger_list", callback(self, self, "select_unit_trigger_list"), "notify_unit_id")
-
+		callback = callback(self, self, "set_selected_trigger_sequence"),
+		items = {},
+	})		  	
+	self:_build_value_number("time", {floats = 0, min = 0}, "") 
+	self:_build_unit_list("trigger_list", callback(self, self, "select_unit_trigger_list"), "notify_unit_id", callback(self, self, "update_selected_sequence"))
+	self:update_selected_sequence()
 	self:add_help_text("Use the \"Edit Triggable\" interface, which you enable in the down left toolbar, to select and edit which units and sequences you want to run.")
 end

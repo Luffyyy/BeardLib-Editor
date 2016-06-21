@@ -23,9 +23,24 @@ function Widget:enabled()
 end
 function Widget:set_position(pos)
 	self._widget:set_position(pos)
+	self:refresh()
 end
 function Widget:set_rotation(rot)
 	self._widget:set_rotation(rot)
+	self:refresh()
+end
+function Widget:refresh()
+	local objects = self._widget:get_objects_by_type(Idstring("model"))
+	for _, object in pairs(objects) do
+		object:set_visibility(not object:visibility())
+		object:set_visibility(not object:visibility())
+	end
+	local num = self._widget:num_bodies()
+	for i = 0, num - 1 do
+		local unit_body = self._widget:body(i)
+		unit_body:set_enabled(not unit_body:enabled())
+		unit_body:set_enabled(not unit_body:enabled())
+	end
 end
 function Widget:update()
 end
@@ -40,6 +55,8 @@ function MoveWidget:init(parent)
 	self._move_widget_axis = {}
 	self._move_widget_offset = Vector3()
 	self._widget:set_visible(false)
+	self._unit_start_positions = {}
+	self._move_widget_offsets = {}
 end
 function MoveWidget:reset_values()
  	self._move_widget_axis = {}
@@ -60,7 +77,7 @@ function MoveWidget:update(t, dt)
 	Application:draw_cylinder(u_pos + u_rot:x() * ps, u_pos + (u_rot:z() + u_rot:x()) * ps, pr, 1, 0, 0)
 	Application:draw_cylinder(u_pos + u_rot:y() * ps, u_pos + (u_rot:y() + u_rot:x()) * ps, pr, 0, 1, 0)
 	Application:draw_cylinder(u_pos + u_rot:x() * ps, u_pos + (u_rot:y() + u_rot:x()) * ps, pr, 1, 0, 0)
-	local draw_axis = {} -- clone(self._draw_axis)
+	local draw_axis = clone(self._draw_axis)
 	if #draw_axis == 0 then
 		local from = self._parent:get_cursor_look_point(0)
 		local to = self._parent:get_cursor_look_point(100000)
@@ -95,8 +112,8 @@ function MoveWidget:update(t, dt)
 	end
 end
 function MoveWidget:calculate(unit, widget_rot)
-	local result_pos = self:calc_move_widget_pos(unit, widget_rot)
-	result_pos = result_pos + self._move_widget_offset
+	local result_pos = self:calc_move_widget_pos(unit, unit:rotation())
+	result_pos = result_pos + self._move_widget_offsets[unit:editor_id()]
 	return result_pos
 end
 function MoveWidget:calc_move_widget_pos(unit, widget_rot)
@@ -107,23 +124,23 @@ function MoveWidget:calc_move_widget_pos(unit, widget_rot)
 		local axis1 = widget_rot[self._move_widget_axis[1]](widget_rot)
 		local axis2 = widget_rot[self._move_widget_axis[2]](widget_rot)
 		local normal = axis1:cross(axis2)
-		local d = self._unit_start_pos:dot(normal)
-		--[[if p2 - p1:dot(normal) ~= 0 then --No idea how to fix :/
-			local t = (d - p1:dot(normal)) / p2 - p1:dot(normal)
-			result_pos = (p2 - p1) * t
-		end]]
+		local d = self._unit_start_positions[unit:editor_id()]:dot(normal)
+		--if p2 - p1:dot(normal) ~= 0 then --No idea how to fix :/
+		--	local t = (d - p1:dot(normal)) / p2 - p1:dot(normal)
+			--result_pos = (p2 - p1) * t
+		--end
 	else
 		local axis1 = self._move_widget_axis[1]
 		local from = self._parent:get_cursor_look_point(0)
 		local to = self._parent:get_cursor_look_point(100)
-		local w_s_pos = self._unit_start_pos + widget_rot[axis1](widget_rot) * -100
-		local w_e_pos = self._unit_start_pos + widget_rot[axis1](widget_rot) * 100
+		local w_s_pos = --[[self._unit_start_positions[unit:editor_id()] + ]] widget_rot[axis1](widget_rot) * -100
+		local w_e_pos = --[[self._unit_start_positions[unit:editor_id()] +  ]] widget_rot[axis1](widget_rot) * 100
 		local mid_line_pos = math.line_intersection(w_s_pos, w_e_pos, from, to)
 		local dot1_v = mid_line_pos - w_s_pos
 		local dot2_v = w_e_pos - w_s_pos
 		local dot = dot2_v:normalized():dot(dot1_v)
 		local line_pos = w_s_pos + dot2_v:normalized() * dot
-		result_pos = line_pos - self._unit_start_pos
+		result_pos = line_pos -- - self._unit_start_positions[unit:editor_id()]
 	end
 	result_pos = result_pos:rotate_with(widget_rot:inverse())
 	local grid_size = self._parent:grid_size()
@@ -131,7 +148,7 @@ function MoveWidget:calc_move_widget_pos(unit, widget_rot)
 	result_pos = result_pos:with_y(math.round(result_pos.y / grid_size) * grid_size)
 	result_pos = result_pos:with_z(math.round(result_pos.z / grid_size) * grid_size)
 	result_pos = result_pos:rotate_with(widget_rot)
-	return result_pos + self._unit_start_pos
+	return result_pos -- + self._unit_start_positions[unit:editor_id()]
 end
 function MoveWidget:add_move_widget_axis(axis)
 	if axis == "x" then
@@ -148,30 +165,31 @@ function MoveWidget:add_move_widget_axis(axis)
 		table.insert(self._move_widget_axis, "y")
 		table.insert(self._draw_axis, "x")
 		table.insert(self._draw_axis, "y")
-		table.insert(self._draw_axis, "xy")
+		--table.insert(self._draw_axis, "xy")
 	elseif axis == "xz" then
 		table.insert(self._move_widget_axis, "x")
 		table.insert(self._move_widget_axis, "z")
 		table.insert(self._draw_axis, "x")
 		table.insert(self._draw_axis, "z")
-		table.insert(self._draw_axis, "xz")
+		--table.insert(self._draw_axis, "xz")
 	elseif axis == "yz" then
 		table.insert(self._move_widget_axis, "y")
 		table.insert(self._move_widget_axis, "z")
 		table.insert(self._draw_axis, "y")
 		table.insert(self._draw_axis, "z")
-		table.insert(self._draw_axis, "yz")
+		--table.insert(self._draw_axis, "yz")
 	end
 	return table
 end
-function MoveWidget:set_move_widget_offset(unit, widget_rot)
-	self._unit_start_pos = unit:position()
-	self._move_widget_offset = unit:position() - self:calc_move_widget_pos(unit, widget_rot)
+function MoveWidget:set_move_widget_offset(unit)
+	self._unit_start_positions[unit:editor_id()] = unit:position()
+	self._move_widget_offsets[unit:editor_id()] = unit:position() - self:calc_move_widget_pos(unit, unit:rotation())
 end
 RotationWidget = RotationWidget or class(Widget)
 function RotationWidget:init(parent)
 	self.super.init(self, parent, "rotation_widget")
 	self._rotate_widget_axis = nil
+	self._rotate_widget_unit_rotations = {}
 end
 function RotationWidget:reset_values()
 	self._rotate_widget_axis = nil
@@ -182,8 +200,8 @@ end
 function RotationWidget:set_rotate_widget_start_screen_position(pos)
 	self._rotate_widget_start_screen_position = pos
 end
-function RotationWidget:set_rotate_widget_unit_rot(rot)
-	self._rotate_widget_unit_rot = rot
+function RotationWidget:set_rotate_widget_unit_rot(unit)
+	self._rotate_widget_unit_rotations[unit:editor_id()] = unit:rotation() 
 end
 function RotationWidget:set_world_dir(ray_pos)
 	self._world_dir = ray_pos - self._widget:position()
@@ -207,7 +225,7 @@ function RotationWidget:update(t, dt)
 		self._yellow_pen:torus(u_pos, 75, 2.5, u_rot[axis](u_rot))
 	end
 end
-function RotationWidget:calculate(unit, widget_rot, widget_pos, widget_screen_pos)
+function RotationWidget:calculate(unit, widget_rot)
 	self._parent:world_to_screen(unit:position())
 	local world_click_pos = self._widget:position() + self._world_dir
 	local distance_vector = self._rotate_widget_start_screen_position - self._parent:cursor_pos()
@@ -230,12 +248,10 @@ function RotationWidget:calculate(unit, widget_rot, widget_pos, widget_screen_po
 	local snap_rot = self._parent:snap_rotation()
 	local rot = math.round(distance / snap_rot) * snap_rot
 	local result_rot = Rotation(Rotation()[self._rotate_widget_axis](Rotation()), rot)
---	self._parent:set_value_info(string.format("(" .. self._rotate_widget_axis .. ") (%.2f %.2f %.2f)", result_rot:yaw(), result_rot:pitch(), result_rot:roll()))
-	--[[if self._layer:local_rot() then
-		result_rot = Rotation(self._rotate_widget_unit_rot[self._rotate_widget_axis](self._rotate_widget_unit_rot), rot)
-	end]]
-	result_rot = result_rot * self._rotate_widget_unit_rot
+	--if self._layer:local_rot() then
+		result_rot = Rotation(self._rotate_widget_unit_rotations[unit:editor_id()][self._rotate_widget_axis](self._rotate_widget_unit_rotations[unit:editor_id()]), rot)
+	--end
+	result_rot = result_rot * self._rotate_widget_unit_rotations[unit:editor_id()]
 	Application:draw_rotation(unit:position(), result_rot)
-	--self._parent:set_value_info_pos(widget_screen_pos)
 	return result_rot
 end

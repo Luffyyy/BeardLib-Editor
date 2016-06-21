@@ -44,7 +44,6 @@ function EditorAccessCamera:show_all_units_dialog()
     BeardLibEditor.managers.Dialog:show({
         title = "Decide what camera unit this element should handle",
         items = {},
-        yes = "Apply",
         no = "Cancel",
         w = 600,
         h = 600,
@@ -64,17 +63,7 @@ function EditorAccessCamera:load_all_units(menu, item)
         name = "searchbox",
         text = "Search what: ",
         callback = callback(self, self, "load_all_units")         
-    })     
-    local selected_divider = menu:GetItem("selected_divider") or menu:Divider({
-        name = "selected_divider",
-        text = "Selected: ",
-        size = 30,    
-    })        
-    local unselected_divider = menu:GetItem("unselected_divider") or menu:Divider({
-        name = "unselected_divider",
-        text = "Unselected: ",
-        size = 30,    
-    })     
+    })      
     menu:Button({
         name = "no_unit",
         text = "None",
@@ -104,9 +93,6 @@ function EditorAccessCamera:_build_panel()
         callback = callback(self, self, "show_all_units_dialog")
     })    	
 	self:_build_value_combobox("text_id", self._text_options, "Select a text id from the combobox")
-	--text_sizer:add(EWS:StaticText("Text: ", "", ""), 1, 2, "ALIGN_CENTER_VERTICAL,RIGHT,EXPAND")
-	--self._text = EWS:StaticText(managers.localization:text(self._element.values.text_id), "", "")
-
 	self:_build_value_number("yaw_limit", {floats = 0, min = -1}, "Specify a yaw limit.")
 	self:_build_value_number("pitch_limit", {floats = 0, min = -1}, "Specify a pitch limit.")
 end

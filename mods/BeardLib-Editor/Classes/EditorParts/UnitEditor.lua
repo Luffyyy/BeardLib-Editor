@@ -6,12 +6,16 @@ function UnitEditor:init(parent, menu)
     self._menu = menu:NewMenu({
         name = "selected_unit",
         text = "Selected Unit",
+        visible = true,
+        w = 250,
         help = "",
-    })
+    })    
+    self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
+    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom()) 
+    self._parent._current_menu = self._menu
     self._widget_slot_mask = World:make_slot_mask(1)
     self._selected_units = {}
     self._disabled_units = {}
-
     self:build_default_menu()
 
     self._trigger_ids = {}
@@ -49,15 +53,10 @@ function UnitEditor:build_default_menu()
     })
 end
 function UnitEditor:select_exisiting_unit()
-    local menu = self._parent._menu:GetItem("find")
-    self._parent._menu:SwitchMenu(menu)    
-    self._parent.managers.SpawnSearch:load_all_units(menu)    
+    self._parent.managers.SpawnSearch:load_all_units()    
 end
 function UnitEditor:spawn_new_unit()
-    local menu = self._parent._menu:GetItem("find")
-    menu:ClearItems()
-    self._parent._menu:SwitchMenu(menu)    
-    self._parent.managers.SpawnSearch:browse(menu)
+    self._parent.managers.SpawnSearch:browse()
 end
 function UnitEditor:InitItems()
     self._menu:ClearItems()
@@ -79,21 +78,6 @@ function UnitEditor:InitItems()
         help = "",
         group = quick_buttons,
         callback = callback(self, self, "deselect_unit"),
-    })
-    self._menu:Button({
-        name = "deselect_unit",
-        text = "Deselect unit(s)",
-        help = "",
-        group = quick_buttons,
-        callback = callback(self, self, "deselect_unit"),
-    })
-    self._menu:Button({
-        name = "add_to_prefabs",
-        text = "Add unit(s) to prefabs",
-        value = "",
-        help = "",
-        group = quick_buttons,        
-        callback = callback(self, self, "add_units_to_prefabs"),
     })
     self._menu:TextBox({
         name = "unit_name",
@@ -136,20 +120,21 @@ function UnitEditor:InitItems()
         help = "",
         group = other,
         callback = callback(self, self, "set_unit_data"),
-    })
+    })   
     self._menu:Button({
         name = "select_unit_path",
         text = "Set unit",
         help = "",
         group = other,
         callback = callback(self, self, "select_unit_dialog"),
-    })
+    })    
+    local grid_size = self._parent.managers.GameOptions._menu:GetItem("grid_Size").value
     self._menu:Slider({
         name = "positionx",
         text = "Position x: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
     })
@@ -157,8 +142,8 @@ function UnitEditor:InitItems()
         name = "positiony",
         text = "Position Y: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
     })
@@ -166,8 +151,8 @@ function UnitEditor:InitItems()
         name = "positionz",
         text = "Position z: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
     })
@@ -175,8 +160,8 @@ function UnitEditor:InitItems()
         name = "rotationyaw",
         text = "Rotation yaw: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
     })
@@ -184,8 +169,8 @@ function UnitEditor:InitItems()
         name = "rotationpitch",
         text = "Rotation pitch: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
     })
@@ -193,11 +178,11 @@ function UnitEditor:InitItems()
         name = "rotationroll",
         text = "Rotation roll: ",
         value = 0,
-        step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"),
         help = "",
+        step = grid_size,
         group = transform,
         callback = callback(self, self, "set_unit_data"),
-    })
+    })    
     self._menu:Button({
         name = "unit_delete_btn",
         text = "Delete unit(s)",
@@ -206,9 +191,13 @@ function UnitEditor:InitItems()
         callback = callback(self, self, "delete_unit"),
     })
     self._menu:ItemsGroup({
-        name = "modifiers",
-        text = "Modifiers",
+        name = "links",
+        text = "Links",
     })    
+end
+
+function UnitEditor:update_grid_size()
+    self:set_unit()
 end
 
 function UnitEditor:select_unit_dialog()
@@ -315,6 +304,17 @@ function UnitEditor:deselect_unit(menu, item)
     self:set_unit(true)
 end
 
+function UnitEditor:update_positions(menu, item)
+    if #self._selected_units == 1 then
+        local unit = self._selected_units[1]
+        self._menu:GetItem("positionx"):SetValue(unit:position().x or 0)
+        self._menu:GetItem("positiony"):SetValue(unit:position().y or 0)
+        self._menu:GetItem("positionz"):SetValue(unit:position().z or 0)
+        self._menu:GetItem("rotationyaw"):SetValue(unit:rotation():yaw() or 0)
+        self._menu:GetItem("rotationpitch"):SetValue(unit:rotation():pitch() or 0)
+        self._menu:GetItem("rotationroll"):SetValue(unit:rotation():roll() or 0)
+    end
+end
 function UnitEditor:set_unit_data(menu, item)
     local x = menu:GetItem("positionx").value
     local y = menu:GetItem("positiony").value
@@ -328,7 +328,7 @@ function UnitEditor:set_unit_data(menu, item)
         self:set_position(unit, Vector3(x, y, z), Rotation( yaw, pitch, roll))
         if unit:unit_data() and unit:unit_data().unit_id then
             local prev_id = unit:unit_data().unit_id
-            unit:unit_data().name_id = self._menu:GetItem("unit_name").value
+            managers.worlddefinition:set_name_id(unit, self._menu:GetItem("unit_name").value)
             local mesh_variations = managers.sequence:get_editable_state_sequence_list(unit:name()) or {}
             unit:unit_data().mesh_variation = mesh_variations[self._menu:GetItem("unit_mesh_variation").value]
             local mesh_variation = unit:unit_data().mesh_variation
@@ -341,8 +341,8 @@ function UnitEditor:set_unit_data(menu, item)
             local path_changed = unit:unit_data().name ~= self._menu:GetItem("unit_path").value 
             
             unit:unit_data().name = self._menu:GetItem("unit_path").value 
-
             unit:unit_data().unit_id = self._menu:GetItem("unit_id").value
+ 
             unit:set_editor_id(unit:unit_data().unit_id)            
 
             managers.worlddefinition:set_unit(prev_id, unit:unit_data(), old_continent, new_continent)            
@@ -386,40 +386,46 @@ end
 function UnitEditor:select_widget() 
     local from = self._parent:get_cursor_look_point(0)
     local to = self._parent:get_cursor_look_point(100000)
+    local ok
     if self._selected_units[1] and self._parent._move_widget:enabled() then
         local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
         if ray and ray.body then
-            if shift() then
-         --       self:clone()
+            if alt() then
+                self:clone()
             end
             self._parent._move_widget:add_move_widget_axis(self._parent._widget_bodies[ray.body:name():t()])
             self._grab = true
-           -- self._grab_info_grab_info = {position = self._parent:widget_affect_object():position(), rotation = self._parent:widget_affect_object():rotation()}
-            self._parent._using_widget = true
-            self._parent._move_widget:set_move_widget_offset(self._selected_units[1], self._parent:widget_rot())
+            self._grab_info = CoreEditorUtils.GrabInfo:new(self._selected_units[1])
+            self._parent._using_move_widget = true
+            for _, unit in pairs(self._selected_units) do
+                self._parent._move_widget:set_move_widget_offset(unit)
+            end
             return true
         end
     end
     if self._selected_units[1] and self._parent._rotate_widget:enabled() then
         local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
         if ray and ray.body then
-            if shift() then
-               -- self:clone()
-            end
             self._parent._rotate_widget:set_rotate_widget_axis(self._parent._widget_bodies[ray.body:name():t()])
-            --managers.editor:set_value_info_visibility(true)
             self._grab = true
-          --  self._grab_info = {position = self._parent:widget_affect_object():position(), rotation = self._parent:widget_affect_object():rotation()}
-            self._parent._using_widget = true
+            self._grab_info = CoreEditorUtils.GrabInfo:new(self._selected_units[1])
+            self._parent._using_rotate_widget = true
             self._parent._rotate_widget:set_world_dir(ray.position)
             self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
-            self._parent._rotate_widget:set_rotate_widget_unit_rot(self._selected_units[1]:rotation())
+            for _, unit in pairs(self._selected_units) do
+                self._parent._rotate_widget:set_rotate_widget_unit_rot(unit)
+            end
             return true
         end
     end
 end
 
 function UnitEditor:use_grab_info()
+    if self._grab then
+        self._grab = false
+        --self._parent:set_unit_positions(self._grab_info:position())
+     --   self:set_unit_rotations(self._grab_info:rotation())
+    end    
     self._parent:reset_widget_values()
     self._grab = false
 end
@@ -429,7 +435,7 @@ function UnitEditor:select_unit(mouse2)
 	local ray
     local from = self._parent:get_cursor_look_point(0)
     local to = self._parent:get_cursor_look_point(200000)
-	if self._parent._menu:GetItem("units_visibility").value then
+	if self._parent._menu:GetItem("Map/EditorUnits").value then
         ray = World:raycast("ray", from, to, "ray_type", "body editor walk", "slot_mask", self._parent._editor_all)
     else
         ray = World:raycast("ray", from, to)
@@ -463,9 +469,9 @@ function UnitEditor:set_unit(reset)
     if not reset and alive(unit) then
         self:InitItems()
         self._parent:use_widgets(alive(unit))
-        self._menu:GetItem("unit_name"):SetValue(show_real and unit:unit_data().name_id or "")
-        self._menu:GetItem("unit_path"):SetValue(show_real and unit:unit_data().name or "")    
-        self._menu:GetItem("unit_id"):SetValue(show_real and unit:unit_data().unit_id or "")        
+        self._menu:GetItem("unit_name"):SetValue(show_real and unit:unit_data().name_id or "", true)
+        self._menu:GetItem("unit_path"):SetValue(show_real and unit:unit_data().name or "", true)    
+        self._menu:GetItem("unit_id"):SetValue(show_real and unit:unit_data().unit_id or "", true)        
         local mesh_variations = show_real and managers.sequence:get_editable_state_sequence_list(unit:name() or "") or {}
         self._menu:GetItem("unit_mesh_variation"):SetItems(mesh_variations)
         self._menu:GetItem("unit_mesh_variation"):SetValue(show_real and unit:unit_data().mesh_variation and table.get_key(mesh_variations, unit:unit_data().mesh_variation) or nil)
@@ -477,23 +483,30 @@ function UnitEditor:set_unit(reset)
         self._menu:GetItem("rotationyaw"):SetValue(show_real and unit:rotation():yaw() or 0)
         self._menu:GetItem("rotationpitch"):SetValue(show_real and unit:rotation():pitch() or 0)
         self._menu:GetItem("rotationroll"):SetValue(show_real and unit:rotation():roll() or 0)
-        self._menu:GetItem("rotationroll"):SetEnabled(show_real)  
-
+        self._menu:GetItem("rotationroll"):SetEnabled(show_real)       
         continent_item:SetEnabled(show_real)
         self._menu:GetItem("rotationpitch"):SetEnabled(show_real)        
-        self._menu:GetItem("rotationyaw"):SetEnabled(show_real)        
+        self._menu:GetItem("rotationyaw"):SetEnabled(show_real)    
+
+        self._menu:GetItem("positionx"):SetStep(self._parent._grid_size)
+        self._menu:GetItem("positiony"):SetStep(self._parent._grid_size)
+        self._menu:GetItem("positionz"):SetStep(self._parent._grid_size)
+        self._menu:GetItem("rotationyaw"):SetStep(self._parent._snap_rotation)
+        self._menu:GetItem("rotationpitch"):SetStep(self._parent._snap_rotation)
+        self._menu:GetItem("rotationroll"):SetStep(self._parent._snap_rotation)
+     
         self._menu:GetItem("unit_mesh_variation"):SetEnabled(show_real)        
         self._menu:GetItem("unit_name"):SetEnabled(show_real)
         self._menu:GetItem("unit_path"):SetEnabled(show_real)
         self._menu:GetItem("unit_id"):SetEnabled(show_real)
-
+    
         if show_real then
-            for _, element in pairs(managers.mission:get_modifiers_of_unit(unit)) do
+            for _, element in pairs(managers.mission:get_links(unit:unit_data().unit_id)) do
                 self._menu:Button({
                     name = element.editor_name,
-                    text = element.editor_name .. " [" .. (element.id or "") .."]",
+                    text = element.editor_name .. " [" .. (element.class or "") .."]",
                     label = "elements",
-                    group = self._menu:GetItem("modifiers"),
+                    group = self._menu:GetItem("links"),
                     callback = callback(self._parent, self._parent, "_select_element", element)
                 })
             end
@@ -543,40 +556,48 @@ function UnitEditor:set_position(unit, position, rotation, offset)
 
     unit:unit_data().position = unit:position()
     unit:unit_data().rotation = unit:rotation()
+    managers.worlddefinition:set_unit( unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)        
 end
-
 function UnitEditor:update(t, dt)
     if managers.viewport:get_current_camera() then
-        local brush = Draw:brush(Color(0, 0.5, 0.85))
-        local cam_up = managers.viewport:get_current_camera():rotation():z()
-    	local cam_right = managers.viewport:get_current_camera():rotation():x()        
-        for _, unit in pairs(self._selected_units) do
-            if alive(unit) then
-                brush:set_render_template(Idstring("OverlayVertexColorTextured"))
-                unit:oobb():debug_draw(0, 0.5, 0.85)
-                brush:sphere(unit:position(), 10)
-                brush:set_font(Idstring("fonts/font_medium"), 32)
-                brush:center_text(unit:position() + Vector3(-10, -10, 200), unit:unit_data().name_id .. "[ " .. unit:editor_id() .. " ]", cam_right, -cam_up)
+        local pen = Draw:pen(Color(0.15, 1, 1, 1))
+        if #self._selected_units > 0 then
+            local brush = Draw:brush(Color(0.15, 1, 1, 1))
+            brush:set_font(Idstring("core/fonts/nice_editor_font"), 24)
+            brush:set_render_template(Idstring("OverlayVertexColorTextured"))
+            for _, unit in ipairs(self._selected_units) do
+                if alive(unit) then
+                    local num = unit:num_bodies()
+                    for i = 0, num - 1 do
+                        local body = unit:body(i)
+                        if self._parent:_should_draw_body(body) then
+                            pen:set(Color(0, 0.5, 1))
+                            pen:body(body)
+                            brush:set_color(Color(0, 0.5, 1))
+                        end                            
+                    end
+                end
             end
+            return
         end
     end
 end
 
 function UnitEditor:KeyCPressed(button_index, button_name, controller_index, controller, trigger_id)
-    if ctrl() and #self._selected_units > 0 and not self._menu._highlighted then
+    if ctrl() and #self._selected_units > 0 and not self._parent._menu._highlighted then
         self:set_unit_data(self._menu)
         local all_unit_data = {}
         for _, unit in pairs(self._selected_units) do
             table.insert(all_unit_data, unit:unit_data())
         end
         Application:set_clipboard(json.custom_encode(all_unit_data))
-	end
+    end
 end
 
 function UnitEditor:KeyVPressed(button_index, button_name, controller_index, controller, trigger_id)
-    if ctrl() and not self._menu._highlighted then
+    if ctrl() and not self._parent._menu._highlighted then
         local ret, data = pcall(function() return json.custom_decode(Application:get_clipboard()) end)
-        if ret then
+        if ret and type(data) == "table" then
             self._selected_units = {}
             for _, sub_data in pairs(data) do
                 self._parent:SpawnUnit(sub_data.name, sub_data, true)
@@ -588,6 +609,18 @@ function UnitEditor:KeyVPressed(button_index, button_name, controller_index, con
         else
             log(tostring(data))
         end
+    end
+end
+ 
+function UnitEditor:clone()
+    self:set_unit_data(self._menu)
+    local all_unit_data = clone(self._selected_units)
+    self._selected_units = {}
+    for _, unit in pairs(all_unit_data) do
+        self._parent:SpawnUnit(unit:unit_data().name, clone(unit:unit_data()), true)
+        if #self._selected_units > 1 then
+            self:StorePreviousPosRot()
+        end 
     end
 end
 

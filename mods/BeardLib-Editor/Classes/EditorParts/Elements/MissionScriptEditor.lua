@@ -87,12 +87,12 @@ function MissionScriptEditor:_create_panel()
     local position = self._element.values.position
     local rotation = self._element.values.rotation
     rotation = type(rotation) == "number" and Rotation(0,0,0) or rotation
-	self:_build_value_slider("position_x", {value = position and position.x or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
-	self:_build_value_slider("position_y", {value = position and position.y or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
-	self:_build_value_slider("position_z", {value = position and position.z or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)
-	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
-	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
-	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, step = BeardLibEditor.Options:GetValue("Map/MainSliderSpeed"), callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)
+	self:_build_value_slider("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
+	self:_build_value_slider("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
+	self:_build_value_slider("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)	
+	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
+	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
+	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
 	self:_build_value_checkbox("execute_on_startup", "should the element execute when game starts", other)
 	self:_build_value_number("trigger_times", {min = 0}, "Specifies how many time this element can be executed (0 mean unlimited times)", other)
 	local base_delay_ctrlr = self:_build_value_number("base_delay", {min = 0,}, "Specifies a base delay that is added to each on executed delay", other)
@@ -257,6 +257,7 @@ function MissionScriptEditor:_build_value_number(value_name, options, tooltip, g
 	  	filter = "number",
 		min = options.min,
 		max = options.max,
+        floats = options.floats,
         group = group or self._class_group,    
 	  	callback = options.callback or callback(self, self, "set_element_data", value_name),
 	})
@@ -281,6 +282,7 @@ function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, g
 	  	value = options.value or self._element.values[value_name],
 		min = options.min,
 		max = options.max,
+        floats = options.floats,
         group = group or self._class_group,
 	  	callback = options.callback or callback(self, self, "set_element_data", value_name),
 	})
@@ -306,7 +308,7 @@ function MissionScriptEditor:_build_text(text)
 	return div
 end
 
-function MissionScriptEditor:_build_unit_list(value_name, select_callback, id_key)
+function MissionScriptEditor:_build_unit_list(value_name, select_callback, id_key, update_callback)
     self._elements_menu:Button({
         name = "remove_add_element",
         text = "Add/Remove an unit to " .. value_name .. " list",
@@ -315,14 +317,24 @@ function MissionScriptEditor:_build_unit_list(value_name, select_callback, id_ke
     })     	
 	self._elements_menu:Button({
 		name = "add_selected_units",
-		text = "Add selected unit(s) to " .. value_name .. " list",
-		callback = callback(self, self, "add_selected_units", value_name),
+		text = "Add selected unit(s) to " .. value_name,
+        callback = function()
+            self:add_selected_units(value_name)
+            if update_callback then
+                update_callback()
+            end
+        end,        
         group = self._elements_menu:GetItem("quick_buttons")    
 	})
 	self._elements_menu:Button({
 		name = "remove_selected_units",
-		text = "Remove selected unit(s) to " .. value_name .. " list",
-		callback = callback(self, self, "remove_selected_units", value_name),
+		text = "Remove selected unit(s) from " .. value_name,
+		callback = function()
+            self:remove_selected_units(value_name)
+            if update_callback then
+                update_callback()
+            end
+        end,
         group = self._elements_menu:GetItem("quick_buttons")
 	})	
 
@@ -341,12 +353,15 @@ function MissionScriptEditor:apply_units(value_name)
 	self._element.values[value_name] = self._selected_units
 end
 
-function MissionScriptEditor:add_selected_units(value_name)
+function MissionScriptEditor:add_selected_units(value_name, clbk)
 	for k, unit in pairs(self._editor.managers.UnitEditor._selected_units) do
-		if unit:unit_data() then
+		if unit:unit_data() and not table.has(self._element.values[value_name], unit:unit_data().unit_id) then
 			table.insert(self._element.values[value_name], unit:unit_data().unit_id)
 		end
 	end
+    if clbk then
+        clbk()
+    end
 end
 
 function MissionScriptEditor:remove_selected_units(value_name)
@@ -355,17 +370,18 @@ function MissionScriptEditor:remove_selected_units(value_name)
 			table.delete(self._element.values[value_name], unit:unit_data().unit_id)
 		end
 	end
+    if clbk then
+        clbk()
+    end   
 end
 
 function MissionScriptEditor:remove_add_units_dialog(params)
     BeardLibEditor.managers.Dialog:show({
-        title = "Add an unit to " .. params.value_name .. " list",
+        title = "Add an unit to " .. params.value_name,
         callback = callback(self, self, "apply_units", params.value_name),
         items = {},
         yes = "Apply",
         no = "Cancel",
-        w = 600,
-        h = 600,
     })
     local unit_ids = clone(self._element.values[params.value_name])
     self._selected_units = unit_ids
@@ -378,7 +394,7 @@ function MissionScriptEditor:select_unit(id, params)
 end
 
 function MissionScriptEditor:unselect_unit(id, params)
-	table.delete(self._selected_units, id)
+	table.remove(self._selected_units, table.get_key(self._selected_units, id))
 	self:load_all_units(params)
 end
 

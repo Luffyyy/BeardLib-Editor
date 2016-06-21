@@ -367,7 +367,6 @@ function EditorSpecialObjective:_build_panel()
 			value = table.contains(self._nav_link_filter, o),
 			callback = callback(self, self, "_toggle_nav_link_filter_value"),
 		})	
-		log(tostring(check))	
 		table.insert(self._nav_link_filter_check_boxes, check)
 	end
 	self:_build_value_combobox("ai_group", table.list_add({"none"}, clone(ElementSpecialObjective._AI_GROUPS)), "Select an ai group.")
@@ -379,7 +378,7 @@ function EditorSpecialObjective:_build_panel()
 	self:_build_value_checkbox("use_instigator", "Use instigator")
 	self:_build_value_checkbox("forced", "Forced")
 	self:_build_value_checkbox("no_arrest", "No Arrest")
-	self:_build_value_checkbox("scan", "Idle scan", "Idle scan")
+	self:_build_value_checkbox("scan", "Idle scan", nil, "Idle scan")
 	self:_build_value_checkbox("allow_followup_self", "", nil, "Allow self-followup")
 	self:_build_value_number("search_distance", {min = 0}, "Used to specify the distance to use when searching for an AI")
 	local options = table.list_add({"none"}, clone(CopActionAct._act_redirects.SO))
@@ -393,8 +392,8 @@ function EditorSpecialObjective:_build_panel()
 	self:_build_value_combobox("attitude", table.list_add({"none"}, ElementSpecialObjective._ATTITUDES), "Select combat attitude.")
 	self:_build_value_combobox("trigger_on", table.list_add({"none"}, ElementSpecialObjective._TRIGGER_ON), "Select when to trigger objective.")
 	self:_build_value_combobox("interaction_voice", table.list_add({"none"}, ElementSpecialObjective._INTERACTION_VOICES), "Select what voice to use when interacting with the character.")
-	self:_build_value_number("interrupt_dis", {min = -1}, "Interrupt if a threat is detected closer than this distance (meters). -1 means at any distance. For non-visible threats this value is multiplied with 0.7.", "Interrupt Distance:")
-	self:_build_value_number("interrupt_dmg", {min = -1}, "Interrupt if total damage received as a ratio of total health exceeds this ratio. value: 0-1.", "Interrupt Damage:")
+	self:_build_value_number("interrupt_dis", {min = -1}, "Interrupt if a threat is detected closer than this distance (meters). -1 means at any distance. For non-visible threats this value is multiplied with 0.7.", nil, "Interrupt Distance:")
+	self:_build_value_number("interrupt_dmg", {min = -1}, "Interrupt if total damage received as a ratio of total health exceeds this ratio. value: 0-1.", nil, "Interrupt Damage:")
 	self:_build_value_number("interval", {min = -1}, "Used to specify how often the SO should search for an actor. A negative value means it will check only once.")
 	self:_build_value_number("base_chance", {
 		min = 0,
@@ -403,7 +402,7 @@ function EditorSpecialObjective:_build_panel()
 	self:_build_value_number("chance_inc", {
 		min = 0,
 		max = 1
-	}, "Used to specify an incremental chance to happen", "Chance incremental:")
+	}, "Used to specify an incremental chance to happen", nil, "Chance incremental:")
 	self:_build_value_number("action_duration_min", {min = 0}, "How long the character stays in his specified action.")
 	self:_build_value_number("action_duration_max", {min = 0}, "How long the character stays in his specified action. Zero means indefinitely.")
 	local test_units = table.list_add(EditorSpawnCivilian._options, EditorSpawnEnemyDummy._options)
