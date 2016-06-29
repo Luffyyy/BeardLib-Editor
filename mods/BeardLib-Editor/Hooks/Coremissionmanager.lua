@@ -35,9 +35,6 @@ MissionManager = MissionManager or CoreClass.class(CoreEvent.CallbackHandler)
 			self:_load_mission_file(name, file_dir, data)
 		end
 	end
-	if Global.editor_mode then
-		_G.BeardLibEditor.managers.MapEditor:load_missions(self._missions)
-	end
 	self:_activate_mission(activate_mission)
 	return true
 end

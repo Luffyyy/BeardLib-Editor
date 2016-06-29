@@ -15,7 +15,6 @@ if not _G.BeardLibEditor then
         "EditorParts/ElementEditor.lua",
         "EditorParts/UnitEditor.lua",
         "EditorParts/GameOptions.lua",
-        "EditorParts/EditorWidgets.lua",
         "EditorParts/SpawnSearch.lua",
         "EditorParts/UpperMenu.lua",
         "EditorParts/EditorConsole.lua",

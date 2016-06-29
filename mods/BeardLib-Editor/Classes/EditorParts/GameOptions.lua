@@ -33,20 +33,22 @@ function GameOptions:CreateItems()
         value = BeardLibEditor.Options:GetOption("Map/CameraSpeed").value,
         callback = callback(self, self, "update_option_value"),
     })       
-    self._menu:ComboBox({
+    self._menu:Slider({
         name = "grid_Size",
         text = "Grid Size",
-        help = "The grid size(how much the unit will move)",
-        value = 2,
-        items = self._parent._grid_sizes,
+        help = "How much centimeters the unit will move",
+        value = 1,
+        min = 0.1,
+        max = 10000,
         callback = callback(self._parent, self._parent, "update_grid_size")
     })    
-    self._menu:ComboBox({
+    self._menu:Slider({
         name = "snap_rotation",
         text = "Snap rotation",
-        help = "The snap rotation(how much the unit will rotate)",
-        value = 7,
-        items = self._parent._snap_rotations,
+        help = "How much degrees the unit will rotate",
+        value = 90,
+        min = 1,
+        max = 180,
         callback = callback(self._parent, self._parent, "update_snap_rotation")
     }) 
     self._menu:Divider({

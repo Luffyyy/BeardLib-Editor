@@ -138,9 +138,7 @@ function WorldDefinition:init_done()
 		end
 	end
 	self:_unload_package(self._current_world_init_package)	
-	if Global.editor_mode then
-		_G.BeardLibEditor.managers.MapEditor:load_continents(self._continent_definitions)
-	else
+	if not Global.editor_mode then
 		self._continent_definitions = nil
 		self._definition = nil
 	end
@@ -190,7 +188,11 @@ function WorldDefinition:_setup_editor_unit_data(unit, data)
 	unit:unit_data().name_id = data.name_id
 	unit:unit_data().name = data.name
 	unit:unit_data().continent = data.continent
-	unit:unit_data().world_pos = unit:position()
+	unit:unit_data().position = unit:position()
+	unit:unit_data().rotation = unit:rotation()
+	unit:unit_data().local_pos = Vector3(0, 0, 0)
+	unit:unit_data().local_rot = Vector3(0, 0, 0)
+
 	unit:unit_data().projection_lights = data.projection_lights
 	self:set_up_name_id(unit)
 end

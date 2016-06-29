@@ -49,19 +49,37 @@ function SpawnSearch:init(parent, menu)
 end
 
 
-function SpawnSearch:load_prefabs()
-    for _, prefabs in pairs(BeardLibEditor.Options._storage.Prefabs) do
-        if type(prefabs) == "table" then
+function SpawnSearch:load_prefabs()            
+    self:clear()
+    for _, prefab in pairs(BeardLibEditor.Options._storage.Prefabs) do
+        if type(prefab.value) == "table" then
             self._menu:Button({
-                name = "uplevel_btn",
-                text = "^ ( " .. (self.current_dir or self.custom_dir) .. " )",
-                callback = callback(self, self, "folder_back"),
+                name = prefab.value.name,
+                text = prefab.value.name,
+                callback = callback(self, self, "spawn_prefab", prefab.value.units),
                 label = "select_buttons"
             })              
         end
     end
 end
 
+function SpawnSearch:spawn_prefab(prefab)
+    self._parent.managers.UnitEditor._selected_units = {}    
+    for _, unit in pairs(prefab) do
+        self._parent:SpawnUnit(unit.name, nil, true)
+    end
+    local reference = self._parent.managers.UnitEditor._selected_units[1]
+    for k, unit in pairs(self._parent.managers.UnitEditor._selected_units) do
+        if unit ~= reference then
+            unit:unit_data().position = prefab[k].position
+            local pos = prefab[1].position
+            local rot = prefab[1].rotation
+            unit:unit_data().local_pos = prefab[k].position - pos 
+            unit:unit_data().local_rot = rot:inverse() * unit:rotation()
+        end
+    end
+    self._parent:set_unit_positions(reference:position())     
+end
 function SpawnSearch:clear()
     self._menu:ClearItems("temp1")
     self._menu:ClearItems("temp2")
@@ -246,7 +264,7 @@ function SpawnSearch:show_elements_list(menu, item)
         searchbox = self._menu:GetItem("searchbox")
     end
     searchbox:SetCallback(callback(self, self, "show_elements_list"))
-    for k, element in pairs(self._parent._mission_elements) do
+    for k, element in pairs(ElementEditor._mission_elements) do
         if (not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value)) then
             self._menu:Button({
                 name = element,

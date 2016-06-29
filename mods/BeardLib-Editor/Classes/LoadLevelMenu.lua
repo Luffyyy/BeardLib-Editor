@@ -1,7 +1,7 @@
 LoadLevelMenu = LoadLevelMenu or class()
 function LoadLevelMenu:init()
 	self._main_menu = MenuUI:new({
-        alpha = 0.4,
+        alpha = 0.75,
         text_color = Color.white,
         highlight_color = Color("33476a"),
         background_color = Color(0.2, 0.2, 0.2),
@@ -34,7 +34,7 @@ function LoadLevelMenu:create_items(menu)
 		end
 	end	
     local i =  #self._menu.items
-    i = (i % 3 == 0) and i or i + 1
+    i = (i % 3 == 1) and i + 2 or (i % 3 == 2) and i + 1 or i
     self._menu:SetMaxRow(math.max(1, i / 3))
 end
 

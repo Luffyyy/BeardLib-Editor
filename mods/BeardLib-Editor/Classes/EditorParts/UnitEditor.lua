@@ -78,6 +78,13 @@ function UnitEditor:InitItems()
         help = "",
         group = quick_buttons,
         callback = callback(self, self, "deselect_unit"),
+    })    
+    self._menu:Button({
+        name = "add_units_to_prefabs",
+        text = "Add unit(s) to prefabs",
+        help = "",
+        group = quick_buttons,
+        callback = callback(self, self, "add_units_to_prefabs"),
     })
     self._menu:TextBox({
         name = "unit_name",
@@ -298,7 +305,7 @@ end
 function UnitEditor:unit_click(unit_path)
     BeardLibEditor.managers.Dialog:hide()
     self._menu:GetItem("unit_path"):SetValue(unit_path)
-    self:set_unit_data(self._menu)
+    self:set_unit_data()
 end
 function UnitEditor:deselect_unit(menu, item)
     self:set_unit(true)
@@ -315,13 +322,13 @@ function UnitEditor:update_positions(menu, item)
         self._menu:GetItem("rotationroll"):SetValue(unit:rotation():roll() or 0)
     end
 end
-function UnitEditor:set_unit_data(menu, item)
-    local x = menu:GetItem("positionx").value
-    local y = menu:GetItem("positiony").value
-    local z = menu:GetItem("positionz").value
-    local yaw = menu:GetItem("rotationyaw").value
-    local pitch = menu:GetItem("rotationpitch").value
-    local roll =  menu:GetItem("rotationroll").value
+function UnitEditor:set_unit_data()
+    local x = self._menu:GetItem("positionx").value
+    local y = self._menu:GetItem("positiony").value
+    local z = self._menu:GetItem("positionz").value
+    local yaw = self._menu:GetItem("rotationyaw").value
+    local pitch = self._menu:GetItem("rotationpitch").value
+    local roll =  self._menu:GetItem("rotationroll").value
 
     if #self._selected_units == 1 then
         local unit = self._selected_units[1]
@@ -372,17 +379,42 @@ function UnitEditor:StorePreviousPosRot()
 end
 
 function UnitEditor:add_units_to_prefabs(menu, item)
-    for _, unit in pairs(self._selected_units) do
-        if self._parent._menu:GetItem("prefabs") and not self._parent._menu:GetItem("prefabs"):GetItem(unit:unit_data().name_id) then
-            self._parent._menu:GetItem("prefabs"):Button({
-                name = unit:unit_data().name_id,
-                text = unit:unit_data().name_id,
-                callback = callback(self._parent, self._parent, "SpawnUnit", unit:unit_data().name)
-            })
-        end
-    end
+    BeardLibEditor.managers.Dialog:show({
+        title = "Add new prefab",
+        items = {
+            {
+                type = "TextBox",
+                name = "prefab_name",
+                text = "Name",
+                value = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or "Prefab",
+            },           
+            {
+                type = "Toggle",
+                name = "save_prefab",
+                text = "Save",
+                value = true,
+            }
+        },
+        yes = "Add",
+        no = "Cancel",
+        callback = callback(self, self, "add_unit_dialog_yes"),
+        w = 600,
+        h = 200,
+    })    
+
 end
 
+function UnitEditor:add_unit_dialog_yes(items)
+    local prefab = {
+        name = items[1].value,
+        units = {},
+    }
+    for _, unit in pairs(self._selected_units) do
+        table.insert(prefab.units, unit:unit_data())
+    end           
+    table.insert(BeardLibEditor.Options._storage.Prefabs, {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs, value = prefab})
+    BeardLibEditor.Options:Save()
+end 
 function UnitEditor:select_widget() 
     local from = self._parent:get_cursor_look_point(0)
     local to = self._parent:get_cursor_look_point(100000)
@@ -397,9 +429,7 @@ function UnitEditor:select_widget()
             self._grab = true
             self._grab_info = CoreEditorUtils.GrabInfo:new(self._selected_units[1])
             self._parent._using_move_widget = true
-            for _, unit in pairs(self._selected_units) do
-                self._parent._move_widget:set_move_widget_offset(unit)
-            end
+            self._parent._move_widget:set_move_widget_offset(self._selected_units[1], self._selected_units[1]:rotation())
             return true
         end
     end
@@ -412,14 +442,29 @@ function UnitEditor:select_widget()
             self._parent._using_rotate_widget = true
             self._parent._rotate_widget:set_world_dir(ray.position)
             self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
-            for _, unit in pairs(self._selected_units) do
-                self._parent._rotate_widget:set_rotate_widget_unit_rot(unit)
-            end
+            self._parent._rotate_widget:set_rotate_widget_unit_rot(self._selected_units[1]:rotation())
             return true
         end
     end
 end
-
+function UnitEditor:recalc_all_locals()
+    if alive(self._selected_units[1]) then
+        local reference = self._selected_units[1]
+        reference:unit_data().local_pos = Vector3(0, 0, 0)
+        reference:unit_data().local_rot = Rotation(0, 0, 0)
+        for _, unit in ipairs(self._selected_units) do
+            if unit ~= reference then
+                self:recalc_locals(unit, reference)
+            end
+        end
+    end
+end
+function UnitEditor:recalc_locals(unit, reference)
+    local pos = reference:position()
+    local rot = reference:rotation()
+    unit:unit_data().local_pos = unit:unit_data().position - pos 
+    unit:unit_data().local_rot = rot:inverse() * unit:rotation()
+end
 function UnitEditor:use_grab_info()
     if self._grab then
         self._grab = false
@@ -435,17 +480,21 @@ function UnitEditor:select_unit(mouse2)
 	local ray
     local from = self._parent:get_cursor_look_point(0)
     local to = self._parent:get_cursor_look_point(200000)
-	if self._parent._menu:GetItem("Map/EditorUnits").value then
-        ray = World:raycast("ray", from, to, "ray_type", "body editor walk", "slot_mask", self._parent._editor_all)
-    else
-        ray = World:raycast("ray", from, to)
+    for _, r in pairs(World:raycast_all("ray", from, to, "ray_type", "body editor walk", "slot_mask", self._parent._editor_all)) do
+    	if r.unit:visible() then 
+    		ray = r
+    		break
+    	end
     end
+    self:recalc_all_locals()
 	if ray then
-		BeardLibEditor:log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+        if not self._parent._mouse_hold then
+			BeardLibEditor:log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+        end
         if mouse2 then
             if not table.contains(self._selected_units, ray.unit) then
-                table.insert(self._selected_units, ray.unit)
-                self:StorePreviousPosRot()
+            	table.insert(self._selected_units, ray.unit)
+            	self:StorePreviousPosRot()
             elseif not self._parent._mouse_hold then
                 table.delete(self._selected_units, ray.unit)
             end
@@ -457,13 +506,13 @@ function UnitEditor:select_unit(mouse2)
 	else
 		BeardLibEditor:log("No ray")
 	end
-
 end
 
 function UnitEditor:set_unit(reset)
     if reset then
         self._selected_units = {}
     end
+    self:recalc_all_locals()
     local unit = self._selected_units[1]
     local show_real = #self._selected_units == 1  
     if not reset and alive(unit) then
@@ -585,7 +634,7 @@ end
 
 function UnitEditor:KeyCPressed(button_index, button_name, controller_index, controller, trigger_id)
     if ctrl() and #self._selected_units > 0 and not self._parent._menu._highlighted then
-        self:set_unit_data(self._menu)
+        self:set_unit_data()
         local all_unit_data = {}
         for _, unit in pairs(self._selected_units) do
             table.insert(all_unit_data, unit:unit_data())
@@ -613,7 +662,10 @@ function UnitEditor:KeyVPressed(button_index, button_name, controller_index, con
 end
  
 function UnitEditor:clone()
-    self:set_unit_data(self._menu)
+    if #self._selected_units > 1 then
+        self:StorePreviousPosRot()
+    end
+    self:set_unit_data()
     local all_unit_data = clone(self._selected_units)
     self._selected_units = {}
     for _, unit in pairs(all_unit_data) do
