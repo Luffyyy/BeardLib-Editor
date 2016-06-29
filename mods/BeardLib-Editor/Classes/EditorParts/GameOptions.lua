@@ -271,7 +271,7 @@ function GameOptions:drop_player()
 end
 
 function GameOptions:position_debug()
-	local p = self._camera_pos
+	local p = self._parent._camera_pos
 	log("Camera Pos: " .. tostring(p))
 end
 
@@ -321,15 +321,47 @@ function GameOptions:update(t, dt)
 	end
 end
 
-function GameOptions:save_continents()
+function GameOptions:save()
     local path = self._menu:GetItem("savepath").value:gsub("\\" , "/")
-    local world_def = managers.worlddefinition
-    if not file.DirectoryExists( path ) then
+
+    if file.GetFiles(path) then
+
+        local backup_dir = BeardLib.Utils.Path.Combine(path, "..", "backups", table.remove(string.split(path, "/")))
+        if file.GetFiles(backup_dir) then
+            os.execute("del \"" .. backup_dir .. "\" /q /s")
+        end
+        os.execute("xcopy \"" .. path .. "\" \"" .. backup_dir .. "\" /e /i /h /y /c")
+    else
         os.execute("mkdir \"" .. path .. "\"")
     end
-    if file.DirectoryExists( path ) then
+
+    local script_path = BeardLib.Utils.Path.Combine(path, "world")
+    if not file.GetFiles(script_path) then
+        os.execute("mkdir \"" .. script_path .. "\"")
+    end
+
+    self:save_continents(script_path)
+    self:save_missions(script_path)
+end
+
+function GameOptions:save_continents(main_path)
+    local world_def = managers.worlddefinition
+
+    if file.GetFiles( main_path ) then
+        local continents_data = {}
         for continent_name, data in pairs(world_def._continent_definitions) do
-            self:save_continent(continent_name, data, path)
+            self:save_continent(continent_name, data, main_path)
+            continents_data[continent_name] = { editor_only = continent_name == "editor_only", name=continent_name }
+        end
+        local c_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents_data, "custom_xml")
+        local c_file = BeardLib.Utils.Path.Combine(main_path, "continents.continents")
+        local continents_file = io.open(c_file, "w+")
+        _G.BeardLibEditor:log("Saving continents file as custom_xml in %s", c_file)
+        if continents_file then
+            continents_file:write(c_data)
+            continents_file:close()
+        else
+            _G.BeardLibEditor:log("Failed to save continents file %s", c_file)
         end
     else
         BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
@@ -337,30 +369,39 @@ function GameOptions:save_continents()
 end
 
 function GameOptions:save_continent(continent, data, path)
-    local sub_path = path .. "/" .. continent .. "/"
-    if not file.DirectoryExists(sub_path) then
+    local sub_path = BeardLib.Utils.Path.Combine(path, continent)
+    if not file.GetFiles(sub_path) then
         os.execute("mkdir \"" .. sub_path .. "\"")
     end
 
     local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml")
-    local continent_file = io.open(sub_path .. "/" .. continent .. ".continent.custom_xml", "w+")
-    _G.BeardLibEditor:log("Saving continent: " .. continent .. " as a custom_xml in " .. path)
+    local continent_file = io.open(BeardLib.Utils.Path.Combine(sub_path, continent .. ".continent"), "w+")
+    _G.BeardLibEditor:log("Saving continent: %s as a custom_xml in %s", continent, path)
     if continent_file then
         continent_file:write(new_data)
         continent_file:close()
     else
-        _G.BeardLibEditor:log("Failed to save continent: " .. continent .. " path: " .. path)
+        _G.BeardLibEditor:log("Failed to save continent: %s path: %s", continent, path)
     end
 end
 
-function GameOptions:save_missions()
-    local path = self._menu:GetItem("savepath").value:gsub("\\" , "/")
-    if not file.DirectoryExists( path ) then
-        os.execute("mkdir \"" .. path .. "\"")
-    end
-    if file.DirectoryExists( path ) then
+function GameOptions:save_missions(main_path)
+    if file.GetFiles(main_path) then
+        local mission_data = {}
         for mission_name, data in pairs(managers.mission._missions) do
-            self:save_mission_file(mission_name, data, path)
+            self:save_mission_file(mission_name, data, main_path)
+            mission_data[mission_name] = { file=string.format("%s/%s", mission_name, mission_name) }
+        end
+
+        local m_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "custom_xml")
+        local m_file = BeardLib.Utils.Path.Combine(main_path, "mission.mission")
+        local mission_file = io.open(m_file, "w+")
+        _G.BeardLibEditor:log("Saving continents file as custom_xml in %s", m_file)
+        if mission_file then
+            mission_file:write(m_data)
+            mission_file:close()
+        else
+            _G.BeardLibEditor:log("Failed to save continents file %s", m_file)
         end
     else
         BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
@@ -368,13 +409,13 @@ function GameOptions:save_missions()
 end
 
 function GameOptions:save_mission_file(mission, data, path)
-    local sub_path = path .. "/" .. mission .. "/"
-    if not file.DirectoryExists(sub_path) then
+    local sub_path = BeardLib.Utils.Path.Combine(path, mission)
+    if not file.GetFiles(sub_path) then
         os.execute("mkdir \"" .. sub_path .. "\"")
     end
 
     local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "generic_xml")
-    local mission_file = io.open(sub_path .. "/" .. mission .. ".mission.generic_xml", "w+")
+    local mission_file = io.open(sub_path .. "/" .. mission .. ".mission", "w+")
     _G.BeardLibEditor:log("Saving mission: " .. mission .. " as a generic_xml in " .. path)
     if mission_file then
         mission_file:write(new_data)

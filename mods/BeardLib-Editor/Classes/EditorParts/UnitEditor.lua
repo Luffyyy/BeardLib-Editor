@@ -345,21 +345,21 @@ function UnitEditor:set_unit_data()
             local old_continent = unit:unit_data().continent
             unit:unit_data().continent = self._menu:GetItem("unit_continent"):SelectedItem()
             local new_continent = unit:unit_data().continent
-            local path_changed = unit:unit_data().name ~= self._menu:GetItem("unit_path").value 
-            
-            unit:unit_data().name = self._menu:GetItem("unit_path").value 
-            unit:unit_data().unit_id = self._menu:GetItem("unit_id").value
- 
-            unit:set_editor_id(unit:unit_data().unit_id)            
+            local path_changed = unit:unit_data().name ~= self._menu:GetItem("unit_path").value
 
-            managers.worlddefinition:set_unit(prev_id, unit:unit_data(), old_continent, new_continent)            
+            unit:unit_data().name = self._menu:GetItem("unit_path").value
+            unit:unit_data().unit_id = self._menu:GetItem("unit_id").value
+
+            unit:set_editor_id(unit:unit_data().unit_id)
+
+            managers.worlddefinition:set_unit(prev_id, unit:unit_data(), old_continent, new_continent)
             if PackageManager:has(Idstring("unit"), Idstring(unit:unit_data().name)) and path_changed then
                 local unit_data = unit:unit_data()
-      
-                self:delete_unit()                
+
+                self:delete_unit()
                 for k,v in pairs(unit_data) do
                     log(tostring(k) .. "  = "  .. tostring(v) )
-                end      
+                end
                 self._parent:SpawnUnit(unit_data.name, unit_data, false, true)
             end
         end
@@ -409,13 +409,14 @@ function UnitEditor:add_unit_dialog_yes(items)
         name = items[1].value,
         units = {},
     }
+
     for _, unit in pairs(self._selected_units) do
         table.insert(prefab.units, unit:unit_data())
-    end           
-    table.insert(BeardLibEditor.Options._storage.Prefabs, {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs, value = prefab})
+    end
+    BeardLibEditor.Options._storage.Prefabs[prefab.name] = {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs, value = prefab}
     BeardLibEditor.Options:Save()
-end 
-function UnitEditor:select_widget() 
+end
+function UnitEditor:select_widget()
     local from = self._parent:get_cursor_look_point(0)
     local to = self._parent:get_cursor_look_point(100000)
     local ok
@@ -514,14 +515,14 @@ function UnitEditor:set_unit(reset)
     end
     self:recalc_all_locals()
     local unit = self._selected_units[1]
-    local show_real = #self._selected_units == 1  
+    local show_real = #self._selected_units == 1
     if not reset and alive(unit) then
         self:InitItems()
         self._parent:use_widgets(alive(unit))
         self._menu:GetItem("unit_name"):SetValue(show_real and unit:unit_data().name_id or "", true)
-        self._menu:GetItem("unit_path"):SetValue(show_real and unit:unit_data().name or "", true)    
-        self._menu:GetItem("unit_id"):SetValue(show_real and unit:unit_data().unit_id or "", true)        
-        local mesh_variations = show_real and managers.sequence:get_editable_state_sequence_list(unit:name() or "") or {}
+        self._menu:GetItem("unit_path"):SetValue(show_real and unit:unit_data().name or "", true)
+        self._menu:GetItem("unit_id"):SetValue(show_real and unit:unit_data().unit_id or "", true)
+        local mesh_variations = show_real and managers.sequence:get_editable_state_sequence_list(unit:unit_data().name or "") or {}
         self._menu:GetItem("unit_mesh_variation"):SetItems(mesh_variations)
         self._menu:GetItem("unit_mesh_variation"):SetValue(show_real and unit:unit_data().mesh_variation and table.get_key(mesh_variations, unit:unit_data().mesh_variation) or nil)
         local continent_item = self._menu:GetItem("unit_continent")

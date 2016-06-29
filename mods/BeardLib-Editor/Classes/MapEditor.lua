@@ -365,22 +365,30 @@ function MapEditor:set_unit_positions(pos)
 
 end
 function MapEditor:set_unit_position(unit, pos)
-    local new_pos = pos + unit:unit_data().local_pos 
-    self.managers.UnitEditor:set_position(unit, new_pos, unit:rotation())    
+    local new_pos = pos + unit:unit_data().local_pos
+    self.managers.UnitEditor:set_position(unit, new_pos, unit:rotation())
 end
 function MapEditor:set_unit_rotations(rot)
-    local reference = self:widget_affect_object()    
+    local reference = self:widget_affect_object()
     self.managers.UnitEditor:set_position(reference, reference:position(), rot)
     for _, unit in ipairs(self.managers.UnitEditor._selected_units) do
         if unit ~= reference then
-            self:set_unit_position(unit, reference:position())            
-            self.managers.UnitEditor:set_position(unit, unit:position(), rot * unit:unit_data().local_rot)    
+            self:set_unit_position(unit, reference:position())
+            self.managers.UnitEditor:set_position(unit, unit:position(), rot * unit:unit_data().local_rot)
         end
     end
 end
+function MapEditor:load_continents(continents)
+    local continent_items = {}
+    for continent_name, _ in pairs(continents) do
+        table.insert(continent_items, continent_name)
+    end
+    self.managers.UnitEditor._continents = continent_items
+end
+
 function MapEditor:update_widgets(t, dt)
     if not self._closed and alive(self:widget_affect_object()) then
-        local widget_pos  = self:world_to_screen(self:widget_affect_object():position())     
+        local widget_pos  = self:world_to_screen(self:widget_affect_object():position())
         if widget_pos.z > 100 then
             widget_pos = widget_pos:with_z(0)
             local widget_screen_pos = widget_pos

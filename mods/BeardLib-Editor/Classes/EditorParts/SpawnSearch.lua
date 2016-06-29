@@ -1,70 +1,70 @@
 SpawnSearch = SpawnSearch or class()
 
 function SpawnSearch:init(parent, menu)
-    self._parent = parent 
+    self._parent = parent
     self._tabs = menu:NewMenu({
         name = "spawnsearch_tabs",
         w = 200,
         h = 16,
         items_size = 14,
         size_by_text = true,
-        row_max = 1,        
+        row_max = 1,
         visible = true,
-    })    
+    })
     self._menu = menu:NewMenu({
         name = "find",
         w = 200,
         size_by_text = true,
         visible = true,
     })
-    self._menu:SetSize(200, 250)    
-    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())     
-    self._menu:Panel():set_world_right(self._menu:Panel():parent():world_right())  
+    self._menu:SetSize(200, 250)
+    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())
+    self._menu:Panel():set_world_right(self._menu:Panel():parent():world_right())
     self._tabs:Panel():set_leftbottom(self._menu:Panel():lefttop())
-    self._tabs:ContextMenu({ 
+    self._tabs:ContextMenu({
         name = "units",
         text = "Units",
         label = "main",
         items = {
-            {text = "New", callback = callback(self, self, "browse")}, 
+            {text = "New", callback = callback(self, self, "browse")},
             {text = "Select", callback = callback(self, self, "load_all_units")}
         }
     })
-    self._tabs:ContextMenu({   
+    self._tabs:ContextMenu({
         name = "mission_elements",
         text = "Mission elements",
         label = "main",
         items = {
-            {text = "New", callback = callback(self, self, "show_elements_list")}, 
+            {text = "New", callback = callback(self, self, "show_elements_list")},
             {text = "Select", callback = callback(self, self, "load_all_mission_elements")}
         }
-    })       
-    self._tabs:Button({   
+    })
+    self._tabs:Button({
         name = "prefabs",
         text = "Prefabs",
         label = "main",
         callback = callback(self, self, "load_prefabs")
-    })        
+    })
     self:browse()
 end
 
 
-function SpawnSearch:load_prefabs()            
+function SpawnSearch:load_prefabs()
     self:clear()
     for _, prefab in pairs(BeardLibEditor.Options._storage.Prefabs) do
-        if type(prefab.value) == "table" then
+        if type(prefab) == "table" and type(prefab.value) == "table" then
             self._menu:Button({
                 name = prefab.value.name,
                 text = prefab.value.name,
                 callback = callback(self, self, "spawn_prefab", prefab.value.units),
                 label = "select_buttons"
-            })              
+            })
         end
     end
 end
 
 function SpawnSearch:spawn_prefab(prefab)
-    self._parent.managers.UnitEditor._selected_units = {}    
+    self._parent.managers.UnitEditor._selected_units = {}
     for _, unit in pairs(prefab) do
         self._parent:SpawnUnit(unit.name, nil, true)
     end

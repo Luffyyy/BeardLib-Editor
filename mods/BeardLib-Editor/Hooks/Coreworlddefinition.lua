@@ -137,10 +137,12 @@ function WorldDefinition:init_done()
 			self:_unload_package(package)
 		end
 	end
-	self:_unload_package(self._current_world_init_package)	
+	self:_unload_package(self._current_world_init_package)
 	if not Global.editor_mode then
 		self._continent_definitions = nil
 		self._definition = nil
+	else
+		_G.BeardLibEditor.managers.MapEditor:load_continents(self._continent_definitions)
 	end
 end
 

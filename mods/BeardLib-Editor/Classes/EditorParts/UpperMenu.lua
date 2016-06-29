@@ -85,8 +85,7 @@ end
 
 function UpperMenu:save()
     BeardLibEditor:log("Saving Map..")
-    self._parent.managers.GameOptions:save_continents()
-    self._parent.managers.GameOptions:save_missions()
+    self._parent.managers.GameOptions:save()
 end
 
 function UpperMenu:disable()
