@@ -56,16 +56,11 @@ function EditorConsole:init(parent, menu)
     })
 
     self:Clear()
-    BeardLibEditor.log = function( this, msg )
-        self:Log(msg)
-    end    
-    BeardLibEditor.Error = function( this, msg )
-        self:Error(msg)
-    end
     self.closed = false
 end
 
-function EditorConsole:Log(msg)
+function EditorConsole:Log(msg, ...)
+    msg = string.format(msg, ...)
     local date = Application:date("%X")    
     table.insert(self._messages, {message = tostring(msg), date = date, typ = "info"})
     if self._show_info.value then
@@ -85,7 +80,8 @@ function EditorConsole:LogMission(msg)
         })
     end
 end
-function EditorConsole:Error(msg)
+function EditorConsole:Error(msg, ...)
+    msg = string.format(msg, ...)
     local date = Application:date("%X")
     table.insert(self._messages, {message = tostring(msg), date = date, typ = "error"})
     if self._show_errors.value then

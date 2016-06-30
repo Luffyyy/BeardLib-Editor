@@ -356,15 +356,15 @@ function GameOptions:save_continents(main_path)
         local c_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents_data, "custom_xml")
         local c_file = BeardLib.Utils.Path.Combine(main_path, "continents.continents")
         local continents_file = io.open(c_file, "w+")
-        _G.BeardLibEditor:log("Saving continents file as custom_xml in %s", c_file)
+        self._parent:Log("Saving continents file as custom_xml in %s", c_file)
         if continents_file then
             continents_file:write(c_data)
             continents_file:close()
         else
-            _G.BeardLibEditor:log("Failed to save continents file %s", c_file)
+            self._parent:Error("Failed to save continents file %s", c_file)
         end
     else
-        BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
     end
 end
 
@@ -376,12 +376,12 @@ function GameOptions:save_continent(continent, data, path)
 
     local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml")
     local continent_file = io.open(BeardLib.Utils.Path.Combine(sub_path, continent .. ".continent"), "w+")
-    _G.BeardLibEditor:log("Saving continent: %s as a custom_xml in %s", continent, path)
+    self._parent:Log("Saving continent: %s as a custom_xml in %s", continent, path)
     if continent_file then
         continent_file:write(new_data)
         continent_file:close()
     else
-        _G.BeardLibEditor:log("Failed to save continent: %s path: %s", continent, path)
+        self._parent:Error("Failed to save continent: %s path: %s", continent, path)
     end
 end
 
@@ -396,15 +396,15 @@ function GameOptions:save_missions(main_path)
         local m_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "custom_xml")
         local m_file = BeardLib.Utils.Path.Combine(main_path, "mission.mission")
         local mission_file = io.open(m_file, "w+")
-        _G.BeardLibEditor:log("Saving continents file as custom_xml in %s", m_file)
+        self._parent:Log("Saving continents file as custom_xml in %s", m_file)
         if mission_file then
             mission_file:write(m_data)
             mission_file:close()
         else
-            _G.BeardLibEditor:log("Failed to save continents file %s", m_file)
+            self._parent:Error("Failed to save continents file %s", m_file)
         end
     else
-        BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
     end
 end
 
@@ -416,12 +416,12 @@ function GameOptions:save_mission_file(mission, data, path)
 
     local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "generic_xml")
     local mission_file = io.open(sub_path .. "/" .. mission .. ".mission", "w+")
-    _G.BeardLibEditor:log("Saving mission: " .. mission .. " as a generic_xml in " .. path)
+    self._parent:Log("Saving mission: " .. mission .. " as a generic_xml in " .. path)
     if mission_file then
         mission_file:write(new_data)
         mission_file:close()
     else
-        _G.BeardLibEditor:log("Failed to save mission: " .. mission .. " path: " .. path)
+        self._parent:Error("Failed to save mission: " .. mission .. " path: " .. path)
     end
 end
 
@@ -436,10 +436,10 @@ function GameOptions:save_nav_data()
             file:write(managers.navigation._load_data)
             file:close()
         else
-            BeardLibEditor:log("Save data is not ready!")
+            self._parent:Log("Save data is not ready!")
         end
     else
-        BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
     end
 end
 
@@ -467,7 +467,7 @@ function GameOptions:save_cover_data()
         file:write(new_data)
         file:close()
     else
-        BeardLibEditor:log("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Log("Directory doesn't exists(Failed to create directory?)")
     end
 end
 
@@ -510,7 +510,7 @@ function GameOptions:_build_nav_segments()
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "_build_visibility_graph"))
         else
-            BeardLibEditor:log("No nav surface found.")
+            self._parent:Log("No nav surface found.")
         end
     end
     },[2] = {text = "No", is_cancel_button = true}}, true)

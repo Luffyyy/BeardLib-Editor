@@ -84,7 +84,7 @@ function UpperMenu:SwitchMenu(menu)
 end
 
 function UpperMenu:save()
-    BeardLibEditor:log("Saving Map..")
+    self._parent:Log("Saving Map..")
     self._parent.managers.GameOptions:save()
 end
 

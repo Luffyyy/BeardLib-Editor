@@ -229,6 +229,12 @@ end
 function MapEditor:add_element(element, menu, item)
     self.managers.ElementEditor:add_element(element)
 end
+function MapEditor:Log( ... )
+    self.managers.Console:Log(...)
+end
+function MapEditor:Error( ... )
+    self.managers.Console:Error(...)
+end
 function MapEditor:SpawnUnit( unit_path, unit_data, no_reset, respawn )
     local unit
     local cam = managers.viewport:get_current_camera()
@@ -242,11 +248,11 @@ function MapEditor:SpawnUnit( unit_path, unit_data, no_reset, respawn )
         unit = CoreUnit.safe_spawn_unit(unit_path, pos, rot)
     end
     if not unit then
-        BeardLibEditor:log("Something went wrong while spawning the unit..")
+        self:Error("Something went wrong while spawning the unit..")
         return
     end
     if not unit.unit_data or not unit:unit_data()  then
-        BeardLibEditor:log(unit_path .. " Has no unit data.")
+        self:Error(unit_path .. " Has no unit data.")
 		return
     elseif respawn then
         for k, v in pairs(unit_data) do

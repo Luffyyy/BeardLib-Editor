@@ -230,8 +230,6 @@ function UnitEditor:browse()
     for _, part in pairs(dir_split) do
         dir_tbl = dir_tbl[part]
     end
-
-    BeardLibEditor:log(self.current_dir)   
     local show_not_loaded = menu:GetItem("show_not_loaded") or menu:Toggle({
         name = "show_not_loaded",
         text = "Show not loaded units",
@@ -413,7 +411,7 @@ function UnitEditor:add_unit_dialog_yes(items)
     for _, unit in pairs(self._selected_units) do
         table.insert(prefab.units, unit:unit_data())
     end
-    BeardLibEditor.Options._storage.Prefabs[prefab.name] = {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs, value = prefab}
+    table.insert(BeardLibEditor.Options._storage.Prefabs, {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs + 1, value = prefab})
     BeardLibEditor.Options:Save()
 end
 function UnitEditor:select_widget()
@@ -490,7 +488,7 @@ function UnitEditor:select_unit(mouse2)
     self:recalc_all_locals()
 	if ray then
         if not self._parent._mouse_hold then
-			BeardLibEditor:log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+			self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
         end
         if mouse2 then
             if not table.contains(self._selected_units, ray.unit) then
@@ -505,7 +503,7 @@ function UnitEditor:select_unit(mouse2)
         end        
         self:set_unit()
 	else
-		BeardLibEditor:log("No ray")
+		self._parent:Log("No ray")
 	end
 end
 

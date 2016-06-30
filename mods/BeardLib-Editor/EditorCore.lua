@@ -116,7 +116,7 @@ function BeardLibEditor:LoadHashlist()
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-    self:log("Hashlist Loaded[Method " .. (has_hashlist and "A" or "B") .. "]" )
+    self:log("Hashlist Loaded[Method %s]", has_hashlist and "A" or "B")
 end
 
 if RequiredScript then

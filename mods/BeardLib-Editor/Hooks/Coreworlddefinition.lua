@@ -142,7 +142,7 @@ function WorldDefinition:init_done()
 		self._continent_definitions = nil
 		self._definition = nil
 	else
-		_G.BeardLibEditor.managers.MapEditor:load_continents(self._continent_definitions)
+		managers.editor:load_continents(self._continent_definitions)
 	end
 end
 
@@ -156,7 +156,7 @@ function WorldDefinition:delete_unit(unit)
 			for k, static in pairs(continent.statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
 					table.remove(continent.statics, k)
-					_G.BeardLibEditor:log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
+					managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
 
 					return
 				end

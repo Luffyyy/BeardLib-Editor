@@ -67,17 +67,6 @@ end
 function MissionManager:execute_element(element)
 	self._scripts["default"]:execute_element(element)
 end
-function MissionManager:save_mission_file(mission, type, path)
-	local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._missions[mission], type)	 
-	local mission_file = io.open(path .. "/" .. mission .. "_mission" .. "." .. type, "w+")
-	_G.BeardLib:log("Saving mission: " .. mission .. " as a " .. type .. " in " .. path)
-	if mission_file then
-		mission_file:write(new_data)
-		mission_file:close()	
-	else
-		_G.BeardLib:log("Failed to save mission: " .. mission .. " path: " .. path)
-	end		 
-end
 function MissionManager:get_executors_of_element(element)
 	local executors = {}
 	if element then
@@ -268,5 +257,5 @@ function MissionScript:_debug_draw(t, dt)
 end
 
 function MissionScript:debug_output(debug, color)
-	_G.BeardLibEditor.managers.MapEditor.managers.Console:LogMission(debug)
+	managers.editor.managers.Console:LogMission(debug)
 end
