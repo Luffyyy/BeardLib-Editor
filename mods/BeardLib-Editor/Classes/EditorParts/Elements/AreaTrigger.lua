@@ -1,10 +1,6 @@
 core:import("CoreShapeManager")
 EditorAreaTrigger = EditorAreaTrigger or class(MissionScriptEditor)
 
-function EditorAreaTrigger:init(element)
-	self.super.init(self, element)
-end
- 
 function EditorAreaTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementAreaTrigger"
@@ -24,13 +20,49 @@ function EditorAreaTrigger:create_element()
 	self._element.values.rules_element_ids = nil
 	self._element.values.unit_ids = nil	
 end
+
+function EditorAreaTrigger:set_shape_property(menu, item)	
+	self:set_element_data(item.name, menu, item)
+	self._shape:set_property(item.name, item.value)
+	self._cylinder_shape:set_property(item.name, item.value)
+end
+
+function EditorAreaTrigger:create_shapes()
+	self._shape = CoreShapeManager.ShapeBoxMiddle:new({position = self._element.values.position, rotation = self._element.values.rotation, width = self._element.values.width, depth = self._element.values.depth, height = self._element.values.height})
+	self._cylinder_shape = CoreShapeManager.ShapeCylinderMiddle:new({position = self._element.values.position, rotation = self._element.values.rotation, radius = self._element.values.radius, height = self._element.values.height})	
+end
+
 function EditorAreaTrigger:_add_unit_id(id)
 	table.insert(self._element.values.unit_ids, id)
 	if self._instigator_ctrlr then
 		self._instigator_ctrlr:set_enabled(not self._element.values.unit_ids)
 	end
 end
-
+function EditorAreaTrigger:get_shape()
+	if not self._shape then
+		self:create_shapes()
+	end
+	return self._element.values.shape_type == "box" and self._shape or self._element.values.shape_type == "cylinder" and self._cylinder_shape
+end
+function EditorAreaTrigger:update(t, dt, selected_unit, all_units)
+	if not self._element.values.use_shape_element_ids then
+		local shape = self:get_shape()
+		if shape then
+			shape:draw(t, dt, 1, 1, 1)
+		end
+	else
+		--self:_check_removed_units(all_units)
+		for _,id in ipairs(self._element.values.use_shape_element_ids) do
+			local unit = all_units[id]
+			local shape = unit:mission_element():get_shape()
+			shape:draw(t, dt, 0.85, 0.85, 0.85)
+		end
+	end
+	self._shape:set_position(self._element.values.position)
+	self._cylinder_shape:set_position(self._element.values.position)	
+	self._shape:set_rotation(self._element.values.rotation)
+	self._cylinder_shape:set_rotation(self._element.values.rotation)
+end
 function EditorAreaTrigger:_remove_unit_id(id)
 	table.delete(self._element.values.unit_ids, id)
 	self._element.values.unit_ids = #self._element.values.unit_ids > 0 and self._element.values.unit_ids or nil
@@ -73,16 +105,17 @@ end
 function EditorAreaTrigger:_build_panel(disable_params)
 	self:_create_panel()
 	self:create_values_ctrlrs(disable_params)
+ 	
 	local shape_type = self:_build_value_combobox("shape_type", {"box", "cylinder"}, "Select shape for area")
 	self._shape_type_params = shape_type
 
-	local width = self:_build_value_number("width", {min = 0}, "Set the width for the shape")
+	local width = self:_build_value_slider("width", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the width for the shape")
 	self._width_params = width
-	local depth = self:_build_value_number("depth", {min = 0}, "Set the depth for the shape")
+	local depth = self:_build_value_slider("depth", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the depth for the shape")
 	self._depth_params = depth
-	local height = self:_build_value_number("height", {min = 0}, "Set the height for the shape")
+	local height = self:_build_value_slider("height", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the height for the shape")
 	self._height_params = height
-	local radius = self:_build_value_number("radius", {min = 0}, "Set the radius for the shape")
+	local radius = self:_build_value_slider("radius", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the radius for the shape")
 	self._radius_params = radius
 	self:_set_shape_type()
 end
@@ -94,12 +127,16 @@ end
 AreaOperatorElement = AreaOperatorElement or class(MissionScriptEditor)
 AreaOperatorElement.SAVE_UNIT_POSITION = false
 AreaOperatorElement.SAVE_UNIT_ROTATION = false
-function AreaOperatorElement:init(...)
-	AreaOperatorElement.super.init(self, ...)
-end
-
 function AreaOperatorElement:init(unit)
-	CoreAreaOperatorElement.super.init(self, unit)
+	self.super.init(self, unit)
+	self._apply_on_checkboxes = {"interval", "use_disabled_shapes"}
+	for _,uses in ipairs(self._apply_on_checkboxes) do
+		self._element.values["apply_on_" .. uses] = false
+		table.insert(self._save_values, "apply_on_" .. uses)
+	end
+end
+function AreaOperatorElement:create_element()
+	self.super.create_element(self)
 	self._element.class = "ElementAreaOperator"
 	self._element.values.elements = {}
 	self._element.values.interval = 0.1
@@ -107,24 +144,13 @@ function AreaOperatorElement:init(unit)
 	self._element.values.instigator = managers.mission:default_area_instigator()
 	self._element.values.amount = "1"
 	self._element.values.use_disabled_shapes = false
-	self._element.values.operation = "none"
-	self._apply_on_checkboxes = {"interval", "use_disabled_shapes"}
-	for _,uses in ipairs(self._apply_on_checkboxes) do
-		self._element.values["apply_on_" .. uses] = false
-		table.insert(self._save_values, "apply_on_" .. uses)
-	end
+	self._element.values.operation = "none"	
 end
-
-function AreaOperatorElement:add_element()
-
-end
-
 function AreaOperatorElement:_build_panel()
 	self:_create_panel()
 	local exact_names = {"core/units/mission_elements/trigger_area/trigger_area"}
 	self:_build_add_remove_unit_from_list(self._element.values.elements, nil, exact_names)
 	EditorAreaTrigger.create_values_ctrlrs(self, {trigger_type = true, instigator = true, amount = true})
-	panel_sizer:add(EWS:StaticLine(panel, "", "LI_HORIZONTAL"), 0, 5, "EXPAND,TOP,BOTTOM")
 	self:_build_value_combobox("operation", {"none", "clear_inside"}, "Select an operation for the selected elements")
 	for _,uses in ipairs(self._apply_on_checkboxes) do
 		local name = "apply_on_" .. uses

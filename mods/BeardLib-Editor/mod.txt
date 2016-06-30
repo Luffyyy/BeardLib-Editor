@@ -5,20 +5,27 @@
 	"contact" : "simon@lastbullet.net",
 	"hooks" : [
 		{ "hook_id" : "core/lib/managers/viewport/environment/coreenvironmentmanager", "script_path" : "EditorCore.lua" },
-		{ "hook_id" : "core/lib/managers/viewport/corescriptviewport", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "core/lib/managers/viewport/corescriptviewport", "script_path" : "EditorCore.lua" },
+		{ "hook_id" : "core/lib/managers/coreshapemanager", "script_path" : "EditorCore.lua" },
 		{ "hook_id" : "core/lib/system/coresystem", "script_path" : "EditorCore.lua" },
         { "hook_id" : "lib/managers/navigationmanager", "script_path" : "EditorCore.lua"},      
         { "hook_id" : "lib/managers/navfieldbuilder", "script_path" : "EditorCore.lua"},		
-		{ "hook_id" : "lib/managers/menu/menuscenemanager", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "lib/managers/menumanager", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "lib/utils/game_state_machine/gamestatemachine", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "lib/managers/menu/menuscenemanager", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "lib/setups/gamesetup", "script_path" : "EditorCore.lua" },       
+        { "hook_id" : "lib/states/editorstate", "script_path" : "EditorCore.lua" },       
+        { "hook_id" : "lib/setups/levelloadingsetup", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "core/lib/setups/coresetup", "script_path" : "EditorCore.lua" },
 		{ "hook_id" : "core/lib/utils/dev/editor/coreworlddefinition", "script_path" : "EditorCore.lua"},
 		{ "hook_id" : "core/lib/managers/mission/coremissionmanager", "script_path" : "EditorCore.lua"}
 	],
-	"updates" : [
-		{
-			"revision" : 1,
-			"identifier" : "beardlib_editor"
-		}
-	],
+    "updates" : [
+        {
+            "revision" : 1,
+            "identifier" : "beardlib_editor"
+        }
+    ],
     "libraries" : [
         {
             "display_name" : "BeardLib",

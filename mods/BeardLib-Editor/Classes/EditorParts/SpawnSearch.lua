@@ -2,47 +2,93 @@ SpawnSearch = SpawnSearch or class()
 
 function SpawnSearch:init(parent, menu)
     self._parent = parent
-
+    self._tabs = menu:NewMenu({
+        name = "spawnsearch_tabs",
+        w = 200,
+        h = 16,
+        items_size = 14,
+        size_by_text = true,
+        row_max = 1,
+        visible = true,
+    })
     self._menu = menu:NewMenu({
         name = "find",
-        text = "Find",
-        help = "",
+        w = 200,
+        size_by_text = true,
+        visible = true,
     })
-
-    self:CreateItems()
-end
-
-function SpawnSearch:CreateItems()
-    self._menu:ClearItems()
-    self._menu:Button({
-        name = "units_browser_button",
-        text = "Add Unit..",
-        label = "main",
-        callback = callback(self, self, "browse")
-    })
-    self._menu:Button({
-        name = "elements_list_button",
-        text = "Add Mission Element..",
-        label = "main",
-        callback = callback(self, self, "show_elements_list")
-    })
-    self._menu:Button({
-        name = "all_mission_elements",
-        text = "Mission Elements",
-        label = "main",
-        callback = callback(self, self, "load_all_mission_elements")
-    })
-    self._menu:Button({
-        name = "all_units",
+    self._menu:SetSize(200, 250)
+    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())
+    self._menu:Panel():set_world_right(self._menu:Panel():parent():world_right())
+    self._tabs:Panel():set_leftbottom(self._menu:Panel():lefttop())
+    self._tabs:ContextMenu({
+        name = "units",
         text = "Units",
         label = "main",
-        callback = callback(self, self, "load_all_units")
+        items = {
+            {text = "New", callback = callback(self, self, "browse")},
+            {text = "Select", callback = callback(self, self, "load_all_units")}
+        }
     })
+    self._tabs:ContextMenu({
+        name = "mission_elements",
+        text = "Mission elements",
+        label = "main",
+        items = {
+            {text = "New", callback = callback(self, self, "show_elements_list")},
+            {text = "Select", callback = callback(self, self, "load_all_mission_elements")}
+        }
+    })
+    self._tabs:Button({
+        name = "prefabs",
+        text = "Prefabs",
+        label = "main",
+        callback = callback(self, self, "load_prefabs")
+    })
+    self:browse()
 end
 
 
+function SpawnSearch:load_prefabs()
+    self:clear()
+    for _, prefab in pairs(BeardLibEditor.Options._storage.Prefabs) do
+        if type(prefab) == "table" and type(prefab.value) == "table" then
+            self._menu:Button({
+                name = prefab.value.name,
+                text = prefab.value.name,
+                callback = callback(self, self, "spawn_prefab", prefab.value.units),
+                label = "select_buttons"
+            })
+        end
+    end
+end
+
+function SpawnSearch:spawn_prefab(prefab)
+    self._parent.managers.UnitEditor._selected_units = {}
+    for _, unit in pairs(prefab) do
+        self._parent:SpawnUnit(unit.name, nil, true)
+    end
+    local reference = self._parent.managers.UnitEditor._selected_units[1]
+    for k, unit in pairs(self._parent.managers.UnitEditor._selected_units) do
+        if unit ~= reference then
+            unit:unit_data().position = prefab[k].position
+            local pos = prefab[1].position
+            local rot = prefab[1].rotation
+            unit:unit_data().local_pos = prefab[k].position - pos 
+            unit:unit_data().local_rot = rot:inverse() * unit:rotation()
+        end
+    end
+    self._parent:set_unit_positions(reference:position())     
+end
+function SpawnSearch:clear()
+    self._menu:ClearItems("temp1")
+    self._menu:ClearItems("temp2")
+    self._menu:ClearItems("select_buttons")
+end
 function SpawnSearch:browse()
-    self._menu:ClearItems()
+    self._menu:ClearItems("temp1")
+    self._menu:ClearItems("select_buttons")
+    self._current_menu = nil
     self.current_dir = self.current_dir or ""
     local dir_split = string.split(self.current_dir, "/")
 
@@ -50,30 +96,33 @@ function SpawnSearch:browse()
     for _, part in pairs(dir_split) do
         dir_tbl = dir_tbl[part]
     end
-
-    BeardLibEditor:log(self.current_dir)
-    self._menu:Button({
-        name = "back_button",
-        text = "Back",
-        callback = callback(self, self, "CreateItems")
-    })
+    local show_not_loaded = self._menu:GetItem("show_not_loaded") or self._menu:Toggle({
+        name = "show_not_loaded",
+        text = "Show not loaded units",
+        value = false,
+        callback = callback(self, self, "browse"),
+        label = "temp2"
+    })    
+    show_not_loaded:SetCallback(callback(self, self, "browse"))
+    local search_btn = self._menu:GetItem("search_btn") or self._menu:Button({
+        name = "search_btn",
+        text = "Search",
+        callback = callback(self, self, "file_search"),
+        label = "temp2"
+    })        
     self._menu:Button({
         name = "uplevel_btn",
         text = "^ ( " .. (self.current_dir or self.custom_dir) .. " )",
         callback = callback(self, self, "folder_back"),
-    })
-    self._menu:Button({
-        name = "search_btn",
-        text = "Search",
-        callback = callback(self, self, "file_search"),
-    })    
+        label = "temp1"
+    })        
     for key, data in pairs(dir_tbl) do
         if tonumber(key) ~= nil then
-            if data.file_type == "unit" then
+            if data.file_type == "unit" and (PackageManager:has(Idstring("unit"), Idstring(data.path)) or show_not_loaded.value) then
                 self._menu:Button({
                     name = data.name,
                     text = data.name .. "." .. data.file_type,
-                    label = "temp",
+                    label = "temp1",
                     path = data.path,
                     color = PackageManager:has(Idstring("unit"), Idstring(data.path)) and Color.green or Color.red,
                     callback = callback(self, self, "file_click"),
@@ -83,20 +132,25 @@ function SpawnSearch:browse()
             self._menu:Button({
                 name = key,
                 text = key,
-                label = "temp",
+                label = "temp1",
                 callback = callback(self, self, "folder_click"),
             })
         end
     end
 end
 
+function SpawnSearch:refresh_search()
+    if self._current_menu then
+        self._current_menu()
+    end
+end
 
 function SpawnSearch:file_search(menu, item)
     self._is_searching = false
     managers.system_menu:show_keyboard_input({
         text = "",
         title = "Search:",
-        callback_func = callback(self, self, "search"),
+        callback_func = callback(self, self, "_search"),
     })
 end
 
@@ -111,23 +165,37 @@ function SpawnSearch:folder_back(menu, item)
         self:browse()
     end
 end
-function SpawnSearch:search(success, search)
+function SpawnSearch:_search(success, search)
     if not success then
         return
-    end
-    if not self._is_searching then
-        self._menu:ClearItems("temp")
-        self._is_searching = true
-    end
+    end    
+    self:search(search)
+end
+function SpawnSearch:search(search)
+    if not search or search == "" then
+        return
+    end    
+    self._current_menu = callback(self, self, "search", search)
+    self._menu:ClearItems("temp1")
+    self._is_searching = true
+    
+    self._menu:GetItem("show_not_loaded"):SetCallback(self._current_menu)
+
+    self._menu:Button({
+        name = "uplevel_btn",
+        text = "Back",
+        callback = callback(self, self, "folder_back"),
+        label = "temp1"
+    })
     for _, unit_path in pairs(BeardLibEditor.DBPaths["unit"]) do
         local split = string.split(unit_path, "/")
         local unit = split[#split]
-        if unit:match(search) then
+        if unit:match(search) and (PackageManager:has(Idstring("unit"), Idstring(unit_path)) or self._menu:GetItem("show_not_loaded").value) then
             self._menu:Button({
                 name = unit,
                 text = unit,   
                 path = unit_path,
-                label = "temp",
+                label = "temp1",
                 color = PackageManager:has(Idstring("unit"), Idstring(unit_path)) and Color.green or Color.red,
                 callback = callback(self, self, "file_click"),
             })
@@ -145,32 +213,29 @@ function SpawnSearch:folder_click(menu, item)
 end
 
 function SpawnSearch:load_all_mission_elements(menu, item)
-    menu:ClearItems("main")
-    menu:ClearItems("select_buttons")
+    self:clear()
+    self._current_menu = callback(self, self, "load_all_mission_elements", self._menu)
     local searchbox
     if not self._menu:GetItem("searchbox") then
-        menu:Button({
-            name = "back_button",
-            text = "Back",
-            callback = callback(self, self, "CreateItems")
-        })
-        searchbox = menu:TextBox({
+        searchbox = self._menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "load_all_mission_elements")
+            callback = callback(self, self, "load_all_mission_elements"),
+            label = "search"
         })
     else
         searchbox = self._menu:GetItem("searchbox")
     end
+    searchbox:SetCallback(callback(self, self, "load_all_mission_elements"))
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
                 for i, element in pairs(tbl.elements) do
                     --No limit = Slow scroll.
-                    if #menu._items < 200 then
+                    if #self._menu._items < 200 then
                         if (not searchbox.value or searchbox.value == "" or string.match(element.editor_name, searchbox.value) or string.match(element.id, searchbox.value)) or string.match(element.class, searchbox.value) then
                             local _element = managers.mission:get_mission_element(element.id)
-                            menu:Button({
+                            self._menu:Button({
                                 name = element.editor_name,
                                 text = element.editor_name .. " [" .. element.id .."]",
                                 label = "select_buttons",
@@ -185,26 +250,23 @@ function SpawnSearch:load_all_mission_elements(menu, item)
     end
 end
 function SpawnSearch:show_elements_list(menu, item)
-    menu:ClearItems("main")
-    menu:ClearItems("select_buttons")
+    self:clear()
+    self._current_menu = nil
     local searchbox
     if not self._menu:GetItem("searchbox") then
-        menu:Button({
-            name = "back_button",
-            text = "Back",
-            callback = callback(self, self, "CreateItems")
-        })
-        searchbox = menu:TextBox({
+        searchbox = self._menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "show_elements_list")
+            callback = callback(self, self, "show_elements_list"),
+            label = "search",
         })
     else
         searchbox = self._menu:GetItem("searchbox")
     end
-    for k, element in pairs(self._parent._mission_elements) do
+    searchbox:SetCallback(callback(self, self, "show_elements_list"))
+    for k, element in pairs(ElementEditor._mission_elements) do
         if (not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value)) then
-            menu:Button({
+            self._menu:Button({
                 name = element,
                 text = element,
                 label = "select_buttons",
@@ -214,27 +276,24 @@ function SpawnSearch:show_elements_list(menu, item)
     end
 end
 function SpawnSearch:load_all_units(menu, item)
-    menu:ClearItems("main")
-    menu:ClearItems("select_buttons")
+    self:clear()
+    self._current_menu = callback(self, self, "load_all_units", self._menu)
     local searchbox
     if not self._menu:GetItem("searchbox") then
-        menu:Button({
-            name = "back_button",
-            text = "Back",
-            callback = callback(self, self, "CreateItems")
-        })
-        searchbox = menu:TextBox({
+        searchbox = self._menu:TextBox({
             name = "searchbox",
             text = "Search what: ",
-            callback = callback(self, self, "load_all_units")
-        })
+            callback = callback(self, self, "load_all_units"),
+            label = "search"
+        })       
     else
         searchbox = self._menu:GetItem("searchbox")
     end
+    searchbox:SetCallback(callback(self, self, "load_all_units"))
     for k, unit in pairs(World:find_units_quick("all")) do
-        if #menu._items < 200 then
+        if #self._menu._items < 200 then
             if unit:unit_data() and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
-                menu:Button({
+                self._menu:Button({
                     name = unit:unit_data().name_id,
                     text = unit:unit_data().name_id .. " [" .. (unit:unit_data().unit_id or "") .."]",
                     label = "select_buttons",
@@ -251,7 +310,6 @@ function SpawnSearch:file_click(menu, item)
 		QuickMenu:new( "Warning", "Unit is not loaded, load it? (Might crash)",
 		{[1] = {text = "Yes", callback = function()
 			managers.dyn_resource:load(Idstring("unit"), Idstring(unit_path), DynamicResourceManager.DYN_RESOURCES_PACKAGE, false)
-			--self:browse(self._current_menu)
 			self._parent:SpawnUnit(unit_path)
   		end
   		},[2] = {text = "No", is_cancel_button = true}}, true)

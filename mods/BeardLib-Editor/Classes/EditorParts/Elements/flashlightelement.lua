@@ -12,7 +12,7 @@ end
 
 function EditorFlashlight:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "", "Flashlight state")
-	self:_build_value_checkbox("on_player", "", "Include player")
+	self:_build_value_checkbox("state", "", nil, "Flashlight state")
+	self:_build_value_checkbox("on_player", "", nil, "Include player")
 	self:add_help_text("Sets if flashlights should be turned on or off.")
 end

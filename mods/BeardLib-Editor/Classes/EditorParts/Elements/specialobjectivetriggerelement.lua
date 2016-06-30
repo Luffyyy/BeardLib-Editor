@@ -32,6 +32,6 @@ function EditorSpecialObjectiveTrigger:_build_panel()
 		"ElementSpecialObjective",
 		"ElementSpecialObjectiveGroup"
 	}
-	self:_build_add_remove_unit_from_list(self._element.values.elements, names)
+	self:_build_element_list(self._element.values.elements, names)
 	self:_build_value_combobox("event", self._options, "Select an event from the combobox")
 end

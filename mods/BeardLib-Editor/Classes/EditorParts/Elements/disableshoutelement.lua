@@ -11,6 +11,6 @@ end
 function EditorDisableShout:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementSpawnCivilian", "ElementSpawnEnemyDummy"})
-	self:_build_value_checkbox("disable_shout", "", "Disable shout")
+	self:_build_value_checkbox("disable_shout")
 end
  

@@ -12,7 +12,7 @@ end
 
 function EditorModifyPlayer:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("damage_fall_disabled", "Set player damage fall disabled", "Set player damage fall disabled")
-	self:_build_value_checkbox("invulnerable", "Player cannot be hurt", "Invulnerable")
+	self:_build_value_checkbox("damage_fall_disabled", "Set player damage fall disabled", nil, "Disabled damage fall")
+	self:_build_value_checkbox("invulnerable", "Player cannot be hurt")
 	self:_add_help_text("Modifies player properties. The changes are only applied to a player as instigator and cannot be used as a global state")
 end

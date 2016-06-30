@@ -1,2 +1,17 @@
 <mod name="BeardLib-Editor" global_key="BeardLibEditor">
+    <modules>
+        <OptionModule build_menu="false" auto_load="true">
+            <options>
+                <option_group name="Map">
+                    <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>
+                    <option type="boolean" default_value="false" name="EditorUnits"/>
+                    <option type="boolean" default_value="false" name="HighlightUnits"/>
+                    <option type="boolean" default_value="false" name="ShowElements"/>
+                </option_group>
+                <option_set name="Prefabs" not_pre_generated="true">
+                    <item_parameters />
+                </option_set>
+            </options>
+        </OptionModule>
+    </modules>
 </mod>
