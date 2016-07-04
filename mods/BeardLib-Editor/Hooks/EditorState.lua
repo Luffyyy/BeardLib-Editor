@@ -9,6 +9,7 @@ function EditorState:at_enter()
     local job_id = managers.job:current_job_id()
     tweak_data.narrative.jobs[job_id].contract_cost = {0,0,0,0,0}
     tweak_data.narrative.jobs[job_id].payout = {0,0,0,0,0}
+	tweak_data.narrative.jobs[job_id].contract_visuals = {}
     tweak_data.narrative.jobs[job_id].contract_visuals.min_mission_xp = {0,0,0,0,0}
     tweak_data.narrative.jobs[job_id].contract_visuals.max_mission_xp = {0,0,0,0,0}
 end

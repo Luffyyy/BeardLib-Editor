@@ -393,15 +393,15 @@ function GameOptions:save_missions(main_path)
             mission_data[mission_name] = { file=string.format("%s/%s", mission_name, mission_name) }
         end
 
-        local m_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "custom_xml")
+        local m_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "generic_xml")
         local m_file = BeardLib.Utils.Path.Combine(main_path, "mission.mission")
         local mission_file = io.open(m_file, "w+")
-        self._parent:Log("Saving continents file as custom_xml in %s", m_file)
+        self._parent:Log("Saving main missions file as generic_xml in %s", m_file)
         if mission_file then
             mission_file:write(m_data)
             mission_file:close()
         else
-            self._parent:Error("Failed to save continents file %s", m_file)
+            self._parent:Error("Failed to save missions file %s", m_file)
         end
     else
         self._parent:Error("Directory doesn't exists(Failed to create directory?)")
