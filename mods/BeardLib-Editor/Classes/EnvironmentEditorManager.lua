@@ -169,7 +169,7 @@ function EnvironmentEditorManager:MODIDEnteredCallback(success, value)
         }
         local fileName = self.current_filename
         local file = io.open(fileName, "w+")
-        file:write(json.custom_encode(JsonData))
+        file:write(json.custom_encode(JsonData, true))
         file:close()
     end
 end
