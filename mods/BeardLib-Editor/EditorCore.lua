@@ -1,5 +1,5 @@
 if not _G.BeardLibEditor then
-    _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml")
+    _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml", false, true)
 
     local self = BeardLibEditor
 
