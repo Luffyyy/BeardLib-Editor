@@ -121,7 +121,7 @@ function MissionManager:delete_executors_of_element(element)
 end
  
 function MissionManager:get_links( id )	
-	if id <= 0 then
+ 	if not tonumber(id) or tonumber(id) <= 0 then
 		return {}
 	end
 	local modifiers = {}

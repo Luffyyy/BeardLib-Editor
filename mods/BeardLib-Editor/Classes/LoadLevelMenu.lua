@@ -1,24 +1,26 @@
 LoadLevelMenu = LoadLevelMenu or class()
 function LoadLevelMenu:init()
 	self._main_menu = MenuUI:new({
-        alpha = 0.75,
         text_color = Color.white,
-        highlight_color = Color("33476a"),
-        background_color = Color(0.2, 0.2, 0.2),
+        marker_highlight_color = Color("33476a"),
 		create_items = callback(self, self, "create_items"),
 	})	
 end
 
 function LoadLevelMenu:create_items(menu)
 	self._menu = menu:NewMenu({
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.75,        
 		name = "LoadLevel",
         visible = true,
+        items_size = 20,
         position = "Center",
         w = 750,
 	})
 	self._menu:Button({
 		name = "close_button",
 		text = "Close",
+        w = 375,
 		callback = function()
 			menu:disable()
 		end
@@ -28,14 +30,15 @@ function LoadLevelMenu:create_items(menu)
 			local text_id = tweak_data.narrative:create_job_name(job_id)
 			self._menu:Button({
 				name = job_id,
+                w = 375,
 				text = string.pretty(text_id, true) .. "[" .. job_id .. "]",
 				callback = callback(self, self, "load_level", job_id)
 			})				
 		end
 	end	
     local i =  #self._menu.items
-    i = (i % 3 == 1) and i + 2 or (i % 3 == 2) and i + 1 or i
-    self._menu:SetMaxRow(math.max(1, i / 3))
+    i = (i % 2 == 1) and i + 1 or i
+    self._menu:SetMaxRow(math.max(1, i / 2))
 end
 
 function LoadLevelMenu:load_level(level_id)

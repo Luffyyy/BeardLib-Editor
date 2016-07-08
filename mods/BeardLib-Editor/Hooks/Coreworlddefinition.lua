@@ -7,6 +7,7 @@ function WorldDefinition:init(params)
 	PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
 	self:_load_world_package()
 	self._definition = self:_serialize_to_script(params.file_type, params.file_path)
+	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self._continent_definitions = {}
 	self._continents = {}
 	self._portal_slot_mask = World:make_slot_mask(1)
@@ -54,6 +55,32 @@ function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
 			end
 		end
 	end
+end
+function WorldDefinition:_create_portal(data, offset)
+	if not Application:editor() then
+		for _, portal in ipairs(data.portals) do
+			local t = {}
+			for _, point in ipairs(portal.points) do
+				table.insert(t, point.position + offset)
+			end
+			local top = portal.top
+			local bottom = portal.bottom
+			if top == 0 and bottom == 0 then
+				top, bottom = nil, nil
+			end
+			managers.portal:add_portal(t, bottom, top)
+		end
+	end
+	data.unit_groups._meta = nil
+	for name, data in pairs(data.unit_groups) do
+		local group = managers.portal:add_unit_group(name)
+		local shapes = data.shapes or data
+		for _, shape in ipairs(shapes) do
+			group:add_shape(shape)
+		end
+		group:set_ids(data.ids)
+	end
+	managers.editor.managers.WorldDataEditor:load_portals()
 end
 function WorldDefinition:insert_name_id(unit)
 	local name = unit:unit_data().name

@@ -124,6 +124,8 @@ function ElementEditor:init(parent, menu)
     self._parent = parent
     self._trigger_ids = {}
     self._menu = menu:NewMenu({
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,
         name = "selected_element",
         text = "Selected element",
         w = 250,

@@ -100,6 +100,20 @@ function NavigationManager:update(t, dt)
 	end
 	self:_commence_coarce_searches(t)
 end
+function NavigationManager:set_debug_draw_state(options)
+    local temp = {}
+    if type(options) == "table" then
+        for k, option in pairs(options) do
+            temp[k] = option.value 
+        end 
+        options = temp
+    end
+    if options and not self._draw_enabled then
+        self:_init_draw_data()
+        self._draw_data.start_t = TimerManager:game():time()
+    end
+    self._draw_enabled = options
+end
 function NavigationManager:build_complete_clbk(draw_options)
 	self:_refresh_data_from_builder()
 

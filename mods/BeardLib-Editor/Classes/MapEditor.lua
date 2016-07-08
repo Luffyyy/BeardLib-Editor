@@ -164,14 +164,12 @@ function MapEditor:screen_to_world(pos, dist)
 end
 function MapEditor:create_menu()
     self._menu = MenuUI:new({
-        alpha = 0.4,
         text_color = Color.white,
-        normal_color = Color("33476a"):with_alpha(0),
-        highlight_color = Color("33476a"),
-        background_color = Color(0.2, 0.2, 0.2),
-        mousepressed = callback(self, self, "mouse_pressed"),
-        mouserelease = callback(self, self, "mouse_released"),
-        mousemoved = callback(self, self, "mouse_moved"),
+        marker_color = Color("33476a"):with_alpha(0),
+        marker_highlight_color = Color("33476a"),
+        mouse_press = callback(self, self, "mouse_pressed"),
+        mouse_release = callback(self, self, "mouse_released"),
+        mouse_move = callback(self, self, "mouse_moved"),
         create_items = callback(self, self, "create_items"),
     })
 end
@@ -179,7 +177,8 @@ function MapEditor:create_items(menu)
 	self.managers.UnitEditor = UnitEditor:new(self, menu)
 	self.managers.ElementEditor = ElementEditor:new(self, menu)
 	self.managers.SpawnSearch = SpawnSearch:new(self, menu)
-	self.managers.GameOptions = GameOptions:new(self, menu)
+    self.managers.GameOptions = GameOptions:new(self, menu)
+	self.managers.WorldDataEditor = WorldDataEditor:new(self, menu)
     self.managers.UpperMenu = UpperMenu:new(self, menu)
     self.managers.Console = EditorConsole:new(self, menu)
 end
@@ -205,6 +204,9 @@ function MapEditor:mouse_released( button, x, y )
     self:reset_widget_values()
 end
 function MapEditor:mouse_pressed( button, x, y )
+    if self._menu:MouseInside() then
+        return
+    end
     if button == Idstring("0") then
         self.managers.UnitEditor:use_grab_info()
         if not self.managers.UnitEditor:select_widget() then
@@ -424,7 +426,7 @@ function MapEditor:update_widgets(t, dt)
     end
 end
 function MapEditor:update_camera(t, dt)
-	if self._menu._highlighted or not shift() then
+	if self._menu:MouseInside() or not shift() then
         managers.mouse_pointer._mouse:show()
         self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()
 		return

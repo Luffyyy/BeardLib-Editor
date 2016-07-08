@@ -6,6 +6,8 @@ function GameOptions:init(parent, menu)
     self._menu = menu:NewMenu({
         name = "game_options",
         text = "Game",
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,
         w = 250,
         help = "",
     })
@@ -96,31 +98,32 @@ function GameOptions:CreateItems()
         help = "",
         value = false,
     })
-    self._menu:Toggle({
-        name = "draw_nav_segments",
-        text = "Draw Nav segments",
-        help = "",
-        callback = callback(self, self, "draw_nav_segments"),
-        value = false,
-    })
-    self._menu:Table({
+    local items = { 
+        quads = false,
+        doors = false,
+        blockers = false,
+        vis_graph = false,
+        coarse_graph = false,
+        nav_links = false,
+        covers = false,
+    }
+    local group = self._menu:ItemsGroup({
         name = "draw_nav_segments_options",
-        text = "Draw:",
-        add = false,
-        remove = false,
-        help = "",
-        items = {
-            quads = true,
-            doors = true,
-            blockers = true,
-            vis_graph = true,
-            coarse_graph = true,
-            nav_links = true,
-            covers = true,
-        },
-        callback = callback(self, self, "draw_nav_segments"),
-        value = false,
-    })    
+        text = "Draw",
+        toggleable = false,
+        marker_color = self._menu.background_color / 1.2
+    })
+    self._draw_options = {}
+    for k, v in pairs(items) do
+        self._draw_options[k] = self._menu:Toggle({
+            name = k,
+            text = string.pretty(k, true),
+            value = v,
+            callback = callback(self, self, "draw_nav_segments"),
+            items_size = 12,
+            group = group,
+        })
+    end
     self._menu:Divider({
         name = "other",
         normal_color = self._menu.highlight_color,
@@ -261,7 +264,7 @@ end
 
 function GameOptions:draw_nav_segments( menu, item )
     if managers.navigation then
-        managers.navigation:set_debug_draw_state(menu:GetItem("draw_nav_segments").value and menu:GetItem("draw_nav_segments_options").items or false )
+        managers.navigation:set_debug_draw_state(self._draw_options)
     end
 end
 
@@ -334,16 +337,31 @@ function GameOptions:save()
     else
         os.execute("mkdir \"" .. path .. "\"")
     end
-
     local script_path = BeardLib.Utils.Path.Combine(path, "world")
     if not file.GetFiles(script_path) then
         os.execute("mkdir \"" .. script_path .. "\"")
     end
-
+    self:save_world(script_path)
     self:save_continents(script_path)
     self:save_missions(script_path)
 end
 
+function GameOptions:save_world(main_path)
+    if file.GetFiles( main_path ) then
+        local w_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.worlddefinition._world_data, "generic_xml")
+        local w_file = BeardLib.Utils.Path.Combine(main_path, "world.world")     
+        local world_file = io.open(w_file, "w+")
+        self._parent:Log("Saving world file as generic_xml in %s", w_file)
+        if world_file then
+            world_file:write(w_data)
+            world_file:close()
+        else
+            self._parent:Error("Failed to save world file %s", c_file)
+        end
+    else
+        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
+    end
+end
 function GameOptions:save_continents(main_path)
     local world_def = managers.worlddefinition
 
@@ -353,7 +371,7 @@ function GameOptions:save_continents(main_path)
             self:save_continent(continent_name, data, main_path)
             continents_data[continent_name] = { editor_only = continent_name == "editor_only", name=continent_name }
         end
-        local c_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents_data, "custom_xml")
+        local c_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents_data, "custom_xml")
         local c_file = BeardLib.Utils.Path.Combine(main_path, "continents.continents")
         local continents_file = io.open(c_file, "w+")
         self._parent:Log("Saving continents file as custom_xml in %s", c_file)
@@ -374,7 +392,7 @@ function GameOptions:save_continent(continent, data, path)
         os.execute("mkdir \"" .. sub_path .. "\"")
     end
 
-    local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml")
+    local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml")
     local continent_file = io.open(BeardLib.Utils.Path.Combine(sub_path, continent .. ".continent"), "w+")
     self._parent:Log("Saving continent: %s as a custom_xml in %s", continent, path)
     if continent_file then
@@ -393,7 +411,7 @@ function GameOptions:save_missions(main_path)
             mission_data[mission_name] = { file=string.format("%s/%s", mission_name, mission_name) }
         end
 
-        local m_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "generic_xml")
+        local m_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "generic_xml")
         local m_file = BeardLib.Utils.Path.Combine(main_path, "mission.mission")
         local mission_file = io.open(m_file, "w+")
         self._parent:Log("Saving main missions file as generic_xml in %s", m_file)
@@ -414,7 +432,7 @@ function GameOptions:save_mission_file(mission, data, path)
         os.execute("mkdir \"" .. sub_path .. "\"")
     end
 
-    local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "generic_xml")
+    local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "generic_xml")
     local mission_file = io.open(sub_path .. "/" .. mission .. ".mission", "w+")
     self._parent:Log("Saving mission: " .. mission .. " as a generic_xml in " .. path)
     if mission_file then
@@ -463,7 +481,7 @@ function GameOptions:save_cover_data()
             table.insert(covers.rotations, math.round(rot:yaw()))
         end
         local file = io.open(path .. "/cover_data.cover_data", "w+")
-        local new_data = _G.BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml")
+        local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml")
         file:write(new_data)
         file:close()
     else

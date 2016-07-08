@@ -4,8 +4,11 @@ function SpawnSearch:init(parent, menu)
     self._parent = parent
     self._tabs = menu:NewMenu({
         name = "spawnsearch_tabs",
-        w = 200,
-        h = 16,
+        w = 220,
+        h = 20,
+        padding = 0,
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,
         items_size = 14,
         size_by_text = true,
         row_max = 1,
@@ -13,11 +16,12 @@ function SpawnSearch:init(parent, menu)
     })
     self._menu = menu:NewMenu({
         name = "find",
-        w = 200,
-        size_by_text = true,
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,
+        w = 220,
+        h = 250,
         visible = true,
     })
-    self._menu:SetSize(200, 250)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())
     self._menu:Panel():set_world_right(self._menu:Panel():parent():world_right())
     self._tabs:Panel():set_leftbottom(self._menu:Panel():lefttop())
@@ -88,6 +92,7 @@ end
 function SpawnSearch:browse()
     self._menu:ClearItems("temp1")
     self._menu:ClearItems("select_buttons")
+    self._menu:ClearItems("search")
     self._current_menu = nil
     self.current_dir = self.current_dir or ""
     local dir_split = string.split(self.current_dir, "/")
@@ -150,7 +155,7 @@ function SpawnSearch:file_search(menu, item)
     managers.system_menu:show_keyboard_input({
         text = "",
         title = "Search:",
-        callback_func = callback(self, self, "_search"),
+        callback_func = callback(self, SpawnSearch, "_search"),
     })
 end
 

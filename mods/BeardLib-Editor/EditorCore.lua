@@ -18,6 +18,7 @@ if not _G.BeardLibEditor then
         "EditorParts/SpawnSearch.lua",
         "EditorParts/UpperMenu.lua",
         "EditorParts/EditorConsole.lua",
+        "EditorParts/WorldDataEditor.lua",
         "EnvironmentEditorManager.lua",
         "EnvironmentEditorHandler.lua",
         "ScriptDataConverterManager.lua",

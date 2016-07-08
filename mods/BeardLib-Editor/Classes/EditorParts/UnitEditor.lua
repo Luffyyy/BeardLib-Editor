@@ -6,6 +6,8 @@ function UnitEditor:init(parent, menu)
     self._menu = menu:NewMenu({
         name = "selected_unit",
         text = "Selected Unit",
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,        
         visible = true,
         w = 250,
         help = "",

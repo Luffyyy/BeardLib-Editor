@@ -3,15 +3,20 @@ function EditorConsole:init(parent, menu)
     self._parent = parent
     self._options_menu = menu:NewMenu({
         name = "console_options",
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,        
         w = 600,
-        h = 16,
+        h = 20,
+        padding = 0,
         size_by_text = true,
         row_max = 1,
         visible = true,
     })       
     self._menu = menu:NewMenu({
         name = "console_output",
-        position = "Center|Bottom",     
+        position = "Center|Bottom",    
+        background_color = Color(0.2, 0.2, 0.2),
+        background_alpha = 0.4,         
         override_size_limit = true,  
         size_by_text = true,
         w = 600,
@@ -56,7 +61,7 @@ function EditorConsole:init(parent, menu)
     })
 
     self:Clear()
-    self.closed = false
+    self:Toggle()
 end
 
 function EditorConsole:Log(msg, ...)
