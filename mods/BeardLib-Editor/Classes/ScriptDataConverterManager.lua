@@ -84,14 +84,14 @@ function ScriptDataConveterManager:GetTypeDataFrom(file, typ)
     elseif typ == "binary" then
         new_data = ScriptSerializer:from_binary(read_data)
     end
-    
+
     return new_data
 end
 
 function ScriptDataConveterManager:GetTypeDataTo(data, typ)
     local new_data
     if typ == "json" then
-        new_data = json.custom_encode(data)
+        new_data = json.custom_encode(data, true)
     elseif typ == "custom_xml" then
         new_data = ScriptSerializer:to_custom_xml(data)
     elseif typ == "generic_xml" then
