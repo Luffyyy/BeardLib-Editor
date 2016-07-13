@@ -26,7 +26,7 @@ ScriptDataConveterManager.script_data_paths = {
 }
 
 function ScriptDataConveterManager:init()
-    
+
     self:init_paths()
 end
 
@@ -34,15 +34,15 @@ function ScriptDataConveterManager:init_paths()
     table.insert(self.script_data_paths, {
         path = "C:/", name = "C Drive"
     })
-    
+
     table.insert(self.script_data_paths, {
         path = "D:/", name = "D Drive"
     })
-    
+
     table.insert(self.script_data_paths, {
         path = "E:/", name = "E Drive"
     })
-    
+
     table.insert(self.script_data_paths, {
         path = "F:/", name = "F Drive"
     })
@@ -60,18 +60,18 @@ function ScriptDataConveterManager:init_paths()
                 path_data.path = path_data.path .. "/"
             end
         end
-        
+
         if not path_data.assets then
             path_data.assets = false
         end
     end
-    
-    
+
+
 end
 
 function ScriptDataConveterManager:GetTypeDataFrom(file, typ)
     local read_data = file:read("*all")
-    
+
     local new_data
     if typ == "json" then
         new_data = json.custom_decode(read_data)
@@ -99,30 +99,30 @@ function ScriptDataConveterManager:GetTypeDataTo(data, typ)
     elseif typ == "binary" then
         new_data = ScriptSerializer:to_binary(data)
     end
-    
+
     return new_data
 end
 
 function ScriptDataConveterManager:ConvertFile(file, from_i, to_i, filename_dialog)
     local from_data = self.script_file_from_types[from_i]
     local to_data = self.script_file_to_types[to_i]
-    
+
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
-    
+
     local from_file = not self.assets and io.open(file, from_data.open_type or 'r') or nil
     if from_file == nil and not self.assets then
         BeardLibEditor:log("[Error] File not accessible")
         return
     end
-    
+
     local convert_data = self.assets and PackageManager:_script_data(file_split[2]:id(), file_split[1]:id()) or self:GetTypeDataFrom(from_file, from_data.name)
     if from_file then
         from_file:close()
     end
-    
+
     local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
-    
+
     if filename_dialog then
         --Use system_menu dialog
         managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
@@ -141,13 +141,13 @@ function ScriptDataConveterManager:SaveConvertedData(params, success, value)
     local new_data = self:GetTypeDataTo(params.convert_data, params.to_data.name)
     to_file:write(new_data)
     to_file:close()
-    
+
     self:RefreshFilesAndFolders()
 end
 
 function ScriptDataConveterManager:GetFilesAndFolders(current_path)
     local folders, files
-    
+
     if self.assets then
         local path_split = string.split(current_path, "/")
         local tbl = BeardLibEditor.DBEntries
@@ -158,10 +158,10 @@ function ScriptDataConveterManager:GetFilesAndFolders(current_path)
                 tbl = {}
             end
         end
-        
+
         folders = {}
         files = {}
-        
+
         for i, j in pairs(tbl) do
             if tonumber(i) ~= nil then
                 log(j.name)
@@ -174,20 +174,20 @@ function ScriptDataConveterManager:GetFilesAndFolders(current_path)
         folders = file.GetDirectories(current_path)
         files = file.GetFiles(current_path)
     end
-    
+
     return files or {}, folders or {}
 end
 
 function ScriptDataConveterManager:RefreshFilesAndFolders()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
-    
+
     local gui_class = managers.menu:active_menu().renderer
-    
+
     self.path_text = self.path_text or gui_class.safe_rect_panel:child("BeardLibEditorPathText") or gui_class.safe_rect_panel:text({
         name = "BeardLibEditorPathText",
         text = "",
-        font =  tweak_data.menu.pd2_medium_font, 
+        font =  tweak_data.menu.pd2_medium_font,
         font_size = 25,
         layer = 20,
         color = Color.yellow
@@ -197,7 +197,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
     local x, y, w, h = self.path_text:text_rect()
     self.path_text:set_size(w, h)
     self.path_text:set_position(0, 0)
-    
+
     MenuHelperPlus:AddButton({
         id = "BackToStart",
         title = "Back to Shortcuts",
@@ -205,7 +205,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
         node = node,
         localized = false
     })
-    
+
     if not self.assets then
         MenuHelperPlus:AddButton({
             id = "OpenFolderInExplorer",
@@ -215,11 +215,11 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
             localized = false
         })
     end
-    
+
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 1 or self.assets and #up_level > 0 then
         table.remove(up_level, #up_level)
-        
+
         local up_string = table.concat(up_level, "/")
         MenuHelperPlus:AddButton({
             id = "UpLevel",
@@ -232,15 +232,15 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
             }
         })
     end
-    
+
     MenuHelperPlus:AddDivider({
         id = "fileDivider",
         node = node,
         size = 15
     })
-    
+
     local files, folders = self:GetFilesAndFolders(self.current_script_path)
-    
+
     if folders then
         table.sort(folders)
         for i, folder in pairs(folders) do
@@ -259,7 +259,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
             })
         end
     end
-    
+
     if files then
         table.sort(files)
         for i, file in pairs(files) do
@@ -286,16 +286,16 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
             end
         end
     end
-    
+
     managers.menu:add_back_button(node)
-    
+
     BeardLib:RefreshCurrentNode()
 end
 
 function ScriptDataConveterManager:CreateScriptDataFileOption()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
-    
+
     MenuHelperPlus:AddButton({
         id = "BackToStart",
         title = "Back to Shortcuts",
@@ -303,7 +303,7 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
         node = node,
         localized = false
     })
-    
+
     MenuHelperPlus:AddButton({
         id = "Cancel",
         title = "Cancel",
@@ -314,15 +314,15 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
             base_path = self.current_script_path
         }
     })
-    
+
     MenuHelperPlus:AddDivider({
         id = "fileDivider",
         node = node,
         size = 15
     })
-    
+
     --log(self.current_selected_file_path)
-    
+
     if self.path_text then
         self.path_text:set_visible(true)
         self.path_text:set_text(self.current_selected_file_path)
@@ -330,7 +330,7 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
         self.path_text:set_size(w, h)
         self.path_text:set_position(0, 0)
     end
-    
+
     local file_parts = string.split(self.current_selected_file, "%.")
     local extension = file_parts[#file_parts]
     local selected_from = 1
@@ -340,27 +340,27 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
             break
         end
     end
-    
+
     MenuHelperPlus:AddMultipleChoice({
         id = "convertfrom",
         title = "from",
         node = node,
         value = selected_from,
-        items = BeardLib:GetSubValues(self.script_file_from_types, "name"),
+        items = BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"),
         localized = false,
         localized_items = false,
         enabled = not self.assets
     })
-    
+
     MenuHelperPlus:AddMultipleChoice({
         id = "convertto",
         title = "to",
         node = node,
-        items = BeardLib:GetSubValues(self.script_file_to_types, "name"),
+        items = BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"),
         localized = false,
         localized_items = false
     })
-    
+
     MenuHelperPlus:AddButton({
         id = "convert",
         title = "convert",
@@ -368,16 +368,16 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
         node = node,
         localized = false
     })
-    
+
     managers.menu:add_back_button(node)
-    
+
     BeardLib:RefreshCurrentNode()
 end
 
 function ScriptDataConveterManager:CreateRootItems()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
-    
+
     for i, path_data in pairs(self.script_data_paths) do
         MenuHelperPlus:AddButton({
             id = "BeardLibEditorPath" .. path_data.name,
@@ -391,7 +391,7 @@ function ScriptDataConveterManager:CreateRootItems()
             }
         })
     end
-    
+
     managers.menu:add_back_button(node)
 end
 
@@ -406,71 +406,71 @@ function ScriptDataConveterManager:BuildNode(main_node)
 
     MenuCallbackHandler.BeardLibEditorFolderClick = function(this, item)
         self.current_script_path = item._parameters.base_path or ""
-        
+
         if item._parameters.assets ~= nil then
             self.assets = item._parameters.assets
         end
-        
+
         self:RefreshFilesAndFolders()
     end
-    
+
     MenuCallbackHandler.BeardLibEditorFileClick = function(this, item)
         self.current_selected_file = item._parameters.text_id
         self.current_selected_file_path = item._parameters.base_path
-        
+
         self:CreateScriptDataFileOption()
     end
-    
+
     MenuCallbackHandler.BeardLibEditorScriptStart = function(this, item)
         local gui_class = managers.menu:active_menu().renderer:active_node_gui()
         local path_text = gui_class.safe_rect_panel:child("BeardLibEditorPathText")
-        
+
         if path_text then
             gui_class.safe_rect_panel:remove(path_text)
         end
-        
+
         local node = MenuHelperPlus:GetNode(nil, self.NodeName)
         node:clean_items()
-    
+
         self.current_script_path = ""
         self:CreateRootItems()
-        
+
         if self.path_text then
             self.path_text:set_visible(false)
         end
-        
+
         BeardLib:RefreshCurrentNode()
     end
-    
+
     MenuCallbackHandler.BeardLibEditorConvertClick = function(this, item)
         local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-        
+
         local convertfrom_item = node:item("convertfrom")
         local convertto_item = node:item("convertto")
-        
+
         if convertfrom_item and convertto_item then
             self:ConvertFile(self.current_selected_file_path, convertfrom_item:value(), convertto_item:value(), true)
         end
     end
-    
+
     MenuCallbackHandler.BeardLibEditorOpenInExplorer = function(this, item)
         local open_path = string.gsub(self.current_script_path, "%./", "")
         open_path = string.gsub(self.current_script_path, "/", "\\")
-        
+
         os.execute('start "" "' .. open_path .. '"')
     end
-    
+
     local node = MenuHelperPlus:NewNode(nil, {
         name = self.NodeName,
         back_callback = "BeardLibEditorScriptDataMenuBack"
     })
-        
+
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorScriptDataMenu",
         title = "BeardLibEditorScriptDataMenu_title",
         node = main_node,
         next_node = self.NodeName,
     })
-    
+
     self:CreateRootItems()
 end
