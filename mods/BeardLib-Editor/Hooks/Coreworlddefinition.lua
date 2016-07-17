@@ -1,3 +1,4 @@
+if Global.editor_mode then
 core:module("CoreWorldDefinition")
 WorldDefinition = WorldDefinition or class()
 function WorldDefinition:init(params)
@@ -27,13 +28,7 @@ function WorldDefinition:init(params)
 	self._use_unit_callbacks = {}
 	self._mission_element_units = {}
 	self._termination_counter = 0
-	if Global.editor_mode then
-		self:create("ai")
-	end
-end
-
-function WorldDefinition:editor()
-	return _G.BeardLibEditor.managers.MapEditor
+	self:create("ai")
 end
 function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
 	local continent_data = self._continent_definitions[old_continent]
@@ -56,31 +51,29 @@ function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
 		end
 	end
 end
-function WorldDefinition:_create_portal(data, offset)
-	if not Application:editor() then
-		for _, portal in ipairs(data.portals) do
-			local t = {}
-			for _, point in ipairs(portal.points) do
-				table.insert(t, point.position + offset)
-			end
-			local top = portal.top
-			local bottom = portal.bottom
-			if top == 0 and bottom == 0 then
-				top, bottom = nil, nil
-			end
-			managers.portal:add_portal(t, bottom, top)
-		end
+function WorldDefinition:_load_world_package()
+	if Application:editor() then
+		return
 	end
-	data.unit_groups._meta = nil
-	for name, data in pairs(data.unit_groups) do
-		local group = managers.portal:add_unit_group(name)
-		local shapes = data.shapes or data
-		for _, shape in ipairs(shapes) do
-			group:add_shape(shape)
-		end
-		group:set_ids(data.ids)
+	local package = self._world_dir .. "world"
+	if not DB:is_bundled() and not DB:has("package", package) then
+		log("No world.package file found in " .. self._world_dir .. ", please resave level")
+		return
 	end
-	managers.editor.managers.WorldDataEditor:load_portals()
+	if not PackageManager:loaded(package) then
+		PackageManager:load(package)
+		self._current_world_package = package
+	end
+	local package = self._world_dir .. "world_init"
+	if not DB:is_bundled() and not DB:has("package", package) then
+		log("No world_init.package file found in " .. self._world_dir .. ", please resave level")
+		return
+	end
+	if not PackageManager:loaded(package) then
+		PackageManager:load(package)
+		self._current_world_init_package = package
+	end
+	self:_load_sound_package()
 end
 function WorldDefinition:insert_name_id(unit)
 	local name = unit:unit_data().name
@@ -90,11 +83,11 @@ function WorldDefinition:insert_name_id(unit)
 end
 function WorldDefinition:set_up_name_id(unit)
 	if unit:unit_data().name_id ~= "none" then
-		unit:unit_data().name_id = self:get_name_id(unit)
-		self:set_unit(unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)
-	else
 		self:insert_name_id(unit)
-	end
+	else
+		unit:unit_data().name_id = self:get_name_id(unit)
+	end				
+	self:set_unit(unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)
 end
 function WorldDefinition:get_name_id(unit, name)
 	local u_name = unit:unit_data().name
@@ -156,7 +149,7 @@ function WorldDefinition:get_unit_number(name)
 	return i
 end
 function WorldDefinition:_continent_editor_only(data)
-	return not Global.editor_mode and data.editor_only 
+	return false
 end
 function WorldDefinition:init_done()
 	if self._continent_init_packages then
@@ -165,12 +158,7 @@ function WorldDefinition:init_done()
 		end
 	end
 	self:_unload_package(self._current_world_init_package)
-	if not Global.editor_mode then
-		self._continent_definitions = nil
-		self._definition = nil
-	else
-		managers.editor:load_continents(self._continent_definitions)
-	end
+	managers.editor:load_continents(self._continent_definitions)
 end
 
 function WorldDefinition:delete_unit(unit)
@@ -194,26 +182,21 @@ function WorldDefinition:delete_unit(unit)
 end
 
 function WorldDefinition:add_unit(unit, continent)
-	table.insert(self._continent_definitions[continent].statics, { unit_data = unit:unit_data()})
+	table.insert(self._continent_definitions[continent].statics, {unit_data = unit:unit_data()})
 end
 
 function WorldDefinition:_set_only_visible_in_editor(unit, data)
 	if unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor then
-		unit:set_visible(Global.editor_mode and _G.BeardLibEditor.Options:GetOption("Map/EditorUnits").value or false)
+		unit:set_visible(_G.BeardLibEditor.Options:GetOption("Map/EditorUnits").value)
 	end
 end
 function WorldDefinition:_setup_disable_on_ai_graph(unit, data)
 	if not data.disable_on_ai_graph then
 		return
 	end
-	if Global.editor_mode then
-		unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
-	end
+	unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
 end
 function WorldDefinition:_setup_editor_unit_data(unit, data)
-	if not Global.editor_mode then
-		return
-	end
 	unit:unit_data().name_id = data.name_id
 	unit:unit_data().name = data.name
 	unit:unit_data().continent = data.continent
@@ -273,9 +256,6 @@ function WorldDefinition:assign_unit_data(unit, data)
 	if unit:unit_data().helper_type and unit:unit_data().helper_type ~= "none" then
 		managers.helper_unit:add_unit(unit, unit:unit_data().helper_type)
 	end
-	if data.continent and is_editor then
-		--managers.editor:add_unit_to_continent(data.continent, unit)
-	end
 	self:_setup_lights(unit, data)
 	self:_setup_variations(unit, data)
 	self:_setup_editable_gui(unit, data)
@@ -293,7 +273,7 @@ function WorldDefinition:assign_unit_data(unit, data)
 end
 
 function WorldDefinition:_setup_unit_id(unit, data)
-	unit:unit_data().unit_id = data.unit_id
+	unit:unit_data().unit_id = tonumber(data.unit_id)
 	unit:set_editor_id(unit:unit_data().unit_id)
 	self._all_units[unit:unit_data().unit_id] = unit
 	self:use_me(unit, Application:editor())
@@ -310,4 +290,5 @@ function WorldDefinition:GetNewUnitID()
 	self._largest_id = self._largest_id + 1
 
 	return self._largest_id
+end
 end

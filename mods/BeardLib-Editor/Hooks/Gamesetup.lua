@@ -32,13 +32,8 @@ function GameSetup:init_finalize()
 	end
 end
 
-function GameSetup:destroy()
-	Setup.destroy(self)
-	BeardLibEditor.managers.MapEditor:destroy()
-	if script_data.level_script and script_data.level_script.destroy then
-		script_data.level_script:destroy()
+Hooks:PostHook(GameSetup, "destroy", "BeardLibEditorDestroy",function()
+	if BeardLibEditor.managers.MapEditor then
+		BeardLibEditor.managers.MapEditor:destroy()
 	end
-	managers.navigation:destroy()
-	managers.time_speed:destroy()
-	managers.network.account:set_playing(false)
-end
+end)

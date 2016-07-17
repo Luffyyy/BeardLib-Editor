@@ -4,12 +4,10 @@ function GameOptions:init(parent, menu)
     self._parent = parent
 
     self._menu = menu:NewMenu({
-        name = "game_options",
-        text = "Game",
+        name = "game_options_menu",
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,
         w = 250,
-        help = "",
     })
     self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())     
@@ -83,7 +81,7 @@ function GameOptions:CreateItems()
         name = "Map/ShowElements",
         text = "Show Elements",
         help = "",
-        value = BeardLibEditor.Options:GetOption("Map/EditorUnits").ShowElements,
+        value = BeardLibEditor.Options:GetOption("Map/ShowElements").value,
         callback = callback(self, self, "update_option_value"),
     })
     self._menu:Button({
@@ -237,7 +235,7 @@ function GameOptions:load_all_elements_classes(menu, item)
         })      
     end    
 
-    for _, element in pairs(self._parent._mission_elements) do
+    for _, element in pairs(self._parent.managers.ElementEditor._mission_elements) do
         if not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value) and not table.has(self._wanted_elements, element) then
             menu:Button({
                 name = element, 

@@ -146,7 +146,7 @@ end
 
 function SpawnSearch:refresh_search()
     if self._current_menu then
-        self._current_menu()
+        self._current_menu(self._menu)
     end
 end
 
@@ -155,7 +155,7 @@ function SpawnSearch:file_search(menu, item)
     managers.system_menu:show_keyboard_input({
         text = "",
         title = "Search:",
-        callback_func = callback(self, SpawnSearch, "_search"),
+        callback_func = callback(self, SpawnSearch, "_search", menu),
     })
 end
 
@@ -170,23 +170,25 @@ function SpawnSearch:folder_back(menu, item)
         self:browse()
     end
 end
-function SpawnSearch:_search(success, search)
+function SpawnSearch:_search(menu, success, search)
     if not success then
         return
     end    
-    self:search(search)
+    self:search(menu, search)
 end
-function SpawnSearch:search(search)
+function SpawnSearch:search(menu, search)
+    search = type(search) == "string" and search or self._last_search
     if not search or search == "" then
         return
-    end    
-    self._current_menu = callback(self, self, "search", search)
+    end     
+    self._last_search = search
+    self._current_menu = callback(self, self, "search", menu)
     self._menu:ClearItems("temp1")
     self._is_searching = true
     
-    self._menu:GetItem("show_not_loaded"):SetCallback(self._current_menu)
+    menu:GetItem("show_not_loaded"):SetCallback(self._current_menu)
 
-    self._menu:Button({
+    menu:Button({
         name = "uplevel_btn",
         text = "Back",
         callback = callback(self, self, "folder_back"),
@@ -195,8 +197,8 @@ function SpawnSearch:search(search)
     for _, unit_path in pairs(BeardLibEditor.DBPaths["unit"]) do
         local split = string.split(unit_path, "/")
         local unit = split[#split]
-        if unit:match(search) and (PackageManager:has(Idstring("unit"), Idstring(unit_path)) or self._menu:GetItem("show_not_loaded").value) then
-            self._menu:Button({
+        if unit:match(search) and (PackageManager:has(Idstring("unit"), Idstring(unit_path)) or menu:GetItem("show_not_loaded").value) then
+            menu:Button({
                 name = unit,
                 text = unit,   
                 path = unit_path,
@@ -299,8 +301,8 @@ function SpawnSearch:load_all_units(menu, item)
         if #self._menu._items < 200 then
             if unit:unit_data() and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
                 self._menu:Button({
-                    name = unit:unit_data().name_id,
-                    text = unit:unit_data().name_id .. " [" .. (unit:unit_data().unit_id or "") .."]",
+                    name = tostring(unit:unit_data().name_id),
+                    text = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
                     label = "select_buttons",
                     callback = callback(self._parent, self._parent, "_select_unit", unit)
                 })

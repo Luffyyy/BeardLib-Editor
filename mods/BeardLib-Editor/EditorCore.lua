@@ -204,16 +204,15 @@ if Hooks then
 
     Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function( menu_manager, nodes )
         --I'm going to leave this here, but I really don't like it being here
-        BeardLibEditor.managers.MapEditor = MapEditor:new()
+        if Global.editor_mode then
+            BeardLibEditor.managers.MapEditor = MapEditor:new()
+        end
         BeardLibEditor.managers.Dialog = MenuDialog:new()
         BeardLibEditor.managers.LoadLevel = LoadLevelMenu:new()
 
         local main_node = MenuHelperPlus:GetNode(nil, BeardLib.MainMenu)
-
         BeardLibEditor.managers.EnvironmentEditor:BuildNode(main_node)
-
         BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
-
         BeardLibEditor.managers.LoadLevel:BuildNode(main_node)
     end)
 

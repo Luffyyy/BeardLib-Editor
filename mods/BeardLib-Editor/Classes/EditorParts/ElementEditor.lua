@@ -123,34 +123,6 @@ function ElementEditor:init(parent, menu)
     end    
     self._parent = parent
     self._trigger_ids = {}
-    self._menu = menu:NewMenu({
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,
-        name = "selected_element",
-        text = "Selected element",
-        w = 250,
-        help = "",
-    })
-    self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
-    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom()) 
-    self:build_default_menu()
-end
-function ElementEditor:build_default_menu()
-    self._menu:ClearItems()
-    self._menu:Divider({
-        name = "no_element",
-        text = "No element selected",
-    })
-    self._menu:Button({
-        name = "select_exisiting",
-        text = "Select existing element",
-        callback = callback(self, self, "select_exisiting_elmenet")
-    })    
-    self._menu:Button({
-        name = "create_new",
-        text = "Create new element",
-        callback = callback(self, self, "create_new_elmenet")
-    })
 end
 function ElementEditor:select_exisiting_elmenet()
     self._parent.managers.SpawnSearch:load_all_mission_elements()
@@ -175,28 +147,33 @@ function ElementEditor:set_element(element, add)
     if element_editor_class then
         local new = element_editor_class:new(element.id and element or nil)    
         if add then 
-            new:add_to_mission()
+            self._parent:_select_unit(new:add_to_mission())
         end
         new:_build_panel()
-		self._parent.managers.UpperMenu:SwitchMenu(self._parent._menu:GetItem("selected_element"))
         self._current_script = new
-        self._parent._selected_element = new._element
+        if self._parent:selected_unit() then
+            local executors = managers.mission:get_links(self._parent:selected_unit().mission_element)        
+            local executors_group = new._elements_menu:ItemsGroup({
+                name = "links",
+                text = "links",
+            })
+            for _, element in pairs(executors) do
+                new._elements_menu:Button({
+                    name = element.editor_name,
+                    text = element.editor_name .. " [" .. (element.class or "") .."]",
+                    group = executors_group,
+                    callback = callback(self, self, "set_element", element)
+                })
+            end 
+        else
+            self._current_script = nil
+        end
+
     else
-        self._parent._selected_element = nil
+        if element and element.class then
+            BeardLibEditor:log("[ERROR] Element class %s has no editor class!", element.class)
+        end
     end
-    local executors = managers.mission:get_links(self._parent._selected_element.id)
-    local executors_group = self._menu:ItemsGroup({
-        name = "links",
-        text = "links",
-    })
-    for _, element in pairs(executors) do
-        self._menu:Button({
-            name = element.editor_name,
-            text = element.editor_name .. " [" .. (element.class or "") .."]",
-            group = executors_group,
-            callback = callback(self, self, "set_element", element)
-        })
-    end    
 end
 
 function ElementEditor:add_element(name)
@@ -204,7 +181,7 @@ function ElementEditor:add_element(name)
 end
  
 function ElementEditor:update(t, dt)
-    if self._parent._selected_element and self._current_script.update then
+    if self._parent:selected_unit() and self._parent:selected_unit().mission_element and self._current_script and self._current_script.update then
         self._current_script:update(t, dt)
     end   
 end

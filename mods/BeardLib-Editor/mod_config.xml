@@ -11,5 +11,12 @@
                 <item_parameters />
             </option_set>
         </options>
-    </Options>
+    </Options>    
+    <AddFiles directory="Assets">
+        <texture path="textures/editor_icons_df" force="true"/>
+        <unit path="units/mission_element/element" force="true"/>
+        <object path="units/mission_element/element" force="true"/>
+        <model path="units/mission_element/element" force="true"/>
+        <cooked_physics path="units/mission_element/element" force="true"/>
+    </AddFiles>
 </mod>

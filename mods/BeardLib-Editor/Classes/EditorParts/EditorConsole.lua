@@ -30,7 +30,7 @@ function EditorConsole:init(parent, menu)
         text = "Console ",
         w = w,
         color = Color.white,
-        callback = callback(self, self, "Toggle"),
+        callback = callback(self, self, "ToggleConsole"),
     })
     self._options_menu:Button({
         name ="cleat_button",
@@ -61,7 +61,7 @@ function EditorConsole:init(parent, menu)
     })
 
     self:Clear()
-    self:Toggle()
+    self:ToggleConsole()
 end
 
 function EditorConsole:Log(msg, ...)
@@ -97,7 +97,7 @@ function EditorConsole:Error(msg, ...)
     end
 end
 
-function EditorConsole:Toggle()    
+function EditorConsole:ToggleConsole()    
     self.closed = not self.closed
     if self.closed then
         self._options_menu:AnimatePosition("bottom")

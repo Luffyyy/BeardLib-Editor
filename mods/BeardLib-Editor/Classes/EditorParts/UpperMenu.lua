@@ -5,72 +5,31 @@ function UpperMenu:init(parent, menu)
         name = "upper_menu",
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,       
-        help = "",
         h = 42,
         w = 250,
         row_max = 1,
         visible = true,
     })        
-    self._menu:ImageButton({
-        name = "units",
-        texture = "core/textures/editor_icons_df",
-        texture_rect = {256, 262, 115, 115},
-        callback = callback(self, self, "SwitchMenu", menu:GetItem("selected_unit")),
-        w = 32,
-        h = 32,
-    })       
-    self._menu:ImageButton({
-        name = "mission_elements",
-        texture = "core/textures/editor_icons_df",
-        texture_rect = {383, 261, 115, 115},
-        callback = callback(self, self, "SwitchMenu", menu:GetItem("selected_element")),
-        w = 32,
-        h = 32,      
-    })  
-    self._menu:ImageButton({
-        name = "options",
-        texture = "core/textures/editor_icons_df",
-        texture_rect = {385, 385, 115, 115},
-        callback = callback(self, self, "SwitchMenu", menu:GetItem("game_options")),
-        w = 32,
-        h = 32,      
-    })            
-    self._menu:ImageButton({
-        name = "world",
-        texture = "core/textures/editor_icons_df",
-        texture_rect = {135, 271, 115, 115},
-        callback = callback(self, self, "SwitchMenu", menu:GetItem("world_settings")),
-        w = 32,
-        h = 32,      
-    })        
-    self._menu:ImageButton({
-        name = "save",
-        texture = "core/textures/editor_icons_df",
-        texture_rect = {260, 385, 115, 115},
-        callback = callback(self, self, "save"),
-        w = 32,
-        h = 32,      
-    })      
+    self:Tab("selected", "textures/editor_icons_df", {256, 262, 115, 115})
+    self:Tab("worlddata", "textures/editor_icons_df", {135, 271, 115, 115})
+    self:Tab("game_options", "textures/editor_icons_df", {385, 385, 115, 115})
+    self:Tab("save", "textures/editor_icons_df", {260, 385, 115, 115}, callback(self, self, "save"))
     if self._parent._has_fix then 
-        self._menu:ImageButton({
-            name = "move_widget_enable",
-            texture = "core/textures/editor_icons_df",
-            texture_rect = {9, 377, 115, 115},
-            callback = callback(self, self, "toggle_move_widget"),
-            w = 26,
-            h = 26,      
-        })       
-        self._menu:ImageButton({
-            name = "rotation_widget_enable",
-            texture = "core/textures/editor_icons_df",
-            texture_rect = {137, 383, 115, 115},
-            callback = callback(self, self, "toggle_rotation_widget"),
-            w = 26,
-            h = 26,      
-        })    
+        self:Tab("move_widget_enable", "textures/editor_icons_df", {9, 377, 115, 115}, callback(self, self, "toggle_move_widget"), 30, 30)
+        self:Tab("rotation_widget_enable", "textures/editor_icons_df", {137, 383, 115, 115}, callback(self, self, "toggle_rotation_widget"), 30, 30)   
     end
 end
 
+function UpperMenu:Tab(name, texture, texture_rect, clbk, w, h)
+    return self._menu:ImageButton({
+        name = name,
+        texture = texture,
+        texture_rect = texture_rect,
+        callback = clbk or callback(self, self, "SwitchMenu", self._menu.menu:GetItem(name .. "_menu")),
+        w = 36 or w,
+        h = 36 or h,      
+    })    
+end
 function UpperMenu:toggle_move_widget()
     self._parent._use_move_widget = not self._parent._use_move_widget
     self._parent:use_widgets()

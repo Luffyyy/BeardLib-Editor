@@ -4,6 +4,9 @@ function EditorState:init(game_state_machine)
 	GameState.init(self, "editor", game_state_machine)
 end
 function EditorState:at_enter()
+	if not Global.editor_mode then
+		return
+	end
 	BeardLibEditor.managers.MapEditor:enable()
     managers.achievment.award = function() end
     local job_id = managers.job:current_job_id()
@@ -14,5 +17,7 @@ function EditorState:at_enter()
     tweak_data.narrative.jobs[job_id].contract_visuals.max_mission_xp = {0,0,0,0,0}
 end
 function EditorState:at_exit()
-	BeardLibEditor.managers.MapEditor:disable()
+	if Global.editor_mode then
+		BeardLibEditor.managers.MapEditor:disable()
+	end
 end
