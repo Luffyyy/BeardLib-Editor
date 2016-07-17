@@ -51,30 +51,6 @@ function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
 		end
 	end
 end
-function WorldDefinition:_load_world_package()
-	if Application:editor() then
-		return
-	end
-	local package = self._world_dir .. "world"
-	if not DB:is_bundled() and not DB:has("package", package) then
-		log("No world.package file found in " .. self._world_dir .. ", please resave level")
-		return
-	end
-	if not PackageManager:loaded(package) then
-		PackageManager:load(package)
-		self._current_world_package = package
-	end
-	local package = self._world_dir .. "world_init"
-	if not DB:is_bundled() and not DB:has("package", package) then
-		log("No world_init.package file found in " .. self._world_dir .. ", please resave level")
-		return
-	end
-	if not PackageManager:loaded(package) then
-		PackageManager:load(package)
-		self._current_world_init_package = package
-	end
-	self:_load_sound_package()
-end
 function WorldDefinition:insert_name_id(unit)
 	local name = unit:unit_data().name
 	self._name_ids[name] = self._name_ids[name] or {}

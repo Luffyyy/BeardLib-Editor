@@ -223,9 +223,6 @@ function UnitEditor:update_positions(menu, item)
             self.position_x:SetStep(self._parent._grid_size)
             self.position_y:SetStep(self._parent._grid_size)
             self.position_z:SetStep(self._parent._grid_size)
-            self.rotation_yaw:SetStep(self._parent._snap_rotation)
-            self.rotation_pitch:SetStep(self._parent._snap_rotation)
-            self.rotation_roll:SetStep(self._parent._snap_rotation)           
         elseif unit:unit_data().mission_element and self._parent.managers.ElementEditor._current_script then
             self._parent.managers.ElementEditor._current_script:update_positions(unit:position(), unit:rotation())
         end      

@@ -122,10 +122,7 @@ function MissionScriptEditor:update_positions(pos, rot)
     if rot and rot_yaw then
         rot_yaw:SetValue(rot or 0, false, true)
         rot_pitch:SetValue(rot or 0, false, true)
-        rot_roll:SetValue(rot or 0, false, true) 
-	    rot_yaw:SetStep(self._editor._snap_rotation)
-	    rot_pitch:SetStep(self._editor._snap_rotation)
-	    rot_roll:SetStep(self._editor._snap_rotation)           
+        rot_roll:SetValue(rot or 0, false, true)           
     end          
 end
 function MissionScriptEditor:deselect_element()
