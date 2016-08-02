@@ -22,7 +22,9 @@ function WorldDefinition:init(params)
 	self:parse_continents()
 	managers.sequence:preload()
 	PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+	self._unit_ids = {}
 	self._all_units = {}
+	self._start_id = 100000
 	self._trigger_units = {}
 	self._name_ids = {}
 	self._use_unit_callbacks = {}
@@ -62,7 +64,7 @@ function WorldDefinition:set_up_name_id(unit)
 		self:insert_name_id(unit)
 	else
 		unit:unit_data().name_id = self:get_name_id(unit)
-	end				
+	end
 	self:set_unit(unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)
 end
 function WorldDefinition:get_name_id(unit, name)
@@ -227,8 +229,8 @@ function WorldDefinition:assign_unit_data(unit, data)
 		return
 	end
 	unit:unit_data().instance = data.instance
-	self:_setup_unit_id(unit, data)
 	self:_setup_editor_unit_data(unit, data)
+	self:_setup_unit_id(unit, data)
 	if unit:unit_data().helper_type and unit:unit_data().helper_type ~= "none" then
 		managers.helper_unit:add_unit(unit, unit:unit_data().helper_type)
 	end
@@ -252,19 +254,23 @@ function WorldDefinition:_setup_unit_id(unit, data)
 	unit:unit_data().unit_id = tonumber(data.unit_id)
 	unit:set_editor_id(unit:unit_data().unit_id)
 	self._all_units[unit:unit_data().unit_id] = unit
-	self:use_me(unit, Application:editor())
-
-	if data.unit_id then
-		self._largest_id = self._largest_id or 0
-		if data.unit_id > self._largest_id then
-			self._largest_id = data.unit_id
-		end
+	if data.continent then
+		self._unit_ids[data.continent] = self._unit_ids[data.continent] or {}
+		self._unit_ids[data.continent][unit:unit_data().unit_id] = true
+		self:use_me(unit, Application:editor())
 	end
 end
 
-function WorldDefinition:GetNewUnitID()
-	self._largest_id = self._largest_id + 1
-
-	return self._largest_id
+function WorldDefinition:GetNewUnitID(continent)
+	if continent and self._unit_ids[continent] then
+		local i = self._start_id
+		while self._unit_ids[continent][i] do
+			i = i + 1
+		end
+		self._unit_ids[continent][i] = true
+		return i
+	else
+		BeardLibEditor:log("[ERROR] continent needed for unit id")
+	end
 end
 end

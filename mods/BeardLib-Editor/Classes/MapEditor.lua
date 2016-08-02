@@ -4,7 +4,7 @@ function MapEditor:init()
     managers.editor = self
     self._grid_size = 1
     self._snap_rotation = 90
-    self._screen_borders = {x = 1280, y = 720}     
+    self._screen_borders = {x = 1280, y = 720}
 	self._camera_object = World:create_camera()
 	self._camera_object:set_far_range(250000)
 	self._camera_object:set_fov(75)
@@ -18,8 +18,8 @@ function MapEditor:init()
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
 	self.managers = {}
-    self:check_has_fix()    
-    self._use_move_widget = self._has_fix        
+    self:check_has_fix()
+    self._use_move_widget = self._has_fix
     self._widget_bodies = {
         ["@ID4f01cba97e94239b@"] = "x",
         ["@IDce15c901d9af3e30@"] = "y",
@@ -28,10 +28,10 @@ function MapEditor:init()
         ["@ID5dac81a18d09497c@"] = "xz",
         ["@ID0602a12dbeee9c14@"]= "yz"
     }
-    self:create_menu()     
-    Input:keyboard():add_trigger(Idstring("f10"), function()                
-        if self._closed then 
-            self._before_state = game_state_machine:current_state_name()               
+    self:create_menu()
+    Input:keyboard():add_trigger(Idstring("f10"), function()
+        if self._closed then
+            self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
         elseif managers.platform._current_presence == "Playing" then
             game_state_machine:change_state_by_name(self._before_state)
@@ -127,7 +127,7 @@ function MapEditor:check_has_fix()
     unit:set_slot(0)
 end
 function MapEditor:error_has_no_fix()
-    QuickMenu:new( "Error", "In order for this feature to work you need to install the pdmod given in the download page of the mod.", {{text = "ok", is_cancel_button = true}}, true)    
+    QuickMenu:new( "Error", "In order for this feature to work you need to install the pdmod given in the download page of the mod.", {{text = "ok", is_cancel_button = true}}, true)
 end
 function MapEditor:update_grid_size(menu, item)
     self._grid_size = tonumber(item.value)
@@ -170,7 +170,7 @@ function MapEditor:create_menu()
         create_items = callback(self, self, "create_items"),
     })
 end
-function MapEditor:create_items(menu)	
+function MapEditor:create_items(menu)
     local mangrs = {"ElementEditor", "UnitEditor", "SpawnSearch", "GameOptions", "WorldDataEditor", "UpperMenu", "EditorConsole"}
     for _, manager in pairs(mangrs) do
         local manager_class = rawget(_G, manager)
@@ -179,7 +179,7 @@ function MapEditor:create_items(menu)
         manager_class.ComboBox = self.ComboBox
         manager_class.TextBox = self.TextBox
         manager_class.Slider = self.Slider
-        manager_class.Toggle = self.Toggle  
+        manager_class.Toggle = self.Toggle
         self.managers[manager] = manager_class:new(self, menu)
     end
 end
@@ -213,13 +213,13 @@ function MapEditor:mouse_pressed( button, x, y )
         if not self.managers.UnitEditor:select_widget() then
             self.managers.UnitEditor:select_unit()
         end
-    elseif button == Idstring("1") then            
+    elseif button == Idstring("1") then
         self.managers.UnitEditor:select_unit(true)
         self._mouse_hold = true
     end
 end
 function MapEditor:_select_unit(unit, no_reset)
-    self.managers.UpperMenu:SwitchMenu(self._menu:GetItem("selected_menu"))    
+    self.managers.UpperMenu:SwitchMenu(self._menu:GetItem("selected_menu"))
     if no_reset ~= true then
         self.managers.UnitEditor._selected_units = {}
     end
@@ -229,7 +229,7 @@ end
 function MapEditor:_select_element(element, menu, item)
     for _, unit in pairs(World:find_units_quick("all")) do
         if unit:unit_data() and unit:unit_data().mission_element == element.id then
-            self:_select_unit(unit) 
+            self:_select_unit(unit)
         end
     end
     self.managers.ElementEditor:set_element(element)
@@ -250,11 +250,12 @@ function MapEditor:SpawnUnit( unit_path, unit_data, no_reset, respawn )
         data = unit_data
     else
         data = {
-            unit_id = managers.worlddefinition:GetNewUnitID(),
-            name = unit_path,     
+            unit_id = managers.worlddefinition:GetNewUnitID(unit_data and unit_data.continent or "world"),
+            name = unit_path,
+            mesh_variation = unit_data and unit_data.mesh_variation,
             position = unit_data and unit_data.position or cam:position() + cam:rotation():y(),
             rotation = unit_data and unit_data.rotation or Rotation(0,0,0),
-            continent = unit_data and unit_data.continent or "world",     
+            continent = unit_data and unit_data.continent or "world",
         }
     end
     local unit = managers.worlddefinition:make_unit(data, Vector3())
@@ -333,7 +334,7 @@ function MapEditor:paused_update(t, dt)
     self:update(t, dt)
 end
 function MapEditor:update(t, dt)
-    if self:enabled() then      
+    if self:enabled() then
         for _, manager in pairs(self.managers) do
             if manager.update then
                 manager:update(t, dt)
@@ -344,7 +345,7 @@ function MapEditor:update(t, dt)
     end
 end
 function MapEditor:set_unit_positions(pos)
-    local reference = self:selected_unit()    
+    local reference = self:selected_unit()
     self.managers.UnitEditor:set_position(reference, pos, reference:rotation())
     for _, unit in ipairs(self.managers.UnitEditor._selected_units) do
         if unit ~= reference then
@@ -352,8 +353,8 @@ function MapEditor:set_unit_positions(pos)
         end
     end
     if not (self._menu._highlighted and self._menu._highlighted.cantype) then
-        self.managers.UnitEditor:update_positions()  
-    end     
+        self.managers.UnitEditor:update_positions()
+    end
 end
 function MapEditor:set_unit_position(unit, pos)
     local new_pos = pos + unit:unit_data().local_pos
@@ -367,10 +368,10 @@ function MapEditor:set_unit_rotations(rot)
             self:set_unit_position(unit, reference:position())
             self.managers.UnitEditor:set_position(unit, unit:position(), rot * unit:unit_data().local_rot)
         end
-    end    
+    end
     if not (self._menu._highlighted and self._menu._highlighted.cantype) then
-        self.managers.UnitEditor:update_positions()  
-    end     
+        self.managers.UnitEditor:update_positions()
+    end
 end
 function MapEditor:load_continents(continents)
     local continent_items = {}
@@ -460,7 +461,7 @@ function MapEditor:Button(name, group, callback, text, help)
         help = help,
         group = group,
         callback = callback,
-    })    
+    })
 end
 function MapEditor:ComboBox(name, group, callback, items, value, text, help)
     return self._menu:ComboBox({
@@ -469,7 +470,7 @@ function MapEditor:ComboBox(name, group, callback, items, value, text, help)
         help = help,
         items = items,
         value = value,
-        group = group,    
+        group = group,
         callback = callback,
     })
 end
@@ -479,7 +480,7 @@ function MapEditor:TextBox(name, group, callback, value, text, help)
         text = text or string.pretty(name, true) .. ":",
         value = value,
         help = help,
-        group = group,        
+        group = group,
         callback = callback,
     })
 end
@@ -503,7 +504,7 @@ function MapEditor:Toggle(name, group, callback, value, text, help)
         value = value,
         help = help,
         value = value,
-        group = group,    
+        group = group,
         callback = callback,
     })
 end
