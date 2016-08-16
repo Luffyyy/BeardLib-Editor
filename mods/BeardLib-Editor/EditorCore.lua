@@ -10,37 +10,9 @@ if not _G.BeardLibEditor then
 
     self.DBPaths = {}
     self.DBEntries = {}
-
-    self.classes = {
-        "EditorParts/ElementEditor.lua",
-        "EditorParts/UnitEditor.lua",
-        "EditorParts/GameOptions.lua",
-        "EditorParts/SpawnSearch.lua",
-        "EditorParts/UpperMenu.lua",
-        "EditorParts/EditorConsole.lua",
-        "EditorParts/WorldDataEditor.lua",
-        "EnvironmentEditorManager.lua",
-        "EnvironmentEditorHandler.lua",
-        "ScriptDataConverterManager.lua",
-        "MapEditor.lua",
-        "LoadLevelMenu.lua",
-        "OptionCallbacks.lua"
-    }
-
-    self.hook_files = {
-        ["core/lib/managers/mission/coremissionmanager"] = "Coremissionmanager.lua",
-        ["core/lib/managers/coreshapemanager"] = "Coreshapemanager.lua",
-        ["core/lib/utils/dev/editor/coreworlddefinition"] = "Coreworlddefinition.lua",
-        ["lib/utils/game_state_machine/gamestatemachine"] = "Gamestatemachine.lua",
-        ["lib/setups/gamesetup"] = "Gamesetup.lua",
-        ["lib/states/editorstate"] = "EditorState.lua",
-        ["lib/managers/navigationmanager"] = "Navigationmanager.lua",
-        ["lib/managers/navfieldbuilder"] = "Navfieldbuilder.lua"
-    }
 end
 
 function BeardLibEditor:_init()
-    self:LoadClasses()
     self:init_modules()
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
@@ -50,13 +22,6 @@ function BeardLibEditor:_init()
 
     self:LoadHashlist()
 end
-
-function BeardLibEditor:LoadClasses()
-    for _, clss in pairs(self.classes) do
-        dofile(self.ClassDirectory .. clss)
-    end
-end
-
 function BeardLibEditor:LoadHashlist()        
     self:log("Loading Hashlist")
     local has_hashlist = DB:has("idstring_lookup", "idstring_lookup") 
@@ -119,14 +84,6 @@ function BeardLibEditor:LoadHashlist()
     end
     self:log("Hashlist Loaded[Method %s]", has_hashlist and "A" or "B")
 end
-
-if RequiredScript then
-    local requiredScript = RequiredScript:lower()
-    if BeardLibEditor.hook_files[requiredScript] then
-        dofile( BeardLibEditor.HooksDirectory .. BeardLibEditor.hook_files[requiredScript] )
-    end
-end
-
 function BeardLibEditor:update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
