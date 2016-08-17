@@ -151,25 +151,33 @@ end
 function EnvironmentEditorManager:FilenameEnteredCallback(success, value)
     if success then
         self.current_filename = value
-        managers.system_menu:show_keyboard_input({text = "GeneratedMod" .. self._active_environment, title = "Environment Mod ID", callback_func = callback(self, self, "MODIDEnteredCallback")})
-    end
-end
-
-function EnvironmentEditorManager:MODIDEnteredCallback(success, value)
-    if success then
         local handler = self:GetHandler(self._active_environment)
-        local JsonData = {
-            Environment = {
-                {
-                    file_key = self._active_environment,
-                    ParamMods = handler._current_data,
-                    ID = value
-                }
-            }
-        }
+        local data = handler:GetEditorValues()
         local fileName = self.current_filename
+        local write_data = {
+            _meta = "environment",
+            metadata = {_meta="metadata"},
+            data = {}
+        }
+        local add_param = function(_, value)
+            local param_split = string.split(value.path, "/")
+            local param_name = table.remove(param_split)
+            local cur_tbl = write_data.data
+            for _, tbl_name in pairs(param_split) do
+                cur_tbl[tbl_name] = cur_tbl[tbl_name] or {_meta = tbl_name}
+                cur_tbl = cur_tbl[tbl_name]
+            end
+            table.insert(cur_tbl, {
+                _meta="param",
+                key = param_name,
+                value = value.value
+            })
+        end
+        for i, val in pairs(data) do
+            add_param(i, val)
+        end
         local file = io.open(fileName, "w+")
-        file:write(json.custom_encode(JsonData, true))
+        file:write(ScriptSerializer:to_custom_xml(write_data))
         file:close()
     end
 end
