@@ -387,12 +387,14 @@ function MapEditor:update_widgets(t, dt)
                 if self._move_widget:enabled() then
                     local result_pos = self._move_widget:calculate(self:selected_unit(), widget_rot, widget_pos, widget_screen_pos)
                     self:set_unit_positions(result_pos)
+                    self.managers.UnitEditor:update_positions()
                 end
             end
             if self._using_rotate_widget then
                 if self._rotate_widget:enabled() then
                     local result_rot = self._rotate_widget:calculate(self:selected_unit(), widget_rot, widget_pos, widget_screen_pos)
                     self:set_unit_rotations(result_rot)
+                    self.managers.UnitEditor:update_positions()
                 end
             end
             if self._move_widget:enabled() then
