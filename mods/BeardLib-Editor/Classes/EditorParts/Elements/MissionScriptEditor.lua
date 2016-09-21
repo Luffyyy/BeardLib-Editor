@@ -289,7 +289,7 @@ function MissionScriptEditor:_build_value_text(value_name, tooltip, group, custo
 	return num
 end
 function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, group, custom_name)
-	local slider = self._elements_menu:Slider({
+	local slider = self._elements_menu:NumberBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
 	  	help = tooltip or "Set a number value",

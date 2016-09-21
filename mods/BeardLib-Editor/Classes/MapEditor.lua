@@ -179,6 +179,7 @@ function MapEditor:create_items(menu)
         manager_class.ComboBox = self.ComboBox
         manager_class.TextBox = self.TextBox
         manager_class.Slider = self.Slider
+        manager_class.NumberBox = self.NumberBox
         manager_class.Toggle = self.Toggle
         self.managers[manager] = manager_class:new(self, menu)
     end
@@ -352,9 +353,6 @@ function MapEditor:set_unit_positions(pos)
             self:set_unit_position(unit, pos)
         end
     end
-    if not (self._menu._highlighted and self._menu._highlighted.cantype) then
-        self.managers.UnitEditor:update_positions()
-    end
 end
 function MapEditor:set_unit_position(unit, pos)
     local new_pos = pos + unit:unit_data().local_pos
@@ -368,9 +366,6 @@ function MapEditor:set_unit_rotations(rot)
             self:set_unit_position(unit, reference:position())
             self.managers.UnitEditor:set_position(unit, unit:position(), rot * unit:unit_data().local_rot)
         end
-    end
-    if not (self._menu._highlighted and self._menu._highlighted.cantype) then
-        self.managers.UnitEditor:update_positions()
     end
 end
 function MapEditor:load_continents(continents)
@@ -486,6 +481,19 @@ function MapEditor:TextBox(name, group, callback, value, text, help)
 end
 function MapEditor:Slider(name, group, callback, options, value, text, help)
     return self._menu:Slider({
+        name = name,
+        text = text or string.pretty(name, true) .. ":",
+        value = value,
+        help = help,
+        min = options.min,
+        max = options.max,
+        floats = options.floats,
+        group = group,
+        callback = callback,
+    })
+end
+function MapEditor:NumberBox(name, group, callback, options, value, text, help)
+    return self._menu:NumberBox({
         name = name,
         text = text or string.pretty(name, true) .. ":",
         value = value,

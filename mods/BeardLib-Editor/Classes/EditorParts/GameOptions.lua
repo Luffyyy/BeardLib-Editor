@@ -7,7 +7,7 @@ function GameOptions:init(parent, menu)
         name = "game_options_menu",
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,
-        w = 250,
+        w = 300,
     })
     self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())     

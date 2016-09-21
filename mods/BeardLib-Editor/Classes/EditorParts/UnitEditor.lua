@@ -8,7 +8,7 @@ function UnitEditor:init(parent, menu)
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
         visible = true,
-        w = 250,
+        w = 300,
     })    
     self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom()) 
@@ -94,7 +94,7 @@ function UnitEditor:build_positions_items()
     local transform = self:Group("unit_transform")
     self._axis_controls = {"position_x", "position_y", "position_z", "rotation_yaw", "rotation_pitch", "rotation_roll"}
     for _, control in pairs(self._axis_controls) do
-        self[control] = self._menu:Slider({
+        self[control] = self._menu:NumberBox({
             name = control,
             text = string.pretty(control, true),
             step = self._parent.managers.GameOptions._menu:GetItem("grid_Size").value,
@@ -214,12 +214,13 @@ function UnitEditor:update_positions(menu, item)
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:unit_data().mission_element then
-            self.position_x:SetValue(unit:position().x or 0, false, true)
-            self.position_y:SetValue(unit:position().y or 0, false, true)
-            self.position_z:SetValue(unit:position().z or 0, false, true)
-            self.rotation_yaw:SetValue(unit:rotation():yaw() or 0, false, true)
-            self.rotation_pitch:SetValue(unit:rotation():pitch() or 0, false, true)
-            self.rotation_roll:SetValue(unit:rotation():roll() or 0, false, true) 
+            self.position_x:SetValue(unit:position().x or 10, false, true)
+            self.position_y:SetValue(unit:position().y or 10, false, true)
+            self.position_z:SetValue(unit:position().z or 10, false, true)
+            self.rotation_yaw:SetValue(unit:rotation():yaw() or 10, false, true)
+            self.rotation_pitch:SetValue(unit:rotation():pitch() or 10, false, true)
+            self.rotation_roll:SetValue(unit:rotation():roll() or 10, false, true) 
+            log(string.format("%.2f", Application:time()) .. " building rotation " .. string.format("%s, %s, %s", self.rotation_yaw.value, self.rotation_pitch.value, self.rotation_roll.value))
             self.position_x:SetStep(self._parent._grid_size)
             self.position_y:SetStep(self._parent._grid_size)
             self.position_z:SetStep(self._parent._grid_size)
@@ -231,6 +232,7 @@ function UnitEditor:update_positions(menu, item)
 end
 function UnitEditor:set_unit_data()
     local position = Vector3(self.position_x.value, self.position_y.value, self.position_z.value)
+    log(string.format("%.2f", Application:time()) .. " building rotation " .. string.format("%s, %s, %s", self.rotation_yaw.value, self.rotation_pitch.value, self.rotation_roll.value))
     local rotation = Rotation(self.rotation_yaw.value, self.rotation_pitch.value, self.rotation_roll.value)
 
     if #self._selected_units == 1 then
@@ -464,6 +466,7 @@ function UnitEditor:set_unit(reset)
         self._menu:GetItem("mesh_variation"):SetItems(mesh_variations)
         self._menu:GetItem("mesh_variation"):SetValue(table.get_key(mesh_variations, unit:unit_data().mesh_variation))
         self:update_positions()
+        self._selected = self._selected_units
         local continent_item = self._menu:GetItem("continent")
         continent_item:SetValue(table.get_key(continent_item.items, unit:unit_data().continent))
  

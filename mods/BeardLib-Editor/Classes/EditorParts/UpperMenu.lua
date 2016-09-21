@@ -6,7 +6,7 @@ function UpperMenu:init(parent, menu)
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,       
         h = 42,
-        w = 250,
+        w = 300,
         row_max = 1,
         visible = true,
     })        

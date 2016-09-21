@@ -6,7 +6,7 @@ function WorldDataEditor:init(parent, menu)
         name = "worlddata_menu",
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
-        w = 250,
+        w = 300,
         help = "",
     })     
     self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
@@ -31,11 +31,11 @@ function WorldDataEditor:build_portals_layer_menu()
     local portals = self:Group("portals")
     self._axis_controls = {"position_x", "position_y", "position_z", "rotation_yaw", "rotation_pitch", "rotation_roll"}
     for _, control in pairs(self._axis_controls) do
-        self[control] = self:Slider(control, nil, callback(self, self, "set_shape_position"), {floats = 0}, 0)
+        self[control] = self:NumberBox(control, nil, callback(self, self, "set_shape_position"), {floats = 0}, 0)
     end
     self._properties_controls = {"width", "height", "depth", "radius"}
     for _, control in pairs(self._properties_controls) do
-        self[control] = self:Slider(control, nil, callback(self, self, "set_shape"), {floats = 0}, 0)
+        self[control] = self:NumberBox(control, nil, callback(self, self, "set_shape"), {floats = 0}, 0)
     end
     local shapes = self:Group("shapes")
     local units = self:Group("units")
