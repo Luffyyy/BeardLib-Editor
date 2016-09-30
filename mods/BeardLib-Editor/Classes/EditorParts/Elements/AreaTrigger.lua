@@ -109,13 +109,13 @@ function EditorAreaTrigger:_build_panel(disable_params)
 	local shape_type = self:_build_value_combobox("shape_type", {"box", "cylinder"}, "Select shape for area")
 	self._shape_type_params = shape_type
 
-	local width = self:_build_value_slider("width", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the width for the shape")
+	local width = self:_build_value_number("width", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the width for the shape")
 	self._width_params = width
-	local depth = self:_build_value_slider("depth", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the depth for the shape")
+	local depth = self:_build_value_number("depth", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the depth for the shape")
 	self._depth_params = depth
-	local height = self:_build_value_slider("height", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the height for the shape")
+	local height = self:_build_value_number("height", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the height for the shape")
 	self._height_params = height
-	local radius = self:_build_value_slider("radius", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the radius for the shape")
+	local radius = self:_build_value_number("radius", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the radius for the shape")
 	self._radius_params = radius
 	self:_set_shape_type()
 end

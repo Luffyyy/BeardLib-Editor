@@ -12,8 +12,8 @@ function EditorPhysicsPush:update()
 end
 function EditorPhysicsPush:_build_panel(panel, panel_sizer)
 	self:_create_panel()
-	self:_build_value_slider("range", {min = 1, max = 10000}, "", "Range:")
-	self:_build_value_slider("physicspush_velocity", {min = 1, max = 5000}, "", "Velocity:")
-	self:_build_value_slider("physicspush_mass", {min = 1, max = 5000}, "", "Mass:")
+	self:_build_value_number("range", {min = 1, max = 10000}, "", "Range:")
+	self:_build_value_number("physicspush_velocity", {min = 1, max = 5000}, "", "Velocity:")
+	self:_build_value_number("physicspush_mass", {min = 1, max = 5000}, "", "Mass:")
 end
  

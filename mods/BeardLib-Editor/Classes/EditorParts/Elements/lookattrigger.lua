@@ -30,7 +30,7 @@ end
 function EditorLookAtTrigger:_build_panel()
 	self:_create_panel()
 	self:_build_value_number("interval", {min = 0.01}, "Set the check interval for the look at, in seconds")
-	self:_build_value_slider("sensitivity", {max = 0.999, min = 0.5})
+	self:_build_value_number("sensitivity", {max = 0.999, min = 0.5})
 	self:_build_value_number("distance", {min = 0}, "(Optional) Sets a distance to use with the check (in meters)")
 	self:_build_value_checkbox("in_front", "Only in front")
 	self:_add_help_text([[

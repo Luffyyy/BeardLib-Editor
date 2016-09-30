@@ -88,12 +88,12 @@ function MissionScriptEditor:_create_panel()
     local position = self._element.values.position
     local rotation = self._element.values.rotation
     rotation = type(rotation) == "number" and Rotation(0,0,0) or rotation
-	self:_build_value_slider("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
-	self:_build_value_slider("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
-	self:_build_value_slider("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)	
-	self:_build_value_slider("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
-	self:_build_value_slider("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
-	self:_build_value_slider("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
+	self:_build_value_number("position_x", {value = position and position.x or 0, callback = callback(self, self, "set_element_position")}, "The x position of the element", transform)
+	self:_build_value_number("position_y", {value = position and position.y or 0, callback = callback(self, self, "set_element_position")}, "The y position of the element", transform)
+	self:_build_value_number("position_z", {value = position and position.z or 0, callback = callback(self, self, "set_element_position")}, "The z position of the element", transform)	
+	self:_build_value_number("rotation_y", {value = rotation and rotation:yaw() or 0, callback = callback(self, self, "set_element_position")}, "The yaw rotation of the element", transform)
+	self:_build_value_number("rotation_p", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The pitch rotation of the element", transform)
+	self:_build_value_number("rotation_r", {value = rotation and rotation:pitch() or 0, callback = callback(self, self, "set_element_position")}, "The roll rotation of the element", transform)	
 	self:_build_value_checkbox("execute_on_startup", "should the element execute when game starts", other)
 	self:_build_value_number("trigger_times", {floats = 0, min = 0}, "Specifies how many time this element can be executed (0 mean unlimited times)", other)
 	local base_delay_ctrlr = self:_build_value_number("base_delay", {floats = 0, min = 0,}, "Specifies a base delay that is added to each on executed delay", other)
@@ -263,32 +263,6 @@ function MissionScriptEditor:_build_value_combobox(value_name, options, tooltip,
 	return combo
 end
 function MissionScriptEditor:_build_value_number(value_name, options, tooltip, group, custom_name)
-	local num = self._elements_menu:TextBox({
-		name = value_name,
-		text = string.pretty(custom_name or value_name, true) .. ":",
-	  	help = tooltip or "Set a number value",
-	  	value = options.value or self._element.values[value_name],
-	  	filter = "number",
-		min = options.min,
-		max = options.max,
-        floats = options.floats,
-        group = group or self._class_group,    
-	  	callback = options.callback or callback(self, self, "set_element_data"),
-	})
-	return num
-end
-function MissionScriptEditor:_build_value_text(value_name, tooltip, group, custom_name)
-	local num = self._elements_menu:TextBox({
-		name = value_name,
-		text = string.pretty(custom_name or value_name, true) .. ":",
-	  	help = tooltip,
-	  	value = self._element.values[value_name],
-        group = group or self._class_group,        
-	  	callback = callback(self, self, "set_element_data"),
-	})
-	return num
-end
-function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, group, custom_name)
 	local slider = self._elements_menu:NumberBox({
 		name = value_name,
 		text = string.pretty(custom_name or value_name, true) .. ":",
@@ -301,6 +275,17 @@ function MissionScriptEditor:_build_value_slider(value_name, options, tooltip, g
 	  	callback = options.callback or callback(self, self, "set_element_data"),
 	})
 	return slider
+end
+function MissionScriptEditor:_build_value_text(value_name, tooltip, group, custom_name)
+	local num = self._elements_menu:TextBox({
+		name = value_name,
+		text = string.pretty(custom_name or value_name, true) .. ":",
+	  	help = tooltip,
+	  	value = self._element.values[value_name],
+        group = group or self._class_group,        
+	  	callback = callback(self, self, "set_element_data"),
+	})
+	return num
 end
 function MissionScriptEditor:_build_value_checkbox(value_name, tooltip, group, custom_name)
 	local toggle = self._elements_menu:Toggle({

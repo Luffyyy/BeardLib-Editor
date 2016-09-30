@@ -69,7 +69,7 @@ function EditorMoveUnit:_build_panel()
     self:_build_value_checkbox("is_displacement")
     self:_build_value_checkbox("unit_position_as_start_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
-    self:_build_value_slider("end_position_x", {value = end_pos.x or 0, callback = callback(self, self, "set_element_position")})
-    self:_build_value_slider("end_position_y", {value = end_pos.y or 0, callback = callback(self, self, "set_element_position")})
-    self:_build_value_slider("end_position_z", {value = end_pos.z or 0, callback = callback(self, self, "set_element_position")})     
+    self:_build_value_number("end_position_x", {value = end_pos.x or 0, callback = callback(self, self, "set_element_position")})
+    self:_build_value_number("end_position_y", {value = end_pos.y or 0, callback = callback(self, self, "set_element_position")})
+    self:_build_value_number("end_position_z", {value = end_pos.z or 0, callback = callback(self, self, "set_element_position")})     
 end
