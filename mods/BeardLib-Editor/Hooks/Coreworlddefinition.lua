@@ -25,6 +25,7 @@ function WorldDefinition:init(params)
 	self._unit_ids = {}
 	self._all_units = {}
 	self._start_id = 100000
+	self._start_ids = {}
 	self._trigger_units = {}
 	self._name_ids = {}
 	self._use_unit_callbacks = {}
@@ -137,6 +138,11 @@ function WorldDefinition:init_done()
 	end
 	self:_unload_package(self._current_world_init_package)
 	managers.editor:load_continents(self._continent_definitions)
+	local i = 1 
+	for continent, _ in pairs(self._continent_definitions) do
+		self._start_ids[continent] = self._start_id * i
+		i = i + 1
+	end
 end
 
 function WorldDefinition:delete_unit(unit)
@@ -263,14 +269,14 @@ end
 
 function WorldDefinition:GetNewUnitID(continent)
 	if continent and self._unit_ids[continent] then
-		local i = self._start_id
+		local i = self._start_ids[continent] 
 		while self._unit_ids[continent][i] do
 			i = i + 1
 		end
 		self._unit_ids[continent][i] = true
 		return i
 	else
-		BeardLibEditor:log("[ERROR] continent needed for unit id")
+		_G.BeardLibEditor:log("[ERROR] continent needed for unit id")
 	end
 end
 end

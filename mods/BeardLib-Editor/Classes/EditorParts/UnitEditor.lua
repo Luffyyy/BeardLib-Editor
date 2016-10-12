@@ -17,8 +17,11 @@ function UnitEditor:init(parent, menu)
     self._selected_units = {}
     self._disabled_units = {}
     self:build_default_menu()
-
+    self._pen = Draw:pen(Color(0.15, 1, 1, 1))
+    self._brush = Draw:brush(Color(0.15, 1, 1, 1))
     self._trigger_ids = {}
+    self._nav_surfaces = {}
+    self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
 end
 
 function UnitEditor:enabled()
@@ -549,21 +552,25 @@ function UnitEditor:set_position(unit, position, rotation, offset)
     end
 end
 function UnitEditor:update(t, dt)
+    for _, unit in pairs(self._nav_surfaces) do 
+        Application:draw(unit, 0,0.8,1) 
+    end
     if managers.viewport:get_current_camera() then
-        local pen = Draw:pen(Color(0.15, 1, 1, 1))
         if #self._selected_units > 0 then
-            local brush = Draw:brush(Color(0.15, 1, 1, 1))
-            brush:set_font(Idstring("core/fonts/nice_editor_font"), 24)
-            brush:set_render_template(Idstring("OverlayVertexColorTextured"))
+            self._brush:set_font(Idstring("core/fonts/nice_editor_font"), 24)
+            self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
             for _, unit in ipairs(self._selected_units) do
                 if alive(unit) then
+                    if unit:name() == self._nav_surface then
+                        Application:draw(unit, 1,0.2,0)
+                    end
                     local num = unit:num_bodies()
                     for i = 0, num - 1 do
                         local body = unit:body(i)
                         if self._parent:_should_draw_body(body) then
-                            pen:set(Color(0, 0.5, 1))
-                            pen:body(body)
-                            brush:set_color(Color(0, 0.5, 1))
+                            self._pen:set(Color(0, 0.5, 1))
+                            self._pen:body(body)
+                            self._brush:set_color(Color(0, 0.5, 1))
                         end                            
                     end
                 end

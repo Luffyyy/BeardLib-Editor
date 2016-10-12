@@ -6,7 +6,7 @@ function SpawnSearch:init(parent, menu)
         name = "spawnsearch_tabs",
         w = 220,
         h = 20,
-        padding = 0,
+        offset = 0,
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,
         items_size = 14,

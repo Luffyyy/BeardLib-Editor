@@ -374,6 +374,11 @@ function MapEditor:load_continents(continents)
         table.insert(continent_items, continent_name)
     end
     self.managers.UnitEditor._continents = continent_items
+    for _, unit in pairs(managers.worlddefinition._all_units) do
+        if unit:name() == self.managers.UnitEditor._nav_surface then
+            table.insert(self.managers.UnitEditor._nav_surfaces, unit)
+        end
+    end
 end
 function MapEditor:update_widgets(t, dt)
     if not self._closed and alive(self:selected_unit()) then

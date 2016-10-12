@@ -7,7 +7,7 @@ function EditorConsole:init(parent, menu)
         background_alpha = 0.4,        
         w = 600,
         h = 20,
-        padding = 0,
+        offset = 0,
         size_by_text = true,
         row_max = 1,
         visible = true,
