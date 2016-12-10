@@ -41,9 +41,9 @@ function BeardLibEditor:LoadHashlist()
             file_type = typ
         })
     end
-    local types = clone(BeardLib.script_data_types)
+    local types = clone(BeardLib.config.script_data_types)
     table.insert(types, "unit")
-	if has_hashlist then 
+	if has_hashlist then
         local file = DB:open("idstring_lookup", "idstring_lookup")
         if file ~= nil then
             --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
@@ -167,7 +167,7 @@ if Hooks then
         BeardLibEditor.managers.Dialog = MenuDialog:new()
         BeardLibEditor.managers.LoadLevel = LoadLevelMenu:new()
 
-        local main_node = MenuHelperPlus:GetNode(nil, BeardLib.MainMenu)
+        local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
         BeardLibEditor.managers.EnvironmentEditor:BuildNode(main_node)
         BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
         BeardLibEditor.managers.LoadLevel:BuildNode(main_node)

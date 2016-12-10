@@ -269,7 +269,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
             if self.assets and not PackageManager:has(extension:id(), (self.current_script_path .. file_parts[1]):id()) then
                 colour = Color.red
             end
-            if table.contains(BeardLib.script_data_types, extension) or table.contains(BeardLib.script_data_formats, extension) then
+            if table.contains(BeardLib.config.script_data_types, extension) or table.contains(BeardLib.config.script_data_formats, extension) then
                 MenuHelperPlus:AddButton({
                     id = "BeardLibEditorPath" .. file,
                     title = file,

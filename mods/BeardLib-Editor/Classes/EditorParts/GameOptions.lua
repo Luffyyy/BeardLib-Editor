@@ -50,17 +50,17 @@ function GameOptions:CreateItems()
         min = 1,
         max = 180,
         callback = callback(self._parent, self._parent, "update_snap_rotation")
-    }) 
+    })
     self._menu:Divider({
         name = "map_options",
         normal_color = self._menu.highlight_color,
         size = 30,
         text = "Map",
-    })      
+    })
     self._menu:TextBox({
         name = "savepath",
         text = "Map save path: ",
-        value = BeardLib.MapsPath .. level,
+        value = BeardLib.config.maps_dir .. level,
         help = "",
     })
     self._menu:Toggle({
