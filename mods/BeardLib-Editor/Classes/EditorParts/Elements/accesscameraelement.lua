@@ -1,10 +1,5 @@
-EditorAccessCamera = EditorAccessCamera or class(MissionScriptEditor) --Needs full look.
-function EditorAccessCamera:init(element)
-	self.super.init(self, element)
-	--self:_add_text_options()
-	self._text_options = {"debug_none"}
-end
-
+EditorAccessCamera = EditorAccessCamera or class(MissionScriptEditor) --wip.
+EditorAccessCamera._text_options = {"debug_none"}
 function EditorAccessCamera:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementAccessCamera"
@@ -92,15 +87,11 @@ function EditorAccessCamera:_build_panel()
         help = "Decide what camera unit this element should handle",
         callback = callback(self, self, "show_all_units_dialog")
     })    	
-	self:_build_value_combobox("text_id", self._text_options, "Select a text id from the combobox")
-	self:_build_value_number("yaw_limit", {floats = 0, min = -1}, "Specify a yaw limit.")
-	self:_build_value_number("pitch_limit", {floats = 0, min = -1}, "Specify a pitch limit.")
+	self:ComboCtrl("text_id", self._text_options, {help = "Select a text id from the combobox"})
+	self:NumberCtrl("yaw_limit", {floats = 0, min = -1}, {help = "Specify a yaw limit."})
+	self:NumberCtrl("pitch_limit", {floats = 0, min = -1}, {help = "Specify a pitch limit."})
 end
 EditorAccessCameraOperator = EditorAccessCameraOperator or class(MissionScriptEditor)
-function EditorAccessCameraOperator:init(unit)
-	self.super.init(self, unit)
-end
-
 function EditorAccessCameraOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementAccessCameraOperator"
@@ -111,14 +102,11 @@ end
 function EditorAccessCameraOperator:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementAccessCamera", "ElementSecurityCamera"})
-	self:_build_value_combobox("operation", {"none", "destroy"}, "Select an operation for the selected elements")
-	self:_add_help_text("This element can modify point_access_camera element. Select elements to modify using insert and clicking on them.")
+	self:ComboCtrl("operation", {"none", "destroy"}, {help = "Select an operation for the selected elements"})
+	self:Text("This element can modify point_access_camera element. Select elements to modify using insert and clicking on them.")
 end
 
 EditorAccessCameraTrigger = EditorAccessCameraTrigger or class(MissionScriptEditor)
-function EditorAccessCameraTrigger:init(element)
-	self.super.init(self, element)
-end
 
 function EditorAccessCameraTrigger:create_element()
 	self.super.create_element(self)
@@ -130,10 +118,10 @@ end
 function EditorAccessCameraTrigger:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementAccessCamera", "ElementSecurityCamera"})
-	self:_build_value_combobox("trigger_type", {
+	self:ComboCtrl("trigger_type", {
 		"accessed",
 		"destroyed",
 		"alarm"
 	}, "Select a trigger type for the selected elements")
-	self:_add_help_text("This element is a trigger to point_access_camera element.")
+	self:Text("This element is a trigger to point_access_camera element.")
 end

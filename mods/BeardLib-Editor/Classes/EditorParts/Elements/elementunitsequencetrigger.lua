@@ -1,7 +1,4 @@
 EditorUnitSequenceTrigger = EditorUnitSequenceTrigger or class(MissionScriptEditor)
-EditorUnitSequenceTrigger.SAVE_UNIT_POSITION = false
-EditorUnitSequenceTrigger.SAVE_UNIT_ROTATION = false
-
 function EditorUnitSequenceTrigger:create_element()
     self.super.create_element(self)
 	self._element.class = "ElementUnitSequenceTrigger"
@@ -9,6 +6,7 @@ function EditorUnitSequenceTrigger:create_element()
 	self._element.values.trigger_times = 1
 	self._element.values.sequence_list = {}
 end
+
 function EditorUnitSequenceTrigger:select_unit_sequence_list(id, params) 
 	table.insert(self._selected_units, {
 		guis_id = #self._selected_units + 1,
@@ -17,17 +15,20 @@ function EditorUnitSequenceTrigger:select_unit_sequence_list(id, params)
 	}) 
 	self:load_all_units(params)
 end
+
 function EditorUnitSequenceTrigger:set_selected_sequence(menu, item)
 	local sequence_combo = self._elements_menu:GetItem("sequence")	
 	local sequence_list_unit = self._element.values.sequence_list[sequence_combo.value]
 	sequence_list_unit.sequence = item:SelectedItem()
 end
+
 function EditorUnitSequenceTrigger:apply_units(value_name)
 	self.super.apply_units(self, value_name)
 	self:update_selected_sequence()
 end
+
 function EditorUnitSequenceTrigger:add_selected_units(value_name)
-	for _, unit in pairs(self._editor.managers.UnitEditor._selected_units) do
+	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
 		if unit:unit_data() then
 			table.insert(self._element.values[value_name], {
 				guis_id = #self._element.values[value_name] + 1,
@@ -38,8 +39,9 @@ function EditorUnitSequenceTrigger:add_selected_units(value_name)
 	end
 	self:update_selected_sequence()
 end
+
 function EditorUnitSequenceTrigger:remove_selected_units(value_name)
-	for _, unit in pairs(self._editor.managers.UnitEditor._selected_units) do
+	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
 		if unit:unit_data() then
 			for k, sequence_unit in pairs(self._element.values[value_name]) do 
 				if sequence_unit.unit_id == unit:unit_data().unit_id then
@@ -50,6 +52,7 @@ function EditorUnitSequenceTrigger:remove_selected_units(value_name)
 	end
 	self:update_selected_sequence()
 end
+
 function EditorUnitSequenceTrigger:update_selected_sequence()
 	local combo_sequence_list = {}
 	local sequence_list = {}
@@ -80,6 +83,7 @@ function EditorUnitSequenceTrigger:update_selected_sequence()
 	end
 
 end
+
 function EditorUnitSequenceTrigger:_build_panel()
 	self:_create_panel()
 	self._elements_menu:ComboBox({

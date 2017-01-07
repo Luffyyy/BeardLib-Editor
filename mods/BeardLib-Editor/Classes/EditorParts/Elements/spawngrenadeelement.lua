@@ -6,6 +6,7 @@ function EditorSpawnGrenade:create_element()
 	self._element.values.spawn_dir = Vector3(0, 0, 1)
 	self._element.values.strength = 1
 end
+
 function EditorSpawnGrenade:test_element()
 	if self._element.values.grenade_type == "frag" then
 		ProjectileBase.throw_projectile(1, self._unit:position(), self._element.values.spawn_dir * self._element.values.strength)
@@ -35,9 +36,10 @@ function EditorSpawnGrenade:update(d, dt)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.spawn_dir * 35, 0.75, 0.75, 0.75, 0.075)
 	end
 end
+
 function EditorSpawnGrenade:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("grenade_type", table.map_keys(tweak_data.blackmarket.projectiles), "Select what type of grenade will be spawned.")
-	self:_build_value_number("strength", {floats = 1}, "Use this to add a strength to a physic push on the spawned grenade")
-	self:_add_help_text("Spawns a grenade.")
+	self:ComboCtrl("grenade_type", table.map_keys(tweak_data.blackmarket.projectiles), {help = "Select what type of grenade will be spawned."})
+	self:NumberCtrl("strength", {floats = 1, help = "Use this to add a strength to a physic push on the spawned grenade"})
+	self:Text("Spawns a grenade.")
 end

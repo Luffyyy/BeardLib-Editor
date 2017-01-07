@@ -1,8 +1,4 @@
 EditorLookAtTrigger = EditorLookAtTrigger or class(MissionScriptEditor)
-function EditorLookAtTrigger:init(unit)
-	EditorLookAtTrigger.super.init(self, unit)
-end
-
 function EditorLookAtTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementLookAtTrigger"
@@ -29,13 +25,13 @@ function EditorLookAtTrigger:update(t, dt)
 end
 function EditorLookAtTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("interval", {min = 0.01}, "Set the check interval for the look at, in seconds")
-	self:_build_value_number("sensitivity", {max = 0.999, min = 0.5})
-	self:_build_value_number("distance", {min = 0}, "(Optional) Sets a distance to use with the check (in meters)")
-	self:_build_value_checkbox("in_front", "Only in front")
-	self:_add_help_text([[
+	self:NumberCtrl("interval", {min = 0.01, help = "Set the check interval for the look at, in seconds"})
+	self:NumberCtrl("sensitivity", {max = 0.999, min = 0.5})
+	self:NumberCtrl("distance", {min = 0, help = "(Optional) Sets a distance to use with the check (in meters)"})
+	self:BooleanCtrl("in_front", {text = "Only in front"})
+	self:Text([[
 		Interval defines how offen the check should be done. Sensitivity defines how precise the look angle must be. A sensitivity of 0.999 means that you need to look almost directly at it, 0.5 means that you will get the trigger somewhere at the edge of the screen (might be outside or inside). 
 
-		Distance(in meters) can be used as a filter to the trigger (0 means no distance filtering)]]
-	)
+		Distance(in meters) can be used as a filter to the trigger (0 means no distance filtering)
+	]])
 end

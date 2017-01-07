@@ -1,7 +1,4 @@
 AiGlobalEventUnitElement = AiGlobalEventUnitElement or class(MissionScriptEditor)
-function AiGlobalEventUnitElement:init(unit)
-	AiGlobalEventUnitElement.super.init(self, unit)
-end
 function AiGlobalEventUnitElement:create_element()
 	self.super.create_element(self)	
 	self._element.class = "ElementAiGlobalEvent"
@@ -16,7 +13,7 @@ function AiGlobalEventUnitElement:post_init(...)
 end
 function AiGlobalEventUnitElement:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("wave_mode", ElementAiGlobalEvent._wave_modes)
-	self:_build_value_combobox("AI_event", ElementAiGlobalEvent._AI_events)
-	self:_build_value_combobox("blame", ElementAiGlobalEvent._blames)
+	self:ComboCtrl("wave_mode", ElementAiGlobalEvent._wave_modes)
+	self:ComboCtrl("AI_event", ElementAiGlobalEvent._AI_events)
+	self:ComboCtrl("blame", ElementAiGlobalEvent._blames)
 end

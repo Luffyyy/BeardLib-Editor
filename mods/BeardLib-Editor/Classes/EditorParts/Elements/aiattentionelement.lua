@@ -20,19 +20,9 @@ function AIAttentionElement:create_element()
 end
 function AIAttentionElement:_build_panel()
 	self:_create_panel()
-	local names = {
-		"ai_spawn_enemy",
-		"ai_spawn_civilian",
-		"ai_enemy_group",
-		"ai_civilian_group"
-	}
 	self:_build_element_list("instigator_ids", {"ElementSpawnEnemyDummy", "ElementSpawnCivlian", "ElementSpawnEnemyGroup", "ElementSpawnCivlianGroup"})
-	self:_build_value_checkbox("use_instigator")
-	self:_build_value_combobox("preset", table.list_add({"none"}, tweak_data.attention.indexes), "Select the attention preset.")
-	self:_build_value_combobox("operation", {
-		"set",
-		"add",
-		"override"
-	}, "Select an operation.")
-	self:_build_value_combobox("override", table.list_add({"none"}, tweak_data.attention.indexes), "Select the attention preset to be overriden. (valid only with override operation)")
+	self:BooleanCtrl("use_instigator")
+	self:ComboCtrl("preset", table.list_add({"none"}, tweak_data.attention.indexes), {help = "Select the attention preset."})
+	self:ComboCtrl("operation", {"set","add","override"}, {help = "Select an operation."})
+	self:ComboCtrl("override", table.list_add({"none"}, tweak_data.attention.indexes), {help = "Select the attention preset to be overriden. (valid only with override operation)"})
 end

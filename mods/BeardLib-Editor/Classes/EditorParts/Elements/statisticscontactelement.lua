@@ -1,9 +1,4 @@
 EditorStatisticsContact = EditorStatisticsContact or class(MissionScriptEditor)
-EditorStatisticsContact.SAVE_UNIT_POSITION = false
-EditorStatisticsContact.SAVE_UNIT_ROTATION = false
-function EditorStatisticsContact:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
 function EditorStatisticsContact:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementStatisticsContact"
@@ -16,8 +11,6 @@ function EditorStatisticsContact:create_element()
 end
 function EditorStatisticsContact:_build_panel()
 	self:_create_panel()
-	panel = panel or self._panel
-	panel_sizer = panel_sizer or self._panel_sizer
 	local contact_list = {}
 	for contact, _ in pairs(tweak_data.narrative.contacts) do
 		if contact ~= "wip" and contact ~= "tests" then
@@ -25,7 +18,7 @@ function EditorStatisticsContact:_build_panel()
 		end
 	end
 	table.sort(contact_list)
-	self:_build_value_combobox("contact", contact_list, "Select the required contact")
+	self:ComboCtrl("contact", contact_list, {help = "Select the required contact"})
 	local states = {
 		"started",
 		"started_dropin",
@@ -34,10 +27,10 @@ function EditorStatisticsContact:_build_panel()
 		"failed",
 		"failed_dropin"
 	}
-	self:_build_value_combobox("state", states, "Select the required play state.")
+	self:ComboCtrl("state", states, {help = "Select the required play state."})
 	local difficulties = deep_clone(tweak_data.difficulties)
 	table.insert(difficulties, "all")
-	self:_build_value_combobox("difficulty", difficulties, "Select the required difficulty.")
-	self:_build_value_checkbox("include_dropin", "Select if drop-in is counted as well.")
-	self:_build_value_number("required", {floats = 0, min = 1}, "Type the required amount that is needed.")
+	self:ComboCtrl("difficulty", difficulties, {help = "Select the required difficulty."})
+	self:BooleanCtrl("include_dropin", {help = "Select if drop-in is counted as well."})
+	self:NumberCtrl("required", {floats = 0, min = 1, help = "Type the required amount that is needed."})
 end

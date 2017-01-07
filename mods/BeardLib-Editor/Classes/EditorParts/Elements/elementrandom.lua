@@ -1,7 +1,4 @@
-
 EditorRandom = EditorRandom or class(MissionScriptEditor)
-EditorRandom.SAVE_UNIT_POSITION = false
-EditorRandom.SAVE_UNIT_ROTATION = false
 function EditorRandom:create_element()
 	EditorRandom.super.create_element(self)
     self._element.class = "ElementRandom"
@@ -68,7 +65,7 @@ function EditorRandom:load_all_elements(menu, item)
         end
     end 	
 end
-function EditorRandom:_build_panel(panel, panel_sizer)
+function EditorRandom:_build_panel()
 	self:_create_panel()
     self._elements_menu:Button({
         name = "choose_counter_element",
@@ -76,8 +73,8 @@ function EditorRandom:_build_panel(panel, panel_sizer)
         help = "Decide what counter element this element should handle",
         callback = callback(self, self, "show_all_elements_dialog")
     })    	
-	self:_build_value_number("amount", {floats = 0, min = 1}, "Specifies the amount of elements to be executed")
-	self:_build_value_number("amount_random", {floats = 0, min = 0}, "Add a random amount to amount")
-	self:_build_value_checkbox("ignore_disabled")
-	self:_add_help_text("Use 'Amount' only to specify an exact amount of elements to execute. Use 'Amount Random' to add a random amount to 'Amount' ('Amount' + random('Amount Random').")
+    self:NumberCtrl("amount", {floats = 0, min = 1, help = "Specifies the amount of elements to be executed"})
+    self:NumberCtrl("amount_random", {floats = 0, min = 0, help = "Add a random amount to amount"})
+	self:BooleanCtrl("ignore_disabled")
+	self:Text("Use 'Amount' only to specify an exact amount of elements to execute. Use 'Amount Random' to add a random amount to 'Amount' ('Amount' + random('Amount Random').")
 end

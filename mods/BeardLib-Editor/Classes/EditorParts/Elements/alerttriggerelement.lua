@@ -1,13 +1,11 @@
 EditorAlertTrigger = EditorAlertTrigger or class(MissionScriptEditor)
-function EditorAlertTrigger:init(unit)
-	EditorAlertTrigger.super.init(self, unit)
-end
 function EditorAlertTrigger:create_element()	
 	self.super.create_element(self)
 	self._element.class = "ElementAlertTrigger"
 	self._element.values.filter = "0"
 	self._element.values.alert_types = {}
 end
+
 function EditorAlertTrigger:_build_panel()
 	self:_create_panel()
 	local alert_type_table = {
@@ -50,9 +48,10 @@ function EditorAlertTrigger:_build_panel()
 		self._filter_check_boxes[o] = check
 	end
 end
+
 function EditorAlertTrigger:apply_preset(menu, item)
 	local value = item:SelectedItem()
-	QuickMenu:new( "Alert Trigger", "Apply preset " .. (item:SelectedItem() or "")  .. "?", {[1] = {text = "Yes", callback = function()	
+	QuickMenu:new("Alert Trigger", "Apply preset " .. (item:SelectedItem() or "")  .. "?", {[1] = {text = "Yes", callback = function()	
 		if value == "clear" then
 			self:_set_filter_none()
 		elseif value == "all" then
@@ -62,18 +61,21 @@ function EditorAlertTrigger:apply_preset(menu, item)
 		end	
 	end},[2] = {text = "No", is_cancel_button = true}}, true)
 end
+
 function EditorAlertTrigger:_set_filter_all()
 	for name, item in pairs(self._filter_check_boxes) do
 		item:SetValue(true)
 	end
 	self._element.values.filter = managers.navigation:convert_access_filter_to_string(managers.navigation.ACCESS_FLAGS)
 end
+
 function EditorAlertTrigger:_set_filter_none()
 	for name, item in pairs(self._filter_check_boxes) do
 		item:SetValue(false)
 	end
 	self._element.values.filter = "0"
 end
+
 function EditorAlertTrigger:on_filter_checkbox_changed(menu, item)
 	local filter_table = managers.navigation:convert_access_filter_to_table(self._element.values.filter)
 	local value = item.value
@@ -88,6 +90,7 @@ function EditorAlertTrigger:on_filter_checkbox_changed(menu, item)
 	self._element.values.filter = managers.navigation:convert_access_filter_to_string(filter_table)
 	local filter = managers.navigation:convert_access_filter_to_number(self._element.values.filter)
 end
+
 function EditorAlertTrigger:on_alert_type_checkbox_changed(menu, item)
 	local value = item.value
 	if value then

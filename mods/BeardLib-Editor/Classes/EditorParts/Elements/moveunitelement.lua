@@ -1,5 +1,4 @@
 EditorMoveUnit = EditorMoveUnit or class(MissionScriptEditor)
-
 function EditorMoveUnit:create_element()
     self.super.create_element(self)
     self._element.class = "ElementMoveUnit"
@@ -8,6 +7,7 @@ function EditorMoveUnit:create_element()
     self._element.values.start_pos = self._element.values.position
     self._element.values.end_pos = self._element.values.start_pos
 end
+
 function EditorMoveUnit:update(t, dt)
     local end_pos = self._element.values.end_pos
     local start_pos = self._element.values.start_pos or self._element.values.position
@@ -18,12 +18,14 @@ function EditorMoveUnit:update(t, dt)
     Application:draw_sphere(end_pos, 10, 1, 0, 0)
     Application:draw_line(start_pos, end_pos, 0, 1, 0)
 end
+
 function EditorMoveUnit:update_positions(...)
     self.super.update_positions(self, ...)
     if not self._element.values.unit_position_as_start_position then
         self._element.values.start_pos = self._element.values.position
     end
 end
+
 function EditorMoveUnit:set_element_data(menu, item)   
     self.super.set_element_data(self, menu, item)
     if item.name == "is_displacement" then
@@ -48,12 +50,13 @@ function EditorMoveUnit:set_element_data(menu, item)
         end                
     end
 end
+
 function EditorMoveUnit:set_element_position(...)
     self.super.set_element_position(self, ...)
     if not self._element.values.unit_position_as_start_position then
         self._element.values.start_pos = self._element.values.position
     end
-    local pos = Vector3(self._elements_menu:GetItem("end_position_x").value, self._elements_menu:GetItem("end_position_y").value, self._elements_menu:GetItem("end_position_z").value)
+    local pos = Vector3(self._elements_menu:GetItem("end_position_x"):Value(), self._elements_menu:GetItem("end_position_y"):Value(), self._elements_menu:GetItem("end_position_z"):Value())
     if self._element.values.is_displacement then
         self._element.values.displacement = pos
         self._element.values.end_pos = nil
@@ -62,14 +65,15 @@ function EditorMoveUnit:set_element_position(...)
         self._element.values.displacement = nil
     end
 end
+
 function EditorMoveUnit:_build_panel()
 	self:_create_panel()
     self:_build_unit_list("unit_ids")
-    self:_build_value_number("speed", {floats = 2, min = 0.1}, "Set the speed of unit movement")  
-    self:_build_value_checkbox("is_displacement")
-    self:_build_value_checkbox("unit_position_as_start_position")
+    self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})  
+    self:BooleanCtrl("is_displacement")
+    self:BooleanCtrl("unit_position_as_start_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
-    self:_build_value_number("end_position_x", {value = end_pos.x or 0, callback = callback(self, self, "set_element_position")})
-    self:_build_value_number("end_position_y", {value = end_pos.y or 0, callback = callback(self, self, "set_element_position")})
-    self:_build_value_number("end_position_z", {value = end_pos.z or 0, callback = callback(self, self, "set_element_position")})     
+    self:NumberCtrl("end_position_x", {value = end_pos.x or 0, callback = callback(self, self, "set_element_position")})
+    self:NumberCtrl("end_position_y", {value = end_pos.y or 0, callback = callback(self, self, "set_element_position")})
+    self:NumberCtrl("end_position_z", {value = end_pos.z or 0, callback = callback(self, self, "set_element_position")})     
 end

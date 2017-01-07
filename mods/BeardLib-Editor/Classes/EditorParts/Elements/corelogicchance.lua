@@ -1,17 +1,18 @@
 EditorLogicChance = EditorLogicChance or class(MissionScriptEditor)
- 
 function EditorLogicChance:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementLogicChance"
 	self._element.values.chance = 100
 end
+
 function EditorLogicChance:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("chance", {
+	self:NumberCtrl("chance", {
 		floats = 0,
 		min = 0,
-		max = 100
-	}, "Specifies chance that this element will call its on executed elements (in percent)")
+		max = 100,
+		help = "Specifies chance that this element will call its on executed elements (in percent)"
+	})
 end
 EditorLogicChanceOperator = EditorLogicChanceOperator or class(MissionScriptEditor)
  
@@ -25,20 +26,22 @@ end
 function EditorLogicChanceOperator:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementLogicChance"})
-	self:_build_value_combobox("operation", {
+	self:ComboCtrl("operation", {
 		"none",
 		"add_chance",
 		"subtract_chance",
 		"reset",
 		"set_chance"
-	}, "Select an operation for the selected elements")
-	self:_build_value_number("chance", {
+	}, {help = "Select an operation for the selected elements"})
+	self:NumberCtrl("chance", {
 		floats = 0,
 		min = 0,
-		max = 100
-	}, "Amount of chance to add, subtract or set to the logic chance elements.")
-	self:_add_help_text("This element can modify logic_chance element. Select logic chance elements to modify using insert and clicking on the elements.")
+		max = 100,
+		help = "Amount of chance to add, subtract or set to the logic chance elements."
+	})
+	self:Text("This element can modify logic_chance element. Select logic chance elements to modify using insert and clicking on the elements.")
 end
+
 EditorLogicChanceTrigger = EditorLogicChanceTrigger or class(MissionScriptEditor)
 function EditorLogicChanceTrigger:create_element()
 	self.super.create_element(self)
@@ -50,6 +53,6 @@ end
 function EditorLogicChanceTrigger:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementLogicChance"})
-	self:_build_value_combobox("outcome", {"fail", "success"}, "Select an outcome to trigger on")
-	self:_add_help_text("This element is a trigger to logic_chance element.")
+	self:ComboCtrl("outcome", {"fail", "success"}, {help = "Select an outcome to trigger on"})
+	self:Text("This element is a trigger to logic_chance element.")
 end

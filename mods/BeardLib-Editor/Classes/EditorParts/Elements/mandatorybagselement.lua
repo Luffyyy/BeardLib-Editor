@@ -1,10 +1,4 @@
 EditorMandatoryBags = EditorMandatoryBags or class(MissionScriptEditor)
-EditorMandatoryBags.SAVE_UNIT_POSITION = false
-EditorMandatoryBags.SAVE_UNIT_ROTATION = false
-function EditorMandatoryBags:init(unit)
-	EditorMandatoryBags.super.init(self, unit)
-end
-
 function EditorMandatoryBags:create_element()
     self.super.create_element(self)
   	self._element.class = "ElementMandatoryBags"
@@ -14,10 +8,11 @@ end
 
 function EditorMandatoryBags:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
-	self:_build_value_number("amount", {
+	self:ComboCtrl("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
+	self:NumberCtrl("amount", {
 		floats = 0,
 		min = 0,
-		max = 100
-	}, "Amount of mandatory bags.")
+		max = 100, 
+		help = "Amount of mandatory bags."
+	})
 end

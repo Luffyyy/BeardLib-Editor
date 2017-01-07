@@ -8,7 +8,7 @@ end
 
 function EditorKillZone:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("type", {
+	self:ComboCtrl("type", {
 		"sniper",
 		"gas",
 		"fire",

@@ -1,6 +1,4 @@
 EditorEnemyPreferedAdd = EditorEnemyPreferedAdd or class(MissionScriptEditor)
-EditorEnemyPreferedAdd.SAVE_UNIT_POSITION = false
-EditorEnemyPreferedAdd.SAVE_UNIT_ROTATION = false
 function EditorEnemyPreferedAdd:create_elment()
 	self.super.create_elment(self)
 	self._element.class = "ElementEnemyPreferedAdd"
@@ -13,8 +11,6 @@ function EditorEnemyPreferedAdd:_build_panel()
 	self:_build_element_list("spawn_groups", {"ElementSpawnEnemyGroup"})
 end
 EditorEnemyPreferedRemove = EditorEnemyPreferedRemove or class(MissionScriptEditor)
-EditorEnemyPreferedRemove.SAVE_UNIT_POSITION = false
-EditorEnemyPreferedRemove.SAVE_UNIT_ROTATION = false
 function EditorEnemyPreferedRemove:create_elment()
 	self.super.create_elment(self)
 	self._element.values.elements = {}

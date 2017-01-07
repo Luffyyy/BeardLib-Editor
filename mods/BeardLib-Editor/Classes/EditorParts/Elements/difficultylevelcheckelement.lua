@@ -1,8 +1,4 @@
 EditorDifficultyLevelCheck = EditorDifficultyLevelCheck or class(MissionScriptEditor)
-function EditorDifficultyLevelCheck:init(unit)
-	EditorDifficultyLevelCheck.super.init(self, unit)
-end
-
 function EditorDifficultyLevelCheck:create_element()
 	self.super.create_element(self)
  	self._element.class = "ElementDifficultyLevelCheck"
@@ -27,6 +23,6 @@ function EditorDifficultyLevelCheck:_build_panel()
 		ctrlr_proportions = 2,
 		sorted = false
 	}
-	self:_build_value_combobox("difficulty", {"normal", "hard", "overkill"}, "Select a difficulty")
-	self:add_help_text("The element will only execute if the difficulty level is set to what you pick.")
+	self:ComboCtrl("difficulty", {"normal", "hard", "overkill"}, {help = "Select a difficulty"})
+	self:Text("The element will only execute if the difficulty level is set to what you pick.")
 end

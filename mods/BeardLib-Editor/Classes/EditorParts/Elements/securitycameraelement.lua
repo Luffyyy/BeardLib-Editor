@@ -1,9 +1,7 @@
 EditorSecurityCamera = EditorSecurityCamera or class(MissionScriptEditor)
-EditorSecurityCamera.SAVE_UNIT_POSITION = false
-EditorSecurityCamera.SAVE_UNIT_ROTATION = false
 EditorSecurityCamera._object_original_rotations = {}
-function EditorSecurityCamera:init(unit)
-	EditorSecurityCamera.super.init(self, unit)
+function EditorSecurityCamera:create_element(unit)
+	EditorSecurityCamera.super.create_element(self, unit)
 	self._element.class = "ElementSecurityCamera"
 	self._element.values.yaw = 0
 	self._element.values.pitch = -30
@@ -13,6 +11,7 @@ function EditorSecurityCamera:init(unit)
 	self._element.values.detection_delay_min = 2
 	self._element.values.detection_delay_max = 3
 end
+
 function EditorSecurityCamera:show_all_units_dialog()
     BeardLibEditor.managers.Dialog:show({
         title = "Decide what camera unit this element should handle",
@@ -76,20 +75,22 @@ function EditorSecurityCamera:_build_panel()
         help = "Decide what camera unit this element should handle",
         callback = callback(self, self, "show_all_units_dialog")
     })    		
- 	self:_build_value_checkbox("ai_enabled")
- 	self:_build_value_checkbox("apply_settings")
- 	self:_build_value_number("yaw", {min = -180, max = 180}, "Specify camera yaw (degrees).")
- 	self:_build_value_number("pitch", {min = -90, max = 90}, "Specify camera pitch (degrees).")
- 	self:_build_value_number("fov", {min = 0, max = 180}, "Specify camera FOV (degrees).")
- 	self:_build_value_number("detection_range", {min = 0, floats = 0}, "Specify camera detection_range (meters).")
- 	self:_build_value_number("suspicion_range", {min = 0, floats = 0}, "Specify camera suspicion_range.")
- 	self:_build_value_number("detection_delay_min", {min = 0, floats = 0}, "Detection delay at zero distance.")
- 	self:_build_value_number("detection_delay_max", {min = 0, floats = 0}, "Detection delay at max distance.")
+ 	self:BooleanCtrl("ai_enabled")
+ 	self:BooleanCtrl("apply_settings")
+	self:NumberCtrl("yaw", {min = -180, max = 180, help = "Specify camera yaw (degrees)."})
+	self:NumberCtrl("pitch", {min = -90, max = 90, help = "Specify camera pitch (degrees)."})
+	self:NumberCtrl("fov", {min = 0, max = 180, help = "Specify camera FOV (degrees)."})
+	self:NumberCtrl("detection_range", {min = 0, floats = 0, help = "Specify camera detection_range (meters)."})
+	self:NumberCtrl("suspicion_range", {min = 0, floats = 0, help = "Specify camera suspicion_range."})
+	self:NumberCtrl("detection_delay_min", {min = 0, floats = 0, help = "Detection delay at zero distance."})
+	self:NumberCtrl("detection_delay_max", {min = 0, floats = 0, help = "Detection delay at max distance."})
 end
+
 function EditorSecurityCamera:update_editing()
 	self:_find_camera_raycast()
 	self:_raycast()
 end
+
 function EditorSecurityCamera:_find_camera_raycast()
 	local from = managers.editor:get_cursor_look_point(0)
 	local to = managers.editor:get_cursor_look_point(100000)
@@ -106,6 +107,7 @@ function EditorSecurityCamera:_find_camera_raycast()
 	Application:draw(ray.unit, 0, 1, 0)
 	return ray.unit
 end
+
 function EditorSecurityCamera:_raycast()
 	local from = managers.editor:get_cursor_look_point(0)
 	local to = managers.editor:get_cursor_look_point(100000)
@@ -120,6 +122,7 @@ end
 function EditorSecurityCamera:load_camera_unit(unit)
 	self:_set_camera_unit(unit)
 end
+
 function EditorSecurityCamera:selected()
 	AIAttentionElement.super.selected(self)
 	self:_chk_units_alive()

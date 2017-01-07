@@ -1,8 +1,4 @@
 EditorEnemyDummyTrigger = EditorEnemyDummyTrigger or class(MissionScriptEditor)
-function EditorEnemyDummyTrigger:init(unit)
-	self.super.init(self, unit)
-end
-
 function EditorEnemyDummyTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementEnemyDummyTrigger"
@@ -13,7 +9,7 @@ end
 function EditorEnemyDummyTrigger:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup", "ElementSpawnCivilian", "ElementSpawnCivilianGroup"})
-	local options = {
+	self:ComboCtrl("event", {
 		"alerted",
 		"death",
 		"killshot",
@@ -32,6 +28,5 @@ function EditorEnemyDummyTrigger:_build_panel()
 		"anim_act_08",
 		"anim_act_09",
 		"anim_act_10"
-	}
-	self:_build_value_combobox("event", options)
+	})
 end

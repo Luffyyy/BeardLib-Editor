@@ -1,7 +1,4 @@
 EditorScenarioEvent = EditorScenarioEvent or class(MissionScriptEditor)
-function EditorScenarioEvent:init(unit)
-	EditorScenarioEvent.super.init(self, unit)
-end
 function EditorScenarioEvent:create_element()
 	self.super.create_element(self)	
 	self._element.class = "ElementScenarioEvent"
@@ -12,8 +9,14 @@ function EditorScenarioEvent:create_element()
 end
 function EditorScenarioEvent:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("amount", {min = 1, max = 25}, "Should be set to the amount of enemies that will be created from this event", nil ,"Amount")
-	self:_build_value_combobox("task", managers.groupai:state():task_names(), "Select a task from the combobox", nil ,"Task")
-	self:_build_value_number("base_chance", {min = 0, max = 1}, "Used to specify chance to happen (1==absolutely!)", nil ,"Base chance")
-	self:_build_value_number("chance_inc", {min = 0, max = 1}, "Used to specify an incremental chance to happen", nil ,"Chance incremental")
+	self:NumberCtrl("amount", {
+		min = 1, 
+		max = 25,
+		help = "Should be set to the amount of enemies that will be created from this event", 
+	})
+	self:ComboCtrl("task", managers.groupai:state():task_names(), {
+		help = "Select a task from the combobox"
+	})
+	self:NumberCtrl("base_chance", {min = 0, max = 1, help = "Used to specify chance to happen (1==absolutely!)"})
+	self:NumberCtrl("chance_inc", {min = 0, max = 1, help = "Used to specify an incremental chance to happen", text = "Chance incremental"})
 end

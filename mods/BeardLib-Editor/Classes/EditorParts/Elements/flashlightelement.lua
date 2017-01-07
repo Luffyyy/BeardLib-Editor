@@ -1,8 +1,4 @@
 EditorFlashlight = EditorFlashlight or class(MissionScriptEditor)
-function EditorFlashlight:init(unit)
-	EditorFlashlight.super.init(self, unit)
-end
-
 function EditorFlashlight:create_element()
     self.super.create_element(self)
     self._element.class = "ElementFlashlight"
@@ -12,7 +8,7 @@ end
 
 function EditorFlashlight:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "", nil, "Flashlight state")
-	self:_build_value_checkbox("on_player", "", nil, "Include player")
-	self:add_help_text("Sets if flashlights should be turned on or off.")
+    self:BooleanCtrl("state", {text = "Flashlight state"})
+    self:BooleanCtrl("on_player", {text = "Include player"})
+	self:Text("Sets if flashlights should be turned on or off.")
 end

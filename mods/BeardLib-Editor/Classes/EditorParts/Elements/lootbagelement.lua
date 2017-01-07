@@ -1,8 +1,5 @@
 EditorLootBag = EditorLootBag or class(MissionScriptEditor)
 EditorLootBag.USES_POINT_ORIENTATION = true
-function EditorLootBag:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
 function EditorLootBag:create_element()
     self.super.create_element(self)	
     self._element.class = "ElementLootBag"
@@ -11,6 +8,7 @@ function EditorLootBag:create_element()
 	self._element.values.carry_id = "none"
 	self._element.values.from_respawn = false
 end
+
 function EditorLootBag:update(d, dt)
 	local kb = Input:keyboard()
 	local speed = 60 * dt
@@ -34,27 +32,24 @@ function EditorLootBag:update(d, dt)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.spawn_dir * 50, 0.75, 0.75, 0.75, 0.1)
 	end
 end
+
 function EditorLootBag:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("push_multiplier", {floats = 1, min = 0}, "Use this to add a velocity to a physic push on the spawned unit")
-	self:_build_value_combobox("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()), "Select a carry_id to be created.")
-	self:_build_value_checkbox("from_respawn")
+	self:NumberCtrl("push_multiplier", {floats = 1, min = 0, help = "Use this to add a velocity to a physic push on the spawned unit"})
+	self:ComboCtrl("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()), {help = "Select a carry_id to be created."})
+	self:BooleanCtrl("from_respawn")
 end
+
 LootBagTriggerUnitElement = LootBagTriggerUnitElement or class(MissionScriptEditor)
-LootBagTriggerUnitElement.SAVE_UNIT_POSITION = false
-LootBagTriggerUnitElement.SAVE_UNIT_ROTATION = false
-function LootBagTriggerUnitElement:init(unit)
-	LootBagTriggerUnitElement.super.init(self, unit)
-end
- 
 function LootBagTriggerUnitElement:create_element()
     self.super.create_element(self)
 	self._element.values.elements = {}
 	self._element.values.trigger_type = "load"
 end
+
 function LootBagTriggerUnitElement:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementLootBag"})
-	self:_build_value_combobox("trigger_type", {"load", "spawn"}, "Select a trigger type for the selected elements")
-	self:_add_help_text("This element is a trigger to point_loot_bag element.")
+	self:ComboCtrl("trigger_type", {"load", "spawn"}, {help = "Select a trigger type for the selected elements"})
+	self:Text("This element is a trigger to point_loot_bag element.")
 end

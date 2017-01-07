@@ -1,7 +1,4 @@
 EditorPrePlanning = EditorPrePlanning or class(MissionScriptEditor)
-function EditorPrePlanning:init(unit)
-	EditorPrePlanning.super.init(self, unit)
-end 
 function EditorPrePlanning:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementPrePlanning"
@@ -22,13 +19,14 @@ function EditorPrePlanning:_data_updated(value_type, value)
 end
 function EditorPrePlanning:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("upgrade_lock", tweak_data.preplanning.upgrade_locks, "Select a upgrade lock from the combobox")
-	self:_build_value_combobox("dlc_lock", tweak_data.preplanning.dlc_locks, "Select a DLC lock from the combobox")
-	self:_build_value_combobox("location_group", tweak_data.preplanning.location_groups, "Select a location group from the combobox")
+	self:ComboCtrl("upgrade_lock", tweak_data.preplanning.upgrade_locks, "Select a upgrade lock from the combobox")
+	self:ComboCtrl("dlc_lock", tweak_data.preplanning.dlc_locks, "Select a DLC lock from the combobox")
+	self:ComboCtrl("location_group", tweak_data.preplanning.location_groups, "Select a location group from the combobox")
 	local allowed_types = {}
 	for k, v in pairs(managers.preplanning:types()) do
 		allowed_types[v] = self._element.values.allowed_types[v] == true
 	end
+	--[[ Redo later
 	self._elements_menu:Table({
 		name = "allowed_types",
 		text = "Allowed Types:",
@@ -50,5 +48,5 @@ function EditorPrePlanning:_build_panel()
 		remove = false,
 		help = "Select preplanning types that are disabled if point is used",
 		callback = callback(self, self, "_data_updated", "disables_types"),
-	})
+	})]]
 end

@@ -1,9 +1,4 @@
 EditorEnableUnit = EditorEnableUnit or class(MissionScriptEditor)
-function EditorEnableUnit:init(unit)
-	EditorEnableUnit.super.init(self, unit)    
-	self._selected_units = {} 
-end
- 
 function EditorEnableUnit:create_element()
     self.super.create_element(self)
     self._element.class = "ElementEnableUnit"

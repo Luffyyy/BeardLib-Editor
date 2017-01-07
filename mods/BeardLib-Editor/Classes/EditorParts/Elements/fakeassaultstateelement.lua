@@ -1,8 +1,4 @@
 EditorFakeAssaultState = EditorFakeAssaultState or class(MissionScriptEditor)
-function EditorFakeAssaultState:init(unit)
-	EditorFakeAssaultState.super.init(self, unit)
-end
-
 function EditorFakeAssaultState:create_element()
     self.super.create_element(self)
     self._element.class = "ElementFakeAssaultState"
@@ -11,6 +7,6 @@ end
 
 function EditorFakeAssaultState:_build_panel()
 	self:_create_panel()
-	self:_build_value_checkbox("state", "", "Fake assault state")
-	self:add_help_text("Sets if fake assault state should be turned on or off.")
+    self:BooleanCtrl("state", {text = "Fake assault state"})
+	self:Text("Sets if fake assault state should be turned on or off.")
 end

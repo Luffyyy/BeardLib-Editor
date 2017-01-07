@@ -1,10 +1,4 @@
 EditorLootSecuredTrigger = EditorLootSecuredTrigger or class(MissionScriptEditor)
-EditorLootSecuredTrigger.SAVE_UNIT_POSITION = false
-EditorLootSecuredTrigger.SAVE_UNIT_ROTATION = false
-function EditorLootSecuredTrigger:init(unit)
-	EditorLootSecuredTrigger.super.init(self, unit)
-end
-
 function EditorLootSecuredTrigger:create_element()
     self.super.create_element(self)
  	self._element.class = "ElementLootSecuredTrigger"
@@ -16,7 +10,7 @@ end
 
 function EditorLootSecuredTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("amount", {min = 0}, "Minimum amount of loot required to trigger")
-	self:_build_value_checkbox("include_instant_cash")
-	self:_build_value_checkbox("report_only")
+	self:NumberCtrl("amount", {min = 0, help = "Minimum amount of loot required to trigger"})
+	self:BooleanCtrl("include_instant_cash")
+	self:BooleanCtrl("report_only")
 end

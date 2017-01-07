@@ -1,11 +1,5 @@
 EditorSpawnEnemyGroup = EditorSpawnEnemyGroup or class(MissionScriptEditor)
-EditorSpawnEnemyGroup.SAVE_UNIT_POSITION = false
-EditorSpawnEnemyGroup.SAVE_UNIT_ROTATION = false
 EditorSpawnEnemyGroup.RANDOMS = {"amount"}
-function EditorSpawnEnemyGroup:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
-
 function EditorSpawnEnemyGroup:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnEnemyGroup"
@@ -16,6 +10,7 @@ function EditorSpawnEnemyGroup:create_element()
 	self._element.values.interval = 0
 	self._element.values.team = "default"	
 end
+
 function EditorSpawnEnemyGroup:post_init(...)
 	EditorSpawnEnemyGroup.super.post_init(self, ...)
 	if self._element.values.preferred_spawn_groups then
@@ -40,11 +35,11 @@ end
 function EditorSpawnEnemyGroup:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementSpawnEnemyDummy"})
-	self:_build_value_combobox("spawn_type", table.list_add({"ordered"}, {"random", "group"}), "Specify how the enemy will be spawned.")
-	self:_build_value_checkbox("ignore_disabled", "Select if disabled spawn points should be ignored or not")
-	self:_build_value_number("amount", {floats = 0, min = 0}, "Specify amount of enemies to spawn from group")
-	self:_build_value_number("interval", {floats = 0, min = 0}, "Used to specify how often this spawn can be used. 0 means no interval")
-	self:_build_value_combobox("team", table.list_add({"default"}, tweak_data.levels:get_team_names_indexed()), "Select the group's team (overrides character team).")
+	self:ComboCtrl("spawn_type", table.list_add({"ordered"}, {"random", "group"}), {help = "Specify how the enemy will be spawned."})
+	self:BooleanCtrl("ignore_disabled", {help = "Select if disabled spawn points should be ignored or not"})
+	self:NumberCtrl("amount", {floats = 0, min = 0, help = "Specify amount of enemies to spawn from group"})
+	self:NumberCtrl("interval", {floats = 0, min = 0, help = "Used to specify how often this spawn can be used. 0 means no interval"})
+	self:ComboCtrl("team", table.list_add({"default"}, tweak_data.levels:get_team_names_indexed()), {help = "Select the group's team (overrides character team)."})
 	local opt = {}
 	for cat_name, team in pairs(tweak_data.group_ai.enemy_spawn_groups) do
 		table.insert(opt, cat_name)
@@ -58,6 +53,7 @@ function EditorSpawnEnemyGroup:_build_panel()
 		})
 	end
 end
+
 function EditorSpawnEnemyGroup:on_preferred_spawn_groups_checkbox_changed(menu, item)
 	if item.value then
 		self._element.values.preferred_spawn_groups = self._element.values.preferred_spawn_groups or {}

@@ -6,6 +6,7 @@ function EditorBlurZone:create_element()
 	self._element.values.radius = 200
 	self._element.values.height = 200 
 end
+
 function EditorBlurZone:update(t, dt) 
 	local brush = Draw:brush()
 	brush:set_color(Color(0.15, 1, 1, 1))
@@ -17,9 +18,10 @@ function EditorBlurZone:update(t, dt)
 	brush:half_sphere(self._element.values.position + math.Z * self._element.values.height, self._element.values.radius, -math.Z, 2)
 	pen:half_sphere(self._element.values.position + math.Z * self._element.values.height, self._element.values.radius, -math.Z)
 end
+
 function EditorBlurZone:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("mode", {min = 0, max = 2}, "Set the mode, 0 is disable, 2 is flash, 1 is normal")
-	self:_build_value_number("radius", {min = 1}, "Set the radius")
-	self:_build_value_number("height", {min = 0}, "Set the height")
+	self:NumberCtrl("mode", {min = 0, max = 2}, {help = "Set the mode, 0 is disable, 2 is flash, 1 is normal"})
+	self:NumberCtrl("radius", {min = 1}, {help = "Set the radius"})
+	self:NumberCtrl("height", {min = 0}, {help = "Set the height"})
 end

@@ -7,9 +7,6 @@ EditorVehicleTrigger.events = {
 	EditorVehicleTrigger.ON_EXIT,
 	EditorVehicleTrigger.ON_ALL_INSIDE
 }
-function EditorVehicleTrigger:init(unit)
-	EditorVehicleTrigger.super.init(self, unit)
-end
 function EditorVehicleTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementVehicleTrigger"
@@ -18,6 +15,6 @@ function EditorVehicleTrigger:create_element()
 end
 function EditorVehicleTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("event", EditorVehicleTrigger.events, "Select an event from the combobox")
-	self:_add_help_text("Set the vehicle event the element should trigger on.")
+	self:ComboCtrl("event", EditorVehicleTrigger.events, {help = "Select an event from the combobox"})
+	self:Text("Set the vehicle event the element should trigger on.")
 end

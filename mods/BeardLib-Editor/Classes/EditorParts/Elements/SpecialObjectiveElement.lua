@@ -1,4 +1,4 @@
-EditorSpecialObjective = EditorSpecialObjective or class(MissionScriptEditor)
+EditorSpecialObjective = EditorSpecialObjective or class(MissionScriptEditor) --wip
 EditorSpecialObjective.INSTANCE_VAR_NAMES = {
 	{
 		type = "special_objective_action",
@@ -15,12 +15,9 @@ EditorSpecialObjective._AI_SO_types = {
 	"AI_sniper",
 	"AI_phalanx"
 }
-function EditorSpecialObjective:init(unit)
-	EditorSpecialObjective.super.init(self, unit)
-	self._enemies = {}
-	self._nav_link_filter = {}
-	self._nav_link_filter_check_boxes = {}	
-end
+EditorSpecialObjective._enemies = {}
+EditorSpecialObjective._nav_link_filter = {}
+EditorSpecialObjective._nav_link_filter_check_boxes = {}
 function EditorSpecialObjective:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpecialObjective"
@@ -50,6 +47,7 @@ function EditorSpecialObjective:create_element()
 	self._element.values.SO_access = "0"
 	self._element.values.test_unit = "default"	
 end
+
 function EditorSpecialObjective:post_init(...)
 	EditorSpecialObjective.super.post_init(self, ...)
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
@@ -57,6 +55,7 @@ function EditorSpecialObjective:post_init(...)
 		self._element.values.SO_access = tostring(self._element.values.SO_access)
 	end
 end
+
 function EditorSpecialObjective:test_element()
 	if not managers.navigation:is_data_ready() then
 	 	BeardLibEditor:log("Can't test spawn unit without ready navigation data (AI-graph)")
@@ -119,6 +118,7 @@ function EditorSpecialObjective:test_element()
 	self._so_class:on_executed(enemy)
 	self._start_test_t = Application:time()
 end
+
 function EditorSpecialObjective:stop_test_element()
 	for _, enemy in ipairs(self._enemies) do
 		enemy:set_slot(0)
@@ -126,14 +126,13 @@ function EditorSpecialObjective:stop_test_element()
 	self._enemies = {}
 	print("Stop test time", self._start_test_t and Application:time() - self._start_test_t or 0)
 end
+
 function EditorSpecialObjective:draw_links(t, dt, selected_unit, all_units)
 	EditorSpecialObjective.super.draw_links(self, t, dt, selected_unit)
 	self:_draw_follow_up(selected_unit, all_units)
 end
+
 function EditorSpecialObjective:update_selected(t, dt, selected_unit, all_units)
-	if self._element.values.patrol_path ~= "none" then
-		managers.editor:layer("Ai"):draw_patrol_path_externaly(self._element.values.patrol_path)
-	end
 	local brush = Draw:brush()
 	brush:set_color(Color(0.15, 1, 1, 1))
 	local pen = Draw:pen(Color(0.15, 0.5, 0.5, 0.5))
@@ -159,6 +158,7 @@ function EditorSpecialObjective:update_selected(t, dt, selected_unit, all_units)
 	end
 	self:_highlight_if_outside_the_nav_field(t)
 end
+
 function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
 	if managers.navigation:is_data_ready() then
 		local my_pos = self._unit:position()
@@ -179,6 +179,7 @@ function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
 		managers.navigation:destroy_nav_tracker(nav_tracker)
 	end
 end
+
 function EditorSpecialObjective:update_unselected(t, dt, selected_unit, all_units)
 	if self._element.values.followup_elements then
 		local followup_elements = self._element.values.followup_elements
@@ -209,6 +210,7 @@ function EditorSpecialObjective:update_unselected(t, dt, selected_unit, all_unit
 		end
 	end
 end
+
 function EditorSpecialObjective:_draw_follow_up(selected_unit, all_units)
 	if self._element.values.followup_elements then
 		for _, element_id in ipairs(self._element.values.followup_elements) do
@@ -226,11 +228,13 @@ function EditorSpecialObjective:_draw_follow_up(selected_unit, all_units)
 		end
 	end
 end
+
 function EditorSpecialObjective:update_editing()
 	self:_so_raycast()
 	self:_spawn_raycast()
 	self:_raycast()
 end
+
 function EditorSpecialObjective:_so_raycast()
 	local ray = managers.editor:unit_by_raycast({mask = 10, ray_type = "editor"})
 	if ray and ray.unit and (string.find(ray.unit:name():s(), "point_special_objective", 1, true) or string.find(ray.unit:name():s(), "ai_so_group", 1, true)) then
@@ -240,6 +244,7 @@ function EditorSpecialObjective:_so_raycast()
 	end
 	return nil
 end
+
 function EditorSpecialObjective:_spawn_raycast()
 	local ray = managers.editor:unit_by_raycast({mask = 10, ray_type = "editor"})
 	if not ray or not ray.unit then
@@ -252,6 +257,7 @@ function EditorSpecialObjective:_spawn_raycast()
 	end
 	return id
 end
+
 function EditorSpecialObjective:_raycast()
 	local from = managers.editor:get_cursor_look_point(0)
 	local to = managers.editor:get_cursor_look_point(100000)
@@ -262,6 +268,7 @@ function EditorSpecialObjective:_raycast()
 	end
 	return nil
 end
+
 function EditorSpecialObjective:_lmb()
 	local id = self:_so_raycast()
 	if id then
@@ -299,9 +306,11 @@ function EditorSpecialObjective:_lmb()
 	end
 	self._element.values.search_position = self:_raycast() or self._element.values.search_position
 end
+
 function EditorSpecialObjective:add_triggers(vc)
 	vc:add_trigger(Idstring("lmb"), callback(self, self, "_lmb"))
 end
+
 function EditorSpecialObjective:selected()
 	EditorSpecialObjective.super.selected(self)
 	if not managers.ai_data:patrol_path(self._element.values.patrol_path) then
@@ -310,6 +319,7 @@ function EditorSpecialObjective:selected()
 	CoreEws.update_combobox_options(self._patrol_path_params, table.list_add({"none"}, managers.ai_data:patrol_path_names()))
 	CoreEws.change_combobox_value(self._patrol_path_params, self._element.values.patrol_path)
 end
+
 function EditorSpecialObjective:_apply_preset(menu, item)
 	QuickMenu:new( "Special objective", "Apply preset " .. (item.selected or "")  .. "?", {[1] = {text = "Yes", callback = function()	
 		if item.selected == "clear" then
@@ -322,18 +332,21 @@ function EditorSpecialObjective:_apply_preset(menu, item)
 		end 	
 	end},[2] = {text = "No", is_cancel_button = true}}, true)
 end
+
 function EditorSpecialObjective:_enable_all_nav_link_filters()
 	for  k, check in pairs(self._nav_link_filter_check_boxes) do
 		check:SetValue(true)
 		self:_toggle_nav_link_filter_value(check)
 	end
 end
+
 function EditorSpecialObjective:_clear_all_nav_link_filters()
 	for  k, check in pairs(self._nav_link_filter_check_boxes) do
 		check:SetValue(false)
 		self:_toggle_nav_link_filter_value(check)
 	end
 end
+
 function EditorSpecialObjective:_toggle_nav_link_filter_value(item)
 	if item.value then
 		for i, k in ipairs(self._nav_link_filter) do
@@ -347,6 +360,7 @@ function EditorSpecialObjective:_toggle_nav_link_filter_value(item)
 	end
 	self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(self._nav_link_filter)
 end
+
 function EditorSpecialObjective:_build_panel()
 	self:_create_panel()
 	self._nav_link_filter_check_boxes = self._nav_link_filter_check_boxes or {}
@@ -369,44 +383,43 @@ function EditorSpecialObjective:_build_panel()
 		})	
 		table.insert(self._nav_link_filter_check_boxes, check)
 	end
-	self:_build_value_combobox("ai_group", table.list_add({"none"}, clone(ElementSpecialObjective._AI_GROUPS)), "Select an ai group.")
-	self:_build_value_checkbox("is_navigation_link", "", nil, "Navigation link")
-	self:_build_value_checkbox("align_rotation", "Align rotation")
-	self:_build_value_checkbox("align_position", "Align position")
-	self:_build_value_checkbox("needs_pos_rsrv", "", nil, "Reserve position")
-	self:_build_value_checkbox("repeatable", "Repeatable")
-	self:_build_value_checkbox("use_instigator", "Use instigator")
-	self:_build_value_checkbox("forced", "Forced")
-	self:_build_value_checkbox("no_arrest", "No Arrest")
-	self:_build_value_checkbox("scan", "Idle scan", nil, "Idle scan")
-	self:_build_value_checkbox("allow_followup_self", "", nil, "Allow self-followup")
-	self:_build_value_number("search_distance", {min = 0}, "Used to specify the distance to use when searching for an AI")
+	self:ComboCtrl("ai_group", table.list_add({"none"}, clone(ElementSpecialObjective._AI_GROUPS)), {help = "Select an ai group."})
+	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
+	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
+	self:BooleanCtrl("align_position", {text = "Align position"})
+	self:BooleanCtrl("needs_pos_rsrv", {text = "Reserve position"})
+	self:BooleanCtrl("repeatable", {text = "Repeatable"})
+	self:BooleanCtrl("use_instigator", {text = "Use instigator"})
+	self:BooleanCtrl("forced", {text = "Forced"})
+	self:BooleanCtrl("no_arrest", {text = "No Arrest"})
+	self:BooleanCtrl("scan", {text = "Idle scan"})
+	self:BooleanCtrl("allow_followup_self", {text = "Allow self-followup"})
+	self:NumberCtrl("search_distance", {min = 0, help = "Used to specify the distance to use when searching for an AI"})
 	local options = table.list_add({"none"}, clone(CopActionAct._act_redirects.SO))
-	self:_build_value_combobox("so_action", table.list_add(options, self._AI_SO_types), "Select a action that the unit should start with.")
-	local ctrlr, params = self:_build_value_combobox("patrol_path", table.list_add({"none"}, {} --[[managers.ai_data:patrol_path_names()]]), "Select a patrol path to use from the spawn point. Different objectives and behaviors will interpet the path different.")
-	self._patrol_path_params = params
-	self:_build_value_combobox("path_style", table.list_add({"none"}, ElementSpecialObjective._PATHING_STYLES), "Specifies how the patrol path should be used.")
-	self:_build_value_combobox("path_haste", table.list_add({"none"}, ElementSpecialObjective._HASTES), "Select path haste to use.")
-	self:_build_value_combobox("path_stance", table.list_add({"none"}, ElementSpecialObjective._STANCES), "Select path stance to use.")
-	self:_build_value_combobox("pose", table.list_add({"none"}, ElementSpecialObjective._POSES), "Select pose to use.")
-	self:_build_value_combobox("attitude", table.list_add({"none"}, ElementSpecialObjective._ATTITUDES), "Select combat attitude.")
-	self:_build_value_combobox("trigger_on", table.list_add({"none"}, ElementSpecialObjective._TRIGGER_ON), "Select when to trigger objective.")
-	self:_build_value_combobox("interaction_voice", table.list_add({"none"}, ElementSpecialObjective._INTERACTION_VOICES), "Select what voice to use when interacting with the character.")
-	self:_build_value_number("interrupt_dis", {min = -1}, "Interrupt if a threat is detected closer than this distance (meters). -1 means at any distance. For non-visible threats this value is multiplied with 0.7.", nil, "Interrupt Distance:")
-	self:_build_value_number("interrupt_dmg", {min = -1}, "Interrupt if total damage received as a ratio of total health exceeds this ratio. value: 0-1.", nil, "Interrupt Damage:")
-	self:_build_value_number("interval", {min = -1}, "Used to specify how often the SO should search for an actor. A negative value means it will check only once.")
-	self:_build_value_number("base_chance", {
-		min = 0,
-		max = 1
-	}, "Used to specify chance to happen (1==absolutely!)")
-	self:_build_value_number("chance_inc", {
-		min = 0,
-		max = 1
-	}, "Used to specify an incremental chance to happen", nil, "Chance incremental:")
-	self:_build_value_number("action_duration_min", {min = 0}, "How long the character stays in his specified action.")
-	self:_build_value_number("action_duration_max", {min = 0}, "How long the character stays in his specified action. Zero means indefinitely.")
+	self:ComboCtrl("so_action", table.list_add(options, self._AI_SO_types), {help = "Select a action that the unit should start with."})
+	self:ComboCtrl("path_style", table.list_add({"none"}, ElementSpecialObjective._PATHING_STYLES), {help = "Specifies how the patrol path should be used."})
+	self:ComboCtrl("path_haste", table.list_add({"none"}, ElementSpecialObjective._HASTES), {help = "Select path haste to use."})
+	self:ComboCtrl("path_stance", table.list_add({"none"}, ElementSpecialObjective._STANCES), {help = "Select path stance to use."})
+	self:ComboCtrl("pose", table.list_add({"none"}, ElementSpecialObjective._POSES), {help = "Select pose to use."})
+	self:ComboCtrl("attitude", table.list_add({"none"}, ElementSpecialObjective._ATTITUDES), {help = "Select combat attitude."})
+	self:ComboCtrl("trigger_on", table.list_add({"none"}, ElementSpecialObjective._TRIGGER_ON), {help = "Select when to trigger objective."})
+	self:ComboCtrl("interaction_voice", table.list_add({"none"}, ElementSpecialObjective._INTERACTION_VOICES), {help = "Select what voice to use when interacting with the character."})
+	self:NumberCtrl("interrupt_dis", {
+		min = -1, 
+		help = "Interrupt if a threat is detected closer than this distance (meters). -1 means at any distance. For non-visible threats this value is multiplied with 0.7.", 
+		text = "Interrupt Distance:"
+	})
+	self:NumberCtrl("interrupt_dmg", {min = -1, 
+		help = "Interrupt if total damage received as a ratio of total health exceeds this ratio. value: 0-1.", 
+		text = "Interrupt Damage:"
+	})
+	self:NumberCtrl("interval", {min = -1, help = "Used to specify how often the SO should search for an actor. A negative value means it will check only once."})
+	self:NumberCtrl("base_chance", {min = 0, max = 1,  help = "Used to specify chance to happen (1==absolutely!)"})
+	self:NumberCtrl("chance_inc", {min = 0, max = 1, help = "Used to specify an incremental chance to happen", text = "Chance incremental:"})
+	self:NumberCtrl("action_duration_min", {min = 0, help = "How long the character stays in his specified action."})
+	self:NumberCtrl("action_duration_max", {min = 0, help = "How long the character stays in his specified action. Zero means indefinitely."})
 	local test_units = table.list_add(EditorSpawnCivilian._options, EditorSpawnEnemyDummy._options)
 	table.insert(test_units, 1, "default")
---	self:_build_value_combobox("test_unit", test_units, "Select the unit to be used when testing.")
+--	self:ComboCtrl("test_unit", test_units, {help = "Select the unit to be used when testing."})
 end
  

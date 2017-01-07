@@ -1,8 +1,4 @@
 EditorPlayerState = EditorPlayerState or class(MissionScriptEditor)
-function EditorPlayerState:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
-
 function EditorPlayerState:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementPlayerState"
@@ -12,9 +8,9 @@ end
 
 function EditorPlayerState:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("state", mixin_add(managers.player:player_states(), {
+	self:ComboCtrl("state", mixin_add(managers.player:player_states(), {
 		"electrocution"
-	}), "Select a state from the combobox")
-	self:_build_value_checkbox("use_instigator", "On instigator")
-	self:add_help_text("Set the state the players should change to.")
+	}), {help = "Select a state from the combobox"})
+	self:BooleanCtrl("use_instigator", {text = "On instigator"})
+	self:Text("Set the state the players should change to.")
 end

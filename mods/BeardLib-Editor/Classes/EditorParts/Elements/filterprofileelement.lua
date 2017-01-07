@@ -1,8 +1,4 @@
 EditorProfileFilter = EditorProfileFilter or class(MissionScriptEditor)
-function EditorProfileFilter:init(unit)
-	EditorProfileFilter.super.init(self, unit)
-end
-
 function EditorProfileFilter:create_element()
 	self.super.create_element(self)
  	self._element.class = "ElementProfileFilter"
@@ -14,17 +10,20 @@ end
 
 function EditorProfileFilter:_build_panel()
 	self:_create_panel()
-	self:_build_value_number("player_lvl", {
+	self:NumberCtrl("player_lvl", {
 		min = 0,
-		max = 100
-	}, "Set player level filter")
-	self:_build_value_number("money_earned", {
+		max = 100, 
+		help = "Set player level filter"
+	})
+	self:NumberCtrl("money_earned", {
 		min = 0,
-		max = 1000000
-	}, "Set player level filter")
-	self:_build_value_number("money_offshore", {
+		max = 1000000, 
+		help = "Set player level filter"
+	})
+	self:NumberCtrl("money_offshore", {
 		min = 0,
-		max = 1000000
-	}, "Set money offshore filter, in thousands.")
-	self:_build_value_combobox("achievement", table.list_add({"none"}, table.map_keys(managers.achievment.achievments)), "Select an achievement to filter on")
+		max = 1000000, 
+		help = "Set money offshore filter, in thousands."
+	})
+	self:ComboCtrl("achievement", table.list_add({"none"}, table.map_keys(managers.achievment.achievments)), {help = "Select an achievement to filter on"})
 end

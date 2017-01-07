@@ -1,9 +1,4 @@
 EditorCarry = EditorCarry or class(MissionScriptEditor)
-EditorCarry.SAVE_UNIT_POSITION = false
-EditorCarry.SAVE_UNIT_ROTATION = false
-function EditorCarry:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
 function EditorCarry:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementCarry"
@@ -13,7 +8,7 @@ function EditorCarry:create_element()
 end
 function EditorCarry:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("operation", {
+	self:ComboCtrl("operation", {
 		"remove",
 		"freeze",
 		"secure",
@@ -21,5 +16,5 @@ function EditorCarry:_build_panel()
 		"add_to_respawn",
 		"filter_only"
 	})
-	self:_build_value_combobox("type_filter", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
+	self:ComboCtrl("type_filter", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
 end

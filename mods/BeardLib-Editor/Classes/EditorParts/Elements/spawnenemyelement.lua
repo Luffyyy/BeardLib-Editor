@@ -1,4 +1,3 @@
-core:import("CoreEditorUtils")
 EditorSpawnEnemyDummy = EditorSpawnEnemyDummy or class(MissionScriptEditor)
 EditorSpawnEnemyDummy.USES_POINT_ORIENTATION = true
 EditorSpawnEnemyDummy.INSTANCE_VAR_NAMES = {
@@ -9,6 +8,7 @@ EditorSpawnEnemyDummy.INSTANCE_VAR_NAMES = {
 	}
 }
 EditorSpawnEnemyDummy._options = {}
+EditorSpawnEnemyDummy._enemies = {}
 for _, dlc in pairs(tweak_data.character:character_map()) do
 	for _, character in pairs(dlc.list) do
 		local character_path =  dlc.path .. character .. "/" .. character
@@ -17,10 +17,7 @@ for _, dlc in pairs(tweak_data.character:character_map()) do
 		end
 	end
 end
-function EditorSpawnEnemyDummy:init(unit)
-	EditorSpawnEnemyDummy.super.init(self, unit)
-	self._enemies = {}
-end
+
 function EditorSpawnEnemyDummy:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnEnemyDummy"
@@ -34,12 +31,10 @@ function EditorSpawnEnemyDummy:create_element()
 	self._element.values.voice = 0
 	self._element.values.team = "default"
 end
-function EditorSpawnEnemyDummy:post_init(...)
-	EditorSpawnEnemyDummy.super.post_init(self, ...)
-end
+
 function EditorSpawnEnemyDummy:test_element() 
 	if not managers.navigation:is_data_ready() then
-		EWS:message_box(Global.frame_panel, "Can't test spawn unit without ready navigation data (AI-graph)", "Spawn", "OK,ICON_ERROR", Vector3(-1, -1, 0))
+		--EWS:message_box(Global.frame_panel, "Can't test spawn unit without ready navigation data (AI-graph)", "Spawn", "OK,ICON_ERROR", Vector3(-1, -1, 0))
 		return
 	end
 	if self._element.values.enemy ~= "none" and managers.groupai:state():is_AI_enabled() then
@@ -56,34 +51,38 @@ function EditorSpawnEnemyDummy:test_element()
 		unit:movement():set_position(unit:position())
 	end
 end
+
 function EditorSpawnEnemyDummy:get_spawn_anim()
 	return self._element.values.spawn_action
 end
+
 function EditorSpawnEnemyDummy:stop_test_element()
 	for _, enemy in ipairs(self._enemies) do
 		enemy:set_slot(0)
 	end
 	self._enemies = {}
 end
+
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("enemy", self._options)
-	self:_build_value_checkbox("participate_to_group_ai", "")
+	self:ComboCtrl("enemy", self._options)
+	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")
-	self:_build_value_combobox("spawn_action", spawn_action_options)
-	self:_build_value_number("interval", {floats = 2, min = 0}, "Used to specify how often this spawn can be used. 0 means no interval")
-	self:_build_value_number("voice", {
+	self:ComboCtrl("spawn_action", spawn_action_options)
+	self:NumberCtrl("interval", {floats = 2, min = 0, help = "Used to specify how often this spawn can be used. 0 means no interval"})
+	self:NumberCtrl("voice", {
 		floats = 0,
 		min = 0,
-		max = 5
-	}, "Voice variant. 1-5. 0 for random.")
-	self:_build_value_combobox("accessibility", ElementSpawnEnemyDummy.ACCESSIBILITIES, "Only units with this movement type will be spawned from this element.")
+		max = 5, 
+		text = "Voice variant. 1-5. 0 for random."
+	})
+	self:ComboCtrl("accessibility", ElementSpawnEnemyDummy.ACCESSIBILITIES, {help = "Only units with this movement type will be spawned from this element."})
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")
 	table.insert(pickups, "no_pickup")
-	self:_build_value_combobox("force_pickup", pickups)
-	self:_build_value_combobox("team", table.list_add({"default"}, tweak_data.levels:get_team_names_indexed()), "Select the character's team.")
+	self:ComboCtrl("force_pickup", pickups)
+	self:ComboCtrl("team", table.list_add({"default"}, tweak_data.levels:get_team_names_indexed()), {help = "Select the character's team."})
 end
 
 function EditorSpawnEnemyDummy:_resolve_team(unit)
@@ -93,6 +92,7 @@ function EditorSpawnEnemyDummy:_resolve_team(unit)
 		return self._element.values.team
 	end
 end
+
 function EditorSpawnEnemyDummy:destroy(...)
 	EditorSpawnEnemyDummy.super.destroy(self, ...)
 	self:stop_test_element()

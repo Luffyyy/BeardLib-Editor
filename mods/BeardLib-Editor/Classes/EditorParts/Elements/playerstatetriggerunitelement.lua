@@ -1,8 +1,4 @@
 EditorPlayerStateTrigger = EditorPlayerStateTrigger or class(MissionScriptEditor)
-function EditorPlayerStateTrigger:init(unit)
-	EditorPlayerStateTrigger.super.init(self, unit)
-end
-
 function EditorPlayerStateTrigger:create_element()
     self.super.create_element(self)
     self._element.class = "ElementPlayerStateTrigger"
@@ -12,6 +8,6 @@ end
 
 function EditorPlayerStateTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_value_combobox("state", managers.player:player_states(), "Select a state from the combobox")
-	self:_add_help_text("Set the player state the element should trigger on.")
+    self:ComboCtrl("state", managers.player:player_states(), {help = "Select a state from the combobox"})
+	self:Text("Set the player state the element should trigger on.")
 end

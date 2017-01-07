@@ -1,7 +1,4 @@
 EditorVehicleSpawner = EditorVehicleSpawner or class(MissionScriptEditor)
-function EditorVehicleSpawner:init(unit)
-	MissionScriptEditor.init(self, unit)
-end
 function EditorVehicleSpawner:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementVehicleSpawner"
@@ -15,6 +12,6 @@ function EditorVehicleSpawner:_build_panel()
 		"escape_van",
 		"muscle"
 	}
-	self:_build_value_combobox("vehicle", vehicles, "Select a vehicle from the combobox")
-	self:_add_help_text("The vehicle that will be spawned")
+	self:ComboCtrl("vehicle", vehicles, {help = "Select a vehicle from the combobox"})
+	self:Text("The vehicle that will be spawned")
 end

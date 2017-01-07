@@ -2,7 +2,7 @@ core:import("CoreShapeManager")
 EditorAreaTrigger = EditorAreaTrigger or class(MissionScriptEditor)
 
 function EditorAreaTrigger:create_element()
-	self.super.create_element(self)
+	EditorAreaTrigger.super.create_element(self)
 	self._element.class = "ElementAreaTrigger"
 	self._element.values.trigger_times = 1
 	self._element.values.interval = 0.1
@@ -51,7 +51,7 @@ function EditorAreaTrigger:update(t, dt, selected_unit, all_units)
 			shape:draw(t, dt, 1, 1, 1)
 		end
 	else
-		--self:_check_removed_units(all_units)
+		--self:_check_removed_units(all_units) 
 		for _,id in ipairs(self._element.values.use_shape_element_ids) do
 			local unit = all_units[id]
 			local shape = unit:mission_element():get_shape()
@@ -87,46 +87,40 @@ function EditorAreaTrigger:_set_shape_type()
 end
 
 function EditorAreaTrigger:create_values_ctrlrs(disable)
-	self:_build_value_number("interval", {min = 0.01}, "Set the check interval for the area, in seconds.")
+	self:NumberCtrl("interval", {min = 0.01, help ="Set the check interval for the area, in seconds."})
 	if not disable or not disable.trigger_type then
-		self:_build_value_combobox("trigger_on", {"on_enter", "on_exit", "both", "on_empty", "while_inside"})
+		self:ComboCtrl("trigger_on", {"on_enter", "on_exit", "both", "on_empty", "while_inside"})
 	end
 	if not disable or not disable.instigator then
-		local instigator, _ = self:_build_value_combobox("instigator", managers.mission:area_instigator_categories(), "Select an instigator type for the area")
+		local instigator, _ = self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type for the area"})
 		self._instigator_ctrlr = instigator
 		self._instigator_ctrlr:SetEnabled(not self._element.values.unit_ids)
 	end
 	if not disable or not disable.amount then
-		self:_build_value_combobox("amount", {"1", "2", "3", "4", "all"}, "Select how many are required to trigger area")
+		self:ComboCtrl("amount", {"1", "2", "3", "4", "all"}, {help = "Select how many are required to trigger area"})
 	end
-	self._use_disabled_shapes = self:_build_value_checkbox("use_disabled_shapes")
+	self._use_disabled_shapes = self:BooleanCtrl("use_disabled_shapes")
 end
 
 function EditorAreaTrigger:_build_panel(disable_params)
 	self:_create_panel()
 	self:create_values_ctrlrs(disable_params)
  	
-	local shape_type = self:_build_value_combobox("shape_type", {"box", "cylinder"}, "Select shape for area")
+	local shape_type = self:ComboCtrl("shape_type", {"box", "cylinder"}, {help = "Select shape for area"})
 	self._shape_type_params = shape_type
 
-	local width = self:_build_value_number("width", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the width for the shape")
+	local width = self:NumberCtrl("width", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the width for the shape"})
 	self._width_params = width
-	local depth = self:_build_value_number("depth", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the depth for the shape")
+	local depth = self:NumberCtrl("depth", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the depth for the shape"})
 	self._depth_params = depth
-	local height = self:_build_value_number("height", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the height for the shape")
+	local height = self:NumberCtrl("height", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the height for the shape"})
 	self._height_params = height
-	local radius = self:_build_value_number("radius", {floats = 0, callback = callback(self, self, "set_shape_property")}, "Set the radius for the shape")
+	local radius = self:NumberCtrl("radius", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the radius for the shape"})
 	self._radius_params = radius
 	self:_set_shape_type()
 end
 
-function EditorAreaTrigger:clone_data(...)
-	EditorAreaTrigger.super.clone_data(self, ...)
-end
-
 AreaOperatorElement = AreaOperatorElement or class(MissionScriptEditor)
-AreaOperatorElement.SAVE_UNIT_POSITION = false
-AreaOperatorElement.SAVE_UNIT_ROTATION = false
 function AreaOperatorElement:init(unit)
 	self.super.init(self, unit)
 	self._apply_on_checkboxes = {"interval", "use_disabled_shapes"}
@@ -151,19 +145,19 @@ function AreaOperatorElement:_build_panel()
 	local exact_names = {"core/units/mission_elements/trigger_area/trigger_area"}
 	self:_build_add_remove_unit_from_list(self._element.values.elements, nil, exact_names)
 	EditorAreaTrigger.create_values_ctrlrs(self, {trigger_type = true, instigator = true, amount = true})
-	self:_build_value_combobox("operation", {"none", "clear_inside"}, "Select an operation for the selected elements")
+	self:ComboCtrl("operation", {"none", "clear_inside"}, {help = "Select an operation for the selected elements"})
 	for _,uses in ipairs(self._apply_on_checkboxes) do
 		local name = "apply_on_" .. uses
-		self:_build_value_checkbox(name)
+		self:BooleanCtrl(name)
 	end
-	self:_add_help_text("This element can modify trigger_area element. Select areas to modify using insert and clicking on the elements.")
+	self:Text("This element can modify trigger_area element. Select areas to modify using insert and clicking on the elements.")
 end
 
 AreaReportTriggerElement = AreaReportTriggerElement or class(EditorAreaTrigger)
 AreaReportTriggerElement.ON_EXECUTED_ALTERNATIVES = {"enter", "leave", "empty", "while_inside", "on_death", "rule_failed", "reached_amount"}
 
-function AreaReportTriggerElement:init(...)
-	AreaReportTriggerElement.super.init(self, ...)
+function AreaReportTriggerElement:create_element(...)
+	AreaReportTriggerElement.super.create_element(self, ...)
 	self._element.class = "ElementTriggerAreaReport"
 	self._element.values.trigger_on = nil
 end

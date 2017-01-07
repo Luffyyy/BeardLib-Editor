@@ -1,6 +1,4 @@
 EditorCharacterTeam = EditorCharacterTeam or class(MissionScriptEditor)
-EditorCharacterTeam.SAVE_UNIT_POSITION = false
-EditorCharacterTeam.SAVE_UNIT_ROTATION = false
 function EditorCharacterTeam:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementCharacterTeam"
@@ -13,7 +11,7 @@ end
 function EditorCharacterTeam:_build_panel()
 	self:_create_panel()
 	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
-	self:_build_value_checkbox("use_instigator")
-	self:_build_value_checkbox("ignore_disabled")
-	self:_build_value_combobox("team", tweak_data.levels:get_team_names_indexed(), "Select wanted team for the character.")
+	self:BooleanCtrl("use_instigator")
+	self:BooleanCtrl("ignore_disabled")
+	self:ComboCtrl("team", tweak_data.levels:get_team_names_indexed(), {help = "Select wanted team for the character."})
 end
