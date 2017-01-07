@@ -1,101 +1,26 @@
-GameOptions = GameOptions or class()
-
+GameOptions = GameOptions or class(EditorPart)
 function GameOptions:init(parent, menu)
-    self._parent = parent
-
-    self._menu = menu:NewMenu({
-        name = "game_options_menu",
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,
-        w = 300,
-    })
-    self._menu:SetSize(nil, self._menu:Panel():h() - 42)    
-    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom())     
+    self.super.init(self, parent, menu, "GameOptions")    
     self._wanted_elements = {}
-    self:CreateItems()
 end
 
-function GameOptions:CreateItems()
+function GameOptions:build_default_menu()
+    self.super.build_default_menu(self)
     local level =  "/" .. (Global.game_settings.level_id or "")
-    self._menu:Divider({
-        name = "basic_options",
-        normal_color = self._menu.highlight_color,
-        size = 30,
-        text = "Basic",
-    }) 
-    self._menu:Slider({
-        name = "Map/CameraSpeed",
-        text = "Camera Speed",
-        help = "",
-        max = 10,
-        min = 0,
-        step = 0.1,
-        value = BeardLibEditor.Options:GetOption("Map/CameraSpeed").value,
-        callback = callback(self, self, "update_option_value"),
-    })       
-    self._menu:Slider({
-        name = "grid_Size",
-        text = "Grid Size",
-        help = "How much centimeters the unit will move",
-        value = 1,
-        min = 0.1,
-        max = 10000,
-        callback = callback(self._parent, self._parent, "update_grid_size")
-    })    
-    self._menu:Slider({
-        name = "snap_rotation",
-        text = "Snap rotation",
-        help = "How much degrees the unit will rotate",
-        value = 90,
-        min = 1,
-        max = 180,
-        callback = callback(self._parent, self._parent, "update_snap_rotation")
-    })
-    self._menu:Divider({
-        name = "map_options",
-        normal_color = self._menu.highlight_color,
-        size = 30,
-        text = "Map",
-    })
-    self._menu:TextBox({
-        name = "savepath",
-        text = "Map save path: ",
-        value = BeardLib.config.maps_dir .. level,
-        help = "",
-    })
-    self._menu:Toggle({
-        name = "Map/EditorUnits",
-        text = "Editor Units",
-        help = "",
-        value = BeardLibEditor.Options:GetOption("Map/EditorUnits").value,
-        callback = callback(self, self, "set_editor_units_visible"),
-    })
-    self._menu:Toggle({
-        name = "Map/HighlightUnits",
-        text = "Highlight Units",
-        help = "",
-        value = BeardLibEditor.Options:GetOption("Map/HighlightUnits").value,
-        callback = callback(self, self, "update_option_value"),
-    })
-    self._menu:Toggle({
-        name = "Map/ShowElements",
-        text = "Show Elements",
-        help = "",
-        value = BeardLibEditor.Options:GetOption("Map/ShowElements").value,
-        callback = callback(self, self, "update_option_value"),
-    })
-    self._menu:Button({
-        name = "elements_to_show",
-        text = "Elements to draw",
-        help = "Decide what elements to draw(none = all)",
-        callback = callback(self, self, "show_elements_classes_dialog")
-    })        
-    self._menu:Toggle({
-        name = "draw_portals",
-        text = "Draw Portals",
-        help = "",
-        value = false,
-    })
+    self:Divider("Basic", self._menu.highlight_color)
+    self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"))
+    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1})
+    self:Slider("GridSize", callback(self._parent, self._parent, "update_grid_size"), 1, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
+    self:Slider("SnapRotation", callback(self._parent, self._parent, "update_snap_rotation"), 90, {max = 1, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
+    
+    self:Divider("Map", self._menu.highlight_color)
+    self:TextBox("SavePath", nil, BeardLib.config.maps_dir .. level, {text = "Map save path"})
+    self:Toggle("EditorUnits", callback(self, self, "set_editor_units_visible"), self:Value("EditorUnits"))
+    self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"))
+    self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"))
+    self:Button("ElementsToDraw", callback(self, self, "elements_classes_dia"), {text = "Prefered Element Classes(none = all)"})
+    self:Toggle("DrawPortals", nil, false, {text = "Draw Portals"})
+    local group = self:Group("Draw", {toggleable = false, marker_color = self._menu.background_color / 1.2})
     local items = { 
         quads = false,
         doors = false,
@@ -105,87 +30,34 @@ function GameOptions:CreateItems()
         nav_links = false,
         covers = false,
     }
-    local group = self._menu:ItemsGroup({
-        name = "draw_nav_segments_options",
-        text = "Draw",
-        toggleable = false,
-        marker_color = self._menu.background_color / 1.2
-    })
     self._draw_options = {}
     for k, v in pairs(items) do
-        self._draw_options[k] = self._menu:Toggle({
-            name = k,
-            text = string.pretty(k, true),
-            value = v,
-            callback = callback(self, self, "draw_nav_segments"),
-            items_size = 12,
-            group = group,
-        })
+        self._draw_options[k] = self:Toggle(k, callback(self, self, "draw_nav_segments"), v, {items_size = 14, group = group})
     end
-    self._menu:Divider({
-        name = "other",
-        normal_color = self._menu.highlight_color,
-        size = 30,
-        text = "Other",
-    })      
-    self._menu:Button({
-        name = "teleport_player",
-        text = "Teleport Player",
-        help = "",
-        callback = callback(self, self, "drop_player"),
-    })      
-    self._menu:Button({
-        name = "position_debug",
-        text = "Position Debug",
-        help = "",
-        callback = callback(self, self, "position_debug"),
-    })
-    self._menu:Button({
-        name = "delete_all_units",
-        text = "Delete All Units",
-        help = "",
-        callback = callback(self, self, "delete_all_units")
-    })
-    self._menu:Button({
-        name = "clear_massunit",
-        text = "Clear MassUnit",
-        help = "",
-        callback = callback(self, self, "clear_massunit")
-    })
+    self:Divider("Other", self._menu.highlight_color)
+    self:Button("TeleportPlayer", callback(self, self, "drop_player"))
+    self:Button("LogPosition", callback(self, self, "position_debug"))
+    self:Button("ClearWorld", callback(self, self, "clear_world"))
+    self:Button("ClearMassUnit", callback(self, self, "clear_massunit"))
+    if self._parent._has_fix then
+        self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"))
+        self:Button("SaveNavigationData", callback(self, self, "save_nav_data"))
+        self:Button("SaveNavigationData", callback(self, self, "save_nav_data"))
+    end
+    self:Button("SaveCoverData", callback(self, self, "save_cover_data"))
+    self:Toggle("PauseGame", callback(self, self, "pause_game"), false)  
+end
 
-    local has_fix = self._parent._has_fix
-    self._menu:Button({
-        name = "build_nav",
-        text = "Build Navigation Data" .. (has_fix and "" or "[Disabled]"),
-        help = "",
-        callback = has_fix and callback(self, self, "_build_nav_segments") or callback(self._parent, self._parent, "error_has_no_fix"),
-    })
-    self._menu:Button({
-        name = "save_nav_data",
-        text = "Save Navigation Data" .. (has_fix and "" or "[Disabled]"),
-        help = "",
-        callback = has_fix and callback(self, self, "save_nav_data") or callback(self._parent, self._parent, "error_has_no_fix")
-    })
-    self._menu:Button({
-        name = "save_cover_data",
-        text = "Save Cover Data",
-        help = "",
-        callback = callback(self, self, "save_cover_data"),
-    })
-    self._menu:Toggle({
-        name = "pause_game",
-        text = "Pause Game",
-        help = "",
-        value = false,
-        callback = callback(self, self, "pause_game")
-    })    
+function GameOptions:loaded_continents(continents, current_continent)
+    self._current_continent:SetItems(continents)
+    self._current_continent:SetSelectedItem(current_continent)
 end
 
 function GameOptions:update_option_value(menu, item)
-    BeardLibEditor.Options:SetValue(item.name, item.value)
+    BeardLibEditor.Options:SetValue("Map/"..item.name, item.value)
 end
 
-function GameOptions:show_elements_classes_dialog()
+function GameOptions:elements_classes_dia()
     BeardLibEditor.managers.Dialog:show({
         title = "Select what elements to show(none = all)",
         items = {},
@@ -251,245 +123,140 @@ function GameOptions:pause_game(menu, item)
     Application:set_pause(item.value)
 end
 
+function GameOptions:set_current_continent(menu, item)
+    self._parent._current_continent = item:SelectedItem()
+end
+
 function GameOptions:set_editor_units_visible(menu, item)
     self:update_option_value(meun, item)
 	for _, unit in pairs(World:find_units_quick("all")) do
 		if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
-			unit:set_visible( self._menu:GetItem("Map/EditorUnits").value )
+			unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
 		end
 	end
 end
 
-function GameOptions:draw_nav_segments( menu, item )
+function GameOptions:draw_nav_segments(menu, item)
     if managers.navigation then
         managers.navigation:set_debug_draw_state(self._draw_options)
     end
 end
 
 function GameOptions:drop_player()
-	local rot_new = Rotation(self._parent._camera_rot:yaw(), 0, 0)
-	game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, rot_new)
+	game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0))
 end
 
 function GameOptions:position_debug()
-	local p = self._parent._camera_pos
-	log("Camera Pos: " .. tostring(p))
+    BeardLibEditor:log("Camera Position: %s", tostring(self._parent._camera_pos))
+	BeardLibEditor:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
 end
 
-function GameOptions:delete_all_units()
-    QuickMenu:new( "Are you sure you want to continue?", "Are you sure you want to delete all units?",
-        {[1] = {text = "Yes", callback = function()
-            for k, unit in pairs(World:find_units_quick("all")) do
-                if alive(unit) and unit:editor_id() ~= -1 then
-                    managers.worlddefinition:delete_unit(unit)
-                    World:delete_unit(unit)
-                end
+function GameOptions:clear_world()
+    BeardLibEditor.Utils:YesNoQuestion("This will delete all units in the world!", function()
+        for k, unit in pairs(World:find_units_quick("all")) do
+            if alive(unit) and unit:editor_id() ~= -1 then
+                managers.worlddefinition:delete_unit(unit)
+                World:delete_unit(unit)
             end
         end
-        },[2] = {text = "No", is_cancel_button = true}},
-        true
-    )
+    end)
 end
 
 function GameOptions:clear_massunit()
-    QuickMenu:new( "Are you sure you want to continue?", "Are you sure you want to clear the MassUnit?",
-        {[1] = {text = "Yes", callback = function()
-            MassUnitManager:delete_all_units()
-        end
-        },[2] = {text = "No", is_cancel_button = true}},
-        true
-    )
+    BeardLibEditor.Utils:YesNoQuestion("This will clear the MassUnits in the world", function()
+        MassUnitManager:delete_all_units()
+    end)
 end
 
 function GameOptions:update(t, dt)
-    local brush = Draw:brush(Color(0, 0.5, 0.85))
-    local highlight = self._menu:GetItem("Map/HighlightUnits")
-    local pen = Draw:pen(Color(0.15, 1, 1, 1))
-
-    if highlight and highlight.value and managers.viewport:get_current_camera() then
-        local bodies = World:find_bodies("intersect", "sphere", self._parent._camera_pos, 2500)
-        for _, body in ipairs(bodies) do
+    if self:Value("HighlightUnits") and managers.viewport:get_current_camera() then
+        for _, body in ipairs(World:find_bodies("intersect", "sphere", self._parent._camera_pos, 2500)) do
             if self._parent:_should_draw_body(body) then
-                pen:set(Color.white)
-                pen:body(body)
+                self._pen:set(Color.white)
+                self._pen:body(body)
             end
         end
 	end
-	if self._menu:GetItem("draw_portals").value then
+    local draw_portals = self._menu:GetItem("draw_portals")
+	if draw_portals and draw_portals.value then
 		for _, portal in pairs(managers.portal:unit_groups()) do
-			portal:draw(t,dt, 0.5, false, true)
+			portal:draw(t, dt, 0.5, false, true)
 		end
 	end
 end
 
 function GameOptions:save()
-    local path = self._menu:GetItem("savepath").value:gsub("\\" , "/")
-
-    if file.GetFiles(path) then
-
+    local path = self._menu:GetItem("SavePath").value:gsub("\\" , "/")
+    if SystemFS:exists(path) then
         local backup_dir = BeardLib.Utils.Path:Combine(path, "..", "backups", table.remove(string.split(path, "/")))
-        if file.GetFiles(backup_dir) then
-            os.execute("del \"" .. backup_dir .. "\" /q /s")
+        if SystemFS:exists(backup_dir) then
+            SystemFS:delete_file(backup_dir)
         end
         os.execute("xcopy \"" .. path .. "\" \"" .. backup_dir .. "\" /e /i /h /y /c")
     else
-        os.execute("mkdir \"" .. path .. "\"")
+        SystemFS:make_dir(path)
     end
-    local script_path = BeardLib.Utils.Path:Combine(path, "world")
-    if not file.GetFiles(script_path) then
-        os.execute("mkdir \"" .. script_path .. "\"")
+    local map_path = BeardLib.Utils.Path:Combine(path, "world")
+    if not SystemFS:exists(map_path) then
+        SystemFS:make_dir(map_path)
     end
-    self:save_world(script_path)
-    self:save_continents(script_path)
-    self:save_missions(script_path)
+    self:SaveData(map_path, "world.world", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.worlddefinition._world_data, "generic_xml"))
+    local continents = {}
+    local missions = {}
+    for name, data in pairs(managers.worlddefinition._continent_definitions) do
+        local dir = BeardLib.Utils.Path:Combine(map_path, name)
+        self:SaveData(dir, name .. ".continent", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml"))
+        self:SaveData(dir, name .. ".mission", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.mission._missions[name], "generic_xml"))
+        continents[name] = {name = name, editor_only = (ontinent_name == "editor_only")}
+        missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
+    end
+    self:SaveData(map_path, "continents.continents", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents, "custom_xml"))
+    self:SaveData(map_path, "mission.mission", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(missions, "custom_xml"))
 end
 
-function GameOptions:save_world(main_path)
-    if file.GetFiles( main_path ) then
-        local w_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.worlddefinition._world_data, "generic_xml")
-        local w_file = BeardLib.Utils.Path:Combine(main_path, "world.world")     
-        local world_file = io.open(w_file, "w+")
-        self._parent:Log("Saving world file as generic_xml in %s", w_file)
-        if world_file then
-            world_file:write(w_data)
-            world_file:close()
-        else
-            self._parent:Error("Failed to save world file %s", c_file)
-        end
-    else
-        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
+function GameOptions:SaveData(path, file_name, data)
+    if not SystemFS:exists(path) then
+        SystemFS:make_dir(path)
     end
-end
-function GameOptions:save_continents(main_path)
-    local world_def = managers.worlddefinition
-
-    if file.GetFiles( main_path ) then
-        local continents_data = {}
-        for continent_name, data in pairs(world_def._continent_definitions) do
-            self:save_continent(continent_name, data, main_path)
-            continents_data[continent_name] = { editor_only = continent_name == "editor_only", name=continent_name }
-        end
-        local c_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents_data, "custom_xml")
-        local c_file = BeardLib.Utils.Path:Combine(main_path, "continents.continents")
-        local continents_file = io.open(c_file, "w+")
-        self._parent:Log("Saving continents file as custom_xml in %s", c_file)
-        if continents_file then
-            continents_file:write(c_data)
-            continents_file:close()
-        else
-            self._parent:Error("Failed to save continents file %s", c_file)
-        end
+    local file = SystemFS:open(BeardLib.Utils.Path:Combine(path, file_name), "w") 
+    self._parent:Log("Saving file '%s' as generic_xml in %s", file_name, path)
+    if file then
+        file:write(data)
+        file:close()
     else
-        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Error("Failed to save file %s", c_file)
     end
 end
 
-function GameOptions:save_continent(continent, data, path)
-    local sub_path = BeardLib.Utils.Path:Combine(path, continent)
-    if not file.GetFiles(sub_path) then
-        os.execute("mkdir \"" .. sub_path .. "\"")
-    end
-
-    local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml")
-    local continent_file = io.open(BeardLib.Utils.Path:Combine(sub_path, continent .. ".continent"), "w+")
-    self._parent:Log("Saving continent: %s as a custom_xml in %s", continent, path)
-    if continent_file then
-        continent_file:write(new_data)
-        continent_file:close()
+function GameOptions:save_nav_data()    
+    local path = self._menu:GetItem("SavePath").value
+    if managers.navigation:get_save_data() and managers.navigation._load_data then
+        self:SaveData(path, "nav_manager_data.nav_data", managers.navigation._load_data)
     else
-        self._parent:Error("Failed to save continent: %s path: %s", continent, path)
-    end
-end
-
-function GameOptions:save_missions(main_path)
-    if file.GetFiles(main_path) then
-        local mission_data = {}
-        for mission_name, data in pairs(managers.mission._missions) do
-            self:save_mission_file(mission_name, data, main_path)
-            mission_data[mission_name] = { file=string.format("%s/%s", mission_name, mission_name) }
-        end
-
-        local m_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(mission_data, "generic_xml")
-        local m_file = BeardLib.Utils.Path:Combine(main_path, "mission.mission")
-        local mission_file = io.open(m_file, "w+")
-        self._parent:Log("Saving main missions file as generic_xml in %s", m_file)
-        if mission_file then
-            mission_file:write(m_data)
-            mission_file:close()
-        else
-            self._parent:Error("Failed to save missions file %s", m_file)
-        end
-    else
-        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
-    end
-end
-
-function GameOptions:save_mission_file(mission, data, path)
-    local sub_path = BeardLib.Utils.Path:Combine(path, mission)
-    if not file.GetFiles(sub_path) then
-        os.execute("mkdir \"" .. sub_path .. "\"")
-    end
-
-    local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "generic_xml")
-    local mission_file = io.open(sub_path .. "/" .. mission .. ".mission", "w+")
-    self._parent:Log("Saving mission: " .. mission .. " as a generic_xml in " .. path)
-    if mission_file then
-        mission_file:write(new_data)
-        mission_file:close()
-    else
-        self._parent:Error("Failed to save mission: " .. mission .. " path: " .. path)
-    end
-end
-
-function GameOptions:save_nav_data()
-    local path = self._menu:GetItem("savepath").value
-    if not file.DirectoryExists( path ) then
-        os.execute("mkdir " .. path:gsub("/" , "\\"))
-    end
-    if file.DirectoryExists( path ) then
-        if managers.navigation:get_save_data() and managers.navigation._load_data then
-            local file = io.open(path .. "/nav_manager_data.nav_data", "w+")
-            file:write(managers.navigation._load_data)
-            file:close()
-        else
-            self._parent:Log("Save data is not ready!")
-        end
-    else
-        self._parent:Error("Directory doesn't exists(Failed to create directory?)")
+        self._parent:Log("Save data is not ready!")
     end
 end
 
 function GameOptions:save_cover_data()
-    local path = self._menu:GetItem("savepath").value
-    if not file.DirectoryExists( path ) then
-        os.execute("mkdir " .. path:gsub("/" , "\\"))
+    local path = self._menu:GetItem("SavePath").value
+    local all_cover_units = World:find_units_quick("all", managers.slot:get_mask("cover"))
+    local covers = {
+        positions = {},
+        rotations = {}
+    }
+    for i, unit in pairs(all_cover_units) do
+        local pos = Vector3()
+        unit:m_position(pos)
+        mvector3.set_static(pos, math.round(pos.x), math.round(pos.y), math.round(pos.z))
+        table.insert(covers.positions, pos)
+        local rot = unit:rotation()
+        table.insert(covers.rotations, math.round(rot:yaw()))
     end
-    if file.DirectoryExists( path ) then
-        local all_cover_units = World:find_units_quick("all", managers.slot:get_mask("cover"))
-        local covers = {
-            positions = {},
-            rotations = {}
-        }
-        for i, unit in pairs(all_cover_units) do
-            local pos = Vector3()
-            unit:m_position(pos)
-            mvector3.set_static(pos, math.round(pos.x), math.round(pos.y), math.round(pos.z))
-            table.insert(covers.positions, pos)
-            local rot = unit:rotation()
-            table.insert(covers.rotations, math.round(rot:yaw()))
-        end
-        local file = io.open(path .. "/cover_data.cover_data", "w+")
-        local new_data = BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml")
-        file:write(new_data)
-        file:close()
-    else
-        self._parent:Log("Directory doesn't exists(Failed to create directory?)")
-    end
+    self:SaveData(path, "cover_data.cover_data", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml"))
 end
 
-function GameOptions:_build_nav_segments()
-    QuickMenu:new( "Info", "This will disable the player and AI and build the nav data proceed?",
-    {[1] = {text = "Yes", callback = function()
+function GameOptions:build_nav_segments() -- Add later the options to the menu
+    BeardLibEditor.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
         local settings = {}
         local units = {}
         for _, unit in ipairs(World:find_units_quick("all")) do
@@ -509,14 +276,15 @@ function GameOptions:_build_nav_segments()
             end
         end
         if #settings > 0 then
+            local SE = self:Manager("StaticEditor")
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:in_slot(managers.slot:get_mask("persons"))   then
                     unit:set_enabled(false)
                     if unit:brain() then
                        unit:brain()._current_logic.update = nil
                     end
-                    if self._parent.managers.UnitEditor._disabled_units then
-                        table.insert(self._parent.managers.UnitEditor._disabled_units, unit)
+                    if SE._disabled_units then
+                        table.insert(SE._disabled_units, unit)
                     end
                     for _, extension in pairs(unit:extensions()) do
                         unit:set_extension_update_enabled(Idstring(extension), false)
@@ -524,15 +292,14 @@ function GameOptions:_build_nav_segments()
                 end
             end
             managers.navigation:clear()
-            managers.navigation:build_nav_segments(settings, callback(self, self, "_build_visibility_graph"))
+            managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
             self._parent:Log("No nav surface found.")
-        end
-    end
-    },[2] = {text = "No", is_cancel_button = true}}, true)
+        end       
+    end)
 end
 
-function GameOptions:_build_visibility_graph()
+function GameOptions:build_visibility_graph()
     local all_visible = true
     local exclude, include
     if not all_visible then

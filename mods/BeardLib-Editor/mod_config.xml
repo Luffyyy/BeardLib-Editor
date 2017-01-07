@@ -1,12 +1,20 @@
 <mod name="BeardLib-Editor" global_key="BeardLibEditor">
     <Classes directory="Classes">
+        <class file="Utils.lua"/>
+        <class file="MissionElementUnit.lua"/>
+        <class file="EditorParts/EditorPart.lua"/>
         <class file="EditorParts/ElementEditor.lua"/>
-        <class file="EditorParts/UnitEditor.lua"/>
+        <class file="EditorParts/StaticEditor.lua"/>
         <class file="EditorParts/GameOptions.lua"/>
-        <class file="EditorParts/SpawnSearch.lua"/>
+        <class file="EditorParts/SpawnSelect.lua"/>
         <class file="EditorParts/UpperMenu.lua"/>
         <class file="EditorParts/EditorConsole.lua"/>
         <class file="EditorParts/WorldDataEditor.lua"/>
+        <class file="EditorParts/EditUnitEditableGui.lua"/>
+        <class file="EditorParts/EditLadder.lua"/>
+        <class file="EditorParts/EditZipLine.lua"/>
+        <class file="EditorParts/EditUnitLight.lua"/>
+        <class file="EditorParts/MissionScriptEditor.lua"/>
         <class file="EnvironmentEditorManager.lua"/>
         <class file="EnvironmentEditorHandler.lua"/>
         <class file="ScriptDataConverterManager.lua"/>
@@ -21,6 +29,7 @@
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="Coreworlddefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="Gamestatemachine.lua"/>
         <hook source_file="lib/setups/gamesetup" file="Gamesetup.lua"/>
+        <hook source_file="core/lib/system/coresystem" file="CoreSystem.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
         <hook source_file="lib/managers/navigationmanager" file="Navigationmanager.lua"/>
         <hook source_file="lib/managers/navfieldbuilder" file="Navfieldbuilder.lua"/>
@@ -44,5 +53,18 @@
         <object path="units/mission_element/element" force="true"/>
         <model path="units/mission_element/element" force="true"/>
         <cooked_physics path="units/mission_element/element" force="true"/>
+        <unit path="units/civilian_element/element" force="true"/>
+        <object path="units/civilian_element/element" force="true"/>
+        <model path="units/civilian_element/element" force="true"/>
+        <cooked_physics path="units/civilian_element/element" force="true"/>       
+        <material_config path="units/enemy_element/element" force="true"/>       
+        <unit path="units/enemy_element/element" force="true"/>
+        <object path="units/enemy_element/element" force="true"/>
+        <model path="units/enemy_element/element" force="true"/>
+        <cooked_physics path="units/enemy_element/element" force="true"/>        
+        <unit path="core/units/nav_surface/nav_surface" force="true"/>
+        <object path="core/units/nav_surface/nav_surface" force="true"/>
+        <model path="core/units/nav_surface/nav_surface" force="true"/>
+        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>
     </AddFiles>
 </mod>

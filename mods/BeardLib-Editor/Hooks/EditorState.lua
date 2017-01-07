@@ -7,7 +7,7 @@ function EditorState:at_enter()
 	if not Global.editor_mode then
 		return
 	end
-	BeardLibEditor.managers.MapEditor:enable()
+	managers.editor:enable()
     managers.achievment.award = function() end
     local job_id = managers.job:current_job_id()
     tweak_data.narrative.jobs[job_id].contract_cost = {0,0,0,0,0}
@@ -18,6 +18,6 @@ function EditorState:at_enter()
 end
 function EditorState:at_exit()
 	if Global.editor_mode then
-		BeardLibEditor.managers.MapEditor:disable()
+		managers.editor:disable()
 	end
 end

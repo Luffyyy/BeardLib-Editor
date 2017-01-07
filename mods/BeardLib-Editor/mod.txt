@@ -14,7 +14,7 @@
 	],
     "updates" : [
         {
-            "revision" : 5.6,
+            "revision" : 6,
             "identifier" : "beardlib_editor"
         }
     ],

@@ -1,4 +1,4 @@
-ElementEditor = ElementEditor or class()
+ElementEditor = ElementEditor or class(EditorPart)
 ElementEditor._mission_elements = {   
     --Custom Elements--
     "ElementMoveUnit",
@@ -117,7 +117,6 @@ ElementEditor._mission_elements = {
 
 function ElementEditor:init(parent, menu)
     local path = BeardLibEditor.ModPath .. "Classes/EditorParts/Elements/"
-    dofile(path .. "MissionScriptEditor.lua")
     for _, file in pairs(file.GetFiles(path)) do
         dofile(path .. file)
     end    
@@ -140,44 +139,39 @@ function ElementEditor:disabled()
     end
 
     self._trigger_ids = {}
+end 
+
+function ElementEditor:get_editor_class(class)
+    return rawget(_G, class:gsub("Element", "Editor"))
 end
 
-function ElementEditor:set_element(element, add)
-    local element_editor_class = rawget(_G, element.class:gsub("Element", "Editor"))
-    if element_editor_class then
-        local new = element_editor_class:new(element.id and element or nil)    
-        if add then 
-            self._parent:_select_unit(new:add_to_mission())
-        end
-        new:_build_panel()
-        self._current_script = new
-        if self._parent:selected_unit() then
-            local executors = managers.mission:get_links(self._parent:selected_unit().mission_element)        
-            local executors_group = new._elements_menu:ItemsGroup({
-                name = "links",
-                text = "links",
-            })
-            for _, element in pairs(executors) do
-                new._elements_menu:Button({
-                    name = element.editor_name,
-                    text = element.editor_name .. " [" .. (element.class or "") .."]",
-                    group = executors_group,
-                    callback = callback(self, self, "set_element", element)
-                })
-            end 
+function ElementEditor:set_element(element)
+    if element then
+        local clss = self:get_editor_class(element.class) 
+        if clss then
+            local script = clss:new(element)    
+            script:work()
+            self._current_script = script
+            if not self._parent:selected_unit() then
+                self._current_script = nil
+            end
         else
-            self._current_script = nil
+            if element.class then
+                BeardLibEditor:log("[ERROR] Element class %s has no editor class(Report this)", element.class)
+            end
         end
-
     else
-        if element and element.class then
-            BeardLibEditor:log("[ERROR] Element class %s has no editor class!", element.class)
-        end
+        BeardLibEditor:log("[ERROR] Nil element!")
     end
 end
 
 function ElementEditor:add_element(name)
-    self:set_element({class = name}, true)    
+    local clss = self:get_editor_class(name) 
+    if clss then
+        self:Manager("StaticEditor"):set_selected_unit(clss:init())    
+    else
+        BeardLibEditor:log("[ERROR] Element class %s has no editor class(Report this)", name)
+    end
 end
  
 function ElementEditor:update(t, dt)

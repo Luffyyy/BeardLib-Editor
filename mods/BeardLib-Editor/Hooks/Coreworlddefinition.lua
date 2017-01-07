@@ -156,7 +156,6 @@ function WorldDefinition:delete_unit(unit)
 				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
 					table.remove(continent.statics, k)
 					managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
-
 					return
 				end
 			end
@@ -180,23 +179,39 @@ function WorldDefinition:_setup_disable_on_ai_graph(unit, data)
 	end
 	unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
 end
-function WorldDefinition:_setup_editor_unit_data(unit, data)
-	unit:unit_data().name_id = data.name_id
-	unit:unit_data().name = data.name
-	unit:unit_data().continent = data.continent
-	unit:unit_data().position = unit:position()
-	unit:unit_data().rotation = unit:rotation()
-	unit:unit_data().local_pos = Vector3(0, 0, 0)
-	unit:unit_data().local_rot = Vector3(0, 0, 0)
 
-	unit:unit_data().projection_lights = data.projection_lights
+function WorldDefinition:_setup_editor_unit_data(unit, data)		
+	local ud = unit:unit_data()
+	ud.name_id = data.name_id
+	ud.name = data.name
+
+	data.projection_light = data.projection_light or _G.BeardLibEditor.Utils:HasAnyProjectionLight(unit)
+    data.lights = data.lights or _G.BeardLibEditor.Utils:LightData(unit)
+    data.triggers = data.triggers or _G.BeardLibEditor.Utils:TriggersData(unit)
+    data.editable_gui = data.editable_gui or _G.BeardLibEditor.Utils:EditableGuiData(unit)
+    data.ladder = data.ladder or _G.BeardLibEditor.Utils:LadderData(unit)
+    data.zipline = data.zipline or _G.BeardLibEditor.Utils:ZiplineData(unit)
+
+	ud.continent = data.continent
+	ud.position = unit:position()
+	ud.rotation = unit:rotation()
+	ud.local_pos = Vector3()
+	ud.local_rot = Vector3()
+	ud.projection_lights = data.projection_lights
+	ud.lights = data.lights
+	ud.triggers = data.triggers
+    ud.editable_gui = data.editable_gui	
+    ud.ladder = data.ladder
+    ud.zipline = data.zipline
+    ud.hide_on_projection_light = data.hide_on_projection_light
+    ud.disable_on_ai_graph = data.disable_on_ai_graph
+    ud.disable_shadows = data.disable_shadows
+    ud.disable_collision = data.disable_collision
+    ud.hide_on_projection_light = data.hide_on_projection_light
 	self:set_up_name_id(unit)
 end
 function WorldDefinition:make_unit(data, offset)
 	local name = data.name
-	if self._ignore_spawn_list[Idstring(name):key()] then
-		return nil
-	end
 	if table.has(self._replace_names, name) then
 		name = self._replace_names[name]
 	end
@@ -210,30 +225,17 @@ function WorldDefinition:make_unit(data, offset)
 		end
 	end
 	local unit
-	if MassUnitManager:can_spawn_unit(Idstring(name)) and not is_editor then
+	if MassUnitManager:can_spawn_unit(Idstring(name)) then
 		unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 	else
 		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
 	end
 	if unit then
 		self:assign_unit_data(unit, data)
-	elseif is_editor then
-		local s = "Failed creating unit " .. tostring(name)
-		Application:throw_exception(s)
 	end
-	if self._termination_counter == 0 then
-		Application:check_termination()
-	end
-	self._termination_counter = (self._termination_counter + 1) % 100
 	return unit
 end
 function WorldDefinition:assign_unit_data(unit, data)
-	local is_editor = Global.editor_mode
-	if unit:unit_data().only_exists_in_editor and not is_editor then
-		self._ignore_spawn_list[unit:name():key()] = true
-		unit:set_slot(0)
-		return
-	end
 	unit:unit_data().instance = data.instance
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)
@@ -268,7 +270,8 @@ function WorldDefinition:_setup_unit_id(unit, data)
 end
 
 function WorldDefinition:GetNewUnitID(continent)
-	if continent and self._unit_ids[continent] then
+	if continent then
+		self._unit_ids[continent] = self._unit_ids[continent] or {}
 		local i = self._start_ids[continent] 
 		while self._unit_ids[continent][i] do
 			i = i + 1

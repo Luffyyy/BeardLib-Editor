@@ -2,14 +2,17 @@ if not _G.BeardLibEditor then
     _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml", false, true)
 
     local self = BeardLibEditor
-
+    self.ExtractDirectory = "assets/extract/"
+    self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
+    self.ModuleDirectory = self.ClassDirectory .. "Modules/"
     self.managers = {}
     self._replace_script_data = {}
-
+    self.modules = {}
     self.DBPaths = {}
     self.DBEntries = {}
+    self.color = Color("4385ef")
 end
 
 function BeardLibEditor:_init()
@@ -19,9 +22,18 @@ function BeardLibEditor:_init()
     end
     self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
     self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
-
     self:LoadHashlist()
 end
+
+function BeardLibEditor:RegisterModule(key, module)
+    if not self.modules[key] then
+        self:log("Registered module editor with key %s", key)
+        self.modules[key] = module
+    else
+        self:log("[ERROR] Module editor with key %s already exists", key or "")
+    end
+end
+
 function BeardLibEditor:LoadHashlist()        
     self:log("Loading Hashlist")
     local has_hashlist = DB:has("idstring_lookup", "idstring_lookup") 
@@ -43,7 +55,8 @@ function BeardLibEditor:LoadHashlist()
     end
     local types = clone(BeardLib.config.script_data_types)
     table.insert(types, "unit")
-	if has_hashlist then
+    table.insert(types, "texture")
+    if has_hashlist then 
         local file = DB:open("idstring_lookup", "idstring_lookup")
         if file ~= nil then
             --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
@@ -82,8 +95,21 @@ function BeardLibEditor:LoadHashlist()
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-    self:log("Hashlist Loaded[Method %s]", has_hashlist and "A" or "B")
+    self:log("%s Hashlist Loaded", has_hashlist and "Inside" or "Outside")
+    self:log("Loading Custom Assets to Hashlist")
+    local mod = BeardLib.current_map_mod
+    if mod and mod._config.level.add then
+        for _, v in pairs(mod._config.level.add) do
+            if type(v) == "table" then
+                self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
+                if not table.contains(self.DBPaths[v._meta], v.path) then
+                    table.insert(self.DBPaths[v._meta], v.path)
+                end
+            end
+        end
+    end
 end
+
 function BeardLibEditor:update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
@@ -101,7 +127,6 @@ function BeardLibEditor:paused_update(t, dt)
 end
 
 if MenuManager then
-
     function MenuManager:create_controller()
         if not self._controller then
             self._controller = managers.controller:create_controller("MenuManager", nil, true)
@@ -159,7 +184,7 @@ if Hooks then
         })
     end)
 
-    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function( menu_manager, nodes )
+    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes)
         --I'm going to leave this here, but I really don't like it being here
         if Global.editor_mode then
             BeardLibEditor.managers.MapEditor = MapEditor:new()
@@ -179,7 +204,7 @@ if Hooks then
                 local next_data_path = name and name .. "/" .. sub_data.key or sub_data.key
 
                 local next_data_path_key = next_data_path:key()
-                BeardLibEditor.managers.EnvironmentEditor:AddHandlerValue(path:key(), next_data_path_key, sub_data.value, next_data_path)
+                self.managers.EnvironmentEditor:AddHandlerValue(path:key(), next_data_path_key, sub_data.value, next_data_path)
             else
                 local next_data_path = name and name .. "/" .. sub_data._meta or sub_data._meta
                 self:ProcessScriptData(sub_data, path, extension, next_data_path)
@@ -188,22 +213,16 @@ if Hooks then
     end
 
     Hooks:Add("BeardLibPreProcessScriptData", "BeardLibEditorLoadEnvParams", function(PackManager, filepath, extension, data)
-        if extension ~= Idstring("environment") then
-            return
+        if extension == Idstring("environment") and data and data.data then
+            BeardLibEditor:ProcessScriptData(data.data, filepath, extension)
         end
-
-        if not data or (data and not data.data) then
-            return
-        end
-
-        BeardLibEditor:ProcessScriptData(data.data, filepath, extension)
     end)
-
-
-
 end
 
 if not BeardLibEditor.setup then
     BeardLibEditor:_init()
     BeardLibEditor.setup = true
 end
+
+
+

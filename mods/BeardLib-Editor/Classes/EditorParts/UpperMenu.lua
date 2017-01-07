@@ -10,10 +10,11 @@ function UpperMenu:init(parent, menu)
         row_max = 1,
         visible = true,
     })        
-    self:Tab("selected", "textures/editor_icons_df", {256, 262, 115, 115})
-    self:Tab("worlddata", "textures/editor_icons_df", {135, 271, 115, 115})
-    self:Tab("game_options", "textures/editor_icons_df", {385, 385, 115, 115})
-    self:Tab("save", "textures/editor_icons_df", {260, 385, 115, 115}, callback(self, self, "save"))
+    self:Tab("StaticEditor", "textures/editor_icons_df", {256, 262, 115, 115})
+    self:Tab("WorldDataEditor", "textures/editor_icons_df", {135, 271, 115, 115})
+    self:Tab("SpawnSelect", "textures/editor_icons_df", {377, 267, 115, 115})
+    self:Tab("GameOptions", "textures/editor_icons_df", {385, 385, 115, 115})
+    self:Tab("Save", "textures/editor_icons_df", {260, 385, 115, 115}, callback(self, self, "save"))
     if self._parent._has_fix then 
         self:Tab("move_widget_enable", "textures/editor_icons_df", {9, 377, 115, 115}, callback(self, self, "toggle_move_widget"), 30, 30)
         self:Tab("rotation_widget_enable", "textures/editor_icons_df", {137, 383, 115, 115}, callback(self, self, "toggle_rotation_widget"), 30, 30)   
@@ -21,28 +22,31 @@ function UpperMenu:init(parent, menu)
 end
 
 function UpperMenu:Tab(name, texture, texture_rect, clbk, w, h)
+    local menu = self._parent.managers[name]
     return self._menu:ImageButton({
         name = name,
         texture = texture,
         texture_rect = texture_rect,
-        callback = clbk or callback(self, self, "SwitchMenu", self._menu.menu:GetItem(name .. "_menu")),
+        callback = clbk or callback(menu, menu, "Switch"),
         w = 36 or w,
         h = 36 or h,      
     })    
 end
+
 function UpperMenu:toggle_move_widget()
     self._parent._use_move_widget = not self._parent._use_move_widget
     self._parent:use_widgets()
 end
+
 function UpperMenu:toggle_rotation_widget()
     self._parent._use_rotation_widget = not self._parent._use_rotation_widget
     self._parent:use_widgets()
 end
-function UpperMenu:enable()
-    self._menu:enable()
-end
+
 function UpperMenu:SwitchMenu(menu)
-    self._parent._current_menu:SetVisible(false)
+    if self._parent._current_menu then
+        self._parent._current_menu:SetVisible(false)
+    end
     self._parent._current_menu = menu
     menu:SetVisible(true)
 end
@@ -51,7 +55,4 @@ function UpperMenu:save()
     self._parent:Log("Saving Map..")
     self._parent.managers.GameOptions:save()
 end
-
-function UpperMenu:disable()
-    self._menu:disable()
-end
+ 
