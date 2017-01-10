@@ -54,12 +54,13 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
         table.insert(config, {_meta = "unit", path = unit, force = true, unload = true})
         local node = self:ParseXml("unit", unit)
         for child in node:children() do
-            if child:name() == "object" then
+            local name = child:name()
+            if name == "object" then
                 local object = child:parameter("file")
                 table.insert(config, {_meta = "object", path = object, force = true, unload = true})
                 local obj_node = BeardLibEditor.Utils:ParseXml("object", object)
                 for obj_child in obj_node:children() do
-                    local name = obj_child:name() 
+                    name = obj_child:name() 
                     if name == "diesel" and obj_child:has_parameter("materials") then
                         local material = obj_child:parameter("materials")
                         table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})                             
@@ -79,9 +80,25 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
                         for efct in child:children() do
                             table.insert(config, {_meta = "effect", path = efct:parameter("effect"), force = true, unload = true})   
                         end
+                    elseif name == "animation_def" then
+                        local anim_def = obj_child:parameter("name") 
+                        table.insert(config, {_meta = name, path = anim_def, force = true, unload = true})   
+                        local anim_node = BeardLibEditor.Utils:ParseXml(name, anim_def)
+                        for anim_child in anim_node:children() do    
+                            if anim_child:name() == "animation_set" then
+                                for anim_set in anim_child:children() do
+                                    local anim_subset = anim_set:parameter("file") 
+                                    table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
+                                    local anim_set_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
+                                    for anim_set_child in anim_set_node:children() do             
+                                        table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
+                                    end                      
+                                end   
+                            end
+                        end                   
                     end
                 end
-            elseif child:name() == "dependencies" then
+            elseif name == "dependencies" then
                 for dep_child in child:children() do
                     if dep_child:has_parameter("unit") then
                         self:ReadUnitAndLoad(dep_child:parameter("unit"))
@@ -92,6 +109,23 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
                         end
                     end
                 end
+            elseif name == "anim_state_machine" then
+                table.insert(config, {_meta = "anim_state_machine", path = child:parameter("name"), force = true, unload = true})
+                local anim_state = child:parameter("name") 
+                table.insert(config, {_meta = "animation_state_machine", path = anim_state, force = true, unload = true})   
+                local anim_state_node = BeardLibEditor.Utils:ParseXml("animation_state_machine", anim_state)
+                for anim_child in anim_state_node:children() do    
+                    if anim_child:name() == "states" then
+                        for anim_set in anim_child:children() do
+                            local anim_subset = anim_set:parameter("file") 
+                            table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
+                            local anim_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
+                            for anim_set_child in anim_node:children() do             
+                                table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
+                            end                      
+                        end   
+                    end
+                end                 
             end
         end
     end

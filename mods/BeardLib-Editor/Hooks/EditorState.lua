@@ -19,5 +19,6 @@ end
 function EditorState:at_exit()
 	if Global.editor_mode then
 		managers.editor:disable()
+		managers.mission:activate()
 	end
 end

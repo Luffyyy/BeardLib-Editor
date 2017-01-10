@@ -81,7 +81,7 @@ end
 
 function EditorAccessCamera:_build_panel()
 	self:_create_panel()
-    self._elements_menu:Button({
+    self._menu:Button({
         name = "choose_camera_unit",
         text = "Choose camera unit",
         help = "Decide what camera unit this element should handle",
@@ -101,7 +101,7 @@ end
 
 function EditorAccessCameraOperator:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementAccessCamera", "ElementSecurityCamera"})
+	self:BuildElementsManage("elements", nil, {"ElementAccessCamera", "ElementSecurityCamera"})
 	self:ComboCtrl("operation", {"none", "destroy"}, {help = "Select an operation for the selected elements"})
 	self:Text("This element can modify point_access_camera element. Select elements to modify using insert and clicking on them.")
 end
@@ -117,7 +117,7 @@ end
 
 function EditorAccessCameraTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementAccessCamera", "ElementSecurityCamera"})
+	self:BuildElementsManage("elements", nil, {"ElementAccessCamera", "ElementSecurityCamera"})
 	self:ComboCtrl("trigger_type", {
 		"accessed",
 		"destroyed",

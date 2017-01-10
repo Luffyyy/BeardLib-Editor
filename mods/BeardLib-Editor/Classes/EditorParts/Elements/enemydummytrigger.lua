@@ -8,7 +8,7 @@ end
 
 function EditorEnemyDummyTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup", "ElementSpawnCivilian", "ElementSpawnCivilianGroup"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup", "ElementSpawnCivilian", "ElementSpawnCivilianGroup"})
 	self:ComboCtrl("event", {
 		"alerted",
 		"death",

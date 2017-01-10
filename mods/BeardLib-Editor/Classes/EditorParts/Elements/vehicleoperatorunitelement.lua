@@ -9,7 +9,7 @@ end
 
 function EditorVehicleOperator:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements")
+	self:BuildElementsManage("elements")
 	self:ComboCtrl("operation", {"none","lock","unlock","secure","break_down","repair","damage","activate","deactivate","block"}, {help = "Select an operation for the selected elements"})
 	self:NumberCtrl("damage", {floats = 0, min = 1, help = "Specify the amount of damage."})
 

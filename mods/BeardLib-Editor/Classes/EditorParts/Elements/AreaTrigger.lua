@@ -142,8 +142,7 @@ function AreaOperatorElement:create_element()
 end
 function AreaOperatorElement:_build_panel()
 	self:_create_panel()
-	local exact_names = {"core/units/mission_elements/trigger_area/trigger_area"}
-	self:_build_add_remove_unit_from_list(self._element.values.elements, nil, exact_names)
+	self:BuildElementsManage("elements", nil, {"ElementAreaTrigger"})
 	EditorAreaTrigger.create_values_ctrlrs(self, {trigger_type = true, instigator = true, amount = true})
 	self:ComboCtrl("operation", {"none", "clear_inside"}, {help = "Select an operation for the selected elements"})
 	for _,uses in ipairs(self._apply_on_checkboxes) do

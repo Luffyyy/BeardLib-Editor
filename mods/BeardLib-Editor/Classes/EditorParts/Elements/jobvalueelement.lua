@@ -9,8 +9,8 @@ end
 
 function EditorJobValue:_build_panel()
 	self:_create_panel()
-	self:_build_value_text("key", {})
-	self:_build_value_text("value", {})
+	self:StringCtrl("key")
+	self:StringCtrl("value")
 	self:BooleanCtrl("save")
 end
 
@@ -49,5 +49,5 @@ end
 
 function EditorApplyJobValue:_build_panel()
 	EditorJobValue._build_panel(self)
-	self:_build_element_list("elements")	
+	self:BuildElementsManage("elements")	
 end

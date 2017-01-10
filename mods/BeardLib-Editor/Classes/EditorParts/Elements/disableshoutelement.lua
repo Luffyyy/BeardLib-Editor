@@ -7,7 +7,7 @@ function EditorDisableShout:create_element()
 end
 function EditorDisableShout:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnCivilian", "ElementSpawnEnemyDummy"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnCivilian", "ElementSpawnEnemyDummy"})
 	self:BooleanCtrl("disable_shout")
 end
  

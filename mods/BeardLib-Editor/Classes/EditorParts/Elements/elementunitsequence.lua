@@ -17,13 +17,14 @@ function EditorUnitSequence:select_unit_trigger_list(id, params)
 	}) 
 	self:load_all_units(params)
 end
+
 function EditorUnitSequence:apply_units(value_name)
 	self.super.apply_units(self, value_name)
 	self:update_selected_sequence()
 end
 
 function EditorUnitSequence:set_selected_trigger_sequence(menu, item)
-	local sequence_combo = self._elements_menu:GetItem("trigger_list")	
+	local sequence_combo = self._menu:GetItem("trigger_list")	
 	local trigger_list_unit = self._element.values.trigger_list[sequence_combo.value]
 	trigger_list_unit.notify_unit_sequence = item:SelectedItem()
 end
@@ -31,8 +32,8 @@ end
 function EditorUnitSequence:update_selected_sequence()
 	local combo_trigger_list = {}
 	local trigger_list = {}
-	local selected_sequence = self._elements_menu:GetItem("selected_trigger")
-	local sequence_combo = self._elements_menu:GetItem("trigger_list")
+	local selected_sequence = self._menu:GetItem("selected_trigger")
+	local sequence_combo = self._menu:GetItem("trigger_list")
 	for _, trigger_unit in pairs(self._element.values.trigger_list) do
 		local unit = managers.worlddefinition:get_unit_on_load(trigger_unit.notify_unit_id)  
 		if alive(unit) then		
@@ -65,34 +66,6 @@ function EditorUnitSequence:apply_modify_trigger_unit(i, items)
 	self:update_selected_sequence()
 end
 
-function EditorUnitSequence:add_selected_units(value_name)
-	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
-		if unit:unit_data() then
-			table.insert(self._element.values[value_name], {
-				name = "run_sequence", 
-				id = #self._element.values[value_name] + 1, 
-				notify_unit_id = unit:unit_data().unit_id,
-				time = 0,
-				notify_unit_sequence = "" 
-			}) 			
-		end
-	end
-	self:update_selected_sequence()
-end
-
-function EditorUnitSequence:remove_selected_units(value_name)
-	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
-		if unit:unit_data() then
-			for k, trigger_list_unit in pairs(self._element.values[value_name]) do 
-				if trigger_list_unit.notify_unit_id == unit:unit_data().unit_id then
-					table.remove(self._element.values[value_name], k)
-				end
-			end
-		end
-	end
-	self:update_selected_sequence()
-end
-
 function EditorUnitSequence:_build_panel()
 	self:_create_panel()
 	self:BooleanCtrl("only_for_local_player")
@@ -100,7 +73,7 @@ function EditorUnitSequence:_build_panel()
 	for _, unit in pairs(self._element.values.trigger_list) do
 		table.insert(trigger_list, unit.notify_unit_id)
 	end
-	self._elements_menu:ComboBox({	
+	self._menu:ComboBox({	
 		name = "trigger_list",
 		text = "Trigger List",
 		help = "Select a unit to modify",
@@ -108,7 +81,7 @@ function EditorUnitSequence:_build_panel()
 		callback = callback(self, self, "update_selected_sequence"),
 		items = trigger_list,
 	})	
-	self._elements_menu:ComboBox({
+	self._menu:ComboBox({
 		name = "selected_trigger",
 		text = "Trigger Sequence",
 		help = "Select a sequence for the unit",
@@ -117,7 +90,7 @@ function EditorUnitSequence:_build_panel()
 		items = {},
 	})		  	
 	self:NumberCtrl("time", {floats = 0, min = 0}) 
-	self:_build_unit_list("trigger_list", callback(self, self, "select_unit_trigger_list"), "notify_unit_id", callback(self, self, "update_selected_sequence"))
+	self:BuildUnitsManage("trigger_list", {key = "notify_unit_id", orig = {notify_unit_id = 0, id = 1, name = "run_sequence", notify_unit_sequence = "", time = 0}})
 	self:update_selected_sequence()
 	self:Text("Use the \"Edit Triggable\" interface, which you enable in the down left toolbar, to select and edit which units and sequences you want to run.")
 end

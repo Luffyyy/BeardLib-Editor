@@ -8,8 +8,8 @@ function EditorPlaySound:create_element()
 end
 function EditorPlaySound:_build_panel(panel, panel_sizer)
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnCivlian"})
-	self:_build_value_text("sound_event", nil, nil, "Sound ID")
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian"})
+	self:StringCtrl("sound_event", {text = "Sound ID"})
 	self:BooleanCtrl("append_prefix", {help = "Append unit prefix"})
 	self:BooleanCtrl("use_instigator", {help = "Play on instigator"})
 end

@@ -8,7 +8,7 @@ end
 
 function EditorOperator:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements")
+	self:BuildElementsManage("elements")
 	self:ComboCtrl("operation", {"none","add","remove"}, {help = "Select an operation for the selected elements"})
 	self:Text("Choose an operation to perform on the selected elements. An element might not have the selected operation implemented and will then generate error when executed.")
 end

@@ -7,17 +7,8 @@ function EditorUnitSequenceTrigger:create_element()
 	self._element.values.sequence_list = {}
 end
 
-function EditorUnitSequenceTrigger:select_unit_sequence_list(id, params) 
-	table.insert(self._selected_units, {
-		guis_id = #self._selected_units + 1,
-		sequence = "",
-		unit_id = id,
-	}) 
-	self:load_all_units(params)
-end
-
 function EditorUnitSequenceTrigger:set_selected_sequence(menu, item)
-	local sequence_combo = self._elements_menu:GetItem("sequence")	
+	local sequence_combo = self._menu:GetItem("sequence")	
 	local sequence_list_unit = self._element.values.sequence_list[sequence_combo.value]
 	sequence_list_unit.sequence = item:SelectedItem()
 end
@@ -56,8 +47,8 @@ end
 function EditorUnitSequenceTrigger:update_selected_sequence()
 	local combo_sequence_list = {}
 	local sequence_list = {}
-	local sequence_combo = self._elements_menu:GetItem("sequence")	
-	local selected_sequence = self._elements_menu:GetItem("selected_sequence")
+	local sequence_combo = self._menu:GetItem("sequence")	
+	local selected_sequence = self._menu:GetItem("selected_sequence")
 	for _, sequence_unit in pairs(self._element.values.sequence_list) do
 		local unit = managers.worlddefinition:get_unit_on_load(sequence_unit.unit_id)  
 		if alive(unit) then		
@@ -86,7 +77,7 @@ end
 
 function EditorUnitSequenceTrigger:_build_panel()
 	self:_create_panel()
-	self._elements_menu:ComboBox({
+	self._menu:ComboBox({
 		name = "sequence",
 		text = "Sequence Unit",
 		help = "Select a sequence unit to modify",
@@ -95,7 +86,7 @@ function EditorUnitSequenceTrigger:_build_panel()
 		value = 1,
 		items = {},
 	})	
-	self._elements_menu:ComboBox({
+	self._menu:ComboBox({
 		name = "selected_sequence",
 		text = "Sequence",
 		help = "Select a sequence for the unit",
@@ -103,6 +94,7 @@ function EditorUnitSequenceTrigger:_build_panel()
 		callback = callback(self, self, "set_selected_sequence"),
 		items = {},
 	})		 
-	self:_build_unit_list("sequence_list", callback(self, self, "select_unit_sequence_list"), "unit_id", callback(self, self, "update_selected_sequence"))
+	self:BuildUnitsManage("sequence_list", {key = "unit_id", orig = {unit_id = 0, sequence = "", guis_id = 1}})
 	self:update_selected_sequence()
 end
+]]

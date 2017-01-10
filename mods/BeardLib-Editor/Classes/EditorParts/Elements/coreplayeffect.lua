@@ -41,6 +41,6 @@ end
 
 function EditorStopEffect:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementPlayEffect"})
+	self:BuildElementsManage("elements", nil, {"ElementPlayEffect"})
 	self:ComboCtrl("operation", {"kill", "fade_kill"}, {help = "Select a kind of operation to perform on the added effects"})
 end

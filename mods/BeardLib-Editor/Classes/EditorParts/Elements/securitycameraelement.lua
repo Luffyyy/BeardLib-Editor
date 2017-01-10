@@ -69,7 +69,7 @@ end
  
 function EditorSecurityCamera:_build_panel()
 	self:_create_panel()
-    self._elements_menu:Button({
+    self._menu:Button({
         name = "choose_camera_unit",
         text = "Choose camera unit",
         help = "Decide what camera unit this element should handle",

@@ -9,6 +9,6 @@ end
 
 function EditorVariable:_build_panel()
 	self:_create_panel()
-    self:_build_value_text("variable")
+    self:StringCtrl("variable")
 	self:BooleanCtrl("activated", {help = "Set if the variable is active and uncheck if the variable is disabled."})
 end

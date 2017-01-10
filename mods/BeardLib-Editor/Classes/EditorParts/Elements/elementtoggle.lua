@@ -9,7 +9,7 @@ end
 
 function EditorToggle:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements")
+	self:BuildElementsManage("elements")
 	self:ComboCtrl("toggle", {"on","off","toggle"}, {help = "Select how you want to toggle an element"})
 	self:NumberCtrl("set_trigger_times", {floats = 0, min = -1, help = "Sets the elements trigger times when toggle on (-1 means do not use)"})
 end

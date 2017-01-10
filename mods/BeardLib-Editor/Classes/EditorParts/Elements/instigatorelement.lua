@@ -20,7 +20,7 @@ end
 
 function EditorInstigatorOperator:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementInstigator"})
+	self:BuildElementsManage("elements", nil, {"ElementInstigator"})
 	self:ComboCtrl("operation", {
 		"none",
 		"set",
@@ -46,7 +46,7 @@ end
 
 function EditorInstigatorTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementInstigator"})
+	self:BuildElementsManage("elements", nil, {"ElementInstigator"})
 	self:ComboCtrl("trigger_type", {
 		"death",
 		"set",

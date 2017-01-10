@@ -11,6 +11,6 @@ function EditorSetOutline:_build_panel()
 		"ai_spawn_enemy",
 		"ai_spawn_civilian"
 	}
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
 	 self:BooleanCtrl("set_outline", {text = "Enable outline"})
 end

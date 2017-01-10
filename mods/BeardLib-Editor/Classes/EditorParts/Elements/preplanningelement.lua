@@ -27,7 +27,7 @@ function EditorPrePlanning:_build_panel()
 		allowed_types[v] = self._element.values.allowed_types[v] == true
 	end
 	--[[ Redo later
-	self._elements_menu:Table({
+	self._menu:Table({
 		name = "allowed_types",
 		text = "Allowed Types:",
 		items = allowed_types,
@@ -40,7 +40,7 @@ function EditorPrePlanning:_build_panel()
 	for k, v in pairs(managers.preplanning:types()) do
 		disables_types[v] = self._element.values.disables_types[v] == true
 	end
-	self._elements_menu:Table({
+	self._menu:Table({
 		name = "disables_types",
 		text = "Disables Types:",
 		items = disables_types,

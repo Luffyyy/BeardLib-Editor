@@ -25,7 +25,7 @@ function EditorLogicChanceOperator:create_element()
 end
 function EditorLogicChanceOperator:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementLogicChance"})
+	self:BuildElementsManage("elements", nil, {"ElementLogicChance"})
 	self:ComboCtrl("operation", {
 		"none",
 		"add_chance",
@@ -52,7 +52,7 @@ end
 
 function EditorLogicChanceTrigger:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementLogicChance"})
+	self:BuildElementsManage("elements", nil, {"ElementLogicChance"})
 	self:ComboCtrl("outcome", {"fail", "success"}, {help = "Select an outcome to trigger on"})
 	self:Text("This element is a trigger to logic_chance element.")
 end

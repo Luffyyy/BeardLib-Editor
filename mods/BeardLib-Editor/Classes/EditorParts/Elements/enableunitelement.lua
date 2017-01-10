@@ -7,5 +7,5 @@ end
 
 function EditorEnableUnit:_build_panel()
 	self:_create_panel()
-	self:_build_unit_list("unit_ids")
+	self:BuildUnitsManage("unit_ids")
 end

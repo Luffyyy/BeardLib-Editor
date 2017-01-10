@@ -7,7 +7,7 @@ function EditorCharacterSequence:create_element()
 end
 function EditorCharacterSequence:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
 	self:BooleanCtrl("use_instigator")
-	self:_build_value_text("sequence")
+	self:StringCtrl("sequence")
 end

@@ -8,7 +8,7 @@ end
 
 function EditorEnemyPreferedAdd:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("spawn_groups", {"ElementSpawnEnemyGroup"})
+	self:BuildElementsManage("spawn_groups", nil, {"ElementSpawnEnemyGroup"})
 end
 EditorEnemyPreferedRemove = EditorEnemyPreferedRemove or class(MissionScriptEditor)
 function EditorEnemyPreferedRemove:create_elment()
@@ -18,5 +18,5 @@ function EditorEnemyPreferedRemove:create_elment()
 end
 function EditorEnemyPreferedRemove:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementEnemyPreferedAdd"})
+	self:BuildElementsManage("elements", nil, {"ElementEnemyPreferedAdd"})
 end

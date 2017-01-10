@@ -34,7 +34,7 @@ end
 
 function EditorSpawnEnemyGroup:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy"})
 	self:ComboCtrl("spawn_type", table.list_add({"ordered"}, {"random", "group"}), {help = "Specify how the enemy will be spawned."})
 	self:BooleanCtrl("ignore_disabled", {help = "Select if disabled spawn points should be ignored or not"})
 	self:NumberCtrl("amount", {floats = 0, min = 0, help = "Specify amount of enemies to spawn from group"})
@@ -45,7 +45,7 @@ function EditorSpawnEnemyGroup:_build_panel()
 		table.insert(opt, cat_name)
 	end
 	for i, o in ipairs(opt) do
-		self._elements_menu:Toggle({
+		self._menu:Toggle({
 			name = o,
 			text = o,
 			value = self._element.values.preferred_spawn_groups and table.contains(self._element.values.preferred_spawn_groups, o) or false,

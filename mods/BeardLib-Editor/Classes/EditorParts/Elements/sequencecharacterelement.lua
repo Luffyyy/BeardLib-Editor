@@ -8,8 +8,8 @@ end
 
 function EditorSequenceCharacter:_build_panel()
 	self:_create_panel()
-	self:_build_value_text("sequence")
-	self:_build_element_list("sequence", {"ElementSpawnEnemyDummy"})
+	self:StringCtrl("sequence")
+	self:BuildElementsManage("sequence", nil, {"ElementSpawnEnemyDummy"})
 end
  
  

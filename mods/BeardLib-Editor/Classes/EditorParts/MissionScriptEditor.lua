@@ -56,6 +56,8 @@ function MissionScriptEditor:_create_panel()
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = main})
  	self:StringCtrl("editor_name", {help = "The element's editor name to be used to find quickly find it in the editor.", data = self._element, group = main})
+ 	self._element.values.position = self._element.values.position or Vector3()
+ 	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
     rotation = type(rotation) == "number" and Rotation() or rotation
@@ -188,6 +190,10 @@ function MissionScriptEditor:unselect_element(i, params)
 	self:load_all_mission_elements(params)
 end
 
+function MissionScriptEditor:update_element()
+	managers.mission:set_element(self._element)
+end
+
 function MissionScriptEditor:set_element_data(menu, item)
 	local data = self:ItemData(item)
 	data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
@@ -195,24 +201,24 @@ function MissionScriptEditor:set_element_data(menu, item)
 	if item.name == "base_delay_rand" then
 		data[item.name] = data[item.name] > 0 and data[item.name] or nil
 	end
-	managers.mission:set_element(self._element)
+	self:update_element()
 end
 function MissionScriptEditor:set_element_position(menu)
 	self._element.values.position = Vector3(self.x:Value(), self.y:Value(), self.z:Value())
 	self._element.values.rotation = Rotation(self.yaw:Value(), self.pitch:Value(), self.roll:Value())
-	managers.mission:set_element(self._element)
+	self:update_element()
 end
 
 function MissionScriptEditor:apply_elements(value_name)
 	self._element.values[value_name] = self._selected_elements
-	managers.mission:set_element(self._element)
+	self:update_element()
 end
 
-function MissionScriptEditor:BuildUnitsManage(value_name, select_callback, id_key, update_callback)
+function MissionScriptEditor:BuildUnitsManage(value_name, table_data)
     self._menu:Button({
         name = "remove_add_element",
         text = "Add/Remove an unit to " .. value_name .. " list",
-        callback = callback(self, self, "OpenUnitsManageDialog", {value_name = value_name, select_callback = select_callback, id_key = id_key}),
+        callback = callback(self, self, "OpenUnitsManageDialog", {value_name = value_name, table_data = table_data}),
         group = self._menu:GetItem("QuickButtons")
     })     	
 	self._menu:Button({
@@ -220,9 +226,6 @@ function MissionScriptEditor:BuildUnitsManage(value_name, select_callback, id_ke
 		text = "Add selected unit(s) to " .. value_name,
         callback = function()
             self:add_selected_units(value_name)
-            if update_callback then
-                update_callback()
-            end
         end,        
         group = self._menu:GetItem("QuickButtons")    
 	})
@@ -231,9 +234,6 @@ function MissionScriptEditor:BuildUnitsManage(value_name, select_callback, id_ke
 		text = "Remove selected unit(s) from " .. value_name,
 		callback = function()
             self:remove_selected_units(value_name)
-            if update_callback then
-                update_callback()
-            end
         end,
         group = self._menu:GetItem("QuickButtons")
 	})	
@@ -309,11 +309,15 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 	    	self._element.values[params.value_name] = {}
 	    	for _, data in pairs(final_selected_list) do
 	    		if params.table_data then	    	
-	    			local add = params.table_data.orig	
+	    			local add 	
 		    		for _, v in pairs(current_list) do
-	                	if type(v) == "table" and v[params.table_data] == data.element.id then
+	                	if type(v) == "table" and v[params.table_data.key] == data.element.id then
 	                		add = v
 	                	end
+	                end
+	                if not add then
+	                	add = params.table_data.orig
+	                	add[params.table_data.key] = data.element.id
 	                end
 	    			table.insert(self._element.values[params.value_name], add)
 	    		else
@@ -322,21 +326,31 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 	    	end
 	    end
 	})
+	self:update_element()
 end
 
 function MissionScriptEditor:OpenUnitsManageDialog(params)
 	local selected_list = {}
 	local list = {}
- 	for k, unit in pairs(managers.worlddefinition._all_units) do
+	local current_list = self._element.values[params.value_name]
+    for k, unit in pairs(managers.worlddefinition._all_units) do
  		local ud = unit:unit_data()
  		local data = {
 	   		name = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
 	   		unit = unit, 			
  		}
- 		if table.contains(self._element.values[params.value_name], ud.unit_id) then 
- 			table.insert(selected_list, data)
- 		end
- 		table.insert(list, data)
+    	if params.table_data then
+    		for _, v in pairs(current_list) do
+    			if type(v) == "table" and v[params.table_data.key] == ud.unit_id then
+			 		table.insert(selected_list, data)
+    			end
+    		end
+    	else
+	 		if table.contains(current_list, ud.unit_id) then 
+	 			table.insert(selected_list, data)
+	 		end                   		
+    	end                 
+    	table.insert(list, data)
     end
 	managers.editor._select_list:Show({
 	    selected_list = selected_list,
@@ -344,16 +358,34 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 	    callback = params.callback or function(final_selected_list)
 	    	self._element.values[params.value_name] = {}
 	    	for _, data in pairs(final_selected_list) do
-	    		table.insert(self._element.values[params.value_name], data.unit:unit_data().unit_id)
+	    		local unit = data.unit
+	    		local id = unit:unit_data().unit_id
+	    		if params.table_data then	    	
+	    			local add 	
+		    		for _, v in pairs(current_list) do
+	                	if type(v) == "table" and v[params.table_data.key] == id then
+	                		add = v
+	                	end
+	                end
+	                if not add then
+	                	add = params.table_data.orig
+	                	add[params.table_data.key] = id
+	                end
+	    			table.insert(self._element.values[params.value_name], add)
+	    		else
+	    			table.insert(self._element.values[params.value_name], id)
+	    		end 
 	    	end
 	    end
 	})
+	self:update_element()
 end
 
 function MissionScriptEditor:BasicCtrlInit(value_name, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
 	opt.text = string.pretty(value_name, true)
+	return opt
 end
 
 function MissionScriptEditor:ItemData(item)
@@ -370,21 +402,21 @@ function MissionScriptEditor:Text(text, opt)
 end
 
 function MissionScriptEditor:NumberCtrl(value_name, opt)
-	self:BasicCtrlInit(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
     return self:NumberBox(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:BooleanCtrl(value_name, opt)
-	self:BasicCtrlInit(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
     return self:Toggle(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:StringCtrl(value_name, opt)
-	self:BasicCtrlInit(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
     return self:TextBox(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
-	self:BasicCtrlInit(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
     return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, table.get_key(items, self:ItemData(opt)[value_name]), opt)
 end

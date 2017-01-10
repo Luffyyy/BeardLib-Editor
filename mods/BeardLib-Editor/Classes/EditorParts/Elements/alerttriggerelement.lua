@@ -20,7 +20,7 @@ function EditorAlertTrigger:_build_panel()
 	}
 	self._alert_type_check_boxes = {}
 	for i, o in ipairs(alert_type_table) do
-		local check = self._elements_menu:Toggle({
+		local check = self._menu:Toggle({
 			name = o,
 			text = string.pretty(o, true),
 			value = table.contains(self._element.values.alert_types, o),
@@ -28,7 +28,7 @@ function EditorAlertTrigger:_build_panel()
 		})
 		self._alert_type_check_boxes[o] = check
 	end
-	self._elements_menu:ComboBox({
+	self._menu:ComboBox({
 		name = "preset",
 		text = "Preset:",
 		items = {"clear", "all"},
@@ -39,7 +39,7 @@ function EditorAlertTrigger:_build_panel()
 	local filter_table = managers.navigation:convert_access_filter_to_table(self._element.values.filter)
 	self._filter_check_boxes = {}
 	for i, o in ipairs(opt) do
-		local check = self._elements_menu:Toggle({
+		local check = self._menu:Toggle({
 			name = o,
 			text = string.pretty(o, true),
 			value = table.contains(filter_table, o),

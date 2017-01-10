@@ -111,20 +111,21 @@ function SpawnSelect:OpenSelectUnitDialog(params)
 	   		color = params.choose_color and params.choose_color(unit),
 	   	}, params), params.merge_with_item and params.merge_with_item(unit) or {}))
     end
-	managers.editor._listdia:Show({
+	self._parent._listdia:Show({
 	    list = units,
 	    callback = function(item)
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(item)
 	    	else
-	    		managers.editor:_select_unit(item.unit)	        
-	    		managers.editor._listdia:hide()
+	    		self._parent:_select_unit(item.unit)	        
+	    		self._parent._listdia:hide()
 	    	end
 	    end
 	}) 
 end
 
-function SpawnSelect:OpenSelectElementDialog()
+function SpawnSelect:OpenSelectElementDialog(params)
+    params = params or {}
 	local elements = {}
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
@@ -141,8 +142,12 @@ function SpawnSelect:OpenSelectElementDialog()
 	self._parent._listdia:Show({
 	    list = elements,
 	    callback = function(item)
-	    	self._parent:_select_element(item.element)
-	        self._parent._listdia:hide()
+            if type(params.on_click) == "function" then
+                params.on_click(item)
+            else
+                self._parent:select_element(item.element)
+                self._parent._listdia:hide()
+            end
 	    end
 	}) 
 end

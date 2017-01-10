@@ -47,5 +47,5 @@ function EditorWaypoint:_build_panel()
 	self:_create_panel()
 	self:BooleanCtrl("only_in_civilian", {help = "This waypoint will only be visible for players that are in civilian mode"})
 	self:ComboCtrl("icon", self._icon_options, {help = "Select an icon"})
-	self:_build_value_text("text_id")
+	self:StringCtrl("text_id")
 end

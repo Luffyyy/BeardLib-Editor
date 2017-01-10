@@ -34,8 +34,15 @@ function MissionManager:parse(params, stage_name, offset, file_type)
 			self:_load_mission_file(name, file_dir, data)
 		end
 	end
-	self:_activate_mission(activate_mission)
+	--self:_activate_mission(activate_mission)
 	return true
+end
+
+function MissionManager:activate()
+	if not self._activated then
+		self._activated = true
+		self:_activate_mission()
+	end
 end
 
 function MissionManager:_load_mission_file(name, file_dir, data)
@@ -55,6 +62,7 @@ function MissionManager:set_element(element)
 			for i, s_element in pairs(script.elements) do
 				if s_element.id == element.id then
 					self._missions[m_name][s_name].elements[i] = element
+					self._scripts[s_name]._elements[element.id]._values = element.values
 				end
 			end
 		end

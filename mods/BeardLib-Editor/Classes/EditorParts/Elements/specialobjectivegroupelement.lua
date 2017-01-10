@@ -16,6 +16,6 @@ function EditorSpecialObjectiveGroup:_build_panel()
 	})
 	self:BooleanCtrl("use_instigator")
 	self:NumberCtrl("base_chance", {min = 0, max = 1, floats = 2, help = "Used to specify chance to happen (1==absolutely!)"})
-	self:_build_element_list("spawn_instigator_ids", {"ElementSpawnEnemyGroup"})
-	self:_build_element_list("followup_elements", {"ElementSpeicalObjective"})
+	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyGroup"})
+	self:BuildElementsManage("followup_elements", nil, {"ElementSpeicalObjective"})
 end

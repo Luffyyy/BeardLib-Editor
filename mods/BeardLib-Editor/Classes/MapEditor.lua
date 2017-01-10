@@ -166,11 +166,12 @@ end
 
 function MapEditor:select_element(element)
     for _, unit in pairs(World:find_units_quick("all")) do
-        if unit:mission_element() and unit:mission_element() == element then
+        if unit:mission_element() and unit:mission_element().element.id == element.id then
             self:select_unit(unit)
         end
     end
     self.managers.ElementEditor:set_element(element)
+    self.managers.StaticEditor:Switch()
 end
 
 function MapEditor:add_element(element, menu, item)

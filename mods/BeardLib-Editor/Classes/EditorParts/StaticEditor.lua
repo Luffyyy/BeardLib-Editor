@@ -317,7 +317,7 @@ function StaticEditor:set_unit(reset)
                 label = "elements",
                 items_size = 14,
                 group = self._menu:GetItem("Links"),
-                callback = callback(self._parent, self._parent, "_select_element", element)
+                callback = callback(self._parent, self._parent, "select_element", element)
             })
         end
     else

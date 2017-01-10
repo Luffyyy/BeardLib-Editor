@@ -26,10 +26,6 @@ end
 
 function EditorSpecialObjectiveTrigger:_build_panel()
 	self:_create_panel()
-	local names = {
-		"ElementSpecialObjective",
-		"ElementSpecialObjectiveGroup"
-	}
-	self:_build_element_list(self._element.values.elements, names)
+	self:BuildElementsManage("elements", nil, {"ElementSpecialObjective","ElementSpecialObjectiveGroup"})
 	self:ComboCtrl("event", self._options, {help = "Select an event from the combobox"})
 end

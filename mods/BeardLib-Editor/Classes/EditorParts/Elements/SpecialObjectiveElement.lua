@@ -366,7 +366,7 @@ function EditorSpecialObjective:_build_panel()
 	self._nav_link_filter_check_boxes = self._nav_link_filter_check_boxes or {}
 
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
-	self._elements_menu:ComboBox({
+	self._menu:ComboBox({
 		name = "preset",
 		text = "Preset:",
 		items = {"clear", "all"},
@@ -375,7 +375,7 @@ function EditorSpecialObjective:_build_panel()
 	})
 	local opt = NavigationManager.ACCESS_FLAGS
 	for i, o in ipairs(opt) do
-		local check = self._elements_menu:Toggle({
+		local check = self._menu:Toggle({
 			name = o,
 			text = o,
 			value = table.contains(self._nav_link_filter, o),

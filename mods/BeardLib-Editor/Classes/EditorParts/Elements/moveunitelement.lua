@@ -38,9 +38,9 @@ function EditorMoveUnit:set_element_data(menu, item)
             self._element.values.end_pos = self._last_end_position or self._element.values.start_pos
         end
         local end_pos = self._element.values.end_pos or self._element.values.displacement
-        self._elements_menu:GetItem("end_position_x"):SetValue(end_pos.x, false, true)
-        self._elements_menu:GetItem("end_position_y"):SetValue(end_pos.y, false, true)
-        self._elements_menu:GetItem("end_position_z"):SetValue(end_pos.z, false, true)
+        self._menu:GetItem("end_position_x"):SetValue(end_pos.x, false, true)
+        self._menu:GetItem("end_position_y"):SetValue(end_pos.y, false, true)
+        self._menu:GetItem("end_position_z"):SetValue(end_pos.z, false, true)
     elseif item.name == "unit_position_as_start_position" then
         if item.value == true then
             self._last_start_position = mvector3.copy(self._element.values.start_pos) 
@@ -56,7 +56,7 @@ function EditorMoveUnit:set_element_position(...)
     if not self._element.values.unit_position_as_start_position then
         self._element.values.start_pos = self._element.values.position
     end
-    local pos = Vector3(self._elements_menu:GetItem("end_position_x"):Value(), self._elements_menu:GetItem("end_position_y"):Value(), self._elements_menu:GetItem("end_position_z"):Value())
+    local pos = Vector3(self._menu:GetItem("end_position_x"):Value(), self._menu:GetItem("end_position_y"):Value(), self._menu:GetItem("end_position_z"):Value())
     if self._element.values.is_displacement then
         self._element.values.displacement = pos
         self._element.values.end_pos = nil
@@ -68,7 +68,7 @@ end
 
 function EditorMoveUnit:_build_panel()
 	self:_create_panel()
-    self:_build_unit_list("unit_ids")
+    self:BuildUnitsManage("unit_ids")
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})  
     self:BooleanCtrl("is_displacement")
     self:BooleanCtrl("unit_position_as_start_position")

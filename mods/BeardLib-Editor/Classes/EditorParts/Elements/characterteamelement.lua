@@ -10,7 +10,7 @@ end
 
 function EditorCharacterTeam:_build_panel()
 	self:_create_panel()
-	self:_build_element_list("elements", {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
 	self:BooleanCtrl("use_instigator")
 	self:BooleanCtrl("ignore_disabled")
 	self:ComboCtrl("team", tweak_data.levels:get_team_names_indexed(), {help = "Select wanted team for the character."})
