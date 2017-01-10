@@ -97,4 +97,4 @@ function EditorUnitSequenceTrigger:_build_panel()
 	self:BuildUnitsManage("sequence_list", {key = "unit_id", orig = {unit_id = 0, sequence = "", guis_id = 1}})
 	self:update_selected_sequence()
 end
-]]
+ 

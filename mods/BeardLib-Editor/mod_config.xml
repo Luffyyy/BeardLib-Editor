@@ -29,7 +29,6 @@
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="Coreworlddefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="Gamestatemachine.lua"/>
         <hook source_file="lib/setups/gamesetup" file="Gamesetup.lua"/>
-        <hook source_file="core/lib/system/coresystem" file="CoreSystem.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
         <hook source_file="lib/managers/navigationmanager" file="Navigationmanager.lua"/>
         <hook source_file="lib/managers/navfieldbuilder" file="Navfieldbuilder.lua"/>
