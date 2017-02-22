@@ -19,7 +19,7 @@ function EditorUnitSequenceTrigger:apply_units(value_name)
 end
 
 function EditorUnitSequenceTrigger:add_selected_units(value_name)
-	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
+	for _, unit in pairs(self:Manager("static")._selected_units) do
 		if unit:unit_data() then
 			table.insert(self._element.values[value_name], {
 				guis_id = #self._element.values[value_name] + 1,
@@ -32,7 +32,7 @@ function EditorUnitSequenceTrigger:add_selected_units(value_name)
 end
 
 function EditorUnitSequenceTrigger:remove_selected_units(value_name)
-	for _, unit in pairs(self:Manager("StaticEditor")._selected_units) do
+	for _, unit in pairs(self:Manager("static")._selected_units) do
 		if unit:unit_data() then
 			for k, sequence_unit in pairs(self._element.values[value_name]) do 
 				if sequence_unit.unit_id == unit:unit_data().unit_id then

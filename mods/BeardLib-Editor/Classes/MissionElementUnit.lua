@@ -48,6 +48,14 @@ function MissionElementUnit:update(t, dt)
 	end
 end
 
+function MissionElementUnit:set_enabled(enabled)
+	if enabled then
+		self._ws:show()
+	else
+		self._ws:hide()
+	end
+end
+
 function MissionElementUnit:set_color(color)
 	self._icon:set_color(color)
 	self._text:set_color(color)

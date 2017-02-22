@@ -1,0 +1,12 @@
+<table>
+	<editor_groups/>
+	<instances/>
+	<statics>
+		<table>
+			<unit_data _prev_pos="300.25 -645.83 183.48" _prev_rot="0 0 0 -1" continent="world" local_pos="0 0 0" local_rot="0 -0 0 -1" mesh_variation="display_off" name="units/payday2/architecture/bnk/bnk_int_floor4x4_a" name_id="com_int_construction_concrete_floor_2x2m_001" position="300.25 -645.83 183.48" rotation="-0 0 -0 -1" unit_id="100000"/>
+		</table>
+	</statics>
+	<values>
+		<workviews/>
+	</values>
+</table>

@@ -22,6 +22,7 @@ function WorldDefinition:init(params)
 	self:parse_continents()
 	managers.sequence:preload()
 	PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+	self._world_unit_ids = {}
 	self._unit_ids = {}
 	self._all_units = {}
 	self._start_id = 100000
@@ -33,20 +34,34 @@ function WorldDefinition:init(params)
 	self._termination_counter = 0
 	self:create("ai")
 end
-function WorldDefinition:set_unit(unit_id, config, old_continent, new_continent)
-	local continent_data = self._continent_definitions[old_continent]
-	local new_continent_data = self._continent_definitions[new_continent]
-	local move_continent = (old_continent ~= new_continent)
-	if continent_data then
-		for i, static in pairs(continent_data.statics) do
+function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
+	local statics
+	local new_statics
+	local move 
+	local uname = unit:unit_data().name
+	if unit:wire_data() then
+		statics = managers.worlddefinition._world_data.wires
+	elseif unit:ai_editor_data() then
+		statics = managers.worlddefinition._world_data.ai
+	else
+		statics = self._continent_definitions[old_continent]
+		new_statics = self._continent_definitions[new_continent]
+		move = (old_continent ~= new_continent)		
+		if statics then
+			statics = statics.statics
+			new_statics = new_statics.statics
+		end
+	end
+	if statics then
+		for i, static in pairs(statics) do
 			if type(static) == "table" then
 				if static.unit_data.unit_id == unit_id then
-					for k,v in pairs(config) do
-						static.unit_data[k] = v
-					end
+					for k,v in pairs(unit:unit_data()) do static.unit_data[k] = v end					
+					for k,v in pairs(unit:wire_data() or {}) do static.wire_data[k] = v end					
+					for k,v in pairs(unit:ai_editor_data() or {}) do static.ai_editor_data[k] = v end
 					if move_continent then
-						continent_data.statics[i] = nil
-						table.insert(new_continent_data.statics, static)
+						statics[i] = nil
+						table.insert(new_statics, static)
 					end
 					break
 				end
@@ -61,12 +76,13 @@ function WorldDefinition:insert_name_id(unit)
 	self._name_ids[name][name_id] = (self._name_ids[name][name_id] or 0) + 1
 end
 function WorldDefinition:set_up_name_id(unit)
-	if unit:unit_data().name_id ~= "none" then
+	local ud = unit:unit_data()
+	if ud.name_id ~= "none" then
 		self:insert_name_id(unit)
 	else
-		unit:unit_data().name_id = self:get_name_id(unit)
+		ud.name_id = self:get_name_id(unit)
 	end
-	self:set_unit(unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)
+	self:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 end
 function WorldDefinition:get_name_id(unit, name)
 	local u_name = unit:unit_data().name
@@ -102,7 +118,7 @@ function WorldDefinition:get_name_id(unit, name)
 end
 function WorldDefinition:remove_name_id(unit)
 	local unit_name = unit:unit_data().name
-	if self._name_ids[unit_name] then
+	if self._name_ids[unit_name] and self._name_ids[unit_name][name_id] then
 		local name_id = unit:unit_data().name_id
 		self._name_ids[unit_name][name_id] = self._name_ids[unit_name][name_id] - 1
 		if self._name_ids[unit_name][name_id] == 0 then
@@ -161,11 +177,23 @@ function WorldDefinition:delete_unit(unit)
 			end
 		end
 	end
-
 end
 
-function WorldDefinition:add_unit(unit, continent)
-	table.insert(self._continent_definitions[continent].statics, {unit_data = unit:unit_data()})
+function WorldDefinition:add_unit(unit)
+	local statics
+	local ud = unit:unit_data()
+	if unit:wire_data() then
+		statics = managers.worlddefinition._world_data.wires
+	elseif unit:ai_editor_data() then
+		statics = managers.worlddefinition._world_data.ai
+	else
+		statics = self._continent_definitions[ud.continent].statics
+	end
+	table.insert(statics, {
+		unit_data = unit:unit_data(),
+		wire_data = unit:wire_data(),
+		ai_editor_data = unit:ai_editor_data(),
+	})
 end
 
 function WorldDefinition:_set_only_visible_in_editor(unit, data)
@@ -178,6 +206,32 @@ function WorldDefinition:_setup_disable_on_ai_graph(unit, data)
 		return
 	end
 	unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
+end
+
+function WorldDefinition:_create_ai_editor_unit(data, offset)
+	local unit = self:_create_statics_unit(data, offset)
+	if data.ai_editor_data then
+		for name, value in pairs(data.ai_editor_data) do
+			unit:ai_editor_data()[name] = value
+		end
+	end
+	return unit
+end
+
+function WorldDefinition:create_unit(data, type)		
+	local offset = Vector3()
+	local unit 
+	if type == Idstring("wire") then
+		unit = self:_create_wires_unit(data, offset)
+	elseif type == Idstring("ai") then
+		unit = self:_create_ai_editor_unit(data, offset)
+	else
+		unit = self:_create_statics_unit(data, offset)
+	end 
+	if unit then
+		self:add_unit(unit)
+	end
+	return unit
 end
 
 function WorldDefinition:_setup_editor_unit_data(unit, data)		
@@ -208,6 +262,13 @@ function WorldDefinition:_setup_editor_unit_data(unit, data)
     ud.disable_shadows = data.disable_shadows
     ud.disable_collision = data.disable_collision
     ud.hide_on_projection_light = data.hide_on_projection_light
+
+	local wd = unit:wire_data()
+    if wd then
+    	local target = unit:get_object(Idstring("a_target"))
+    	wd.target_pos = target:position()
+    	wd.target_rot = target:rotation()
+    end
 	self:set_up_name_id(unit)
 end
 function WorldDefinition:make_unit(data, offset)
@@ -225,6 +286,7 @@ function WorldDefinition:make_unit(data, offset)
 		end
 	end
 	local unit
+	--log(tostring( name ))
 	if MassUnitManager:can_spawn_unit(Idstring(name)) then
 		unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 	else
@@ -259,24 +321,32 @@ function WorldDefinition:assign_unit_data(unit, data)
 end
 
 function WorldDefinition:_setup_unit_id(unit, data)
-	unit:unit_data().unit_id = tonumber(data.unit_id)
-	unit:set_editor_id(unit:unit_data().unit_id)
-	self._all_units[unit:unit_data().unit_id] = unit
+	local ud = unit:unit_data()
+	ud.unit_id = tonumber(data.unit_id)
+	unit:set_editor_id(ud.unit_id)
+	self._all_units[ud.unit_id] = unit
 	if data.continent then
 		self._unit_ids[data.continent] = self._unit_ids[data.continent] or {}
-		self._unit_ids[data.continent][unit:unit_data().unit_id] = true
+		self._unit_ids[data.continent][ud.unit_id] = true
 		self:use_me(unit, Application:editor())
+	elseif unit:wire_data() or unit:ai_editor_data() then
+		self._world_unit_ids[ud.unit_id] = true
 	end
 end
 
-function WorldDefinition:GetNewUnitID(continent)
-	if continent then
+function WorldDefinition:GetNewUnitID(continent, t)
+	if continent then		
 		self._unit_ids[continent] = self._unit_ids[continent] or {}
-		local i = self._start_ids[continent] 
-		while self._unit_ids[continent][i] do
+		local tbl = self._unit_ids[continent]
+		local i = self._start_ids[continent]
+		if t == Idstring("wire") or t == Idstring("ai") then
+			tbl = self._world_unit_ids
+			i = 1
+		end
+		while tbl[i] do
 			i = i + 1
 		end
-		self._unit_ids[continent][i] = true
+		tbl[i] = true
 		return i
 	else
 		_G.BeardLibEditor:log("[ERROR] continent needed for unit id")

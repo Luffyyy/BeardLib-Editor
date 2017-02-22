@@ -25,6 +25,26 @@ function BeardLibEditor:_init()
     self:LoadHashlist()
 end
 
+function BeardLibEditor:InitManagers()
+    local M = BeardLibEditor.managers
+    if Global.editor_mode then
+        M.MapEditor = MapEditor:new()
+    end
+    M.Menu = EditorMenu:new()
+    M.Dialog = MenuDialog:new()
+    M.ListDialog = ListDialog:new()
+    M.SelectDialog = SelectListDialog:new()
+
+    M.MapProject = MapProjectManager:new()
+    M.LoadLevel = LoadLevelMenu:new()
+
+    local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
+    M.EnvironmentEditor:BuildNode(main_node)
+    M.ScriptDataConveter:BuildNode(main_node)
+    M.MapProject:BuildNode(main_node)
+    M.LoadLevel:BuildNode(main_node)
+end
+
 function BeardLibEditor:RegisterModule(key, module)
     if not self.modules[key] then
         self:log("Registered module editor with key %s", key)
@@ -36,61 +56,49 @@ end
 
 function BeardLibEditor:LoadHashlist()        
     self:log("Loading Hashlist")
-    local has_hashlist = DB:has("idstring_lookup", "idstring_lookup") 
-    local function AddPathEntry(line, typ)
-        local path_split = string.split(line, "/")
-        local curr_tbl = self.DBEntries
-
-        local filename = table.remove(path_split)
-
-        for _, part in pairs(path_split) do
-            curr_tbl[part] = curr_tbl[part] or {}
-            curr_tbl = curr_tbl[part]
-        end
-        table.insert(curr_tbl, {
-            path = line,
-            name = filename,
-            file_type = typ
-        })
-    end
+    local has_hashlist = DB:has("idstring_lookup", "idstring_lookup")     
     local types = clone(BeardLib.config.script_data_types)
     table.insert(types, "unit")
     table.insert(types, "texture")
+    local function ProcessLine(line)
+        local path
+        for _, typ in pairs(types) do
+            self.DBPaths[typ] = self.DBPaths[typ] or {}           
+
+            if DB:has(typ, line) then             
+                path = true
+                table.insert(self.DBPaths[typ], line)
+    
+                local path_split = string.split(line, "/")
+                local curr_tbl = self.DBEntries
+                local filename = table.remove(path_split)
+                for _, part in pairs(path_split) do
+                    curr_tbl[part] = curr_tbl[part] or {}
+                    curr_tbl = curr_tbl[part]
+                end
+                table.insert(curr_tbl, {
+                    path = line,
+                    name = filename,
+                    file_type = typ
+                })
+            end
+        end
+        if not path then
+            self.DBPaths.other = self.DBPaths.other or {}
+            table.insert(self.DBPaths.other, line)
+        end
+    end
     if has_hashlist then 
         local file = DB:open("idstring_lookup", "idstring_lookup")
         if file ~= nil then
             --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-            for line in string.gmatch(file:read(), "[%w_/]+%z") do
-                --Remove the Zero byte at the end of the path
-                line = string.sub(line, 1, #line - 1)
-
-                for _, typ in pairs(types) do
-                    self.DBPaths[typ] = self.DBPaths[typ] or {}
-                    if DB:has(typ, line) then
-                        table.insert(self.DBPaths[typ], line)
-                        AddPathEntry(line, typ)
-                        --I wish I could break so we don't have to iterate more than needed, but some files exist with the same name but a different type
-                        --break
-                    end
-                end
-            end
+            for line in string.gmatch(file:read(), "[%w_/]+%z") do ProcessLine(string.sub(line, 1, #line - 1)) end
             file:close()
         end
     else
         local lines = io.lines(self.ModPath .. "list.txt", "r")
-        if lines then
-            for line in lines do
-                for _, typ in pairs(types) do
-                    self.DBPaths[typ] = self.DBPaths[typ] or {}
-                    if DB:has(typ, line) then
-                        table.insert(self.DBPaths[typ], line)
-                        AddPathEntry(line, typ)                    
-                    end
-                end
-            end
-        else
-            self:log("Failed Loading Hashlist.")
-        end
+        if lines then for line in lines do ProcessLine(line) end
+        else self:log("Failed Loading Outside Hashlist.") end
     end       
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
@@ -180,22 +188,13 @@ if Hooks then
             ["BeardLibEditorSaveEnvTable_title"] = "Save Current modifications",
             ["BeardLibEditorResetEnv_title"] = "Reset Values",
             ["BeardLibEditorScriptDataMenu_title"] = "ScriptData Converter",
-            ["BeardLibEditorLoadLevel_title"] = "Load Level"
+            ["BeardLibEditorLoadLevel_title"] = "Load Level",
+            ["BeardLibLevelManage_title"] = "Manage Levels"
         })
     end)
 
     Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes)
-        --I'm going to leave this here, but I really don't like it being here
-        if Global.editor_mode then
-            BeardLibEditor.managers.MapEditor = MapEditor:new()
-        end
-        BeardLibEditor.managers.Dialog = MenuDialog:new()
-        BeardLibEditor.managers.LoadLevel = LoadLevelMenu:new()
-
-        local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
-        BeardLibEditor.managers.EnvironmentEditor:BuildNode(main_node)
-        BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
-        BeardLibEditor.managers.LoadLevel:BuildNode(main_node)
+        BeardLibEditor:InitManagers()
     end)
 
     function BeardLibEditor:ProcessScriptData(data, path, extension, name)

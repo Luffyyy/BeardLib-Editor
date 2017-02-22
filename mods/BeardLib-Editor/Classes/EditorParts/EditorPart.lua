@@ -12,8 +12,19 @@ function EditorPart:init(parent, menu, name)
     })    
     self._menu:SetSize(nil, self._menu:Panel():h() - 43)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
-
     self:build_default_menu()
+end
+
+function EditorPart:bind(key, clbk)
+    table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring(key), clbk))
+end
+
+function EditorPart:selected_unit()
+    return self._parent:selected_unit()
+end
+
+function EditorPart:selected_units()
+    return self._parent:selected_units()
 end
 
 function EditorPart:init_basic(parent, name)
@@ -22,10 +33,17 @@ function EditorPart:init_basic(parent, name)
     self._pen = Draw:pen(Color(0.15, 1, 1, 1))
     self._brush = Draw:brush(Color(0.15, 1, 1, 1))   
     self._trigger_ids = {}
+    self._axis_controls = {"x", "y", "z", "yaw", "pitch", "roll"}
+    self._shape_controls = {"width", "height", "depth", "radius"}
+    MenuUtils:new(self)
+end
+
+function EditorPart:Enabled()
+    return self._menu:Visible()
 end
 
 function EditorPart:Switch()
-    self:Manager("UpperMenu"):SwitchMenu(self._menu)
+    self:Manager("menu"):SwitchMenu(self._menu)
 end
 
 function EditorPart:Value(v)
@@ -33,12 +51,13 @@ function EditorPart:Value(v)
 end
 
 function EditorPart:Manager(n)
-    return self._parent.managers[n]
+    return managers.editor.managers[n]
 end 
 
 function EditorPart:build_default_menu()
     self._menu:ClearItems()
     self._menu:Divider({
+        name = "Title",
         items_size = 24,
         marker_color = self._menu.marker_highlight_color,
         text = string.pretty2(self._menu.name)
@@ -51,97 +70,3 @@ function EditorPart:disable()
     end
     self._trigger_ids = {}
 end
-
-function EditorPart:Divider(name, opt)
-    opt = opt or {}
-    return self._menu:Divider(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        color = self._menu.marker_highlight_color,
-    }, opt))
-end
-
-function EditorPart:Group(name, opt)
-    opt = opt or {}
-    return self._menu:ItemsGroup(table.merge({
-        name = name,
-        text = string.pretty2(name),
-    }, opt))
-end
-
-function EditorPart:Button(name, callback, opt)
-    opt = opt or {}
-    return self._menu:Button(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        callback = callback,
-    }, opt))
-end
-
-function EditorPart:SmallButton(name, callback, parent, opt)    
-    opt = opt or {}
-    return self._menu:Button(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        callback = callback,
-        size_by_text = true,
-        position = "TopRight",
-        align = "center",
-        override_parent = parent,
-    }, opt))
-end
-
-function EditorPart:ComboBox(name, callback, items, value, opt)
-    opt = opt or {}
-    return self._menu:ComboBox(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        value = value,
-        items = items,
-        callback = callback,
-    }, opt))
-end
-
-function EditorPart:TextBox(name, callback, value, opt)
-    opt = opt or {}
-    return self._menu:TextBox(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        callback = callback,
-        value = value
-    }, opt))
-end
-
-function EditorPart:Slider(name, callback, value, opt)
-    opt = opt or {}
-    return self._menu:Slider(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        value = value,
-        callback = callback,
-    }, opt))
-end
-
-function EditorPart:NumberBox(name, callback, value, opt)
-    opt = opt or {}
-    return self._menu:NumberBox(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        value = value,
-        callback = callback,
-    }, opt))
-end
-
-function EditorPart:Toggle(name, callback, value, opt)    
-    opt = opt or {}
-    return self._menu:Toggle(table.merge({
-        name = name,
-        text = string.pretty2(name),
-        value = value,
-        callback = callback,
-    }, opt))
-end
-
-
-
-

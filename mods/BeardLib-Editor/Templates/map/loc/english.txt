@@ -1,0 +1,6 @@
+{
+	"map_brief" : "",
+	"heist_map" : "Map",
+	"narr_map" : "Map",
+	"narr_map_brief" : ""
+}

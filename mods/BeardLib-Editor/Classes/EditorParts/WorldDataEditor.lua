@@ -5,34 +5,51 @@ end
 
 function WorldDataEditor:build_default_menu()
     self.super.build_default_menu(self)
-    local layers = {"ai", "environment", "portals", "wires"}
-    self._menu:Divider({text = "Select a layer to edit"})
-    for _, layer in pairs(layers) do
-        self:Button(layer, callback(self, self, "build_" .. layer .. "_layer_menu"))
+    if self._editor then
+        self._editor = nil
     end
+    local layers = {"ai", "environment", "portals", "wires"}
+    self:Divider("Select a layer to edit")
+    for _, layer in pairs(layers) do
+        self:Button(layer, callback(self, self, "build_menu", layer))
+    end
+end
+
+function WorldDataEditor:build_menu(menu)
+    self.super.build_default_menu(self)
+    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25)}) 
+    self["build_"..menu.."_layer_menu"](self)
 end
 
 function WorldDataEditor:build_wires_layer_menu()
-    self._menu:ClearItems()
-    self:Button("Back", callback(self, self, "build_default_menu"))
+    local loaded_wires = self:Group("SpawnWire")
+    for _, wire in pairs(BeardLibEditor.Utils:GetUnits({type = "wire"})) do
+        self:Button(wire, function()
+            self._parent:SpawnUnit(wire)
+            self:build_menu("wires")
+        end)
+    end
+    local existing_wires = self:Group("ExistingWires")
+    managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
+    for _, wire in pairs(managers.worlddefinition._world_data.wires) do
+        local ud = wire.unit_data
+        self:Button(ud.name_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
+    end
 end
 
 function WorldDataEditor:build_portals_layer_menu()
-    self._menu:ClearItems()
-    self:Button("Back", callback(self, self, "build_default_menu"))    
     local portals = self:Group("Portals")
-    self._axis_controls = {"position_x", "position_y", "position_z", "rotation_yaw", "rotation_pitch", "rotation_roll"}
-    for _, control in pairs(self._axis_controls) do
-        self[control] = self:NumberBox(control, callback(self, self, "set_shape_position"), 0, {floats = 0})
-    end
-    self._properties_controls = {"width", "height", "depth", "radius"}
-    for _, control in pairs(self._properties_controls) do
-        self[control] = self:NumberBox(control, callback(self, self, "set_shape"), 0, {floats = 0})
-    end
-    local shapes = self:Group("Shapes")
-    local units = self:Group("Units")
-    self:Button("New Portal", callback(self, self, "add_portal"), {group = portals})
+    self:AxisControls(callback(self, self, "set_shape_position"))
+    self:ShapeControls(callback(self, self, "set_shape"))
+    self:Group("Shapes")
+    self:Group("Units")
+    self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
     self:load_portals(portals)
+    self:update_menu()
+end
+
+function WorldDataEditor:widget_unit()
+    return self:Enabled() and self._selected_shape and FakeObject:new(self._selected_shape) or nil
 end
 
 function WorldDataEditor:add_shape()
@@ -44,31 +61,17 @@ end
 function WorldDataEditor:load_portals(group)
     self._menu:ClearItems("portals")
     for name, portal in pairs(managers.portal:unit_groups()) do
-        local btn = self:Button(portal._name, callback(self, self, "select_portal"), {label = "portals", group = group})
-        self._menu:ContextMenu({
-            name = portal._name,
-            text = ":",
-            override_parent = btn,
-            size_by_text = true,
-            position = "TopRight",
-            items = {
-                {text = "Remove", callback = callback(self, self, "remove_portal")},
-                {text = "Rename", callback = callback(self, self, "rename_portal")}
-            },
-            align = "center",
-            marker_highlight_color = Color.black,
-        })
+        local btn = self:Button(portal._name, callback(self, self, "select_portal"), {label = "portals", group = group, items ={
+            {text = "Remove", callback = callback(self, self, "remove_portal")},
+            {text = "Rename", callback = callback(self, self, "rename_portal")}
+        }})
     end   
 end
 
 function WorldDataEditor:build_environment_layer_menu()
-    self._menu:ClearItems()
-    self:Button("Back", callback(self, self, "build_default_menu"))
 end
 
 function WorldDataEditor:build_ai_layer_menu()    
-    self._menu:ClearItems()
-    self:Button("Back", callback(self, self, "build_default_menu"))
     local states = {
         "empty",
         "airport",
@@ -79,12 +82,10 @@ function WorldDataEditor:build_ai_layer_menu()
     self:ComboBox("GroupState", function(menu, item)
         self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
-    self:Button("AddNavSurface", function()
-        self._parent:SpawnUnit("core/units/nav_surface/nav_surface")
-    end)
+    self:Button("AddNavSurface", callback(self._parent, self._parent, "SpawnUnit", "core/units/nav_surface/nav_surface"))
 end
 
-function WorldDataEditor:rename_portal(menu, item)
+function WorldDataEditor:rename_portal(menu, item, selection)
     managers.system_menu:show_keyboard_input({
         text = item.name,
         title = "New portal name:",
@@ -99,8 +100,8 @@ function WorldDataEditor:rename_portal(menu, item)
     self:save()
 end
 
-function WorldDataEditor:remove_portal(menu, item)
-    QuickMenu:new( "Warning", "Remove portal? " .. tostring(item.name),
+function WorldDataEditor:remove_portal(menu, item, selection)
+    QuickMenu:new("Warning", "Remove portal? " .. tostring(item.name),
         {{text = "Yes", callback = function()
             managers.portal:remove_unit_group(item.name)
             self:load_portals()
@@ -110,7 +111,7 @@ function WorldDataEditor:remove_portal(menu, item)
 end
 
 function WorldDataEditor:remove_shape(menu, item)
-    QuickMenu:new( "Warning", "Remove shape?",
+    QuickMenu:new("Warning", "Remove shape?",
         {{text = "Yes", callback = function()
             if self._selected_shape == self._selected_portal._shapes[tonumber(item.name)] then
                 self._selected_shape = nil
@@ -164,16 +165,7 @@ function WorldDataEditor:load_portal_shapes()
         local btn = self:Button("shape_" .. tostring(i), callback(self, self, "select_shape"), {group = group})
         btn.id = i
         btn:SetLabel("Shapes")
-        self._menu:Button({
-            name = tostring(i),
-            text = "x",
-            override_parent = btn,
-            size_by_text = true,
-            position = "TopRight",
-            align = "center",
-            callback = callback(self, self, "remove_shape"),
-            marker_highlight_color = Color.red,
-        })
+        self:SmallButton(tostring(i), callback(self, self, "remove_shape"), btn, {text = "x", marker_highlight_color = Color.red}) 
     end
 end
 
@@ -182,21 +174,12 @@ function WorldDataEditor:load_portal_units()
     for unit_id, _ in pairs(self._selected_portal._ids) do
         local unit = managers.worlddefinition:get_unit(unit_id)
         if unit then
-            local btn = self:Button(unit_id, function() self._parent:_select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id), group = self._menu:GetItem("Units")})
+            local btn = self:Button(unit_id, function() self._parent:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id), group = self._menu:GetItem("Units")})
             btn:SetLabel("Units")
-            self._menu:Button({
-                name = tostring(i),
-                text = "x",
-                override_parent = btn,
-                size_by_text = true,
-                position = "TopRight",
-                align = "center",
-                callback = function() 
-                    self._selected_portal:add_unit_id(unit)
-                    self:load_portal_units()
-                end,
-                marker_highlight_color = Color.red,
-            })        
+            self:SmallButton(unit_id, function() 
+                self._selected_portal:add_unit_id(unit)
+                self:load_portal_units()
+            end, btn, {text = "x", marker_highlight_color = Color.red})     
         end
     end
 end
@@ -206,15 +189,25 @@ function WorldDataEditor:update(t, dt)
         local portal = self._selected_portal
         local r, g, b = portal._r, portal._g, portal._b
         self._brush:set_color(Color(0.25, r, g, b))
-        for k, unit in pairs(World:find_units_quick("all")) do 
-            if unit:unit_data() and self._selected_portal._ids[unit:unit_data().unit_id] then
+        for unit_id in pairs(self._selected_portal._ids) do  
+            local unit = managers.worlddefinition:get_unit(unit_id)
+            if alive(unit) then
                 self._brush:unit(unit)
-                Application:draw(unit, r, g, b)
             end
         end
         if self._selected_shape then
             self._selected_shape:draw(t, dt, 1,1,1)
         end
+    end
+end
+
+function WorldDataEditor:update_menu()
+    local shape = self._selected_shape
+    self:SetAxisControlsEnabled(shape ~= nil)
+    self:SetShapeControlsEnabled(shape ~= nil)
+    if shape then
+        self:SetAxisControls(shape:position(), shape:rotation())
+        self:SetShapeControls(shape._properties)
     end
 end
 
@@ -231,19 +224,7 @@ function WorldDataEditor:select_shape(menu, item)
     if item then
         item:SetColor(Color.white)
     end
-    self.position_x:SetValue(self._selected_shape and self._selected_shape:position().x or 0)      
-    self.position_y:SetValue(self._selected_shape and self._selected_shape:position().y or 0)      
-    self.position_z:SetValue(self._selected_shape and self._selected_shape:position().z or 0)      
-    self.rotation_yaw:SetValue(self._selected_shape and self._selected_shape:rotation():yaw() or 0)      
-    self.rotation_pitch:SetValue(self._selected_shape and self._selected_shape:rotation():pitch() or 0)      
-    self.rotation_roll:SetValue(self._selected_shape and self._selected_shape:rotation():roll() or 0)      
-    for _, control in pairs(self._properties_controls) do
-        if self._selected_shape then
-            self[control]:SetValue(self._selected_shape._properties[control])
-        else
-            self[control]:SetValue(0)
-        end
-    end
+    self:update_menu()
     self:save()
 end
 
@@ -251,8 +232,8 @@ function WorldDataEditor:set_shape_position(menu, item)
     if not self._selected_portal or not self._selected_shape then
         return
     end   
-    self._selected_shape:set_position(Vector3(self.position_x.value, self.position_y.value, self.position_z.value))
-    self._selected_shape:set_rotation(Rotation(self.rotation_yaw.value, self.rotation_pitch.value, self.rotation_roll.value))
+    self._selected_shape:set_position(self:AxisControlsPosition())
+    self._selected_shape:set_rotation(self:AxisControlsRotation())
     self:save()
 end
 

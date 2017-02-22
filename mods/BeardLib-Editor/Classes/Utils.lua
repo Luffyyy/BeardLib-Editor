@@ -4,7 +4,7 @@ getmetatable(Idstring()).s = function(s)
 end
 
 BeardLibEditor.Utils = {}
---Sets the position of a unit correctly
+--Sets the position of a unit/object correctly
 function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
     if offset and unit:unit_data()._prev_pos and unit:unit_data()._prev_rot then
         local pos = mvector3.copy(unit:unit_data()._prev_pos)
@@ -18,25 +18,27 @@ function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
     	unit:set_position(position)
     	unit:set_rotation(rotation)
     end
-	local objects = unit:get_objects_by_type(Idstring("model"))
-	for _, object in pairs(objects) do
-		object:set_visibility(not object:visibility())
-		object:set_visibility(not object:visibility())
-	end
-	local num = unit:num_bodies()
-	for i = 0, num - 1 do
-		local unit_body = unit:body(i)
-		unit_body:set_enabled(not unit_body:enabled())
-		unit_body:set_enabled(not unit_body:enabled())
-	end
-    unit:unit_data().position = unit:position()
-    unit:unit_data().rotation = unit:rotation()
-    if unit:mission_element() then
-		local element = unit:mission_element().element
-        element.values.position = unit:position()
-        element.values.rotation = unit:rotation()
-    else
-        managers.worlddefinition:set_unit(unit:unit_data().unit_id, unit:unit_data(), unit:unit_data().continent, unit:unit_data().continent)        
+    if unit.get_objects_by_type then
+        local objects = unit:get_objects_by_type(Idstring("model"))
+        for _, object in pairs(objects) do
+            object:set_visibility(not object:visibility())
+            object:set_visibility(not object:visibility())
+        end
+        local num = unit:num_bodies()
+        for i = 0, num - 1 do
+            local unit_body = unit:body(i)
+            unit_body:set_enabled(not unit_body:enabled())
+            unit_body:set_enabled(not unit_body:enabled())
+        end
+        unit:unit_data().position = unit:position()
+        unit:unit_data().rotation = unit:rotation()
+        if unit:mission_element() then
+            local element = unit:mission_element().element
+            element.values.position = unit:position()
+            element.values.rotation = unit:rotation()
+        elseif unit:unit_data().name then
+            managers.worlddefinition:set_unit(unit:unit_data().unit_id, unit, unit:unit_data().continent, unit:unit_data().continent)        
+        end
     end
 end
 
@@ -45,13 +47,15 @@ function BeardLibEditor.Utils:ParseXml(typ, path)
     return SystemFS:exists(file) and SystemFS:parse_xml(file, "r")
 end
 
-function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
+function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
     local config = {}
     local path = BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, unit)
+    log("Checking unit .. " .. tostring( unit ))
     if SystemFS:exists(path ..".unit") then
         table.insert(config, {_meta = "cooked_physics", path = unit, force = true, unload = true})
         table.insert(config, {_meta = "model", path = unit, force = true, unload = true})
         table.insert(config, {_meta = "unit", path = unit, force = true, unload = true})
+        log("Adding cooked_physics, moodel and unit of " .. tostring(unit))
         local node = self:ParseXml("unit", unit)
         for child in node:children() do
             local name = child:name()
@@ -88,9 +92,11 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
                             if anim_child:name() == "animation_set" then
                                 for anim_set in anim_child:children() do
                                     local anim_subset = anim_set:parameter("file") 
+                                    log("Adding animation_subset" .. tostring(anim_subset))
                                     table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
                                     local anim_set_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
-                                    for anim_set_child in anim_set_node:children() do             
+                                    for anim_set_child in anim_set_node:children() do       
+                                        log("Adding animation " .. anim_set_child:parameter("file"))          
                                         table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
                                     end                      
                                 end   
@@ -101,35 +107,34 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit)
             elseif name == "dependencies" then
                 for dep_child in child:children() do
                     if dep_child:has_parameter("unit") then
-                        self:ReadUnitAndLoad(dep_child:parameter("unit"))
+                        table.merge(config, self:ReadUnitAndLoad(dep_child:parameter("unit"), false))
                     else
-                        for dep in dep_child:children() do
-                            log("dependencies " .. tostring( dep:name() ) .. ", " .. tostring( dep:parameter_value() ) )
-                            table.insert(config, {_meta = dep:name(), path = dep:parameter_value(), force = true, unload = true})   
+                        for ext, path in pairs(dep_child:parameters()) do
+                            log("Adding dependency " .. tostring(ext) .. ", " .. tostring(path))
+                            table.insert(config, {_meta = ext, path = path, force = true, unload = true})   
                         end
                     end
                 end
             elseif name == "anim_state_machine" then
-                table.insert(config, {_meta = "anim_state_machine", path = child:parameter("name"), force = true, unload = true})
                 local anim_state = child:parameter("name") 
+                log("Adding animation state machine " .. tostring(anim_state))
                 table.insert(config, {_meta = "animation_state_machine", path = anim_state, force = true, unload = true})   
                 local anim_state_node = BeardLibEditor.Utils:ParseXml("animation_state_machine", anim_state)
                 for anim_child in anim_state_node:children() do    
                     if anim_child:name() == "states" then
-                        for anim_set in anim_child:children() do
-                            local anim_subset = anim_set:parameter("file") 
-                            table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
-                            local anim_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
-                            for anim_set_child in anim_node:children() do             
-                                table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
-                            end                      
-                        end   
+                        local anim_states = anim_child:parameter("file") 
+                        log("Adding animation_states " .. tostring(anim_states))
+                        table.insert(config, {_meta = "animation_states", path = anim_states, force = true, unload = true}) 
                     end
                 end                 
             end
         end
+    else
+        BeardLibEditor:log("[WARNING] Unit %s is missing from extract!")
     end
-    CustomPackageManager:LoadPackageConfig("assets/extract", config)
+    if load ~= false then
+        CustomPackageManager:LoadPackageConfig("assets/extract", config)
+    end
     return config
 end
 
@@ -328,11 +333,11 @@ function BeardLibEditor.Utils:ZiplineData(unit)
     return t
 end
 
-function BeardLibEditor.Utils:InEditorSlot(unit)
+function BeardLibEditor.Utils:InSlot(unit, slot)
     local ud = PackageManager:unit_data(Idstring(unit):id())
     if ud then
         local unit_slot = ud:slot()
-        for slot in string.gmatch(tostring(managers.editor._editor_all), "%d+") do
+        for slot in string.gmatch(tostring(slot), "%d+") do
             if tonumber(slot) == unit_slot then
                 return true
             end
@@ -341,18 +346,26 @@ function BeardLibEditor.Utils:InEditorSlot(unit)
     return false
 end
 
-function BeardLibEditor.Utils:GetUnits(not_loaded)
+function BeardLibEditor.Utils:GetUnits(params)
     local units = {}
     for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
-        if (not_loaded or self:InEditorSlot(unit)) then
+        if (params.not_loaded or self:InSlot(unit, params.slot or managers.editor._editor_all)) and (not params.type or self:GetUnitType(unit) == Idstring(params.type)) then
             table.insert(units, unit)
         end
     end
     return units
 end
 
+function BeardLibEditor.Utils:GetUnitType(unit)
+    if not unit then
+        log(debug.traceback())
+    end
+    local ud = PackageManager:unit_data(Idstring(unit):id())
+    return ud and ud:type() 
+end
+
 function BeardLibEditor.Utils:Unhash(ids, type)
-    for _, path in pairs(BeardLibEditor.DBPaths[type]) do
+    for _, path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
         if Idstring(path) == ids then
             return path
         end
@@ -382,6 +395,32 @@ function BeardLibEditor.Utils:FromHashlist(params)
     return not check and f, d or false
 end
 
-function BeardLibEditor.Utils:YesNoQuestion(title, clbk)
-    QuickMenu:new("Are you sure you want to continue?", title, {[1] = {text = "Yes", callback = clbk},[2] = {text = "No", is_cancel_button = true}}, true)
+function BeardLibEditor.Utils:YesNoQuestion(title, clbk, no_clbk)
+    QuickMenuPlus:new("Are you sure you want to continue?", title, {{text = "Yes", callback = clbk}, {text = "No", callback = no_clbk}}, {no_background = true, position_func = function(panel, wsPanel)
+        panel:set_rightbottom(wsPanel:rightbottom())
+    end})
+end
+
+FakeObject = FakeObject or class()
+function FakeObject:init(o)
+    self._o = o
+end
+function FakeObject:rotation()
+    return self:alive() and self._o:rotation()
+end
+function FakeObject:position()
+    return self:alive() and self._o:position()
+end
+function FakeObject:set_position(pos)
+    if self:alive() then
+        self._o:set_position(pos)
+    end
+end
+function FakeObject:set_rotation(rot)
+    if self:alive() then
+        self._o:set_rotation(rot)
+    end
+end
+function FakeObject:alive()
+    return self._o and not self._o.alive and true or self._o:alive()
 end

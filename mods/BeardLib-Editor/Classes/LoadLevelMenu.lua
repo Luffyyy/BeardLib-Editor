@@ -3,6 +3,7 @@ function LoadLevelMenu:init()
 	self._menus = {}	
 	self._main_menu = MenuUI:new({
         text_color = Color.white,
+        layer = 10,
         marker_highlight_color = BeardLibEditor.color,
 		create_items = callback(self, self, "create_items"),
 	})	
@@ -21,6 +22,7 @@ function LoadLevelMenu:create_items(menu)
         visible = true,
         row_max = 1,
         items_size = 20,
+        scrollbar = false,
         position = "TopCenter",
         w = w,
         h = 20,
@@ -37,6 +39,7 @@ function LoadLevelMenu:create_items(menu)
         visible = true,
         row_max = 1,
         items_size = 20,
+        scrollbar = false,
         position = {self._menus.all:Panel():leftbottom()},
         w = w,
         h = 20,
@@ -108,14 +111,12 @@ function LoadLevelMenu:load_level(level_id)
 end
 
 function LoadLevelMenu:BuildNode(main_node)
-	MenuCallbackHandler.BeardLibMpaEditorMenuOpen = function(this, item)
-      	self._main_menu:enable()
-	end
+	MenuCallbackHandler.BeardLibMapEditorMenuOpen = callback(self._main_menu, self._main_menu, "enable")
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorLoadLevel",
         title = "BeardLibEditorLoadLevel_title",
         node = main_node,
-        callback = "BeardLibMpaEditorMenuOpen"
+        callback = "BeardLibMapEditorMenuOpen"
     })
 end
  

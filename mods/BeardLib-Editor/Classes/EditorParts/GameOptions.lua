@@ -11,10 +11,10 @@ function GameOptions:build_default_menu()
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"))
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1})
     self:Slider("GridSize", callback(self._parent, self._parent, "update_grid_size"), 1, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
-    self:Slider("SnapRotation", callback(self._parent, self._parent, "update_snap_rotation"), 90, {max = 1, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
+    self:Slider("SnapRotation", callback(self._parent, self._parent, "update_snap_rotation"), 90, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
     
     self:Divider("Map", self._menu.highlight_color)
-    self:TextBox("SavePath", nil, BeardLib.config.maps_dir .. level, {text = "Map save path"})
+    self:TextBox("SavePath", nil, BeardLib.current_map_mod and BeardLib.current_map_mod.ModPath or BeardLib.config.maps_dir .. level, {text = "Map save path"})
     self:Toggle("EditorUnits", callback(self, self, "set_editor_units_visible"), self:Value("EditorUnits"))
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"))
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"))
@@ -42,7 +42,6 @@ function GameOptions:build_default_menu()
     if self._parent._has_fix then
         self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"))
         self:Button("SaveNavigationData", callback(self, self, "save_nav_data"))
-        self:Button("SaveNavigationData", callback(self, self, "save_nav_data"))
     end
     self:Button("SaveCoverData", callback(self, self, "save_cover_data"))
     self:Toggle("PauseGame", callback(self, self, "pause_game"), false)  
@@ -54,7 +53,10 @@ function GameOptions:loaded_continents(continents, current_continent)
 end
 
 function GameOptions:update_option_value(menu, item)
-    BeardLibEditor.Options:SetValue("Map/"..item.name, item.value)
+    BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
+    if item.name == "ShowElements" then
+        self:Manager("mission"):set_elements_vis()
+    end
 end
 
 function GameOptions:elements_classes_dia()
@@ -107,7 +109,7 @@ function GameOptions:load_all_elements_classes(menu, item)
         })      
     end    
 
-    for _, element in pairs(self._parent.managers.ElementEditor._mission_elements) do
+    for _, element in pairs(self:Manager("mission")._mission_elements) do
         if not searchbox.value or searchbox.value == "" or string.match(element, searchbox.value) and not table.has(self._wanted_elements, element) then
             menu:Button({
                 name = element, 
@@ -185,8 +187,20 @@ function GameOptions:update(t, dt)
 	end
 end
 
+function GameOptions:map_path()
+    return self._menu:GetItem("SavePath"):Value():gsub("\\" , "/")
+end
+
+function GameOptions:map_world_path()
+    local map_path = BeardLib.Utils.Path:Combine(self:map_path(), "world")
+    if not SystemFS:exists(map_path) then
+        SystemFS:make_dir(map_path)
+    end
+    return map_path
+end
+
 function GameOptions:save()
-    local path = self._menu:GetItem("SavePath").value:gsub("\\" , "/")
+    local path = self:map_path()
     if SystemFS:exists(path) then
         local backup_dir = BeardLib.Utils.Path:Combine(path, "..", "backups", table.remove(string.split(path, "/")))
         if SystemFS:exists(backup_dir) then
@@ -196,10 +210,7 @@ function GameOptions:save()
     else
         SystemFS:make_dir(path)
     end
-    local map_path = BeardLib.Utils.Path:Combine(path, "world")
-    if not SystemFS:exists(map_path) then
-        SystemFS:make_dir(map_path)
-    end
+    local map_path = self:map_world_path()
     self:SaveData(map_path, "world.world", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.worlddefinition._world_data, "generic_xml"))
     local continents = {}
     local missions = {}
@@ -229,7 +240,7 @@ function GameOptions:SaveData(path, file_name, data)
 end
 
 function GameOptions:save_nav_data()    
-    local path = self._menu:GetItem("SavePath").value
+    local path = self:map_world_path()
     if managers.navigation:get_save_data() and managers.navigation._load_data then
         self:SaveData(path, "nav_manager_data.nav_data", managers.navigation._load_data)
     else
@@ -276,7 +287,7 @@ function GameOptions:build_nav_segments() -- Add later the options to the menu
             end
         end
         if #settings > 0 then
-            local SE = self:Manager("StaticEditor")
+            local SE = self:Manager("static")
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:in_slot(managers.slot:get_mask("persons"))   then
                     unit:set_enabled(false)

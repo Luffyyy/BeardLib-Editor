@@ -69,7 +69,7 @@ function NavigationManager:update(t, dt)
 		if self._draw_enabled then
 			local options = self._draw_enabled
 			local data = self._draw_data
-			if data then
+			if data and type(options) == "table" then
 				local progress = math.clamp((t - data.start_t) / (data.duration * 0.5), 0, 1)
                 if options.quads then
                     self:_draw_rooms(progress)
@@ -116,20 +116,26 @@ function NavigationManager:set_debug_draw_state(options)
 end
 function NavigationManager:build_complete_clbk(draw_options)
 	self:_refresh_data_from_builder()
-
 	self:set_debug_draw_state(draw_options)
 	if self:is_data_ready() then
 		self._load_data = self:get_save_data()
+        local c = managers.editor.managers.opt
         BeardLibEditor:log("Navigation data Progress: Done!")
-        QuickMenu:new( "Info", "Done building navigation data do you wish to save it?",
-        {[1] = {text = "Yes", callback = function()
-                BeardLibEditor.managers.MapEditor.managers.GameOptions:save_nav_data()
-            end
-        },[2] = {text = "No", is_cancel_button = true}}, true)        
+        QuickMenu:new("Info", "Done building navigation data do you wish to save it?", {{text = "Yes", callback = callback(c, c, "save_nav_data")}, {text = "No", is_cancel_button = true}}, true)        
     end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end
+    local SE = managers.editor.managers.static
+    for _, unit in pairs(SE._disabled_units) do
+        if alive(unit) then
+            unit:set_enabled(true)
+            for _, extension in pairs(unit:extensions()) do
+                unit:set_extension_update_enabled(Idstring(extension), true)
+            end
+        end
+    end
+    SE._disabled_units = {} 
 end
 function NavigationManager:search_coarse(params)
     if self._builder._building then

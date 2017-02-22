@@ -44,7 +44,7 @@ function MapEditor:init()
         end
     end)
 end
-
+ 
 function MapEditor:create_menu()
     self._menu = MenuUI:new({
         text_color = Color.white,
@@ -58,10 +58,11 @@ function MapEditor:create_menu()
 end
 
 function MapEditor:create_items(menu)
-    for _, manager in pairs({"ElementEditor", "StaticEditor", "GameOptions", "SpawnSelect", "WorldDataEditor", "UpperMenu", "EditorConsole"}) do
-        self.managers[manager] = rawget(_G, manager):new(self, menu)
+    for k, v in pairs({mission = MissionEditor, static = StaticEditor, opt = GameOptions, spwsel = SpawnSelect, wdata = WorldDataEditor, console = EditorConsole}) do
+        self.managers[k] = v:new(self, menu)
     end
-    self.managers.StaticEditor:Switch()
+    self.managers.menu = UpperMenu:new(self, menu)
+    self.managers.static:Switch()
 end
 
 function MapEditor:set_value_info_pos()
@@ -108,6 +109,19 @@ function MapEditor:cursor_pos()
     return Vector3(x / self._screen_borders.x * 2 - 1, y / self._screen_borders.y * 2 - 1, 0)
 end
 
+function MapEditor:select_unit_by_raycast(slot, clbk)
+    local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(200000), "ray_type", "body editor walk", "slot_mask", slot)
+    if #rays > 0 then
+        for _, r in pairs(rays) do
+            if clbk(r.unit) then 
+                return r
+            end
+        end
+    else
+        return false
+    end
+end
+
 function MapEditor:get_cursor_look_point(dist)
     return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist))
 end
@@ -135,12 +149,11 @@ function MapEditor:use_widgets()
 end
 
 function MapEditor:mouse_moved(x, y)
-    if self._mouse_hold then
-        self.managers.StaticEditor:select_unit(true)
-    end
+    self.managers.static:mouse_moved(x, y)
 end
 
 function MapEditor:mouse_released(button, x, y)
+    self.managers.static:mouse_released(button, x, y)
     self._mouse_hold = false
     self:reset_widget_values()
 end
@@ -149,19 +162,12 @@ function MapEditor:mouse_pressed(button, x, y)
     if self._menu:MouseInside() then
         return
     end
-    if button == Idstring("0") then
-        if not self.managers.StaticEditor:select_widget() then
-            self.managers.StaticEditor:select_unit()
-        end
-    elseif button == Idstring("1") then
-        self.managers.StaticEditor:select_unit(true)
-        self._mouse_hold = true
-    end
+    self.managers.static:mouse_pressed(button, x, y)
 end
 
 function MapEditor:select_unit(unit, add)
-    self.managers.StaticEditor:Switch() 
-    self.managers.StaticEditor:set_selected_unit(unit, add)
+    self.managers.static:Switch() 
+    self.managers.static:set_selected_unit(unit, add)
 end
 
 function MapEditor:select_element(element)
@@ -170,57 +176,103 @@ function MapEditor:select_element(element)
             self:select_unit(unit)
         end
     end
-    self.managers.ElementEditor:set_element(element)
-    self.managers.StaticEditor:Switch()
+    self.managers.mission:set_element(element)
+    self.managers.static:Switch()
 end
 
 function MapEditor:add_element(element, menu, item)
-    self.managers.ElementEditor:add_element(element)
+    self.managers.mission:add_element(element)
 end
 
 function MapEditor:Log(...)
-    self.managers.EditorConsole:Log(...)
+    self.managers.console:Log(...)
 end
 
 function MapEditor:Error(...)
-    self.managers.EditorConsole:Error(...)
+    self.managers.console:Error(...)
 end
 
-function MapEditor:SpawnUnit(unit_path, ud, add, respawn)
+function MapEditor:DeleteUnit(unit)
+    if alive(unit) then
+        if unit:mission_element() then 
+            managers.mission:delete_element(unit:mission_element().element.id) 
+            if managers.editor then
+                self.managers.mission:remove_element_unit(unit)
+            end
+        end
+        managers.worlddefinition:delete_unit(unit)
+        World:delete_unit(unit)
+    end
+end
+
+function MapEditor:SpawnUnit(unit_path, old_unit, add)
     local cam = managers.viewport:get_current_camera()
     local data = {}
-    if respawn then
-        data = ud
-    else
+    local t 
+    if type(old_unit) == "userdata" then
         data = {
-            unit_id = managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent),
-            name = unit_path,
-            mesh_variation = ud and ud.mesh_variation,
-            position = ud and ud.position or cam:position() + cam:rotation():y(),
-            rotation = ud and ud.rotation or Rotation(0,0,0),
-            continent = ud and ud.continent or self._current_continent,
-            material_variation = ud and ud.material_variation,
-            disable_shadows = ud and ud.disable_shadows,
-            disable_collision = ud and ud.disable_collision,
-            hide_on_projection_light = ud and ud.hide_on_projection_light,
-            disable_on_ai_graph = ud and ud.disable_on_ai_graph,
-            lights = ud and ud.lights,
-            projection_light = ud and ud.projection_light,
-            projection_lights = ud and ud.projection_lights,
-            projection_textures = ud and ud.projection_textures,
-            triggers = ud and ud.triggers, 
-            editable_gui = ud and ud.editable_gui,
-            ladder = ud and ud.ladder, 
-            zipline = ud and ud.zipline,
+            unit_data = deep_clone(old_unit:unit_data()),
+            wire_data = old_unit:wire_data() and deep_clone(old_unit:wire_data()),
+            ai_editor_data = old_unit:ai_editor_data() and deep_clone(old_unit:ai_editor_data()),
         }
+        t = old_unit:wire_data() and "wire" or old_unit:ai_editor_data() and "ai" or ""
+        data.unit_data.name_id = nil
+        data.unit_data.unit_id = managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
+    else
+        t = BeardLibEditor.Utils:GetUnitType(unit_path)
+        local ud = old_unit and old_unit.unit_data
+        local wd = old_unit and old_unit.wire_data 
+        local ad = old_unit and old_unit.ai_editor_data
+        data = {
+            unit_data = {
+                unit_id = managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
+                name = unit_path,
+                mesh_variation = ud and ud.mesh_variation,
+                position = ud and ud.position or cam:position() + cam:rotation():y(),
+                rotation = ud and ud.rotation or Rotation(0,0,0),
+                continent = ud and ud.continent or self._current_continent,
+                material_variation = ud and ud.material_variation,
+                disable_shadows = ud and ud.disable_shadows,
+                disable_collision = ud and ud.disable_collision,
+                hide_on_projection_light = ud and ud.hide_on_projection_light,
+                disable_on_ai_graph = ud and ud.disable_on_ai_graph,
+                lights = ud and ud.lights,
+                projection_light = ud and ud.projection_light,
+                projection_lights = ud and ud.projection_lights,
+                projection_textures = ud and ud.projection_textures,
+                triggers = ud and ud.triggers, 
+                editable_gui = ud and ud.editable_gui,
+                ladder = ud and ud.ladder, 
+                zipline = ud and ud.zipline,
+            }
+        }
+        if t == Idstring("wire") then
+            data.wire_data = wd or {
+                slack = 0,
+                target_pos = data.unit_data.position,
+                target_rot = Rotation() 
+            }
+        elseif t == Idstring("ai") then
+            data.ai_editor_data = ad or {
+                visibilty_exlude_filter = {},
+                visibilty_include_filter = {},
+                location_id = "location_unknown",
+                suspicion_mul = 1,
+                detection_mul = 1                
+            }
+        end
     end
-    local unit = managers.worlddefinition:make_unit(data, Vector3())
-    if unit then
-        managers.worlddefinition:add_unit(unit, unit:unit_data().continent)
-        self:select_unit(unit, add)
+    local unit = managers.worlddefinition:create_unit(data, t)
+    if alive(unit) then 
+        self:select_unit(unit, add)        
+        if unit:name() == self.managers.static._nav_surface then
+            table.insert(self.managers.static._nav_surfaces, unit)
+        end
     else
         BeardLibEditor:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
     end
+
+    return unit
 end
 
 function MapEditor:_should_draw_body(body)
@@ -291,11 +343,15 @@ function MapEditor:selected_unit()
 end
 
 function MapEditor:selected_units()
-    return self.managers.StaticEditor._selected_units
+    return self.managers.static._selected_units
+end
+
+function MapEditor:widget_unit()
+    return self.managers.static:widget_unit() or self.managers.wdata:widget_unit() or self:selected_unit()
 end
 
 function MapEditor:widget_rot()
-    return self:selected_unit():rotation()
+    return self:widget_unit():rotation()
 end
 
 function MapEditor:paused_update(t, dt)
@@ -315,10 +371,10 @@ function MapEditor:update(t, dt)
 end
 
 function MapEditor:set_unit_positions(pos)
-    local reference = self:selected_unit()
+    local reference = self:widget_unit()
     BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
-    for _, unit in ipairs(self.managers.StaticEditor._selected_units) do
-        if unit ~= reference then
+    for _, unit in ipairs(self.managers.static._selected_units) do
+        if unit ~= self:selected_unit() then
             self:set_unit_position(unit, pos)
         end
     end
@@ -330,10 +386,10 @@ function MapEditor:set_unit_position(unit, pos)
 end
 
 function MapEditor:set_unit_rotations(rot)
-    local reference = self:selected_unit()
+    local reference = self:widget_unit()
     BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
-    for _, unit in ipairs(self.managers.StaticEditor._selected_units) do
-        if unit ~= reference then
+    for _, unit in ipairs(self.managers.static._selected_units) do
+        if unit ~= self:selected_unit() then
             self:set_unit_position(unit, reference:position())
             BeardLibEditor.Utils:SetPosition(unit, unit:position(), rot * unit:unit_data().local_rot)
         end
@@ -348,8 +404,8 @@ function MapEditor:load_continents(continents)
         table.insert(self._continents, continent)
     end
     for _, unit in pairs(managers.worlddefinition._all_units) do
-        if unit:name() == self.managers.StaticEditor._nav_surface then
-            table.insert(self.managers.StaticEditor._nav_surfaces, unit)
+        if unit:name() == self.managers.static._nav_surface then
+            table.insert(self.managers.static._nav_surfaces, unit)
         end
     end
     for _, manager in pairs(self.managers) do
@@ -360,8 +416,8 @@ function MapEditor:load_continents(continents)
 end
 
 function MapEditor:update_widgets(t, dt)
-    if not self._closed and alive(self:selected_unit()) then
-        local widget_pos  = self:world_to_screen(self:selected_unit():position())
+    if not self._closed and alive(self:widget_unit()) then
+        local widget_pos  = self:world_to_screen(self:widget_unit():position())
         if widget_pos.z > 50 then
             widget_pos = widget_pos:with_z(0)
             local widget_screen_pos = widget_pos
@@ -369,16 +425,18 @@ function MapEditor:update_widgets(t, dt)
             local widget_rot = self:widget_rot()
             if self._using_move_widget then
                 if self._move_widget:enabled() then
-                    local result_pos = self._move_widget:calculate(self:selected_unit(), widget_rot, widget_pos, widget_screen_pos)
+                    local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                     self:set_unit_positions(result_pos)
-                    self.managers.StaticEditor:update_positions()
+                    self.managers.static:update_positions()
+                    self.managers.wdata:update_menu()
                 end
             end
             if self._using_rotate_widget then
                 if self._rotate_widget:enabled() then
-                    local result_rot = self._rotate_widget:calculate(self:selected_unit(), widget_rot, widget_pos, widget_screen_pos)
+                    local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                     self:set_unit_rotations(result_rot)
-                    self.managers.StaticEditor:update_positions()
+                    self.managers.static:update_positions()
+                    self.managers.wdata:update_menu()
                 end
             end
             if self._move_widget:enabled() then

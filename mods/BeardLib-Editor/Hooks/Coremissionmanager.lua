@@ -230,7 +230,10 @@ function MissionScript:execute_element(element)
 	self._elements[element.id]:on_executed(managers.player:player_unit())
 end
 
-function MissionScript:create_mission_element_unit(element)	
+function MissionScript:create_mission_element_unit(element)
+	if not element.values.position then
+		return 
+	end
 	local unit_name = "units/mission_element/element"
 	if element.class == "ElementSpawnCivilian" then
 		unit_name = "units/civilian_element/element"
@@ -241,10 +244,13 @@ function MissionScript:create_mission_element_unit(element)
 	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation(0,0,0)
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
     unit:unit_data().position = element.values.position   
-    unit:unit_data().rotation = element.values.rotation 
+   	unit:unit_data().rotation = element.values.rotation 
     unit:unit_data().local_pos = Vector3()
     unit:unit_data().local_rot = Rotation()
 	unit:mission_element().element = element
+	if managers.editor then
+		managers.editor.managers.mission:add_element_unit(unit)
+	end
 	return unit
 end
 
@@ -259,7 +265,7 @@ end
 
 function MissionScript:debug_output(debug, color)
 	if managers.editor then
-		managers.editor.managers.EditorConsole:LogMission(debug)
+		managers.editor.managers.console:LogMission(debug)
 	end
 end
 end

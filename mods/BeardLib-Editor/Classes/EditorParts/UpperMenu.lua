@@ -10,10 +10,10 @@ function UpperMenu:init(parent, menu)
         row_max = 1,
         visible = true,
     })        
-    self:Tab("StaticEditor", "textures/editor_icons_df", {256, 262, 115, 115})
-    self:Tab("WorldDataEditor", "textures/editor_icons_df", {135, 271, 115, 115})
-    self:Tab("SpawnSelect", "textures/editor_icons_df", {377, 267, 115, 115})
-    self:Tab("GameOptions", "textures/editor_icons_df", {385, 385, 115, 115})
+    self:Tab("static", "textures/editor_icons_df", {256, 262, 115, 115})
+    self:Tab("wdata", "textures/editor_icons_df", {135, 271, 115, 115})
+    self:Tab("spwsel", "textures/editor_icons_df", {377, 267, 115, 115})
+    self:Tab("opt", "textures/editor_icons_df", {385, 385, 115, 115})
     self:Tab("Save", "textures/editor_icons_df", {260, 385, 115, 115}, callback(self, self, "save"))
     if self._parent._has_fix then 
         self:Tab("move_widget_enable", "textures/editor_icons_df", {9, 377, 115, 115}, callback(self, self, "toggle_move_widget"), 30, 30)
@@ -53,6 +53,6 @@ end
 
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
-    self._parent.managers.GameOptions:save()
+    self._parent.managers.opt:save()
 end
  

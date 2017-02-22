@@ -1,0 +1,10 @@
+<table ambience_enabled="true" default_ambience="ambience_int_office_small" default_environment="pd2_acoustics_indoor_medium" default_occasional="occasionals_silent">
+	<sound_area_emitters/>
+	<sound_emitters>
+		<table emitter_event="emitter_ac_hum_02" name="sound_emitter_001" position="-1741 4845 5451" rotation="0 0 0 -1"/>
+		<table emitter_event="emitter_wind" name="sound_emitter_002" position="-2086 6241 5345" rotation="0 0 0 -1"/>
+	</sound_emitters>
+	<sound_environments>
+		<table ambience_event="ambience_ext_downtown_windy_night" depth="2020" environment="pd2_acoustics_outdoor_large_echo" height="420" name="sound_environment_030" occasional_event="occasionals_silent" position="-2939 5398 5196" rotation="0 0 0 0" type="box" use_ambience="true" use_environment="true" use_occasional="true" width="2030"/>
+	</sound_environments>
+</table>

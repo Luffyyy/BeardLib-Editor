@@ -22,7 +22,7 @@ function EditorAreaTrigger:create_element()
 end
 
 function EditorAreaTrigger:set_shape_property(menu, item)	
-	self:set_element_data(item.name, menu, item)
+	self:set_element_data(menu, item)
 	self._shape:set_property(item.name, item.value)
 	self._cylinder_shape:set_property(item.name, item.value)
 end

@@ -1,7 +1,7 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element)
-	self._parent = managers.editor
-	self._menu = self:Manager("StaticEditor")._menu
+	self:init_basic(managers.editor, "MissionElement")
+	self._menu = self:Manager("static")._menu
 	if element then 
 		self._element = element
 	else
@@ -51,7 +51,7 @@ function MissionScriptEditor:_create_panel()
 	local transform = self:Group("Transform")
 	self._class_group = self:Group(self._element.class:gsub("Element", "") .. "") 
 	self:Button("DeselectElement", callback(self, self, "deselect_element"), {group = quick_buttons})    
-	local SE = self:Manager("StaticEditor")
+	local SE = self:Manager("static")
 	self:Button("DeleteElement", callback(SE, SE, "delete_selected"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = main})
@@ -89,11 +89,13 @@ function MissionScriptEditor:update_positions(pos, rot)
     if rot then
     	for _, axis in pairs(self._rot_axis) do
     		self[axis]:SetValue(rot[axis](rot) or 0, false, true)
+    		self[axis]:SetStep(self._parent._snap_rotation)
     	end      
     end          
 end
+
 function MissionScriptEditor:deselect_element()
-    self:Manager("StaticEditor"):build_default_menu()
+    self:Manager("static"):build_default_menu()
     self._parent._selected_element = nil
 end
  
@@ -253,7 +255,7 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
-	for k, unit in pairs(self:Manager("StaticEditor")._selected_units) do
+	for k, unit in pairs(self:Manager("static")._selected_units) do
 		if unit:unit_data() and not table.has(self._element.values[value_name], unit:unit_data().unit_id) then
 			table.insert(self._element.values[value_name], unit:unit_data().unit_id)
 		end
@@ -264,7 +266,7 @@ function MissionScriptEditor:add_selected_units(value_name, clbk)
 end
 
 function MissionScriptEditor:remove_selected_units(value_name)
-	for k, unit in pairs(self:Manager("StaticEditor")._selected_units) do
+	for k, unit in pairs(self:Manager("static")._selected_units) do
 		if unit:unit_data() then
 			table.delete(self._element.values[value_name], unit:unit_data().unit_id)
 		end
@@ -313,10 +315,11 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 		    		for _, v in pairs(current_list) do
 	                	if type(v) == "table" and v[params.table_data.key] == data.element.id then
 	                		add = v
+	                		break
 	                	end
 	                end
 	                if not add then
-	                	add = params.table_data.orig
+	                	add = clone(params.table_data.orig)
 	                	add[params.table_data.key] = data.element.id
 	                end
 	    			table.insert(self._element.values[params.value_name], add)

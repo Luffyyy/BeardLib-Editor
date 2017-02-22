@@ -1,3 +1,4 @@
+--To later work with MenuUI
 ScriptDataConveterManager = ScriptDataConveterManager or class()
 
 ScriptDataConveterManager.script_file_from_types = {
@@ -24,6 +25,14 @@ ScriptDataConveterManager.script_data_paths = {
     {path = string.gsub(Application:base_path(), "\\", "/"), name = "PAYDAY 2 Directory"},
     {name = "PAYDAY 2 Assets", assets = true}
 }
+
+function ScriptDataConveterManager:RefreshCurrentNode()
+    local selected_node = managers.menu:active_menu().logic:selected_node()
+    managers.menu:active_menu().renderer:refresh_node(selected_node)
+    local selected_item = selected_node:selected_item()
+    selected_node:select_item(selected_item and selected_item:name())
+    managers.menu:active_menu().renderer:highlight_item(selected_item)
+end
 
 function ScriptDataConveterManager:init()
 
@@ -289,7 +298,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
 
     managers.menu:add_back_button(node)
 
-    BeardLib:RefreshCurrentNode()
+    self:RefreshCurrentNode()
 end
 
 function ScriptDataConveterManager:CreateScriptDataFileOption()
@@ -371,7 +380,7 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
 
     managers.menu:add_back_button(node)
 
-    BeardLib:RefreshCurrentNode()
+    self:RefreshCurrentNode()
 end
 
 function ScriptDataConveterManager:CreateRootItems()
@@ -439,7 +448,7 @@ function ScriptDataConveterManager:BuildNode(main_node)
             self.path_text:set_visible(false)
         end
 
-        BeardLib:RefreshCurrentNode()
+        self:RefreshCurrentNode()
     end
 
     MenuCallbackHandler.BeardLibEditorConvertClick = function(this, item)

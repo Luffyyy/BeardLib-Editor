@@ -1,0 +1,9 @@
+<generic_scriptdata type="table">
+	<entry key="default" type="table">
+		<entry key="activate_on_parsed" type="boolean" value="true"/>
+		<entry key="elements" type="table">
+		</entry>
+		<entry key="instances" type="table">
+		</entry>
+	</entry>
+</generic_scriptdata>

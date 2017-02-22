@@ -7,15 +7,9 @@ function EditorSpawnGrenade:create_element()
 	self._element.values.strength = 1
 end
 
-function EditorSpawnGrenade:test_element()
-	if self._element.values.grenade_type == "frag" then
-		ProjectileBase.throw_projectile(1, self._unit:position(), self._element.values.spawn_dir * self._element.values.strength)
-	end
-end
- 
 function EditorSpawnGrenade:update(d, dt)
 	local kb = Input:keyboard()
-	local speed = 60 * rel_time
+	local speed = 60 * dt
 	if kb:down(Idstring("left")) then
 		self._element.values.spawn_dir = self._element.values.spawn_dir:rotate_with(Rotation(speed, 0, 0))
 	end
