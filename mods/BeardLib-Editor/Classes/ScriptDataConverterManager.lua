@@ -1,61 +1,30 @@
---To later work with MenuUI
-ScriptDataConveterManager = ScriptDataConveterManager or class()
-
-ScriptDataConveterManager.script_file_from_types = {
-    {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
-    {name = "json", func = "json.custom_decode"},
-    {name = "xml", func = "ScriptSerializer:from_xml"},
-    {name = "generic_xml", func = "ScriptSerializer:from_generic_xml"},
-    {name = "custom_xml", func = "ScriptSerializer:from_custom_xml"},
-}
-
-ScriptDataConveterManager.script_file_to_types = {
-    {name = "binary", open_type = "wb"},
-    {name = "json"},
-    {name = "generic_xml"},
-    {name = "custom_xml"},
-}
-
-ScriptDataConveterManager.NodeName = "BeardLibEditorScriptDataMenu"
-
-ScriptDataConveterManager.script_data_paths = {
-    {path = "%userprofile%", name = "User Folder"},
-    {path = "%userprofile%/Documents/", name = "Documents"},
-    {path = "%userprofile%/Desktop/", name = "Desktop"},
-    {path = string.gsub(Application:base_path(), "\\", "/"), name = "PAYDAY 2 Directory"},
-    {name = "PAYDAY 2 Assets", assets = true}
-}
-
-function ScriptDataConveterManager:RefreshCurrentNode()
-    local selected_node = managers.menu:active_menu().logic:selected_node()
-    managers.menu:active_menu().renderer:refresh_node(selected_node)
-    local selected_item = selected_node:selected_item()
-    selected_node:select_item(selected_item and selected_item:name())
-    managers.menu:active_menu().renderer:highlight_item(selected_item)
-end
-
-function ScriptDataConveterManager:init()
-
-    self:init_paths()
-end
-
-function ScriptDataConveterManager:init_paths()
-    table.insert(self.script_data_paths, {
-        path = "C:/", name = "C Drive"
-    })
-
-    table.insert(self.script_data_paths, {
-        path = "D:/", name = "D Drive"
-    })
-
-    table.insert(self.script_data_paths, {
-        path = "E:/", name = "E Drive"
-    })
-
-    table.insert(self.script_data_paths, {
-        path = "F:/", name = "F Drive"
-    })
-
+ScriptDataConverterManager = ScriptDataConverterManager or class()
+function ScriptDataConverterManager:init()
+    ScriptDataConverterManager.NodeName = "BeardLibEditorScriptDataMenu"
+    ScriptDataConverterManager.script_file_from_types = {
+        {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
+        {name = "json", func = "json.custom_decode"},
+        {name = "xml", func = "ScriptSerializer:from_xml"},
+        {name = "generic_xml", func = "ScriptSerializer:from_generic_xml"},
+        {name = "custom_xml", func = "ScriptSerializer:from_custom_xml"},
+    }
+    ScriptDataConverterManager.script_file_to_types = {
+        {name = "binary", open_type = "wb"},
+        {name = "json"},
+        {name = "generic_xml"},
+        {name = "custom_xml"},
+    }
+    ScriptDataConverterManager.script_data_paths = {
+        {path = "%userprofile%", name = "User Folder"},
+        {path = "%userprofile%/Documents/", name = "Documents"},
+        {path = "%userprofile%/Desktop/", name = "Desktop"},
+        {path = string.gsub(Application:base_path(), "\\", "/"), name = "PAYDAY 2 Directory"},
+        {name = "PAYDAY 2 Assets", assets = true},
+        {path = "C:/", name = "C Drive"},
+        {path = "D:/", name = "D Drive"},
+        {path = "E:/", name = "E Drive"},
+        {path = "F:/", name = "F Drive"},
+    }
     local user_path = string.gsub(Application:windows_user_folder(),  "\\", "/")
     local split_user_path = string.split(user_path, "/")
     for i = 1, 3 do
@@ -74,87 +43,44 @@ function ScriptDataConveterManager:init_paths()
             path_data.assets = false
         end
     end
-
-
+  
 end
 
-function ScriptDataConveterManager:GetTypeDataFrom(file, typ)
-    local read_data = file:read("*all")
 
-    local new_data
-    if typ == "json" then
-        new_data = json.custom_decode(read_data)
-    elseif typ == "xml" then
-        new_data = ScriptSerializer:from_xml(read_data)
-    elseif typ == "custom_xml" then
-        new_data = ScriptSerializer:from_custom_xml(read_data)
-    elseif typ == "generic_xml" then
-        new_data = ScriptSerializer:from_generic_xml(read_data)
-    elseif typ == "binary" then
-        new_data = ScriptSerializer:from_binary(read_data)
-    end
-
-    return new_data
+function ScriptDataConverterManager:RefreshCurrentNode()
+    local selected_node = managers.menu:active_menu().logic:selected_node()
+    managers.menu:active_menu().renderer:refresh_node(selected_node)
+    local selected_item = selected_node:selected_item()
+    selected_node:select_item(selected_item and selected_item:name())
+    managers.menu:active_menu().renderer:highlight_item(selected_item)
 end
 
-function ScriptDataConveterManager:GetTypeDataTo(data, typ)
-    local new_data
-    if typ == "json" then
-        new_data = json.custom_encode(data, true)
-    elseif typ == "custom_xml" then
-        new_data = ScriptSerializer:to_custom_xml(data)
-    elseif typ == "generic_xml" then
-        new_data = ScriptSerializer:to_generic_xml(data)
-    elseif typ == "binary" then
-        new_data = ScriptSerializer:to_binary(data)
-    end
-
-    return new_data
-end
-
-function ScriptDataConveterManager:ConvertFile(file, from_i, to_i, filename_dialog)
-    local from_data = self.script_file_from_types[from_i]
+function ScriptDataConverterManager:ConvertFile(file, from_i, to_i, filename_dialog)
     local to_data = self.script_file_to_types[to_i]
-
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
-
-    local from_file = not self.assets and io.open(file, from_data.open_type or 'r') or nil
-    if from_file == nil and not self.assets then
-        BeardLibEditor:log("[Error] File not accessible")
-        return
-    end
-
-    local convert_data = self.assets and PackageManager:_script_data(file_split[2]:id(), file_split[1]:id()) or self:GetTypeDataFrom(from_file, from_data.name)
-    if from_file then
-        from_file:close()
-    end
-
-    local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
-
-    if filename_dialog then
-        --Use system_menu dialog
-        managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
+    local convert_data = self.assets and PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())   
+    if convert_data then
+        local new_path = self.assets and BeardLib.Utils.Path:Combine(string.gsub(Application:base_path(),  "\\", "/"), (filename_split[#filename_split] .. "." .. to_data.name)) or (file .. "." .. to_data.name)
+        if filename_dialog then
+            managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
+        else
+            self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
+        end    
     else
-        self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
+        BeardLibEditor:log("[Error]")
     end
 end
 
-function ScriptDataConveterManager:SaveConvertedData(params, success, value)
+function ScriptDataConverterManager:SaveConvertedData(params, success, value)
     if not success then
         return
     end
-    log("writefile")
-    log(value)
-    local to_file = io.open(value, params.to_data.open_type or "w+")
-    local new_data = self:GetTypeDataTo(params.convert_data, params.to_data.name)
-    to_file:write(new_data)
-    to_file:close()
-
+    FileIO:WriteScriptDataTo(value, params.convert_data, params.to_data.name)
     self:RefreshFilesAndFolders()
 end
 
-function ScriptDataConveterManager:GetFilesAndFolders(current_path)
+function ScriptDataConverterManager:GetFilesAndFolders(current_path)
     local folders, files
 
     if self.assets then
@@ -187,7 +113,7 @@ function ScriptDataConveterManager:GetFilesAndFolders(current_path)
     return files or {}, folders or {}
 end
 
-function ScriptDataConveterManager:RefreshFilesAndFolders()
+function ScriptDataConverterManager:RefreshFilesAndFolders()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
 
@@ -301,7 +227,7 @@ function ScriptDataConveterManager:RefreshFilesAndFolders()
     self:RefreshCurrentNode()
 end
 
-function ScriptDataConveterManager:CreateScriptDataFileOption()
+function ScriptDataConverterManager:CreateScriptDataFileOption()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
 
@@ -383,11 +309,12 @@ function ScriptDataConveterManager:CreateScriptDataFileOption()
     self:RefreshCurrentNode()
 end
 
-function ScriptDataConveterManager:CreateRootItems()
+function ScriptDataConverterManager:CreateRootItems()
     local node = MenuHelperPlus:GetNode(nil, self.NodeName)
     node:clean_items()
 
     for i, path_data in pairs(self.script_data_paths) do
+
         MenuHelperPlus:AddButton({
             id = "BeardLibEditorPath" .. path_data.name,
             title = path_data.name,
@@ -404,7 +331,7 @@ function ScriptDataConveterManager:CreateRootItems()
     managers.menu:add_back_button(node)
 end
 
-function ScriptDataConveterManager:BuildNode(main_node)
+function ScriptDataConverterManager:BuildNode(main_node)
     MenuCallbackHandler.BeardLibEditorScriptDataMenuBack = function(this, item)
         self:CreateRootItems()
         self.current_script_path = ""

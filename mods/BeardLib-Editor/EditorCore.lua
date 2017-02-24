@@ -20,8 +20,6 @@ function BeardLibEditor:_init()
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
     end
-    self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
-    self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
     self:LoadHashlist()
 end
 
@@ -30,19 +28,20 @@ function BeardLibEditor:InitManagers()
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
     end
+    M.EnvironmentEditor = EnvironmentEditorManager:new()
+    M.ScriptDataConverter = ScriptDataConverterManager:new()
     M.Menu = EditorMenu:new()
     M.Dialog = MenuDialog:new()
     M.ListDialog = ListDialog:new()
     M.SelectDialog = SelectListDialog:new()
+    M.FBD = FileBrowserDialog:new()
 
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
 
     local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
     M.EnvironmentEditor:BuildNode(main_node)
-    M.ScriptDataConveter:BuildNode(main_node)
-    M.MapProject:BuildNode(main_node)
-    M.LoadLevel:BuildNode(main_node)
+    M.ScriptDataConverter:BuildNode(main_node)
 end
 
 function BeardLibEditor:RegisterModule(key, module)
@@ -189,7 +188,8 @@ if Hooks then
             ["BeardLibEditorResetEnv_title"] = "Reset Values",
             ["BeardLibEditorScriptDataMenu_title"] = "ScriptData Converter",
             ["BeardLibEditorLoadLevel_title"] = "Load Level",
-            ["BeardLibLevelManage_title"] = "Manage Levels"
+            ["BeardLibLevelManage_title"] = "Manage Levels",
+            ["BeardLibEditorMenu"] = "BeardLibEditor Menu"
         })
     end)
 

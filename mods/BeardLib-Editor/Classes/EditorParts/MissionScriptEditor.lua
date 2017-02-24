@@ -1,6 +1,7 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element)
 	self:init_basic(managers.editor, "MissionElement")
+	MenuUtils:new(self)
 	self._menu = self:Manager("static")._menu
 	if element then 
 		self._element = element
@@ -194,6 +195,11 @@ end
 
 function MissionScriptEditor:update_element()
 	managers.mission:set_element(self._element)
+	local unit = self:selected_unit()
+	if unit and unit.element then
+		unit:set_position(self._element.values.position)
+		unit:set_rotation(self._element.values.rotation)
+	end
 end
 
 function MissionScriptEditor:set_element_data(menu, item)

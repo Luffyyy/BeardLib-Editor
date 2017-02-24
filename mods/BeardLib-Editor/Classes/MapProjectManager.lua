@@ -1,18 +1,16 @@
 MapProjectManager = MapProjectManager or class()
 function MapProjectManager:init()
-	MenuUI:new({
-        text_color = Color.white,
-        marker_highlight_color = BeardLibEditor.color,
-        layer = 10,
-		create_items = callback(self, self, "create_items"),
-	})	
 	self._templates_directory = BeardLib.Utils.Path:Combine(BeardLibEditor.ModPath, "Templates/map")
-	local data = FileIO:ReadFrom(BeardLib.Utils.Path:Combine(self._templates_directory, "main.xml"), "*all")
+	local data = FileIO:ReadFrom(BeardLib.Utils.Path:Combine(self._templates_directory, "main.xml"))
 	if data then
     	self._main_xml_template = ScriptSerializer:from_custom_xml(data)
     else
     	BeardLibEditor:log("[ERROR]")
     end
+   	self._menu = BeardLibEditor.managers.Menu
+	self._menu:make_page("New", "Projects", callback(self, self, "new_project"))
+	self._menu:make_page("EditExisting", "Projects", callback(self, self, "select_project"))   	
+	MenuUtils:new(self, self._menu._menus.Projects)
 end
 
 function MapProjectManager:get_projects_list()
@@ -33,13 +31,14 @@ function MapProjectManager:get_project_by_narrative_id(narr)
 end
 
 function MapProjectManager:select_project()
-    BeardLibEditor.managers.ListDialog:Show({
+    self._menu._list_dia:Show({
         list = self:get_projects_list(),
         callback = function(selection)
-            BeardLibEditor.managers.ListDialog:hide()   
+            self._menu._list_dia:hide()   
             local old_name = selection.mod._clean_config.name
+           	self._menu:select_page("Projects", nil, self._menu:GetItem("EditExisting"))
             self:edit_main_xml(selection.mod._clean_config, function()
-            	FileIO:WriteTo(BeardLib.Utils.Path:Combine(selection.mod.ModPath, "main.xml"), BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._current_data, "custom_xml"))
+            	FileIO:WriteTo(BeardLib.Utils.Path:Combine(selection.mod.ModPath, "main.xml"), FileIO:ConvertToScriptData(self._current_data, "custom_xml"))
                 selection.mod._clean_config = self._current_data
                 if self._current_data.name ~= old_name then
                 	FileIO:MoveTo(selection.mod.ModPath, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, self._current_data.name))
@@ -50,11 +49,12 @@ function MapProjectManager:select_project()
 end
 
 function MapProjectManager:new_project()
+	self._menu:select_page("Projects", nil, self._menu:GetItem("New"))
 	self:edit_main_xml(self._main_xml_template, function()
 		local new_map = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, self._current_data.name)
 		FileIO:CopyTo(self._templates_directory, new_map)
-		FileIO:WriteTo(BeardLib.Utils.Path:Combine(new_map, "main.xml"), BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(self._current_data, "custom_xml"))
-        self:build_default_menu()
+		FileIO:WriteTo(BeardLib.Utils.Path:Combine(new_map, "main.xml"), FileIO:ConvertToScriptData(self._current_data, "custom_xml"))
+        self:disable()
 	end)
 end
 
@@ -71,7 +71,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
 		table.insert(data, {_meta = "narrative"})
 		level = BeardLib.Utils:GetNodeByMeta(data, "narrative")
 	end
-		local up = callback(self, self, "set_level_data")
+	local up = callback(self, self, "set_level_data")
 	local basic = self:Group("Basic")
 	self:TextBox("ModName", up, data.name, {group = basic})
 	self:TextBox("LevelId", up, level.id, {group = basic})
@@ -124,56 +124,26 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
 		--self._assets[asset] = self:Toggle(asset, up, assets[asset] ~= nil, {items_size = 14, group = levelassets}) 
 	end
 	self:Button("Save", save_clbk)
-	self:Button("Back", callback(self, self, "build_default_menu"))
-	self:Button("Close", callback(self._main_menu, self._main_menu, "disable"))
+	self:Button("Back", callback(self, self, "disable"))
 	self._current_data = data
 end
 
-function MapProjectManager:create_items(menu)
-	self._main_menu = menu
-	self._menu = menu:NewMenu({
-		name = "menu",
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.75,
-        visible = true,    
-        items_size = 20,
-        h = self._main_menu._panel:h(),
-        position = "center",
-        w = 750,
-	})	
-	MenuUtils:new(self)
-	self:build_default_menu()
-end
-
-function MapProjectManager:build_default_menu()
+function MapProjectManager:disable()
 	self:ClearItems()
-	self:Button("NewProject", callback(self, self, "new_project"))
-	self:Button("EditExisiting", callback(self, self, "select_project"))
-	self:Button("Close", callback(self._main_menu, self._main_menu, "disable"))
+	self._menu:select_page()
 end
 
-function MapProjectManager:set_level_data()
+function MapProjectManager:set_level_data(menu, item)
 	local t = self._current_data
 	local level = BeardLib.Utils:GetNodeByMeta(t, "level")
 	local narr = BeardLib.Utils:GetNodeByMeta(t, "narrative")
 	local narr_level_chain = BeardLib.Utils:GetNodeByMeta(narr, "chain")
-	t.name = self._menu:GetItem("ModName"):Value()
-	level.id = self._menu:GetItem("LevelId"):Value()
+	t.name = menu:GetItem("ModName"):Value()
+	level.id = menu:GetItem("LevelId"):Value()
 	level.name_id = string.format("heist_%s", level.id)	
 	level.brief_id = string.format("heist_%s_brief", level.id)	
-	narr.id = self._menu:GetItem("NarrativeId"):Value()
+	narr.id = menu:GetItem("NarrativeId"):Value()
 	narr.brief_id = string.format("narr_%s_brief", narr.id)
 	narr.name_id = string.format("narr_%s", narr.id)
 	narr_level_chain[1].level_id = level.id --Later point: Multiple levels!
 end
-
-function MapProjectManager:BuildNode(main_node)
-	MenuCallbackHandler.BeardLibLevelManageOpen = callback(self._main_menu, self._main_menu, "enable")
-    MenuHelperPlus:AddButton({
-        id = "BeardLibLevelManage",
-        title = "BeardLibLevelManage_title",
-        node = main_node,
-        callback = "BeardLibLevelManageOpen"
-    })
-end
- 

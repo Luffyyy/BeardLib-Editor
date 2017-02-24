@@ -1,6 +1,5 @@
 LoadLevelMenu = LoadLevelMenu or class()
 function LoadLevelMenu:init()
-	self._menus = {}	
 	self._main_menu = MenuUI:new({
         text_color = Color.white,
         layer = 10,
@@ -10,7 +9,7 @@ function LoadLevelMenu:init()
 end
 
 function LoadLevelMenu:create_items(menu)
-	local w = 750
+	local EMenu = BeardLibEditor.managers.Menu
 	self._menu = menu
 	self._tabs = menu:NewMenu({
 		name = "tabs",
@@ -27,9 +26,9 @@ function LoadLevelMenu:create_items(menu)
         w = w,
         h = 20,
 	})
-	self:make_page("all")
-	self:make_page("vanilla")
-	self:make_page("custom")	
+	EMenu:make_page("all", "Levels")
+	EMenu:make_page("vanilla", "Levels")
+	EMenu:make_page("custom", "Levels")	
 	self._bottom_tabs = menu:NewMenu({
 		name = "bottom_tabs",
         background_color = Color(0.2, 0.2, 0.2),
@@ -40,7 +39,7 @@ function LoadLevelMenu:create_items(menu)
         row_max = 1,
         items_size = 20,
         scrollbar = false,
-        position = {self._menus.all:Panel():leftbottom()},
+        position = {EMenu._menus.all:Panel():leftbottom()},
         w = w,
         h = 20,
 	})
@@ -49,74 +48,32 @@ function LoadLevelMenu:create_items(menu)
 		text = "Close",
 		callback = callback(menu, menu, "disable")
 	})
-	local columns = 3
+	local columns = 4
 	for job_id, job in pairs(tweak_data.narrative.jobs) do
-		for name, m in pairs(self._menus) do
+		for name, m in pairs(EMenu._menus) do
 			if name == "all" or (name == "custom" and job.custom) or (name == "vanilla" and not job.custom) then
 				m:Button({
 					name = job_id,
-		            w = w / columns,
+		            w = m.w / columns,
 					text = job_id,
 					callback = callback(self, self, "load_level", job_id)
 				})	
 			end
 		end
 	end	
-	self:select_page("all")
-
-	for _, m in pairs(self._menus) do
+	for _, m in pairs(EMenu._menus) do
    		m:SetMaxRow(math.ceil(#m.items / columns))
 	end
 end
 
-function LoadLevelMenu:make_page(name)
-	self._menus[name] = self._menu:NewMenu({
-		name = name,
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.75,        
-        items_size = 20,
-        h = self._menu._panel:h() - 40,
-        position = {self._tabs:Panel():leftbottom()},
-        w = 750,
-	})
-	self._tabs:Button({
-		name = name,
-		text = string.pretty(name),
-		callback = callback(self, self, "select_page", name)
-	})
-	return self._menus[name]
-end
-
-function LoadLevelMenu:select_page(page)
-	for name, m in pairs(self._menus) do
-		local tab = self._tabs:GetItem(name)
-		tab.marker_color = self._tabs.marker_color
-		tab:Panel():child("bg"):set_color(tab.marker_color)
-		m:SetVisible(false)
-	end 
-	local tab = self._tabs:GetItem(page)
-	tab.marker_color = tab.marker_highlight_color
-	tab:Panel():child("bg"):set_color(tab.marker_color)
-	self._menus[page]:SetVisible(true)
-end
-
 function LoadLevelMenu:load_level(level_id)
-    QuickMenu:new( "Load level?", "",
+    QuickMenu:new("Load level?", "",
         {[1] = {text = "Yes", callback = function()
         	Global.editor_mode = true
 			MenuCallbackHandler:play_single_player()
-			MenuCallbackHandler:start_single_player_job({job_id = level_id, difficulty = "normal"})            
+			MenuCallbackHandler:start_single_player_job({job_id = level_id, difficulty = "normal"})
+			BeardLibEditor.managers.Menu:set_enabled(false)
         end
     },[2] = {text = "No", is_cancel_button = true}}, true)
-end
-
-function LoadLevelMenu:BuildNode(main_node)
-	MenuCallbackHandler.BeardLibMapEditorMenuOpen = callback(self._main_menu, self._main_menu, "enable")
-    MenuHelperPlus:AddButton({
-        id = "BeardLibEditorLoadLevel",
-        title = "BeardLibEditorLoadLevel_title",
-        node = main_node,
-        callback = "BeardLibMapEditorMenuOpen"
-    })
 end
  

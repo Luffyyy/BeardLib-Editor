@@ -23,11 +23,24 @@ function EditUnitLight:build_menu(units)
 	self._far_range = self:NumberBox("FarRange[cm]", callback(self, self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the range of the light in cm", group = light_options})
 	self._upper_clipping = self:NumberBox("UpperClipping[cm]", callback(self, self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the upper clipping in cm", group = light_options})
 	self._lower_clipping = self:NumberBox("LowerClipping[cm]", callback(self, self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the lower clipping in cm", group = light_options})
-	local intensity_options = {}
-	for _, intensity in ipairs(LightIntensityDB:list()) do
-		table.insert(intensity_options, intensity:s())
-	end	
-	self._intensity = self:ComboBox("Intensity", callback(self, self, "set_unit_data_parent"), intensity_options, 1, {help = "Select an intensity from the combobox", group = light_options})
+	self._intensity_options = {
+		"none", 
+		"identity", 
+		"match", 
+		"candle", 
+		"desklight", 
+		"neonsign", 
+		"flashlight", 
+		"monitor", 
+		"dimilight", 
+		"streetlight", 
+		"searchlight",
+		"reddot",
+		"sun",
+		"inside of borg queen",
+		"megatron"
+	}
+	self._intensity = self:ComboBox("Intensity", callback(self, self, "set_unit_data_parent"), self._intensity_options, 1, {help = "Select an intensity from the combobox", group = light_options})
 	self._falloff = self:Slider("Falloff", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the light falloff exponent", floats = 1, min = 1, max = 10, group = light_options})
 	self._start_angle = self:Slider("StartAngle", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
 	self._end_angle = self:Slider("EndAngle", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
@@ -62,12 +75,16 @@ function EditUnitLight:update_light()
 	self._near_range:SetValue(light:near_range())
 	self._far_range:SetValue(light:far_range())
 	local clipping_values = light:clipping_values()
-	self._lower_clipping:SetValue(clipping_values.x)
-	self._upper_clipping:SetValue(clipping_values.y)
+	self._lower_clipping:SetValue(clipping_values.y)
+	self._upper_clipping:SetValue(clipping_values.x)
 	local intensity = BeardLibEditor.Utils:GetIntensityPreset(light:multiplier())
 	light:set_multiplier(LightIntensityDB:lookup(intensity))
 	light:set_specular_multiplier(LightIntensityDB:lookup_specular_multiplier(intensity))
-	self._intensity:SetSelectedItem(intensity:s())
+	for k, i in pairs(self._intensity_options) do
+		if Idstring(i) == intensity then
+			self._intensity:SetValue(k)
+		end
+	end
 	self._falloff:SetValue(light:falloff_exponent())
 	self._start_angle:SetValue(light:spot_angle_start())
 	self._end_angle:SetValue(light:spot_angle_end())
@@ -89,19 +106,21 @@ function EditUnitLight:set_unit_data()
 	local light = self:selected_light()
 	local clipping_values = light:clipping_values()
 	light:set_enable(self._enabled:Value())
-	light:set_multiplier(LightIntensityDB:lookup(Idstring(self._intensity:Value())))
-	light:set_specular_multiplier(LightIntensityDB:lookup_specular_multiplier(Idstring(self._intensity:Value())))
+	light:set_multiplier(LightIntensityDB:lookup(Idstring(self._intensity:SelectedItem())))
+	light:set_specular_multiplier(LightIntensityDB:lookup_specular_multiplier(Idstring(self._intensity:SelectedItem())))
 	light:set_near_range(self._near_range:Value())
 	light:set_far_range(self._far_range:Value())
 	light:set_falloff_exponent(self._falloff:Value())
 	light:set_clipping_values(clipping_values:with_x(self._upper_clipping:Value()))
 	light:set_clipping_values(clipping_values:with_y(self._lower_clipping:Value()))
 	light:set_spot_angle_start(self._start_angle:Value())
-	light:set_spot_angle_end(self._end_angle:Value())
-	unit:unit_data().projection_lights = unit:unit_data().projection_lights or {}
-	local res = self._shadow_resolution:Value()	
-	unit:unit_data().projection_lights[self._idstrings[light:name():key()]] = {x = res, y = res}
-	if self._spot_texture.enabled then
+	light:set_spot_angle_end(self._end_angle:Value())	
+	if self._shadow_resolution.enabled then
+		local res = self._shadow_resolution:SelectedItem()	
+		unit:unit_data().projection_lights = unit:unit_data().projection_lights or {}
+		unit:unit_data().projection_lights[self._idstrings[light:name():key()]] = {x = res, y = res}
+	end
+	if self._shadow_resolution.enabled then
 		local tex = "units/lights/spot_light_projection_textures/" .. self._spot_texture:SelectedItem()
 		light:set_projection_texture(Idstring(tex), false, false)
 		unit:unit_data().projection_textures = unit:unit_data().projection_textures or {}

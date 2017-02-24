@@ -48,7 +48,7 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
                 local q = [["]]
                 os.execute("echo f | xcopy " .. q .. BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\") .. q .. " " .. q .. BeardLib.Utils.Path:Combine(map_mod.ModPath, add.directory or "", path):gsub("/", "\\") .. q .. "/y")
             end      
-            file:write(BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml"))
+            file:write(FileIO:ConvertToScriptData(data, "custom_xml"))
             file:close()
         end, function()
             self:Manager("static"):delete_selected()

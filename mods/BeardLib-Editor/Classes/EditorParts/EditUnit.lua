@@ -12,6 +12,7 @@ function EditUnit:is_editable(parent, name)
 	end
 	self:init_basic(parent, name)
 	self._menu = parent._menu
+	MenuUtils:new(self)
 	self:build_menu(units)
 	return self
 end

@@ -211,18 +211,18 @@ function GameOptions:save()
         SystemFS:make_dir(path)
     end
     local map_path = self:map_world_path()
-    self:SaveData(map_path, "world.world", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.worlddefinition._world_data, "generic_xml"))
+    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(managers.worlddefinition._world_data, "generic_xml"))
     local continents = {}
     local missions = {}
     for name, data in pairs(managers.worlddefinition._continent_definitions) do
         local dir = BeardLib.Utils.Path:Combine(map_path, name)
-        self:SaveData(dir, name .. ".continent", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(data, "custom_xml"))
-        self:SaveData(dir, name .. ".mission", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(managers.mission._missions[name], "generic_xml"))
+        self:SaveData(dir, name .. ".continent", FileIO:ConvertToScriptData(data, "custom_xml"))
+        self:SaveData(dir, name .. ".mission", FileIO:ConvertToScriptData(managers.mission._missions[name], "generic_xml"))
         continents[name] = {name = name, editor_only = (ontinent_name == "editor_only")}
         missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
     end
-    self:SaveData(map_path, "continents.continents", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(continents, "custom_xml"))
-    self:SaveData(map_path, "mission.mission", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(missions, "custom_xml"))
+    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(continents, "custom_xml"))
+    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, "custom_xml"))
 end
 
 function GameOptions:SaveData(path, file_name, data)
@@ -263,7 +263,7 @@ function GameOptions:save_cover_data()
         local rot = unit:rotation()
         table.insert(covers.rotations, math.round(rot:yaw()))
     end
-    self:SaveData(path, "cover_data.cover_data", BeardLibEditor.managers.ScriptDataConveter:GetTypeDataTo(covers, "custom_xml"))
+    self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, "custom_xml"))
 end
 
 function GameOptions:build_nav_segments() -- Add later the options to the menu

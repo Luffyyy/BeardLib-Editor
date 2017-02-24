@@ -10,6 +10,7 @@ function EditorPart:init(parent, menu, name)
         visible = false,
         w = 300,
     })    
+    MenuUtils:new(self)
     self._menu:SetSize(nil, self._menu:Panel():h() - 43)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
     self:build_default_menu()
@@ -35,7 +36,6 @@ function EditorPart:init_basic(parent, name)
     self._trigger_ids = {}
     self._axis_controls = {"x", "y", "z", "yaw", "pitch", "roll"}
     self._shape_controls = {"width", "height", "depth", "radius"}
-    MenuUtils:new(self)
 end
 
 function EditorPart:Enabled()

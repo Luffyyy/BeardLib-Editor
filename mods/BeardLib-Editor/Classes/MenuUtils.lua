@@ -1,26 +1,30 @@
 MenuUtils = MenuUtils or class()
-function MenuUtils:init(this, menu_key)
-	menu_key = menu_key or "_menu"
+function MenuUtils:init(this, menu)
+	menu = menu or this._menu
 	function this:Divider(name, opt)
 	    opt = opt or {}
-	    return self[menu_key]:Divider(table.merge({
+	    return menu:Divider(table.merge({
 	        name = name,
-	        text = string.pretty2(name),
-	        color = self[menu_key].marker_highlight_color,
+	        text = name,
+	        color = menu.marker_highlight_color,
 	    }, opt))
 	end
 
 	function this:Group(name, opt)
 	    opt = opt or {}
-	    return self[menu_key]:ItemsGroup(table.merge({
+	    return menu:ItemsGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	    }, opt))
 	end
 
+	function this:CloseButton()
+		self:Button("Close", callback(menu.menu, menu.menu, "disable"))
+	end
+
 	function this:Button(name, callback, opt)
 	    opt = opt or {}
-	    return self[menu_key]:Button(table.merge({
+	    return menu:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
@@ -29,7 +33,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:SmallButton(name, callback, parent, opt)    
 	    opt = opt or {}
-	    return self[menu_key]:Button(table.merge({
+	    return menu:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
@@ -42,7 +46,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:ComboBox(name, callback, items, value, opt)
 	    opt = opt or {}
-	    return self[menu_key]:ComboBox(table.merge({
+	    return menu:ComboBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -53,7 +57,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:TextBox(name, callback, value, opt)
 	    opt = opt or {}
-	    return self[menu_key]:TextBox(table.merge({
+	    return menu:TextBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
@@ -63,7 +67,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:Slider(name, callback, value, opt)
 	    opt = opt or {}
-	    return self[menu_key]:Slider(table.merge({
+	    return menu:Slider(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -73,7 +77,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:NumberBox(name, callback, value, opt)
 	    opt = opt or {}
-	    return self[menu_key]:NumberBox(table.merge({
+	    return menu:NumberBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -83,7 +87,7 @@ function MenuUtils:init(this, menu_key)
 
 	function this:Toggle(name, callback, value, opt)    
 	    opt = opt or {}
-	    return self[menu_key]:Toggle(table.merge({
+	    return menu:Toggle(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -146,6 +150,10 @@ function MenuUtils:init(this, menu_key)
 	end	
 
 	function this:ClearItems(lbl)
-		self[menu_key]:ClearItems(lbl)
+		menu:ClearItems(lbl)
+	end	
+
+	function this:GetItem(name)
+		return menu:GetItem(name)
 	end
 end
