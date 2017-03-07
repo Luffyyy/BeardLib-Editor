@@ -1,8 +1,8 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element)
 	self:init_basic(managers.editor, "MissionElement")
-	MenuUtils:new(self)
 	self._menu = self:Manager("static")._menu
+	MenuUtils:new(self)
 	if element then 
 		self._element = element
 	else

@@ -120,7 +120,7 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:AxisControlsPosition()    
-	    return Vector3(self.x.value, self.x.value, self.x.value)
+	    return Vector3(self.x.value, self.y.value, self.z.value)
 	end
 
 	function this:AxisControlsRotation()    
