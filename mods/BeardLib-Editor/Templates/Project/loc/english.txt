@@ -1,0 +1,4 @@
+{
+	"heist_okfaf_1_name" : "fuck off",
+	"heist_okfaf_1_brief" : "Ok xd"
+}

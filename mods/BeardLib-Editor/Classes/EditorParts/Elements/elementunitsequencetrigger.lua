@@ -8,9 +8,7 @@ function EditorUnitSequenceTrigger:create_element()
 end
 
 function EditorUnitSequenceTrigger:set_selected_sequence(menu, item)
-	local sequence_combo = self._menu:GetItem("sequence")	
-	local sequence_list_unit = self._element.values.sequence_list[sequence_combo.value]
-	sequence_list_unit.sequence = item:SelectedItem()
+	self._element.values.sequence_list[self._menu:GetItem("sequence"):Value()].sequence = item:SelectedItem()
 end
 
 function EditorUnitSequenceTrigger:apply_units(value_name)
@@ -94,7 +92,7 @@ function EditorUnitSequenceTrigger:_build_panel()
 		callback = callback(self, self, "set_selected_sequence"),
 		items = {},
 	})		 
-	self:BuildUnitsManage("sequence_list", {key = "unit_id", orig = {unit_id = 0, sequence = "", guis_id = 1}})
+	self:BuildUnitsManage("sequence_list", {key = "unit_id", orig = {unit_id = 0, sequence = "", guis_id = 1}}, callback(self, self, "update_selected_sequence"))
 	self:update_selected_sequence()
 end
  

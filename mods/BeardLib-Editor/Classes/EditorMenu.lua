@@ -4,10 +4,9 @@ function EditorMenu:init()
 	self._main_menu = MenuUI:new({
         text_color = Color.white,
         layer = 10,
-        marker_highlight_color = BeardLibEditor.color,
+        marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
 		create_items = callback(self, self, "create_items"),
 	})	    
-    self._list_dia = ListDialog:new({w = self._main_menu._panel:w() - 250, h = self._main_menu._panel:h(), position = "RightBottom"})
 	MenuCallbackHandler.BeardLibEditorMenu = callback(self._main_menu, self._main_menu, "enable")
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorMenu",
@@ -18,25 +17,23 @@ function EditorMenu:init()
     })
 end
 
-function EditorMenu:make_page(name, group_name, clbk)
-    local menu_name = clbk and group_name or name
-    self._menus[menu_name] = self._menus[menu_name] or self._main_menu:NewMenu({
+function EditorMenu:make_page(name, clbk, opt)
+    self._menus[name] = self._menus[name] or self._main_menu:Menu(table.merge({
         name = name,
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.75,        
         items_size = 20,
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,
-    })
-    local group = group_name and (self:GetItem(group_name) or self:Group(group_name))
-    self:Button(name, clbk or callback(self, self, "select_page", name), {text = string.pretty(name), group = group, offset = {4, 2}})
+    }, opt or {}))
+    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4})
     return self._menus[name]
 end
 
 
 function EditorMenu:create_items(menu)
 	self._main_menu = menu
-	self._tabs = menu:NewMenu({
+	self._tabs = menu:Menu({
 		name = "tabs",
         scrollbar = false,
         background_color = Color(0.2, 0.2, 0.2),

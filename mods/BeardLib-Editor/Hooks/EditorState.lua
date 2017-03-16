@@ -7,18 +7,21 @@ function EditorState:at_enter()
 	if not Global.editor_mode then
 		return
 	end
-	managers.editor:enable()
+	 
+	managers.editor:set_enabled(true)
     managers.achievment.award = function() end
     local job_id = managers.job:current_job_id()
-    tweak_data.narrative.jobs[job_id].contract_cost = {0,0,0,0,0}
-    tweak_data.narrative.jobs[job_id].payout = {0,0,0,0,0}
-	tweak_data.narrative.jobs[job_id].contract_visuals = {}
-    tweak_data.narrative.jobs[job_id].contract_visuals.min_mission_xp = {0,0,0,0,0}
-    tweak_data.narrative.jobs[job_id].contract_visuals.max_mission_xp = {0,0,0,0,0}
+    if job_id then
+	    tweak_data.narrative.jobs[job_id].contract_cost = {0,0,0,0,0}
+	    tweak_data.narrative.jobs[job_id].payout = {0,0,0,0,0}
+		tweak_data.narrative.jobs[job_id].contract_visuals = {}
+	    tweak_data.narrative.jobs[job_id].contract_visuals.min_mission_xp = {0,0,0,0,0}
+	    tweak_data.narrative.jobs[job_id].contract_visuals.max_mission_xp = {0,0,0,0,0}
+	end
 end
 function EditorState:at_exit()
 	if Global.editor_mode then
-		managers.editor:disable()
+		managers.editor:set_enabled(false)
 		managers.mission:activate()
 	end
 end

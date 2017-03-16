@@ -6,15 +6,16 @@ function EditorConsole:init(parent, menu)
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
         w = 600,
-        h = 20,
+        h = 18,
+        items_size = 18,
+        scrollbar = false,
         offset = 0,
-        size_by_text = true,
-        row_max = 1,
+        align_method = "grid",
         visible = true,
     })       
     self._menu = menu:NewMenu({
         name = "console_output",
-        position = "Center|Bottom",    
+        position = "CenterBottom",    
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,         
         override_size_limit = true,  
@@ -25,38 +26,43 @@ function EditorConsole:init(parent, menu)
         visible = true,
     })      
     self._options_menu:Panel():set_leftbottom(self._menu:Panel():lefttop())    
+    local w = self._options_menu.w / 5
     self._options_menu:Button({
         name ="hide_console",
-        text = "Console ",
+        text = "Console",
+        color = self._menu.marker_highlight_color,
         w = w,
-        color = Color.white,
         callback = callback(self, self, "ToggleConsole"),
     })
     self._options_menu:Button({
         name ="cleat_button",
         text = "Clear",
-        color = Color.white,
+        color = self._menu.marker_highlight_color,
+        w = w,
         callback = callback(self, self, "Clear"),
     })
     self._show_info = self._options_menu:Toggle({
         name ="show_info",
         text = "Info",
+        color = Color.yellow,
+        w = w,
         value = true,
-        color = Color.white,
         callback = callback(self, self, "FilterConsole"),
     }) 
     self._show_mission = self._options_menu:Toggle({
         name ="show_mission",
         text = "Mission",
         value = true,        
-        color = Color.yellow,
+        color = Color.green,
+        w = w,
         callback = callback(self, self, "FilterConsole"),
     })
     self._show_errors = self._options_menu:Toggle({
         name ="show_errors",
         text = "Errors",
-        value = true,        
         color = Color.red,
+        value = true,        
+        w = w,
         callback = callback(self, self, "FilterConsole"),
     })
 
@@ -100,9 +106,11 @@ end
 function EditorConsole:ToggleConsole()    
     self.closed = not self.closed
     if self.closed then
-        self._options_menu:AnimatePosition("bottom")
+        self._options_menu:SetPosition("Bottom")
     else
-        self._options_menu:AnimatePosition("bottom", self._menu:Panel():top())
+        self._options_menu:SetPosition(function(menu)
+            menu:Panel():set_bottom(self._menu:Panel():top() - 2)
+        end)
     end
     self._menu:SetVisible(not self.closed)
 end

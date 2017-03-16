@@ -63,51 +63,61 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
                 local object = child:parameter("file")
                 table.insert(config, {_meta = "object", path = object, force = true, unload = true})
                 local obj_node = BeardLibEditor.Utils:ParseXml("object", object)
-                for obj_child in obj_node:children() do
-                    name = obj_child:name() 
-                    if name == "diesel" and obj_child:has_parameter("materials") then
-                        local material = obj_child:parameter("materials")
-                        table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})                             
-                        local mat_node = BeardLibEditor.Utils:ParseXml("material_config", material)
-                        for mat_child in mat_node:children() do
-                            if mat_child:name() == "material" then
-                                for mat_child_child in mat_child:children() do
-                                    if mat_child_child:has_parameter("file") then
-                                        table.insert(config, {_meta = "texture", path = mat_child_child:parameter("file"), force = true, unload = true})   
+                if obj_node then
+                    for obj_child in obj_node:children() do
+                        name = obj_child:name() 
+                        if name == "diesel" and obj_child:has_parameter("materials") then
+                            local material = obj_child:parameter("materials")
+                            table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})                             
+                            local mat_node = BeardLibEditor.Utils:ParseXml("material_config", material)
+                            for mat_child in mat_node:children() do
+                                if mat_child:name() == "material" then
+                                    for mat_child_child in mat_child:children() do
+                                        if mat_child_child:has_parameter("file") then
+                                            table.insert(config, {_meta = "texture", path = mat_child_child:parameter("file"), force = true, unload = true})   
+                                            log("Adding texture " .. tostring(mat_child_child:parameter("file")))
+                                        end
                                     end
-                                end
-                            end 
-                        end
-                    elseif name == "sequence_manager" then
-                        table.insert(config, {_meta = "sequence_manager", path = obj_child:parameter("file"), force = true, unload = true})   
-                    elseif name == "effects" then
-                        for efct in child:children() do
-                            table.insert(config, {_meta = "effect", path = efct:parameter("effect"), force = true, unload = true})   
-                        end
-                    elseif name == "animation_def" then
-                        local anim_def = obj_child:parameter("name") 
-                        table.insert(config, {_meta = name, path = anim_def, force = true, unload = true})   
-                        local anim_node = BeardLibEditor.Utils:ParseXml(name, anim_def)
-                        for anim_child in anim_node:children() do    
-                            if anim_child:name() == "animation_set" then
-                                for anim_set in anim_child:children() do
-                                    local anim_subset = anim_set:parameter("file") 
-                                    log("Adding animation_subset" .. tostring(anim_subset))
-                                    table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
-                                    local anim_set_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
-                                    for anim_set_child in anim_set_node:children() do       
-                                        log("Adding animation " .. anim_set_child:parameter("file"))          
-                                        table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
-                                    end                      
-                                end   
+                                end 
                             end
-                        end                   
+                        elseif name == "sequence_manager" then
+                            table.insert(config, {_meta = "sequence_manager", path = obj_child:parameter("file"), force = true, unload = true})   
+                            log("Adding sequence_manager " .. tostring(obj_child:parameter("file")))
+                        elseif name == "effects" then
+                            for efct in child:children() do
+                                table.insert(config, {_meta = "effect", path = efct:parameter("effect"), force = true, unload = true})   
+                                log("Adding effect " .. tostring(efct:parameter("effect")))
+                            end
+                        elseif name == "animation_def" then
+                            local anim_def = obj_child:parameter("name") 
+                            table.insert(config, {_meta = name, path = anim_def, force = true, unload = true})   
+                            local anim_node = BeardLibEditor.Utils:ParseXml(name, anim_def)
+                            for anim_child in anim_node:children() do    
+                                if anim_child:name() == "animation_set" then
+                                    for anim_set in anim_child:children() do
+                                        local anim_subset = anim_set:parameter("file") 
+                                        log("Adding animation_subset" .. tostring(anim_subset))
+                                        table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
+                                        local anim_set_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
+                                        for anim_set_child in anim_set_node:children() do       
+                                            log("Adding animation " .. anim_set_child:parameter("file"))          
+                                            table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
+                                        end                      
+                                    end   
+                                end
+                            end                   
+                        end
                     end
                 end
             elseif name == "dependencies" then
                 for dep_child in child:children() do
                     if dep_child:has_parameter("unit") then
-                        table.merge(config, self:ReadUnitAndLoad(dep_child:parameter("unit"), false))
+                        local read_unit = self:ReadUnitAndLoad(dep_child:parameter("unit"), false)
+                        if read_unit then
+                            table.merge(config, read_unit)
+                        else
+                            return false
+                        end
                     else
                         for ext, path in pairs(dep_child:parameters()) do
                             log("Adding dependency " .. tostring(ext) .. ", " .. tostring(path))
@@ -130,12 +140,39 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
             end
         end
     else
-        BeardLibEditor:log("[WARNING] Unit %s is missing from extract!")
+        BeardLibEditor:log("[WARNING] Unit %s is missing from extract, Unit will not spawn!", tostring(unit))
+        return false
     end
     if load ~= false then
         CustomPackageManager:LoadPackageConfig("assets/extract", config)
     end
     return config
+end
+
+function BeardLibEditor.Utils:GetPackagesOfLevel(level)
+    local dir = "levels/"..level.world_name .. "/"
+    local packages = {dir.."world"}
+    local was_loaded
+    if PackageManager:loaded(packages[1]) then --Ugly method but sadly overkill fucked this..
+        was_loaded = true
+    else
+        PackageManager:load(packages[1])
+    end
+    local ext = Idstring("mission")
+    local path = Idstring(dir.."mission")
+    if PackageManager:has(ext, path) then
+        local data = PackageManager:script_data(ext, path)
+        for c in pairs(data) do
+            local p = dir..c.."/"..c
+            if PackageManager:package_exists(p) then
+                table.insert(packages, p)
+            end
+        end
+    end
+    if not was_loaded and PackageManager:loaded(packages[1]) then
+        PackageManager:unload(packages[1])
+    end
+    return packages
 end
 
 function BeardLibEditor.Utils:GetLights(unit)

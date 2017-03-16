@@ -210,7 +210,7 @@ end
 
 function WorldDefinition:_create_ai_editor_unit(data, offset)
 	local unit = self:_create_statics_unit(data, offset)
-	if data.ai_editor_data then
+	if unit and data.ai_editor_data then
 		for name, value in pairs(data.ai_editor_data) do
 			unit:ai_editor_data()[name] = value
 		end
@@ -286,11 +286,12 @@ function WorldDefinition:make_unit(data, offset)
 		end
 	end
 	local unit
-	--log(tostring( name ))
 	if MassUnitManager:can_spawn_unit(Idstring(name)) then
 		unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
-	else
+	else --if PackageManager:has(Idstring("unit"), Idstring(name)) then
 		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+	--else
+		--_G.BeardLibEditor:log("Unit '%s' cannot be spawned!", tostring(name))
 	end
 	if unit then
 		self:assign_unit_data(unit, data)

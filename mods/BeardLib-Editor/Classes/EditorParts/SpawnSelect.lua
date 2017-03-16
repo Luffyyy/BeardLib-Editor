@@ -1,12 +1,12 @@
 SpawnSelect = SpawnSelect or class(EditorPart)
 function SpawnSelect:init(parent, menu)
-    self.super.init(self, parent, menu, "SpawnSelect")    
+    self.super.init(self, parent, menu, "Spawn Or Select")    
 end
 
 function SpawnSelect:build_default_menu()
     self.super.build_default_menu(self)
     self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"))
-    if BeardLib.current_map_mod and SystemFS:exists(BeardLibEditor.ExtractDirectory) then
+    if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
     	self:Button("Spawn Unit(extract)", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}))
     end
     self:Button("Spawn Element", callback(self, self, "OpenSpawnElementDialog"))
@@ -17,39 +17,44 @@ end
 
 function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
     local config = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
-    self._parent:SpawnUnit(unit)    
-    local map_mod = BeardLib.current_map_mod 
-    local main = map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_mod.ModPath, "main.xml"))
-    local data = BeardLib.Utils:CleanCustomXmlTable(deep_clone(BeardLib.current_map_mod._clean_config))
-    local level = BeardLib.Utils:GetNodeByMeta(data, "level")
-    local add = BeardLib.Utils:GetNodeByMeta(level, "add")
-    if not add then
-        add = {_meta = "add", directory = "Assets"}
-        table.insert(level, add)
+    if not config then
+        BeardLibEditor:log("[ERROR] Something went wrong when trying to load the unit!")
+        return
     end
-
-    for k,v in pairs(config) do
-        local exists 
-        for _, tbl in pairs(add) do
-            if type(tbl) == "table" and tbl._meta == v._meta and tbl.path == v.path then
-                exists = true
-                break
+    self._parent:SpawnUnit(unit)    
+    local map_mod = BeardLibEditor.managers.MapProject:current_mod()         
+    local data = map_mod and BeardLib.Utils:CleanCustomXmlTable(deep_clone(map_mod._clean_config))
+    local level
+    if data then
+        level = BeardLib.Utils:GetNodeByMeta(data, "level")
+        add = BeardLib.Utils:GetNodeByMeta(level, "add")
+        if not add then
+            add = {_meta = "add", directory = "Assets"}
+            table.insert(level, add)
+        end
+    end
+    if map_mod then
+        for k,v in pairs(config) do
+            local exists 
+            for _, tbl in pairs(add) do
+                if type(tbl) == "table" and tbl._meta == v._meta and tbl.path == v.path then
+                    exists = true
+                    break
+                end
             end
-        end
-        if not exists then
-            table.insert(add, v)
-        end
-    end               
-    if not dontask then
+
+            if not exists and not PackageManager:has(Idstring(v._meta):id(), Idstring(v.path):id()) then
+                log(tostring( v._meta ) .. " = " .. tostring( v.path ))
+                table.insert(add, v)
+            end
+        end      
+        local map_path = BeardLibEditor.managers.MapProject:current_path()
         BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", function()
-            local file = io.open(main, "w")
+            FileIO:WriteScriptDataTo(map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml")), data, "custom_xml")
             for _, asset in pairs(config) do
                 local path = asset.path .. "." .. asset._meta
-                local q = [["]]
-                os.execute("echo f | xcopy " .. q .. BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\") .. q .. " " .. q .. BeardLib.Utils.Path:Combine(map_mod.ModPath, add.directory or "", path):gsub("/", "\\") .. q .. "/y")
-            end      
-            file:write(FileIO:ConvertToScriptData(data, "custom_xml"))
-            file:close()
+                FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, add.directory or "", path):gsub("/", "\\"))
+            end
         end, function()
             self:Manager("static"):delete_selected()
             CustomPackageManager:UnloadPackageConfig(config)
@@ -160,14 +165,14 @@ end
 function SpawnSelect:OpenSpawnUnitDialog(params)
 	params = params or {}
 	self._parent._listdia:Show({
-	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, type = params.type}),
+	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, slot = params.slot, type = params.type}),
 	    callback = function(unit)
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(unit)
 	    	else
 				self._parent:SpawnUnit(unit)	
 			end
-			self._parent._listdia:hide()	    	 
+			self._parent._listdia:hide()
 	    end
 	}) 
 end

@@ -16,6 +16,15 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	    }, opt))
+	end	
+
+	function this:DivGroup(name, opt)
+	    opt = opt or {}
+	    opt.use_as_menu = true
+	    opt.offset = {8, 4}
+	    opt.text = opt.text or string.pretty2(name)
+	    local div = self:Divider(name.."Div", opt)
+		return self:Group(name, opt), div
 	end
 
 	function this:CloseButton()
@@ -137,15 +146,35 @@ function MenuUtils:init(this, menu)
 
 	function this:AxisControls(callback, opt)    
 	    opt = opt or {}
-	    for _, control in pairs(self._axis_controls) do
-	        self[control] = self:NumberBox(control, callback, 0, table.merge({floats = 0}, opt))
+	    opt.align_method = "grid"
+	    opt.use_as_menu = true
+	    opt.color = false
+	    self:Divider("Translate", opt)
+	    local translation = self:Group("TranslateGroup", opt)
+	    self:Divider("Rotate", opt)
+	    local rotation = self:Group("RotateGroup", opt)
+	    opt.w = translation.w / 3
+	    opt.offset = 0
+	    opt.control_slice = 1.75
+	    for i, control in pairs(self._axis_controls) do
+	    	opt.group = i < 4 and translation or rotation
+	        self[control] = self:NumberBox(control, callback, 0, opt)
 	    end
 	end
 
 	function this:ShapeControls(callback, opt)    
 	    opt = opt or {}
+	    opt.floats = 0
+	    opt.align_method = "grid"
+	    opt.use_as_menu = true
+	    opt.color = false
+	    self:Divider("Shape", opt)
+	    local shape = self:Group("ShapeGroup", opt)
+	    opt.w = shape.w / 2
+	    opt.offset = 0
+	    opt.group = shape
 	    for _, control in pairs(self._shape_controls) do
-	        self[control] = self:NumberBox(control, callback, 0, table.merge({floats = 0}, opt))
+	        self[control] = self:NumberBox(control, callback, 0, opt)
 	    end
 	end	
 

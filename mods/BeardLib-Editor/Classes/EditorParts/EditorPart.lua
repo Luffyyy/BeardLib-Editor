@@ -1,7 +1,7 @@
 EditorPart = EditorPart or class()
 function EditorPart:init(parent, menu, name)
     self:init_basic(parent, name)
-    self._menu = menu:NewMenu({
+    self._menu = menu:Menu({
         name = name,
         control_slice = 1.75,
         items_size = 18,
@@ -59,6 +59,7 @@ function EditorPart:build_default_menu()
     self._menu:Divider({
         name = "Title",
         items_size = 24,
+        offset = 0,
         marker_color = self._menu.marker_highlight_color,
         text = string.pretty2(self._menu.name)
     })

@@ -5,9 +5,8 @@ end
 
 function WorldDataEditor:build_default_menu()
     self.super.build_default_menu(self)
-    if self._editor then
-        self._editor = nil
-    end
+    self._selected_portal = nil
+    self._selected_shape = nil
     local layers = {"ai", "environment", "portals", "wires"}
     self:Divider("Select a layer to edit")
     for _, layer in pairs(layers) do
@@ -39,12 +38,13 @@ end
 
 function WorldDataEditor:build_portals_layer_menu()
     local portals = self:Group("Portals")
-    self:AxisControls(callback(self, self, "set_shape_position"))
-    self:ShapeControls(callback(self, self, "set_shape"))
+    local transform = self:Group("Transform")
+    self:AxisControls(callback(self, self, "set_shape_position"), {group = transform})
+    self:ShapeControls(callback(self, self, "set_shape"), {group = transform})
     self:Group("Shapes")
     self:Group("Units")
     self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
-    self:load_portals(portals)
+    self:load_portals()
     self:update_menu()
 end
 
@@ -58,10 +58,10 @@ function WorldDataEditor:add_shape()
     self:save()
 end
 
-function WorldDataEditor:load_portals(group)
+function WorldDataEditor:load_portals()
     self._menu:ClearItems("portals")
     for name, portal in pairs(managers.portal:unit_groups()) do
-        local btn = self:Button(portal._name, callback(self, self, "select_portal"), {label = "portals", group = group, items ={
+        local btn = self:Button(portal._name, callback(self, self, "select_portal"), {label = "portals", group = self:GetItem("Portals"), items ={
             {text = "Remove", callback = callback(self, self, "remove_portal")},
             {text = "Rename", callback = callback(self, self, "rename_portal")}
         }})
@@ -165,7 +165,7 @@ function WorldDataEditor:load_portal_shapes()
         local btn = self:Button("shape_" .. tostring(i), callback(self, self, "select_shape"), {group = group})
         btn.id = i
         btn:SetLabel("Shapes")
-        self:SmallButton(tostring(i), callback(self, self, "remove_shape"), btn, {text = "x", marker_highlight_color = Color.red}) 
+        self:SmallButton(tostring(i), callback(self, self, "remove_shape"), btn, {text = "x", marker_highlight_color = Color.red})
     end
 end
 

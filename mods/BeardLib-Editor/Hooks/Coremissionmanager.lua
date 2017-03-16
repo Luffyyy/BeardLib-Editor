@@ -198,10 +198,6 @@ function MissionManager:get_mission_element(id)
 	return nil
 end
 
-function MissionManager:_add_script(data)
-	self._scripts[data.name] = MissionScript:new(data)
-end
-
 function MissionScript:_create_elements(elements)
 	local new_elements = {}
 	for _, element in pairs(elements) do	
@@ -258,9 +254,6 @@ function MissionScript:delete_element(element)
 	self._elements[element.id]:set_enabled(false)
 	self._elements[element.id] = nil
 	self._element_groups[element.class] = nil
-end
-
-function MissionScript:_debug_draw(t, dt)
 end
 
 function MissionScript:debug_output(debug, color)

@@ -3,6 +3,7 @@
         <class file="Utils.lua"/>
         <class file="MenuUtils.lua"/>
         <class file="EditorMenu.lua"/>
+        <class file="EditorOptionsMenu.lua"/>
         <class file="MissionElementUnit.lua"/>
         <class file="MapProjectManager.lua"/>
         <class file="EditorParts/EditorPart.lua"/>
@@ -31,7 +32,6 @@
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="Coremissionmanager.lua"/>
         <hook source_file="core/lib/managers/coreshapemanager" file="Coreshapemanager.lua"/>
-        <hook source_file="core/lib/units/coreunitdamage" file="CoreUnitDamage.lua"/>
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="Coreworlddefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="Gamestatemachine.lua"/>
         <hook source_file="lib/setups/gamesetup" file="Gamesetup.lua"/>
@@ -40,7 +40,8 @@
         <hook source_file="lib/managers/navfieldbuilder" file="Navfieldbuilder.lua"/>
     </Hooks>
     <Options build_menu="false" auto_load="true">
-        <options>
+        <options>                
+            <option type="Color" default_value="Color(0.26, 0.52, 0.93)" name="AccentColor"/>
             <option_group name="Map">
                 <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>

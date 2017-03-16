@@ -3,6 +3,8 @@ EnvironmentEditorManager = EnvironmentEditorManager or class()
 function EnvironmentEditorManager:init()
     self._handlers = {}
     self.NodeName = "EnvironmentEditorNode"
+    local menu = BeardLibEditor.managers.Menu
+    MenuUtils:new(self, menu:make_page("EnvironmentEditor"))
 end
 
 function EnvironmentEditorManager:BuildNode(main_node)

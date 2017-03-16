@@ -43,7 +43,8 @@ function ScriptDataConverterManager:init()
             path_data.assets = false
         end
     end
-  
+    local menu = BeardLibEditor.managers.Menu
+    MenuUtils:new(self, menu:make_page("ScriptData"))
 end
 
 
@@ -59,7 +60,7 @@ function ScriptDataConverterManager:ConvertFile(file, from_i, to_i, filename_dia
     local to_data = self.script_file_to_types[to_i]
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
-    local convert_data = self.assets and PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())   
+    local convert_data = self.assets and PackageManager:script_data(file_split[2]:id(), file_split[1]:id())   
     if convert_data then
         local new_path = self.assets and BeardLib.Utils.Path:Combine(string.gsub(Application:base_path(),  "\\", "/"), (filename_split[#filename_split] .. "." .. to_data.name)) or (file .. "." .. to_data.name)
         if filename_dialog then

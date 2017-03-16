@@ -59,10 +59,7 @@ function NavigationManager:init()
 		self._pos_reservations = {}
 	end
 end
-function NavigationManager:_safe_remove_unit(unit)
-end
-function NavigationManager:remove_AI_blocker_units()
-end
+
 function NavigationManager:update(t, dt)
 	if self._debug then
 		self._builder:update(t, dt)
@@ -100,6 +97,7 @@ function NavigationManager:update(t, dt)
 	end
 	self:_commence_coarce_searches(t)
 end
+
 function NavigationManager:set_debug_draw_state(options)
     local temp = {}
     if type(options) == "table" then
@@ -114,6 +112,7 @@ function NavigationManager:set_debug_draw_state(options)
     end
     self._draw_enabled = options
 end
+
 function NavigationManager:build_complete_clbk(draw_options)
 	self:_refresh_data_from_builder()
 	self:set_debug_draw_state(draw_options)
@@ -137,6 +136,7 @@ function NavigationManager:build_complete_clbk(draw_options)
     end
     SE._disabled_units = {} 
 end
+
 function NavigationManager:search_coarse(params)
     if self._builder._building then
         return
@@ -209,3 +209,7 @@ function NavigationManager:search_coarse(params)
         return result
     end
 end
+
+function NavigationManager:_safe_remove_unit(unit) end
+
+function NavigationManager:remove_AI_blocker_units() end

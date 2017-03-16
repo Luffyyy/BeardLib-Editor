@@ -24,9 +24,7 @@ function EditorUnitSequence:apply_units(value_name)
 end
 
 function EditorUnitSequence:set_selected_trigger_sequence(menu, item)
-	local sequence_combo = self._menu:GetItem("trigger_list")	
-	local trigger_list_unit = self._element.values.trigger_list[sequence_combo.value]
-	trigger_list_unit.notify_unit_sequence = item:SelectedItem()
+	self._element.values.trigger_list[self._menu:GetItem("trigger_list"):Value()].notify_unit_sequence = item:SelectedItem()
 end
 
 function EditorUnitSequence:update_selected_sequence()
@@ -90,7 +88,6 @@ function EditorUnitSequence:_build_panel()
 		items = {},
 	})		  	
 	self:NumberCtrl("time", {floats = 0, min = 0}) 
-	self:BuildUnitsManage("trigger_list", {key = "notify_unit_id", orig = {notify_unit_id = 0, id = 1, name = "run_sequence", notify_unit_sequence = "", time = 0}})
+	self:BuildUnitsManage("trigger_list", {key = "notify_unit_id", orig = {notify_unit_id = 0, id = 1, name = "run_sequence", notify_unit_sequence = "", time = 0}}, callback(self, self, "update_selected_sequence"))
 	self:update_selected_sequence()
-	self:Text("Use the \"Edit Triggable\" interface, which you enable in the down left toolbar, to select and edit which units and sequences you want to run.")
 end

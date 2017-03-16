@@ -8,15 +8,6 @@ EditorSpawnCivilian.INSTANCE_VAR_NAMES = {
 		value = "state"
 	}
 }
-EditorSpawnCivilian._options = {}
-for _, dlc in pairs(tweak_data.character:character_map()) do
-	for _, character in pairs(dlc.list) do
-		local character_path =  dlc.path .. character .. "/" .. character
-		if character:match("civ") and PackageManager:has(Idstring("unit"), Idstring(character_path)) then
-			table.insert(EditorSpawnCivilian._options, character_path)
-		end
-	end
-end
 function EditorSpawnCivilian:init(unit)
 	EditorSpawnCivilian.super.init(self, unit)
 	self._enemies = {}
@@ -26,15 +17,20 @@ function EditorSpawnCivilian:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnCivilian"
 	self._element.values.state = "none"
-	self._element.values.enemy = "units/payday2/characters/civ_male_casual_1/civ_male_casual_1"
+	self._element.values.enemy = ""
 	self._element.values.force_pickup = "none"
 	self._element.values.team = "default"
 end
 
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
-	self._options = {}
-	self:ComboCtrl("enemy", self._options)
+    self:StringCtrl("enemy", {text = "Civilian Unit Path"})
+    self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
+    	slot = 21,
+        on_click = function(unit_path)
+            self._menu:GetItem("enemy"):SetValue(unit_path, true)
+        end,
+    }), {group = other})
  	self:ComboCtrl("state", table.list_add(self._states, {"none"}))
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")

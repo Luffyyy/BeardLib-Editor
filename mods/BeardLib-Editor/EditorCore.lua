@@ -1,50 +1,44 @@
-if not _G.BeardLibEditor then
-    _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml", false, true)
-
-    local self = BeardLibEditor
+_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "mod_config.xml", false, true)
+local self = BeardLibEditor
+function self:Init()
+    self:init_modules()
     self.ExtractDirectory = "assets/extract/"
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
     self.ModuleDirectory = self.ClassDirectory .. "Modules/"
     self.managers = {}
-    self._replace_script_data = {}
     self.modules = {}
     self.DBPaths = {}
-    self.DBEntries = {}
-    self.color = Color("4385ef")
-end
-
-function BeardLibEditor:_init()
-    self:init_modules()
-    if not PackageManager:loaded("core/packages/editor") then
-        PackageManager:load("core/packages/editor")
-    end
+    self.DBEntries = {}   
     self:LoadHashlist()
+    self.InitDone = true
 end
 
-function BeardLibEditor:InitManagers()
+function self:InitManagers()
+    local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local M = BeardLibEditor.managers
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
-    end
-    M.EnvironmentEditor = EnvironmentEditorManager:new()
-    M.ScriptDataConverter = ScriptDataConverterManager:new()
+    end 
     M.Menu = EditorMenu:new()
+    M.EnvironmentEditor = EnvironmentEditorManager:new()    
+    M.ScriptDataConverter = ScriptDataConverterManager:new()
     M.Dialog = MenuDialog:new()
-    M.ListDialog = ListDialog:new()
-    M.SelectDialog = SelectListDialog:new()
-    M.FBD = FileBrowserDialog:new()
+    M.ListDialog = ListDialog:new({marker_highlight_color = acc_color})
+    M.SelectDialog = SelectListDialog:new({marker_highlight_color = acc_color})
+    M.ColorDialog = ColorDialog:new({marker_highlight_color = acc_color})
+    M.FBD = FileBrowserDialog:new({marker_highlight_color = acc_color})
 
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
-
+    M.EditorOptions = EditorOptionsMenu:new()
     local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
     M.EnvironmentEditor:BuildNode(main_node)
     M.ScriptDataConverter:BuildNode(main_node)
 end
 
-function BeardLibEditor:RegisterModule(key, module)
+function self:RegisterModule(key, module)
     if not self.modules[key] then
         self:log("Registered module editor with key %s", key)
         self.modules[key] = module
@@ -53,12 +47,13 @@ function BeardLibEditor:RegisterModule(key, module)
     end
 end
 
-function BeardLibEditor:LoadHashlist()        
+function self:LoadHashlist()        
     self:log("Loading Hashlist")
     local has_hashlist = DB:has("idstring_lookup", "idstring_lookup")     
     local types = clone(BeardLib.config.script_data_types)
     table.insert(types, "unit")
     table.insert(types, "texture")
+    table.insert(types, "movie")
     local function ProcessLine(line)
         local path
         for _, typ in pairs(types) do
@@ -87,22 +82,30 @@ function BeardLibEditor:LoadHashlist()
             table.insert(self.DBPaths.other, line)
         end
     end
-    if has_hashlist then 
-        local file = DB:open("idstring_lookup", "idstring_lookup")
-        if file ~= nil then
-            --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-            for line in string.gmatch(file:read(), "[%w_/]+%z") do ProcessLine(string.sub(line, 1, #line - 1)) end
-            file:close()
-        end
+    if Global.DBPaths and Global.DBEntries then
+        self.DBPaths = Global.DBPaths
+        self.DBEntries = Global.DBEntries
+        self:log("Hashlist is Already Loaded.")
     else
-        local lines = io.lines(self.ModPath .. "list.txt", "r")
-        if lines then for line in lines do ProcessLine(line) end
-        else self:log("Failed Loading Outside Hashlist.") end
-    end       
+        if has_hashlist then 
+            local file = DB:open("idstring_lookup", "idstring_lookup")
+            if file ~= nil then
+                --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
+                for line in string.gmatch(file:read(), "[%w_/]+%z") do ProcessLine(string.sub(line, 1, #line - 1)) end
+                file:close()
+            end
+        else
+            local lines = io.lines(self.ModPath .. "list.txt", "r")
+            if lines then for line in lines do ProcessLine(line) end
+            else self:log("Failed Loading Outside Hashlist.") end
+        end  
+        self:log("%s Hashlist Loaded", has_hashlist and "Inside" or "Outside")   
+        Global.DBPaths = self.DBPaths
+        Global.DBEntries = self.DBEntries 
+    end
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-    self:log("%s Hashlist Loaded", has_hashlist and "Inside" or "Outside")
     self:log("Loading Custom Assets to Hashlist")
     local mod = BeardLib.current_map_mod
     if mod and mod._config.level.add then
@@ -117,7 +120,7 @@ function BeardLibEditor:LoadHashlist()
     end
 end
 
-function BeardLibEditor:update(t, dt)
+function self:update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
             manager:update(t, dt)
@@ -125,7 +128,7 @@ function BeardLibEditor:update(t, dt)
     end
 end
 
-function BeardLibEditor:paused_update(t, dt)
+function self:paused_update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.paused_update then
             manager:paused_update(t, dt)
@@ -197,7 +200,7 @@ if Hooks then
         BeardLibEditor:InitManagers()
     end)
 
-    function BeardLibEditor:ProcessScriptData(data, path, extension, name)
+    function self:ProcessScriptData(data, path, extension, name)
         for _, sub_data in ipairs(data) do
             if sub_data._meta == "param" then
                 local next_data_path = name and name .. "/" .. sub_data.key or sub_data.key
@@ -218,9 +221,8 @@ if Hooks then
     end)
 end
 
-if not BeardLibEditor.setup then
-    BeardLibEditor:_init()
-    BeardLibEditor.setup = true
+if not BeardLibEditor.InitDone then
+    BeardLibEditor:Init()
 end
 
 

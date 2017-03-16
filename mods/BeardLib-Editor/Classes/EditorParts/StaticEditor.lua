@@ -13,6 +13,9 @@ function StaticEditor:enable()
     self:bind("c", callback(self, self, "KeyCPressed"))
     self:bind("v", callback(self, self, "KeyVPressed"))
     self:bind("f", callback(self, self, "KeyFPressed"))
+    local menu = self:Manager("menu")
+    self:bind("r", callback(menu, menu, "toggle_rotation_widget"))
+    self:bind("t", callback(menu, menu, "toggle_move_widget"))
 end
 
 function StaticEditor:build_default_menu()
@@ -41,7 +44,7 @@ function StaticEditor:build_unit_editor_menu()
     self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableCollision", callback(self, self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableOnAiGraph", callback(self, self, "set_unit_data"), false, {group = other})
+    self:Toggle("DisableOnAIGraph", callback(self, self, "set_unit_data"), false, {group = other})
     self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
         on_click = function(unit_path)
             self._menu:GetItem("UnitPath"):SetValue(unit_path)
@@ -61,9 +64,7 @@ end
 function StaticEditor:build_positions_items()
     self:build_quick_buttons()    
     local transform = self:Group("Transform")
-    for _, control in pairs({"position_x", "position_y", "position_z", "rotation_yaw", "rotation_pitch", "rotation_roll"}) do
-        self[control] = self:NumberBox(string.pretty(control, true), callback(self, self, "set_unit_data"), 0, {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
-    end
+    self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
 end
 
 function StaticEditor:update_grid_size()
@@ -78,18 +79,10 @@ function StaticEditor:update_positions(menu, item)
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
-            self.position_x:SetValue(unit:position().x or 10, false, true)
-            self.position_y:SetValue(unit:position().y or 10, false, true)
-            self.position_z:SetValue(unit:position().z or 10, false, true)
-            self.rotation_yaw:SetValue(unit:rotation():yaw() or 10, false, true)
-            self.rotation_pitch:SetValue(unit:rotation():pitch() or 10, false, true)
-            self.rotation_roll:SetValue(unit:rotation():roll() or 10, false, true) 
-            self.position_x:SetStep(self._parent._grid_size)
-            self.position_y:SetStep(self._parent._grid_size)
-            self.position_z:SetStep(self._parent._grid_size)           
-            self.rotation_yaw:SetStep(self._parent._snap_rotation)
-            self.rotation_pitch:SetStep(self._parent._snap_rotation)
-            self.rotation_roll:SetStep(self._parent._snap_rotation)
+            self:SetAxisControls(unit:position(), unit:rotation())
+            for i, control in pairs(self._axis_controls) do
+                self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
+            end
         elseif unit:mission_element() and self:Manager("mission")._current_script then
             self:Manager("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end      
@@ -103,8 +96,8 @@ function StaticEditor:update_positions(menu, item)
 end
 
 function StaticEditor:set_unit_data()
-    self._parent:set_unit_positions(Vector3(self.position_x:Value(), self.position_y:Value(), self.position_z:Value()))
-    self._parent:set_unit_rotations(Rotation(self.rotation_yaw:Value(), self.rotation_pitch:Value(), self.rotation_roll:Value()))  
+    self._parent:set_unit_positions(self:AxisControlsPosition())
+    self._parent:set_unit_rotations(self:AxisControlsRotation())  
     if #self._selected_units == 1 then
         local unit = self._selected_units[1]
         if unit:unit_data() and unit:unit_data().unit_id then
@@ -121,7 +114,7 @@ function StaticEditor:set_unit_data()
             ud.disable_shadows = self._menu:GetItem("DisableShadows"):Value()
             ud.disable_collision = self._menu:GetItem("DisableCollision"):Value()
             ud.hide_on_projection_light = self._menu:GetItem("HideOnProjectionLight"):Value()
-            ud.disable_on_ai_graph = self._menu:GetItem("DisableOnAiGraph"):Value()
+            ud.disable_on_ai_graph = self._menu:GetItem("DisableOnAIGraph"):Value()
 
             ud.lights = BeardLibEditor.Utils:LightData(unit)
             ud.triggers = BeardLibEditor.Utils:TriggersData(unit)
@@ -352,7 +345,7 @@ function StaticEditor:set_menu_unit(unit)
     self._menu:GetItem("DisableShadows"):SetValue(unit:unit_data().disable_shadows, false, true)
     self._menu:GetItem("DisableCollision"):SetValue(unit:unit_data().disable_collision, false, true)
     self._menu:GetItem("HideOnProjectionLight"):SetValue(unit:unit_data().hide_on_projection_light, false, true)
-    self._menu:GetItem("DisableOnAiGraph"):SetValue(unit:unit_data().disable_on_ai_graph, false, true)
+    self._menu:GetItem("DisableOnAIGraph"):SetValue(unit:unit_data().disable_on_ai_graph, false, true)
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then
             editor:set_menu_unit(unit)
