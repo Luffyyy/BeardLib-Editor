@@ -119,7 +119,6 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         for i, level_in_chain in pairs(narr.chain) do
             if type(level_in_chain) == "table" then
                 self:new_level_dialog(level_in_chain.level_id, function(name)
-                    log(tostring( name ))
                     local level = clone(tweak_data.levels[level_in_chain.level_id])
                     table.insert(data, level)
                     level._meta = "level"
@@ -357,6 +356,8 @@ function MapProjectManager:create_new_narrative(name)
     narr.id = name
     local proj_path = U.Path:Combine(BeardLib.config.maps_dir, name)
     FileIO:CopyTo(U.Path:Combine(self._templates_directory, "Project"), proj_path)
+    FileIO:MakeDir(U.Path:Combine(proj_path, "assets"))
+    FileIO:MakeDir(U.Path:Combine(proj_path, "levels"))
     FileIO:WriteTo(U.Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, "custom_xml"))  
     return data 
 end
