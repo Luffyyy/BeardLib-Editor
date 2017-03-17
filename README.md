@@ -1,4 +1,5 @@
 # PAYDAY-2-BeardLib-Editor
 Editor extension for BeardLib
-For the editor to fully work you have to install the pdmod fix:
-https://www.dropbox.com/s/dp3x8mqfebprx9v/BeardLib-Editor.pdmod?dl=0
+
+If you want the editor to fully work please install this pdmod using Bundle modder:
+https://www.dropbox.com/s/hwjimqxjg7ehrmm/BeardLibEditor%20Physics%20Fix.pdmod?dl=0
