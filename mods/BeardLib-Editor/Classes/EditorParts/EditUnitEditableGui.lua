@@ -95,14 +95,10 @@ function EditUnitEditableGui:update_positions()
 	self:set_unit_data()
 end
 
-function EditUnitEditableGui:show_color_dialog() --
-	local colordlg = EWS:ColourDialog(Global.frame, true, self._ctrls.color_button:background_colour() / 255)
-	if colordlg:show_modal() then
-		self._ctrls.color_button:set_background_colour(colordlg:get_colour().x * 255, colordlg:get_colour().y * 255, colordlg:get_colour().z * 255)
-		for _, unit in ipairs(self._selected_units) do
-			if alive(unit) and unit:editable_gui() then
-				unit:editable_gui():set_font_color(Vector3(colordlg:get_colour().x, colordlg:get_colour().y, colordlg:get_colour().z))
-			end
-		end
-	end
+function EditUnitEditableGui:show_color_dialog() 
+	local unit = self:selected_unit()
+	local vc = unit:editable_gui():font_color()
+    BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+    	unit:editable_gui():set_font_color(Vector3(color.red, color.green, color.blue))
+    end})
 end

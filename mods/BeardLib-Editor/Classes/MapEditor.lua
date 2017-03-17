@@ -39,7 +39,7 @@ function me:init()
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
         elseif managers.platform._current_presence == "Playing" then
-            game_state_machine:change_state_by_name(self._before_state)
+            game_state_machine:change_state_by_name(self._before_state or "ingame_waiting_for_players")
         else
             game_state_machine:change_state_by_name("ingame_waiting_for_players")
         end

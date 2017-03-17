@@ -133,12 +133,11 @@ function EditUnitLight:set_menu_unit(units)
 	self:update_light()
 end
 
-function EditUnitLight:show_color_dialog() --
-	local colordlg = EWS:ColourDialog(self._panel, true, self._color_ctrlr:background_colour() / 255)
-	if colordlg:show_modal() then
-		self._color_ctrlr:set_background_colour(colordlg:get_colour().x * 255, colordlg:get_colour().y * 255, colordlg:get_colour().z * 255)
-		self:selected_light():set_color(self._color_ctrlr:background_colour() / 255)
-	end
+function EditUnitLight:show_color_dialog()
+	local vc = self:selected_light():color()
+    BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+    	self:selected_light():set_color(Vector3(color.red, color.green, color.blue))
+    end})
 end
 
 function EditUnitLight:selected_light() 
