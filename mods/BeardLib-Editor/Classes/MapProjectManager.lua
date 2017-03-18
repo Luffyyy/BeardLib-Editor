@@ -489,12 +489,19 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
 	self._experience_multipliers = {}
 	self._max_mission_xps = {}
 	self._min_mission_xps = {}
-	self._payouts = {}	
-	narr.contract_cost = narr.contract_cost or {}
-	narr.experience_mul = narr.experience_mul  or {}
-	narr.max_mission_xp = narr.max_mission_xp or {}
-	narr.min_mission_xp = narr.min_mission_xp or {}
-	narr.payout = narr.payout or {}
+	self._payouts = {}
+    local function convertnumber(i)
+        local t = {}
+        for i=1, #self._diffs do
+            table.insert(t, i)
+        end
+        return t
+    end
+	narr.contract_cost = type(narr.contract_cost) == "table" and narr.contract_cost or convertnumber(narr.contract_cost)
+	narr.experience_mul = type(narr.experience_mul) == "table" and narr.experience_mul or convertnumber(narr.experience_mul)
+	narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
+	narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
+	narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
 	local diff_settings = self:DivGroup("DifficultySettings", {group = self._curr_editing})
 	for i, diff in pairs(self._diffs) do
 		local group = self:Group(diff, {group = diff_settings, closed = true})
