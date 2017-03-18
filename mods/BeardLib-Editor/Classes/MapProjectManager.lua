@@ -130,7 +130,7 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                     level.id = name
                     level_in_chain.level_id = level.id
                     level.name_id = nil
-                    level.briefing_id = nil
+                    level.briefing_id = nil 
                     level.add = {directory = "assets"}
                     level.script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
                     local level_path = U.Path:Combine(levels_path, level.id)
@@ -265,7 +265,7 @@ function MapProjectManager:_select_project(mod, save_prev)
         end
     end
     self._current_mod = mod
-    BeardLibEditor.managers.ListDialog:hide()   
+    BeardLibEditor.managers.ListDialog:hide()
     self:edit_main_xml(mod._clean_config, function()        
         local t = self._current_data
         local id = t.orig_id or t.name
@@ -430,7 +430,7 @@ function MapProjectManager:add_exisiting_level_dialog()
             local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
             table.insert(chain, {level_id = id, type = "d", type_id = "heist_type_assault"})
             BeardLibEditor.managers.ListDialog:hide()
-            self:_select_project(self._current_data, true)
+            self:_select_project(self._current_mod, true)
         end
     })
 end
@@ -489,19 +489,19 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
 	self._experience_multipliers = {}
 	self._max_mission_xps = {}
 	self._min_mission_xps = {}
-	self._payouts = {}
-    local function convertnumber(i)
+	self._payouts = {}	
+    local function convertnumber(n)
         local t = {}
         for i=1, #self._diffs do
-            table.insert(t, i)
+            table.insert(t, n)
         end
         return t
     end
-	narr.contract_cost = type(narr.contract_cost) == "table" and narr.contract_cost or convertnumber(narr.contract_cost)
-	narr.experience_mul = type(narr.experience_mul) == "table" and narr.experience_mul or convertnumber(narr.experience_mul)
-	narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
-	narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
-	narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
+    narr.contract_cost = type(narr.contract_cost) == "table" and narr.contract_cost or convertnumber(narr.contract_cost)
+    narr.experience_mul = type(narr.experience_mul) == "table" and narr.experience_mul or convertnumber(narr.experience_mul)
+    narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
+    narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
+    narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
 	local diff_settings = self:DivGroup("DifficultySettings", {group = self._curr_editing})
 	for i, diff in pairs(self._diffs) do
 		local group = self:Group(diff, {group = diff_settings, closed = true})

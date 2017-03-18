@@ -23,6 +23,7 @@
         <class file="EditorParts/EditZipLine.lua"/>
         <class file="EditorParts/EditUnitLight.lua"/>
         <class file="EditorParts/MissionScriptEditor.lua"/>
+        <class file="EditorParts/EnvironmentLayerEditor.lua"/>
         <class file="EnvironmentEditorManager.lua"/>
         <class file="EnvironmentEditorHandler.lua"/>
         <class file="ScriptDataConverterManager.lua"/>
@@ -71,7 +72,12 @@
         <unit path="core/units/nav_surface/nav_surface" force="true"/>
         <object path="core/units/nav_surface/nav_surface" force="true"/>
         <model path="core/units/nav_surface/nav_surface" force="true"/>
-        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>
+        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>        
+        <unit path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <cooked_physics path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>
     </AddFiles>
     <MissionElements>
         <!--Custom Elements-->

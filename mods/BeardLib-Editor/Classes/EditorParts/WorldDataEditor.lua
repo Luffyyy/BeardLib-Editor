@@ -5,19 +5,27 @@ end
 
 function WorldDataEditor:build_default_menu()
     self.super.build_default_menu(self)
+    self._editors = {}
     self._selected_portal = nil
     self._selected_shape = nil
-    local layers = {"ai", "environment", "portals", "wires"}
+    local layers = {"ai", {name = "environment", class = EnvironmentLayerEditor}, "portals", "wires"}
     self:Divider("Select a layer to edit")
     for _, layer in pairs(layers) do
-        self:Button(layer, callback(self, self, "build_menu", layer))
+        local tbl = type(layer) == "table"
+        self:Button(tbl and layer.name or layer, callback(self, self, "build_menu", tbl and layer.class or layer))
     end
 end
 
-function WorldDataEditor:build_menu(menu)
+function WorldDataEditor:build_menu(layer)
     self.super.build_default_menu(self)
-    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25)}) 
-    self["build_"..menu.."_layer_menu"](self)
+    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25)})
+    if type(layer) == "string" then
+        self["build_"..layer.."_layer_menu"](self)
+    else
+        local layer_clss = layer:new(self)
+        layer_clss:build_menu()
+        table.insert(self._editors, layer_clss)
+    end
 end
 
 function WorldDataEditor:build_wires_layer_menu()
@@ -66,9 +74,6 @@ function WorldDataEditor:load_portals()
             {text = "Rename", callback = callback(self, self, "rename_portal")}
         }})
     end   
-end
-
-function WorldDataEditor:build_environment_layer_menu()
 end
 
 function WorldDataEditor:build_ai_layer_menu()    
@@ -185,6 +190,11 @@ function WorldDataEditor:load_portal_units()
 end
 
 function WorldDataEditor:update(t, dt)
+    for _, editor in pairs(self._editors) do
+        if editor.update then
+            editor:update(t, dt)
+        end
+    end
     if self._selected_portal then
         local portal = self._selected_portal
         local r, g, b = portal._r, portal._g, portal._b

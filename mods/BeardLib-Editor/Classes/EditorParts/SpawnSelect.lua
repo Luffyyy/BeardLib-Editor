@@ -15,6 +15,39 @@ function SpawnSelect:build_default_menu()
     self:Button("Select Element", callback(self, self, "OpenSelectElementDialog"))
 end
 
+function SpawnSelect:remove_dummy_unit()
+    local unit = self._dummy_spawn_unit
+    if alive(unit) then
+        unit:set_enabled(false)
+        unit:set_slot(0)
+        World:delete_unit(unit)
+    end
+end
+
+function SpawnSelect:mouse_pressed(button, x, y)
+    if not self._currently_spawning then
+        return false
+    end
+    if button == Idstring("0") then
+        self._parent:SpawnUnit(self._currently_spawning)
+    elseif button == Idstring("1") then
+        self:remove_dummy_unit()
+        self._currently_spawning = nil
+        self:SetTitle()
+        self:Manager("menu"):set_tabs_enabled(true)
+        if self:selected_unit() then
+            self:Manager("static"):Switch()
+        end
+    end
+    return true
+end
+
+function SpawnSelect:update(t, dt)
+    if alive(self._dummy_spawn_unit) then
+        self._dummy_spawn_unit:set_position(self._parent._spawn_position)
+    end
+end
+
 function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
     local config = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
     if not config then
@@ -114,11 +147,13 @@ function SpawnSelect:OpenSelectUnitDialog(params)
 	params = params or {}
 	local units = {}
  	for k, unit in pairs(managers.worlddefinition._all_units) do            
-	    table.insert(units, table.merge(table.merge({
-	   		name = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
-	   		unit = unit,
-	   		color = params.choose_color and params.choose_color(unit),
-	   	}, params), params.merge_with_item and params.merge_with_item(unit) or {}))
+        if alive(unit) then
+    	    table.insert(units, table.merge(table.merge({
+    	   		name = tostring(unit:unit_data().name_id) .. " [" .. tostring(unit:unit_data().unit_id) .."]",
+    	   		unit = unit,
+    	   		color = params.choose_color and params.choose_color(unit),
+    	   	}, params), params.merge_with_item and params.merge_with_item(unit) or {}))
+        end
     end
 	self._parent._listdia:Show({
 	    list = units,
@@ -142,7 +177,7 @@ function SpawnSelect:OpenSelectElementDialog(params)
                 for i, element in pairs(tbl.elements) do
                 	table.insert(elements, {
                         create_group = string.pretty2(element.class:gsub("Element", "")),
-                		name = element.editor_name .. " [" .. element.id .."]",
+                		name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]",
                 		element = element,
                 	})
                 end
@@ -170,7 +205,13 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(unit)
 	    	else
-				self._parent:SpawnUnit(unit)	
+                self._currently_spawning = unit
+                self:remove_dummy_unit()
+                if self._parent._spawn_position then
+                    self._dummy_spawn_unit = World:spawn_unit(Idstring(unit), self._parent._spawn_position)
+                end
+                self:Manager("menu"):set_tabs_enabled(false)
+                self:SetTitle("Press: LMB to spawn, RMB to cancel")
 			end
 			self._parent._listdia:hide()
 	    end

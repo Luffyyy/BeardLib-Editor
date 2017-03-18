@@ -40,6 +40,15 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s)
     })    
 end
 
+function UpperMenu:set_tabs_enabled(enabled)
+    for manager in pairs(self._parent.managers) do
+        local item = self._menu:GetItem(manager)
+        if item then
+            item:SetEnabled(enabled)
+        end
+    end
+end
+
 function UpperMenu:toggle_move_widget()
     self._parent._use_move_widget = not self._parent._use_move_widget
     self._parent:use_widgets()

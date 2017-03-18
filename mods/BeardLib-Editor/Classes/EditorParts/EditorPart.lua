@@ -21,7 +21,7 @@ function EditorPart:bind(key, clbk)
 end
 
 function EditorPart:key_pressed(clbk)
-    if not self._parent._menu:Focused() and not shift() and not alt() and not ctrl() then
+    if not self._parent._menu:Focused() and not shift() and not alt() then
         clbk()
     end 
 end
@@ -69,6 +69,10 @@ function EditorPart:build_default_menu()
         marker_color = self._menu.marker_highlight_color,
         text = string.pretty2(self._menu.name)
     })
+end
+
+function EditorPart:SetTitle(title)
+    self:GetItem("Title"):SetText(title or self._menu.name)
 end
 
 function EditorPart:disable()

@@ -11,7 +11,7 @@ end
 
 function MissionEditor:set_elements_vis()
     local enabled = self:Value("ShowElements")
-    for _, unit in pairs(self:Manager("mission")._units) do
+    for _, unit in pairs(self._units) do
         if unit:mission_element() then
             unit:mission_element():set_enabled(enabled)
             unit:set_enabled(enabled)

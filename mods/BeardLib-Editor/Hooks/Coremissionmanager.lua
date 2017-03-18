@@ -29,13 +29,39 @@ function MissionManager:parse(params, stage_name, offset, file_type)
 	local file_dir = string.reverse(string.sub(reverse, i))
 	local continent_files = self:_serialize_to_script(file_type, file_path)
 	continent_files._meta = nil
+	self._start_id = 100000
+	self._start_ids = {}
+	local i = 1
 	for name, data in pairs(continent_files) do
+		self._start_ids[name] = self._start_id * i
+		i = i + 1
 		if not managers.worlddefinition:continent_excluded(name) then
 			self:_load_mission_file(name, file_dir, data)
 		end
 	end
 	--self:_activate_mission(activate_mission)
 	return true
+end
+
+function MissionManager:store_element_id(continent, id)
+	self._ids = self._ids or {}
+	self._ids[continent] = self._ids[continent] or {}
+	self._ids[continent][id] = true
+end
+
+function MissionManager:get_new_id(continent)
+	if continent then		
+		self._ids[continent] = self._ids[continent] or {}
+		local tbl = self._ids[continent]
+		local i = self._start_ids[continent]
+		while tbl[i] do
+			i = i + 1
+		end
+		tbl[i] = true
+		return i
+	else
+		_G.BeardLibEditor:log("[ERROR] continent needed for element id")
+	end
 end
 
 function MissionManager:activate()
@@ -50,8 +76,9 @@ function MissionManager:_load_mission_file(name, file_dir, data)
 	local file_path = file_dir .. data.file
 	local scripts = self:_serialize_to_script("mission", file_path)
 	self._missions[name] = self:_serialize_to_script("mission", file_path) 
-	for name, data in pairs(scripts) do	
-		data.name = name
+	for sname, data in pairs(scripts) do	
+		data.name = sname
+		data.continent = name
 		self:_add_script(data)
 	end
 end
@@ -63,6 +90,7 @@ function MissionManager:set_element(element)
 				if s_element.id == element.id then
 					self._missions[m_name][s_name].elements[i] = element
 					self._scripts[s_name]._elements[element.id]._values = element.values
+					break
 				end
 			end
 		end
@@ -74,8 +102,27 @@ function MissionManager:add_element(element)
 	if rawget(_G, "CoreMissionManager")[module_name] then
 		element.module = module_name 	
 	end
-	table.insert(self._missions["world"]["default"].elements, element)
-	return self._scripts["default"]:create_element(element, true)
+	local script
+	local script_name
+	local mission = self._missions.world
+	if not mission then
+		for _, v in pairs(self._missions) do mission = v break end
+	end
+	if mission then
+		script = mission.default
+		script_name = "default"
+		if not script then
+			for k, v in pairs(tbl) do 
+				tbl = v 
+				script_name = k
+				break 
+			end
+		end
+	else
+		BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element")
+	end
+	table.insert(script.elements, element)
+	return self._scripts[script_name]:create_element(element, true)
 end
 
 function MissionManager:delete_element(id)	
@@ -93,6 +140,10 @@ function MissionManager:delete_element(id)
 		end
 	end
 end
+
+_G.Hooks:PreHook(MissionScript, "init", "BeardLibEditorMissionScriptPreInit", function(self, data)
+	self._continent = data.continent
+end)
 
 function MissionManager:execute_element(element)
 	self._scripts["default"]:execute_element(element)
@@ -208,6 +259,10 @@ end
 
 function MissionScript:create_element(element, return_unit)
 	local class = element.class	
+	if not element.id then
+		element.id = managers.mission:get_new_id(self._continent)
+	end
+	managers.mission:store_element_id(self._continent, element.id)
 	local new_element = self:_element_class(element.module, class):new(self, element)
 
 	new_element.class = element.class
@@ -251,6 +306,7 @@ function MissionScript:create_mission_element_unit(element)
 end
 
 function MissionScript:delete_element(element)
+	self._ids[self._continent][element.id] = nil
 	self._elements[element.id]:set_enabled(false)
 	self._elements[element.id] = nil
 	self._element_groups[element.class] = nil

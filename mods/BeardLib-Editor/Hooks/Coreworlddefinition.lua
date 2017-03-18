@@ -164,9 +164,12 @@ end
 function WorldDefinition:delete_unit(unit)
 	local unit_id = unit:unit_data().unit_id
 	local name_id = unit:unit_data().name_id
+	local continent_name = unit:unit_data().continent
 	self:remove_name_id(unit)
-	if unit_id ~= 1 then
-		local continent = self._continent_definitions[unit:unit_data().continent]
+	if unit_id ~= 1 then	
+		self._all_units[unit_id] = nil
+		self._unit_ids[continent_name][unit_id] = nil
+		local continent = self._continent_definitions[continent_name]
 		if continent then
 			for k, static in pairs(continent.statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
@@ -183,8 +186,10 @@ function WorldDefinition:add_unit(unit)
 	local statics
 	local ud = unit:unit_data()
 	if unit:wire_data() then
+		managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
 		statics = managers.worlddefinition._world_data.wires
 	elseif unit:ai_editor_data() then
+		managers.worlddefinition._world_data.ai = managers.worlddefinition._world_data.ai or {}
 		statics = managers.worlddefinition._world_data.ai
 	else
 		statics = self._continent_definitions[ud.continent].statics

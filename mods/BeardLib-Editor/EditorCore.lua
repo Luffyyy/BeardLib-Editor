@@ -18,23 +18,22 @@ end
 function self:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local M = BeardLibEditor.managers
-    if Global.editor_mode then
-        M.MapEditor = MapEditor:new()
-    end 
-    M.Menu = EditorMenu:new()
-    M.EnvironmentEditor = EnvironmentEditorManager:new()    
-    M.ScriptDataConverter = ScriptDataConverterManager:new()
     M.Dialog = MenuDialog:new()
     M.ListDialog = ListDialog:new({marker_highlight_color = acc_color})
     M.SelectDialog = SelectListDialog:new({marker_highlight_color = acc_color})
     M.ColorDialog = ColorDialog:new({marker_highlight_color = acc_color})
     M.FBD = FileBrowserDialog:new({marker_highlight_color = acc_color})
+       
+    if Global.editor_mode then
+        M.MapEditor = MapEditor:new()
+    end 
 
+    M.Menu = EditorMenu:new()
+    M.EnvironmentEditor = EnvironmentEditorManager:new()    
+    M.ScriptDataConverter = ScriptDataConverterManager:new()
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
     M.EditorOptions = EditorOptionsMenu:new()
-    local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
-    M.EnvironmentEditor:BuildNode(main_node)
 end
 
 function self:RegisterModule(key, module)
