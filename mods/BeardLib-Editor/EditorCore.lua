@@ -35,7 +35,6 @@ function self:InitManagers()
     M.EditorOptions = EditorOptionsMenu:new()
     local main_node = MenuHelperPlus:GetNode(nil, BeardLib.config.main_menu)
     M.EnvironmentEditor:BuildNode(main_node)
-    M.ScriptDataConverter:BuildNode(main_node)
 end
 
 function self:RegisterModule(key, module)

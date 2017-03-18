@@ -1,6 +1,5 @@
 ScriptDataConverterManager = ScriptDataConverterManager or class()
 function ScriptDataConverterManager:init()
-    ScriptDataConverterManager.NodeName = "BeardLibEditorScriptDataMenu"
     ScriptDataConverterManager.script_file_from_types = {
         {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
         {name = "json", func = "json.custom_decode"},
@@ -44,16 +43,9 @@ function ScriptDataConverterManager:init()
         end
     end
     local menu = BeardLibEditor.managers.Menu
-    MenuUtils:new(self, menu:make_page("ScriptData"))
-end
-
-
-function ScriptDataConverterManager:RefreshCurrentNode()
-    local selected_node = managers.menu:active_menu().logic:selected_node()
-    managers.menu:active_menu().renderer:refresh_node(selected_node)
-    local selected_item = selected_node:selected_item()
-    selected_node:select_item(selected_item and selected_item:name())
-    managers.menu:active_menu().renderer:highlight_item(selected_item)
+    self._menu = menu:make_page("ScriptData")
+    MenuUtils:new(self)
+    self:CreateRootItems()
 end
 
 function ScriptDataConverterManager:ConvertFile(file, from_i, to_i, filename_dialog)
@@ -100,7 +92,6 @@ function ScriptDataConverterManager:GetFilesAndFolders(current_path)
 
         for i, j in pairs(tbl) do
             if tonumber(i) ~= nil then
-                log(j.name)
                 table.insert(files, j.name .. "." .. j.file_type)
             else
                 table.insert(folders, i)
@@ -115,12 +106,9 @@ function ScriptDataConverterManager:GetFilesAndFolders(current_path)
 end
 
 function ScriptDataConverterManager:RefreshFilesAndFolders()
-    local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-    node:clean_items()
-
-    local gui_class = managers.menu:active_menu().renderer
-
-    self.path_text = self.path_text or gui_class.safe_rect_panel:child("BeardLibEditorPathText") or gui_class.safe_rect_panel:text({
+    self:ClearItems()
+    local panel = self._menu:Panel()
+    self.path_text = self.path_text or panel:text({
         name = "BeardLibEditorPathText",
         text = "",
         font =  tweak_data.menu.pd2_medium_font,
@@ -130,135 +118,58 @@ function ScriptDataConverterManager:RefreshFilesAndFolders()
     })
     self.path_text:set_text(self.current_script_path)
     self.path_text:set_visible(true)
-    local x, y, w, h = self.path_text:text_rect()
+    local _,_,w,h = self.path_text:text_rect()
     self.path_text:set_size(w, h)
     self.path_text:set_position(0, 0)
 
-    MenuHelperPlus:AddButton({
-        id = "BackToStart",
-        title = "Back to Shortcuts",
-        callback = "BeardLibEditorScriptStart",
-        node = node,
-        localized = false
-    })
+    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"), {offset = {2, 32}})
 
     if not self.assets then
-        MenuHelperPlus:AddButton({
-            id = "OpenFolderInExplorer",
-            title = "Open In Explorer",
-            callback = "BeardLibEditorOpenInExplorer",
-            node = node,
-            localized = false
-        })
+        self:Button("OpenFolderInExplorer", callback(self, self, "OpenFolderInExplorer"))
     end
-
     local up_level = string.split(self.current_script_path, "/")
-    if #up_level > 1 or self.assets and #up_level > 0 then
+    if #up_level > 0 then
         table.remove(up_level, #up_level)
 
         local up_string = table.concat(up_level, "/")
-        MenuHelperPlus:AddButton({
-            id = "UpLevel",
-            title = "UP A DIRECTORY...",
-            callback = "BeardLibEditorFolderClick",
-            node = node,
-            localized = false,
-            merge_data = {
-                base_path = up_string .. (up_string == "" and "" or "/")
-            }
-        })
+        self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
 
-    MenuHelperPlus:AddDivider({
-        id = "fileDivider",
-        node = node,
-        size = 15
-    })
-
+    local foldersgroup = self:Group("Folders")
+    local filesgroup = self:Group("Files")
     local files, folders = self:GetFilesAndFolders(self.current_script_path)
-
     if folders then
         table.sort(folders)
         for i, folder in pairs(folders) do
-            MenuHelperPlus:AddButton({
-                id = "BeardLibEditorPath" .. folder,
-                title = folder,
-                callback = "BeardLibEditorFolderClick",
-                node = node,
-                localized = false,
-                merge_data = {
-                    base_path = self.current_script_path .. folder .. "/",
-                    row_item_color = Color.yellow,
-                    hightlight_color = Color.yellow,
-                    to_upper = false
-                }
-            })
+            self:Button(folder, callback(self, self, "FolderClick"), {text = folder, base_path = self.current_script_path .. folder .. "/", group = foldersgroup})
         end
     end
-
     if files then
         table.sort(files)
         for i, file in pairs(files) do
             local file_parts = string.split(file, "%.")
             local extension = file_parts[#file_parts]
-            local colour = Color.white
+            local enabled = true
             if self.assets and not PackageManager:has(extension:id(), (self.current_script_path .. file_parts[1]):id()) then
-                colour = Color.red
+                enabled = false
             end
             if table.contains(BeardLib.config.script_data_types, extension) or table.contains(BeardLib.config.script_data_formats, extension) then
-                MenuHelperPlus:AddButton({
-                    id = "BeardLibEditorPath" .. file,
-                    title = file,
-                    callback = "BeardLibEditorFileClick",
-                    node = node,
-                    localized = false,
-                    merge_data = {
-                        base_path = self.current_script_path .. file,
-                        row_item_color = colour,
-                        hightlight_color = colour,
-                        to_upper = false
-                    }
-                })
+                self:Button(file, callback(self, self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled, group = filesgroup})
             end
         end
     end
-
-    managers.menu:add_back_button(node)
-
-    self:RefreshCurrentNode()
 end
 
 function ScriptDataConverterManager:CreateScriptDataFileOption()
-    local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-    node:clean_items()
+    self:ClearItems()
+    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"), {offset = {2, 32}})
+    local up_level = string.split(self.current_script_path, "/")
+    if #up_level > 0 then
+        table.remove(up_level, #up_level)
 
-    MenuHelperPlus:AddButton({
-        id = "BackToStart",
-        title = "Back to Shortcuts",
-        callback = "BeardLibEditorScriptStart",
-        node = node,
-        localized = false
-    })
-
-    MenuHelperPlus:AddButton({
-        id = "Cancel",
-        title = "Cancel",
-        callback = "BeardLibEditorFolderClick",
-        node = node,
-        localized = false,
-        merge_data = {
-            base_path = self.current_script_path
-        }
-    })
-
-    MenuHelperPlus:AddDivider({
-        id = "fileDivider",
-        node = node,
-        size = 15
-    })
-
-    --log(self.current_selected_file_path)
-
+        local up_string = table.concat(up_level, "/")
+        self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
+    end
     if self.path_text then
         self.path_text:set_visible(true)
         self.path_text:set_text(self.current_selected_file_path)
@@ -276,138 +187,63 @@ function ScriptDataConverterManager:CreateScriptDataFileOption()
             break
         end
     end
-
-    MenuHelperPlus:AddMultipleChoice({
-        id = "convertfrom",
-        title = "from",
-        node = node,
-        value = selected_from,
-        items = BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"),
-        localized = false,
-        localized_items = false,
-        enabled = not self.assets
-    })
-
-    MenuHelperPlus:AddMultipleChoice({
-        id = "convertto",
-        title = "to",
-        node = node,
-        items = BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"),
-        localized = false,
-        localized_items = false
-    })
-
-    MenuHelperPlus:AddButton({
-        id = "convert",
-        title = "convert",
-        callback = "BeardLibEditorConvertClick",
-        node = node,
-        localized = false
-    })
-
-    managers.menu:add_back_button(node)
-
-    self:RefreshCurrentNode()
+    self:ComboBox("From", nil, BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"), selected_from, {enabled = not self.assets})
+    self:ComboBox("To", nil, BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"), selected_from)
+    self:Button("Convert", callback(self, self, "ConvertClick"))
+    self:Button("Cancel", callback(self, self, "FolderClick"), {base_path = self.current_script_path})
 end
 
 function ScriptDataConverterManager:CreateRootItems()
-    local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-    node:clean_items()
-
+    self:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
-
-        MenuHelperPlus:AddButton({
-            id = "BeardLibEditorPath" .. path_data.name,
-            title = path_data.name,
-            callback = "BeardLibEditorFolderClick",
-            node = node,
-            localized = false,
-            merge_data = {
-                base_path = path_data.path,
-                assets = path_data.assets
-            }
-        })
+        self:Button(path_data.name, callback(self, self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
-
-    managers.menu:add_back_button(node)
 end
 
-function ScriptDataConverterManager:BuildNode(main_node)
-    MenuCallbackHandler.BeardLibEditorScriptDataMenuBack = function(this, item)
-        self:CreateRootItems()
-        self.current_script_path = ""
-        if self.path_text then
-            self.path_text:set_visible(false)
-        end
-    end
-
-    MenuCallbackHandler.BeardLibEditorFolderClick = function(this, item)
-        self.current_script_path = item._parameters.base_path or ""
-
-        if item._parameters.assets ~= nil then
-            self.assets = item._parameters.assets
-        end
-
-        self:RefreshFilesAndFolders()
-    end
-
-    MenuCallbackHandler.BeardLibEditorFileClick = function(this, item)
-        self.current_selected_file = item._parameters.text_id
-        self.current_selected_file_path = item._parameters.base_path
-
-        self:CreateScriptDataFileOption()
-    end
-
-    MenuCallbackHandler.BeardLibEditorScriptStart = function(this, item)
-        local gui_class = managers.menu:active_menu().renderer:active_node_gui()
-        local path_text = gui_class.safe_rect_panel:child("BeardLibEditorPathText")
-
-        if path_text then
-            gui_class.safe_rect_panel:remove(path_text)
-        end
-
-        local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-        node:clean_items()
-
-        self.current_script_path = ""
-        self:CreateRootItems()
-
-        if self.path_text then
-            self.path_text:set_visible(false)
-        end
-
-        self:RefreshCurrentNode()
-    end
-
-    MenuCallbackHandler.BeardLibEditorConvertClick = function(this, item)
-        local node = MenuHelperPlus:GetNode(nil, self.NodeName)
-
-        local convertfrom_item = node:item("convertfrom")
-        local convertto_item = node:item("convertto")
-
-        if convertfrom_item and convertto_item then
-            self:ConvertFile(self.current_selected_file_path, convertfrom_item:value(), convertto_item:value(), true)
-        end
-    end
-
-    MenuCallbackHandler.BeardLibEditorOpenInExplorer = function(this, item)
-        local open_path = string.gsub(self.current_script_path, "%./", "")
-        open_path = string.gsub(self.current_script_path, "/", "\\")
-
-        os.execute('start "" "' .. open_path .. '"')
-    end
-
-    local node = MenuHelperPlus:NewNode(nil, {
-        name = self.NodeName,
-        back_callback = "BeardLibEditorScriptDataMenuBack"
-    })
-
-    MenuHelperPlus:AddButton({
-        id = "BeardLibEditorScriptDataMenu",
-        title = "BeardLibEditorScriptDataMenu_title",
-        node = main_node,
-        next_node = self.NodeName,
-    })
-
+function ScriptDataConverterManager:BackToRoot(menu, item)
     self:CreateRootItems()
+    self.current_script_path = ""
+    if self.path_text then
+        self.path_text:set_visible(false)
+    end
+end
+
+function ScriptDataConverterManager:FileClick(menu, item)
+    self.current_selected_file = item.name
+    self.current_selected_file_path = item.base_path
+
+    self:CreateScriptDataFileOption()
+end
+
+function ScriptDataConverterManager:FolderClick(menu, item)
+    self.current_script_path = item.base_path or ""
+    self.assets = self.assets or item.assets
+    self:RefreshFilesAndFolders()
+end
+
+function ScriptDataConverterManager:OpenFolderInExplorer(menu, item)
+    local open_path = string.gsub(self.current_script_path, "%./", "")
+    open_path = string.gsub(self.current_script_path, "/", "\\")
+
+    os.execute('start "" "' .. open_path .. '"')
+end
+
+function ScriptDataConverterManager:BackToShortcuts(menu, item)
+    local panel = self._menu:Panel()
+    if alive(self.path_text) then
+        self.path_text:parent():remove(self.path_text)
+        self.path_text = nil
+    end
+    self:ClearItems()
+    self.assets = false
+    self.current_script_path = ""
+    self:CreateRootItems()
+end
+
+function ScriptDataConverterManager:ConvertClick(menu, item)
+    local convertfrom_item = self:GetItem("convertfrom")
+    local convertto_item = self:GetItem("convertto")
+    if convertfrom_item and convertto_item then
+        self:ConvertFile(self.current_selected_file_path, convertfrom_item:Value(), convertto_item:Value(), true)
+    end    
 end

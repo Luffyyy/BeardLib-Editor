@@ -113,6 +113,8 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         narr.max_mission_xp = narr.contract_visuals.max_mission_xp
         narr.min_mission_xp = narr.contract_visuals.min_mission_xp
         narr.contract_visuals = nil
+        local narr_pkg = narr.package
+        narr.package = nil --packages should only be in levels.
         local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
         local levels_path = U.Path:Combine(mod_path, "levels")
         PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
@@ -130,6 +132,9 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                     local level_path = U.Path:Combine(levels_path, level.id)
                     local level_dir = "levels/"..level.world_name .. "/"
                     local packages = type(level.package) == "string" and {level.package} or level.package or {}
+                    if narr_pkg then
+                        table.insert(packages, narr_pkg)
+                    end
                     table.insert(packages, level_dir.."world")
                     local to_unload = {}
                     for _, p in pairs(packages) do
@@ -163,13 +168,14 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         local p = level_dir..c.."/"..c          
                         if PackageManager:package_exists(p) then
                             table.insert(packages, p)
-                            if PackageManager:package_exists(p.."_init") then
-                                PackageManager:load(p.."_init")
-                                table.insert(to_unload, p.."_init")
-                            end
+                        end                        
+                        local p_init = p.."_init"
+                        if PackageManager:package_exists(p_init) then
+                            PackageManager:load(p_init)
+                            continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
+                            missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))   
+                            PackageManager:unload(p_init)                             
                         end
-                        continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
-                        missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))
                     end
                     for _, p in pairs(to_unload) do
                         if PackageManager:loaded(p) then
@@ -198,7 +204,7 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         BeardLib.managers.MapFramework:RegisterHooks()
                         --Sometimes crashes after this, thx diesel engine
                     end
-                end)             
+                end)
             end
         end
     end

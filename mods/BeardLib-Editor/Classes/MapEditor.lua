@@ -399,7 +399,7 @@ function me:update_widgets(t, dt)
 end
 
 function me:update_camera(t, dt)
-    if self._menu:MouseInside() or not shift() then
+    if self._menu:Focused() or not shift() then
         managers.mouse_pointer._mouse:show()
         self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()
         return

@@ -42,23 +42,24 @@ function MissionEditor:remove_element_unit(unit)
     table.delete(self._units, unit)
 end
 
-function MissionEditor:get_editor_class(class)
-    return rawget(_G, class:gsub("Element", "Editor"))
+function MissionEditor:get_editor_class(c)
+    local clss = rawget(_G, c:gsub("Element", "Editor"))
+    if not clss then
+        BeardLibEditor:log("[Warning] Element class %s has no editor class(Report this)", c)
+    end
+    return clss
 end
 
 function MissionEditor:set_element(element)
     if element then
-        local clss = self:get_editor_class(element.class) 
+        local clss = self:get_editor_class(element.class)
         if clss then
-            local script = clss:new(element)    
+            local script = clss:new(element)
+            script._element.class = element.class
             script:work()
             self._current_script = script
             if not self._parent:selected_unit() then
                 self._current_script = nil
-            end
-        else
-            if element.class then
-                BeardLibEditor:log("[ERROR] Element class %s has no editor class(Report this)", element.class)
             end
         end
     else
@@ -69,9 +70,7 @@ end
 function MissionEditor:add_element(name)
     local clss = self:get_editor_class(name) 
     if clss then
-        self:Manager("static"):set_selected_unit(clss:init())    
-    else
-        BeardLibEditor:log("[ERROR] Element class %s has no editor class(Report this)", name)
+        self:Manager("static"):set_selected_unit(clss:init())
     end
 end
  

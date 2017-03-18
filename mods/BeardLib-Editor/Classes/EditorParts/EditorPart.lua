@@ -17,7 +17,13 @@ function EditorPart:init(parent, menu, name)
 end
 
 function EditorPart:bind(key, clbk)
-    table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring(key), clbk))
+    table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring(key), callback(self, self, "key_pressed", clbk)))
+end
+
+function EditorPart:key_pressed(clbk)
+    if not self._parent._menu:Focused() and not shift() and not alt() and not ctrl() then
+        clbk()
+    end 
 end
 
 function EditorPart:selected_unit()
