@@ -113,6 +113,8 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         narr.max_mission_xp = narr.contract_visuals.max_mission_xp
         narr.min_mission_xp = narr.contract_visuals.min_mission_xp
         narr.contract_visuals = nil
+        narr.name_id = nil
+        narr.briefing_id = nil
         local narr_pkg = narr.package
         narr.package = nil --packages should only be in levels.
         local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
@@ -127,6 +129,8 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                     level.assets = {}
                     level.id = name
                     level_in_chain.level_id = level.id
+                    level.name_id = nil
+                    level.briefing_id = nil
                     level.add = {directory = "assets"}
                     level.script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
                     local level_path = U.Path:Combine(levels_path, level.id)
@@ -457,8 +461,9 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
 	local contacts = table.map_keys(tweak_data.narrative.contacts)
 	self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact), {group = narrative})
 	self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
-    narr.crimenet_callouts = narr.crimenet_callouts or {}
-	narr.debrief_event = narr.debrief_event or {}
+    narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
+	narr.debrief_event = type(narr.debrief_event) == "table" and narr.debrief_event or {narr.debrief_event}
+
 	self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
 	self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
 	self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})

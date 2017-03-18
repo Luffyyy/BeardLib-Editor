@@ -15,7 +15,7 @@ function MissionScriptEditor:create_element()
 	local cam = managers.viewport:get_current_camera()	
 	self._element = {}	
 	self._element.values = {}
-	self._element.class = "MissionScriptElement"	
+	self._element.class = "MissionScriptElement"
 	self._element.editor_name = "New Element"
 	self._element.id = math.random(99999) -- Todo: generate id instead of makinga a random one 
 	self._element.values.position = cam:position() + cam:rotation():y()
