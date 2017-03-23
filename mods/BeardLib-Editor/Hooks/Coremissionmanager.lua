@@ -49,6 +49,10 @@ function MissionManager:store_element_id(continent, id)
 	self._ids[continent][id] = true
 end
 
+function MissionManager:delete_element_id(continent, id)
+	self._ids[continent][id] = nil
+end
+
 function MissionManager:get_new_id(continent)
 	if continent then		
 		self._ids[continent] = self._ids[continent] or {}
@@ -99,7 +103,7 @@ end
 
 function MissionManager:add_element(element)
 	local module_name = "Core" .. element.class
-	if rawget(_G, "CoreMissionManager")[module_name] then
+	if core:_name_to_module(module_name) then
 		element.module = module_name 	
 	end
 	local script
@@ -146,8 +150,13 @@ _G.Hooks:PreHook(MissionScript, "init", "BeardLibEditorMissionScriptPreInit", fu
 end)
 
 function MissionManager:execute_element(element)
-	self._scripts["default"]:execute_element(element)
+    for _, script in pairs(self._scripts) do
+        if script._elements[element.id] then
+            script:execute_element(element)
+        end
+    end
 end
+
 
 function MissionManager:get_executors_of_element(element)
 	local executors = {}
@@ -163,7 +172,7 @@ function MissionManager:get_executors_of_element(element)
 								end
 							end
 						elseif script_element.values.elements then
-							for _, _element in pairs(script_element.values.elements) do									
+							for _, _element in pairs(script_element.values.elements) do
 								if _element.id == element.id then
 									table.insert(executors, script_element)
 								end
@@ -286,11 +295,6 @@ function MissionScript:create_mission_element_unit(element)
 		return 
 	end
 	local unit_name = "units/mission_element/element"
-	if element.class == "ElementSpawnCivilian" then
-		unit_name = "units/civilian_element/element"
-	elseif element.class == "ElementSpawnEnemyDummy" then
-		unit_name = "units/enemy_element/element"
-	end
 	element.values.position = element.values.position or Vector3()
 	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation(0,0,0)
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
@@ -306,7 +310,7 @@ function MissionScript:create_mission_element_unit(element)
 end
 
 function MissionScript:delete_element(element)
-	self._ids[self._continent][element.id] = nil
+	managers.mission:delete_element_id(self._continent, element.id)
 	self._elements[element.id]:set_enabled(false)
 	self._elements[element.id] = nil
 	self._element_groups[element.class] = nil

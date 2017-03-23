@@ -1,19 +1,20 @@
 ScriptDataConverterManager = ScriptDataConverterManager or class()
-function ScriptDataConverterManager:init()
-    ScriptDataConverterManager.script_file_from_types = {
+local scm = ScriptDataConverterManager
+function scm:init()
+    scm.script_file_from_types = {
         {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
         {name = "json", func = "json.custom_decode"},
         {name = "xml", func = "ScriptSerializer:from_xml"},
         {name = "generic_xml", func = "ScriptSerializer:from_generic_xml"},
         {name = "custom_xml", func = "ScriptSerializer:from_custom_xml"},
     }
-    ScriptDataConverterManager.script_file_to_types = {
+    scm.script_file_to_types = {
         {name = "binary", open_type = "wb"},
         {name = "json"},
         {name = "generic_xml"},
         {name = "custom_xml"},
     }
-    ScriptDataConverterManager.script_data_paths = {
+    scm.script_data_paths = {
         {path = "%userprofile%", name = "User Folder"},
         {path = "%userprofile%/Documents/", name = "Documents"},
         {path = "%userprofile%/Desktop/", name = "Desktop"},
@@ -48,24 +49,26 @@ function ScriptDataConverterManager:init()
     self:CreateRootItems()
 end
 
-function ScriptDataConverterManager:ConvertFile(file, from_i, to_i, filename_dialog)
+function scm:ConvertFile(file, from_i, to_i, filename_dialog)
     local to_data = self.script_file_to_types[to_i]
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
-    local convert_data = self.assets and PackageManager:script_data(file_split[2]:id(), file_split[1]:id())   
-    if convert_data then
-        local new_path = self.assets and BeardLib.Utils.Path:Combine(string.gsub(Application:base_path(),  "\\", "/"), (filename_split[#filename_split] .. "." .. to_data.name)) or (file .. "." .. to_data.name)
-        if filename_dialog then
-            managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
-        else
-            self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
-        end    
+
+    local convert_data = not self.assets and FileIO:ReadScriptDataFrom(file, self.script_file_from_types[from_i].name)
+    if not convert_data and not self.assets then
+        BeardLibEditor:log("[Error] File not accessible")
+        return
+    end
+    local convert_data = convert_data or PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())
+    local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
+    if filename_dialog then
+        managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
     else
-        BeardLibEditor:log("[Error]")
+        self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
     end
 end
 
-function ScriptDataConverterManager:SaveConvertedData(params, success, value)
+function scm:SaveConvertedData(params, success, value)
     if not success then
         return
     end
@@ -73,7 +76,7 @@ function ScriptDataConverterManager:SaveConvertedData(params, success, value)
     self:RefreshFilesAndFolders()
 end
 
-function ScriptDataConverterManager:GetFilesAndFolders(current_path)
+function scm:GetFilesAndFolders(current_path)
     local folders, files
 
     if self.assets then
@@ -105,7 +108,7 @@ function ScriptDataConverterManager:GetFilesAndFolders(current_path)
     return files or {}, folders or {}
 end
 
-function ScriptDataConverterManager:RefreshFilesAndFolders()
+function scm:RefreshFilesAndFolders()
     self:ClearItems()
     local panel = self._menu:Panel()
     self.path_text = self.path_text or panel:text({
@@ -160,7 +163,7 @@ function ScriptDataConverterManager:RefreshFilesAndFolders()
     end
 end
 
-function ScriptDataConverterManager:CreateScriptDataFileOption()
+function scm:CreateScriptDataFileOption()
     self:ClearItems()
     self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"), {offset = {2, 32}})
     local up_level = string.split(self.current_script_path, "/")
@@ -193,14 +196,14 @@ function ScriptDataConverterManager:CreateScriptDataFileOption()
     self:Button("Cancel", callback(self, self, "FolderClick"), {base_path = self.current_script_path})
 end
 
-function ScriptDataConverterManager:CreateRootItems()
+function scm:CreateRootItems()
     self:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
         self:Button(path_data.name, callback(self, self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
 end
 
-function ScriptDataConverterManager:BackToRoot(menu, item)
+function scm:BackToRoot(menu, item)
     self:CreateRootItems()
     self.current_script_path = ""
     if self.path_text then
@@ -208,27 +211,27 @@ function ScriptDataConverterManager:BackToRoot(menu, item)
     end
 end
 
-function ScriptDataConverterManager:FileClick(menu, item)
+function scm:FileClick(menu, item)
     self.current_selected_file = item.name
     self.current_selected_file_path = item.base_path
 
     self:CreateScriptDataFileOption()
 end
 
-function ScriptDataConverterManager:FolderClick(menu, item)
+function scm:FolderClick(menu, item)
     self.current_script_path = item.base_path or ""
     self.assets = self.assets or item.assets
     self:RefreshFilesAndFolders()
 end
 
-function ScriptDataConverterManager:OpenFolderInExplorer(menu, item)
+function scm:OpenFolderInExplorer(menu, item)
     local open_path = string.gsub(self.current_script_path, "%./", "")
     open_path = string.gsub(self.current_script_path, "/", "\\")
 
     os.execute('start "" "' .. open_path .. '"')
 end
 
-function ScriptDataConverterManager:BackToShortcuts(menu, item)
+function scm:BackToShortcuts(menu, item)
     local panel = self._menu:Panel()
     if alive(self.path_text) then
         self.path_text:parent():remove(self.path_text)
@@ -240,9 +243,9 @@ function ScriptDataConverterManager:BackToShortcuts(menu, item)
     self:CreateRootItems()
 end
 
-function ScriptDataConverterManager:ConvertClick(menu, item)
-    local convertfrom_item = self:GetItem("convertfrom")
-    local convertto_item = self:GetItem("convertto")
+function scm:ConvertClick(menu, item)
+    local convertfrom_item = self:GetItem("From")
+    local convertto_item = self:GetItem("To")
     if convertfrom_item and convertto_item then
         self:ConvertFile(self.current_selected_file_path, convertfrom_item:Value(), convertto_item:Value(), true)
     end    

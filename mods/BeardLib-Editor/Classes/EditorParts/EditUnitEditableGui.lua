@@ -40,6 +40,7 @@ function EditUnitEditableGui:build_menu(units)
 	self._render_templates = {
 		"diffuse_vc_decal",
 		"Text",
+		"OverlayVertexColorTextured",
 		"TextDistanceField",
 		"diffuse_vc_decal_distance_field"
 	}

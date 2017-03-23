@@ -101,5 +101,5 @@ end
 
 function EditorSpawnEnemyDummy:destroy(...)
 	EditorSpawnEnemyDummy.super.destroy(self, ...)
-	self:stop_test_element()
+	--self:stop_test_element()
 end

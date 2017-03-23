@@ -6,7 +6,9 @@ function self:Init()
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
-    self.ModuleDirectory = self.ClassDirectory .. "Modules/"
+    self.EditorPartsDirectory = self.ClassDirectory .. "EditorParts/"
+    self.ElementsPath = self.EditorPartsDirectory .. "Elements/"
+    
     self.managers = {}
     self.modules = {}
     self.DBPaths = {}
@@ -52,6 +54,7 @@ function self:LoadHashlist()
     table.insert(types, "unit")
     table.insert(types, "texture")
     table.insert(types, "movie")
+    table.insert(types, "effect")
     local function ProcessLine(line)
         local path
         for _, typ in pairs(types) do

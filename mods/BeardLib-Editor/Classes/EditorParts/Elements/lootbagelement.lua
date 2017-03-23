@@ -40,14 +40,15 @@ function EditorLootBag:_build_panel()
 	self:BooleanCtrl("from_respawn")
 end
 
-LootBagTriggerUnitElement = LootBagTriggerUnitElement or class(MissionScriptEditor)
-function LootBagTriggerUnitElement:create_element()
+EditorLootBagTrigger = EditorLootBagTrigger or class(MissionScriptEditor)
+function EditorLootBagTrigger:create_element()
     self.super.create_element(self)
+    self._element.class = "ElementLootBagTrigger"
 	self._element.values.elements = {}
 	self._element.values.trigger_type = "load"
 end
 
-function LootBagTriggerUnitElement:_build_panel()
+function EditorLootBagTrigger:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementLootBag"})
 	self:ComboCtrl("trigger_type", {"load", "spawn"}, {help = "Select a trigger type for the selected elements"})

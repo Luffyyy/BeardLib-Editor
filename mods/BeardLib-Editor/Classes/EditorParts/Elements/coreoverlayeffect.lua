@@ -5,7 +5,7 @@ function EditorOverlayEffect:create_element()
 	self._element.values.effect = "none"
 end
 
-function EditorOverlayEffect:_build_panel(panel, panel_sizer)
+function EditorOverlayEffect:_build_panel()
 	self:_create_panel()
 	local options = {}
 	for name, _ in pairs(managers.overlay_effect:presets()) do 

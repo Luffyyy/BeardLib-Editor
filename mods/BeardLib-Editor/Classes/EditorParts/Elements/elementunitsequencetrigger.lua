@@ -9,6 +9,7 @@ end
 
 function EditorUnitSequenceTrigger:set_selected_sequence(menu, item)
 	self._element.values.sequence_list[self._menu:GetItem("sequence"):Value()].sequence = item:SelectedItem()
+	self:update_element()
 end
 
 function EditorUnitSequenceTrigger:apply_units(value_name)
@@ -70,7 +71,7 @@ function EditorUnitSequenceTrigger:update_selected_sequence()
 	else
 		selected_sequence:SetItems()
 	end
-
+	self:update_element()
 end
 
 function EditorUnitSequenceTrigger:_build_panel()

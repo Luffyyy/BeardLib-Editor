@@ -6,7 +6,7 @@ function EditorPlaySound:create_element()
 	self._element.values.append_prefix = false
 	self._element.values.use_instigator = false
 end
-function EditorPlaySound:_build_panel(panel, panel_sizer)
+function EditorPlaySound:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian"})
 	self:StringCtrl("sound_event", {text = "Sound ID"})

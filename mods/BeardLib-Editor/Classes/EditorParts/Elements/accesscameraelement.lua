@@ -122,6 +122,6 @@ function EditorAccessCameraTrigger:_build_panel()
 		"accessed",
 		"destroyed",
 		"alarm"
-	}, "Select a trigger type for the selected elements")
+	}, {help = "Select a trigger type for the selected elements"})
 	self:Text("This element is a trigger to point_access_camera element.")
 end

@@ -124,7 +124,7 @@ function EditorSecurityCamera:load_camera_unit(unit)
 end
 
 function EditorSecurityCamera:selected()
-	AIAttentionElement.super.selected(self)
+	EditorSecurityCamera.super.selected(self)
 	self:_chk_units_alive()
 	if self._camera_u_data then
 		self:_align_camera_unit()

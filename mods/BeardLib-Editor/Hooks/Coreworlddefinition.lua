@@ -166,7 +166,7 @@ function WorldDefinition:delete_unit(unit)
 	local name_id = unit:unit_data().name_id
 	local continent_name = unit:unit_data().continent
 	self:remove_name_id(unit)
-	if unit_id ~= 1 then	
+	if unit_id ~= 1 then
 		self._all_units[unit_id] = nil
 		self._unit_ids[continent_name][unit_id] = nil
 		local continent = self._continent_definitions[continent_name]
@@ -293,10 +293,10 @@ function WorldDefinition:make_unit(data, offset)
 	local unit
 	if MassUnitManager:can_spawn_unit(Idstring(name)) then
 		unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
-	else --if PackageManager:has(Idstring("unit"), Idstring(name)) then
+	elseif PackageManager:has(Idstring("unit"), Idstring(name)) then
 		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
-	--else
-		--_G.BeardLibEditor:log("Unit '%s' cannot be spawned!", tostring(name))
+	else
+		_G.BeardLibEditor:log("Unit '%s' cannot be spawned!", tostring(name))
 	end
 	if unit then
 		self:assign_unit_data(unit, data)

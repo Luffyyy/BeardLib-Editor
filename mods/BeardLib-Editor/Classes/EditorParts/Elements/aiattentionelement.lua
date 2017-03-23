@@ -1,5 +1,5 @@
-AIAttentionElement = AIAttentionElement or class(MissionScriptEditor)
-function AIAttentionElement:create_element()  
+EditorAIAttention = EditorAIAttention or class(MissionScriptEditor)
+function EditorAIAttention:create_element()  
 	self.super.create_element(self)
 	self._nav_link_filter = {}
 	self._nav_link_filter_check_boxes = {}
@@ -18,7 +18,7 @@ function AIAttentionElement:create_element()
 	self._parent_obj = nil
 	self._att_obj_unit = nil
 end
-function AIAttentionElement:_build_panel()
+function EditorAIAttention:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian", "ElementSpawnEnemyGroup", "ElementSpawnCivlianGroup"})
 	self:BooleanCtrl("use_instigator")

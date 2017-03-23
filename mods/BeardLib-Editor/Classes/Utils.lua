@@ -383,6 +383,16 @@ function BeardLibEditor.Utils:InSlot(unit, slot)
     return false
 end
 
+function BeardLibEditor.Utils:GetEntries(type, loaded)
+    local entries = {}
+    for _, entry in pairs(BeardLibEditor.DBPaths[type]) do
+        if not loaded or PackageManager:has(Idstring(type), Idstring(entry)) then
+            table.insert(entries, entry)
+        end
+    end
+    return entries
+end
+
 function BeardLibEditor.Utils:GetUnits(params)
     local units = {}
     for _, unit in pairs(BeardLibEditor.DBPaths.unit) do

@@ -143,7 +143,9 @@ function me:DeleteUnit(unit)
                 self.managers.mission:remove_element_unit(unit)
             end
         end
-        managers.worlddefinition:delete_unit(unit)
+        if unit:unit_data() and unit:unit_data().contiennt then
+            managers.worlddefinition:delete_unit(unit)
+        end
         World:delete_unit(unit)
     end
 end
@@ -361,23 +363,21 @@ function me:update(t, dt)
                 manager:update(t, dt)
             end
         end
-        local current_pos, current_rot = managers.editor:current_orientation(Vector3(0, 0, 0), self._selected_unit)
-        self._current_pos = current_pos or self._current_pos
-
+        self._current_pos = managers.editor:current_position() or self._current_pos
         self:update_camera(t, dt)
         self:update_widgets(t, dt)
         self:draw_marker(t, dt)
     end
 end
 
-function me:current_orientation(offset_move_vec, unit)
+function me:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
     if true then
         local p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
-            local p = p1 + (p2 - p1) * t + offset_move_vec
+            local p = p1 + (p2 - p1) * t
             if t < 1000 and t > -1000 then
                 local x = math.round(p.x / self:grid_size()) * self:grid_size()
                 local y = math.round(p.y / self:grid_size()) * self:grid_size()
@@ -385,68 +385,21 @@ function me:current_orientation(offset_move_vec, unit)
                 current_pos = Vector3(x, y, z)
             end
         end
-    else
-        local p2 = self:get_cursor_look_point(25000)
-        local ray
-        local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
-        if rays then
-            for _, unit_r in ipairs(rays) do
-                if unit_r.unit ~= unit and unit_r.unit:visible() then
-                    ray = unit_r
-                else
-                end
-            end
-        end
-        if ray then
-            local p = ray.position + offset_move_vec
-            local x = math.round(p.x / self:grid_size()) * self:grid_size()
-            local y = math.round(p.y / self:grid_size()) * self:grid_size()
-            current_pos = Vector3(x, y, p.z)
-            local n = ray.normal
-            Application:draw_line(current_pos, current_pos + n * 2000, 0, 0, 1)
-            if alive(unit) then
-                local u_rot = unit:rotation()
-                local z = n
-                local x = u_rot:x() - z * z:dot(u_rot:x()):normalized()
-                local y = z:cross(x)
-                local rot = Rotation(x, y, z)
-                current_rot = rot * unit:rotation():inverse()
-            end
-        end
-    end
-    if alive(unit) and current_pos then
-        local r = 1100
-        local pos = current_pos
-        Application:draw_sphere(pos, r, 1, 0, 1)
-        local units = unit:find_units("intersect", "force_physics", "sphere", pos, r)
-        local closest_snap
-        for _, unit in ipairs(units) do
-            local aligns = unit:get_objects("snap*")
-            if #aligns > 0 then
-                table.insert(aligns, unit:orientation_object())
-            end
-            for _, o in ipairs(aligns) do
-                local len = o:position() - pos:length()
-                if r > len and (not closest_snap or len < closest_snap:position() - pos:length()) then
-                    closest_snap = o
-                end
-                Application:draw_rotation_size(o:position(), o:rotation(), 400)
-                Application:draw_sphere(o:position(), 50, 0, 1, 1)
-            end
-            Application:draw(unit, 1, 0, 0)
-        end
-        if closest_snap then
-            current_pos = closest_snap:position()
-            current_rot = closest_snap:rotation() * unit:rotation():inverse()
-        end
     end
     self._current_pos = current_pos or self._current_pos
     return current_pos, current_rot
 end
 
-function me:draw_marker(t, dt)
-    local ray = World:raycast(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all, "ignore_units", {self.managers.spwsel._dummy_spawn_unit})
-    self._spawn_position = ray and ray.position or self._current_pos
+function MapEditor:draw_marker(t, dt)
+    local spawn_pos
+    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
+    for _, ray in pairs(rays) do
+        if ray and ray.unit ~= self.managers.spwsel._dummy_spawn_unit then
+            spawn_pos = ray.position
+            break
+        end
+    end
+    self._spawn_position = spawn_pos or self._current_pos
 end
 
 function me:update_widgets(t, dt)

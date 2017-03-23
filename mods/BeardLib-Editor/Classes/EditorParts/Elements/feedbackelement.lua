@@ -1,8 +1,8 @@
 EditorFeedback = EditorFeedback or class(MissionScriptEditor)
 EditorFeedback.USES_POINT_ORIENTATION = true
 function EditorFeedback:create_element()
-	self.super.create_element(self)
-	self._element.class = "ElementEditorFeedback"
+	EditorFeedback.super.create_element(self)
+	self._element.class = "ElementFeedback"
 	self._element.values.effect = "mission_triggered"
 	self._element.values.range = 0
 	self._element.values.use_camera_shake = true
@@ -25,7 +25,7 @@ function EditorFeedback:_build_panel()
 	self:_create_panel()
 	self:NumberCtrl("range", {min = -1, help = "The range the effect should be felt. 0 means that it will be felt everywhere"})
 	self:BooleanCtrl("use_camera_shake")
-	self:ComboCtrl(camera_shaker_sizer, "camera_shake_effect", {"mission_triggered","headbob","player_land","breathing"}, {help = "Select a camera shake effect", "effect"})
+	self:ComboCtrl("camera_shake_effect", {"mission_triggered","headbob","player_land","breathing"}, {help = "Select a camera shake effect", "effect"})
 	self:NumberCtrl("camera_shake_amplitude", {min = -1, help = "Amplitude basically decides the strenght of the shake", text = "amplitude"})
 	self:NumberCtrl("camera_shake_frequency", {min = -1, help = "Changes the frequency of the shake", text = "frequency"})
 	self:NumberCtrl("camera_shake_attack", {min = -1, help = "Time to reach maximum shake", text = "attack"})
@@ -46,9 +46,5 @@ function EditorFeedback:_build_panel()
 end
 
 function EditorFeedback:_effect_options()
-	local effect_options = {}
-	for _, name in ipairs(managers.database:list_entries_of_type("effect")) do
-		table.insert(effect_options, name)
-	end
-	return effect_options
+	return BeardLibEditor.Utils:GetEntries("effect", true)
 end

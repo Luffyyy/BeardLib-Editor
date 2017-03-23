@@ -1,8 +1,7 @@
 MissionEditor = MissionEditor or class(EditorPart)
 function MissionEditor:init(parent, menu)
-    local path = BeardLibEditor.ModPath .. "Classes/EditorParts/Elements/"
-    for _, file in pairs(file.GetFiles(path)) do
-        dofile(path .. file)
+    for _, file in pairs(file.GetFiles(BeardLibEditor.ElementsPath)) do
+        dofile(BeardLibEditor.ElementsPath .. file)
     end    
     self._units = {}
     self._parent = parent
@@ -19,11 +18,20 @@ function MissionEditor:set_elements_vis()
     end
 end
 
-function MissionEditor:enabled()
+function MissionEditor:remove_script()
+    if self._current_script then
+        if self._current_script.destroy then
+            self._current_script:destroy()
+        end
+        self._current_script = nil
+    end
+end
+
+function MissionEditor:enable()
     self:bind("g", callback(self, self, "KeyGPressed"))
 end
 
-function MissionEditor:disabled()
+function MissionEditor:disable()
     for _, id in pairs(self._trigger_ids) do
         Input:keyboard():remove_trigger(id)
     end

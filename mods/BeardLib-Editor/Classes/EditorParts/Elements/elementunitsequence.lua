@@ -25,6 +25,7 @@ end
 
 function EditorUnitSequence:set_selected_trigger_sequence(menu, item)
 	self._element.values.trigger_list[self._menu:GetItem("trigger_list"):Value()].notify_unit_sequence = item:SelectedItem()
+	self:update_element()
 end
 
 function EditorUnitSequence:update_selected_sequence()

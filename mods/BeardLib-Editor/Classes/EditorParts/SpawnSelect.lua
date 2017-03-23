@@ -66,6 +66,7 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
             table.insert(level, add)
         end
     end
+    local to_copy = {}
     if map_mod then
         for k,v in pairs(config) do
             local exists 
@@ -79,14 +80,17 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
             if not exists and not PackageManager:has(Idstring(v._meta):id(), Idstring(v.path):id()) then
                 log(tostring( v._meta ) .. " = " .. tostring( v.path ))
                 table.insert(add, v)
+                table.insert(to_copy, v)
             end
         end      
         local map_path = BeardLibEditor.managers.MapProject:current_path()
         BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", function()
             FileIO:WriteScriptDataTo(map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml")), data, "custom_xml")
-            for _, asset in pairs(config) do
-                local path = asset.path .. "." .. asset._meta
-                FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, add.directory or "", path):gsub("/", "\\"))
+            for _, asset in pairs(to_copy) do
+                if type(asset) == "table" then
+                    local path = asset.path .. "." .. asset._meta
+                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, add.directory or "", path):gsub("/", "\\"))
+                end
             end
         end, function()
             self:Manager("static"):delete_selected()

@@ -1,7 +1,7 @@
 EditorPhysicsPush = EditorPhysicsPush or class(MissionScriptEditor)
 function EditorPhysicsPush:create_element()
 	self.super.create_element(self)
-    self._element.class = "EditorPhysicsPush"
+    self._element.class = "ElementPhysicsPush"
 	self._element.values.physicspush_range = 1000
 	self._element.values.physicspush_velocity = 100
 	self._element.values.physicspush_mass = 100

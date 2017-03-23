@@ -56,6 +56,7 @@ function StaticEditor:build_unit_editor_menu()
 end
 
 function StaticEditor:build_extension_items()
+    self._editors = {}
     for k, v in pairs({light = EditUnitLight, ladder = EditLadder, editable_gui = EditUnitEditableGui, zipline = EditZipLine, wire = EditWire, mesh_variation = EditMeshVariation, ai_data = EditAIData}) do
         self._editors[k] = v:new():is_editable(self)
     end
@@ -290,6 +291,7 @@ function StaticEditor:set_selected_unit(unit, add)
             table.delete(self._selected_units, unit)
         end
     else
+        self:Manager("mission"):remove_script()
         self._selected_units = {}
         self._selected_units[1] = unit
     end
@@ -320,20 +322,23 @@ end
 
 function StaticEditor:set_multi_selected()
     self._editors = {}
-    self._menu:ClearItems()  
+    self._menu:ClearItems()
     self:build_positions_items()
     self:update_positions()
 end
 
 function StaticEditor:set_unit(reset)
     if reset then
+        self:Manager("mission"):remove_script()
         self._selected_units = {}
     end
     local unit = self._selected_units[1]
-    if not reset and alive(unit) then
-        self:set_menu_unit(unit)
-    else
-        self:build_default_menu() 
+    if alive(unit) and unit:unit_data() and not unit:mission_element() then
+        if not reset then
+            self:set_menu_unit(unit)
+        else
+            self:build_default_menu() 
+        end
     end
 end
 
@@ -386,6 +391,7 @@ function StaticEditor:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
         self._parent:DeleteUnit(unit)
     end
+    self:Manager("mission"):remove_script()
     self._selected_units = {}
     self:set_unit()      
 end

@@ -46,6 +46,9 @@ function MissionScriptEditor:_build_panel()
 end
 
 function MissionScriptEditor:_create_panel()
+	if alive(self._main_group) then
+		return
+	end
 	self._main_group = self:Group("Main")	
 	local quick_buttons = self:Group("QuickButtons")
 	local transform = self:Group("Transform")
@@ -96,6 +99,7 @@ function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
 	local value = self._menu:GetItem("OnExecutedList"):Value()
 	if value then
 		self._element.values.on_executed[value].delay = item:Value()
+		self:update_element()
 	end
 end
 
@@ -144,7 +148,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 end
 
 function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, group)
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {value_name = value_name, update_clbk = update_clbk, table_data = table_data}), {text = "Manage "..value_name.." List", group = group or self._class_group})
+	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {value_name = value_name, update_clbk = update_clbk, table_data = table_data, classes = classes}), {text = "Manage "..value_name.." List", group = group or self._class_group})
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
@@ -170,7 +174,7 @@ function MissionScriptEditor:remove_selected_units(value_name)
 end
 
 function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
-	local current_list = self._element.values[params.value_name]
+	local current_list = self._element.values[params.value_name] or {}
 	self._element.values[params.value_name] = {}
 	for _, data in pairs(final_selected_list) do
 		local unit = data.unit
@@ -194,14 +198,14 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
 		end 
 	end
 	if params.update_clbk then
-		params.update_clbk()
+		params.update_clbk(params.value_name)
 	end
 end
 
 function MissionScriptEditor:OpenElementsManageDialog(params)
 	local selected_list = {}
 	local list = {}
-	local current_list = self._element.values[params.value_name]
+	local current_list = self._element.values[params.value_name] or {}
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
@@ -220,8 +224,10 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 				 		if table.contains(current_list, element.id) then 
 				 			table.insert(selected_list, data)
 				 		end                   		
-                	end                 
-                	table.insert(list, data)
+                	end
+                	if not params.classes or table.contains(params.classes, element.class) then     
+                		table.insert(list, data)
+                	end
                 end
             end
         end
@@ -237,7 +243,7 @@ end
 function MissionScriptEditor:OpenUnitsManageDialog(params)
 	local selected_list = {}
 	local list = {}
-	local current_list = self._element.values[params.value_name]
+	local current_list = self._element.values[params.value_name] or {}
     for k, unit in pairs(managers.worlddefinition._all_units) do
  		local ud = unit:unit_data()
  		local data = {
@@ -251,11 +257,13 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
     			end
     		end
     	else
-	 		if table.contains(current_list, ud.unit_id) then 
+	 		if table.contains(current_list, ud.unit_id) then
 	 			table.insert(selected_list, data)
-	 		end                   		
-    	end                 
-    	table.insert(list, data)
+	 		end
+    	end
+    	if (not params.units or table.contains(params.units, ud.name)) and (not params.check_unit or params.check_unit(unit)) then
+    		table.insert(list, data)
+    	end
     end
 	managers.editor._select_list:Show({
 	    selected_list = selected_list,
@@ -285,6 +293,22 @@ function MissionScriptEditor:Text(text, opt)
     return self:Divider(text, opt)
 end
 
+function MissionScriptEditor:ListSelectorOpen(params)
+    BeardLibEditor.managers.SelectDialog:Show({
+        selected_list = params.selected_list,
+        list = params.list,
+        callback = function(list) 
+ 			params.data[params.value_name] = #list > 0 and list or nil
+        end
+    })
+end
+
+function MissionScriptEditor:ListSelector(value_name, list, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+	local data = self:ItemData(opt)
+	self:Button(value_name, callback(self, self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
+end
+
 function MissionScriptEditor:NumberCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
     return self:NumberBox(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
@@ -302,5 +326,6 @@ end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, table.get_key(items, self:ItemData(opt)[value_name]), opt)
+	local v = self:ItemData(opt)[value_name]
+    return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, type(v) == "number" and items[v] and v or table.get_key(items, v), opt)
 end
