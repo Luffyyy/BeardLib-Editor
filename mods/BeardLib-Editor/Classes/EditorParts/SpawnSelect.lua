@@ -5,6 +5,7 @@ end
 
 function SpawnSelect:build_default_menu()
     self.super.build_default_menu(self)
+    local quick = self:Divider("QuickButtons")
     self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"))
     if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
     	self:Button("Spawn Unit(extract)", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}))
@@ -13,6 +14,62 @@ function SpawnSelect:build_default_menu()
     self:Button("Spawn Prefab", callback(self, self, "OpenSpawnPrefabDialog"))
     self:Button("Select Unit", callback(self, self, "OpenSelectUnitDialog", {}))
     self:Button("Select Element", callback(self, self, "OpenSelectElementDialog"))
+    local numerr = table.size(self._parent._errors)
+    self:Divider(tostring(numerr).." Errors", {color = numerr > 0 and Color.red or quick.color})
+    self:ShowErrors()
+end
+
+function SpawnSelect:ShowErrors()
+    if not BeardLibEditor.managers.MapProject or not BeardLibEditor.managers.MapProject:current_mod() then
+        return
+    end
+    local function fixed_errors(typ, val)
+        for k, v in pairs(self._parent._errors) do
+            if v.type == typ and v.value == val then
+                self._parent._errors[k] = nil  
+            end
+        end
+        self:build_default_menu()
+        QuickMenuPlus:new("Error(s) Fixed!", "Please restart the level.")
+    end
+    for _, error in pairs(self._parent._errors) do
+        local typ = error.type
+        local val = error.value
+
+        local errgroup = self:GetItem(typ) or self:DivGroup(typ, {text = string.pretty(typ), color = Color.red})
+        local erritem = self:GetItem(typ.."/"..val)
+        if erritem then
+            erritem.count = erritem.count + 1
+            self:GetItem(erritem.name.."Div"):SetText(val.."("..tostring(erritem.count)..")")
+        else
+            erritem = self:DivGroup(typ.."/"..val, {text = val, items_size = 12, color = Color.red, align_method = "grid", group = errgroup})
+            erritem.count = 1
+            if typ == "missing_unit" then
+                self:Button("LoadUnitFromExtract", function()
+                    self:SpawnUnitFromExtract(val, true, true) 
+                    fixed_errors(typ, val)
+                end, {group = erritem, size_by_text = true})
+                self:Button("SearchPackage", function()
+                    local package = BeardLibEditor.Utils:GetPackagesOfUnit(val, true)
+                    local proj = BeardLibEditor.managers.MapProject
+                    local map_mod = proj:current_mod()
+                    local map_path = proj:current_path()
+                    local mainxml_path = map_mod and map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml"))
+                    local data = mainxml_path and proj:get_clean_data(FileIO:ReadScriptDataFrom(mainxml_path, "custom_xml"))
+                    local level = proj:current_level(data)
+                    if level then
+                        if not table.contains(level.packages, package) then
+                            table.insert(level.packages, package)
+                        end
+                        FileIO:WriteScriptDataTo(mainxml_path, data, "custom_xml")
+                        fixed_errors(typ, val)                  
+                    else
+                        BeardLibEditor:log("[ERROR] Something went wrong when trying to get current level in [SpawnSelect:ShowErrors:SearchPackage]")
+                    end
+                end, {group = erritem, size_by_text = true})
+            end
+        end
+    end
 end
 
 function SpawnSelect:remove_dummy_unit()
@@ -48,54 +105,56 @@ function SpawnSelect:update(t, dt)
     end
 end
 
-function SpawnSelect:SpawnUnitFromExtract(unit, dontask)
+function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
     local config = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
     if not config then
         BeardLibEditor:log("[ERROR] Something went wrong when trying to load the unit!")
         return
     end
-    self._parent:SpawnUnit(unit)    
-    local map_mod = BeardLibEditor.managers.MapProject:current_mod()         
-    local data = map_mod and BeardLib.Utils:CleanCustomXmlTable(deep_clone(map_mod._clean_config))
-    local level
-    if data then
-        level = BeardLib.Utils:GetNodeByMeta(data, "level")
-        add = BeardLib.Utils:GetNodeByMeta(level, "add")
-        if not add then
-            add = {_meta = "add", directory = "Assets"}
-            table.insert(level, add)
-        end
+    if not dontspawn then
+        self._parent:SpawnUnit(unit)
     end
+    local proj = BeardLibEditor.managers.MapProject
+    local map_mod = proj:current_mod()
+    local map_path = proj:current_path()
+    local mainxml_path =  map_mod and map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml"))
+    local data = mainxml_path and proj:get_clean_data(FileIO:ReadScriptDataFrom(mainxml_path, "custom_xml"))
+    local level = data and proj:current_level(data)
     local to_copy = {}
     if map_mod then
+        level.add = level.add or {_meta = "add", directory = "Assets"}
         for k,v in pairs(config) do
             local exists 
-            for _, tbl in pairs(add) do
+            for _, tbl in pairs(level.add) do
                 if type(tbl) == "table" and tbl._meta == v._meta and tbl.path == v.path then
                     exists = true
                     break
                 end
             end
 
-            if not exists and not PackageManager:has(Idstring(v._meta):id(), Idstring(v.path):id()) then
-                log(tostring( v._meta ) .. " = " .. tostring( v.path ))
-                table.insert(add, v)
+            if not exists then
+                table.insert(level.add, v)
                 table.insert(to_copy, v)
             end
         end      
-        local map_path = BeardLibEditor.managers.MapProject:current_path()
-        BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", function()
-            FileIO:WriteScriptDataTo(map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml")), data, "custom_xml")
+        
+        function save()
+            FileIO:WriteScriptDataTo(mainxml_path, data, "custom_xml")
             for _, asset in pairs(to_copy) do
                 if type(asset) == "table" then
                     local path = asset.path .. "." .. asset._meta
-                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, add.directory or "", path):gsub("/", "\\"))
+                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, level.add.directory or "", path):gsub("/", "\\"))
                 end
             end
-        end, function()
-            self:Manager("static"):delete_selected()
-            CustomPackageManager:UnloadPackageConfig(config)
-        end)
+        end
+        if not dontask then
+            BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", save, function()
+                self:Manager("static"):delete_selected()
+                CustomPackageManager:UnloadPackageConfig(config)
+            end)
+        else
+            save()
+        end
     end
 end
 
@@ -141,7 +200,7 @@ function SpawnSelect:OpenSpawnElementDialog()
 	self._parent._listdia:Show({
 	    list = BeardLibEditor._config.MissionElements,
 	    callback = function(item)
-	    	self._parent:add_element(item)
+            self._parent:add_element(item)
 	        self._parent._listdia:hide()
 	    end
 	}) 

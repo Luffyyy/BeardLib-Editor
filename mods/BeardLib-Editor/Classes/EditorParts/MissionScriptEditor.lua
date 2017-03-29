@@ -59,6 +59,7 @@ function MissionScriptEditor:_create_panel()
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
  	self:StringCtrl("editor_name", {help = "The element's editor name to be used to find quickly find it in the editor.", data = self._element, group = self._main_group})
+ 	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element, group = self._main_group})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
@@ -104,13 +105,14 @@ function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
 end
 
 function MissionScriptEditor:update_positions(pos, rot)
-	if not self.x then
+	if not self.x or not pos or not rot then
 		return
 	end
     self:SetAxisControls(pos, rot)
     for i, control in pairs(self._axis_controls) do
     	self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
-    end        
+    end
+    self:update_element()  
 end
 
 function MissionScriptEditor:deselect_element()
@@ -118,8 +120,8 @@ function MissionScriptEditor:deselect_element()
     self._parent._selected_element = nil
 end
 
-function MissionScriptEditor:update_element()
-	managers.mission:set_element(self._element)
+function MissionScriptEditor:update_element(old_script)
+	managers.mission:set_element(self._element, old_script)
 	local unit = self:selected_unit()
 	if alive(unit) and unit.element then
 		unit:set_position(self._element.values.position)
@@ -128,13 +130,23 @@ function MissionScriptEditor:update_element()
 end
 
 function MissionScriptEditor:set_element_data(menu, item)
-	local data = self:ItemData(item)
-	data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
-	data[item.name] = tonumber(data[item.name]) or data[item.name]
-	if item.name == "base_delay_rand" then
-		data[item.name] = data[item.name] > 0 and data[item.name] or nil
+	local old_script = self._element.script
+	function set_element_data()
+		local data = self:ItemData(item)
+		data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
+		data[item.name] = tonumber(data[item.name]) or data[item.name]
+		if item.name == "base_delay_rand" then
+			data[item.name] = data[item.name] > 0 and data[item.name] or nil
+		end
+		self:update_element(old_script)	
 	end
-	self:update_element()
+	if item.name == "script" and item:SelectedItem() ~= old_script then
+		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all executors will be removed!", function()
+			set_element_data()
+		end)
+	else
+		set_element_data()
+	end
 end
 
 function MissionScriptEditor:set_element_position(menu)
@@ -326,6 +338,5 @@ end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-	local v = self:ItemData(opt)[value_name]
-    return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, type(v) == "number" and items[v] and v or table.get_key(items, v), opt)
+    return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, table.get_key(items, self:ItemData(opt)[value_name]), opt)
 end

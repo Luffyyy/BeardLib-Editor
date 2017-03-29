@@ -31,8 +31,21 @@ function MapProjectManager:init()
 	self:set_edit_title()
 end
 
+function MapProjectManager:current_level(data)
+    for _, level in pairs(BeardLib.Utils:GetNodeByMeta(data, "level", true) or {}) do
+        if level.id == Global.game_settings.level_id then
+            return level
+        end
+    end
+    return nil
+end
+
 function MapProjectManager:current_mod()
 	return BeardLib.current_level and BeardLib.current_level._mod
+end
+
+function MapProjectManager:maps_path()
+    return BeardLib.current_level._config.include.directory
 end
 
 function MapProjectManager:current_path()
@@ -42,7 +55,7 @@ end
 
 function MapProjectManager:current_level_path()
 	local path = self:current_path()
-	return path and U.Path:Combine(path, BeardLib.current_level._config.include.directory)
+	return path and U.Path:Combine(path, self:maps_path())
 end
 
 function MapProjectManager:set_edit_title(title)
@@ -83,15 +96,22 @@ function MapProjectManager:get_packages_of_level(level)
     return packages
 end
 
-local remove_last = function(str)
-    local tbl = string.split(str, "%.")
-
-    return table.remove(tbl), #tbl > 0 and table.concat(tbl, ".")
+function MapProjectManager:get_level_by_id(t, id)
+    local levels = U:GetNodeByMeta(t, "level", true)
+    for _, level in pairs(levels) do
+        if level.id == id then
+            return level
+        end
+    end
 end
 
 function MapProjectManager:get_clean_data(t)
     local data = U:CleanCustomXmlTable(deep_clone(t), true)
-    U:RemoveAllNumberIndexes(U:GetNodeByMeta(data, "narrative"), true)
+    local narrative = U:GetNodeByMeta(data, "narrative")
+    U:RemoveAllNumberIndexes(narrative, true)
+    for _, v in pairs(narrative.chain) do
+        v = U:RemoveAllNumberIndexes(v, true)
+    end
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
         for _, v in pairs({"include", "assets", "script_data_mods", "add"}) do
@@ -110,8 +130,9 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         table.merge(narr, selection.narr)
         data.name = t.name
         narr.id = t.name
-        narr.max_mission_xp = narr.contract_visuals.max_mission_xp
-        narr.min_mission_xp = narr.contract_visuals.min_mission_xp
+        local cv = narr.contract_visuals
+        narr.max_mission_xp = cv and cv.max_mission_xp or narr.max_mission_xp
+        narr.min_mission_xp = cv and cv.min_mission_xp or narr.min_mission_xp
         narr.contract_visuals = nil
         narr.name_id = nil
         narr.briefing_id = nil
@@ -119,6 +140,7 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         narr.package = nil --packages should only be in levels.
         local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
         local levels_path = U.Path:Combine(mod_path, "levels")
+        local to_unload = {}
         PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
         for i, level_in_chain in pairs(narr.chain) do
             if type(level_in_chain) == "table" then
@@ -140,12 +162,11 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         table.insert(packages, narr_pkg)
                     end
                     table.insert(packages, level_dir.."world")
-                    local to_unload = {}
                     for _, p in pairs(packages) do
                         if not PackageManager:loaded(p) then
                             if PackageManager:package_exists(p.."_init") then
                                 PackageManager:load(p.."_init") 
-                                table.insert(to_unload, p.."_init")
+                               table.insert(to_unload, p.."_init")
                             end
                             if PackageManager:package_exists(p) then
                                 PackageManager:load(p)
@@ -177,13 +198,8 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         if PackageManager:package_exists(p_init) then
                             PackageManager:load(p_init)
                             continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
-                            missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))   
-                            PackageManager:unload(p_init)                             
-                        end
-                    end
-                    for _, p in pairs(to_unload) do
-                        if PackageManager:loaded(p) then
-                            PackageManager:unload(p)
+                            missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))
+                            PackageManager:unload(p_init)
                         end
                     end
                     world_data.brush = nil --Figure out what to do with brushes...
@@ -206,7 +222,14 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
                         BeardLib.managers.MapFramework:Load()
                         BeardLib.managers.MapFramework:RegisterHooks()
-                        --Sometimes crashes after this, thx diesel engine
+                        for _, p in pairs(to_unload) do
+                            if PackageManager:loaded(p) then
+                                DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
+                                    log("Unloading temp package " .. tostring(p))
+                                    PackageManager:unload(p)
+                                end)
+                            end
+                        end
                     end
                 end)
             end

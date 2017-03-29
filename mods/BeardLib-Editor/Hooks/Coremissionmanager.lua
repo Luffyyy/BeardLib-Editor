@@ -39,7 +39,7 @@ function MissionManager:parse(params, stage_name, offset, file_type)
 			self:_load_mission_file(name, file_dir, data)
 		end
 	end
-	--self:_activate_mission(activate_mission)
+	self._activate_script = activate_mission
 	return true
 end
 
@@ -55,6 +55,7 @@ end
 
 function MissionManager:get_new_id(continent)
 	if continent then		
+		self._ids = self._ids or {}
 		self._ids[continent] = self._ids[continent] or {}
 		local tbl = self._ids[continent]
 		local i = self._start_ids[continent]
@@ -71,7 +72,7 @@ end
 function MissionManager:activate()
 	if not self._activated then
 		self._activated = true
-		self:_activate_mission()
+		self:_activate_mission(self._activate_script)
 	end
 end
 
@@ -87,23 +88,37 @@ function MissionManager:_load_mission_file(name, file_dir, data)
 	end
 end
 
-function MissionManager:set_element(element)
-	for m_name, mission in pairs(self._missions) do
-		for s_name, script in pairs(mission) do
-			for i, s_element in pairs(script.elements) do
-				if s_element.id == element.id then
-					self._missions[m_name][s_name].elements[i] = element
-					self._scripts[s_name]._elements[element.id]._values = element.values
-					break
-				end
+function MissionManager:set_element(element, old_script)
+	local new_continent = self._scripts[element.script]._continent
+	local old_continent = old_script and self._scripts[old_script]._continent
+	if old_script and element.script ~= old_script then
+		if new_continent ~= old_continent then
+			self:delete_executors_of_element(element)
+			self:delete_element_id(old_continent, element.id)
+			local new_id = self:get_new_id(new_continent)
+			self:store_element_id(new_continent, new_id)
+			element.id = new_id
+		end
+
+		self._scripts[element.script]._elements[element.id] = self._scripts[old_script]._elements[element.id]
+		self._scripts[old_script]._elements[element.id] = nil
+		for k, s_element in pairs(self._missions[new_continent][element.script].elements) do
+			if s_element.id == element.id then
+				self._missions[new_continent][element.script].elements[k] = nil
 			end
 		end
 	end
+	for k, s_element in pairs(self._missions[new_continent][element.script].elements) do
+		if s_element.id == element.id then
+			self._missions[new_continent][element.script].elements[k] = element
+		end
+	end
+	self._scripts[element.script]._elements[element.id]._values = element.values		
 end
 
 function MissionManager:add_element(element)
 	local module_name = "Core" .. element.class
-	if core:_name_to_module(module_name) then
+	if core.__modules[module_name] ~= nil then
 		element.module = module_name 	
 	end
 	local script
@@ -116,17 +131,23 @@ function MissionManager:add_element(element)
 		script = mission.default
 		script_name = "default"
 		if not script then
-			for k, v in pairs(tbl) do 
-				tbl = v 
-				script_name = k
-				break 
+			for k, v in pairs(mission) do
+				if type(v) == "table" then
+					script = v
+					script_name = k
+					break
+				end
 			end
 		end
 	else
-		BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element")
+		_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element")
 	end
-	table.insert(script.elements, element)
-	return self._scripts[script_name]:create_element(element, true)
+	if script then
+		table.insert(script.elements, element)
+		return self._scripts[script_name]:create_element(element, true)
+	else
+		_G.BeardLibEditor:log("[ERROR] No mission scripts found in the map! cannot add elements")
+	end
 end
 
 function MissionManager:delete_element(id)	
@@ -273,7 +294,7 @@ function MissionScript:create_element(element, return_unit)
 	end
 	managers.mission:store_element_id(self._continent, element.id)
 	local new_element = self:_element_class(element.module, class):new(self, element)
-
+	element.script = self._name
 	new_element.class = element.class
 	new_element.module = element.module
 	self._elements[element.id] = new_element

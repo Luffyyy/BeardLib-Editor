@@ -300,7 +300,7 @@ function EditorLaserTrigger:_move_connection_down()
 end
 function EditorLaserTrigger:_build_panel()
 	self:_create_panel()
-	self:NumCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval"})
+	self:NumberCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval"})
 	self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type"})
 	self:ComboCtrl("color", {"red","green","blue"})
 	self:BooleanCtrl("visual_only")

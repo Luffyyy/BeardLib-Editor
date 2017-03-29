@@ -94,7 +94,7 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:Toggle(name, callback, value, opt)    
+	function this:Toggle(name, callback, value, opt)
 	    opt = opt or {}
 	    return menu:Toggle(table.merge({
 	        name = name,
@@ -104,65 +104,80 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:SetAxisControls(pos, rot)    
+	function this:SetAxisControls(pos, rot, name)
+		name = name or ""
 	    for i, control in pairs(self._axis_controls) do
-	        if alive(self[control]) then
-	            self[control]:SetValue(i < 4 and pos[control] or rot[control](rot))
+	        if alive(self[name..control]) then
+	            self[name..control]:SetValue(i < 4 and pos[control] or rot[control](rot))
 	        end
 	    end
 	end
 
-	function this:SetShapeControls(shape)    
+	function this:SetShapeControls(shape, name)
+		name = name or ""
 	    for _, control in pairs(self._shape_controls) do
-	        if alive(self[control]) then
-	            self[control]:SetValue(shape and shape[control] or 0)
+	        if alive(self[name..control]) then
+	            self[name..control]:SetValue(shape and shape[control] or 0)
 	        end
 	    end
 	end
 
-	function this:SetAxisControlsEnabled(enabled)    
+	function this:SetAxisControlsEnabled(enabled, name)
+		name = name or ""
 	    for _, control in pairs(self._axis_controls) do
-	        if alive(self[control]) then
-	            self[control]:SetEnabled(enabled)
+	        if alive(self[name..control]) then
+	            self[name..control]:SetEnabled(enabled)
 	        end
 	    end
 	end
 
-	function this:AxisControlsPosition()    
-	    return Vector3(self.x.value, self.y.value, self.z.value)
+	function this:AxisControlsPosition(name)
+		name = name or ""
+	    return Vector3(self[name.."x"].value, self[name.."y"].value, self[name.."z"].value)
 	end
 
-	function this:AxisControlsRotation()    
-	    return Rotation(self.yaw.value, self.pitch.value, self.roll.value)
+	function this:AxisControlsRotation(name)
+		name = name or ""
+	    return Rotation(self[name.."yaw"].value, self[name.."pitch"].value, self[name.."roll"].value)
 	end
 
-	function this:SetShapeControlsEnabled(enabled)    
+	function this:SetShapeControlsEnabled(enabled, name)
+		name = name or ""
 	    for _, control in pairs(self._shape_controls) do
-	        if alive(self[control]) then
-	            self[control]:SetEnabled(enabled)
+	        if alive(self[name..control]) then
+	            self[name..control]:SetEnabled(enabled)
 	        end
 	    end
 	end
 
-	function this:AxisControls(callback, opt)    
+	function this:AxisControls(callback, opt, name)
+		name = name or ""
 	    opt = opt or {}
 	    opt.align_method = "grid"
 	    opt.use_as_menu = true
 	    opt.color = false
-	    self:Divider("Translate", opt)
-	    local translation = self:Group("TranslateGroup", opt)
-	    self:Divider("Rotate", opt)
-	    local rotation = self:Group("RotateGroup", opt)
+	    local translation
+	    local rotation
+	    if not opt.no_pos then
+	    	self:Divider("Translate"..name, opt)
+			translation = self:Group("TranslateGroup", opt)
+	    end
+	    if not opt.no_rot then
+	    	self:Divider("Rotate"..name, opt)
+	    	rotation = self:Group("RotateGroup", opt)
+	    end
 	    opt.w = translation.w / 3
 	    opt.offset = 0
 	    opt.control_slice = 1.75
 	    for i, control in pairs(self._axis_controls) do
 	    	opt.group = i < 4 and translation or rotation
-	        self[control] = self:NumberBox(control, callback, 0, opt)
+	    	if alive(opt.group) then
+	        	self[name..control] = self:NumberBox(control, callback, 0, opt)
+	        end
 	    end
 	end
 
-	function this:ShapeControls(callback, opt)    
+	function this:ShapeControls(callback, opt, name)
 	    opt = opt or {}
 	    opt.floats = 0
 	    opt.align_method = "grid"
@@ -174,7 +189,7 @@ function MenuUtils:init(this, menu)
 	    opt.offset = 0
 	    opt.group = shape
 	    for _, control in pairs(self._shape_controls) do
-	        self[control] = self:NumberBox(control, callback, 0, opt)
+	        self[control..name] = self:NumberBox(control, callback, 0, opt)
 	    end
 	end	
 

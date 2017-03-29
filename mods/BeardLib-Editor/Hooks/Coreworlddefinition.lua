@@ -34,6 +34,7 @@ function WorldDefinition:init(params)
 	self._termination_counter = 0
 	self:create("ai")
 end
+
 function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
 	local statics
 	local new_statics
@@ -69,12 +70,14 @@ function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
 		end
 	end
 end
+
 function WorldDefinition:insert_name_id(unit)
 	local name = unit:unit_data().name
 	self._name_ids[name] = self._name_ids[name] or {}
 	local name_id = unit:unit_data().name_id
 	self._name_ids[name][name_id] = (self._name_ids[name][name_id] or 0) + 1
 end
+
 function WorldDefinition:set_up_name_id(unit)
 	local ud = unit:unit_data()
 	if ud.name_id ~= "none" then
@@ -84,6 +87,7 @@ function WorldDefinition:set_up_name_id(unit)
 	end
 	self:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 end
+
 function WorldDefinition:get_name_id(unit, name)
 	local u_name = unit:unit_data().name
 	local start_number = 1
@@ -116,6 +120,7 @@ function WorldDefinition:get_name_id(unit, name)
 		end
 	end
 end
+
 function WorldDefinition:remove_name_id(unit)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] and self._name_ids[unit_name][name_id] then
@@ -126,6 +131,7 @@ function WorldDefinition:remove_name_id(unit)
 		end
 	end
 end
+
 function WorldDefinition:set_name_id(unit, name_id)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] then
@@ -134,6 +140,7 @@ function WorldDefinition:set_name_id(unit, name_id)
 		unit:unit_data().name_id = name_id
 	end
 end
+
 function WorldDefinition:get_unit_number(name)
 	local i = 1
 	for _, unit in pairs(World:find_units_quick("all")) do
@@ -143,9 +150,11 @@ function WorldDefinition:get_unit_number(name)
 	end
 	return i
 end
+
 function WorldDefinition:_continent_editor_only(data)
 	return false
 end
+
 function WorldDefinition:init_done()
 	if self._continent_init_packages then
 		for _, package in ipairs(self._continent_init_packages) do
@@ -206,6 +215,7 @@ function WorldDefinition:_set_only_visible_in_editor(unit, data)
 		unit:set_visible(_G.BeardLibEditor.Options:GetOption("Map/EditorUnits").value)
 	end
 end
+
 function WorldDefinition:_setup_disable_on_ai_graph(unit, data)
 	if not data.disable_on_ai_graph then
 		return
@@ -276,6 +286,7 @@ function WorldDefinition:_setup_editor_unit_data(unit, data)
     end
 	self:set_up_name_id(unit)
 end
+
 function WorldDefinition:make_unit(data, offset)
 	local name = data.name
 	if table.has(self._replace_names, name) then
@@ -296,13 +307,14 @@ function WorldDefinition:make_unit(data, offset)
 	elseif PackageManager:has(Idstring("unit"), Idstring(name)) then
 		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
 	else
-		_G.BeardLibEditor:log("Unit '%s' cannot be spawned!", tostring(name))
+		managers.editor:add_error({type = "missing_unit", value = name, data = data})
 	end
 	if unit then
 		self:assign_unit_data(unit, data)
 	end
 	return unit
 end
+
 function WorldDefinition:assign_unit_data(unit, data)
 	unit:unit_data().instance = data.instance
 	self:_setup_editor_unit_data(unit, data)
@@ -356,6 +368,29 @@ function WorldDefinition:GetNewUnitID(continent, t)
 		return i
 	else
 		_G.BeardLibEditor:log("[ERROR] continent needed for unit id")
+	end
+end
+
+function WorldDefinition:_create_sounds(data)
+	local path = self:world_dir() .. data.file
+	if not DB:has("world_sounds", path) then
+		Application:error("The specified sound file '" .. path .. ".world_sounds' was not found for this level! ", path, "No sound will be loaded!")
+		return
+	end
+	local values = self:_serialize_to_script("world_sounds", path)
+	managers.sound_environment:set_default_environment(values.default_environment)
+	managers.sound_environment:set_default_ambience(values.default_ambience)
+	managers.sound_environment:set_ambience_enabled(values.ambience_enabled)
+	managers.sound_environment:set_default_occasional(values.default_occasional)
+	self._sound_data = values
+	for _, sound_environment in ipairs(values.sound_environments) do
+		managers.sound_environment:add_area(sound_environment)
+	end
+	for _, sound_emitter in ipairs(values.sound_emitters) do
+		managers.sound_environment:add_emitter(sound_emitter)
+	end
+	for _, sound_area_emitter in ipairs(values.sound_area_emitters) do
+		managers.sound_environment:add_area_emitter(sound_area_emitter)
 	end
 end
 end

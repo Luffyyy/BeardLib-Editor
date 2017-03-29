@@ -85,6 +85,7 @@
         <value_node value="ElementMoveUnit"/>
         <value_node value="ElementTeleportPlayer"/>
         <value_node value="ElementEnvironment"/>
+        <value_node value="ElementPushInstigator"/>
         <!--Normal-->
         <value_node value="ElementShape"/>
         <value_node value="ElementEnemyPreferedAdd"/>
@@ -100,6 +101,7 @@
         <value_node value="ElementAIGraph"/>
         <value_node value="ElementAIRemove"/>
         <value_node value="ElementAlertTrigger"/>
+        <value_node value="ElementPhysicsPush"/>
         <value_node value="ElementAreaMinPoliceForce"/>
         <value_node value="ElementAreaTrigger"/>
         <value_node value="ElementAreaReportTrigger"/>

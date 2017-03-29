@@ -143,36 +143,76 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
         BeardLibEditor:log("[WARNING] Unit %s is missing from extract, Unit will not spawn!", tostring(unit))
         return false
     end
+
     if load ~= false then
+        local temp = deep_clone(config)
+        config = {}
+        for _, file in pairs(temp) do
+            if not PackageManager:has(Idstring(file._meta):id(), Idstring(file.path):id()) then
+                table.insert(config, file)
+            end
+        end
         CustomPackageManager:LoadPackageConfig("assets/extract", config)
     end
     return config
 end
 
-function BeardLibEditor.Utils:GetPackagesOfLevel(level)
-    local dir = "levels/"..level.world_name .. "/"
-    local packages = {dir.."world"}
-    local was_loaded
-    if PackageManager:loaded(packages[1]) then --Ugly method but sadly overkill fucked this..
-        was_loaded = true
-    else
-        PackageManager:load(packages[1])
-    end
-    local ext = Idstring("mission")
-    local path = Idstring(dir.."mission")
-    if PackageManager:has(ext, path) then
-        local data = PackageManager:script_data(ext, path)
-        for c in pairs(data) do
-            local p = dir..c.."/"..c
+function BeardLibEditor.Utils:GetPackagesOfUnit(unit, first)
+    local to_unload
+    local found_packages = {}
+    local done = {}
+    local function pkgload(p)
+        if not PackageManager:loaded(p) then
+            if PackageManager:package_exists(p.."_init") then
+                PackageManager:load(p.."_init") 
+               table.insert(to_unload, p.."_init")
+            end
             if PackageManager:package_exists(p) then
-                table.insert(packages, p)
+                PackageManager:load(p)
+                table.insert(to_unload, p)
             end
         end
     end
-    if not was_loaded and PackageManager:loaded(packages[1]) then
-        PackageManager:unload(packages[1])
+    local function pkgunload()
+        for _, p in pairs(to_unload) do
+            if PackageManager:loaded(p) then
+                DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
+                    log("Unloading temp package " .. tostring(p))
+                    PackageManager:unload(p)
+                end)
+            end
+        end
     end
-    return packages
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
+    for id, level in pairs(tweak_data.levels) do
+        if level.world_name and not done[level.world_name] then
+            to_unload = {}
+            local level_dir = "levels/"..level.world_name .. "/"
+            pkgload(level_dir.."world")
+            for c in pairs(PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))) do
+                local p = level_dir..c.."/"..c
+                local p_init = p.."_init"
+                if PackageManager:package_exists(p_init) then
+                    PackageManager:load(p_init)
+                end
+                for _, static in pairs(PackageManager:script_data(Idstring("continent"), Idstring(p)).statics or {}) do
+                    if static.unit_data and static.unit_data.name == unit then
+                        table.insert(found_packages, p)
+                        if first then
+                            if PackageManager:loaded(p_init) then PackageManager:unload(p_init) end
+                            pkgunload()
+                            PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+                            return found_packages[1]
+                        end
+                    end
+                end
+                if PackageManager:loaded(p_init) then PackageManager:unload(p_init) end
+            end
+            done[level.world_name] = true
+        end
+    end
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+    return found_packages
 end
 
 function BeardLibEditor.Utils:GetLights(unit)

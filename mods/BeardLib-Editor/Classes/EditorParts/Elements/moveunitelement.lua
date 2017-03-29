@@ -24,6 +24,7 @@ function EditorMoveUnit:update_positions(...)
     if not self._element.values.unit_position_as_start_position then
         self._element.values.start_pos = self._element.values.position
     end
+    self:SetAxisControls(self._element.values.end_pos or self._element.values.displacement, nil, "EndPosition")
 end
 
 function EditorMoveUnit:set_element_data(menu, item)   
@@ -37,10 +38,7 @@ function EditorMoveUnit:set_element_data(menu, item)
             self._element.values.displacement = nil
             self._element.values.end_pos = self._last_end_position or self._element.values.start_pos
         end
-        local end_pos = self._element.values.end_pos or self._element.values.displacement
-        self._menu:GetItem("end_position_x"):SetValue(end_pos.x, false, true)
-        self._menu:GetItem("end_position_y"):SetValue(end_pos.y, false, true)
-        self._menu:GetItem("end_position_z"):SetValue(end_pos.z, false, true)
+        self:update_positions()
     elseif item.name == "unit_position_as_start_position" then
         if item.value == true then
             self._last_start_position = mvector3.copy(self._element.values.start_pos) 
@@ -56,7 +54,7 @@ function EditorMoveUnit:set_element_position(...)
     if not self._element.values.unit_position_as_start_position then
         self._element.values.start_pos = self._element.values.position
     end
-    local pos = Vector3(self._menu:GetItem("end_position_x"):Value(), self._menu:GetItem("end_position_y"):Value(), self._menu:GetItem("end_position_z"):Value())
+    local pos = self:AxisControlsPosition("EndPosition")
     if self._element.values.is_displacement then
         self._element.values.displacement = pos
         self._element.values.end_pos = nil
@@ -69,11 +67,14 @@ end
 function EditorMoveUnit:_build_panel()
 	self:_create_panel()
     self:BuildUnitsManage("unit_ids")
-    self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})  
     self:BooleanCtrl("is_displacement")
     self:BooleanCtrl("unit_position_as_start_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
-    self:NumberCtrl("end_position_x", {value = end_pos.x or 0, callback = callback(self, self, "set_element_position")})
-    self:NumberCtrl("end_position_y", {value = end_pos.y or 0, callback = callback(self, self, "set_element_position")})
-    self:NumberCtrl("end_position_z", {value = end_pos.z or 0, callback = callback(self, self, "set_element_position")})     
+    self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})
+    self:AxisControls(callback(self, self, "set_element_position"), {no_rot = true, group = transform}, "EndPosition")
+    self:Button("ResetEndPosition", function()
+        self._element.values.end_pos = self._element.values.start_pos or self._element.values.position
+        self:update_positions()
+    end)
+    self:update_positions()
 end

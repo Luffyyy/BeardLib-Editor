@@ -11,6 +11,7 @@ function me:init()
     self._select_list = SelectListDialog:new()
     self._current_continent = "world"
     self._grid_size = 1
+    self._errors = {}
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
     self._screen_borders = {x = 1280, y = 720}
@@ -66,6 +67,12 @@ function me:post_init(menu)
 end
 
 --functions
+
+function me:add_error(data)
+    table.insert(self._errors, data)
+    self.managers.spwsel:build_default_menu()
+    self.managers.spwsel:Switch()
+end
 
 function me:check_has_fix()
     local unit = World:spawn_unit(Idstring("core/units/move_widget/move_widget"), Vector3())
@@ -129,6 +136,7 @@ function me:select_element(element)
     for _, unit in pairs(World:find_units_quick("all")) do
         if unit:mission_element() and unit:mission_element().element.id == element.id then
             self:select_unit(unit)
+            break
         end
     end
     self.managers.mission:set_element(element)
@@ -143,7 +151,7 @@ function me:DeleteUnit(unit)
                 self.managers.mission:remove_element_unit(unit)
             end
         end
-        if unit:unit_data() and unit:unit_data().contiennt then
+        if unit:unit_data() and unit:unit_data().continent then
             managers.worlddefinition:delete_unit(unit)
         end
         World:delete_unit(unit)
@@ -208,8 +216,8 @@ function me:SpawnUnit(unit_path, old_unit, add)
         end
     end
     local unit = managers.worlddefinition:create_unit(data, t)
-    if alive(unit) then 
-        self:select_unit(unit, add)        
+    if alive(unit) then
+        self:select_unit(unit, add)
         if unit:name() == self.managers.static._nav_surface then
             table.insert(self.managers.static._nav_surfaces, unit)
         end
@@ -289,11 +297,6 @@ function me:load_continents(continents)
     for continent, _ in pairs(continents) do
         self._current_continent = self._current_continent or continent
         table.insert(self._continents, continent)
-    end
-    for _, unit in pairs(managers.worlddefinition._all_units) do
-        if unit:name() == self.managers.static._nav_surface then
-            table.insert(self.managers.static._nav_surfaces, unit)
-        end
     end
     for _, manager in pairs(self.managers) do
         if manager.loaded_continents then

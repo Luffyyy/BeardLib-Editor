@@ -18,6 +18,15 @@ function StaticEditor:enable()
     self:bind("t", callback(menu, menu, "toggle_move_widget"))
 end
 
+function StaticEditor:loaded_continents()
+    self._nav_surfaces = {}
+    for _, unit in pairs(managers.worlddefinition._all_units) do
+        if unit:name() == self._nav_surface then
+            table.insert(self._nav_surfaces, unit)
+        end
+    end
+end
+
 function StaticEditor:build_default_menu()
     StaticEditor.super.build_default_menu(self)
     self._editors = {}    
@@ -290,7 +299,7 @@ function StaticEditor:set_selected_unit(unit, add)
         elseif not self._mouse_hold then
             table.delete(self._selected_units, unit)
         end
-    else
+    elseif alive(unit) then
         self:Manager("mission"):remove_script()
         self._selected_units = {}
         self._selected_units[1] = unit
@@ -309,14 +318,18 @@ function StaticEditor:set_selected_unit(unit, add)
     end 
 end
 
+local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
+
 function StaticEditor:select_unit(mouse2)
     local ray = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
     self:recalc_all_locals()
-	if ray then
-        if not self._mouse_hold then
-			self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+	if ray and alive(ray.unit) then
+        if ray.unit:name() ~= bain_ids then
+            if not self._mouse_hold then
+                self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+            end
+            self:set_selected_unit(ray.unit, mouse2) 
         end
-        self:set_selected_unit(ray.unit, mouse2) 
 	end
 end
 
@@ -480,7 +493,7 @@ function StaticEditor:clone()
         self._parent:SpawnUnit(unit:unit_data().name, unit, true)
         if #self._selected_units > 1 then
             self:StorePreviousPosRot()
-        end 
+        end
     end
 end
 

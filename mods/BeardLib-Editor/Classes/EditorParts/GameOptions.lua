@@ -9,6 +9,7 @@ function GameOptions:build_default_menu()
     local level =  "/" .. (Global.game_settings.level_id or "")
     self:Divider("Basic", self._menu.highlight_color)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"))
+    self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"))
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1})
     self:Slider("GridSize", callback(self._parent, self._parent, "update_grid_size"), 1, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
     self:Slider("SnapRotation", callback(self._parent, self._parent, "update_snap_rotation"), 90, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
@@ -39,7 +40,6 @@ function GameOptions:build_default_menu()
     self:Divider("Other", self._menu.highlight_color)
     self:Button("TeleportPlayer", callback(self, self, "drop_player"))
     self:Button("LogPosition", callback(self, self, "position_debug"))
-    self:Button("ClearWorld", callback(self, self, "clear_world"))
     self:Button("ClearMassUnit", callback(self, self, "clear_massunit"))
     self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix})
     self:Button("SaveNavigationData", callback(self, self, "save_nav_data"), {enabled = self._parent._has_fix})
@@ -49,7 +49,9 @@ end
 
 function GameOptions:loaded_continents(continents, current_continent)
     self._current_continent:SetItems(continents)
-    self._current_continent:SetSelectedItem(current_continent)
+    self._current_continent:SetSelectedItem(current_continent)   
+    self._current_script:SetItems(table.map_keys(managers.mission._scripts))
+    self._current_script:SetValue(1)
 end
 
 function GameOptions:update_option_value(menu, item)
@@ -65,6 +67,10 @@ end
 
 function GameOptions:set_current_continent(menu, item)
     self._parent._current_continent = item:SelectedItem()
+end
+
+function GameOptions:set_current_script(menu, item)
+    self._parent._current_script = item:SelectedItem()
 end
 
 function GameOptions:set_editor_units_visible(menu, item)
@@ -89,17 +95,6 @@ end
 function GameOptions:position_debug()
     BeardLibEditor:log("Camera Position: %s", tostring(self._parent._camera_pos))
 	BeardLibEditor:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
-end
-
-function GameOptions:clear_world()
-    BeardLibEditor.Utils:YesNoQuestion("This will delete all units in the world!", function()
-        for k, unit in pairs(World:find_units_quick("all")) do
-            if alive(unit) and unit:editor_id() ~= -1 then
-                managers.worlddefinition:delete_unit(unit)
-                World:delete_unit(unit)
-            end
-        end
-    end)
 end
 
 function GameOptions:clear_massunit()
@@ -138,9 +133,24 @@ function GameOptions:map_world_path()
 end
 
 function GameOptions:save()
+    local xml = "generic_xml"
+    local cusxml = "custom_xml"
+    local include = {
+        {_meta = "file", file = "world.world", type = xml},
+        {_meta = "file", file = "continents.continents", type = cusxml},
+        {_meta = "file", file = "mission.mission", type = cusxml},
+        {_meta = "file", file = "nav_manager_data.nav_data", type = xml},
+        {_meta = "file", file = "cover_data.cover_data", type = cusxml},
+        {_meta = "file", file = "world_sounds.world_sounds", type = cusxml},
+    }
+    local worlddef = managers.worlddefinition
     local path = self:map_path()
     if FileIO:Exists(path) then
-        local backup_dir = BeardLib.Utils.Path:Combine(path, "..", "backups", table.remove(string.split(path, "/")))
+        local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
+        if not FileIO:Exists(backups_dir) then
+            FileIO:MakeDir(backups_dir)
+        end
+        local backup_dir = BeardLib.Utils.Path:Combine(backups_dir, table.remove(string.split(path, "/")))
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
         end
@@ -149,26 +159,45 @@ function GameOptions:save()
         FileIO:MakeDir(path)
     end
     local map_path = self:map_world_path()
-    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(managers.worlddefinition._world_data, "generic_xml"))
+    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
     local continents = {}
     local missions = {}
-    for name, data in pairs(managers.worlddefinition._continent_definitions) do
+    for name, data in pairs(worlddef._continent_definitions) do
         local dir = BeardLib.Utils.Path:Combine(map_path, name)
-        self:SaveData(dir, name .. ".continent", FileIO:ConvertToScriptData(data, "custom_xml"))
-        self:SaveData(dir, name .. ".mission", FileIO:ConvertToScriptData(managers.mission._missions[name], "generic_xml"))
-        continents[name] = {name = name, editor_only = (ontinent_name == "editor_only")}
+        local continent_file = name .. ".continent"
+        local mission_file = name .. ".mission"
+        table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
+        table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
+        self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
+        self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
+        continents[name] = {name = name, editor_only = (name == "editor_only")} --later make an option
         missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
     end
-    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(continents, "custom_xml"))
-    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, "custom_xml"))
-    self:save_cover_data()
+    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(continents, cusxml))
+    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
+    self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data, cusxml))
+    self:save_cover_data()    
+    for _, folder in pairs(FileIO:GetFolders(map_path)) do
+        if not worlddef._continent_definitions[folder] then
+            FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
+        end
+    end
+    local proj = BeardLibEditor.managers.MapProject
+    local map_mod = proj:current_mod()
+    local data = map_mod and proj:get_clean_data(map_mod._clean_config)
+    if data then
+        local level = proj:get_level_by_id(data, Global.game_settings.level_id)
+        include.directory = level.include.directory
+        level.include = include
+        FileIO:WriteScriptDataTo(map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(path, "main.xml")), data, "custom_xml")
+    end
 end
 
 function GameOptions:SaveData(path, file_name, data)
     if not FileIO:Exists(path) then
         FileIO:MakeDir(path)
     end
-    self._parent:Log("Saving file '%s' as generic_xml in %s", file_name, path)
+    self._parent:Log("Saving script data '%s' in %s", file_name, path)
     FileIO:WriteTo(BeardLib.Utils.Path:Combine(path, file_name), data)
 end
 
