@@ -1,6 +1,6 @@
 StaticEditor = StaticEditor or class(EditorPart)
 function StaticEditor:init(parent, menu)
-    StaticEditor.super.init(self, parent, menu, "StaticEditor")
+    StaticEditor.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
     self._disabled_units = {}
     self._nav_surfaces = {}
@@ -14,8 +14,8 @@ function StaticEditor:enable()
     self:bind("v", callback(self, self, "KeyVPressed"))
     self:bind("f", callback(self, self, "KeyFPressed"))
     local menu = self:Manager("menu")
-    self:bind("r", callback(menu, menu, "toggle_rotation_widget"))
-    self:bind("t", callback(menu, menu, "toggle_move_widget"))
+    self:bind("r", callback(menu, menu, "toggle_widget", "rotation"))
+    self:bind("t", callback(menu, menu, "toggle_widget", "move"))
 end
 
 function StaticEditor:loaded_continents()
@@ -125,18 +125,19 @@ function StaticEditor:set_unit_data()
             ud.disable_collision = self._menu:GetItem("DisableCollision"):Value()
             ud.hide_on_projection_light = self._menu:GetItem("HideOnProjectionLight"):Value()
             ud.disable_on_ai_graph = self._menu:GetItem("DisableOnAIGraph"):Value()
+            for _, editor in pairs(self._editors) do
+                if editor.set_unit_data then
+                    editor:set_unit_data()
+                end
+            end
+            BeardLib.Utils:RemoveAllNumberIndexes(ud, true) --Custom xml issues happen in here also 😂🔫 
 
             ud.lights = BeardLibEditor.Utils:LightData(unit)
             ud.triggers = BeardLibEditor.Utils:TriggersData(unit)
             ud.editable_gui = BeardLibEditor.Utils:EditableGuiData(unit)
             ud.ladder = BeardLibEditor.Utils:LadderData(unit)
             ud.zipline = BeardLibEditor.Utils:ZiplineData(unit)
-            unit:set_editor_id(ud.unit_id)           
-            for _, editor in pairs(self._editors) do
-                if editor.set_unit_data then
-                    editor:set_unit_data()
-                end
-            end            
+            unit:set_editor_id(ud.unit_id)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             for index = 0, unit:num_bodies() - 1 do
                 local body = unit:body(index)
@@ -291,9 +292,19 @@ function StaticEditor:check_unit_ok(unit)
     end
 end
 
+function StaticEditor:reset_selected_units()
+    for _, unit in pairs(self:selected_units()) do
+        if unit:mission_element() then unit:mission_element():unselect() end
+    end
+    self._selected_units = {}
+end
+
 function StaticEditor:set_selected_unit(unit, add)
     self:recalc_all_locals()
     if add then
+        for _, unit in pairs(self:selected_units()) do
+            if unit:mission_element() then unit:mission_element():unselect() end
+        end
         if not table.contains(self._selected_units, unit) then
             table.insert(self._selected_units, unit)
         elseif not self._mouse_hold then
@@ -301,7 +312,7 @@ function StaticEditor:set_selected_unit(unit, add)
         end
     elseif alive(unit) then
         self:Manager("mission"):remove_script()
-        self._selected_units = {}
+        self:reset_selected_units()
         self._selected_units[1] = unit
     end
     self:StorePreviousPosRot()
@@ -323,8 +334,8 @@ local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 function StaticEditor:select_unit(mouse2)
     local ray = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
     self:recalc_all_locals()
-	if ray and alive(ray.unit) then
-        if ray.unit:name() ~= bain_ids then
+	if ray then
+        if alive(ray.unit) and ray.unit:name() ~= bain_ids then
             if not self._mouse_hold then
                 self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
             end
@@ -343,16 +354,16 @@ end
 function StaticEditor:set_unit(reset)
     if reset then
         self:Manager("mission"):remove_script()
-        self._selected_units = {}
+        self:reset_selected_units()
     end
     local unit = self._selected_units[1]
     if alive(unit) and unit:unit_data() and not unit:mission_element() then
         if not reset then
             self:set_menu_unit(unit)
-        else
-            self:build_default_menu() 
+            return
         end
     end
+    self:build_default_menu()
 end
 
 function StaticEditor:set_menu_unit(unit)   
@@ -405,7 +416,7 @@ function StaticEditor:delete_selected(menu, item)
         self._parent:DeleteUnit(unit)
     end
     self:Manager("mission"):remove_script()
-    self._selected_units = {}
+    self:reset_selected_units()
     self:set_unit()      
 end
 
@@ -425,31 +436,24 @@ function StaticEditor:update(t, dt)
         end
     end
     if managers.viewport:get_current_camera() then
-        if #self._selected_units > 0 then
-            self._brush:set_font(Idstring("core/fonts/nice_editor_font"), 24)
-            self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
-            for _, unit in ipairs(self._selected_units) do
-                if alive(unit) then
-                    if unit:name() == self._nav_surface then
-                        Application:draw(unit, 1,0.2,0)
-                    end
-                    local num = unit:num_bodies()
-                    for i = 0, num - 1 do
-                        local body = unit:body(i)
-                        if self._parent:_should_draw_body(body) then
-                            self._pen:set(Color(0, 0.5, 1))
-                            self._pen:body(body)
-                            self._brush:set_color(Color(0, 0.5, 1))
-                        end                            
-                    end
+        for _, unit in ipairs(self._selected_units) do
+            if alive(unit) then
+                if unit:mission_element() then unit:mission_element():select() end
+                if unit:name() == self._nav_surface then Application:draw(unit, 1,0.2,0) end
+                for i = 0, unit:num_bodies() - 1 do
+                    local body = unit:body(i)
+                    if self._parent:_should_draw_body(body) then
+                        self._pen:set(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
+                        self._pen:body(body)
+                        self._brush:set_color(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
+                    end                            
                 end
             end
-            return
         end
     end
 end
 
-function StaticEditor:KeyCPressed(button_index, button_name, controller_index, controller, trigger_id)
+function StaticEditor:KeyCPressed()
     if ctrl() and #self._selected_units > 0 and not self._parent._menu._highlighted then
         self:set_unit_data()
         local all_unit_data = {}
@@ -464,11 +468,11 @@ function StaticEditor:KeyCPressed(button_index, button_name, controller_index, c
     end
 end
 
-function StaticEditor:KeyVPressed(button_index, button_name, controller_index, controller, trigger_id)
+function StaticEditor:KeyVPressed()
     if ctrl() and not self._parent._menu._highlighted then
         local ret, data = pcall(function() return json.custom_decode(Application:get_clipboard()) end)
         if ret and type(data) == "table" then
-            self._selected_units = {}
+            self:reset_selected_units()
             for _, sub_data in pairs(data) do
                 self._parent:SpawnUnit(sub_data.unit_data.name, sub_data, true)
             end
@@ -488,7 +492,7 @@ function StaticEditor:clone()
     end
     self:set_unit_data()
     local all_unit_data = clone(self._selected_units)
-    self._selected_units = {}
+    self:reset_selected_units()
     for _, unit in pairs(all_unit_data) do
         self._parent:SpawnUnit(unit:unit_data().name, unit, true)
         if #self._selected_units > 1 then
@@ -497,7 +501,7 @@ function StaticEditor:clone()
     end
 end
 
-function StaticEditor:KeyFPressed(button_index, button_name, controller_index, controller, trigger_id)
+function StaticEditor:KeyFPressed()
     if Input:keyboard():down(Idstring("left ctrl")) then
         if self._selected_units[1] then
             self._parent:set_camera(self._selected_units[1]:position())

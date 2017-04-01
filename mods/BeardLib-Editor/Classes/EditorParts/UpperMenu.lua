@@ -7,6 +7,7 @@ function UpperMenu:init(parent, menu)
         background_alpha = 0.4,       
         h = 42,
         w = 300,
+        offset = 0,
         align_method = "grid",
         scrollbar = false,
         visible = true,
@@ -17,8 +18,8 @@ function UpperMenu:init(parent, menu)
         {name = "spwsel", rect = {377, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
         {name = "save", rect = {260, 385, 115, 115}, callback = callback(self, self, "save")},
-        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = callback(self, self, "toggle_move_widget"), enabled = self._parent._has_fix},
-        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = callback(self, self, "toggle_rotation_widget"), enabled = self._parent._has_fix},
+        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = callback(self, self, "toggle_widget", "move"), enabled = self._parent._has_fix},
+        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = callback(self, self, "toggle_widget", "rotation"), enabled = self._parent._has_fix},
     }  
     for _, tab in pairs(tabs) do
         if tab.enabled ~= false then
@@ -34,10 +35,35 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s)
         name = name,
         texture = texture,
         texture_rect = texture_rect,
-        callback = clbk or callback(menu, menu, "Switch"),
-        w = s - 4,
-        h = s - 4,      
+        is_page = not clbk,
+        marker_highlight_color = self._menu.marker_color,
+        callback = callback(self, self, "select_tab", clbk or false),
+        w = s,
+        h = s,
+        icon_w = s - 16,
+        icon_h = s - 16,      
     })    
+end
+
+function UpperMenu:select_tab(clbk, menu, item)
+    if clbk then
+        clbk(menu, item)
+    else
+        self._parent.managers[item.name]:Switch()
+    end
+    for manager in pairs(self._parent.managers) do
+        local mitem = self._menu:GetItem(manager)
+        if mitem and mitem.is_page then
+            mitem.marker_color = menu.marker_color
+            mitem.marker_highlight_color = mitem.marker_color
+            mitem:UnHighlight()
+        end
+    end
+    if not clbk then
+        item.marker_color = menu.marker_highlight_color
+        item.marker_highlight_color = item.marker_color
+        item:UnHighlight()
+    end
 end
 
 function UpperMenu:set_tabs_enabled(enabled)
@@ -49,14 +75,14 @@ function UpperMenu:set_tabs_enabled(enabled)
     end
 end
 
-function UpperMenu:toggle_move_widget()
-    self._parent._use_move_widget = not self._parent._use_move_widget
+function UpperMenu:toggle_widget(name, menu, item)
+    item = item or self._menu:GetItem(name.."_widget_toggle")
+    menu = menu or item.parent
+    self._parent["_use_"..name.."_widget"] = not self._parent["_use_"..name.."_widget"]
     self._parent:use_widgets()
-end
-
-function UpperMenu:toggle_rotation_widget()
-    self._parent._use_rotation_widget = not self._parent._use_rotation_widget
-    self._parent:use_widgets()
+    item.marker_color = self._parent["_use_"..name.."_widget"] and menu.marker_highlight_color or menu.marker_color
+    item.marker_highlight_color = item.marker_color
+    item:UnHighlight()
 end
 
 function UpperMenu:SwitchMenu(menu)

@@ -1,6 +1,6 @@
 SpawnSelect = SpawnSelect or class(EditorPart)
 function SpawnSelect:init(parent, menu)
-    self.super.init(self, parent, menu, "Spawn Or Select")    
+    self.super.init(self, parent, menu, "Utilities")    
 end
 
 function SpawnSelect:build_default_menu()

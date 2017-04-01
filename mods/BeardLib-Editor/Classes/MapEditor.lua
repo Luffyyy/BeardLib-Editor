@@ -27,7 +27,6 @@ function me:init()
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
     self:check_has_fix()
-    self._use_move_widget = self._has_fix
     self._idstrings = {
         ["@ID4f01cba97e94239b@"] = "x",
         ["@IDce15c901d9af3e30@"] = "y",
@@ -64,6 +63,9 @@ function me:post_init(menu)
     self.managers.menu = UpperMenu:new(self, menu)
     self.managers.static:Switch()
     menu.mouse_move = callback(self.managers.static, self.managers.static, "mouse_moved")
+    if self._has_fix then
+        self.managers.menu:toggle_widget("move")
+    end
 end
 
 --functions

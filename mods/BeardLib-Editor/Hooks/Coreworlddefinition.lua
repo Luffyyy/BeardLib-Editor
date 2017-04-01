@@ -57,9 +57,11 @@ function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
 		for i, static in pairs(statics) do
 			if type(static) == "table" then
 				if static.unit_data.unit_id == unit_id then
-					for k,v in pairs(unit:unit_data()) do static.unit_data[k] = v end					
-					for k,v in pairs(unit:wire_data() or {}) do static.wire_data[k] = v end					
-					for k,v in pairs(unit:ai_editor_data() or {}) do static.ai_editor_data[k] = v end
+					--No more for loop the editor is safe enough now to simply set the data
+					static.unit_data = unit:unit_data()
+					static.wire_data = unit:wire_data()
+					static.ai_editor_data = unit:ai_editor_data()
+					BeardLib.Utils:RemoveAllNumberIndexes(static, true)
 					if move_continent then
 						statics[i] = nil
 						table.insert(new_statics, static)
@@ -261,6 +263,7 @@ function WorldDefinition:_setup_editor_unit_data(unit, data)
     data.ladder = data.ladder or _G.BeardLibEditor.Utils:LadderData(unit)
     data.zipline = data.zipline or _G.BeardLibEditor.Utils:ZiplineData(unit)
 
+    BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 	ud.continent = data.continent
 	ud.position = unit:position()
 	ud.rotation = unit:rotation()

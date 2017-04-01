@@ -1,7 +1,7 @@
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local wde = WorldDataEditor
 function wde:init(parent, menu)
-    self.super.init(self, parent, menu, "WorldDataEditor")
+    self.super.init(self, parent, menu, "World")
 end
 
 function wde:loaded_continents()

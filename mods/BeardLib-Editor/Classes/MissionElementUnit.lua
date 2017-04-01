@@ -44,6 +44,7 @@ function MissionElementUnit:init(unit)
         color = self._color,
         text = "",
     })
+
     self._text:set_bottom(self._icon:top() - font_size)
 end
 
@@ -61,13 +62,17 @@ function MissionElementUnit:set_enabled(enabled)
 	end
 end
 
+function MissionElementUnit:select()
+    self._icon:set_texture_rect(230, 14, 128, 128)
+end
+
+function MissionElementUnit:unselect()
+    self._icon:set_texture_rect(368, 14, 128, 128)
+end
+
 function MissionElementUnit:set_color(color)
 	self._icon:set_color(color)
 	self._text:set_color(color)
-end
-
-function MissionElementUnit:set_selected(selected)
-	self:set_color(selected and Color("3911ff") or (self.element.values.enabled and self._color or Color("ff4c4c")))
 end
 
 function MissionElementUnit:destroy()
