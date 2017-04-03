@@ -6,9 +6,6 @@ function me:init()
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
     end
-    self._fbd = FileBrowserDialog:new()
-    self._listdia = ListDialog:new()
-    self._select_list = SelectListDialog:new()
     self._current_continent = "world"
     self._grid_size = 1
     self._errors = {}
@@ -56,11 +53,12 @@ function me:init()
 end
 
 function me:post_init(menu)
-    self.managers = {}
-    for k, v in pairs({mission = MissionEditor, static = StaticEditor, opt = GameOptions, spwsel = SpawnSelect, wdata = WorldDataEditor, console = EditorConsole}) do
+    self.managers = {}    
+    self.managers.menu = UpperMenu:new(self, menu)
+    for k, v in pairs({mission = MissionEditor, static = StaticEditor, opt = GameOptions, spwsel = SpawnSelect, wdata = WorldDataEditor, console = EditorConsole, env = EnvEditor}) do
         self.managers[k] = v:new(self, menu)
     end
-    self.managers.menu = UpperMenu:new(self, menu)
+    self.managers.menu:build_tabs()
     self.managers.static:Switch()
     menu.mouse_move = callback(self.managers.static, self.managers.static, "mouse_moved")
     if self._has_fix then
@@ -78,7 +76,7 @@ end
 
 function me:check_has_fix()
     local unit = World:spawn_unit(Idstring("core/units/move_widget/move_widget"), Vector3())
-    self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit)
+    self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit) ~= nil
     unit:set_enabled(false)
     unit:set_slot(0)
     if not self._has_fix then 
@@ -153,7 +151,7 @@ function me:DeleteUnit(unit)
                 self.managers.mission:remove_element_unit(unit)
             end
         end
-        if unit:unit_data() and unit:unit_data().continent then
+        if unit:unit_data() then
             managers.worlddefinition:delete_unit(unit)
         end
         World:delete_unit(unit)

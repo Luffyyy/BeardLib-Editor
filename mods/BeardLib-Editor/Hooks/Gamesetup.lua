@@ -1,6 +1,6 @@
 Hooks:PostHook(GameSetup, "init_finalize", "BeardLibEditorInitFinalize", function()
 	if not Global.game_settings.single_player then
-		Global.editor_mode = nil	
+		Global.editor_mode = nil
 	end
 	if Global.editor_mode then
 		game_state_machine:change_state_by_name("editor")
@@ -10,7 +10,7 @@ Hooks:PostHook(GameSetup, "init_finalize", "BeardLibEditorInitFinalize", functio
 end)
 
 Hooks:PostHook(GameSetup, "destroy", "BeardLibEditorDestroy",function()
-	if BeardLibEditor.managers.MapEditor then
-		BeardLibEditor.managers.MapEditor:destroy()
+	if managers.editor then
+		managers.editor:destroy()
 	end
 end)

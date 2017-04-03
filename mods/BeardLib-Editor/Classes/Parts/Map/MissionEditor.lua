@@ -1,7 +1,12 @@
 MissionEditor = MissionEditor or class(EditorPart)
 function MissionEditor:init(parent, menu)
-    for _, file in pairs(file.GetFiles(BeardLibEditor.ElementsPath)) do
-        dofile(BeardLibEditor.ElementsPath .. file)
+    local elements = file.GetFiles(BeardLibEditor.ElementsDir)
+    if not elements then
+        BeardLibEditor:log("[ERROR] MissionEditor class has failed to initialize[Missing elements]")
+        return
+    end
+    for _, file in pairs(elements) do
+        dofile(BeardLibEditor.ElementsDir .. file)
     end    
     self._units = {}
     self._parent = parent

@@ -168,11 +168,11 @@ function SpawnSelect:OpenSpawnPrefabDialog()
         	})
         end
     end
-	self._parent._listdia:Show({
+	BeardLibEditor.managers.ListDialog:Show({
 	    list = prefabs,
 	    callback = function(item)
 	    	self:SpawnPrefab(item.prefab.value.units)
-	        self._parent._listdia:hide()
+	        BeardLibEditor.managers.ListDialog:hide()
 	    end
 	}) 
 end
@@ -197,11 +197,11 @@ function SpawnSelect:SpawnPrefab(prefab)
 end
 
 function SpawnSelect:OpenSpawnElementDialog()
-	self._parent._listdia:Show({
+	BeardLibEditor.managers.ListDialog:Show({
 	    list = BeardLibEditor._config.MissionElements,
 	    callback = function(item)
             self._parent:add_element(item)
-	        self._parent._listdia:hide()
+	        BeardLibEditor.managers.ListDialog:hide()
 	    end
 	}) 
 end
@@ -218,14 +218,14 @@ function SpawnSelect:OpenSelectUnitDialog(params)
     	   	}, params), params.merge_with_item and params.merge_with_item(unit) or {}))
         end
     end
-	self._parent._listdia:Show({
+	BeardLibEditor.managers.ListDialog:Show({
 	    list = units,
 	    callback = function(item)
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(item)
 	    	else
 	    		self._parent:select_unit(item.unit)	        
-	    		self._parent._listdia:hide()
+	    		BeardLibEditor.managers.ListDialog:hide()
 	    	end
 	    end
 	}) 
@@ -247,14 +247,14 @@ function SpawnSelect:OpenSelectElementDialog(params)
             end
         end
     end
-	self._parent._listdia:Show({
+	BeardLibEditor.managers.ListDialog:Show({
 	    list = elements,
 	    callback = function(item)
             if type(params.on_click) == "function" then
                 params.on_click(item)
             else
                 self._parent:select_element(item.element)
-                self._parent._listdia:hide()
+                BeardLibEditor.managers.ListDialog:hide()
             end
 	    end
 	}) 
@@ -262,7 +262,7 @@ end
 
 function SpawnSelect:OpenSpawnUnitDialog(params)
 	params = params or {}
-	self._parent._listdia:Show({
+	BeardLibEditor.managers.ListDialog:Show({
 	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, slot = params.slot, type = params.type}),
 	    callback = function(unit)
 	    	if type(params.on_click) == "function" then
@@ -276,7 +276,7 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
                 self:Manager("menu"):set_tabs_enabled(false)
                 self:SetTitle("Press: LMB to spawn, RMB to cancel")
 			end
-			self._parent._listdia:hide()
+			BeardLibEditor.managers.ListDialog:hide()
 	    end
 	}) 
 end

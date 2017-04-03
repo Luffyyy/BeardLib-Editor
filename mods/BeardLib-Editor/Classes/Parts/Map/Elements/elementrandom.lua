@@ -10,7 +10,7 @@ end
 
 function EditorRandom:select_element(item)
 	self._element.values.counter_id = item.element.id
-	self._parent._listdia:hide()
+	BeardLibEditor.ListDialog:hide()
 end
 
 function EditorRandom:_build_panel()

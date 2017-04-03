@@ -160,7 +160,6 @@ function GameOptions:save()
     end
     local map_path = self:map_world_path()
     self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
-    local continents = {}
     local missions = {}
     for name, data in pairs(worlddef._continent_definitions) do
         local dir = BeardLib.Utils.Path:Combine(map_path, name)
@@ -170,10 +169,9 @@ function GameOptions:save()
         table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
         self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
         self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
-        continents[name] = {name = name, editor_only = (name == "editor_only")} --later make an option
         missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
     end
-    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(continents, cusxml))
+    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
     self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
     self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data, cusxml))
     self:save_cover_data()    

@@ -1,3 +1,15 @@
+DummyItem = DummyItem or class()
+function DummyItem:init(name, v)
+	self.name = name
+	self.value = v
+end
+function DummyItem:Value()
+	return self.value
+end
+function DummyItem:SetValue(v)
+	self.value = v
+end
+
 MenuUtils = MenuUtils or class()
 function MenuUtils:init(this, menu)
 	menu = menu or this._menu
@@ -192,6 +204,31 @@ function MenuUtils:init(this, menu)
 	        self[control..name] = self:NumberBox(control, callback, 0, opt)
 	    end
 	end	
+
+	function this:PathItem(name, typ, opt, filterout)
+		opt.control_slice = opt.control_slice or 1.5
+	    local t = self:TextBox(name, nil, "", opt)
+	    opt.text = "Browse for " .. tostring(typ).."s"
+		opt.offset = {t.offset[1] * 4, t.offset[2]}
+	    self:Button("SelectPath"..name, function()
+	       BeardLibEditor.managers.ListDialog:Show({
+		        list = BeardLibEditor.Utils:GetEntries(typ, true, filterout),
+		        callback = function(path) t:SetValue(path) end
+		    })
+	    end, opt)
+	    return t
+	end
+
+	function this:ColorEnvItem(name, opt)
+		local col = DummyItem:new(name, Vector3(1,1,1))
+		local btn = self:Button("SetColor"..name, function()
+			local vc = col:Value()
+			BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+		    	col:SetValue(Vector3(color.red, color.green, color.blue))
+		    end})
+		end, opt)
+		return col
+	end
 
 	function this:ClearItems(lbl)
 		menu:ClearItems(lbl)

@@ -1,17 +1,18 @@
 EditorPart = EditorPart or class()
-function EditorPart:init(parent, menu, name)
+function EditorPart:init(parent, menu, name, opt)
     self:init_basic(parent, name)
-    self._menu = menu:Menu({
+    self._menu = menu:Menu(table.merge({
         name = name,
         control_slice = 1.75,
         items_size = 18,
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
+        scroll_width = 4,
         visible = false,
         w = 300,
-    })    
+        h = self:Manager("menu"):get_menu_h()
+    }, opt or {}))    
     MenuUtils:new(self)
-    self._menu:SetSize(nil, self._menu:Panel():h() - 43)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
     self:build_default_menu()
 end

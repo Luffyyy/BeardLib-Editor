@@ -54,8 +54,10 @@ function wde:rename_continent(continent)
             end
             worlddef._continent_definitions[name] = deep_clone(worlddef._continent_definitions[continent])
             mission._missions[name] = deep_clone(mission._missions[continent])
+            worlddef._continents[name] = deep_clone(worlddef._continents[continent])
             worlddef._continent_definitions[continent] = nil
             mission._missions[continent] = nil
+            worlddef._continents[continent] = nil
             for _, script in pairs(mission._scripts) do
                 if script._continent == continent then
                     script._continent = name
@@ -84,6 +86,7 @@ function wde:remove_continent(continent)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the continent!", function()
         self:clear_all_units_from_continent(continent, true, true)
         managers.mission._missions[continent] = nil
+        managers.worlddefinition._continents[continent] = nil
         managers.worlddefinition._continent_definitions[continent] = nil
         managers.editor:load_continents(managers.worlddefinition._continent_definitions)
         self:build_default_menu()
@@ -139,13 +142,15 @@ function wde:new_continent()
             if not success or name == "" then
                 return
             end
+            local worlddef = managers.worlddefinition
             managers.mission._missions[name] = managers.mission._missions[name] or {}
-            managers.worlddefinition._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
+            worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
                 editor_groups = {},
                 statics = {},
                 values = {workviews = {}}
-            }
-            self._parent:load_continents(managers.worlddefinition._continent_definitions)
+            }            
+            worlddef._continents[name] = {base_id = worlddef._start_id  * #worlddef._continent_definitions, name = name}
+            self._parent:load_continents(worlddef._continent_definitions)
             self:build_default_menu()
         end
     }) 
@@ -371,7 +376,7 @@ function wde:remove_portal(menu, item, selection)
             self:load_portals()
             self:save()            
         end
-    },{text = "No", is_cancel_button = true}}, true)        
+    },{text = "No", is_cancel_button = true}}, true)
 end
 
 function wde:remove_shape(menu, item)

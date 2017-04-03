@@ -1,4 +1,4 @@
-_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "mod_config.xml", false, true)
+_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Config.xml", false, true)
 local self = BeardLibEditor
 function self:Init()
     self:init_modules()
@@ -6,8 +6,9 @@ function self:Init()
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
-    self.EditorPartsDirectory = self.ClassDirectory .. "EditorParts/"
-    self.ElementsPath = self.EditorPartsDirectory .. "Elements/"
+    self.PartsDir = self.ClassDirectory .. "Parts/"
+    self.MapPartsDir = self.PartsDir .. "Map/"
+    self.ElementsDir = self.MapPartsDir .. "Elements/"
     
     self.managers = {}
     self.modules = {}
@@ -31,7 +32,6 @@ function self:InitManagers()
     end 
 
     M.Menu = EditorMenu:new()
-    M.EnvironmentEditor = EnvironmentEditorManager:new()    
     M.ScriptDataConverter = ScriptDataConverterManager:new()
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
@@ -55,6 +55,7 @@ function self:LoadHashlist()
     table.insert(types, "texture")
     table.insert(types, "movie")
     table.insert(types, "effect")
+    table.insert(types, "scene")
     local function ProcessLine(line)
         local path
         for _, typ in pairs(types) do
@@ -149,26 +150,11 @@ if MenuManager then
             end
         end
     end
-    function MenuCallbackHandler:_dialog_end_game_yes()
+    local o = MenuCallbackHandler._dialog_end_game_yes
+    function MenuCallbackHandler:_dialog_end_game_yes(...)
         Global.editor_mode = nil
-        managers.platform:set_playing(false)
-        managers.job:clear_saved_ghost_bonus()
-        managers.statistics:stop_session({quit = true})
-        managers.savefile:save_progress()
-        managers.job:deactivate_current_job()
-        managers.gage_assignment:deactivate_assignments()
-        if Network:multiplayer() then
-            Network:set_multiplayer(false)
-            managers.network:session():send_to_peers("set_peer_left")
-            managers.network:queue_stop_network()
-        end
-        managers.network.matchmake:destroy_game()
-        managers.network.voice_chat:destroy_voice()
-        managers.groupai:state():set_AI_enabled(false)
-        managers.menu:post_event("menu_exit")
-        managers.menu:close_menu("menu_pause")
-        setup:load_start_menu()
-    end    
+        o(self, ...)
+    end
 end
 
 if Hooks then

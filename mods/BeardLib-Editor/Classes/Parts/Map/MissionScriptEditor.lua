@@ -244,7 +244,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
             end
         end
     end
-	managers.editor._select_list:Show({
+	BeardLibEditor.managers.SelectDialog:Show({
 	    selected_list = selected_list,
 	    list = list,
 	    callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
@@ -277,7 +277,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
     		table.insert(list, data)
     	end
     end
-	managers.editor._select_list:Show({
+	BeardLibEditor.managers.SelectDialog:Show({
 	    selected_list = selected_list,
 	    list = list,
 	    callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)

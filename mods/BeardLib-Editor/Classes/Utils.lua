@@ -423,10 +423,19 @@ function BeardLibEditor.Utils:InSlot(unit, slot)
     return false
 end
 
-function BeardLibEditor.Utils:GetEntries(type, loaded)
+function BeardLibEditor.Utils:GetEntries(type, loaded, filterout)
     local entries = {}
     for _, entry in pairs(BeardLibEditor.DBPaths[type]) do
-        if not loaded or PackageManager:has(Idstring(type), Idstring(entry)) then
+        local pass = true
+        if filterout then
+            for _, v in pairs(filterout) do
+                if entry:match(v) then
+                    pass = false
+                    break
+                end
+            end
+        end
+        if pass and (not loaded or PackageManager:has(Idstring(type), Idstring(entry))) then
             table.insert(entries, entry)
         end
     end

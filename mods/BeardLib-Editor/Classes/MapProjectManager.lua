@@ -1,34 +1,34 @@
 MapProjectManager = MapProjectManager or class()
 local U = BeardLib.Utils
 function MapProjectManager:init()
-	self._templates_directory = U.Path:Combine(BeardLibEditor.ModPath, "Templates")
-	local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
-	if data then
-    	self._main_xml_template = ScriptSerializer:from_custom_xml(data)
+    self._templates_directory = U.Path:Combine(BeardLibEditor.ModPath, "Templates")
+    local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
+    if data then
+        self._main_xml_template = ScriptSerializer:from_custom_xml(data)
     else
-    	BeardLibEditor:log("[ERROR] Failed reading main.xml template!")
+        BeardLibEditor:log("[ERROR] Failed reading main.xml template!")
     end
     data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._level_module_template = ScriptSerializer:from_custom_xml(data)
 
-   	local menu = BeardLibEditor.managers.Menu
-	self._diffs = {
-		"Normal",
-		"Hard",
-		"Very Hard",
-		"Overkill",
-		"Mayhem",
-		"Death Wish",
-		"One Down"
-	}	  	
-	self._menu = menu:make_page("Projects")
-	MenuUtils:new(self)
-	local btns = self:DivGroup("QuickActions", {w = 300})
-	self:Button("NewProject", callback(self, self, "new_project_dialog"), {group = btns})
-	self:Button("CloneExistingHeist", callback(self, self, "select_narr_as_project"), {group = btns})
-	self:Button("EditExistingProject", callback(self, self, "select_project_dialog"), {group = btns})
-	self._curr_editing = self:DivGroup("CurrEditing")
-	self:set_edit_title()
+    local menu = BeardLibEditor.managers.Menu
+    self._diffs = {
+        "Normal",
+        "Hard",
+        "Very Hard",
+        "Overkill",
+        "Mayhem",
+        "Death Wish",
+        "One Down"
+    }       
+    self._menu = menu:make_page("Projects")
+    MenuUtils:new(self)
+    local btns = self:DivGroup("QuickActions", {w = 300})
+    self:Button("NewProject", callback(self, self, "new_project_dialog"), {group = btns})
+    self:Button("CloneExistingHeist", callback(self, self, "select_narr_as_project"), {group = btns})
+    self:Button("EditExistingProject", callback(self, self, "select_project_dialog"), {group = btns})
+    self._curr_editing = self:DivGroup("CurrEditing")
+    self:set_edit_title()
 end
 
 function MapProjectManager:current_level(data)
@@ -41,7 +41,7 @@ function MapProjectManager:current_level(data)
 end
 
 function MapProjectManager:current_mod()
-	return BeardLib.current_level and BeardLib.current_level._mod
+    return BeardLib.current_level and BeardLib.current_level._mod
 end
 
 function MapProjectManager:maps_path()
@@ -49,17 +49,17 @@ function MapProjectManager:maps_path()
 end
 
 function MapProjectManager:current_path()
-	local mod = self:current_mod() 
-	return mod and mod.ModPath
+    local mod = self:current_mod() 
+    return mod and mod.ModPath
 end
 
 function MapProjectManager:current_level_path()
-	local path = self:current_path()
-	return path and U.Path:Combine(path, self:maps_path())
+    local path = self:current_path()
+    return path and U.Path:Combine(path, self:maps_path())
 end
 
 function MapProjectManager:set_edit_title(title)
-	self:GetItem("CurrEditingDiv"):SetText("Currently Editing: ".. (title or "None"))
+    self:GetItem("CurrEditingDiv"):SetText("Currently Editing: ".. (title or "None"))
 end
 
 function MapProjectManager:get_projects_list()
@@ -71,12 +71,12 @@ function MapProjectManager:get_projects_list()
 end
 
 function MapProjectManager:get_project_by_narrative_id(narr)
-	for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
-		local narrative = U:GetNodeByMeta(data, "narrative")
-		if narrative.id == narr.id then
-			return mod
-		end
-	end
+    for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
+        local narrative = U:GetNodeByMeta(data, "narrative")
+        if narrative.id == narr.id then
+            return mod
+        end
+    end
 end
 
 function MapProjectManager:get_packages_of_level(level)
@@ -469,30 +469,30 @@ function MapProjectManager:set_crimenet_videos_dialog()
 end
 
 function MapProjectManager:edit_main_xml(data, save_clbk)
-	self:ClearItems(self._curr_editing)
-	self:set_edit_title(tostring(data.name))
-	data = self:get_clean_data(data)
-	local narr = U:GetNodeByMeta(data, "narrative")
+    self:ClearItems(self._curr_editing)
+    self:set_edit_title(tostring(data.name))
+    data = self:get_clean_data(data)
+    local narr = U:GetNodeByMeta(data, "narrative")
     local levels = U:GetNodeByMeta(data, "level", true)
-	if not narr then
-		BeardLibEditor:log("[ERROR] Narrative data is missing from the main.xml!")
-		return
-	end
-	local up = callback(self, self, "set_project_data")
-	local narrative = self:DivGroup("Narrative", {group = self._curr_editing})
-	self:TextBox("ProjectName", up, data.name, {group = narrative})
-	local contacts = table.map_keys(tweak_data.narrative.contacts)
-	self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact), {group = narrative})
-	self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
+    if not narr then
+        BeardLibEditor:log("[ERROR] Narrative data is missing from the main.xml!")
+        return
+    end
+    local up = callback(self, self, "set_project_data")
+    local narrative = self:DivGroup("Narrative", {group = self._curr_editing})
+    self:TextBox("ProjectName", up, data.name, {group = narrative})
+    local contacts = table.map_keys(tweak_data.narrative.contacts)
+    self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact), {group = narrative})
+    self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
     narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
-	narr.debrief_event = type(narr.debrief_event) == "table" and narr.debrief_event or {narr.debrief_event}
+    narr.debrief_event = type(narr.debrief_event) == "table" and narr.debrief_event or {narr.debrief_event}
 
-	self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
-	self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
-	self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
-	local chain = self:DivGroup("Chain", {group = self._curr_editing})
-	self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
-	self:Button("AddNewLevel", callback(self, self, "new_level_dialog"), {group = chain})
+    self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
+    self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
+    self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
+    local chain = self:DivGroup("Chain", {group = self._curr_editing})
+    self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
+    self:Button("AddNewLevel", callback(self, self, "new_level_dialog"), {group = chain})
     local function get_level(level_id)
         for _, v in pairs(levels) do
             if v.id == level_id then
@@ -503,16 +503,16 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     for _, level_in_chain in pairs(narr.chain) do
         if type(level_in_chain) == "table" then
             local level_id = level_in_chain.level_id
-        	local level = get_level(level_id)
-        	local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = chain})
+            local level = get_level(level_id)
+            local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = chain})
             self:SmallButton(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), btn, {text = "x", marker_highlight_color = Color.red})
         end
     end
-	self._contract_costs = {}
-	self._experience_multipliers = {}
-	self._max_mission_xps = {}
-	self._min_mission_xps = {}
-	self._payouts = {}	
+    self._contract_costs = {}
+    self._experience_multipliers = {}
+    self._max_mission_xps = {}
+    self._min_mission_xps = {}
+    self._payouts = {}  
     local function convertnumber(n)
         local t = {}
         for i=1, #self._diffs do
@@ -525,18 +525,18 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
     narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
     narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
-	local diff_settings = self:DivGroup("DifficultySettings", {group = self._curr_editing})
-	for i, diff in pairs(self._diffs) do
-		local group = self:Group(diff, {group = diff_settings, closed = true})
-		self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, text = "Contract Cost"})
-		self._experience_multipliers[i] = self:NumberBox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, group = group, text = "Stealth XP bonus"})
-		self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, text = "Minimum mission XP"})
-		self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, text = "Maximum mission XP"})
-		self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, text = "Payout"})
-	end	
-	self:Button("SaveProject", save_clbk, {group = self._curr_editing})
-	self:Button("Close", callback(self, self, "disable"), {group = self._curr_editing})
-	self._current_data = data
+    local diff_settings = self:DivGroup("DifficultySettings", {group = self._curr_editing})
+    for i, diff in pairs(self._diffs) do
+        local group = self:Group(diff, {group = diff_settings, closed = true})
+        self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, text = "Contract Cost"})
+        self._experience_multipliers[i] = self:NumberBox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, group = group, text = "Stealth XP bonus"})
+        self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, text = "Minimum mission XP"})
+        self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, text = "Maximum mission XP"})
+        self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, text = "Payout"})
+    end 
+    self:Button("SaveProject", save_clbk, {group = self._curr_editing})
+    self:Button("Close", callback(self, self, "disable"), {group = self._curr_editing})
+    self._current_data = data
 end
 
 function MapProjectManager:set_project_data(menu, item)
@@ -583,32 +583,32 @@ function MapProjectManager:set_mission_assets_dialog()
 end
 
 function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, save_clbk)
-	self:ClearItems(self._curr_editing)
-	local level_group = self:Group("Level", {group = self._curr_editing})
-	local up = callback(self, self, "set_project_level_data", level_in_chain)
-	self:TextBox("LevelId", up, level.id, {group = level_group})	
-	--self:Button("ManagePackages", nil, {group = level_group}) Should be managed in the map editor imo
-	local aitype = table.map_keys(LevelsTweakData.LevelType)
-	self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = level_group})
-	self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = level_group}, {group = level_group})
-	self:NumberBox("GhostBonus", up, level.ghost_bonus, {max = 1, min = 0, group = level_group})
-	self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = level_group})	
-	self:Toggle("TeamAiOff", up, level.team_ai_off, {group = level_group})
+    self:ClearItems(self._curr_editing)
+    local level_group = self:Group("Level", {group = self._curr_editing})
+    local up = callback(self, self, "set_project_level_data", level_in_chain)
+    self:TextBox("LevelId", up, level.id, {group = level_group})    
+    --self:Button("ManagePackages", nil, {group = level_group}) Should be managed in the map editor imo
+    local aitype = table.map_keys(LevelsTweakData.LevelType)
+    self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = level_group})
+    self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = level_group}, {group = level_group})
+    self:NumberBox("GhostBonus", up, level.ghost_bonus, {max = 1, min = 0, group = level_group})
+    self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = level_group})    
+    self:Toggle("TeamAiOff", up, level.team_ai_off, {group = level_group})
     level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
     level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
-	self:TextBox("IntroEvent", up, table.concat(level.intro_event, ","), {group = level_group})
-	self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = level_group})
-	--self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = level_group})
-	self:Button("SaveAndGoBackToProject", save_clbk, {group = self._curr_editing})
-	self:Button("GoBackToProject", function() self:edit_main_xml(data, save_clbk) end, {group = self._curr_editing})
-	self:set_edit_title(tostring(data.name) .. " > " .. tostring( level.id ))
+    self:TextBox("IntroEvent", up, table.concat(level.intro_event, ","), {group = level_group})
+    self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = level_group})
+    --self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = level_group})
+    self:Button("SaveAndGoBackToProject", save_clbk, {group = self._curr_editing})
+    self:Button("GoBackToProject", function() self:edit_main_xml(data, save_clbk) end, {group = self._curr_editing})
+    self:set_edit_title(tostring(data.name) .. " > " .. tostring( level.id ))
 end 
 
 function MapProjectManager:set_project_level_data(level_in_chain)
-	local t = self._current_data
-	local level = U:GetNodeByMeta(t, "level")	
+    local t = self._current_data
+    local level = U:GetNodeByMeta(t, "level")   
     local old_name = level.orig_id or level.id
-	level.id = self:GetItem("LevelId"):Value()
+    level.id = self:GetItem("LevelId"):Value()
     local title = tostring(t.name) .. " > " .. tostring(level.id)
     if old_name ~= level.id then
         if level.id == "" and tweak_data.levels[level.id] then
@@ -618,22 +618,22 @@ function MapProjectManager:set_project_level_data(level_in_chain)
             level.orig_id = level.orig_id or old_name
         end
     end
-	level_in_chain.level_id = level.id
-	level.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
-	level.briefing_dialog = self:GetItem("BriefingDialog"):Value()
-	level.ghost_bonus = self:GetItem("GhostBonus"):Value()
-	level.max_bags = self:GetItem("MaxBags"):Value()
-	level.team_ai_off = self:GetItem("TeamAiOff"):Value()
-	local intro = self:GetItem("IntroEvent"):Value()
-	local outro = self:GetItem("OutroEvent"):Value()
-	level.intro_event = intro:match(",") and string.split(intro, ",") or {intro}
-	level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
+    level_in_chain.level_id = level.id
+    level.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
+    level.briefing_dialog = self:GetItem("BriefingDialog"):Value()
+    level.ghost_bonus = self:GetItem("GhostBonus"):Value()
+    level.max_bags = self:GetItem("MaxBags"):Value()
+    level.team_ai_off = self:GetItem("TeamAiOff"):Value()
+    local intro = self:GetItem("IntroEvent"):Value()
+    local outro = self:GetItem("OutroEvent"):Value()
+    level.intro_event = intro:match(",") and string.split(intro, ",") or {intro}
+    level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
     self:set_edit_title(title)
 end
 
 function MapProjectManager:disable()
     self._current_data = nil
     self._current_mod = nil
-	self:ClearItems(self._curr_editing)
-	self:set_edit_title()
+    self:ClearItems(self._curr_editing)
+    self:set_edit_title()
 end

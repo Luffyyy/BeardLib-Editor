@@ -294,7 +294,7 @@ end
 
 function StaticEditor:reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
-        if unit:mission_element() then unit:mission_element():unselect() end
+        if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
     self._selected_units = {}
 end
@@ -420,7 +420,10 @@ function StaticEditor:delete_selected(menu, item)
     self:set_unit()      
 end
 
-function StaticEditor:delete_selected_dialog(menu, item)                    
+function StaticEditor:delete_selected_dialog(menu, item)
+    if not self:selected_unit() then
+        return
+    end        
     QuickMenu:new("Warning", "This will delete the selected unit(s)/element(s), Continue?",
         {[1] = {text = "Yes", callback = callback(self, self, "delete_selected")
     },[2] = {text = "No", is_cancel_button = true}}, true)    

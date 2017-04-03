@@ -1,4 +1,4 @@
-dofile(BeardLibEditor.ElementsPath .. "feedbackelement.lua")
+dofile(BeardLibEditor.ElementsDir .. "feedbackelement.lua")
 EditorExplosion = EditorExplosion or class(EditorFeedback)
 function EditorExplosion:create_element()
 	EditorExplosion.super.create_element(self)
