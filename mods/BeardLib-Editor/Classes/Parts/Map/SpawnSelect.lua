@@ -143,7 +143,7 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
             for _, asset in pairs(to_copy) do
                 if type(asset) == "table" then
                     local path = asset.path .. "." .. asset._meta
-                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path):gsub("/", "\\"), BeardLib.Utils.Path:Combine(map_path, level.add.directory or "", path):gsub("/", "\\"))
+                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path), BeardLib.Utils.Path:Combine(map_path, level.add.directory or "", path))
                 end
             end
         end

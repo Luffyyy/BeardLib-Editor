@@ -162,7 +162,7 @@ function MenuUtils:init(this, menu)
 	    end
 	end
 
-	function this:AxisControls(callback, opt, name)
+	function this:AxisControls(callback, opt, name, pos, rot)
 		name = name or ""
 	    opt = opt or {}
 	    opt.align_method = "grid"
@@ -187,35 +187,51 @@ function MenuUtils:init(this, menu)
 	        	self[name..control] = self:NumberBox(control, callback, 0, opt)
 	        end
 	    end
+	   	if pos and rot then
+	   		self:SetAxisControls(pos, rot, name)
+	   	end
 	end
 
-	function this:ShapeControls(callback, opt, name)
+	function this:ShapeControls(callback, opt, name, shape, no_radius)
+		name = name or ""
 	    opt = opt or {}
 	    opt.floats = 0
 	    opt.align_method = "grid"
 	    opt.use_as_menu = true
 	    opt.color = false
 	    self:Divider("Shape", opt)
-	    local shape = self:Group("ShapeGroup", opt)
-	    opt.w = shape.w / 2
+	    local shapegroup = self:Group("ShapeGroup", opt)
+	    opt.w = shapegroup.w / 2
 	    opt.offset = 0
-	    opt.group = shape
-	    for _, control in pairs(self._shape_controls) do
-	        self[control..name] = self:NumberBox(control, callback, 0, opt)
+	    opt.group = shapegroup
+	    for i, control in pairs(self._shape_controls) do
+	    	if not no_radius or control ~= "radius" then
+				self[control..name] = self:NumberBox(control, callback, 0, opt)
+	    	end    
+	    end
+	    if shape then
+	    	self:SetShapeControls(shape)
 	    end
 	end	
 
-	function this:PathItem(name, typ, opt, filterout)
+	function this:PathItem(name, callback, value, typ, opt, loaded, filterout)
+		opt = opt or {}
 		opt.control_slice = opt.control_slice or 1.5
-	    local t = self:TextBox(name, nil, "", opt)
+		opt.callback = opt.callback or callback
+	    local t = self:TextBox(name, nil, value, opt)
 	    opt.text = "Browse for " .. tostring(typ).."s"
 		opt.offset = {t.offset[1] * 4, t.offset[2]}
-	    self:Button("SelectPath"..name, function()
+		opt.callback = nil
+	    local btn = self:Button("SelectPath"..name, function()
 	       BeardLibEditor.managers.ListDialog:Show({
-		        list = BeardLibEditor.Utils:GetEntries(typ, true, filterout),
-		        callback = function(path) t:SetValue(path) end
+		        list = BeardLibEditor.Utils:GetEntries(typ, loaded, filterout),
+		        callback = function(path) t:SetValue(path, true) end
 		    })
 	    end, opt)
+	    t.SetEnabled = function(this, enabled)
+	    	TextBox.SetEnabled(this, enabled)
+	    	btn:SetEnabled(enabled)
+	    end
 	    return t
 	end
 

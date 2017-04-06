@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<unit name="environment_area" type="envrionment" slot="10">
+  <object file="core/units/environment_area/environment_area" />
+  <movers />
+  <dependencies />
+  <extensions>
+    <extension name="unit_data" class="ScriptUnitData" />
+  </extensions>
+  <sounds>
+    <default_soundsource />
+  </sounds>
+</unit>

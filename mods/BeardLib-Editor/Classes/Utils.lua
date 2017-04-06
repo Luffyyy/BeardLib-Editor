@@ -215,6 +215,11 @@ function BeardLibEditor.Utils:GetPackagesOfUnit(unit, first)
     return found_packages
 end
 
+function BeardLibEditor.Utils:HasEditableLights(unit)
+    local lights = self:GetLights(unit)
+    return lights and #lights > 0
+end
+
 function BeardLibEditor.Utils:GetLights(unit)
     local has_lights = #unit:get_objects_by_type(Idstring("light")) > 0
     if not has_lights then

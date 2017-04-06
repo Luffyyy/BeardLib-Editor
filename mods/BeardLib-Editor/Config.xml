@@ -64,21 +64,33 @@
         <unit path="units/civilian_element/element" force="true"/>
         <object path="units/civilian_element/element" force="true"/>
         <model path="units/civilian_element/element" force="true"/>
-        <cooked_physics path="units/civilian_element/element" force="true"/>       
-        <material_config path="units/enemy_element/element" force="true"/>       
+        <cooked_physics path="units/civilian_element/element" force="true"/>
+        <material_config path="units/enemy_element/element" force="true"/>
         <unit path="units/enemy_element/element" force="true"/>
         <object path="units/enemy_element/element" force="true"/>
         <model path="units/enemy_element/element" force="true"/>
-        <cooked_physics path="units/enemy_element/element" force="true"/>        
+        <cooked_physics path="units/enemy_element/element" force="true"/>
         <unit path="core/units/nav_surface/nav_surface" force="true"/>
         <object path="core/units/nav_surface/nav_surface" force="true"/>
         <model path="core/units/nav_surface/nav_surface" force="true"/>
-        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>        
+        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>
         <unit path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <cooked_physics path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>
+        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>\
+        <unit path="core/units/environment_area/environment_area" force="true"/>
+        <object path="core/units/environment_area/environment_area" force="true"/>
+        <model path="core/units/environment_area/environment_area" force="true"/>
+        <cooked_physics path="core/units/environment_area/environment_area" force="true"/>        
+        <unit path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <object path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <model path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <cooked_physics path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <unit path="core/units/effect/effect" force="true"/>
+        <object path="core/units/effect/effect" force="true"/>
+        <model path="core/units/effect/effect" force="true"/>
+        <cooked_physics path="core/units/effect/effect" force="true"/> 
     </AddFiles>
     <MissionElements>
         <!--Custom Elements-->

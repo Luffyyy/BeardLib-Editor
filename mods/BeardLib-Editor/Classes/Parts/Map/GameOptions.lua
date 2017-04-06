@@ -181,13 +181,26 @@ function GameOptions:save()
         end
     end
     local proj = BeardLibEditor.managers.MapProject
-    local map_mod = proj:current_mod()
-    local data = map_mod and proj:get_clean_data(map_mod._clean_config)
+    local mod = proj:current_mod()
+    local data = mod and proj:get_clean_data(mod._clean_config)
     if data then
         local level = proj:get_level_by_id(data, Global.game_settings.level_id)
-        include.directory = level.include.directory
-        level.include = include
-        FileIO:WriteScriptDataTo(map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(path, "main.xml")), data, "custom_xml")
+        local temp = table.list_add(clone(level.include), include)        
+        level.include = {directory = level.include.directory}
+        for i, include_data in ipairs(temp) do                
+            if type(include_data) == "table" and include_data.file and FileIO:Exists(BeardLib.Utils.Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+                local exists
+                for _, inc_data in ipairs(level.include) do
+                    if type(inc_data) == "table" and inc_data.file == include_data.file then
+                        exists = true
+                    end
+                end
+                if not exists then
+                    level.include[i] = include_data
+                end
+            end
+        end
+        FileIO:WriteScriptDataTo(mod:GetRealFilePath(BeardLib.Utils.Path:Combine(path, "main.xml")), data, "custom_xml")
     end
 end
 

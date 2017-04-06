@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<unit name="dome_occ_shape" type="envrionment" slot="10">
+  <object file="core/units/dome_occ_shape/dome_occ_shape" />
+  <movers />
+  <dependencies />
+  <extensions>
+    <extension name="unit_data" class="ScriptUnitData" />
+  </extensions>
+  <sounds>
+    <default_soundsource />
+  </sounds>
+</unit>

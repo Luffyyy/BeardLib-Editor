@@ -1,6 +1,6 @@
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local wde = WorldDataEditor
-function wde:init(parent, menu)
+function wde:init(parent, menu)    
     self.super.init(self, parent, menu, "World")
 end
 
@@ -10,16 +10,31 @@ function wde:loaded_continents()
     else
         self:build_default_menu()
     end
+    for _, manager in pairs(self.managers) do
+        if manager.loaded_continents then
+            manager:loaded_continents()
+        end
+    end
+end
+
+function wde:update_positions()
+    local shape = self._selected_shape
+    self:SetAxisControlsEnabled(shape ~= nil)
+    self:SetShapeControlsEnabled(shape ~= nil)
+    if shape then
+        self:SetAxisControls(shape:position(), shape:rotation())
+        self:SetShapeControls(shape._properties)
+    end
 end
 
 function wde:build_default_menu()
     self.super.build_default_menu(self)
-    self._editors = {}
+    self.managers = self.managers or {env = EnvironmentLayerEditor:new(self)}
     self._current_continent = nil
     self._selected_portal = nil
     self._selected_shape = nil
     local layers = self:DivGroup("Layers")
-    for _, layer in pairs({"ai", {name = "environment", class = EnvironmentLayerEditor}, "portals", "wires"}) do
+    for _, layer in pairs({"ai", {name = "environment", class = self.managers.env}, "portals", "wires"}) do
         local tbl = type(layer) == "table"
         self:Button(tbl and layer.name or layer, callback(self, self, "build_menu", tbl and layer.class or layer), {group = layers})
     end
@@ -286,9 +301,7 @@ function wde:build_menu(layer)
     if type(layer) == "string" then
         self["build_"..layer.."_layer_menu"](self)
     else
-        local layer_clss = layer:new(self)
-        layer_clss:build_menu()
-        table.insert(self._editors, layer_clss)
+        layer:build_menu()
     end
 end
 
@@ -317,7 +330,7 @@ function wde:build_portals_layer_menu()
     self:Group("Units")
     self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
     self:load_portals()
-    self:update_menu()
+    self:update_positions()
 end
 
 function wde:widget_unit()
@@ -454,7 +467,7 @@ function wde:load_portal_units()
 end
 
 function wde:update(t, dt)
-    for _, editor in pairs(self._editors) do
+    for _, editor in pairs(self.managers) do
         if editor.update then
             editor:update(t, dt)
         end
@@ -472,16 +485,6 @@ function wde:update(t, dt)
         if self._selected_shape then
             self._selected_shape:draw(t, dt, 1,1,1)
         end
-    end
-end
-
-function wde:update_menu()
-    local shape = self._selected_shape
-    self:SetAxisControlsEnabled(shape ~= nil)
-    self:SetShapeControlsEnabled(shape ~= nil)
-    if shape then
-        self:SetAxisControls(shape:position(), shape:rotation())
-        self:SetShapeControls(shape._properties)
     end
 end
 

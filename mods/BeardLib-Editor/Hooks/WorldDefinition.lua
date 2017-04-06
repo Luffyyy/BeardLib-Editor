@@ -416,4 +416,45 @@ function WorldDefinition:_create_sounds(data)
 		managers.sound_environment:add_area_emitter(sound_area_emitter)
 	end
 end
+
+function WorldDefinition:_add_to_portal(unit, data)
+end
+
+local sky_orientation_data_key = Idstring("sky_orientation/rotation"):key()
+
+function WorldDefinition:_create_environment(data, offset)
+	self:_set_environment(data.environment_values.environment)
+	self:_set_default_color_grading(data.environment_values.color_grading)
+	if not self._environment_modifier_id and not Application:editor() then
+		self._environment_modifier_id = managers.viewport:create_global_environment_modifier(sky_orientation_data_key, true, function()
+			return self:sky_rotation_modifier()
+		end)
+	end
+	self._environment = {
+		sky_rot = data.environment_values.sky_rot
+	}
+	local wind = data.wind
+	Wind:set_direction(wind.angle, wind.angle_var, 5)
+	Wind:set_tilt(wind.tile, wind.tilt_var, 5)
+	Wind:set_speed_m_s(wind.speed or 6, wind.speed_variation or 1, 5)
+	Wind:set_enabled(true)
+	for _, environment_area in ipairs(data.environment_areas) do
+		managers.viewport:preload_environment(environment_area.environment)
+		managers.environment_area:add_area(environment_area)
+	end
+	if data.dome_occ_shapes then
+		local shape_data = data.dome_occ_shapes[1]
+		if shape_data then
+			local corner = shape_data.position
+			local size = Vector3(shape_data.depth, shape_data.width, shape_data.height)
+			local texture_name = self:world_dir() .. "cube_lights/" .. "dome_occlusion"
+			if not DB:has(Idstring("texture"), Idstring(texture_name)) then
+				_G.BeardLibEditor:log("[Warning] Dome occlusion texture doesn't exists, probably needs to be generated")
+			else
+				managers.environment_controller:set_dome_occ_params(corner, size, texture_name)
+			end
+		end
+	end
+end
+
 end

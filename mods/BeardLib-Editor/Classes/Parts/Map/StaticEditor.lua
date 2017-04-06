@@ -85,11 +85,14 @@ function StaticEditor:deselect_unit(menu, item)
     self:set_unit(true)
 end
 
-function StaticEditor:update_positions(menu, item)
+function StaticEditor:update_positions()
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
+            if self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
+                self:Manager("wdata").managers.env:save()
+            end
             for i, control in pairs(self._axis_controls) do
                 self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
             end
@@ -107,24 +110,28 @@ end
 
 function StaticEditor:set_unit_data()
     self._parent:set_unit_positions(self:AxisControlsPosition())
-    self._parent:set_unit_rotations(self:AxisControlsRotation())  
-    if #self._selected_units == 1 then
+    self._parent:set_unit_rotations(self:AxisControlsRotation())
+
+    if #self._selected_units == 1 then    
+        if not self:GetItem("Continent") then
+            return
+        end 
         local unit = self._selected_units[1]
         if unit:unit_data() and unit:unit_data().unit_id then
             local prev_id = unit:unit_data().unit_id
             local ud = unit:unit_data()
-            managers.worlddefinition:set_name_id(unit, self._menu:GetItem("Name"):Value())
+            managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
             local old_continent = unit:unit_data().continent
-            ud.continent = self._menu:GetItem("Continent"):SelectedItem()
+            ud.continent = self:GetItem("Continent"):SelectedItem()
             local new_continent = unit:unit_data().continent
-            local path_changed = unit:unit_data().name ~= self._menu:GetItem("UnitPath"):Value()
-            local u_path = self._menu:GetItem("UnitPath"):Value()
+            local path_changed = unit:unit_data().name ~= self:GetItem("UnitPath"):Value()
+            local u_path = self:GetItem("UnitPath"):Value()
             ud.name = (u_path and u_path ~= "" and u_path) or ud.name
-            ud.unit_id = self._menu:GetItem("Id"):Value()
-            ud.disable_shadows = self._menu:GetItem("DisableShadows"):Value()
-            ud.disable_collision = self._menu:GetItem("DisableCollision"):Value()
-            ud.hide_on_projection_light = self._menu:GetItem("HideOnProjectionLight"):Value()
-            ud.disable_on_ai_graph = self._menu:GetItem("DisableOnAIGraph"):Value()
+            ud.unit_id = self:GetItem("Id"):Value()
+            ud.disable_shadows = self:GetItem("DisableShadows"):Value()
+            ud.disable_collision = self:GetItem("DisableCollision"):Value()
+            ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
+            ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data then
                     editor:set_unit_data()
@@ -321,8 +328,14 @@ function StaticEditor:set_selected_unit(unit, add)
     if #self._selected_units > 1 then
         self:set_multi_selected()    
     else
-        if alive(unit) and unit:mission_element() then
-            self:Manager("mission"):set_element(unit:mission_element().element)
+        if alive(unit) then
+            if unit:mission_element() then
+                self:Manager("mission"):set_element(unit:mission_element().element)
+            elseif self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
+                self:Manager("wdata").managers.env:build_unit_menu()
+            else
+                self:set_unit()
+            end
         else
             self:set_unit()
         end
@@ -416,6 +429,7 @@ function StaticEditor:delete_selected(menu, item)
         self._parent:DeleteUnit(unit)
     end
     self:Manager("mission"):remove_script()
+    self:Manager("wdata").managers.env:check_units()
     self:reset_selected_units()
     self:set_unit()      
 end
@@ -441,15 +455,19 @@ function StaticEditor:update(t, dt)
     if managers.viewport:get_current_camera() then
         for _, unit in ipairs(self._selected_units) do
             if alive(unit) then
-                if unit:mission_element() then unit:mission_element():select() end
-                if unit:name() == self._nav_surface then Application:draw(unit, 1,0.2,0) end
-                for i = 0, unit:num_bodies() - 1 do
-                    local body = unit:body(i)
-                    if self._parent:_should_draw_body(body) then
-                        self._pen:set(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
-                        self._pen:body(body)
-                        self._brush:set_color(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
-                    end                            
+                if unit:mission_element() then 
+                    unit:mission_element():select() 
+                elseif unit:name() == self._nav_surface or self:Manager("wdata").managers.env:is_env_unit(unit:name()) then 
+                    Application:draw(unit, 1,0.2,0) 
+                else
+                    for i = 0, unit:num_bodies() - 1 do
+                        local body = unit:body(i)
+                        if self._parent:_should_draw_body(body) then
+                            self._pen:set(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
+                            self._pen:body(body)
+                            self._brush:set_color(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
+                        end
+                    end                    
                 end
             end
         end
@@ -497,7 +515,7 @@ function StaticEditor:clone()
     local all_unit_data = clone(self._selected_units)
     self:reset_selected_units()
     for _, unit in pairs(all_unit_data) do
-        self._parent:SpawnUnit(unit:unit_data().name, unit, true)
+        self._parent:SpawnUnit(unit:unit_data().name or unit:name(), unit, true)
         if #self._selected_units > 1 then
             self:StorePreviousPosRot()
         end
@@ -519,5 +537,3 @@ function StaticEditor:set_unit_enabled(enabled)
         end
 	end
 end
-
- 

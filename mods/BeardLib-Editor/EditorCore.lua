@@ -36,6 +36,29 @@ function self:InitManagers()
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
     M.EditorOptions = EditorOptionsMenu:new()
+
+    self:LoadCustomAssetsToHashListt(self._config.AddFiles)
+    local mod = self.managers.MapProject:current_mod()
+    if mod and mod._config.level.add then
+        self:log("Loading Custom Assets to Hashlist")
+        local level = mod._config.level
+        self:LoadCustomAssetsToHashListt(mod._config.level.add)   
+        if level.include then
+            for i, include_data in ipairs(level.include) do
+                if include_data.file then
+                    local file_split = string.split(include_data.file, "[.]")
+                    local typ = file_split[2]
+                    local path = BeardLib.Utils.Path:Combine("levels/mods/", level.id, file_split[1])
+                    if FileIO:Exists(BeardLib.Utils.Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+                        self.DBPaths[typ] = self.DBPaths[typ] or {}
+                        if not table.contains(self.DBPaths[typ], path) then
+                            table.insert(self.DBPaths[typ], path)
+                        end     
+                    end
+                end
+            end
+        end
+    end
 end
 
 function self:RegisterModule(key, module)
@@ -108,15 +131,14 @@ function self:LoadHashlist()
     for typ, filetbl in pairs(self.DBPaths) do
         self:log(typ .. " Count: " .. #filetbl)
     end
-    self:log("Loading Custom Assets to Hashlist")
-    local mod = BeardLib.current_map_mod
-    if mod and mod._config.level.add then
-        for _, v in pairs(mod._config.level.add) do
-            if type(v) == "table" then
-                self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
-                if not table.contains(self.DBPaths[v._meta], v.path) then
-                    table.insert(self.DBPaths[v._meta], v.path)
-                end
+end
+
+function self:LoadCustomAssetsToHashListt(add)
+    for _, v in pairs(add) do
+        if type(v) == "table" then
+            self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
+            if not table.contains(self.DBPaths[v._meta], v.path) then
+                table.insert(self.DBPaths[v._meta], v.path)
             end
         end
     end
@@ -183,30 +205,10 @@ if Hooks then
         })
     end)
 
-    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes)
-        BeardLibEditor:InitManagers()
-    end)
-
-    function self:ProcessScriptData(data, path, extension, name)
-        for _, sub_data in ipairs(data) do
-            if sub_data._meta == "param" then
-                local next_data_path = name and name .. "/" .. sub_data.key or sub_data.key
-
-                local next_data_path_key = next_data_path:key()
-                self.managers.EnvironmentEditor:AddHandlerValue(path:key(), next_data_path_key, sub_data.value, next_data_path)
-            else
-                local next_data_path = name and name .. "/" .. sub_data._meta or sub_data._meta
-                self:ProcessScriptData(sub_data, path, extension, next_data_path)
-            end
-        end
-    end
-
-    Hooks:Add("BeardLibPreProcessScriptData", "BeardLibEditorLoadEnvParams", function(PackManager, filepath, extension, data)
-        if extension == Idstring("environment") and data and data.data then
-            BeardLibEditor:ProcessScriptData(data.data, filepath, extension)
-        end
-    end)
+    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes) BeardLibEditor:InitManagers() end)
 end
+
+
 
 if not BeardLibEditor.InitDone then
     BeardLibEditor:Init()

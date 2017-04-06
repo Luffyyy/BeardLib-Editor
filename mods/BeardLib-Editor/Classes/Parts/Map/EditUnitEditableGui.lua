@@ -59,7 +59,7 @@ function EditUnitEditableGui:build_menu(units)
 	self._wrapping = self:Toggle("TextWrapping", callback(self._parent, self._parent, "set_unit_data"), units[1]:editable_gui():wrap())
 	self._word_wrapping = self:Toggle("TextWordWrapping", callback(self._parent, self._parent, "set_unit_data"), units[1]:editable_gui():word_wrap(), {enabled = units[1]:editable_gui():wrap()}) --
 	self._debug = self:Toggle("Debug", callback(self._parent, self._parent, "set_unit_data"))
-	self._render_template = self:ComboBox("RenderTemplate", callback(self._parent, self._parent, "set_unit_data"), self._render_templates, table.get_key(self._render_templates, units[1]:editable_gui():blend_mode()), {help = "Select a Render Template from the combobox"})
+	self._render_template = self:ComboBox("RenderTemplate", callback(self._parent, self._parent, "set_unit_data"), self._render_templates, table.get_key(self._render_templates, units[1]:editable_gui():render_template()), {help = "Select a Render Template from the combobox"})
 	self._blend_mode = self:ComboBox("BlendMode", callback(self._parent, self._parent, "set_unit_data"), self._blend_modes, table.get_key(self._blend_modes, units[1]:editable_gui():blend_mode()), {
 		help = "Select a Blend Mode from the combobox", 
 		enabled = units[1]:editable_gui():render_template() == "Text",
