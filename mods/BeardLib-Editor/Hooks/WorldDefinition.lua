@@ -184,7 +184,7 @@ function WorldDefinition:delete_unit(unit)
 	if unit_id > 0 then
 		if self:is_world_unit(unit) then
 			self._world_unit_ids[unit_id] = nil
-		else
+		elseif continent_name then
 			self._unit_ids[continent_name][unit_id] = nil
 		end
 		self._all_units[unit_id] = nil

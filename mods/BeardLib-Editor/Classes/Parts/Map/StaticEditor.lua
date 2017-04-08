@@ -256,6 +256,12 @@ function StaticEditor:mouse_released(button, x, y)
 end
 
 function StaticEditor:widget_unit()
+    local unit = self:selected_unit()
+    if alive(unit) and unit:unit_data().instance then
+        local instance = managers.world_instance:get_instance_data_by_name(unit:unit_data().instance)
+        self._fake_object = self._fake_object or FakeObject:new(instance)
+        return self._fake_object
+    end
     if self:Enabled() then
         for _, editor in pairs(self._editors) do
             if editor.widget_unit then
@@ -282,7 +288,7 @@ end
 function StaticEditor:recalc_locals(unit, reference)
     local pos = reference:position()
     local rot = reference:rotation()
-    unit:unit_data().local_pos = unit:unit_data().position - pos 
+    unit:unit_data().local_pos = unit:unit_data().position - pos --:rotate_with(rot:inverse()) Trying to improve widget rotation but sadly failing.
     unit:unit_data().local_rot = rot:inverse() * unit:rotation()
 end
 
@@ -293,7 +299,7 @@ function StaticEditor:check_unit_ok(unit)
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:Manager("opt")._wanted_elements
     if mission_element then    
-        return BeardLibEditor.Options:GetOption("Map/ShowElements").value and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
+        return BeardLibEditor.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
     else
         return unit:visible()
     end
@@ -303,6 +309,8 @@ function StaticEditor:reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
+    self._fake_object = nil
+    self._instance_units = nil
     self._selected_units = {}
 end
 
@@ -324,9 +332,9 @@ function StaticEditor:set_selected_unit(unit, add)
     end
     self:StorePreviousPosRot()
     local unit = self._selected_units[1]
-    self._parent:use_widgets(unit and alive(unit))          
-    if #self._selected_units > 1 then
-        self:set_multi_selected()    
+    self._parent:use_widgets(unit and alive(unit))
+    if (alive(unit) and unit:unit_data().instance) or #self._selected_units > 1 then
+        self:set_multi_selected()
     else
         if alive(unit) then
             if unit:mission_element() then
@@ -420,7 +428,7 @@ function StaticEditor:addremove_unit_portal(menu, item)
             end
         end
     else
-        QuickMenu:new( "Error", "No portal selected.", {{text = "ok", is_cancel_button = true}}, true)  
+        QuickMenu:new("Error", "No portal selected.", {{text = "ok", is_cancel_button = true}}, true)  
     end    
 end      
 
@@ -452,6 +460,7 @@ function StaticEditor:update(t, dt)
             editor:update(t, dt)
         end
     end
+    local instance_drawn
     if managers.viewport:get_current_camera() then
         for _, unit in ipairs(self._selected_units) do
             if alive(unit) then
@@ -459,6 +468,8 @@ function StaticEditor:update(t, dt)
                     unit:mission_element():select() 
                 elseif unit:name() == self._nav_surface or self:Manager("wdata").managers.env:is_env_unit(unit:name()) then 
                     Application:draw(unit, 1,0.2,0) 
+                elseif unit:unit_data().instance then
+                    
                 else
                     for i = 0, unit:num_bodies() - 1 do
                         local body = unit:body(i)
@@ -467,7 +478,7 @@ function StaticEditor:update(t, dt)
                             self._pen:body(body)
                             self._brush:set_color(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
                         end
-                    end                    
+                    end
                 end
             end
         end

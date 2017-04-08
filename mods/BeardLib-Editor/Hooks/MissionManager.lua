@@ -89,6 +89,9 @@ function MissionManager:_load_mission_file(name, file_dir, data)
 end
 
 function MissionManager:set_element(element, old_script)
+	if not element then
+		return
+	end
 	local new_continent = self._scripts[element.script]._continent
 	local old_continent = old_script and self._scripts[old_script]._continent
 	if old_script and element.script ~= old_script then
@@ -115,6 +118,7 @@ function MissionManager:set_element(element, old_script)
 	end
 	self._scripts[element.script]._elements[element.id]._values = element.values		
 end
+
 
 function MissionManager:add_element(element)
 	local module_name = "Core" .. element.class

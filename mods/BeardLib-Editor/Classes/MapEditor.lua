@@ -177,7 +177,7 @@ end
 function me:SpawnUnit(unit_path, old_unit, add)   
     local cam = managers.viewport:get_current_camera()
     if self.managers.wdata.managers.env:is_env_unit(unit_path) then
-        local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit
+        local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit or {}
         data.position = data.position or cam:position() + cam:rotation():y()
         local unit = self.managers.wdata.managers.env:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
@@ -306,7 +306,7 @@ function me:set_unit_rotations(rot)
     BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
     for _, unit in ipairs(self.managers.static._selected_units) do
         if unit ~= self:selected_unit() then
-            self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
+            self:set_unit_position(unit, unit:position(), rot * unit:unit_data().local_rot)
         end
     end
 end
@@ -454,25 +454,34 @@ function me:update_widgets(t, dt)
             local widget_screen_pos = widget_pos
             widget_pos = self:screen_to_world(widget_pos, 1000)
             local widget_rot = self:widget_rot()
-            if self._using_move_widget then
-                if self._move_widget:enabled() then
-                    local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+            if self._using_move_widget and self._move_widget:enabled() then
+                local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                if self._last_pos ~= result_pos then 
                     self:set_unit_positions(result_pos)
                     self:update_positions()
                 end
+                self._last_pos = result_pos
             end
-            if self._using_rotate_widget then
-                if self._rotate_widget:enabled() then
-                    local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+            if self._using_rotate_widget and self._rotate_widget:enabled() then
+                local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                if self._last_rot ~= result_rot then
                     self:set_unit_rotations(result_rot)
-                    self:update_positions()
                 end
+                self._last_rot = result_rot
             end
-            if self._move_widget:enabled() then
+            if self._move_widget:enabled() then            
+                if self._last_pos ~= nil then
+                    self:set_unit_positions(self._last_pos)
+                    self._last_pos = nil
+                end
                 BeardLibEditor.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
                 self._move_widget:update(t, dt)
             end
             if self._rotate_widget:enabled() then
+                if self._last_rot ~= nil then
+                    self:set_unit_rotations(self._last_rot)
+                    self._last_rot = nil
+                end               
                 BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
                 self._rotate_widget:update(t, dt)
             end

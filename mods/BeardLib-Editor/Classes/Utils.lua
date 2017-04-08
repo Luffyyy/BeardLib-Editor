@@ -507,19 +507,27 @@ function FakeObject:init(o)
     self._o = o
 end
 function FakeObject:rotation()
-    return self:alive() and self._o:rotation()
+    return self:alive() and type(self._o.rotation) == "function" and self._o:rotation() or self._o.rotation
 end
 function FakeObject:position()
-    return self:alive() and self._o:position()
+    return self:alive() and type(self._o.position) == "function" and self._o:position() or self._o.position
 end
 function FakeObject:set_position(pos)
     if self:alive() then
-        self._o:set_position(pos)
+        if type(self._o.position) == "function" then
+            self._o:set_position(pos)
+        else
+            self._o.position = pos
+        end
     end
 end
 function FakeObject:set_rotation(rot)
     if self:alive() then
-        self._o:set_rotation(rot)
+        if type(self._o.rotation) == "function" then
+            self._o:set_rotation(rot)
+        else
+            self._o.rotation = rot
+        end
     end
 end
 function FakeObject:alive()
