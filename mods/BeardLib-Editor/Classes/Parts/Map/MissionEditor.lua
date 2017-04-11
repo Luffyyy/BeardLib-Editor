@@ -13,9 +13,13 @@ function MissionEditor:init(parent, menu)
     self._trigger_ids = {}
 end
 
+function MissionEditor:units()
+    return self._units
+end
+
 function MissionEditor:set_elements_vis()
     local enabled = self:Value("ShowElements")
-    for _, unit in pairs(self._units) do
+    for _, unit in pairs(self:units()) do
         if unit:mission_element() then
             unit:mission_element():set_enabled(enabled)
             unit:set_enabled(enabled)

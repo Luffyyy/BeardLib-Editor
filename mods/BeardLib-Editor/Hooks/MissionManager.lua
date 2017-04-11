@@ -79,9 +79,8 @@ end
 function MissionManager:_load_mission_file(name, file_dir, data)
 	self._missions = self._missions or {}
 	local file_path = file_dir .. data.file
-	local scripts = self:_serialize_to_script("mission", file_path)
 	self._missions[name] = self:_serialize_to_script("mission", file_path) 
-	for sname, data in pairs(scripts) do	
+	for sname, data in pairs(self._missions[name]) do	
 		data.name = sname
 		data.continent = name
 		self:_add_script(data)
@@ -118,7 +117,6 @@ function MissionManager:set_element(element, old_script)
 	end
 	self._scripts[element.script]._elements[element.id]._values = element.values		
 end
-
 
 function MissionManager:add_element(element)
 	local module_name = "Core" .. element.class
@@ -182,7 +180,6 @@ function MissionManager:execute_element(element)
     end
 end
 
-
 function MissionManager:get_executors_of_element(element)
 	local executors = {}
 	if element then
@@ -237,30 +234,39 @@ function MissionManager:delete_executors_of_element(element)
 	end
 end
  
-function MissionManager:get_links(id)	
+function MissionManager:get_links(id, is_element)	
  	if not tonumber(id) or tonumber(id) <= 0 then
 		return {}
 	end
 	local modifiers = {}
-	local function search_table(element, tbl)
-		for _, v in pairs(tbl) do
-			if type(v) == "table" then
-				search_table(element, v)
-			elseif v == id then 
-				table.insert(modifiers, element)
+	local function IsLinked(upper_k, tbl, stop)
+		for k, v in pairs(tbl) do
+			local is_unit = k == "unit_id" or k == "notify_unit_id"
+			if tonumber(k) ~= nil then
+				is_unit = upper_k == "unit_ids"
+			end
+			if (is_element and not is_unit) or (not is_element and is_unit) then
+				if not stop and type(v) == "table" then
+					if IsLinked(k, v, true) then
+						return true
+					end
+				elseif v == id then 
+					return true
+				end
 			end
 		end
 	end
 	for _, script in pairs(self._missions) do
 		for _, tbl in pairs(script) do
 			if tbl.elements then
-				for i, element in pairs(tbl.elements) do
-					for k, element_data in pairs(element) do
-						if type(element_data) == "table" and k ~= "id" then
-							search_table(element, element_data)
+				for _, element in pairs(tbl.elements) do
+					for k, element_data in pairs(element.values) do
+						if type(element_data) == "table" then
+							if IsLinked(k, element_data) then
+								table.insert(modifiers, element)
+							end
 						end
 					end
-
 				end
 			end
 		end

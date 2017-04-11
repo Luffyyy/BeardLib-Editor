@@ -77,6 +77,14 @@ function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
 	end
 end
 
+function WorldDefinition:get_continent_of_static(unit)
+	local ud = unit:unit_data()
+	if ud and not unit:wire_data() and not unit:ai_editor_data() then
+		return self._continent_definitions[ud.continent]
+	end
+	return false
+end
+
 function WorldDefinition:insert_name_id(unit)
 	local name = unit:unit_data().name
 	self._name_ids[name] = self._name_ids[name] or {}

@@ -4,6 +4,7 @@ function StaticEditor:init(parent, menu)
     self._selected_units = {}
     self._disabled_units = {}
     self._nav_surfaces = {}
+    self._ignore_raycast = {}
     self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
 end
@@ -29,7 +30,7 @@ end
 
 function StaticEditor:build_default_menu()
     StaticEditor.super.build_default_menu(self)
-    self._editors = {}    
+    self._editors = {}
     self:Divider("No Selection")
 end
 
@@ -56,12 +57,11 @@ function StaticEditor:build_unit_editor_menu()
     self:Toggle("DisableOnAIGraph", callback(self, self, "set_unit_data"), false, {group = other})
     self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
         on_click = function(unit_path)
-            self._menu:GetItem("UnitPath"):SetValue(unit_path)
+            self:GetItem("UnitPath"):SetValue(unit_path)
             self:set_unit_data()      
         end,
     }), {group = other})
     self:build_extension_items()
-    local links = self:Group("Links")
 end
 
 function StaticEditor:build_extension_items()
@@ -74,6 +74,13 @@ end
 function StaticEditor:build_positions_items()
     self:build_quick_buttons()    
     local transform = self:Group("Transform")
+    self:Button("IgnoreRaycastOnce", function()
+        for _, unit in pairs(self:selected_units()) do
+            if unit:unit_data().unit_id then
+                self._ignore_raycast[unit:unit_data().unit_id] = true
+            end
+        end      
+    end)
     self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
 end
 
@@ -275,8 +282,8 @@ end
 function StaticEditor:recalc_all_locals()
     if alive(self._selected_units[1]) then
         local reference = self._selected_units[1]
-        reference:unit_data().local_pos = Vector3(0, 0, 0)
-        reference:unit_data().local_rot = Rotation(0, 0, 0)
+        reference:unit_data().local_pos = Vector3()
+        reference:unit_data().local_rot = Rotation()
         for _, unit in ipairs(self._selected_units) do
             if unit ~= reference then
                 self:recalc_locals(unit, reference)
@@ -293,7 +300,12 @@ function StaticEditor:recalc_locals(unit, reference)
 end
 
 function StaticEditor:check_unit_ok(unit)
-    if not unit:unit_data() then
+    local ud = unit:unit_data()
+    if not ud then
+        return false
+    end
+    if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
+        self._ignore_raycast[ud.unit_id] = nil
         return false
     end
     local mission_element = unit:mission_element() and unit:mission_element().element
@@ -306,6 +318,8 @@ function StaticEditor:check_unit_ok(unit)
 end
 
 function StaticEditor:reset_selected_units()
+    self:Manager("mission"):remove_script()
+    self:Manager("wdata").managers.env:check_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
@@ -316,23 +330,46 @@ end
 
 function StaticEditor:set_selected_unit(unit, add)
     self:recalc_all_locals()
+    local units = {unit}
+    if alive(unit) and self:Manager("opt"):get_value("SelectEditorGroups") then
+        local continent = managers.worlddefinition:get_continent_of_static(unit)
+        if not add then
+            add = true
+            self:reset_selected_units()
+        end
+        if continent then
+            continent.editor_groups = continent.editor_groups or {}
+            for _, group in pairs(continent.editor_groups) do
+                if group.units then
+                    for _, unit_id in pairs(group.units) do
+                        local u = managers.worlddefinition:get_unit(unit_id)
+                        if alive(u) and not table.contains(units, u) then
+                            table.insert(units, u)
+                        end
+                    end
+                end
+            end
+        end
+    end
     if add then
         for _, unit in pairs(self:selected_units()) do
             if unit:mission_element() then unit:mission_element():unselect() end
         end
-        if not table.contains(self._selected_units, unit) then
-            table.insert(self._selected_units, unit)
-        elseif not self._mouse_hold then
-            table.delete(self._selected_units, unit)
+        for _, u in pairs(units) do
+            if not table.contains(self._selected_units, u) then
+                table.insert(self._selected_units, u)
+            elseif not self._mouse_hold then
+                table.delete(self._selected_units, u)
+            end
         end
     elseif alive(unit) then
-        self:Manager("mission"):remove_script()
         self:reset_selected_units()
         self._selected_units[1] = unit
     end
+
     self:StorePreviousPosRot()
-    local unit = self._selected_units[1]
-    self._parent:use_widgets(unit and alive(unit))
+    local unit = self:selected_unit()
+    self._parent:use_widgets(unit and alive(unit) and unit:enabled())
     if (alive(unit) and unit:unit_data().instance) or #self._selected_units > 1 then
         self:set_multi_selected()
     else
@@ -374,7 +411,6 @@ end
 
 function StaticEditor:set_unit(reset)
     if reset then
-        self:Manager("mission"):remove_script()
         self:reset_selected_units()
     end
     local unit = self._selected_units[1]
@@ -389,37 +425,40 @@ end
 
 function StaticEditor:set_menu_unit(unit)   
     self:build_unit_editor_menu()
-    self._menu:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
-    self._menu:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
-    self._menu:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
-    self._menu:GetItem("DisableShadows"):SetValue(unit:unit_data().disable_shadows, false, true)
-    self._menu:GetItem("DisableCollision"):SetValue(unit:unit_data().disable_collision, false, true)
-    self._menu:GetItem("HideOnProjectionLight"):SetValue(unit:unit_data().hide_on_projection_light, false, true)
-    self._menu:GetItem("DisableOnAIGraph"):SetValue(unit:unit_data().disable_on_ai_graph, false, true)
+    self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
+    self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
+    self:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
+    self:GetItem("DisableShadows"):SetValue(unit:unit_data().disable_shadows, false, true)
+    self:GetItem("DisableCollision"):SetValue(unit:unit_data().disable_collision, false, true)
+    self:GetItem("HideOnProjectionLight"):SetValue(unit:unit_data().hide_on_projection_light, false, true)
+    self:GetItem("DisableOnAIGraph"):SetValue(unit:unit_data().disable_on_ai_graph, false, true)
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then
             editor:set_menu_unit(unit)
         end
     end
     self:update_positions()
-    self._menu:GetItem("Continent"):SetSelectedItem(unit:unit_data().continent)
+    self:GetItem("Continent"):SetSelectedItem(unit:unit_data().continent)
     local not_w_unit = not (unit:wire_data() or unit:ai_editor_data())
-    self._menu:GetItem("Continent"):SetEnabled(not_w_unit)
-    self._menu:GetItem("UnitPath"):SetEnabled(not_w_unit)
-    self._menu:GetItem("SelectUnitPath"):SetEnabled(not_w_unit)
-    for _, element in pairs(managers.mission:get_links(unit:unit_data().unit_id)) do
-        self._menu:Button({
-            name = element.editor_name,
-            text = element.editor_name .. " [" .. (element.class or "") .."]",
-            label = "elements",
-            items_size = 14,
-            group = self._menu:GetItem("Links"),
-            callback = callback(self._parent, self._parent, "select_element", element)
-        })
+    self:GetItem("Continent"):SetEnabled(not_w_unit)
+    self:GetItem("UnitPath"):SetEnabled(not_w_unit)
+    self:GetItem("SelectUnitPath"):SetEnabled(not_w_unit)
+    self:build_links(unit:unit_data().unit_id)
+end
+
+function StaticEditor:build_links(id, is_element)
+    local links = managers.mission:get_links(id, is_element)
+    if #links > 0 then
+        local links_group = self:GetItem("Links") or self:Group("Links")
+        for _, element in pairs(links) do
+            self:Button(element.editor_name, callback(self._parent, self._parent, "select_element", element), {
+                group = links_group, font_size = 16, label = "elements", text = tostring(element.editor_name) .. " | " .. tostring(element.id) .. " | " .. tostring(element.class):gsub("Element", "")
+            })
+        end
     end
 end
 
-function StaticEditor:addremove_unit_portal(menu, item)        
+function StaticEditor:addremove_unit_portal(menu, item)
     local portal = self:Manager("wdata")._selected_portal
     if portal then
         for _, unit in pairs(self._selected_units) do
@@ -436,8 +475,6 @@ function StaticEditor:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
         self._parent:DeleteUnit(unit)
     end
-    self:Manager("mission"):remove_script()
-    self:Manager("wdata").managers.env:check_units()
     self:reset_selected_units()
     self:set_unit()      
 end
@@ -453,32 +490,29 @@ end
 
 function StaticEditor:update(t, dt)
     for _, unit in pairs(self._nav_surfaces) do 
-        Application:draw(unit, 0,0.8,1) 
+        Application:draw(unit, 0,0.8,1)
     end
     for _, editor in pairs(self._editors) do
         if editor.update then
             editor:update(t, dt)
         end
     end
+    local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
     local instance_drawn
+    local draw_bodies = self:Value("DrawBodies")
     if managers.viewport:get_current_camera() then
         for _, unit in ipairs(self._selected_units) do
             if alive(unit) then
-                if unit:mission_element() then 
-                    unit:mission_element():select() 
-                elseif unit:name() == self._nav_surface or self:Manager("wdata").managers.env:is_env_unit(unit:name()) then 
-                    Application:draw(unit, 1,0.2,0) 
-                elseif unit:unit_data().instance then
-                    
-                else
+                if draw_bodies then
                     for i = 0, unit:num_bodies() - 1 do
                         local body = unit:body(i)
                         if self._parent:_should_draw_body(body) then
-                            self._pen:set(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
+                            self._pen:set(color)
                             self._pen:body(body)
-                            self._brush:set_color(BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1))
                         end
                     end
+                else
+                    Application:draw(unit, color:unpack())
                 end
             end
         end

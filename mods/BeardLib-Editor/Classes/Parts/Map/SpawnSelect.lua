@@ -86,14 +86,16 @@ function SpawnSelect:mouse_pressed(button, x, y)
         return false
     end
     if button == Idstring("0") then
+        self._do_switch = true
         self._parent:SpawnUnit(self._currently_spawning)
     elseif button == Idstring("1") then
         self:remove_dummy_unit()
         self._currently_spawning = nil
         self:SetTitle()
         self:Manager("menu"):set_tabs_enabled(true)
-        if self:selected_unit() then
-            self:Manager("static"):Switch()
+        if self._do_switch then
+            self:Manager("menu"):Switch("static")
+            self._do_switch = false
         end
     end
     return true

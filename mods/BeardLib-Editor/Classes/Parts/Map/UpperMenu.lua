@@ -1,6 +1,6 @@
 UpperMenu = UpperMenu or class()
 function UpperMenu:init(parent, menu)
-    self._parent = parent 
+    self._parent = parent
     self._tabs = {
         {name = "static", rect = {256, 262, 115, 115}},
         {name = "wdata", rect = {135, 271, 115, 115}},
@@ -23,6 +23,7 @@ function UpperMenu:init(parent, menu)
         scrollbar = false,
         visible = true,
     })
+    MenuUtils:new(self)
 end
 
 function UpperMenu:build_tabs()
@@ -60,7 +61,7 @@ function UpperMenu:select_tab(clbk, menu, item)
     else
         self._parent.managers[item.name]:Switch()
         for manager in pairs(self._parent.managers) do
-            local mitem = self._menu:GetItem(manager)
+            local mitem = self:GetItem(manager)
             if mitem and mitem.is_page then
                 mitem.marker_color = menu.marker_color
                 mitem.marker_highlight_color = mitem.marker_color
@@ -75,7 +76,7 @@ end
 
 function UpperMenu:set_tabs_enabled(enabled)
     for manager in pairs(self._parent.managers) do
-        local item = self._menu:GetItem(manager)
+        local item = self:GetItem(manager)
         if item and not item.cannot_be_enabled then
             item:SetEnabled(enabled)
         end
@@ -83,7 +84,7 @@ function UpperMenu:set_tabs_enabled(enabled)
 end
 
 function UpperMenu:toggle_widget(name, menu, item)
-    item = item or self._menu:GetItem(name.."_widget_toggle")   
+    item = item or self:GetItem(name.."_widget_toggle")   
     if not item.enabled then
         return
     end
@@ -93,6 +94,10 @@ function UpperMenu:toggle_widget(name, menu, item)
     item.marker_color = self._parent["_use_"..name.."_widget"] and menu.marker_highlight_color or menu.marker_color
     item.marker_highlight_color = item.marker_color
     item:UnHighlight()
+end
+
+function UpperMenu:Switch(name)
+    self:GetItem(name):RunCallback()
 end
 
 function UpperMenu:SwitchMenu(menu)

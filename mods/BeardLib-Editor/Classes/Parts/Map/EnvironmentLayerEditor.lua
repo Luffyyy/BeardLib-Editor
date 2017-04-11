@@ -97,22 +97,24 @@ function EnvironmentLayerEditor:save()
 	local cubemap_gizmos = {}
 	local dome_occ_shapes = {}
 	for _, unit in ipairs(self._created_units) do
-		if unit:name() == self._effect_unit:id() then
-			local effect = unit:unit_data().effect or "none"
-			local name_id = unit:unit_data().name_id or "none"
-			table.insert(effects, {
-				name = effect,
-				name_id = name_id,
-				position = unit:position(),
-				rotation = unit:rotation()
-			})
-		elseif unit:name() == self._environment_area_unit:id() then
-			local area = unit:unit_data().environment_area
-			self:_update_filter_list(area)
-			table.insert(environment_areas, area:save_level_data())
-		elseif unit:name() == self._dome_occ_shape_unit:id() then
-			local shape = unit:unit_data().occ_shape
-			table.insert(dome_occ_shapes, shape:save_level_data())
+		if alive(unit) then
+			if unit:name() == self._effect_unit:id() then
+				local effect = unit:unit_data().effect or "none"
+				local name_id = unit:unit_data().name_id or "none"
+				table.insert(effects, {
+					name = effect,
+					name_id = name_id,
+					position = unit:position(),
+					rotation = unit:rotation()
+				})
+			elseif unit:name() == self._environment_area_unit:id() then
+				local area = unit:unit_data().environment_area
+				self:_update_filter_list(area)
+				table.insert(environment_areas, area:save_level_data())
+			elseif unit:name() == self._dome_occ_shape_unit:id() then
+				local shape = unit:unit_data().occ_shape
+				table.insert(dome_occ_shapes, shape:save_level_data())
+			end
 		end
 	end
 	local data = self:data()

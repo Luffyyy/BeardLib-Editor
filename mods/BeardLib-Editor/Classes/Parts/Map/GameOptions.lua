@@ -18,9 +18,10 @@ function GameOptions:build_default_menu()
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.config.maps_dir .. level)
     end
-    self:Toggle("EditorUnits", callback(self, self, "set_editor_units_visible"), self:Value("EditorUnits"))
+    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"))
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"))
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"))
+    self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"))
     self:Toggle("DrawPortals", nil, false, {text = "Draw Portals"})
     self:Divider("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]"})
     local group = self:Group("Draw", {use_as_menu = true, align_method = "grid"})
@@ -37,6 +38,9 @@ function GameOptions:build_default_menu()
     for k, v in pairs(items) do
         self._draw_options[k] = self:Toggle(k, callback(self, self, "draw_nav_segments"), v, {size_by_text = true, items_size = 14, group = group})
     end
+    self:Divider("Raycast", self._menu.highlight_color)
+    self:Toggle("IgnoreFirstRaycast")
+    self:Toggle("SelectEditorGroups")
     self:Divider("Other", self._menu.highlight_color)
     self:Button("TeleportPlayer", callback(self, self, "drop_player"))
     self:Button("LogPosition", callback(self, self, "position_debug"))
@@ -59,6 +63,18 @@ function GameOptions:update_option_value(menu, item)
     if item.name == "ShowElements" then
         self:Manager("mission"):set_elements_vis()
     end
+    if item.name == "EditorUnits" then
+        for _, unit in pairs(World:find_units_quick("all")) do
+            if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
+                unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
+            end
+        end
+    end
+end
+
+function GameOptions:get_value(opt)
+    local item = self:GetItem(opt)
+    return item and item:Value()
 end
 
 function GameOptions:pause_game(menu, item)
@@ -71,15 +87,6 @@ end
 
 function GameOptions:set_current_script(menu, item)
     self._parent._current_script = item:SelectedItem()
-end
-
-function GameOptions:set_editor_units_visible(menu, item)
-    self:update_option_value(meun, item)
-	for _, unit in pairs(World:find_units_quick("all")) do
-		if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
-			unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
-		end
-	end
 end
 
 function GameOptions:draw_nav_segments(menu, item)

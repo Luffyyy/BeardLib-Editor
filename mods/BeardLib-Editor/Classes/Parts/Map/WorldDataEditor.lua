@@ -501,7 +501,7 @@ function wde:select_shape(menu, item)
     if item then
         item:SetColor(Color.white)
     end
-    self:update_menu()
+    self:update_positions()
     self:save()
 end
 

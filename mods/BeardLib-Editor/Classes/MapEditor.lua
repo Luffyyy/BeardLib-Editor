@@ -1,5 +1,6 @@
 MapEditor = MapEditor or class()
 core:import("CoreEditorWidgets")
+
 local me = MapEditor
 function me:init()
     managers.editor = self
@@ -63,7 +64,7 @@ function me:post_init(menu)
         self.managers[k] = v:new(self, menu)
     end
     self.managers.menu:build_tabs()
-    self.managers.static:Switch()
+    self.managers.menu:Switch("static")
     menu.mouse_move = callback(self.managers.static, self.managers.static, "mouse_moved")
     if self._has_fix then
         self.managers.menu:toggle_widget("move")
@@ -75,7 +76,7 @@ end
 function me:add_error(data)
     table.insert(self._errors, data)
     self.managers.spwsel:build_default_menu()
-    self.managers.spwsel:Switch()
+    self.managers.menu:Switch("spwsel")
 end
 
 function me:check_has_fix()
@@ -104,11 +105,12 @@ function me:reset_widget_values()
     self._rotate_widget:reset_values()
 end
 
-function me:use_widgets()
-    self._move_widget:set_use(self._use_move_widget and self:enabled() and alive(self:selected_unit()))
-    self._move_widget:set_enabled(self._use_move_widget and self:enabled() and alive(self:selected_unit()))
-    self._rotate_widget:set_use(self._use_rotation_widget and self:enabled() and alive(self:selected_unit()))
-    self._rotate_widget:set_enabled(self._use_rotation_widget and self:enabled() and alive(self:selected_unit()))
+function me:use_widgets(use)
+    use = use and self:enabled()
+    self._move_widget:set_use(self._use_move_widget and use)
+    self._move_widget:set_enabled(self._use_move_widget and use)
+    self._rotate_widget:set_use(self._use_rotation_widget and use)
+    self._rotate_widget:set_enabled(self._use_rotation_widget and use)
 end
 
 function me:mouse_moved(x, y)
@@ -132,19 +134,19 @@ function me:mouse_pressed(button, x, y)
 end
 
 function me:select_unit(unit, add)
-    --self.managers.static:Switch()
+    --self.managers.menu:Switch("static")
     self.managers.static:set_selected_unit(unit, add)
 end
 
 function me:select_element(element)
-    for _, unit in pairs(World:find_units_quick("all")) do
+    for _, unit in pairs(self.managers.mission:units()) do
         if unit:mission_element() and unit:mission_element().element.id == element.id then
             self:select_unit(unit)
             break
         end
     end
     self.managers.mission:set_element(element)
-    self.managers.static:Switch()
+    self.managers.menu:Switch("static")
 end
 
 function me:DeleteUnit(unit)
@@ -306,7 +308,7 @@ function me:set_unit_rotations(rot)
     BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
     for _, unit in ipairs(self.managers.static._selected_units) do
         if unit ~= self:selected_unit() then
-            self:set_unit_position(unit, unit:position(), rot * unit:unit_data().local_rot)
+            self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
         end
     end
 end
@@ -377,11 +379,17 @@ function me:cursor_pos()
 end
 
 function me:select_unit_by_raycast(slot, clbk)
+    local first = true
+    local ignore = self.managers.opt:GetItem("IgnoreFirstRaycast"):Value()
     local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(200000), "ray_type", "body editor walk", "slot_mask", slot)
     if #rays > 0 then
         for _, r in pairs(rays) do
-            if clbk(r.unit) then 
-                return r
+            if clbk(r.unit) then
+                if not ignore or not first then
+                    return r
+                else
+                    first = false
+                end
             end
         end
     else

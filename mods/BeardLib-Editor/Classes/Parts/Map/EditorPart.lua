@@ -5,6 +5,7 @@ function EditorPart:init(parent, menu, name, opt)
         name = name,
         control_slice = 1.75,
         items_size = 18,
+        offset = {4, 2},
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
         scroll_width = 4,

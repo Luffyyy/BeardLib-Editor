@@ -23,6 +23,7 @@ function EditorMenu:make_page(name, clbk, opt)
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.75,        
         items_size = 20,
+        visible = false,
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))

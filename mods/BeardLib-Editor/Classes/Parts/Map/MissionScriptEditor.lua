@@ -29,15 +29,9 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    local executors = managers.mission:get_links(self._element)       
-    if #executors > 0 then 
-        self:Group("Links")
-        for _, element in pairs(executors) do
-            self:Button(element.editor_name .. " [" .. (element.class or "") .."]", callback(self, self, "set_element", element), {group = executors_group})
-        end 
-    end
+    self:Manager("static"):build_links(self._element.id, true)
     if #self._class_group.items == 0 then
-    	self._menu:RemoveItem(self._class_group)
+    	self:RemoveItem(self._class_group)
     end
 end
 

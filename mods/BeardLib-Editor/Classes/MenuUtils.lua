@@ -167,7 +167,6 @@ function MenuUtils:init(this, menu)
 	    opt = opt or {}
 	    opt.align_method = "grid"
 	    opt.use_as_menu = true
-	    opt.color = false
 	    local translation
 	    local rotation
 	    if not opt.no_pos then
@@ -178,6 +177,7 @@ function MenuUtils:init(this, menu)
 	    	self:Divider("Rotate"..name, opt)
 	    	rotation = self:Group("RotateGroup", opt)
 	    end
+	   	opt.color = false
 	    opt.w = translation.w / 3
 	    opt.offset = 0
 	    opt.control_slice = 1.75
@@ -252,5 +252,9 @@ function MenuUtils:init(this, menu)
 
 	function this:GetItem(name)
 		return menu:GetItem(name)
+	end
+
+	function this:RemoveItem(name)
+		return menu:RemoveItem(name)
 	end
 end
