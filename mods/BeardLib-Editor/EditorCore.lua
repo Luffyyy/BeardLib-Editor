@@ -6,9 +6,8 @@ function self:Init()
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
-    self.PartsDir = self.ClassDirectory .. "Parts/"
-    self.MapPartsDir = self.PartsDir .. "Map/"
-    self.ElementsDir = self.MapPartsDir .. "Elements/"
+    self.MapClassesDir = self.ClassDirectory .. "Map/"
+    self.ElementsDir = self.MapClassesDir .. "Elements/"
     
     self.managers = {}
     self.modules = {}
