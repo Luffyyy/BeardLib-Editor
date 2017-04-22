@@ -43,11 +43,12 @@ function wde:build_default_menu()
         self:Button("Add", callback(self, self, "new_continent"), {group = continents})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:DivGroup(name, {group = continents, text = name, align_method = "grid"})
-            self:Button("SelectUnits", callback(self, self, "select_all_units_from_continent", name), {size_by_text = true, align = "center", group = continent})
-            self:Button("ClearUnits", callback(self, self, "clear_all_units_from_continent", name), {size_by_text = true, align = "center", group = continent})
-            self:Button("MissionScripts", callback(self, self, "build_mission_scripts_menu", name), {size_by_text = true, align = "center", group = continent})
-            self:Button("Rename", callback(self, self, "rename_continent", name), {size_by_text = true, align = "center", group = continent})
-            self:Button("Remove", callback(self, self, "remove_continent", name), {size_by_text = true, align = "center", group = continent})
+            local opt = {size_by_text = true, align = "center", offset = {6, 0}, group = continent}
+            self:Button("SelectUnits", callback(self, self, "select_all_units_from_continent", name), opt)
+            self:Button("ClearUnits", callback(self, self, "clear_all_units_from_continent", name), opt)
+            self:Button("MissionScripts", callback(self, self, "build_mission_scripts_menu", name), opt)
+            self:Button("Rename", callback(self, self, "rename_continent", name), opt)
+            self:Button("Remove", callback(self, self, "remove_continent", name), opt)
         end
     end
 end
@@ -184,10 +185,11 @@ function wde:build_mission_scripts_menu(continent)
     self:Button("Add", callback(self, self, "add_new_mission_script"), {group = scripts})
     for name, data in pairs(managers.mission._missions[continent]) do
         local script = self:DivGroup(name, {group = scripts, text = name, align_method = "grid"})
-        self:Button("SelectElements", callback(self, self, "select_all_units_from_script", name), {size_by_text = true, align = "center", group = script})
-        self:Button("ClearElements", callback(self, self, "clear_all_elements_from_script", name), {size_by_text = true, align = "center", group = script})
-        self:Button("Rename", callback(self, self, "rename_script", name), {size_by_text = true, align = "center", group = script})
-        self:Button("Remove", callback(self, self, "remove_script", name), {size_by_text = true, align = "center", group = script})        
+        local opt = {size_by_text = true, align = "center", group = script, offset = {6, 0}}
+        self:Button("SelectElements", callback(self, self, "select_all_units_from_script", name), opt)
+        self:Button("ClearElements", callback(self, self, "clear_all_elements_from_script", name), opt)
+        self:Button("Rename", callback(self, self, "rename_script", name), opt)
+        self:Button("Remove", callback(self, self, "remove_script", name), opt)        
     end
 end
 
@@ -344,7 +346,7 @@ function wde:add_shape()
 end
 
 function wde:load_portals()
-    self._menu:ClearItems("portals")
+    self:ClearItems("portals")
     for name, portal in pairs(managers.portal:unit_groups()) do
         local btn = self:Button(portal._name, callback(self, self, "select_portal"), {label = "portals", group = self:GetItem("Portals"), items ={
             {text = "Remove", callback = callback(self, self, "remove_portal")},
@@ -422,8 +424,8 @@ end
 
 function wde:select_portal(menu, item)
     self._selected_shape = nil
-    self._menu:ClearItems("Shapes")
-    self._menu:ClearItems("Units")
+    self:ClearItems("Shapes")
+    self:ClearItems("Units")
     if self._selected_portal then
         self._menu:GetItem(self._selected_portal._name):SetColor()
     end
@@ -440,7 +442,7 @@ function wde:select_portal(menu, item)
 end
 
 function wde:load_portal_shapes()
-    self._menu:ClearItems("Shapes")
+    self:ClearItems("Shapes")
     local group = self._menu:GetItem("Shapes") 
     self:Button("New Shape", callback(self, self, "add_shape"), {group = group}):SetLabel("Shapes")
     for i=1, #self._selected_portal._shapes do
@@ -452,7 +454,7 @@ function wde:load_portal_shapes()
 end
 
 function wde:load_portal_units()
-    self._menu:ClearItems("Units")
+    self:ClearItems("Units")
     for unit_id, _ in pairs(self._selected_portal._ids) do
         local unit = managers.worlddefinition:get_unit(unit_id)
         if unit then

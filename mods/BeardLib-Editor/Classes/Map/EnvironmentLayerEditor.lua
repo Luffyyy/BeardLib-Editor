@@ -2,7 +2,7 @@ EnvironmentLayerEditor = EnvironmentLayerEditor or class(EditorPart)
 local sky_rot_key = Idstring("sky_orientation/rotation"):key()
 function EnvironmentLayerEditor:init(parent)
 	self:init_basic(parent, "EnvironmentLayerEditor")
-	self._menu = parent._menu
+	self._menu = parent._holder
 	MenuUtils:new(self)
 	self._wind_speeds = {
 	 	{speed = 0, beaufort = 0, description = "Calm"},
@@ -211,7 +211,7 @@ function EnvironmentLayerEditor:build_menu()
     }
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
 
-    local dome_occ = self:Group("DomeOcclusion") 
+    local dome_occ = self:Group("DomeOcclusion", {visible = false}) 
     self._draw_occ_shape = self:Toggle("Draw", nul, false, {group = dome_occ})
     self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ, enabled = false})
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
@@ -372,6 +372,8 @@ function EnvironmentLayerEditor:_update_filter_list(area)
 	area:set_filter_list(new_list)
 end
 
+--Unfuctional, when attempting to copy ovk's code everything seems to work fine but the result of the dome occlusion is weird
+--and makes the shadows look wrong so sadly I would probably not bother with dome occlusion.
 function EnvironmentLayerEditor:generate_dome_occ()
 	local shape
 	for _, unit in ipairs(self._created_units) do

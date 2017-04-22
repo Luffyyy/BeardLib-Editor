@@ -2,10 +2,10 @@ EditAIData = EditAIData or class(EditUnit)
 function EditAIData:editable(unit) return unit:ai_editor_data() end
 function EditAIData:build_menu(parent)
 	local ai = self:Group("AIEditorData")
-	self:TextBox("LocationId", callback(self._parent, self._parent, "set_unit_data"), "", {help = "Select a location id to be associated with this navigation point"})
-	self:Divider("LocOfLocation", {text = "Text = " .. managers.localization:text("location_unknown")})
-	self:NumberBox("SuspicionMultiplier", callback(self._parent, self._parent, "set_unit_data"), 1, {min = 1, floats = 1, help = "multiplier applied to suspicion buildup rate"})
-	self:NumberBox("DetectionMultiplier", callback(self._parent, self._parent, "set_unit_data"), 1, {min = 0.01, help = "multiplier applied to AI detection speed. min is 0.01"})
+	self:TextBox("LocationId", callback(self._parent, self._parent, "set_unit_data"), "", {help = "Select a location id to be associated with this navigation point", group = ai})
+	self:Divider("LocOfLocation", {text = "Text = " .. managers.localization:text("location_unknown"), group = ai})
+	self:NumberBox("SuspicionMultiplier", callback(self._parent, self._parent, "set_unit_data"), 1, {min = 1, floats = 1, help = "multiplier applied to suspicion buildup rate", group = ai})
+	self:NumberBox("DetectionMultiplier", callback(self._parent, self._parent, "set_unit_data"), 1, {min = 0.01, help = "multiplier applied to AI detection speed. min is 0.01", group = ai})
 	return sizer
 end
 

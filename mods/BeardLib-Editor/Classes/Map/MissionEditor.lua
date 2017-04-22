@@ -48,6 +48,14 @@ function MissionEditor:disable()
     self._trigger_ids = {}
 end 
 
+function MissionEditor:get_element_unit(id)
+    for _, unit in pairs(self._units) do
+        if unit:mission_element().element.id == id then
+            return unit
+        end
+    end
+end
+
 function MissionEditor:add_element_unit(unit)
     table.insert(self._units, unit)
     local enabled = self:Value("ShowElements")

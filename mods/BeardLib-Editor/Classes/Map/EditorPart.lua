@@ -5,16 +5,19 @@ function EditorPart:init(parent, menu, name, opt)
         name = name,
         control_slice = 1.75,
         items_size = 18,
-        offset = {4, 2},
+        offset = {4, 1},
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.4,        
-        scroll_width = 4,
+        scrollbar = false,
         visible = false,
         w = 300,
         h = self:Manager("menu"):get_menu_h()
-    }, opt or {}))    
-    MenuUtils:new(self)
+    }, opt or {}))
+    MenuUtils:new(self)    
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
+    self:Divider("Title", {items_size = 24, offset = 0, marker_color = self._menu.marker_highlight_color, text = string.pretty2(name)})
+    self._holder = self:Menu("Holder", {automatic_height = false, h = self._menu.h - 24, scroll_width = 4})
+    MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
 
@@ -39,8 +42,11 @@ end
 function EditorPart:init_basic(parent, name)
     self._name = name
     self._parent = parent    
-    self._pen = Draw:pen(Color(0.15, 1, 1, 1))
-    self._brush = Draw:brush(Color(0.15, 1, 1, 1))   
+    self._pen = Draw:pen(Color(1, 1, 1))
+    self._brush = Draw:brush(Color(1, 1, 1))
+    self._brush:set_font(Idstring("fonts/font_large_mf"), 16)
+    self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
+
     self._trigger_ids = {}
     self._axis_controls = {"x", "y", "z", "yaw", "pitch", "roll"}
     self._shape_controls = {"width", "height", "depth", "radius"}
@@ -63,18 +69,11 @@ function EditorPart:Manager(n)
 end 
 
 function EditorPart:build_default_menu()
-    self._menu:ClearItems()
-    self._menu:Divider({
-        name = "Title",
-        items_size = 24,
-        offset = 0,
-        marker_color = self._menu.marker_highlight_color,
-        text = string.pretty2(self._menu.name)
-    })
+    self:ClearItems()
 end
 
 function EditorPart:SetTitle(title)
-    self:GetItem("Title"):SetText(title or self._menu.name)
+    self._menu:GetItem("Title"):SetText(title or self._menu.name)
 end
 
 function EditorPart:disable()

@@ -13,12 +13,20 @@ function MissionElementUnit:init(unit)
     self._ws = self._gui:create_linked_workspace(iconsize / 2, iconsize / 2, root, pos, Vector3(iconsize, 0, 0), Vector3(0, iconsize, 0))
     self._ws:set_billboard(self._ws.BILLBOARD_BOTH)
     local colors = {
-        Color("4689f4"),
-        Color("46f455"),
-        Color("f7ff11"),
-        Color("b711ff"),
+        Color("ffffff"),
+        Color("0d449c"),
+        Color("16b329"),
+        Color("eec022"),
+        Color("9519ca"),
+        Color("d31f07"),
+        Color("555555"),
+        Color("ea34ca"),
+        Color("179d9b"),
+        Color("0c243e"),
+        Color("2c2c2c"),
+        Color("5fc16f"),
     }
-    self._color = colors[math.random(0, #colors)]   
+    self._color = EditorPart:Value("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Value("ElementsColor")
     local texture, rect = "textures/editor_icons_df", {368, 14, 128, 128}
     local size = iconsize / 4
     local font_size = iconsize / 8

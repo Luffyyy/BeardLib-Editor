@@ -64,13 +64,17 @@ function UpperMenu:select_tab(clbk, menu, item)
             local mitem = self:GetItem(manager)
             if mitem and mitem.is_page then
                 mitem.marker_color = menu.marker_color
-                mitem.marker_highlight_color = mitem.marker_color
+                mitem.marker_highlight_color = menu.marker_highlight_color
                 mitem:UnHighlight()
+                mitem.bg:set_h(mitem:Panel():h())
             end
         end
         item.marker_color = menu.marker_highlight_color
         item.marker_highlight_color = item.marker_color
         item:UnHighlight()
+        QuickAnim:Work(item.bg, "speed", 10, "h", 2, "after", function()
+            item.bg:set_bottom(item:Panel():bottom())
+        end)
     end
 end
 
@@ -84,14 +88,13 @@ function UpperMenu:set_tabs_enabled(enabled)
 end
 
 function UpperMenu:toggle_widget(name, menu, item)
-    item = item or self:GetItem(name.."_widget_toggle")   
-    if not item.enabled then
-        return
-    end
+    item = item or self:GetItem(name.."_widget_toggle")
     menu = menu or item.parent
-    self._parent["_use_"..name.."_widget"] = not self._parent["_use_"..name.."_widget"]
-    self._parent:use_widgets()
-    item.marker_color = self._parent["_use_"..name.."_widget"] and menu.marker_highlight_color or menu.marker_color
+    if not item.enabled then return end
+    
+    self._parent["toggle_"..name.."_widget"](self._parent)
+    self._parent:use_widgets(self._parent:selected_unit() ~= nil)
+    item.marker_color = self._parent[name.."_widget_enabled"](self._parent) and menu.marker_highlight_color or menu.marker_color
     item.marker_highlight_color = item.marker_color
     item:UnHighlight()
 end

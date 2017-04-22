@@ -3,31 +3,31 @@ function LoadLevelMenu:init()
 	local menu = BeardLibEditor.managers.Menu
 	self._menu = menu:make_page("Levels")
 	MenuUtils:new(self)
-	local tabs = self:Group("Tabs", {align_method = "grid", use_as_menu = true, offset = 0})
+	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0})
 	local loc = self:Toggle("Localized", callback(self, self, "load_levels", false), false, {size_by_text = true, group = tabs, color = tabs.marker_highlight_color, offset = 0})
 	local tab_opt = {w = (tabs.w - loc.w) / 3, group = tabs, offset = 0, color = tabs.marker_highlight_color}
 	self:Button("All", callback(self, self, "load_levels", "all"), tab_opt)
 	self:Button("Vanilla", callback(self, self, "load_levels", "vanilla"), tab_opt)
 	self:Button("Custom", callback(self, self, "load_levels", "custom"), tab_opt)
-	local levels = self:Group("Levels", {align_method = "grid", use_as_menu = true})
+	local levels = self:Menu("Levels", {align_method = "grid"})
 	self:load_levels("all")
 end
 
 function LoadLevelMenu:load_levels(name)
 	name = name or self._current
-	self._menu:ClearItems("levels")
 	local columns = 3
 	local loc = self:GetItem("Localized")
 	local levels = self:GetItem("Levels")
+	levels:ClearItems("levels")
+
 	for id, level in pairs(tweak_data.levels) do
 		if level.world_name and (name == "all" or (name == "custom" and level.custom) or (name == "vanilla" and not level.custom)) then
-			self._menu:Button({
+			levels:Button({
 				name = id,
 	            w = levels.w / columns,
 				text = loc:Value() and managers.localization:text(tostring(level.name_id)) or id,
 				callback = callback(self, self, "load_level", id),
 				label = "levels",
-				group = levels
 			})	
 		end
 	end

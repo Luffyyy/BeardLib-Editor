@@ -21,6 +21,7 @@ function EnvEditor:init(parent, menu)
     self._posteffect = {}
     self._underlayeffect = {}
     self._sky = {}
+    self._environment_effects = {}
     self._reported_data_path_map = {}
     self._shadow_blocks = {}
     self._shadow_params = {}
@@ -39,6 +40,7 @@ function EnvEditor:build_default_menu()
     local global_illumination = self:DivGroup("GlobalIllumination")
     local skydome = self:DivGroup("Skydome")
     local global_textures = self:DivGroup("GlobalTextures")    
+    local effects = self:DivGroup("Effects")    
     self:add_sky_param(self:ColorEnvItem("sun_ray_color", {text = "Sun Color", group = global_illumination}))
     self:add_sky_param(self:Slider("sun_ray_color_scale", nil, 1, {text = "Sun Intensity", step = 0.1, min = 0, max = 10, group = global_illumination}))
 
@@ -80,6 +82,11 @@ function EnvEditor:build_default_menu()
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice3"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("shadow_slice_overlap"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("shadow_slice_depths"))
+
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("bloom_threshold", nil, 1, {text = "Bloom threshold", min = 0, max = 1, floats = 2, group = effects}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_intensity", nil, 1, {text = "Bloom intensity", min = 0, max = 10, floats = 2, group = effects}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_blur_size", nil, 1, {text = "Bloom blur size", min = 1, max = 4, floats = 0, group = effects}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("lense_intensity", nil, 1, {text = "Lense intensity", min = 0, max = 1, floats = 2, group = effects}))
 
     self:database_load_env(env_path)
 
@@ -139,10 +146,23 @@ function EnvEditor:load_env(env)
                 self:database_load_posteffect(v)
             elseif k == "underlay_effect" then
                 self:database_load_underlay(v)
+            elseif k == "environment_effects" then
+                self:database_load_environment_effects(v)
             end    
         end
         self:parse_shadow_data()
+        self:set_effect_data(self._environment_effects)
     end
+end
+
+function EnvEditor:set_effect_data(active_effects)
+   local all_effects = managers.environment_effects:effects_names()
+   table.sort(all_effects)
+   table.remove_condition(all_effects, function(effect)
+       return table.contains(active_effects, effect)
+   end)
+   --popuplate_list(self._effect_list, all_effects)
+  -- popuplate_list(self._active_effect_list, active_effects)
 end
 
 function EnvEditor:database_load_underlay(underlay_effect_node)
@@ -168,7 +188,7 @@ function EnvEditor:database_load_underlay(underlay_effect_node)
                             mat.params[k] = DummyItem:new()
                             parameter = mat.params[k]
                         elseif managers.viewport:is_deprecated_data_path(data_path) then
-                            log("Deprecated value will be removed next time you save: " .. data_path)
+                        --    log("Deprecated value will be removed next time you save: " .. data_path)
                         else
                             log("Invalid value: " .. data_path)
                         end
@@ -178,6 +198,15 @@ function EnvEditor:database_load_underlay(underlay_effect_node)
                     end
                 end
             end
+        end
+    end
+end
+
+function EnvEditor:database_load_environment_effects(effect_node)
+    for _, param in pairs(effect_node) do
+        if type(param) == "table" and param._meta == "param" and param.key and param.key ~= "" and param.value and param.value ~= "" then
+            self._environment_effects = string.split(param.value, ";")
+            table.sort(self._environment_effects)
         end
     end
 end
@@ -196,7 +225,7 @@ function EnvEditor:database_load_sky(sky_node)
                     log("Editor doesn't handle value but should: " .. data_path)
                     self._sky.params[k] = DummyItem:new()
                 elseif managers.viewport:is_deprecated_data_path(data_path) then
-                    log("Deprecated value will be removed next time you save: " .. data_path)
+                --    log("Deprecated value will be removed next time you save: " .. data_path)
                 else
                     log("Invalid value: " .. data_path)
                 end
@@ -247,7 +276,7 @@ function EnvEditor:database_load_posteffect(post_effect_node)
                                             mod.params[k] = DummyItem:new()
                                             parameter = mod.params[k]
                                         elseif managers.viewport:is_deprecated_data_path(data_path) then
-                                            log("Deprecated value will be removed next time you save: " .. data_path)
+                                        --    log("Deprecated value will be removed next time you save: " .. data_path)
                                         else
                                             log("Invalid value: " .. data_path)
                                         end
@@ -442,6 +471,7 @@ function EnvEditor:write_to_disk()
                 self:write_sky(file)
                 self:write_posteffect(file)
                 self:write_underlayeffect(file)
+                self:write_environment_effects(file)
                 file:print("\t</data>\n")
                 file:print("</environment>\n")
                 file:close()
@@ -491,6 +521,19 @@ function EnvEditor:write_posteffect(file)
         end
     end
     file:print("\t\t</post_effect>\n")
+end
+
+function EnvEditor:write_environment_effects(file)
+    file:print("\t\t<environment_effects>\n")
+    local effects = ""
+    for i, effect in ipairs(self._environment_effects) do
+        if i > 1 then
+            effects = effects .. ";"
+        end
+        effects = effects .. effect
+    end
+    file:print("\t\t\t<param key=\"effects\" value=\"" .. effects .. "\"/>\n")
+    file:print("\t\t</environment_effects>\n")
 end
 
 function EnvEditor:write_shadow_params(file)

@@ -207,11 +207,10 @@ if Hooks then
     Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes) BeardLibEditor:InitManagers() end)
 end
 
-
-
-if not BeardLibEditor.InitDone then
-    BeardLibEditor:Init()
+if not self.InitDone then
+    if BeardLib.Version and BeardLib.Version >= 2.2 then
+        BeardLibEditor:Init()
+    else
+        log("[ERROR], BeardLibEditor requires at least version 2.2 of Beardlib installed!")
+    end
 end
-
-
-

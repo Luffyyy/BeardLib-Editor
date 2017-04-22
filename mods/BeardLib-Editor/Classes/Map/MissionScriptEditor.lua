@@ -1,14 +1,15 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element)
 	self:init_basic(managers.editor, "MissionElement")
-	self._menu = self:Manager("static")._menu
+	self._menu = self:Manager("static")._holder
 	MenuUtils:new(self)
-	if element then 
+	self._on_executed_units = {}
+	if element then
 		self._element = element
 	else
 		self:create_element()
 		return managers.mission:add_element(self._element)
-	end	
+	end
 end
 
 function MissionScriptEditor:create_element()		
@@ -29,10 +30,28 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    self:Manager("static"):build_links(self._element.id, true)
-    if #self._class_group.items == 0 then
+    self._links = self:Manager("static"):build_links(self._element.id, true)
+    if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
+    self._unit = self:Manager("mission"):get_element_unit(self._element.id)
+    self._on_executed_units = {}
+	for _, u in pairs(self._element.values.on_executed) do
+		table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
+	end
+	local executors = managers.mission:get_executors(self._element)
+	self._executors_units = {}
+	for _, element in pairs(executors) do
+		table.insert(self._executors_units, self:Manager("mission"):get_element_unit(element.id))
+	end
+
+	local temp = clone(self._links)
+	self._links = {}
+	for _, element in pairs(self._links) do
+		if not executors[element.id] then
+			table.insert(self._links, element)
+		end
+	end
 end
 
 function MissionScriptEditor:_build_panel()
@@ -107,6 +126,115 @@ function MissionScriptEditor:update_positions(pos, rot)
     	self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
     end
     self:update_element()  
+end
+
+function MissionScriptEditor:update(t, dt)
+	self:draw_links()
+end
+
+function MissionScriptEditor:draw_links()
+	self:draw_link_on_executed()
+	for _, unit in pairs(self._executors_units) do
+		self:draw_link_exec(unit, self._unit)
+	end
+	self:draw_elements(self._links, true)
+	self:draw_elements(self._element.values.orientation_elements)
+	self:draw_elements(self._element.values.rules_elements)
+end
+
+function MissionScriptEditor:draw_elements(elements, is_link)
+	if not elements then
+		return
+	end
+	for _, id in ipairs(elements) do
+		local unit = self:Manager("mission"):get_element_unit(id)
+		if self:should_draw_link(selected_unit, unit) then
+			local r, g, b = unit:mission_element()._color:unpack()
+			self:_draw_link({
+				from_unit = is_link and self._unit or unit,
+				to_unit = is_link and unit or self._unit,
+				r = r,
+				g = g,
+				b = b
+			})
+		end
+	end
+end
+
+function MissionScriptEditor:should_draw_link(unit)
+	local selected_unit = self:selected_unit()
+	return unit == selected_unit or self._unit == selected_unit
+end
+
+function MissionScriptEditor:draw_link_on_executed()
+    local selected_unit = self:selected_unit()
+    local unit_sel = self._unit == selected_unit
+    for _, unit in ipairs(self._on_executed_units) do
+        if alive(unit) then
+            if unit_sel or unit == selected_unit then
+            	self:draw_link_exec(self._unit, unit)
+            end
+        else
+            table.delete(self._on_executed_units, unit)
+        end
+    end
+end
+
+function MissionScriptEditor:draw_link_exec(element_unit, unit)
+    local dir = mvector3.copy(unit:position())
+    mvector3.subtract(dir, element_unit:position())
+    local vec_len = mvector3.normalize(dir)
+    local offset = math.min(50, vec_len)
+    mvector3.multiply(dir, offset)
+    local text = self:get_delay_string(unit:mission_element().element.id, element_unit:mission_element().element)
+    local alternative = self:get_on_executed(unit:mission_element().element.id, element_unit:mission_element().element).alternative
+    if alternative then
+        text = text .. " - " .. alternative .. ""
+    end
+
+    self._brush:center_text(element_unit:position() + dir, text, managers.editor:camera_rotation():x(), -managers.editor:camera_rotation():z())
+    local element_col = element_unit:mission_element()._color
+	self._brush:set_color(element_col)
+    local r, g, b = element_col:unpack()
+    self:draw_link({
+        from_unit = element_unit,
+        to_unit = unit,
+        r = r * 0.75,
+        g = g * 0.75,
+        b = b * 0.75
+    })
+end
+
+function MissionScriptEditor:draw_link(params)
+	params.draw_flow = true -- managers.editor:layer("Mission"):visualize_flow()
+	Application:draw_link(params)
+end
+
+function MissionScriptEditor:get_delay_string(id, element)
+	element = element or self._element
+	local delay = element.values.base_delay + self:get_on_executed(id, element).delay
+	local text = string.format("%.2f", delay)
+	if element.values.base_delay_rand or self:get_on_executed(id, element).delay_rand then
+		local delay_max = delay + (self:get_on_executed(id, element).delay_rand or 0)
+		delay_max = delay_max + (element.values.base_delay_rand and element.values.base_delay_rand or 0)
+		text = text .. "-" .. string.format("%.2f", delay_max) .. ""
+	end
+	return text
+end
+
+function MissionScriptEditor:get_on_executed(id, element)
+	return self:get({id_key = "id", tbl_key = "on_executed"}, id, element)
+end
+
+function MissionScriptEditor:get(table_data, id, element)
+	element = element or self._element
+	local id_key = table_data.id_key
+	local tbl = element.values[table_data.tbl_key]
+	for _, v in ipairs(tbl) do
+		if (id_key and v[id_key] == id) or v == id then
+			return v
+		end
+	end
 end
 
 function MissionScriptEditor:deselect_element()

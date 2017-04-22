@@ -231,8 +231,9 @@ function BeardLibEditor.Utils:GetLights(unit)
         for child in node:children() do
             if child:name() == "lights" then
                 for light in child:children() do
-                    if light:has_parameter("editable") and light:parameter("editable") == "true" then
-                        table.insert(lights, {name = light:parameter("name"), object = unit:get_object(Idstring(light:parameter("name")))})
+                    local object = unit:get_object(Idstring(light:parameter("name")))
+                    if alive(object) and light:has_parameter("editable") and light:parameter("editable") == "true" then
+                        table.insert(lights, {name = light:parameter("name"), object = object})
                     end
                 end
             end

@@ -15,7 +15,8 @@ function MenuUtils:init(this, menu)
 	menu = menu or this._menu
 	function this:Divider(name, opt)
 	    opt = opt or {}
-	    return menu:Divider(table.merge({
+	    local m = opt.group or menu
+	    return m:Divider(table.merge({
 	        name = name,
 	        text = name,
 	        color = menu.marker_highlight_color,
@@ -24,19 +25,36 @@ function MenuUtils:init(this, menu)
 
 	function this:Group(name, opt)
 	    opt = opt or {}
-	    return menu:ItemsGroup(table.merge({
+	    local m = opt.group or menu
+	    return m:ItemsGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
+	        color = menu.marker_highlight_color
 	    }, opt))
 	end	
 
 	function this:DivGroup(name, opt)
 	    opt = opt or {}
-	    opt.use_as_menu = true
-	    opt.offset = {8, 4}
-	    opt.text = opt.text or string.pretty2(name)
-	    local div = self:Divider(name.."Div", opt)
-		return self:Group(name, opt), div
+	    local m = opt.group or menu
+	    return m:DivGroup(table.merge({
+	        name = name,
+	        text = string.pretty2(name),
+	        color = menu.marker_highlight_color,
+	        automatic_height = true,
+	        offset = {8, 4},
+	        background_visible = false
+	    }, opt))
+	end
+
+	function this:Menu(name, opt)
+	    opt = opt or {}
+	    opt.background_visible = opt.background_visible ~= nil and opt.background_visible or false
+	    opt.automatic_height = opt.automatic_height == nil and true or opt.automatic_height
+	    local m = opt.group or menu
+	    return m:Menu(table.merge({
+	        name = name,
+	        text = string.pretty2(name),
+	    }, opt))
 	end
 
 	function this:CloseButton()
@@ -45,7 +63,8 @@ function MenuUtils:init(this, menu)
 
 	function this:Button(name, callback, opt)
 	    opt = opt or {}
-	    return menu:Button(table.merge({
+	    local m = opt.group or menu
+	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
@@ -54,20 +73,23 @@ function MenuUtils:init(this, menu)
 
 	function this:SmallButton(name, callback, parent, opt)    
 	    opt = opt or {}
-	    return menu:Button(table.merge({
+	    local m = opt.group or menu
+	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
 	        size_by_text = true,
 	        position = "CenterRight",
-	        align = "center",
+	        text_align = "center",
+	        text_vertical = "center",
 	        override_parent = parent,
 	    }, opt))
 	end
 
 	function this:ComboBox(name, callback, items, value, opt)
 	    opt = opt or {}
-	    return menu:ComboBox(table.merge({
+	    local m = opt.group or menu
+	    return m:ComboBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -78,7 +100,8 @@ function MenuUtils:init(this, menu)
 
 	function this:TextBox(name, callback, value, opt)
 	    opt = opt or {}
-	    return menu:TextBox(table.merge({
+	    local m = opt.group or menu
+	    return m:TextBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
@@ -88,7 +111,8 @@ function MenuUtils:init(this, menu)
 
 	function this:Slider(name, callback, value, opt)
 	    opt = opt or {}
-	    return menu:Slider(table.merge({
+	    local m = opt.group or menu
+	    return m:Slider(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -98,7 +122,8 @@ function MenuUtils:init(this, menu)
 
 	function this:NumberBox(name, callback, value, opt)
 	    opt = opt or {}
-	    return menu:NumberBox(table.merge({
+	    local m = opt.group or menu
+	    return m:NumberBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -108,7 +133,8 @@ function MenuUtils:init(this, menu)
 
 	function this:Toggle(name, callback, value, opt)
 	    opt = opt or {}
-	    return menu:Toggle(table.merge({
+	    local m = opt.group or menu
+	    return m:Toggle(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
@@ -166,16 +192,13 @@ function MenuUtils:init(this, menu)
 		name = name or ""
 	    opt = opt or {}
 	    opt.align_method = "grid"
-	    opt.use_as_menu = true
 	    local translation
 	    local rotation
 	    if not opt.no_pos then
-	    	self:Divider("Translate"..name, opt)
-			translation = self:Group("TranslateGroup", opt)
+			translation = self:DivGroup("Translate"..name, opt)
 	    end
 	    if not opt.no_rot then
-	    	self:Divider("Rotate"..name, opt)
-	    	rotation = self:Group("RotateGroup", opt)
+	    	rotation = self:DivGroup("Rotate"..name, opt)
 	    end
 	   	opt.color = false
 	    opt.w = translation.w / 3
@@ -197,10 +220,9 @@ function MenuUtils:init(this, menu)
 	    opt = opt or {}
 	    opt.floats = 0
 	    opt.align_method = "grid"
-	    opt.use_as_menu = true
 	    opt.color = false
 	    self:Divider("Shape", opt)
-	    local shapegroup = self:Group("ShapeGroup", opt)
+	    local shapegroup = self:Menu("ShapeGroup", opt)
 	    opt.w = shapegroup.w / 2
 	    opt.offset = 0
 	    opt.group = shapegroup

@@ -180,25 +180,19 @@ function MissionManager:execute_element(element)
     end
 end
 
-function MissionManager:get_executors_of_element(element)
+function MissionManager:get_executors(element)
 	local executors = {}
 	if element then
 		for _, script in pairs(self._missions) do
 			for _, tbl in pairs(script) do
 				if tbl.elements then
-					for i, script_element in pairs(tbl.elements) do
-						if script_element.values.on_executed then
-							for _, on_executed_element in pairs(script_element.values.on_executed) do									
-								if on_executed_element.id == element.id then
-									table.insert(executors, script_element)
+					for i, s_element in pairs(tbl.elements) do
+						if s_element.values.on_executed then
+							for _, exec in pairs(s_element.values.on_executed) do									
+								if exec.id == element.id then
+									table.insert(executors, s_element)
 								end
 							end
-						elseif script_element.values.elements then
-							for _, _element in pairs(script_element.values.elements) do
-								if _element.id == element.id then
-									table.insert(executors, script_element)
-								end
-							end							
 						end
 					end
 				end
@@ -322,12 +316,10 @@ function MissionScript:execute_element(element)
 end
 
 function MissionScript:create_mission_element_unit(element)
-	if not element.values.position then
-		return 
-	end
-	local unit_name = "units/mission_element/element"
 	element.values.position = element.values.position or Vector3()
-	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation(0,0,0)
+	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation()
+
+	local unit_name = "units/mission_element/element"
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
     unit:unit_data().position = element.values.position   
    	unit:unit_data().rotation = element.values.rotation 

@@ -80,7 +80,7 @@ function StaticEditor:build_positions_items()
                 self._ignore_raycast[unit:unit_data().unit_id] = true
             end
         end      
-    end)
+    end, {group = transform})
     self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
 end
 
@@ -456,6 +456,7 @@ function StaticEditor:build_links(id, is_element)
             })
         end
     end
+    return links
 end
 
 function StaticEditor:addremove_unit_portal(menu, item)

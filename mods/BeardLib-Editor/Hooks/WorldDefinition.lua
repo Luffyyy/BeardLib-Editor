@@ -457,7 +457,7 @@ function WorldDefinition:_create_environment(data, offset)
 			local size = Vector3(shape_data.depth, shape_data.width, shape_data.height)
 			local texture_name = self:world_dir() .. "cube_lights/" .. "dome_occlusion"
 			if not DB:has(Idstring("texture"), Idstring(texture_name)) then
-				_G.BeardLibEditor:log("[Warning] Dome occlusion texture doesn't exists, probably needs to be generated")
+			--	_G.BeardLibEditor:log("[Warning] Dome occlusion texture doesn't exists, probably needs to be generated")
 			else
 				managers.environment_controller:set_dome_occ_params(corner, size, texture_name)
 			end

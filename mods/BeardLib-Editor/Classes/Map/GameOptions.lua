@@ -7,24 +7,25 @@ end
 function GameOptions:build_default_menu()
     self.super.build_default_menu(self)
     local level =  "/" .. (Global.game_settings.level_id or "")
-    self:Divider("Basic", self._menu.highlight_color)
-    self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"))
-    self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"))
-    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1})
-    self:Slider("GridSize", callback(self._parent, self._parent, "update_grid_size"), 1, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
-    self:Slider("SnapRotation", callback(self._parent, self._parent, "update_snap_rotation"), 90, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
+    local main = self:DivGroup("Main")
+    self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
+    self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
+    self:Button("AccentColor", callback(self, self, "open_set_color_dialog", "AccentColor"), {group = main})
+    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1, group = main})
+    self:Slider("GridSize", callback(self, self, "update_option_value"), self:Value("GridSize"), {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
+    self:Slider("SnapRotation", callback(self, self, "update_option_value"), self:Value("SnapRotation"), {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})
     
-    self:Divider("Map", self._menu.highlight_color)
+    local map = self:DivGroup("Map")
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.config.maps_dir .. level)
     end
-    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"))
-    self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"))
-    self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"))
-    self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"))
-    self:Toggle("DrawPortals", nil, false, {text = "Draw Portals"})
-    self:Divider("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]"})
-    local group = self:Group("Draw", {use_as_menu = true, align_method = "grid"})
+    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map})
+    self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
+    self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
+    self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
+    self:Toggle("DrawPortals", nil, false, {text = "Draw Portals", group = map})
+
+    local group = self:Menu("Draw", {align_method = "grid", offset = 0, group = self:DivGroup("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", group = holder})})
     local items = { 
         quads = false,
         doors = false,
@@ -38,17 +39,29 @@ function GameOptions:build_default_menu()
     for k, v in pairs(items) do
         self._draw_options[k] = self:Toggle(k, callback(self, self, "draw_nav_segments"), v, {size_by_text = true, items_size = 14, group = group})
     end
-    self:Divider("Raycast", self._menu.highlight_color)
-    self:Toggle("IgnoreFirstRaycast")
-    self:Toggle("SelectEditorGroups")
-    self:Divider("Other", self._menu.highlight_color)
-    self:Button("TeleportPlayer", callback(self, self, "drop_player"))
-    self:Button("LogPosition", callback(self, self, "position_debug"))
-    self:Button("ClearMassUnit", callback(self, self, "clear_massunit"))
-    self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix})
-    self:Button("SaveNavigationData", callback(self, self, "save_nav_data"), {enabled = self._parent._has_fix})
-    self:Button("SaveCoverData", callback(self, self, "save_cover_data"))
-    self:Toggle("PauseGame", callback(self, self, "pause_game"), false)  
+    local raycast = self:DivGroup("Raycast")
+    self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
+    self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
+
+    local mission = self:DivGroup("Mission")
+    self:Toggle("RandomizedElementsColor", callback(self, self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
+    self:Button("ElementsColor", callback(self, self, "open_set_color_dialog", "Map/ElementsColor"), {group = mission})
+
+    local other = self:DivGroup("Other")
+    self:Button("TeleportPlayer", callback(self, self, "drop_player"), {group = other})
+    self:Button("LogPosition", callback(self, self, "position_debug"), {group = other})
+    self:Button("ClearMassUnit", callback(self, self, "clear_massunit"), {group = other})
+    self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
+    self:Button("SaveNavigationData", callback(self, self, "save_nav_data"), {enabled = self._parent._has_fix, group = other})
+    self:Button("SaveCoverData", callback(self, self, "save_cover_data"), {group = other})
+    self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})  
+end
+
+function GameOptions:open_set_color_dialog(option)
+    BeardLibEditor.managers.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
+        BeardLibEditor.Options:SetValue(option, color)
+        BeardLibEditor.Options:Save()
+    end})
 end
 
 function GameOptions:loaded_continents(continents, current_continent)
@@ -69,6 +82,12 @@ function GameOptions:update_option_value(menu, item)
                 unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
             end
         end
+    end
+    if item.name == "GridSize" then
+        self._parent:update_grid_size(item:Value())
+    end
+    if item.name == "SnapRotation" then
+        self._parent:update_snap_rotation(item:Value())
     end
 end
 
@@ -304,9 +323,7 @@ function GameOptions:build_visibility_graph()
         end
     end
     local ray_lenght = 150
-    managers.navigation:build_visibility_graph(callback(self, self, "_finish_visibility_graph"), all_visible, exclude, include, ray_lenght)
-end
-
-function GameOptions:_finish_visibility_graph(menu, item)
-    managers.groupai:set_state("none")
+    managers.navigation:build_visibility_graph(function()
+        managers.groupai:set_state("none")
+    end, all_visible, exclude, include, ray_lenght)
 end

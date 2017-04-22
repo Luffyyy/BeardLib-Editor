@@ -66,7 +66,7 @@ function EditorAccessCamera:load_all_units(menu, item)
         callback = callback(self, self, "select_unit", {})
     })    
      for k, unit in pairs(World:find_units_quick("all")) do
-        if #menu._items < 200 then
+        if #menu._all_items < 200 then
             if unit:unit_data() and unit:base() and unit:base().security_camera and (unit:unit_data().name_id ~= "none" and not searchbox.value or searchbox.value == "" or string.match(unit:unit_data().name_id, searchbox.value or "") or string.match(unit:unit_data().unit_id, searchbox.value or "")) then
                 menu:Button({
                     name = unit:unit_data().name_id,

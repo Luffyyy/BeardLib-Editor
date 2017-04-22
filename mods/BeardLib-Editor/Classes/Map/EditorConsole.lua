@@ -35,7 +35,7 @@ function EditorConsole:init(parent, menu)
         callback = callback(self, self, "ToggleConsole"),
     })
     self._options_menu:Button({
-        name ="cleat_button",
+        name ="clear_button",
         text = "Clear",
         color = self._menu.marker_highlight_color,
         w = w,

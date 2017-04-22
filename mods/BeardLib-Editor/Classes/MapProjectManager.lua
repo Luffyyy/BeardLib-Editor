@@ -59,7 +59,7 @@ function MapProjectManager:current_level_path()
 end
 
 function MapProjectManager:set_edit_title(title)
-    self:GetItem("CurrEditingDiv"):SetText("Currently Editing: ".. (title or "None"))
+    self:GetItem("CurrEditing"):SetText("Currently Editing: ".. (title or "None"))
 end
 
 function MapProjectManager:get_projects_list()
