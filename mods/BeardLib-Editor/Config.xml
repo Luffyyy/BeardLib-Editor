@@ -38,6 +38,7 @@
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
+        <hook source_file="lib/setups/setup" file="Setup.lua"/>
         <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
         <hook source_file="lib/managers/navigationmanager" file="NavigationManager.lua"/>

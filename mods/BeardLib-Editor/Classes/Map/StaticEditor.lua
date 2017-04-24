@@ -404,7 +404,7 @@ end
 
 function StaticEditor:set_multi_selected()
     self._editors = {}
-    self._menu:ClearItems()
+    self:ClearItems()
     self:build_positions_items()
     self:update_positions()
 end

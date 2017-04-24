@@ -71,6 +71,19 @@ end
 
 --functions
 
+function me:animate_bg_fade()
+    local bg = self._menu._panel:rect({
+        name = "Background",
+        layer = 10000,
+        color = Color(0.3, 0.3, 0.3),
+    })
+    QuickAnim:Work(bg, "alpha", 0, "callback", function(o)
+        if alive(o) then
+            o:parent():destroy(o)
+        end
+    end)
+end
+
 function me:add_error(data)
     table.insert(self._errors, data)
     self.managers.spwsel:build_default_menu()

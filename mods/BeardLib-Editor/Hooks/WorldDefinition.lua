@@ -1,7 +1,13 @@
-if Global.editor_mode then
+if not Global.editor_mode then
+	return
+end
 core:module("CoreWorldDefinition")
-WorldDefinition = WorldDefinition or class()
-function WorldDefinition:init(params)
+local self = class(WorldDefinition)
+WorldDefinition = self
+
+local BLE = _G.BeardLibEditor
+function self:init(params)
+	BLE:SetLoadingText("Initializing World Definition")
 	managers.worlddefinition = self
 	self._world_dir = params.world_dir
 	self._cube_lights_path = params.cube_lights_path
@@ -35,11 +41,11 @@ function WorldDefinition:init(params)
 	self:create("ai")
 end
 
-function WorldDefinition:is_world_unit(unit)
+function self:is_world_unit(unit)
 	return unit:wire_data() or unit:ai_editor_data()
 end
 
-function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
+function self:set_unit(unit_id, unit, old_continent, new_continent)
 	local statics
 	local new_statics
 	local move 
@@ -77,7 +83,7 @@ function WorldDefinition:set_unit(unit_id, unit, old_continent, new_continent)
 	end
 end
 
-function WorldDefinition:get_continent_of_static(unit)
+function self:get_continent_of_static(unit)
 	local ud = unit:unit_data()
 	if ud and not unit:wire_data() and not unit:ai_editor_data() then
 		return self._continent_definitions[ud.continent]
@@ -85,14 +91,14 @@ function WorldDefinition:get_continent_of_static(unit)
 	return false
 end
 
-function WorldDefinition:insert_name_id(unit)
+function self:insert_name_id(unit)
 	local name = unit:unit_data().name
 	self._name_ids[name] = self._name_ids[name] or {}
 	local name_id = unit:unit_data().name_id
 	self._name_ids[name][name_id] = (self._name_ids[name][name_id] or 0) + 1
 end
 
-function WorldDefinition:set_up_name_id(unit)
+function self:set_up_name_id(unit)
 	local ud = unit:unit_data()
 	if ud.name_id ~= "none" then
 		self:insert_name_id(unit)
@@ -102,7 +108,7 @@ function WorldDefinition:set_up_name_id(unit)
 	self:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 end
 
-function WorldDefinition:get_name_id(unit, name)
+function self:get_name_id(unit, name)
 	local u_name = unit:unit_data().name
 	local start_number = 1
 	if name then
@@ -135,7 +141,7 @@ function WorldDefinition:get_name_id(unit, name)
 	end
 end
 
-function WorldDefinition:remove_name_id(unit)
+function self:remove_name_id(unit)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] and self._name_ids[unit_name][name_id] then
 		local name_id = unit:unit_data().name_id
@@ -146,7 +152,7 @@ function WorldDefinition:remove_name_id(unit)
 	end
 end
 
-function WorldDefinition:set_name_id(unit, name_id)
+function self:set_name_id(unit, name_id)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] then
 		self:remove_name_id(unit)
@@ -155,7 +161,7 @@ function WorldDefinition:set_name_id(unit, name_id)
 	end
 end
 
-function WorldDefinition:get_unit_number(name)
+function self:get_unit_number(name)
 	local i = 1
 	for _, unit in pairs(World:find_units_quick("all")) do
 		if unit:unit_data() and unit:unit_data().name == name then
@@ -165,11 +171,11 @@ function WorldDefinition:get_unit_number(name)
 	return i
 end
 
-function WorldDefinition:_continent_editor_only(data)
+function self:_continent_editor_only(data)
 	return false
 end
 
-function WorldDefinition:init_done()
+function self:init_done()
 	if self._continent_init_packages then
 		for _, package in ipairs(self._continent_init_packages) do
 			self:_unload_package(package)
@@ -182,9 +188,10 @@ function WorldDefinition:init_done()
 		self._continents[continent].base_id = self._continents[continent].base_id or self._start_id * i
 		i = i + 1
 	end
+	BLE:SetLoadingText("Done Initializing World Definition")
 end
 
-function WorldDefinition:delete_unit(unit)
+function self:delete_unit(unit)
 	local unit_id = unit:unit_data().unit_id
 	local name_id = unit:unit_data().name_id
 	local continent_name = unit:unit_data().continent
@@ -217,7 +224,7 @@ function WorldDefinition:delete_unit(unit)
 	end
 end
 
-function WorldDefinition:add_unit(unit)
+function self:add_unit(unit)
 	local statics
 	local ud = unit:unit_data()
 	if unit:wire_data() then
@@ -236,20 +243,20 @@ function WorldDefinition:add_unit(unit)
 	})
 end
 
-function WorldDefinition:_set_only_visible_in_editor(unit, data)
+function self:_set_only_visible_in_editor(unit, data)
 	if unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor then
-		unit:set_visible(_G.BeardLibEditor.Options:GetOption("Map/EditorUnits").value)
+		unit:set_visible(BLE.Options:GetOption("Map/EditorUnits").value)
 	end
 end
 
-function WorldDefinition:_setup_disable_on_ai_graph(unit, data)
+function self:_setup_disable_on_ai_graph(unit, data)
 	if not data.disable_on_ai_graph then
 		return
 	end
 	unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
 end
 
-function WorldDefinition:_create_ai_editor_unit(data, offset)
+function self:_create_ai_editor_unit(data, offset)
 	local unit = self:_create_statics_unit(data, offset)
 	if unit and data.ai_editor_data then
 		for name, value in pairs(data.ai_editor_data) do
@@ -259,7 +266,7 @@ function WorldDefinition:_create_ai_editor_unit(data, offset)
 	return unit
 end
 
-function WorldDefinition:create_unit(data, type)		
+function self:create_unit(data, type)		
 	local offset = Vector3()
 	local unit 
 	if type == Idstring("wire") then
@@ -275,17 +282,17 @@ function WorldDefinition:create_unit(data, type)
 	return unit
 end
 
-function WorldDefinition:_setup_editor_unit_data(unit, data)		
+function self:_setup_editor_unit_data(unit, data)		
 	local ud = unit:unit_data()
 	ud.name_id = data.name_id
 	ud.name = data.name
 
-	data.projection_light = data.projection_light or _G.BeardLibEditor.Utils:HasAnyProjectionLight(unit)
-    data.lights = data.lights or _G.BeardLibEditor.Utils:LightData(unit)
-    data.triggers = data.triggers or _G.BeardLibEditor.Utils:TriggersData(unit)
-    data.editable_gui = data.editable_gui or _G.BeardLibEditor.Utils:EditableGuiData(unit)
-    data.ladder = data.ladder or _G.BeardLibEditor.Utils:LadderData(unit)
-    data.zipline = data.zipline or _G.BeardLibEditor.Utils:ZiplineData(unit)
+	data.projection_light = data.projection_light or BLE.Utils:HasAnyProjectionLight(unit)
+    data.lights = data.lights or BLE.Utils:LightData(unit)
+    data.triggers = data.triggers or BLE.Utils:TriggersData(unit)
+    data.editable_gui = data.editable_gui or BLE.Utils:EditableGuiData(unit)
+    data.ladder = data.ladder or BLE.Utils:LadderData(unit)
+    data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
 
     BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 	ud.continent = data.continent
@@ -314,7 +321,7 @@ function WorldDefinition:_setup_editor_unit_data(unit, data)
 	self:set_up_name_id(unit)
 end
 
-function WorldDefinition:make_unit(data, offset)
+function self:make_unit(data, offset)
 	local name = data.name
 	if table.has(self._replace_names, name) then
 		name = self._replace_names[name]
@@ -342,7 +349,7 @@ function WorldDefinition:make_unit(data, offset)
 	return unit
 end
 
-function WorldDefinition:assign_unit_data(unit, data)
+function self:assign_unit_data(unit, data)
 	unit:unit_data().instance = data.instance
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)
@@ -365,7 +372,7 @@ function WorldDefinition:assign_unit_data(unit, data)
 	self:_project_assign_unit_data(unit, data)
 end
 
-function WorldDefinition:_setup_unit_id(unit, data)
+function self:_setup_unit_id(unit, data)
 	local ud = unit:unit_data()
 	ud.unit_id = tonumber(data.unit_id)
 	unit:set_editor_id(ud.unit_id)
@@ -379,7 +386,7 @@ function WorldDefinition:_setup_unit_id(unit, data)
 	end
 end
 
-function WorldDefinition:GetNewUnitID(continent, t)
+function self:GetNewUnitID(continent, t)
 	if continent then		
 		self._unit_ids[continent] = self._unit_ids[continent] or {}
 		local tbl = self._unit_ids[continent]
@@ -389,7 +396,7 @@ function WorldDefinition:GetNewUnitID(continent, t)
 			i = 1
 		end
 		if not i then
-			BeardLibEditor:log("[ERROR] Something went wrong in GetNewUnitID...")
+			BLE:log("[ERROR] Something went wrong in GetNewUnitID...")
 		end
 		i = i or 1
 		while tbl[i] do
@@ -398,11 +405,11 @@ function WorldDefinition:GetNewUnitID(continent, t)
 		tbl[i] = true
 		return i
 	else
-		_G.BeardLibEditor:log("[ERROR] continent needed for unit id")
+		BLE:log("[ERROR] continent needed for unit id")
 	end
 end
 
-function WorldDefinition:_create_sounds(data)
+function self:_create_sounds(data)
 	local path = self:world_dir() .. data.file
 	if not DB:has("world_sounds", path) then
 		Application:error("The specified sound file '" .. path .. ".world_sounds' was not found for this level! ", path, "No sound will be loaded!")
@@ -425,12 +432,12 @@ function WorldDefinition:_create_sounds(data)
 	end
 end
 
-function WorldDefinition:_add_to_portal(unit, data)
+function self:_add_to_portal(unit, data)
 end
 
 local sky_orientation_data_key = Idstring("sky_orientation/rotation"):key()
 
-function WorldDefinition:_create_environment(data, offset)
+function self:_create_environment(data, offset)
 	self:_set_environment(data.environment_values.environment)
 	self:_set_default_color_grading(data.environment_values.color_grading)
 	if not self._environment_modifier_id and not Application:editor() then
@@ -457,7 +464,7 @@ function WorldDefinition:_create_environment(data, offset)
 			local size = Vector3(shape_data.depth, shape_data.width, shape_data.height)
 			local texture_name = self:world_dir() .. "cube_lights/" .. "dome_occlusion"
 			if not DB:has(Idstring("texture"), Idstring(texture_name)) then
-			--	_G.BeardLibEditor:log("[Warning] Dome occlusion texture doesn't exists, probably needs to be generated")
+			--	BLE:log("[Warning] Dome occlusion texture doesn't exists, probably needs to be generated")
 			else
 				managers.environment_controller:set_dome_occ_params(corner, size, texture_name)
 			end
@@ -465,4 +472,69 @@ function WorldDefinition:_create_environment(data, offset)
 	end
 end
 
+function self:parse_continents(node, t)
+	local path = self:world_dir() .. self._definition.world_data.continents_file
+	if not DB:has("continents", path) then
+		Application:error("Continent file didn't exist " .. path .. ").")
+		return
+	end
+	self._continents = self:_serialize_to_script("continents", path)
+	self._continents._meta = nil
+	local s = "Loading Package: %s (%d/%d)"
+	local i = 1
+	BLE:SetLoadingText("Loading Packages")
+	local total = table.size(self._continents)
+	for name, data in pairs(self._continents) do
+		if not self:_continent_editor_only(data) then
+			if not self._excluded_continents[name] then
+				local init_path = self:world_dir() .. name .. "/" .. name .. "_init"
+				local path = self:world_dir() .. name .. "/" .. name
+				BLE:SetLoadingText(string.format(s, path, i, total))
+				self:_load_continent_init_package(init_path)
+				self:_load_continent_package(path)
+				if DB:has("continent", path) then
+					self._continent_definitions[name] = self:_serialize_to_script("continent", path)
+				else
+					Application:error("Continent file " .. path .. ".continent doesnt exist.")
+				end
+			end
+		else
+			self._excluded_continents[name] = true
+		end
+		i = i + 1
+	end
+	BLE:SetLoadingText(string.format(s, "Done", total, total))
+	self:_insert_instances()
+end
+
+function self:_insert_instances()
+	BLE:SetLoadingText("Loading Instances Packages")
+	local s = "Loading Instance Package: %s"
+	for name, data in pairs(self._continent_definitions) do
+		if data.instances then
+			for i, instance in ipairs(data.instances) do
+				local package_data = managers.world_instance:packages_by_instance(instance)
+				BLE:SetLoadingText(string.format(s, package_data.package))
+				self:_load_continent_init_package(package_data.init_package)
+				self:_load_continent_package(package_data.package)
+				if Application:editor() or not instance.mission_placed then
+					local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
+					if prepared_unit_data.statics then
+						for _, static in ipairs(prepared_unit_data.statics) do
+							data.statics = data.statics or {}
+							table.insert(data.statics, static)
+						end
+					end
+					if prepared_unit_data.dynamics then
+						for _, dynamic in ipairs(prepared_unit_data.dynamics) do
+							data.dynamics = data.dynamics or {}
+							table.insert(data.dynamics, dynamic)
+						end
+					end
+				else
+					managers.world_instance:prepare_serialized_instance_data(instance)
+				end
+			end
+		end
+	end
 end

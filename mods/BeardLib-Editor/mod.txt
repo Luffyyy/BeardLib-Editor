@@ -9,8 +9,9 @@
 		{ "hook_id" : "core/lib/system/coresystem", "script_path" : "EditorCore.lua" },
         { "hook_id" : "lib/managers/menumanager", "script_path" : "EditorCore.lua" },
         { "hook_id" : "lib/managers/menu/menuscenemanager", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "lib/setups/levelloadingsetup", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "core/lib/setups/coresetup", "script_path" : "EditorCore.lua" }
+        { "hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua" },
+        { "hook_id" : "core/lib/setups/coresetup", "script_path" : "EditorCore.lua" },
+        { "hook_id" : "lib/setups/setup", "script_path" : "EditorCore.lua" }
 	],
     "updates" : [
         {

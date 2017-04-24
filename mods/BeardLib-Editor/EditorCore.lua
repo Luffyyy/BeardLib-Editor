@@ -12,7 +12,7 @@ function self:Init()
     self.managers = {}
     self.modules = {}
     self.DBPaths = {}
-    self.DBEntries = {}   
+    self.DBEntries = {}  
     self:LoadHashlist()
     self.InitDone = true
 end
@@ -143,7 +143,7 @@ function self:LoadCustomAssetsToHashListt(add)
     end
 end
 
-function self:update(t, dt)
+function self:Update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
             manager:update(t, dt)
@@ -151,11 +151,22 @@ function self:update(t, dt)
     end
 end
 
-function self:paused_update(t, dt)
+function self:PausedUpdate(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.paused_update then
             manager:paused_update(t, dt)
         end
+    end
+end
+
+function self:SetLoadingText(text)
+    if alive(Global.LoadingText) then
+        local project = BeardLib.current_level and BeardLib.current_level._mod
+        local s = "Level ".. tostring(Global.game_settings.level_id)
+        if project then
+            s = "Project " .. tostring(project.Name) .. " - " .. tostring(Global.game_settings.level_id)
+        end
+        Global.LoadingText:set_name(s .. "\n" .. tostring(text))
     end
 end
 
@@ -180,15 +191,15 @@ end
 
 if Hooks then
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", function( t, dt )
-        BeardLibEditor:update(t, dt)
+        BeardLibEditor:Update(t, dt)
     end)
 
     Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", function( t, dt )
-        BeardLibEditor:update(t, dt)
+        BeardLibEditor:Update(t, dt)
     end)
 
     Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", function(t, dt)
-        BeardLibEditor:paused_update(t, dt)
+        BeardLibEditor:PausedUpdate(t, dt)
     end)
 
     Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
