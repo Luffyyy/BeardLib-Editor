@@ -469,7 +469,7 @@ function MapProjectManager:set_crimenet_videos_dialog()
 end
 
 function MapProjectManager:edit_main_xml(data, save_clbk)
-    self:ClearItems(self._curr_editing)
+    self._curr_editing:ClearItems()
     self:set_edit_title(tostring(data.name))
     data = self:get_clean_data(data)
     local narr = U:GetNodeByMeta(data, "narrative")
@@ -493,6 +493,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     local chain = self:DivGroup("Chain", {group = self._curr_editing})
     self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
     self:Button("AddNewLevel", callback(self, self, "new_level_dialog"), {group = chain})
+    local levels_group = self:DivGroup("Levels", {group = chain})
     local function get_level(level_id)
         for _, v in pairs(levels) do
             if v.id == level_id then
@@ -504,7 +505,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
         if type(level_in_chain) == "table" then
             local level_id = level_in_chain.level_id
             local level = get_level(level_id)
-            local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = chain})
+            local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = levels_group})
             self:SmallButton(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), btn, {text = "x", marker_highlight_color = Color.red})
         end
     end
@@ -583,7 +584,7 @@ function MapProjectManager:set_mission_assets_dialog()
 end
 
 function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, save_clbk)
-    self:ClearItems(self._curr_editing)
+    self._curr_editing:ClearItems()
     local level_group = self:Group("Level", {group = self._curr_editing})
     local up = callback(self, self, "set_project_level_data", level_in_chain)
     self:TextBox("LevelId", up, level.id, {group = level_group})    
@@ -634,6 +635,6 @@ end
 function MapProjectManager:disable()
     self._current_data = nil
     self._current_mod = nil
-    self:ClearItems(self._curr_editing)
+    self._curr_editing:ClearItems()
     self:set_edit_title()
 end
