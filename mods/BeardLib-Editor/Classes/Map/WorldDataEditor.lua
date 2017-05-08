@@ -5,11 +5,7 @@ function wde:init(parent, menu)
 end
 
 function wde:loaded_continents()
-    if self._current_continent then
-        self:build_mission_scripts_menu(self._current_continent)
-    else
-        self:build_default_menu()
-    end
+    self:build_default_menu()
     for _, manager in pairs(self.managers) do
         if manager.loaded_continents then
             manager:loaded_continents()
@@ -27,10 +23,13 @@ function wde:update_positions()
     end
 end
 
+function wde:button_pos(near, item)
+    item:Panel():set_righttop(near:Panel():left(), 0)
+end
+
 function wde:build_default_menu()
     self.super.build_default_menu(self)
     self.managers = self.managers or {env = EnvironmentLayerEditor:new(self)}
-    self._current_continent = nil
     self._selected_portal = nil
     self._selected_shape = nil
     local layers = self:DivGroup("Layers")
@@ -38,17 +37,41 @@ function wde:build_default_menu()
         local tbl = type(layer) == "table"
         self:Button(tbl and layer.name or layer, callback(self, self, "build_menu", tbl and layer.class or layer), {group = layers})
     end
+    local function base_button_pos(item)
+        local p = item:Panel():parent()
+        item:Panel():set_world_righttop(p:world_right(), p:world_y())
+    end
     if managers.worlddefinition then
         local continents = self:DivGroup("Continents", {text = "Continents and Missions"})
-        self:Button("Add", callback(self, self, "new_continent"), {group = continents})
+        self:Button("NewContinent..", callback(self, self, "new_continent"), {group = continents})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
-            local continent = self:DivGroup(name, {group = continents, text = name, align_method = "grid"})
-            local opt = {size_by_text = true, align = "center", offset = {6, 0}, group = continent}
-            self:Button("SelectUnits", callback(self, self, "select_all_units_from_continent", name), opt)
-            self:Button("ClearUnits", callback(self, self, "clear_all_units_from_continent", name), opt)
-            self:Button("MissionScripts", callback(self, self, "build_mission_scripts_menu", name), opt)
-            self:Button("Rename", callback(self, self, "rename_continent", name), opt)
-            self:Button("Remove", callback(self, self, "remove_continent", name), opt)
+            local continent = self:DivGroup(name, {group = continents, text = name, border_lock_height = false})
+            local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = base_button_pos}
+            opt.marker_highlight_color = Color.red
+            local btn = self:SmallImageButton("Remove", callback(self, self, "remove_continent", name), nil, {184, 2, 48, 48}, continent, opt)
+            local r = btn
+            opt.position = callback(self, self, "button_pos", btn)
+            local btn = self:SmallImageButton("ClearUnits", callback(self, self, "clear_all_units_from_continent", name), nil, {7, 2, 48, 48}, continent, opt)
+            opt.position = callback(self, self, "button_pos", btn)
+            opt.marker_highlight_color = nil
+            local btn = self:SmallImageButton("Rename", callback(self, self, "rename_continent", name), nil, {66, 1, 48, 48}, continent, opt)
+            opt.position = callback(self, self, "button_pos", btn)
+            self:SmallImageButton("SelectUnits", callback(self, self, "select_all_units_from_continent", name), nil, {122, 1, 48, 48}, continent, opt)
+            self:Button("NewMissionScript..", callback(self, self, "add_new_mission_script"), {group = continent, offset = {16, 2}, continent = name})
+            for sname, data in pairs(managers.mission._missions[name]) do
+                local script = self:Divider(sname, {group = continent, text = sname, offset = {16, 4}})
+                opt.marker_highlight_color = Color.red
+                opt.position = base_button_pos
+                opt.continent = name
+                local btn = self:SmallImageButton("Remove", callback(self, self, "remove_script", sname), nil, {184, 2, 48, 48}, script, opt)
+                opt.position = callback(self, self, "button_pos", btn)
+                local btn = self:SmallImageButton("ClearElements", callback(self, self, "clear_all_elements_from_script", sname), nil, {7, 2, 48, 48}, script, opt)
+                opt.position = callback(self, self, "button_pos", btn)
+                opt.marker_highlight_color = nil
+                local btn = self:SmallImageButton("Rename", callback(self, self, "rename_script", sname), nil, {66, 1, 48, 48}, script, opt)
+                opt.position = callback(self, self, "button_pos", btn)
+                self:SmallImageButton("SelectElements", callback(self, self, "select_all_units_from_script", sname), nil, {122, 1, 48, 48}, script, opt)
+            end
         end
     end
 end
@@ -172,28 +195,7 @@ function wde:new_continent()
     }) 
 end
 
---Missions
-function wde:build_mission_scripts_menu(continent)
-    if not continent then
-        log(debug.traceback())
-        return
-    end
-    self._current_continent = continent
-    self.super.build_default_menu(self)
-    self:back_button()
-    local scripts = self:DivGroup("Scripts", {text = "Misison Scripts of " ..  continent})
-    self:Button("Add", callback(self, self, "add_new_mission_script"), {group = scripts})
-    for name, data in pairs(managers.mission._missions[continent]) do
-        local script = self:DivGroup(name, {group = scripts, text = name, align_method = "grid"})
-        local opt = {size_by_text = true, align = "center", group = script, offset = {6, 0}}
-        self:Button("SelectElements", callback(self, self, "select_all_units_from_script", name), opt)
-        self:Button("ClearElements", callback(self, self, "clear_all_elements_from_script", name), opt)
-        self:Button("Rename", callback(self, self, "rename_script", name), opt)
-        self:Button("Remove", callback(self, self, "remove_script", name), opt)        
-    end
-end
-
-function wde:add_new_mission_script()
+function wde:add_new_mission_script(menu, item)
     managers.system_menu:show_keyboard_input({
         text = "",
         title = "New mission script name:",
@@ -202,7 +204,7 @@ function wde:add_new_mission_script()
                 return
             end
             local mission = managers.mission
-            local cname = self._current_continent
+            local cname = item.continent
             mission._missions[cname][name] = mission._missions[cname][name] or {
                 activate_on_parsed = true,
                 elements = {},
@@ -219,17 +221,17 @@ function wde:add_new_mission_script()
     })
 end
 
-function wde:remove_script(script)
+function wde:remove_script(script, menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
         local mission = managers.mission
         self:clear_all_elements_from_script(script, true, true)
-        mission._missions[self._current_continent][script] = nil
+        mission._missions[item.continent][script] = nil
         mission._scripts[script] = nil
-        self:build_mission_scripts_menu(self._current_continent)  
+        self:build_default_menu()  
     end)
 end
 
-function wde:rename_script(script)
+function wde:rename_script(script, menu, item)
     managers.system_menu:show_keyboard_input({
         text = script,
         title = "Rename script to:",
@@ -245,8 +247,8 @@ function wde:rename_script(script)
             mission._scripts[script]._name = name
             mission._scripts[name] = mission._scripts[script]
             mission._scripts[script] = nil
-            mission._missions[self._current_continent][name] = deep_clone(mission._missions[self._current_continent][script])
-            mission._missions[self._current_continent][script] = nil
+            mission._missions[item.continent][name] = deep_clone(mission._missions[item.continent][script])
+            mission._missions[item.continent][script] = nil
             self._parent:load_continents(managers.worlddefinition._continent_definitions)
         end
     })
@@ -255,7 +257,7 @@ end
 function wde:clear_all_elements_from_script(script, no_refresh, no_dialog)
     function delete_all()
         local mission = managers.mission
-        for _, element in pairs(mission._missions[self._current_continent][script].elements) do
+        for _, element in pairs(mission._missions[item.continent][script].elements) do
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:mission_element() and unit:mission_element().element.id == element.id then
                     mission._scripts[script]:delete_element(element)
@@ -265,7 +267,7 @@ function wde:clear_all_elements_from_script(script, no_refresh, no_dialog)
                 end
             end
         end
-        mission._missions[self._current_continent][script].elements = {}
+        mission._missions[item.continent][script].elements = {}
         if no_refresh ~= true then
             self._parent:load_continents(managers.worlddefinition._continent_definitions)
         end
@@ -277,9 +279,9 @@ function wde:clear_all_elements_from_script(script, no_refresh, no_dialog)
     end
 end
 
-function wde:select_all_units_from_script(script)
+function wde:select_all_units_from_script(script, menu, item)
     local selected_units = {}
-    for _, element in pairs(managers.mission._missions[self._current_continent][script].elements) do
+    for _, element in pairs(managers.mission._missions[item.continent][script].elements) do
         for _, unit in pairs(World:find_units_quick("all")) do
             if unit:mission_element() and unit:mission_element().element.id == element.id then
                 table.insert(selected_units, unit)

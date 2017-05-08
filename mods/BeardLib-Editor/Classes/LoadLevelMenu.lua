@@ -1,37 +1,41 @@
 LoadLevelMenu = LoadLevelMenu or class()
 function LoadLevelMenu:init()
 	local menu = BeardLibEditor.managers.Menu
-	self._menu = menu:make_page("Levels")
+	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
 	MenuUtils:new(self)
-	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0})
-	local loc = self:Toggle("Localized", callback(self, self, "load_levels", false), false, {size_by_text = true, group = tabs, color = tabs.marker_highlight_color, offset = 0})
-	local tab_opt = {w = (tabs.w - loc.w) / 3, group = tabs, offset = 0, color = tabs.marker_highlight_color}
-	self:Button("All", callback(self, self, "load_levels", "all"), tab_opt)
-	self:Button("Vanilla", callback(self, self, "load_levels", "vanilla"), tab_opt)
-	self:Button("Custom", callback(self, self, "load_levels", "custom"), tab_opt)
-	local levels = self:Menu("Levels", {align_method = "grid"})
-	self:load_levels("all")
+	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, automatic_height = true})
+	local opt = {size_by_text = true, group = tabs, color = tabs.marker_highlight_color, offset = 0}
+	local w = self:Toggle("Localized", callback(self, self, "load_levels"), false, opt).w
+	w = w + self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
+	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
+	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 1.2, offset = 0})
+	local levels = self:Menu("Levels", {align_method = "grid", h = self._menu:Panel():h() - search:Panel():h(), automatic_height = false})
+	self:load_levels()
 end
 
-function LoadLevelMenu:load_levels(name)
-	name = name or self._current
-	local columns = 3
-	local loc = self:GetItem("Localized")
-	local levels = self:GetItem("Levels")
-	levels:ClearItems("levels")
+function LoadLevelMenu:load_levels()
+	local searching = self:GetItem("Search"):Value()
+	local vanilla = self:GetItem("Vanilla"):Value()
+	local custom = self:GetItem("Custom"):Value()
+    local columns = BeardLibEditor.Options:GetValue("LevelsColumns")
+    local loc = self:GetItem("Localized")
+    local levels = self:GetItem("Levels")
+    levels:ClearItems("levels")
 
-	for id, level in pairs(tweak_data.levels) do
-		if level.world_name and (name == "all" or (name == "custom" and level.custom) or (name == "vanilla" and not level.custom)) then
-			levels:Button({
-				name = id,
-	            w = levels.w / columns,
-				text = loc:Value() and managers.localization:text(tostring(level.name_id)) or id,
-				callback = callback(self, self, "load_level", id),
-				label = "levels",
-			})	
-		end
-	end
-	self._current = name
+    for id, level in pairs(tweak_data.levels) do
+        if level.world_name and (level.custom and custom) or (not level.custom and vanilla) then
+            local text = loc:Value() and managers.localization:text(tostring(level.name_id)) or id
+            if not searching or searching == "" or text:match(searching) then
+                levels:Button({
+                    name = id,
+                    w = levels.w / columns,
+                    text = text,
+                    callback = callback(self, self, "load_level", id),
+                    label = "levels",
+                })  
+            end
+        end
+    end
 end
 
 function LoadLevelMenu:load_level(level_id)

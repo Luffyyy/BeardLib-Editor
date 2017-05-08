@@ -3,7 +3,7 @@ function EditorMenu:init()
     self._menus = {}
 	self._main_menu = MenuUI:new({
         text_color = Color.white,
-        layer = 10,
+        layer = 400,
         marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
 		create_items = callback(self, self, "create_items"),
 	})	    
@@ -27,7 +27,7 @@ function EditorMenu:make_page(name, clbk, opt)
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))
-    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4})
+    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4, marker_highlight_color = self._tabs.marker_color})
     return self._menus[name]
 end
 
@@ -40,14 +40,28 @@ function EditorMenu:create_items(menu)
         background_color = Color(0.2, 0.2, 0.2),
         background_alpha = 0.75,
         visible = true,
-        items_size = 24,        
+        items_size = 24,
         w = 200,
         h = self._main_menu._panel:h(),
         position = "Left",
 	})	
 	MenuUtils:new(self, self._tabs)   
-    local div = self:Divider("BeardLib-Editor")
-    self:SmallButton("X", callback(self._tabs.menu, self._tabs.menu, "disable"), div)
+    local div = self:Divider("BeardLib-Editor", {items_size = 24, offset = 0, marker_color = self._tabs.marker_highlight_color}) 
+    self:SmallButton("x", callback(self._tabs.menu, self._tabs.menu, "disable"), div, {
+        marker_highlight_color = Color.black:with_alpha(0.25),
+        w = self._tabs.items_size, h = self._tabs.items_size,
+        text_align = "center", size_by_text = false
+    })
+    local info = self:DivGroup("Info", {text =  "BeardLib-Editor Revision "..BeardLibEditor.Version, border_lock_height = false, align_method = "grid", offset = 0, items_size = 16, position = function(item)
+        item:Panel():set_world_bottom(item.parent_panel:world_bottom() - 1)
+    end})
+    local function link_button(name, url)
+        self:Button(name, callback(nil, os, "execute", 'start "" "'..url..'"'), {group = info, text = name, text_align = "center", size_by_text = true})
+    end
+    link_button("GitHub", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor")
+    link_button("ModWorkshop", "https://modworkshop.net/mydownloads.php?action=view_down&did=16837")
+    link_button("Guides", "https://modworkshop.net/wiki.php?action=categories&cid=5")
+    link_button("Issues", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues")
 end
 
 function EditorMenu:set_enabled(enabled)
@@ -60,10 +74,7 @@ end
 
 function EditorMenu:select_page(page, menu, item)
     for name, m in pairs(self._menus) do
-        local tab = self._tabs:GetItem(name)
-        tab.marker_highlight_color = self._tabs.marker_color
-        tab.marker_color = self._tabs.marker_color
-        tab:Panel():child("bg"):set_color(tab.marker_color)
+        self._tabs:GetItem(name):SetColor(self._tabs.marker_color)
         m:SetVisible(false)
     end 
     if not page or self._current_page == page then
@@ -71,8 +82,6 @@ function EditorMenu:select_page(page, menu, item)
         return
     end
     self._current_page = page
-    item.marker_highlight_color = self._tabs.marker_highlight_color / 1.5
-    item.marker_color = item.marker_highlight_color
-    item:Panel():child("bg"):set_color(item.marker_color)
+    item:SetColor(self._tabs.marker_highlight_color)
     self._menus[page]:SetVisible(true)
 end

@@ -47,6 +47,7 @@
     </Hooks>
     <Options build_menu="false" auto_load="true">
         <options>                
+            <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color(0.26, 0.52, 0.93)" name="AccentColor"/>
             <option_group name="Map">            
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>

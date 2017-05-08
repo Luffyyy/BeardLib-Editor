@@ -79,9 +79,25 @@ function MenuUtils:init(this, menu)
 	        text = string.pretty2(name),
 	        callback = callback,
 	        size_by_text = true,
+	        text_offset = 0,
 	        position = "CenterRight",
 	        text_align = "center",
 	        text_vertical = "center",
+	        override_parent = parent,
+	    }, opt))
+	end	
+
+	function this:SmallImageButton(name, callback, texture, rect, parent, opt)    
+	    opt = opt or {}
+	    local parent_is_menu = parent.menu_type
+	    local m = parent_is_menu and parent or (opt.group or menu)
+	    opt.help = string.pretty2(name)
+	    return m:ImageButton(table.merge({
+	        name = name,
+	        callback = callback,
+	        position = "CenterRight",
+	        texture = texture,
+	        texture_rect = rect,
 	        override_parent = parent,
 	    }, opt))
 	end
@@ -195,9 +211,11 @@ function MenuUtils:init(this, menu)
 	    local translation
 	    local rotation
 	    if not opt.no_pos then
+	    	opt.border_lock_height = false
 			translation = self:DivGroup("Translate"..name, opt)
 	    end
 	    if not opt.no_rot then
+	    	opt.border_lock_height = false
 	    	rotation = self:DivGroup("Rotate"..name, opt)
 	    end
 	   	opt.color = false

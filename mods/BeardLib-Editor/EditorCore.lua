@@ -8,6 +8,7 @@ function self:Init()
     self.ClassDirectory = self.ModPath .. "Classes/"
     self.MapClassesDir = self.ClassDirectory .. "Map/"
     self.ElementsDir = self.MapClassesDir .. "Elements/"
+    self.Version = 6
     
     self.managers = {}
     self.modules = {}
