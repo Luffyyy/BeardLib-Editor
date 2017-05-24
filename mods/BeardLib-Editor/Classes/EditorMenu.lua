@@ -2,12 +2,12 @@ EditorMenu = EditorMenu or class()
 function EditorMenu:init()
     self._menus = {}
 	self._main_menu = MenuUI:new({
-        text_color = Color.white,
         layer = 400,
+        background_blur = true,
         marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
 		create_items = callback(self, self, "create_items"),
-	})	    
-	MenuCallbackHandler.BeardLibEditorMenu = callback(self._main_menu, self._main_menu, "enable")
+	})
+	MenuCallbackHandler.BeardLibEditorMenu = callback(self, self, "set_enabled", true)
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorMenu",
         title = "BeardLibEditorMenu",
@@ -20,25 +20,24 @@ end
 function EditorMenu:make_page(name, clbk, opt)
     self._menus[name] = self._menus[name] or self._main_menu:Menu(table.merge({
         name = name,
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.75,        
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         items_size = 20,
         visible = false,
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))
     self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4, marker_highlight_color = self._tabs.marker_color})
+
     return self._menus[name]
 end
-
 
 function EditorMenu:create_items(menu)
 	self._main_menu = menu
 	self._tabs = menu:Menu({
 		name = "tabs",
         scrollbar = false,
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.75,
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
         visible = true,
         items_size = 24,
         w = 200,
@@ -46,29 +45,37 @@ function EditorMenu:create_items(menu)
         position = "Left",
 	})	
 	MenuUtils:new(self, self._tabs)   
-    local div = self:Divider("BeardLib-Editor", {items_size = 24, offset = 0, marker_color = self._tabs.marker_highlight_color}) 
-    self:SmallButton("x", callback(self._tabs.menu, self._tabs.menu, "disable"), div, {
+    local div = self:Divider("BeardLibEditor", {items_size = 24, offset = 0, marker_color = self._tabs.marker_highlight_color}) 
+    self:SmallButton("x", callback(self, self, "set_enabled", false), div, {
         marker_highlight_color = Color.black:with_alpha(0.25),
         w = self._tabs.items_size, h = self._tabs.items_size,
         text_align = "center", size_by_text = false
     })
-    local info = self:DivGroup("Info", {text =  "BeardLib-Editor Revision "..BeardLibEditor.Version, border_lock_height = false, align_method = "grid", offset = 0, items_size = 16, position = function(item)
-        item:Panel():set_world_bottom(item.parent_panel:world_bottom() - 1)
-    end})
-    local function link_button(name, url)
-        self:Button(name, callback(nil, os, "execute", 'start "" "'..url..'"'), {group = info, text = name, text_align = "center", size_by_text = true})
-    end
-    link_button("GitHub", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor")
-    link_button("ModWorkshop", "https://modworkshop.net/mydownloads.php?action=view_down&did=16837")
-    link_button("Guides", "https://modworkshop.net/wiki.php?action=categories&cid=5")
-    link_button("Issues", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues")
+end
+
+function EditorMenu:should_close()
+    return self._main_menu:ShouldClose()
+end
+
+function EditorMenu:hide()
+    self:set_enabled(false)
+    return true
 end
 
 function EditorMenu:set_enabled(enabled)
+    local in_editor = managers.editor and game_state_machine:current_state_name() == "editor"
     if enabled then
-        self._main_menu:enable()
+        BeardLib.managers.dialog:OpenDialog(self)
+        self._main_menu:Enable()
+        if in_editor then
+            managers.editor._enabled = false
+        end
     else
-        self._main_menu:disable()
+        BeardLib.managers.dialog:CloseDialog(self)
+        self._main_menu:Disable()
+        if in_editor then
+            managers.editor._enabled = true
+        end
     end
 end
 

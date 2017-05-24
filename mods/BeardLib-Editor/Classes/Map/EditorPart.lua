@@ -6,29 +6,46 @@ function EditorPart:init(parent, menu, name, opt)
         control_slice = 1.75,
         items_size = 18,
         offset = {4, 1},
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,        
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
         w = 300,
         h = self:Manager("menu"):get_menu_h()
     }, opt or {}))
-    MenuUtils:new(self)    
+    MenuUtils:new(self)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
-    self:Divider("Title", {items_size = 24, offset = 0, marker_color = self._menu.marker_highlight_color, text = string.pretty2(name)})
+    self:Divider("Title", {items_size = 24, offset = 0, marker_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
     self._holder = self:Menu("Holder", {automatic_height = false, h = self._menu.h - 24, scroll_width = 4})
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
 
-function EditorPart:bind(key, clbk)
-    table.insert(self._trigger_ids, Input:keyboard():add_trigger(Idstring(key), callback(self, self, "key_pressed", clbk)))
+function EditorPart:bind_opt(opt, clbk)
+    self:bind("Input/"..opt, clbk)
 end
 
-function EditorPart:key_pressed(clbk)
-    if not self._parent._menu:Focused() and not shift() and not alt() then
-        clbk()
-    end 
+function EditorPart:bind(opt, clbk)
+    local key
+    if opt:match("Input") then
+        key = BeardLibEditor.Options:GetValue(opt)
+    else
+        key = opt
+    end
+    if key then
+        table.insert(self._triggers, BeardLib.Utils.Input:TriggerDataFromString(key, clbk))
+    end
+end
+
+function EditorPart:update() 
+    --and not shift() and not alt()
+    local In = BeardLib.Utils.Input
+    if not self._parent._menu:Focused() then
+        for _, trigger in pairs(self._triggers) do
+            if BeardLib.Utils.Input:Triggered(trigger) then
+                trigger.clbk()
+            end
+        end
+    end
 end
 
 function EditorPart:selected_unit()
@@ -47,7 +64,7 @@ function EditorPart:init_basic(parent, name)
     self._brush:set_font(Idstring("fonts/font_large_mf"), 16)
     self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
 
-    self._trigger_ids = {}
+    self._triggers = {}
     self._axis_controls = {"x", "y", "z", "yaw", "pitch", "roll"}
     self._shape_controls = {"width", "height", "depth", "radius"}
 end
@@ -77,8 +94,5 @@ function EditorPart:SetTitle(title)
 end
 
 function EditorPart:disable()
-    for _, id in pairs(self._trigger_ids) do
-        Input:keyboard():remove_trigger(id)
-    end
-    self._trigger_ids = {}
+    self._triggers = {}
 end

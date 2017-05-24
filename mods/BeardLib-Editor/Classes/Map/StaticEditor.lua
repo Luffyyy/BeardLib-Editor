@@ -10,13 +10,49 @@ function StaticEditor:init(parent, menu)
 end
 
 function StaticEditor:enable()
-    self:bind("delete", callback(self, self, "delete_selected_dialog"))
-    self:bind("c", callback(self, self, "KeyCPressed"))
-    self:bind("v", callback(self, self, "KeyVPressed"))
-    self:bind("f", callback(self, self, "KeyFPressed"))
+    self:bind_opt("DeleteSelection", callback(self, self, "delete_selected_dialog"))
+    self:bind_opt("CopyUnit", callback(self, self, "KeyCPressed"))
+    self:bind_opt("PasteUnit", callback(self, self, "KeyVPressed"))
+    self:bind_opt("TeleportToSelection", callback(self, self, "KeyFPressed"))
     local menu = self:Manager("menu")
-    self:bind("r", callback(menu, menu, "toggle_widget", "rotation"))
-    self:bind("t", callback(menu, menu, "toggle_widget", "move"))
+    self:bind_opt("ToggleRotationWidget", callback(menu, menu, "toggle_widget", "rotation"))
+    self:bind_opt("ToggleMoveWidget", callback(menu, menu, "toggle_widget", "move"))
+end
+
+function StaticEditor:mouse_pressed(button, x, y)
+    if button == Idstring("0") then
+        self._parent:reset_widget_values()
+        local from = self._parent:get_cursor_look_point(0)
+        local to = self._parent:get_cursor_look_point(100000)
+        local unit = self._parent:widget_unit()
+        if unit then
+            if self._parent._move_widget:enabled() then
+                local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
+                if ray and ray.body then
+                    if (alt() and not ctrl()) then self:clone() end
+                    self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
+                    self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
+                    self._parent._using_move_widget = true
+                end
+            end
+            if self._parent._rotate_widget:enabled() and not self._parent._using_move_widget then
+                local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
+                if ray and ray.body then
+                    self._parent._rotate_widget:set_rotate_widget_axis(ray.body:name():s())
+                    self._parent._rotate_widget:set_world_dir(ray.position)
+                    self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
+                    self._parent._rotate_widget:set_rotate_widget_unit_rot(self._selected_units[1]:rotation())
+                    self._parent._using_rotate_widget = true
+                end
+            end         
+        end  
+        if not self._parent._using_rotate_widget and not self._parent._using_move_widget then
+            self:select_unit()
+        end
+    elseif button == Idstring("1") then
+        self:select_unit(true)
+        self._mouse_hold = true
+    end  
 end
 
 function StaticEditor:loaded_continents()
@@ -36,10 +72,10 @@ end
 
 function StaticEditor:build_quick_buttons()
     local quick_buttons = self:Group("QuickButtons")
-    self:Button("Deselect unit(s)", callback(self, self, "deselect_unit"), {group = quick_buttons})
-    self:Button("Delete unit(s)", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
-    self:Button("Add unit(s) to prefabs", callback(self, self, "add_units_to_prefabs"), {group = quick_buttons})
-    self:Button("Add to/Remove from portal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons})
+    self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
+    self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
+    --self:Button("CreatePrefab", callback(self, self, "add_units_to_prefabs"), {group = quick_buttons})
+    self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal"})
 end
 
 function StaticEditor:build_unit_editor_menu()
@@ -47,20 +83,14 @@ function StaticEditor:build_unit_editor_menu()
     self._editors = {}
     local other = self:Group("Main")    
     self:build_positions_items()
-    self:TextBox("Name", callback(self, self, "set_unit_data"), "", {group = other})
-    self:TextBox("Id", callback(self, self, "set_unit_data"), "", {group = other})
-    self:TextBox("UnitPath", callback(self, self, "set_unit_data"), "", {group = other})
+    self:TextBox("Name", callback(self, self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
+    self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other})
+    self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", {group = other}, true)
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
     self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableCollision", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableOnAIGraph", callback(self, self, "set_unit_data"), false, {group = other})
-    self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
-        on_click = function(unit_path)
-            self:GetItem("UnitPath"):SetValue(unit_path)
-            self:set_unit_data()      
-        end,
-    }), {group = other})
     self:build_extension_items()
 end
 
@@ -216,42 +246,6 @@ function StaticEditor:add_units_to_prefabs(menu, item)
     })    
 end
 
-function StaticEditor:mouse_pressed(button, x, y)
-    if button == Idstring("0") then
-        self._parent:reset_widget_values()
-        local from = self._parent:get_cursor_look_point(0)
-        local to = self._parent:get_cursor_look_point(100000)
-        local unit = self._parent:widget_unit()
-        if unit then
-            if self._parent._move_widget:enabled() then
-                local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
-                if ray and ray.body then
-                    if (alt() and not ctrl()) then self:clone() end
-                    self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
-                    self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
-                    self._parent._using_move_widget = true
-                end
-            end
-            if self._parent._rotate_widget:enabled() and not self._parent._using_move_widget then
-                local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
-                if ray and ray.body then
-                    self._parent._rotate_widget:set_rotate_widget_axis(ray.body:name():s())
-                    self._parent._rotate_widget:set_world_dir(ray.position)
-                    self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
-                    self._parent._rotate_widget:set_rotate_widget_unit_rot(self._selected_units[1]:rotation())
-                    self._parent._using_rotate_widget = true
-                end
-            end         
-        end  
-        if not self._parent._using_rotate_widget and not self._parent._using_move_widget then
-            self:select_unit()
-        end
-    elseif button == Idstring("1") then
-        self:select_unit(true)
-        self._mouse_hold = true
-    end  
-end
-
 function StaticEditor:mouse_moved(x, y)
     if self._mouse_hold then
         self:select_unit(true)
@@ -284,7 +278,7 @@ function StaticEditor:recalc_all_locals()
         local reference = self._selected_units[1]
         reference:unit_data().local_pos = Vector3()
         reference:unit_data().local_rot = Rotation()
-        for _, unit in ipairs(self._selected_units) do
+        for _, unit in pairs(self._selected_units) do
             if unit ~= reference then
                 self:recalc_locals(unit, reference)
             end
@@ -442,7 +436,6 @@ function StaticEditor:set_menu_unit(unit)
     local not_w_unit = not (unit:wire_data() or unit:ai_editor_data())
     self:GetItem("Continent"):SetEnabled(not_w_unit)
     self:GetItem("UnitPath"):SetEnabled(not_w_unit)
-    self:GetItem("SelectUnitPath"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
 end
 
@@ -468,7 +461,7 @@ function StaticEditor:addremove_unit_portal(menu, item)
             end
         end
     else
-        QuickMenu:new("Error", "No portal selected.", {{text = "ok", is_cancel_button = true}}, true)  
+        QuickMenuPlus:new("Error", "No portal selected")  
     end    
 end      
 
@@ -484,12 +477,14 @@ function StaticEditor:delete_selected_dialog(menu, item)
     if not self:selected_unit() then
         return
     end        
-    QuickMenu:new("Warning", "This will delete the selected unit(s)/element(s), Continue?",
-        {[1] = {text = "Yes", callback = callback(self, self, "delete_selected")
-    },[2] = {text = "No", is_cancel_button = true}}, true)    
+    QuickMenuPlus:new("Warning", "This will delete the selection, Continue?",{
+        {text = "Yes", callback = callback(self, self, "delete_selected")},
+        {text = "No", is_cancel_button = true}
+    })
 end
 
 function StaticEditor:update(t, dt)
+    self.super.update(self, t, dt)
     for _, unit in pairs(self._nav_surfaces) do 
         Application:draw(unit, 0,0.8,1)
     end
@@ -499,16 +494,15 @@ function StaticEditor:update(t, dt)
         end
     end
     local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
-    local instance_drawn
+    self._pen:set(color)
     local draw_bodies = self:Value("DrawBodies")
     if managers.viewport:get_current_camera() then
-        for _, unit in ipairs(self._selected_units) do
+        for _, unit in pairs(self._selected_units) do
             if alive(unit) then
                 if draw_bodies then
                     for i = 0, unit:num_bodies() - 1 do
                         local body = unit:body(i)
                         if self._parent:_should_draw_body(body) then
-                            self._pen:set(color)
                             self._pen:body(body)
                         end
                     end
@@ -521,7 +515,7 @@ function StaticEditor:update(t, dt)
 end
 
 function StaticEditor:KeyCPressed()
-    if ctrl() and #self._selected_units > 0 and not self._parent._menu._highlighted then
+    if #self._selected_units > 0 and not self._parent._menu._highlighted then
         self:set_unit_data()
         local all_unit_data = {}
         for _, unit in pairs(self._selected_units) do
@@ -536,7 +530,7 @@ function StaticEditor:KeyCPressed()
 end
 
 function StaticEditor:KeyVPressed()
-    if ctrl() and not self._parent._menu._highlighted then
+    if not self._parent._menu._highlighted then
         local ret, data = pcall(function() return json.custom_decode(Application:get_clipboard()) end)
         if ret and type(data) == "table" then
             self:reset_selected_units()
@@ -569,11 +563,9 @@ function StaticEditor:clone()
 end
 
 function StaticEditor:KeyFPressed()
-    if Input:keyboard():down(Idstring("left ctrl")) then
-        if self._selected_units[1] then
-            self._parent:set_camera(self._selected_units[1]:position())
-        end
-	end
+    if self._selected_units[1] then
+        self._parent:set_camera(self._selected_units[1]:position())
+    end
 end
 
 function StaticEditor:set_unit_enabled(enabled)

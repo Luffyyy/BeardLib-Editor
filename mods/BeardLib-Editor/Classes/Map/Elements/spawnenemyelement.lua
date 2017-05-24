@@ -65,13 +65,11 @@ end
 
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-    self:StringCtrl("enemy", {text = "Enemy Unit Path"})
-    self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
+    local enemy = self:StringCtrl("enemy", {text = "Enemy Unit Path"})
+    self:Button("BrowseForEnemy", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
     	slot = 12,
-        on_click = function(unit_path)
-            self._menu:GetItem("enemy"):SetValue(unit_path, true)
-        end,
-    }), {group = other})
+        on_click = function(unit_path) enemy:SetValue(unit_path, true) end,
+    }), {group = self._class_group, offset = {enemy.offset[1] * 4, enemy.offset[2]}})
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")

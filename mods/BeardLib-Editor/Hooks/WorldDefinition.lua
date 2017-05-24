@@ -432,6 +432,16 @@ function self:_create_sounds(data)
 	end
 end
 
+function self:_create_world_cameras(data)
+	local path = self:world_dir() .. data.file
+	if not DB:has("world_cameras", path) then
+		Application:error("No world_camera file found! (" .. path .. ")")
+		return
+	end
+	local values = self:_serialize_to_script("world_cameras", path)
+	self._world_cameras_data = values
+	managers.worldcamera:load(values)
+end
 function self:_add_to_portal(unit, data)
 end
 

@@ -35,20 +35,10 @@ function me:init()
         ["@ID5dac81a18d09497c@"] = "xz",
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
-    Input:keyboard():add_trigger(Idstring("f10"), function()
-        if not self._enabled then
-            self._before_state = game_state_machine:current_state_name()
-            game_state_machine:change_state_by_name("editor")
-        elseif managers.platform._current_presence == "Playing" then
-            game_state_machine:change_state_by_name(self._before_state or "ingame_waiting_for_players")
-        else
-            game_state_machine:change_state_by_name("ingame_waiting_for_players")
-        end
-    end)
+    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BeardLibEditor.Options:GetValue("Input/ToggleMapEditor"))
     self._menu = MenuUI:new({
-        text_color = Color.white,
-        marker_color = Color.white:with_alpha(0),
-        marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        marker_color = Color.transparent,
+        scroll_color = BeardLibEditor.Options:GetValue("AccentColor"),
         mouse_press = callback(self, self, "mouse_pressed"),
         mouse_release = callback(self, self, "mouse_released"),
         create_items = callback(self, self, "post_init"),
@@ -159,7 +149,6 @@ function me:mouse_pressed(button, x, y)
 end
 
 function me:select_unit(unit, add)
-    --self.managers.menu:Switch("static")
     self.managers.static:set_selected_unit(unit, add)
 end
 
@@ -292,18 +281,15 @@ end
 function me:set_enabled(enabled)
     self._enabled = enabled
     if enabled then
-        self._menu:enable()
+        self._menu:Enable()
         managers.hud:set_disabled()
     else
-        self._menu:disable()
+        self._menu:Disable()
         managers.hud:set_enabled()
     end
     self._vp:set_active(enabled)
     if type(managers.enemy) == "table" then
         managers.enemy:set_gfx_lod_enabled(not enabled)
-    end
-    if managers.hud then
-        managers.hud:set_enabled()
     end
     for _, manager in pairs(self.managers) do
         if enabled then
@@ -321,7 +307,7 @@ end
 function me:set_unit_positions(pos)
     local reference = self:widget_unit()
     BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
-    for _, unit in ipairs(self.managers.static._selected_units) do
+    for _, unit in pairs(self.managers.static._selected_units) do
         if unit ~= self:selected_unit() then
             self:set_unit_position(unit, pos)
         end
@@ -331,7 +317,7 @@ end
 function me:set_unit_rotations(rot)
     local reference = self:widget_unit()
     BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
-    for _, unit in ipairs(self.managers.static._selected_units) do
+    for _, unit in pairs(self.managers.static._selected_units) do
         if unit ~= self:selected_unit() then
             self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
         end
@@ -426,6 +412,16 @@ end
 --Update functions
 function me:paused_update(t, dt) self:update(t, dt) end
 function me:update(t, dt)
+    if BeardLib.Utils.Input:Triggered(self._toggle_trigger) then
+        if not self._enabled then
+            self._before_state = game_state_machine:current_state_name()
+            game_state_machine:change_state_by_name("editor")
+        elseif managers.platform._current_presence == "Playing" then
+            game_state_machine:change_state_by_name(self._before_state or "ingame_waiting_for_players")
+        else
+            game_state_machine:change_state_by_name("ingame_waiting_for_players")
+        end
+    end
     if self:enabled() then
         for _, manager in pairs(self.managers) do
             if manager.update then
@@ -480,7 +476,7 @@ function me:update_positions()
 end
 
 function me:update_widgets(t, dt)
-    if not self._closed and alive(self:widget_unit()) then
+    if alive(self:widget_unit()) then
         local widget_pos  = self:world_to_screen(self:widget_unit():position())
         if widget_pos.z > 50 then
             widget_pos = widget_pos:with_z(0)
@@ -524,8 +520,7 @@ end
 
 function me:update_camera(t, dt)
     if self._menu:Focused() or not shift() then
-        managers.mouse_pointer._mouse:show()
-        self._mouse_pos_x, self._mouse_pos_y = managers.mouse_pointer._mouse:world_position()
+        managers.mouse_pointer:_activate()
         return
     end
     local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
@@ -540,8 +535,7 @@ function me:update_camera(t, dt)
     local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
     local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
     local rot_new = Rotation(yaw_new, pitch_new, 0)
-    managers.mouse_pointer._mouse:hide()
-    managers.mouse_pointer:set_mouse_world_position(self._mouse_pos_x, self._mouse_pos_y)
+    managers.mouse_pointer:_deactivate()
     self:set_camera(pos_new, rot_new)
 end
 

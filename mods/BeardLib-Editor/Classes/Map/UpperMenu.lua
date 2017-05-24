@@ -14,8 +14,8 @@ function UpperMenu:init(parent, menu)
     local w = 300
     self._menu = menu:Menu({
         name = "upper_menu",
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,       
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
         w = w,
         h = w / #self._tabs,
         offset = 0,

@@ -1,109 +1,40 @@
 EditorConsole = EditorConsole or class()
 function EditorConsole:init(parent, menu)
     self._parent = parent
-    self._options_menu = menu:NewMenu({
+    self._options_menu = menu:Menu({
         name = "console_options",
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,        
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         w = 600,
         h = 18,
+        offset = 0,
         items_size = 18,
         scrollbar = false,
-        offset = 0,
         align_method = "grid",
-        visible = true,
     })       
-    self._menu = menu:NewMenu({
+    self._menu = menu:Menu({
         name = "console_output",
-        position = "CenterBottom",    
-        background_color = Color(0.2, 0.2, 0.2),
-        background_alpha = 0.4,         
-        override_size_limit = true,  
-        size_by_text = true,
         w = 600,
-        should_scroll_down = true,
         h = 100,
-        visible = true,
-    })      
+        size_by_text = true,
+        override_size_limit = true,
+        should_scroll_down = true,
+        position = "CenterBottom",
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+    })
+    MenuUtils:new(self, self._options_menu)
     self._options_menu:Panel():set_leftbottom(self._menu:Panel():lefttop())    
-    local w = self._options_menu.w / 5
-    self._options_menu:Button({
-        name ="hide_console",
-        text = "Console",
-        color = self._menu.marker_highlight_color,
-        w = w,
-        callback = callback(self, self, "ToggleConsole"),
-    })
-    self._options_menu:Button({
-        name ="clear_button",
-        text = "Clear",
-        color = self._menu.marker_highlight_color,
-        w = w,
-        callback = callback(self, self, "Clear"),
-    })
-    self._show_info = self._options_menu:Toggle({
-        name ="show_info",
-        text = "Info",
-        color = Color.yellow,
-        w = w,
-        value = true,
-        callback = callback(self, self, "FilterConsole"),
-    }) 
-    self._show_mission = self._options_menu:Toggle({
-        name ="show_mission",
-        text = "Mission",
-        value = true,        
-        color = Color.green,
-        w = w,
-        callback = callback(self, self, "FilterConsole"),
-    })
-    self._show_errors = self._options_menu:Toggle({
-        name ="show_errors",
-        text = "Errors",
-        color = Color.red,
-        value = true,        
-        w = w,
-        callback = callback(self, self, "FilterConsole"),
-    })
-
+    local opt = {border_bottom = true, text_align = "center", border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
+    self:Button("Console", callback(self, self, "ToggleConsole"), opt)
+    self:Button("Clear", callback(self, self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
+    self.info = self:Toggle("Info", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
+    self.mission = self:Toggle("Mission", callback(self, self, "FilterConsole"), false, table.merge(opt, {border_color = Color.green}))
+    self.errors = self:Toggle("Errors", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
+    MenuUtils:new(self)
     self:Clear()
     self:ToggleConsole()
 end
 
-function EditorConsole:Log(msg, ...)
-    msg = string.format(msg, ...)
-    local date = Application:date("%X")    
-    table.insert(self._messages, {message = tostring(msg), date = date, typ = "info"})
-    if self._show_info.value then
-        self._menu:Divider({
-            text = date .. ": " .. tostring(msg),
-            color = Color.white,
-        })
-    end
-end
-function EditorConsole:LogMission(msg)
-    local date = Application:date("%X")    
-    table.insert(self._messages, {message = tostring(msg), date = date,  typ = "mission"})
-    if self._show_mission.value then
-        self._menu:Divider({
-            text = date .. ": " .. tostring(msg),
-            color = Color.yellow,
-        })
-    end
-end
-function EditorConsole:Error(msg, ...)
-    msg = string.format(msg, ...)
-    local date = Application:date("%X")
-    table.insert(self._messages, {message = tostring(msg), date = date, typ = "error"})
-    if self._show_errors.value then
-        self._menu:Divider({
-            text = date .. ": " .. tostring(msg),
-            color = Color.red,
-        })
-    end
-end
-
-function EditorConsole:ToggleConsole()    
+function EditorConsole:ToggleConsole()
     self.closed = not self.closed
     if self.closed then
         self._options_menu:SetPosition("Bottom")
@@ -114,19 +45,20 @@ function EditorConsole:ToggleConsole()
     end
     self._menu:SetVisible(not self.closed)
 end
-function EditorConsole:Clear()
-    self._messages = {}
-    self:FilterConsole()    
+
+function EditorConsole:PrintMessage(type, message, ...)
+    message = type == "info" and string.format(message, ...) or message
+    local date = Application:date("%X")  
+    self:Divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
 end
 
 function EditorConsole:FilterConsole()
-    self._menu:ClearItems()
-    for _, msg in pairs(self._messages) do
-        if (msg.typ == "info" and self._show_info.value) or (msg.typ == "mission" and self._show_mission.value) or (msg.typ == "error" and self._show_errors.value) then
-            self._menu:Divider({
-                text = msg.date .. ": " .. tostring(msg.message),
-                color = msg.typ == "info" and Color.white or msg.typ == "mission" and Color.yellow or Color.red,
-            })
-        end
+    for _, item in pairs(self._menu._my_items) do
+        item:SetVisible(self[item.type]:Value())
     end
 end
+
+function EditorConsole:Log(msg, ...) self:PrintMessage("info", msg, ...) end 
+function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission", msg, ...) end
+function EditorConsole:Error(msg, ...) self:PrintMessage("error", msg, ...) end
+function EditorConsole:Clear() self:ClearItems() end

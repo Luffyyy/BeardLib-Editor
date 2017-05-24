@@ -127,36 +127,9 @@ function EditorSpecialObjective:stop_test_element()
 	print("Stop test time", self._start_test_t and Application:time() - self._start_test_t or 0)
 end
 
-function EditorSpecialObjective:draw_links(t, dt, selected_unit, all_units)
-	EditorSpecialObjective.super.draw_links(self, t, dt, selected_unit)
-	self:_draw_follow_up(selected_unit, all_units)
-end
-
-function EditorSpecialObjective:update_selected(t, dt, selected_unit, all_units)
-	local brush = Draw:brush()
-	brush:set_color(Color(0.15, 1, 1, 1))
-	local pen = Draw:pen(Color(0.15, 0.5, 0.5, 0.5))
-	brush:sphere(self._element.values.search_position, self._element.values.search_distance, 4)
-	pen:sphere(self._element.values.search_position, self._element.values.search_distance)
-	brush:sphere(self._element.values.search_position, 10, 4)
-	Application:draw_line(self._element.values.search_position, self._unit:position(), 0, 1, 0)
-	self:_draw_follow_up(selected_unit, all_units)
-	if self._element.values.spawn_instigator_ids then
-		for _, id in ipairs(self._element.values.spawn_instigator_ids) do
-			local unit = all_units[id]
-			local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
-			if draw then
-				self:_draw_link({
-					from_unit = unit,
-					to_unit = self._unit,
-					r = 0,
-					g = 0,
-					b = 0.75
-				})
-			end
-		end
-	end
-	self:_highlight_if_outside_the_nav_field(t)
+function EditorSpecialObjective:draw_links()
+	EditorSpecialObjective.super.draw_links(self)
+	self:_draw_follow_up()
 end
 
 function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
@@ -211,13 +184,15 @@ function EditorSpecialObjective:update_unselected(t, dt, selected_unit, all_unit
 	end
 end
 
-function EditorSpecialObjective:_draw_follow_up(selected_unit, all_units)
+function EditorSpecialObjective:_draw_follow_up()
+    local selected_unit = self:selected_unit()
+    local unit_sel = self._unit == selected_unit
 	if self._element.values.followup_elements then
 		for _, element_id in ipairs(self._element.values.followup_elements) do
-			local unit = all_units[element_id]
+			local unit = self:Manager("mission"):get_element_unit(element_id)
 			local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
 			if draw then
-				self:_draw_link({
+				self:draw_link({
 					from_unit = self._unit,
 					to_unit = unit,
 					r = 0,
@@ -311,40 +286,15 @@ function EditorSpecialObjective:add_triggers(vc)
 	vc:add_trigger(Idstring("lmb"), callback(self, self, "_lmb"))
 end
 
-function EditorSpecialObjective:selected()
-	EditorSpecialObjective.super.selected(self)
-	if not managers.ai_data:patrol_path(self._element.values.patrol_path) then
-		self._element.values.patrol_path = "none"
-	end
-	CoreEws.update_combobox_options(self._patrol_path_params, table.list_add({"none"}, managers.ai_data:patrol_path_names()))
-	CoreEws.change_combobox_value(self._patrol_path_params, self._element.values.patrol_path)
-end
-
 function EditorSpecialObjective:_apply_preset(menu, item)
-	QuickMenu:new( "Special objective", "Apply preset " .. (item.selected or "")  .. "?", {[1] = {text = "Yes", callback = function()	
-		if item.selected == "clear" then
-			self:_clear_all_nav_link_filters()
-		elseif item.selected == "all" then
-			self:_enable_all_nav_link_filters()
-		else		
-			log(item.selected)
-
+	local selection = item:SelectedItem()
+	QuickMenuPlus:new("Special objective", "Apply access flag preset " .. (selection or "")  .. "?", {{text = "Yes", callback = function()
+		if selection == "clear all" then
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({})
+		elseif selection == "select all" then
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(NavigationManager.ACCESS_FLAGS)
 		end 	
-	end},[2] = {text = "No", is_cancel_button = true}}, true)
-end
-
-function EditorSpecialObjective:_enable_all_nav_link_filters()
-	for  k, check in pairs(self._nav_link_filter_check_boxes) do
-		check:SetValue(true)
-		self:_toggle_nav_link_filter_value(check)
-	end
-end
-
-function EditorSpecialObjective:_clear_all_nav_link_filters()
-	for  k, check in pairs(self._nav_link_filter_check_boxes) do
-		check:SetValue(false)
-		self:_toggle_nav_link_filter_value(check)
-	end
+	end},{text = "No", is_cancel_button = true}})
 end
 
 function EditorSpecialObjective:_toggle_nav_link_filter_value(item)
@@ -361,29 +311,21 @@ function EditorSpecialObjective:_toggle_nav_link_filter_value(item)
 	self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(self._nav_link_filter)
 end
 
+function EditorSpecialObjective:manage_flags()
+    BeardLibEditor.managers.SelectDialog:Show({
+        selected_list = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access),
+        list = NavigationManager.ACCESS_FLAGS,
+        callback = function(list) self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(list) end
+    })
+end
+
 function EditorSpecialObjective:_build_panel()
 	self:_create_panel()
 	self._nav_link_filter_check_boxes = self._nav_link_filter_check_boxes or {}
 
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
-	self._menu:ComboBox({
-		name = "preset",
-		text = "Preset:",
-		items = {"clear", "all"},
-		help = "Select a preset.",		
-		callback = callback(self, self, "_apply_preset"),
-	})
-	local opt = NavigationManager.ACCESS_FLAGS
-	for i, o in ipairs(opt) do
-		local check = self._menu:Toggle({
-			name = o,
-			text = o,
-			value = table.contains(self._nav_link_filter, o),
-			callback = callback(self, self, "_toggle_nav_link_filter_value"),
-		})	
-		table.insert(self._nav_link_filter_check_boxes, check)
-	end
-	self:ComboCtrl("ai_group", table.list_add({"none"}, clone(ElementSpecialObjective._AI_GROUPS)), {help = "Select an ai group."})
+	self:ComboBox("AccessFlagsPreset", callback(self, self, "_apply_preset"), {"clear all", "select all"}, nil, {group = self._class_group, help = "Here you can quickly select or deselect all access flags"})
+	self:Button("ManageAccessFlags", callback(self, self, "manage_flags"), {group = self._class_group, help = "Decide which types of AI are affected by this element"})
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
 	self:BooleanCtrl("align_position", {text = "Align position"})
@@ -394,9 +336,8 @@ function EditorSpecialObjective:_build_panel()
 	self:BooleanCtrl("no_arrest", {text = "No Arrest"})
 	self:BooleanCtrl("scan", {text = "Idle scan"})
 	self:BooleanCtrl("allow_followup_self", {text = "Allow self-followup"})
-	self:NumberCtrl("search_distance", {min = 0, help = "Used to specify the distance to use when searching for an AI"})
-	local options = table.list_add({"none"}, clone(CopActionAct._act_redirects.SO))
-	self:ComboCtrl("so_action", table.list_add(options, self._AI_SO_types), {help = "Select a action that the unit should start with."})
+	self:ComboCtrl("ai_group", table.list_add({"none"}, clone(ElementSpecialObjective._AI_GROUPS)), {help = "Select an ai group."})
+	self:ComboCtrl("so_action", table.list_add(table.list_add({"none"}, clone(CopActionAct._act_redirects.SO)), self._AI_SO_types), {help = "Select a action that the unit should start with."})
 	self:ComboCtrl("path_style", table.list_add({"none"}, ElementSpecialObjective._PATHING_STYLES), {help = "Specifies how the patrol path should be used."})
 	self:ComboCtrl("path_haste", table.list_add({"none"}, ElementSpecialObjective._HASTES), {help = "Select path haste to use."})
 	self:ComboCtrl("path_stance", table.list_add({"none"}, ElementSpecialObjective._STANCES), {help = "Select path stance to use."})
@@ -404,6 +345,7 @@ function EditorSpecialObjective:_build_panel()
 	self:ComboCtrl("attitude", table.list_add({"none"}, ElementSpecialObjective._ATTITUDES), {help = "Select combat attitude."})
 	self:ComboCtrl("trigger_on", table.list_add({"none"}, ElementSpecialObjective._TRIGGER_ON), {help = "Select when to trigger objective."})
 	self:ComboCtrl("interaction_voice", table.list_add({"none"}, ElementSpecialObjective._INTERACTION_VOICES), {help = "Select what voice to use when interacting with the character."})
+	self:NumberCtrl("search_distance", {min = 0, help = "Used to specify the distance to use when searching for an AI"})
 	self:NumberCtrl("interrupt_dis", {
 		min = -1, 
 		help = "Interrupt if a threat is detected closer than this distance (meters). -1 means at any distance. For non-visible threats this value is multiplied with 0.7.", 
@@ -418,8 +360,5 @@ function EditorSpecialObjective:_build_panel()
 	self:NumberCtrl("chance_inc", {min = 0, max = 1, help = "Used to specify an incremental chance to happen", text = "Chance incremental:"})
 	self:NumberCtrl("action_duration_min", {min = 0, help = "How long the character stays in his specified action."})
 	self:NumberCtrl("action_duration_max", {min = 0, help = "How long the character stays in his specified action. Zero means indefinitely."})
-	local test_units = table.list_add(EditorSpawnCivilian._options, EditorSpawnEnemyDummy._options)
-	table.insert(test_units, 1, "default")
---	self:ComboCtrl("test_unit", test_units, {help = "Select the unit to be used when testing."})
 end
  

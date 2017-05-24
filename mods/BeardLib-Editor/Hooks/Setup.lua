@@ -5,15 +5,16 @@ Hooks:PreHook(Setup, "start_loading_screen", "BeardLibEditorStartLoadingScreen",
 			local gui_data = CoreGuiDataManager.GuiDataManager:new(LoadingEnvironmentScene:gui())
 			local ws = gui_data:create_fullscreen_workspace()
 			local panel = ws:panel():panel({name = "Load", layer = 50})
+			local bgcolor = BeardLibEditor.Options:GetValue("BackgroundColor")
 			panel:rect({
 				name = "Background",
-		       	color = Color(0.3, 0.3, 0.3),
+		       	color = bgcolor:with_alpha(1),
 			})
 			Global.LoadingText = panel:text({
 				name = "Loading",
 				font = "fonts/font_large_mf",
 				font_size = 42,
-				color = Color(0.8, 0.8, 0.8),
+				color = bgcolor:contrast(),
 				align = "center",
 				vertical = "center",
 			})

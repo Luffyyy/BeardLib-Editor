@@ -4,6 +4,7 @@
         <class file="MenuUtils.lua"/>
         <class file="EditorMenu.lua"/>
         <class file="EditorOptionsMenu.lua"/>
+        <class file="AboutMenu.lua"/>
         <class file="MissionElementUnit.lua"/>
         <class file="MapProjectManager.lua"/>
         <class file="Dialogs/EditorList.lua"/>
@@ -49,7 +50,18 @@
         <options>                
             <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color(0.26, 0.52, 0.93)" name="AccentColor"/>
-            <option_group name="Map">            
+            <option type="Color" default_value="Color(0.4, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
+            <option_group name="Input">
+                <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
+                <option type="string" default_value="left ctrl+c" name="CopyUnit"/>
+                <option type="string" default_value="left ctrl+v" name="PasteUnit"/>
+                <option type="string" default_value="left ctrl+s" name="SaveMap"/>
+                <option type="string" default_value="t" name="ToggleMoveWidget"/>
+                <option type="string" default_value="f10" name="ToggleMapEditor"/>
+                <option type="string" default_value="r" name="ToggleRotationWidget"/>
+                <option type="string" default_value="delete" name="DeleteSelection"/>
+            </option_group>
+            <option_group name="Map">
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
                 <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>
@@ -66,6 +78,7 @@
         </options>
     </Options>    
     <AddFiles directory="Assets">
+        <texture path="textures/editor_logo" force="true"/>
         <texture path="textures/editor_icons_df" force="true"/>
         <unit path="units/mission_element/element" force="true"/>
         <object path="units/mission_element/element" force="true"/>

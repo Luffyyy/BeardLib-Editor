@@ -68,7 +68,7 @@ function MissionScriptEditor:_create_panel()
 	self._class_group = self:Group(self._element.class:gsub("Element", "") .. "") 
 	self:Button("DeselectElement", callback(self, self, "deselect_element"), {group = quick_buttons})    
 	local SE = self:Manager("static")
-	self:Button("DeleteElement", callback(SE, SE, "delete_selected"), {group = quick_buttons})
+	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
  	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
@@ -77,7 +77,7 @@ function MissionScriptEditor:_create_panel()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
-    rotation = type(rotation) == "number" and Rotation() or rotation
+    rot = type(rot) == "number" and Rotation() or rot
     self:AxisControls(callback(self, self, "set_element_position"), {group = transform})
     self:update_positions(pos, rot)
     self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
@@ -86,7 +86,7 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
 	self:ComboBox("OnExecutedList", callback(self, self, "update_on_executed_list"), {}, 1, {group = self._main_group})
 	self:NumberBox("SelectedElementDelay", callback(self, self, "set_selected_on_executed_element_delay"), nil, {control_slice = 2.5, floats = 0, min = 0, group = self._main_group})  		
-	self:BuildElementsManage("on_executed", {key = "id", orig = {id = 0, delay = 0}}, nil, callback(self, self, "update_on_executed_list"), self._main_group)
+	self:BuildElementsManage("on_executed", {key = "id", orig = {id = 0, delay = 0}}, nil, callback(self, self, "update_on_executed_list"), self._main_group, ", this list contains elements that this element will execute.")
 	self:update_on_executed_list()
 end
 
@@ -277,12 +277,23 @@ function MissionScriptEditor:set_element_position(menu)
 	self:update_element()
 end
 
-function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clbk, group)
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenUnitsManageDialog", {value_name = value_name, update_clbk = update_clbk, table_data = table_data}), {text = "Manage "..value_name.." List", group = group or self._class_group})
+function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clbk, group, help)
+	help = help or ""
+	self:Button("Manage"..value_name.."List", callback(self, self, "OpenUnitsManageDialog", {
+		value_name = value_name, 
+		update_clbk = update_clbk, 
+		table_data = table_data
+	}), {text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list " .. help, group = group or self._class_group})
 end
 
-function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, group)
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {value_name = value_name, update_clbk = update_clbk, table_data = table_data, classes = classes}), {text = "Manage "..value_name.." List", group = group or self._class_group})
+function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, group, help)
+	help = help or ""
+	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {
+		value_name = value_name, 
+		update_clbk = update_clbk, 
+		table_data = table_data, 
+		classes = classes
+	}), {text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list" .. help, group = group or self._class_group})
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)

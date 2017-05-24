@@ -20,12 +20,13 @@ end
 
 function self:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
+    local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
     M.Dialog = MenuDialog:new()
-    M.ListDialog = ListDialog:new({marker_highlight_color = acc_color})
-    M.SelectDialog = SelectListDialog:new({marker_highlight_color = acc_color})
-    M.ColorDialog = ColorDialog:new({marker_highlight_color = acc_color})
-    M.FBD = FileBrowserDialog:new({marker_highlight_color = acc_color})
+    M.ListDialog = ListDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
+    M.SelectDialog = SelectListDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
+    M.ColorDialog = ColorDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
+    M.FBD = FileBrowserDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
        
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
@@ -36,7 +37,7 @@ function self:InitManagers()
     M.MapProject = MapProjectManager:new()
     M.LoadLevel = LoadLevelMenu:new()
     M.EditorOptions = EditorOptionsMenu:new()
-
+    AboutMenu:new()
     self:LoadCustomAssetsToHashListt(self._config.AddFiles)
     local mod = self.managers.MapProject:current_mod()
     if mod and mod._config.level.add then
@@ -70,7 +71,8 @@ function self:RegisterModule(key, module)
     end
 end
 
-function self:LoadHashlist()        
+function BeardLibEditor:LoadHashlist()
+    local t = os.clock()
     self:log("Loading Hashlist")
     local has_hashlist = DB:has("idstring_lookup", "idstring_lookup")     
     local types = clone(BeardLib.config.script_data_types)
@@ -79,32 +81,35 @@ function self:LoadHashlist()
     table.insert(types, "movie")
     table.insert(types, "effect")
     table.insert(types, "scene")
+    local remove = table.remove
+    local insert = table.insert
+    local split = string.split
+    local entries = self.DBEntries
+    for k, typ in pairs(types) do
+        self.DBPaths[typ] = {}
+    end
     local function ProcessLine(line)
         local path
-        for _, typ in pairs(types) do
-            self.DBPaths[typ] = self.DBPaths[typ] or {}           
-
-            if DB:has(typ, line) then             
-                path = true
-                table.insert(self.DBPaths[typ], line)
-    
-                local path_split = string.split(line, "/")
-                local curr_tbl = self.DBEntries
-                local filename = table.remove(path_split)
-                for _, part in pairs(path_split) do
-                    curr_tbl[part] = curr_tbl[part] or {}
-                    curr_tbl = curr_tbl[part]
-                end
-                table.insert(curr_tbl, {
+        local path_split = split(line, "/")
+        local filename = remove(path_split)
+        local curr_tbl = entries
+        for _, part in pairs(path_split) do
+            curr_tbl[part] = curr_tbl[part] or {}
+            curr_tbl = curr_tbl[part]
+        end
+        local line_split = split(line, ";")
+        local t = split(line_split[2] or "", ",")
+        line = line_split[1]
+        if line and t then
+            for _, typ in pairs(t) do
+                typ = types[tonumber(typ)]
+                insert(self.DBPaths[typ], line)
+                insert(curr_tbl, {
                     path = line,
                     name = filename,
                     file_type = typ
                 })
             end
-        end
-        if not path then
-            self.DBPaths.other = self.DBPaths.other or {}
-            table.insert(self.DBPaths.other, line)
         end
     end
     if Global.DBPaths and Global.DBEntries then
@@ -115,16 +120,18 @@ function self:LoadHashlist()
         if has_hashlist then 
             local file = DB:open("idstring_lookup", "idstring_lookup")
             if file ~= nil then
+                local gmatch = string.gmatch
+                local sub = string.sub
                 --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-                for line in string.gmatch(file:read(), "[%w_/]+%z") do ProcessLine(string.sub(line, 1, #line - 1)) end
+                for line in gmatch(file:read(), "[%w_/]+%z") do ProcessLine(sub(line, 1, #line - 1)) end
                 file:close()
             end
         else
             local lines = io.lines(self.ModPath .. "list.txt", "r")
             if lines then for line in lines do ProcessLine(line) end
-            else self:log("Failed Loading Outside Hashlist.") end
+            else self:log("Failed Loading Outside Hashlist") end
         end  
-        self:log("%s Hashlist Loaded", has_hashlist and "Inside" or "Outside")   
+        self:log("%s Hashlist Loaded, It took %.2f seconds", has_hashlist and "Inside" or "Outside", os.clock() - t)   
         Global.DBPaths = self.DBPaths
         Global.DBEntries = self.DBEntries 
     end
@@ -216,7 +223,7 @@ if Hooks then
         })
     end)
 
-    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function(menu_manager, nodes) BeardLibEditor:InitManagers() end)
+    Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", callback(self, self, "InitManagers"))
 end
 
 if not self.InitDone then

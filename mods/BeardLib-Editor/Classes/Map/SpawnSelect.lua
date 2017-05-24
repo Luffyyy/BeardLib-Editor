@@ -8,7 +8,8 @@ function SpawnSelect:build_default_menu()
     local quick = self:Divider("QuickButtons")
     self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"))
     if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
-    	self:Button("Spawn Unit(extract)", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}))
+        self:Button("Spawn Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}))
+    	self:Button("Load Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtractNoSpawn"), not_loaded = true}))
     end
     self:Button("Spawn Element", callback(self, self, "OpenSpawnElementDialog"))
     self:Button("Spawn Prefab", callback(self, self, "OpenSpawnPrefabDialog"))
@@ -102,9 +103,14 @@ function SpawnSelect:mouse_pressed(button, x, y)
 end
 
 function SpawnSelect:update(t, dt)
+    self.super.update(self, t, dt)
     if alive(self._dummy_spawn_unit) then
         self._dummy_spawn_unit:set_position(self._parent._spawn_position)
     end
+end
+
+function SpawnSelect:SpawnUnitFromExtractNoSpawn(unit, dontask)
+    self:SpawnUnitFromExtract(unit, dontask, true)
 end
 
 function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
@@ -151,7 +157,9 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
         end
         if not dontask then
             BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", save, function()
-                self:Manager("static"):delete_selected()
+                if not dontspawn then
+                    self:Manager("static"):delete_selected()
+                end
                 CustomPackageManager:UnloadPackageConfig(config)
             end)
         else
@@ -267,6 +275,7 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, slot = params.slot, type = params.type}),
 	    callback = function(unit)
+            BeardLibEditor.managers.ListDialog:hide()
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(unit)
 	    	else
@@ -278,7 +287,6 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
                 self:Manager("menu"):set_tabs_enabled(false)
                 self:SetTitle("Press: LMB to spawn, RMB to cancel")
 			end
-			BeardLibEditor.managers.ListDialog:hide()
 	    end
 	}) 
 end

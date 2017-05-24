@@ -13,15 +13,20 @@ end
 MenuUtils = MenuUtils or class()
 function MenuUtils:init(this, menu)
 	menu = menu or this._menu
+	local color = BeardLibEditor.Options:GetValue("AccentColor")
+	function this:GetMenu()
+		return menu
+	end
+
 	function this:Divider(name, opt)
 	    opt = opt or {}
 	    local m = opt.group or menu
 	    return m:Divider(table.merge({
 	        name = name,
 	        text = name,
-	        color = menu.marker_highlight_color,
+	        color = color,
 	    }, opt))
-	end
+	end	
 
 	function this:Group(name, opt)
 	    opt = opt or {}
@@ -29,7 +34,7 @@ function MenuUtils:init(this, menu)
 	    return m:ItemsGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        color = menu.marker_highlight_color
+	        color = color
 	    }, opt))
 	end	
 
@@ -39,7 +44,7 @@ function MenuUtils:init(this, menu)
 	    return m:DivGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        color = menu.marker_highlight_color,
+	        color = color,
 	        automatic_height = true,
 	        offset = {8, 4},
 	        background_visible = false
@@ -71,6 +76,17 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
+	function this:KeyBind(name, callback, value, opt)
+		opt = opt or {}
+		local m = opt.group or menu
+		return m:KeyBind(table.merge({
+			name = name,
+			value = value,
+			supports_additional = true,
+			callback = callback
+		}, opt))
+	end
+
 	function this:SmallButton(name, callback, parent, opt)    
 	    opt = opt or {}
 	    local m = opt.group or menu
@@ -89,13 +105,13 @@ function MenuUtils:init(this, menu)
 
 	function this:SmallImageButton(name, callback, texture, rect, parent, opt)    
 	    opt = opt or {}
-	    local parent_is_menu = parent.menu_type
-	    local m = parent_is_menu and parent or (opt.group or menu)
+	    local m = parent.type_name == "Menu" and parent or (opt.group or menu)
 	    opt.help = string.pretty2(name)
 	    return m:ImageButton(table.merge({
 	        name = name,
 	        callback = callback,
 	        position = "CenterRight",
+	        size_by_icon = false,
 	        texture = texture,
 	        texture_rect = rect,
 	        override_parent = parent,
@@ -110,6 +126,7 @@ function MenuUtils:init(this, menu)
 	        text = string.pretty2(name),
 	        value = value,
 	        items = items,
+	        bigger_context_menu = true,
 	        callback = callback,
 	    }, opt))
 	end
@@ -121,6 +138,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
+	        line_color = color,
 	        value = value
 	    }, opt))
 	end
@@ -142,6 +160,7 @@ function MenuUtils:init(this, menu)
 	    return m:NumberBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
+	       	line_color = color,
 	        value = value,
 	        callback = callback,
 	    }, opt))
@@ -259,9 +278,10 @@ function MenuUtils:init(this, menu)
 		opt.control_slice = opt.control_slice or 1.5
 		opt.callback = opt.callback or callback
 	    local t = self:TextBox(name, nil, value, opt)
-	    opt.text = "Browse for " .. tostring(typ).."s"
+	    opt.text = "Browse " .. tostring(typ).."s"
 		opt.offset = {t.offset[1] * 4, t.offset[2]}
 		opt.callback = nil
+		opt.callback = opt.btn_callback
 	    local btn = self:Button("SelectPath"..name, function()
 	       BeardLibEditor.managers.ListDialog:Show({
 		        list = BeardLibEditor.Utils:GetEntries(typ, loaded, filterout),

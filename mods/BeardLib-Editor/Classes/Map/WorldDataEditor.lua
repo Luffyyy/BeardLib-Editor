@@ -39,7 +39,7 @@ function wde:build_default_menu()
     end
     local function base_button_pos(item)
         local p = item:Panel():parent()
-        item:Panel():set_world_righttop(p:world_right(), p:world_y())
+        item:Panel():set_world_righttop(p:world_righttop())
     end
     if managers.worlddefinition then
         local continents = self:DivGroup("Continents", {text = "Continents and Missions"})
@@ -224,7 +224,7 @@ end
 function wde:remove_script(script, menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
         local mission = managers.mission
-        self:clear_all_elements_from_script(script, true, true)
+        self:_clear_all_elements_from_script(script, item.continent, true, true)
         mission._missions[item.continent][script] = nil
         mission._scripts[script] = nil
         self:build_default_menu()  
@@ -254,10 +254,14 @@ function wde:rename_script(script, menu, item)
     })
 end
 
-function wde:clear_all_elements_from_script(script, no_refresh, no_dialog)
+function wde:clear_all_elements_from_script(script, menu, item)
+    sefl:_clear_all_elements_from_script(script, item.continent)
+end
+
+function wde:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)
     function delete_all()
         local mission = managers.mission
-        for _, element in pairs(mission._missions[item.continent][script].elements) do
+        for _, element in pairs(mission._missions[continent][script].elements) do
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:mission_element() and unit:mission_element().element.id == element.id then
                     mission._scripts[script]:delete_element(element)
@@ -267,7 +271,7 @@ function wde:clear_all_elements_from_script(script, no_refresh, no_dialog)
                 end
             end
         end
-        mission._missions[item.continent][script].elements = {}
+        mission._missions[continent][script].elements = {}
         if no_refresh ~= true then
             self._parent:load_continents(managers.worlddefinition._continent_definitions)
         end

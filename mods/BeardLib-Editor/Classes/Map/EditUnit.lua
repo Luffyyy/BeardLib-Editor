@@ -1,6 +1,7 @@
 EditUnit = EditUnit or class(EditorPart)
 function EditUnit:init() end
 function EditUnit:build_menu() end
+function EditUnit:update() end
 function EditUnit:editable(unit) return true end
 function EditUnit:super_editable(unit) return (alive(unit) and unit:unit_data()) and self:editable(unit) end
 function EditUnit:is_editable(parent, name)

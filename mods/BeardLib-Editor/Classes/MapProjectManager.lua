@@ -177,15 +177,18 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                     level.include = {directory = U.Path:Combine("levels", level.id)}
                     local world_data = PackageManager:script_data(Idstring("world"), Idstring(level_dir.."world"))
                     local continents_data = PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))
-                    table.insert(level.include, {_meta = "file", file = "world.world", type = "generic_xml", data = world_data})
-                    table.insert(level.include, {_meta = "file", file = "continents.continents", type = "custom_xml", data = continents_data})
-                    table.insert(level.include, {_meta = "file", file = "mission.mission", type = "custom_xml", data = PackageManager:script_data(Idstring("mission"), Idstring(level_dir.."mission"))})
-                    table.insert(level.include, {_meta = "file", file = "nav_manager_data.nav_data", type = "generic_xml", data = PackageManager:script_data(Idstring("nav_data"), Idstring(level_dir.."nav_manager_data"))})
+                    table.insert(level.include, {_meta = "file", file = "world.world", type = "binary", data = world_data})
+                    table.insert(level.include, {_meta = "file", file = "continents.continents", type = "binary", data = continents_data})
+                    table.insert(level.include, {_meta = "file", file = "mission.mission", type = "binary", data = PackageManager:script_data(Idstring("mission"), Idstring(level_dir.."mission"))})
+                    table.insert(level.include, {_meta = "file", file = "nav_manager_data.nav_data", type = "binary", data = PackageManager:script_data(Idstring("nav_data"), Idstring(level_dir.."nav_manager_data"))})
                     if DB:has(Idstring("cover_data"), Idstring(level_dir.."cover_data")) then
-                        table.insert(level.include, {_meta = "file", file = "cover_data.cover_data", type = "custom_xml", data = PackageManager:script_data(Idstring("cover_data"), Idstring(level_dir.."cover_data"))})
+                        table.insert(level.include, {_meta = "file", file = "cover_data.cover_data", type = "binary", data = PackageManager:script_data(Idstring("cover_data"), Idstring(level_dir.."cover_data"))})
                     end        
                     if DB:has(Idstring("world_sounds"), Idstring(level_dir.."world_sounds")) then
-                        table.insert(level.include, {_meta = "file", file = "world_sounds.world_sounds", type = "custom_xml", data = PackageManager:script_data(Idstring("world_sounds"), Idstring(level_dir.."world_sounds"))})
+                        table.insert(level.include, {_meta = "file", file = "world_sounds.world_sounds", type = "binary", data = PackageManager:script_data(Idstring("world_sounds"), Idstring(level_dir.."world_sounds"))})
+                    end
+                    if DB:has(Idstring("world_cameras"), Idstring(level_dir.."world_cameras")) then
+                        table.insert(level.include, {_meta = "file", file = "world_cameras.world_cameras", type = "binary", data = PackageManager:script_data(Idstring("world_cameras"), Idstring(level_dir.."world_cameras"))})
                     end
                     local continents = {}
                     local missions = {}
@@ -208,8 +211,8 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                     level.packages = packages
                     for name, c in pairs(continents) do
                         local c_path = U.Path:Combine(name, name)
-                        table.insert(level.include, {_meta = "file", file = c_path..".continent", type = "custom_xml", data = c})
-                        table.insert(level.include, {_meta = "file", file = c_path..".mission", type = "generic_xml", data = missions[name]})
+                        table.insert(level.include, {_meta = "file", file = c_path..".continent", type = "binary", data = c})
+                        table.insert(level.include, {_meta = "file", file = c_path..".mission", type = "binary", data = missions[name]})
                     end
                     for k, include in pairs(level.include) do
                         if type(include) == "table" then

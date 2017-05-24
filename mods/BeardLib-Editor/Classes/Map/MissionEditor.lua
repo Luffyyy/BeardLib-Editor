@@ -10,7 +10,7 @@ function MissionEditor:init(parent, menu)
     end    
     self._units = {}
     self._parent = parent
-    self._trigger_ids = {}
+    self._triggers = {}
 end
 
 function MissionEditor:units()
@@ -35,18 +35,6 @@ function MissionEditor:remove_script()
         self._current_script = nil
     end
 end
-
-function MissionEditor:enable()
-    self:bind("g", callback(self, self, "KeyGPressed"))
-end
-
-function MissionEditor:disable()
-    for _, id in pairs(self._trigger_ids) do
-        Input:keyboard():remove_trigger(id)
-    end
-
-    self._trigger_ids = {}
-end 
 
 function MissionEditor:get_element_unit(id)
     for _, unit in pairs(self._units) do
@@ -100,15 +88,8 @@ function MissionEditor:add_element(name)
 end
  
 function MissionEditor:update(t, dt)
+    self.super.update(self, t, dt)
     if self._parent:selected_unit() and self._parent:selected_unit().mission_element and self._current_script and self._current_script.update then
         self._current_script:update(t, dt)
     end   
-end
- 
-function MissionEditor:KeyGPressed(button_index, button_name, controller_index, controller, trigger_id)
-    if not self._parent._menu._highlighted and Input:keyboard():down(Idstring("left ctrl")) then
-        if self._parent._selected_element then
-            self._parent:set_camera(self._parent._selected_element.values.position)
-        end
-    end
 end

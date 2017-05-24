@@ -115,7 +115,7 @@ function MissionManager:set_element(element, old_script)
 			self._missions[new_continent][element.script].elements[k] = element
 		end
 	end
-	self._scripts[element.script]._elements[element.id]._values = element.values		
+	self._scripts[element.script]._elements[element.id]._values = _G.deep_clone(element.values)
 end
 
 function MissionManager:add_element(element)
@@ -297,7 +297,7 @@ function MissionScript:create_element(element, return_unit)
 		element.id = managers.mission:get_new_id(self._continent)
 	end
 	managers.mission:store_element_id(self._continent, element.id)
-	local new_element = self:_element_class(element.module, class):new(self, element)
+	local new_element = self:_element_class(element.module, class):new(self, _G.deep_clone(element))
 	element.script = self._name
 	new_element.class = element.class
 	new_element.module = element.module
