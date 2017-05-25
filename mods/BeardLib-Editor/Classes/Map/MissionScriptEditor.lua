@@ -35,22 +35,25 @@ function MissionScriptEditor:work()
     	self:RemoveItem(self._class_group)
     end
     self._unit = self:Manager("mission"):get_element_unit(self._element.id)
-    self._on_executed_units = {}
-	for _, u in pairs(self._element.values.on_executed) do
-		table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
-	end
+	self:get_on_executed_units()
 	local executors = managers.mission:get_executors(self._element)
 	self._executors_units = {}
 	for _, element in pairs(executors) do
 		table.insert(self._executors_units, self:Manager("mission"):get_element_unit(element.id))
 	end
-
 	local temp = clone(self._links)
 	self._links = {}
 	for _, element in pairs(self._links) do
 		if not executors[element.id] then
 			table.insert(self._links, element)
 		end
+	end
+end
+
+function MissionScriptEditor:get_on_executed_units()
+    self._on_executed_units = {}
+	for _, u in pairs(self._element.values.on_executed) do
+		table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
 	end
 end
 
@@ -70,9 +73,11 @@ function MissionScriptEditor:_create_panel()
 	local SE = self:Manager("static")
 	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
- 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
  	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
+ 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
+    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element, group = self._main_group})
+	self:ComboBox("OnExecutedList", callback(self, self, "update_on_executed_list"), {}, 1, {group = self._main_group})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
@@ -80,11 +85,9 @@ function MissionScriptEditor:_create_panel()
     rot = type(rot) == "number" and Rotation() or rot
     self:AxisControls(callback(self, self, "set_element_position"), {group = transform})
     self:update_positions(pos, rot)
-    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
     self:NumberCtrl("trigger_times", {help = "Specifies how many time this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
-	self:ComboBox("OnExecutedList", callback(self, self, "update_on_executed_list"), {}, 1, {group = self._main_group})
 	self:NumberBox("SelectedElementDelay", callback(self, self, "set_selected_on_executed_element_delay"), nil, {control_slice = 2.5, floats = 0, min = 0, group = self._main_group})  		
 	self:BuildElementsManage("on_executed", {key = "id", orig = {id = 0, delay = 0}}, nil, callback(self, self, "update_on_executed_list"), self._main_group, ", this list contains elements that this element will execute.")
 	self:update_on_executed_list()
@@ -107,6 +110,7 @@ function MissionScriptEditor:update_on_executed_list()
 	if value then
 		selected_element_delay:SetValue(self._element.values.on_executed[value].delay)
 	end
+	self:get_on_executed_units()
 end
 
 function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
@@ -187,22 +191,24 @@ function MissionScriptEditor:draw_link_exec(element_unit, unit)
     local offset = math.min(50, vec_len)
     mvector3.multiply(dir, offset)
     local text = self:get_delay_string(unit:mission_element().element.id, element_unit:mission_element().element)
-    local alternative = self:get_on_executed(unit:mission_element().element.id, element_unit:mission_element().element).alternative
-    if alternative then
-        text = text .. " - " .. alternative .. ""
-    end
+    if text then
+	    local alternative = self:get_on_executed(unit:mission_element().element.id, element_unit:mission_element().element).alternative
+	    if alternative then
+	        text = text .. " - " .. alternative .. ""
+	    end
 
-    self._brush:center_text(element_unit:position() + dir, text, managers.editor:camera_rotation():x(), -managers.editor:camera_rotation():z())
-    local element_col = element_unit:mission_element()._color
-	self._brush:set_color(element_col)
-    local r, g, b = element_col:unpack()
-    self:draw_link({
-        from_unit = element_unit,
-        to_unit = unit,
-        r = r * 0.75,
-        g = g * 0.75,
-        b = b * 0.75
-    })
+	    self._brush:center_text(element_unit:position() + dir, text, managers.editor:camera_rotation():x(), -managers.editor:camera_rotation():z())
+	    local element_col = element_unit:mission_element()._color
+		self._brush:set_color(element_col)
+	    local r, g, b = element_col:unpack()
+	    self:draw_link({
+	        from_unit = element_unit,
+	        to_unit = unit,
+	        r = r * 0.75,
+	        g = g * 0.75,
+	        b = b * 0.75
+	    })
+	end
 end
 
 function MissionScriptEditor:draw_link(params)
@@ -212,14 +218,19 @@ end
 
 function MissionScriptEditor:get_delay_string(id, element)
 	element = element or self._element
-	local delay = element.values.base_delay + self:get_on_executed(id, element).delay
-	local text = string.format("%.2f", delay)
-	if element.values.base_delay_rand or self:get_on_executed(id, element).delay_rand then
-		local delay_max = delay + (self:get_on_executed(id, element).delay_rand or 0)
-		delay_max = delay_max + (element.values.base_delay_rand and element.values.base_delay_rand or 0)
-		text = text .. "-" .. string.format("%.2f", delay_max) .. ""
+	local exec = self:get_on_executed(id, element)
+	if exec then
+		local delay = element.values.base_delay + exec.delay
+		local text = string.format("%.2f", delay)
+		if element.values.base_delay_rand or exec.delay_rand then
+			local delay_max = delay + (exec.delay_rand or 0)
+			delay_max = delay_max + (element.values.base_delay_rand and element.values.base_delay_rand or 0)
+			text = text .. "-" .. string.format("%.2f", delay_max) .. ""
+		end
+		return text
+	else
+		return false
 	end
-	return text
 end
 
 function MissionScriptEditor:get_on_executed(id, element)
@@ -355,24 +366,26 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
         for _, tbl in pairs(script) do
             if tbl.elements then
                 for i, element in pairs(tbl.elements) do
-                	local data = {
-                		name = element.editor_name .. " [" .. element.id .."]",
-                		element = element,
-                	}
-                	if params.table_data then
-                		for _, v in pairs(current_list) do
-                			if type(v) == "table" and v[params.table_data.key] == element.id then
-						 		table.insert(selected_list, data)
-                			end
-                		end
-                	else
-				 		if table.contains(current_list, element.id) then 
-				 			table.insert(selected_list, data)
-				 		end                   		
-                	end
-                	if not params.classes or table.contains(params.classes, element.class) then     
-                		table.insert(list, data)
-                	end
+                	if element.id ~= self._element.id then
+	                	local data = {
+	                		name = element.editor_name .. " [" .. element.id .."]",
+	                		element = element,
+	                	}
+	                	if params.table_data then
+	                		for _, v in pairs(current_list) do
+	                			if type(v) == "table" and v[params.table_data.key] == element.id then
+							 		table.insert(selected_list, data)
+	                			end
+	                		end
+	                	else
+					 		if table.contains(current_list, element.id) then 
+					 			table.insert(selected_list, data)
+					 		end                   		
+	                	end
+	                	if not params.classes or table.contains(params.classes, element.class) then     
+	                		table.insert(list, data)
+	                	end
+	                end
                 end
             end
         end

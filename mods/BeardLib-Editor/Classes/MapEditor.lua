@@ -38,7 +38,7 @@ function me:init()
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BeardLibEditor.Options:GetValue("Input/ToggleMapEditor"))
     self._menu = MenuUI:new({
         marker_color = Color.transparent,
-        scroll_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
         mouse_press = callback(self, self, "mouse_pressed"),
         mouse_release = callback(self, self, "mouse_released"),
         create_items = callback(self, self, "post_init"),
@@ -495,6 +495,7 @@ function me:update_widgets(t, dt)
                 local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                 if self._last_rot ~= result_rot then
                     self:set_unit_rotations(result_rot)
+                    self:update_positions()
                 end
                 self._last_rot = result_rot
             end
