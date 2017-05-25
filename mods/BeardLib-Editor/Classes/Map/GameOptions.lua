@@ -22,6 +22,7 @@ function GameOptions:build_default_menu()
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
+    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = map, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
@@ -166,12 +167,16 @@ function GameOptions:map_world_path()
 end
 
 function GameOptions:save()
+    local save_in_binary = self:Value("SaveMapFilesInBinary")
+    local xml = save_in_binary and "binary" or "generic_xml"
+    local cusxml = save_in_binary and "binary" or "custom_xml"
     local include = {
-        {_meta = "file", file = "world.world"},
-        {_meta = "file", file = "continents.continents"},
-        {_meta = "file", file = "mission.mission"},
-        {_meta = "file", file = "world_sounds.world_sounds"},
-        {_meta = "file", file = "world_cameras.world_cameras"},
+        {_meta = "file", file = "world.world", type = xml},
+        {_meta = "file", file = "continents.continents", type = cusxml},
+        {_meta = "file", file = "mission.mission", type = cusxml},
+        {_meta = "file", file = "nav_manager_data.nav_data", type = xml},
+        {_meta = "file", file = "world_sounds.world_sounds", type = cusxml},
+        {_meta = "file", file = "world_cameras.world_cameras", type = cusxml}
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()
@@ -189,22 +194,22 @@ function GameOptions:save()
         FileIO:MakeDir(path)
     end
     local map_path = self:map_world_path()
-    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, "binary"))
+    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
     local missions = {}
     for name, data in pairs(worlddef._continent_definitions) do
         local dir = BeardLib.Utils.Path:Combine(map_path, name)
         local continent_file = name .. ".continent"
         local mission_file = name .. ".mission"
-        table.insert(include, {_meta = "file", file = name.."/"..continent_file})
-        table.insert(include, {_meta = "file", file = name.."/"..mission_file})
-        self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, "binary"))
-        self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], "binary"))
+        table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
+        table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
+        self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
+        self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
         missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
     end
-    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, "binary"))
-    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, "binary"))
-    self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, "binary"))
-    self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, "binary"))
+    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
+    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
+    self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, cusxml))
+    self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, cusxml))
     self:save_cover_data(include)
     self:save_nav_data(include)
     for _, folder in pairs(FileIO:GetFolders(map_path)) do
@@ -254,10 +259,12 @@ function GameOptions:save_nav_data(include)
     local had_include = not not include
     include = include or {}
     local save_data = managers.navigation:get_save_data()
+    local save_in_binary = self:Value("SaveMapFilesInBinary")
+    local typ = save_in_binary and "binary" or "generic_xml"
     if save_data then
-        table.insert(include, {_meta = "file", file = "nav_manager_data.nav_data"})
+        table.insert(include, {_meta = "file", file = "nav_manager_data.nav_data", type = typ})
         --This sucks
-        self:SaveData(path, "nav_manager_data.nav_data", FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), "binary"))
+        self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
         self._parent:Log("Save data is not ready!")
         return
@@ -284,8 +291,9 @@ function GameOptions:save_cover_data(include)
         local rot = unit:rotation()
         table.insert(covers.rotations, math.round(rot:yaw()))
     end
-    table.insert(include, {_meta = "file", file = "cover_data.cover_data"})
-    self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, "binary"))
+    local typ = self:Value("SaveMapFilesInBinary") and "binary" or "custom_xml"
+    table.insert(include, {_meta = "file", file = "cover_data.cover_data", type = typ})
+    self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, typ))
     if not had_include then
         self:save_main_xml(include)
     end

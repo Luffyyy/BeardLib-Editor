@@ -255,7 +255,7 @@ function wde:rename_script(script, menu, item)
 end
 
 function wde:clear_all_elements_from_script(script, menu, item)
-    sefl:_clear_all_elements_from_script(script, item.continent)
+    self:_clear_all_elements_from_script(script, item.continent)
 end
 
 function wde:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)

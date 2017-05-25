@@ -17,7 +17,6 @@ EditorSpecialObjective._AI_SO_types = {
 }
 EditorSpecialObjective._enemies = {}
 EditorSpecialObjective._nav_link_filter = {}
-EditorSpecialObjective._nav_link_filter_check_boxes = {}
 function EditorSpecialObjective:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpecialObjective"
@@ -32,7 +31,7 @@ function EditorSpecialObjective:create_element()
 	self._element.values.path_stance = "none"
 	self._element.values.pose = "none"
 	self._element.values.so_action = "none"
-	self._element.values.search_position =  Vector3(0,0,0)
+	self._element.values.search_position = self._element.values.position
 	self._element.values.search_distance = 0
 	self._element.values.interval = ElementSpecialObjective._DEFAULT_VALUES.interval
 	self._element.values.base_chance = ElementSpecialObjective._DEFAULT_VALUES.base_chance
@@ -45,86 +44,9 @@ function EditorSpecialObjective:create_element()
 	self._element.values.trigger_on = "none"
 	self._element.values.interaction_voice = "none"
 	self._element.values.SO_access = "0"
+	self._element.values.followup_elements = {}
+	self._element.values.spawn_instigator_ids = {}
 	self._element.values.test_unit = "default"	
-end
-
-function EditorSpecialObjective:post_init(...)
-	EditorSpecialObjective.super.post_init(self, ...)
-	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
-	if type_name(self._element.values.SO_access) == "number" then
-		self._element.values.SO_access = tostring(self._element.values.SO_access)
-	end
-end
-
-function EditorSpecialObjective:test_element()
-	if not managers.navigation:is_data_ready() then
-	 	BeardLibEditor:log("Can't test spawn unit without ready navigation data (AI-graph)")
-		return
-	end
-	local spawn_unit_name
-	if self._element.values.test_unit == "default" then
-		local SO_access_strings = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
-		for _, access_category in ipairs(SO_access_strings) do
-			if access_category == "civ_male" then
-				spawn_unit_name = Idstring("units/payday2/characters/civ_male_casual_1/civ_male_casual_1")
-				break
-			elseif access_category == "civ_female" then
-				spawn_unit_name = Idstring("units/payday2/characters/civ_female_casual_1/civ_female_casual_1")
-				break
-			elseif access_category == "spooc" then
-				spawn_unit_name = Idstring("units/payday2/characters/ene_spook_1/ene_spook_1")
-				break
-			elseif access_category == "shield" then
-				spawn_unit_name = Idstring("units/payday2/characters/ene_shield_2/ene_shield_2")
-				break
-			elseif access_category == "tank" then
-				spawn_unit_name = Idstring("units/payday2/characters/ene_bulldozer_1/ene_bulldozer_1")
-				break
-			elseif access_category == "taser" then
-				spawn_unit_name = Idstring("units/payday2/characters/ene_tazer_1/ene_tazer_1")
-				break
-			else
-				spawn_unit_name = Idstring("units/payday2/characters/ene_swat_1/ene_swat_1")
-				break
-			end
-		end
-	else
-		spawn_unit_name = self._element.values.test_unit
-	end
-	spawn_unit_name = spawn_unit_name or Idstring("units/payday2/characters/ene_swat_1/ene_swat_1")
-	local enemy = safe_spawn_unit(spawn_unit_name, self._unit:position(), self._unit:rotation())
-	if not enemy then
-		return
-	end
-	table.insert(self._enemies, enemy)
-	managers.groupai:state():set_char_team(enemy, tweak_data.levels:get_default_team_ID("non_combatant"))
-	enemy:movement():set_root_blend(false)
-	local t = {
-		id = self._unit:unit_data().unit_id,
-		editor_name = self._unit:unit_data().name_id
-	}
-	t.values = self:new_save_values()
-	t.values.use_instigator = true
-	t.values.is_navigation_link = false
-	t.values.followup_elements = nil
-	t.values.trigger_on = "none"
-	t.values.spawn_instigator_ids = nil
-	self._script = MissionScript:new({
-		elements = {}
-	})
-	self._so_class = ElementSpecialObjective:new(self._script, t)
-	self._so_class._values.align_position = nil
-	self._so_class._values.align_rotation = nil
-	self._so_class:on_executed(enemy)
-	self._start_test_t = Application:time()
-end
-
-function EditorSpecialObjective:stop_test_element()
-	for _, enemy in ipairs(self._enemies) do
-		enemy:set_slot(0)
-	end
-	self._enemies = {}
-	print("Stop test time", self._start_test_t and Application:time() - self._start_test_t or 0)
 end
 
 function EditorSpecialObjective:draw_links()
@@ -132,56 +54,10 @@ function EditorSpecialObjective:draw_links()
 	self:_draw_follow_up()
 end
 
-function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
-	if managers.navigation:is_data_ready() then
-		local my_pos = self._unit:position()
-		local nav_tracker = managers.navigation._quad_field:create_nav_tracker(my_pos, true)
-		if nav_tracker:lost() then
-			local t1 = t % 0.5
-			local t2 = t % 1
-			local alpha
-			if t2 > 0.5 then
-				alpha = t1
-			else
-				alpha = 0.5 - t1
-			end
-			alpha = math.lerp(0.1, 0.5, alpha)
-			local nav_color = Color(alpha, 1, 0, 0)
-			Draw:brush(nav_color):cylinder(my_pos, my_pos + math.UP * 80, 20, 4)
-		end
-		managers.navigation:destroy_nav_tracker(nav_tracker)
-	end
-end
-
-function EditorSpecialObjective:update_unselected(t, dt, selected_unit, all_units)
-	if self._element.values.followup_elements then
-		local followup_elements = self._element.values.followup_elements
-		local i = #followup_elements
-		while i > 0 do
-			local element_id = followup_elements[i]
-			if not alive(all_units[element_id]) then
-				table.remove(followup_elements, i)
-			end
-			i = i - 1
-		end
-		if not next(followup_elements) then
-			self._element.values.followup_elements = nil
-		end
-	end
-	if self._element.values.spawn_instigator_ids then
-		local spawn_instigator_ids = self._element.values.spawn_instigator_ids
-		local i = #spawn_instigator_ids
-		while i > 0 do
-			local id = spawn_instigator_ids[i]
-			if not alive(all_units[id]) then
-				table.remove(self._element.values.spawn_instigator_ids, i)
-			end
-			i = i - 1
-		end
-		if not next(spawn_instigator_ids) then
-			self._element.values.spawn_instigator_ids = nil
-		end
-	end
+function EditorSpecialObjective:update(t, dt)
+	if self._element.values.search_position then
+    	Application:draw_sphere(self._element.values.search_position, 10, 1, 0, 0)
+    end
 end
 
 function EditorSpecialObjective:_draw_follow_up()
@@ -204,89 +80,7 @@ function EditorSpecialObjective:_draw_follow_up()
 	end
 end
 
-function EditorSpecialObjective:update_editing()
-	self:_so_raycast()
-	self:_spawn_raycast()
-	self:_raycast()
-end
-
-function EditorSpecialObjective:_so_raycast()
-	local ray = managers.editor:unit_by_raycast({mask = 10, ray_type = "editor"})
-	if ray and ray.unit and (string.find(ray.unit:name():s(), "point_special_objective", 1, true) or string.find(ray.unit:name():s(), "ai_so_group", 1, true)) then
-		local id = ray.unit:unit_data().unit_id
-		Application:draw(ray.unit, 0, 1, 0)
-		return id
-	end
-	return nil
-end
-
-function EditorSpecialObjective:_spawn_raycast()
-	local ray = managers.editor:unit_by_raycast({mask = 10, ray_type = "editor"})
-	if not ray or not ray.unit then
-		return
-	end
-	local id
-	if string.find(ray.unit:name():s(), "ai_enemy_group", 1, true) or string.find(ray.unit:name():s(), "ai_spawn_enemy", 1, true) or string.find(ray.unit:name():s(), "ai_civilian_group", 1, true) or string.find(ray.unit:name():s(), "ai_spawn_civilian", 1, true) then
-		id = ray.unit:unit_data().unit_id
-		Application:draw(ray.unit, 0, 0, 1)
-	end
-	return id
-end
-
-function EditorSpecialObjective:_raycast()
-	local from = managers.editor:get_cursor_look_point(0)
-	local to = managers.editor:get_cursor_look_point(100000)
-	local ray = World:raycast(from, to, nil, managers.slot:get_mask("all"))
-	if ray and ray.position then
-		Application:draw_sphere(ray.position, 10, 1, 1, 1)
-		return ray.position
-	end
-	return nil
-end
-
-function EditorSpecialObjective:_lmb()
-	local id = self:_so_raycast()
-	if id then
-		if self._element.values.followup_elements then
-			for i, element_id in ipairs(self._element.values.followup_elements) do
-				if element_id == id then
-					table.remove(self._element.values.followup_elements, i)
-					if not next(self._element.values.followup_elements) then
-						self._element.values.followup_elements = nil
-					end
-					return
-				end
-			end
-		end
-		self._element.values.followup_elements = self._element.values.followup_elements or {}
-		table.insert(self._element.values.followup_elements, id)
-		return
-	end
-	local id = self:_spawn_raycast()
-	if id then
-		if self._element.values.spawn_instigator_ids then
-			for i, si_id in ipairs(self._element.values.spawn_instigator_ids) do
-				if si_id == id then
-					table.remove(self._element.values.spawn_instigator_ids, i)
-					if not next(self._element.values.spawn_instigator_ids) then
-						self._element.values.spawn_instigator_ids = nil
-					end
-					return
-				end
-			end
-		end
-		self._element.values.spawn_instigator_ids = self._element.values.spawn_instigator_ids or {}
-		table.insert(self._element.values.spawn_instigator_ids, id)
-		return
-	end
-	self._element.values.search_position = self:_raycast() or self._element.values.search_position
-end
-
-function EditorSpecialObjective:add_triggers(vc)
-	vc:add_trigger(Idstring("lmb"), callback(self, self, "_lmb"))
-end
-
-function EditorSpecialObjective:_apply_preset(menu, item)
+function EditorSpecialObjective:apply_preset(menu, item)
 	local selection = item:SelectedItem()
 	QuickMenuPlus:new("Special objective", "Apply access flag preset " .. (selection or "")  .. "?", {{text = "Yes", callback = function()
 		if selection == "clear all" then
@@ -297,20 +91,6 @@ function EditorSpecialObjective:_apply_preset(menu, item)
 	end},{text = "No", is_cancel_button = true}})
 end
 
-function EditorSpecialObjective:_toggle_nav_link_filter_value(item)
-	if item.value then
-		for i, k in ipairs(self._nav_link_filter) do
-			if k == item.name then
-				return
-			end
-		end
-		table.insert(self._nav_link_filter, item.name)
-	else
-		table.delete(self._nav_link_filter, item.name)
-	end
-	self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(self._nav_link_filter)
-end
-
 function EditorSpecialObjective:manage_flags()
     BeardLibEditor.managers.SelectDialog:Show({
         selected_list = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access),
@@ -319,13 +99,23 @@ function EditorSpecialObjective:manage_flags()
     })
 end
 
+function EditorSpecialObjective:set_element_position(...)
+    self.super.set_element_position(self, ...)
+    self._element.values.search_position = self:AxisControlsPosition("SearchPosition")
+end
+
 function EditorSpecialObjective:_build_panel()
 	self:_create_panel()
-	self._nav_link_filter_check_boxes = self._nav_link_filter_check_boxes or {}
-
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
-	self:ComboBox("AccessFlagsPreset", callback(self, self, "_apply_preset"), {"clear all", "select all"}, nil, {group = self._class_group, help = "Here you can quickly select or deselect all access flags"})
+	if type_name(self._element.values.SO_access) == "number" then
+		self._element.values.SO_access = tostring(self._element.values.SO_access)
+	end
+	self:ComboBox("AccessFlagsPreset", callback(self, self, "apply_preset"), {"clear all", "select all"}, nil, {group = self._class_group, help = "Here you can quickly select or deselect all access flags"})
 	self:Button("ManageAccessFlags", callback(self, self, "manage_flags"), {group = self._class_group, help = "Decide which types of AI are affected by this element"})
+	self:BuildElementsManage("followup_elements", nil, {"ElementSpecialObjective", "ElementSpecialObjectiveGroup"})
+	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian", "ElementSpawnEnemyGroup", "ElementSpawnCivlianGroup"})
+	self:AxisControls(callback(self, self, "set_element_position"), {no_rot = true, group = self._class_group}, "SearchPosition")
+	self:SetAxisControls(self._element.values.search_position, nil, "SearchPosition")
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
 	self:BooleanCtrl("align_position", {text = "Align position"})
@@ -361,4 +151,3 @@ function EditorSpecialObjective:_build_panel()
 	self:NumberCtrl("action_duration_min", {min = 0, help = "How long the character stays in his specified action."})
 	self:NumberCtrl("action_duration_max", {min = 0, help = "How long the character stays in his specified action. Zero means indefinitely."})
 end
- 
