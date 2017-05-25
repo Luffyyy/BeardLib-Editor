@@ -5,6 +5,12 @@ end
 
 function SpawnSelect:build_default_menu()
     self.super.build_default_menu(self)
+    if not BeardLib.current_level then
+        local s = "You're running the level on preview mode!"
+        s = s .. "\nOnce you save the level it will only save the content of the level, this will not create the level."
+        s = s .. "\nIf you wish to create the level please use the 'Clone Existing Heist' feature in projects menu."
+        self:Divider(s, {color = Color.yellow, border_lock_height = false})
+    end
     local quick = self:Divider("QuickButtons")
     self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"))
     if FileIO:Exists(BeardLibEditor.ExtractDirectory) then

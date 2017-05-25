@@ -6,7 +6,6 @@ end
 
 function GameOptions:build_default_menu()
     self.super.build_default_menu(self)
-    local level =  "/" .. (Global.game_settings.level_id or "")
     local groups_opt = {offset = {8, 2}}
     local main = self:DivGroup("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
@@ -18,7 +17,7 @@ function GameOptions:build_default_menu()
     
     local map = self:DivGroup("Map", groups_opt)
     if not BeardLib.current_level then
-        self:TextBox("MapSavePath", nil, BeardLib.config.maps_dir .. level, {group = main})
+        self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
@@ -157,7 +156,6 @@ end
 
 function GameOptions:map_world_path()    
     local map_path = BeardLibEditor.managers.MapProject:current_level_path() or self:map_path()
-    map_path = map_path and BeardLib.Utils.Path:Combine(map_path, Global.game_settings.level_id)
     if not FileIO:Exists(map_path) then
         FileIO:MakeDir(map_path)
     end
@@ -204,7 +202,7 @@ function GameOptions:save()
     self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, "binary"))
     self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, "binary"))
     self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, "binary"))
-    self:save_cover_data()
+    self:save_cover_data(include)
     self:save_nav_data(include)
     for _, folder in pairs(FileIO:GetFolders(map_path)) do
         if not worlddef._continent_definitions[folder] then
