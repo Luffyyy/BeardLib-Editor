@@ -96,7 +96,10 @@ function MenuUtils:init(this, menu)
 	        callback = callback,
 	        size_by_text = true,
 	        text_offset = 0,
-	        position = "CenterRight",
+	        position = function(item)
+	        	item:SetPositionByString("CenterRight")
+	        	item:Panel():move(-1)
+	        end,
 	        text_align = "center",
 	        text_vertical = "center",
 	        override_parent = parent,
@@ -110,7 +113,10 @@ function MenuUtils:init(this, menu)
 	    return m:ImageButton(table.merge({
 	        name = name,
 	        callback = callback,
-	        position = "CenterRight",
+	        position = function(item)
+	        	item:SetPositionByString("CenterRight")
+	        	item:Panel():move(-1)
+	        end,
 	        size_by_icon = false,
 	        texture = texture,
 	        texture_rect = rect,
@@ -273,7 +279,7 @@ function MenuUtils:init(this, menu)
 	    end
 	end	
 
-	function this:PathItem(name, callback, value, typ, opt, loaded, filterout)
+	function this:PathItem(name, callback, value, typ, opt, loaded, filterout, close)
 		opt = opt or {}
 		opt.control_slice = opt.control_slice or 1.5
 		opt.callback = opt.callback or callback
@@ -285,7 +291,12 @@ function MenuUtils:init(this, menu)
 	    local btn = self:Button("SelectPath"..name, function()
 	       BeardLibEditor.managers.ListDialog:Show({
 		        list = BeardLibEditor.Utils:GetEntries(typ, loaded, filterout),
-		        callback = function(path) t:SetValue(path, true) end
+		        callback = function(path) 
+		        	t:SetValue(path, true)
+		        	if close then
+		        		BeardLibEditor.managers.ListDialog:Hide()
+		        	end
+		        end
 		    })
 	    end, opt)
 	    t.SetEnabled = function(this, enabled)

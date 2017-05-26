@@ -119,13 +119,13 @@ function MissionManager:set_element(element, old_script)
 end
 
 function MissionManager:add_element(element)
-	local module_name = "Core" .. element.class
-	if core.__modules[module_name] ~= nil then
-		element.module = module_name 	
-	end
 	local script
 	local script_name
 	local mission = self._missions.world
+	local m = "Core" .. element.class
+	if MissionScript:_element_class(m) then
+		element.module = m
+	end
 	if not mission then
 		for _, v in pairs(self._missions) do mission = v break end
 	end

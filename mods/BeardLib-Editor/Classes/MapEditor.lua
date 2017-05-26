@@ -220,7 +220,7 @@ function me:SpawnUnit(unit_path, old_unit, add)
                 unit_id = managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
-                position = ud and ud.position or self._spawn_position or cam:position() + cam:rotation():y(),
+                position = ud and ud.position or (self.managers.spwsel._currently_spawning and self._spawn_position) or cam:position() + cam:rotation():y(),
                 rotation = ud and ud.rotation or Rotation(0,0,0),
                 continent = ud and ud.continent or self._current_continent,
                 material_variation = ud and ud.material_variation,

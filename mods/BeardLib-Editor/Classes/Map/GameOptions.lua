@@ -51,7 +51,7 @@ function GameOptions:build_default_menu()
     self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveNavigationData", callback(self, self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveCoverData", callback(self, self, "save_cover_data", false), {group = other})
-    self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})  
+    self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
 end
 
 function GameOptions:enable()
@@ -238,7 +238,7 @@ function GameOptions:save_main_xml(include)
                     end
                 end
                 if not exists then
-                    level.include[i] = include_data
+                    table.insert(level.include, include_data)
                 end
             end
         end
@@ -266,7 +266,7 @@ function GameOptions:save_nav_data(include)
         --This sucks
         self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
-        self._parent:Log("Save data is not ready!")
+        QuickMenuPlus:new("Save data is not ready yet")
         return
     end
     if not had_include then
@@ -338,7 +338,7 @@ function GameOptions:build_nav_segments() -- Add later the options to the menu
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
-            self._parent:Log("No nav surface found.")
+            QuickMenuPlus:new("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one from world menu > AI layer > Add Nav surface")
         end       
     end)
 end
