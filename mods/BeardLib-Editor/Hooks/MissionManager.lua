@@ -118,12 +118,23 @@ function MissionManager:set_element(element, old_script)
 	self._scripts[element.script]._elements[element.id]._values = _G.deep_clone(element.values)
 end
 
+--Fucking hell overkill
+function core:import_without_crashing(module_name)
+	if self.__filepaths[module_name] ~= nil then
+		local fp = self.__filepaths[module_name]
+		require(fp)
+		local m = self.__modules[module_name]
+		rawset(getfenv(2), module_name, m)
+		return m
+	end
+end
+
 function MissionManager:add_element(element)
 	local script
 	local script_name
 	local mission = self._missions.world
 	local m = "Core" .. element.class
-	if MissionScript:_element_class(m) then
+	if rawget(_G, "CoreMissionManager")[m] or core:import_without_crashing(m) then
 		element.module = m
 	end
 	if not mission then
