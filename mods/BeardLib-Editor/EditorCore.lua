@@ -7,13 +7,15 @@ function self:Init()
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
     self.MapClassesDir = self.ClassDirectory .. "Map/"
+    self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
     self.Version = 6
     
     self.managers = {}
     self.modules = {}
     self.DBPaths = {}
-    self.DBEntries = {}  
+    self.DBEntries = {}
+    self.Prefabs = {}
     self:LoadHashlist()
     self.InitDone = true
 end
@@ -22,11 +24,13 @@ function self:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
+    local dialogs_opt = {marker_highlight_color = acc_color, background_color = bg_color}
     M.Dialog = MenuDialog:new()
-    M.ListDialog = ListDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
-    M.SelectDialog = SelectListDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
-    M.ColorDialog = ColorDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
-    M.FBD = FileBrowserDialog:new({marker_highlight_color = acc_color, background_color = bg_color})
+    M.ListDialog = ListDialog:new(dialogs_opt)
+    M.SelectDialog = SelectListDialog:new(dialogs_opt)
+    M.ColorDialog = ColorDialog:new(dialogs_opt)
+    M.InputDialog = InputDialog:new(dialogs_opt)
+    M.FBD = FileBrowserDialog:new(dialogs_opt)
        
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
@@ -38,6 +42,14 @@ function self:InitManagers()
     M.LoadLevel = LoadLevelMenu:new()
     M.EditorOptions = EditorOptionsMenu:new()
     AboutMenu:new()
+
+    local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
+    if prefabs then
+        for _, prefab in pairs(prefabs) do
+            self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptDataFrom(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+        end
+    end
+
     self:LoadCustomAssetsToHashListt(self._config.AddFiles)
     local mod = self.managers.MapProject:current_mod()
     if mod and mod._config.level.add then
@@ -49,8 +61,8 @@ function self:InitManagers()
                 if include_data.file then
                     local file_split = string.split(include_data.file, "[.]")
                     local typ = file_split[2]
-                    local path = BeardLib.Utils.Path:Combine("levels/mods/", level.id, file_split[1])
-                    if FileIO:Exists(BeardLib.Utils.Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+                    local path = Path:Combine("levels/mods/", level.id, file_split[1])
+                    if FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
                         self.DBPaths[typ] = self.DBPaths[typ] or {}
                         if not table.contains(self.DBPaths[typ], path) then
                             table.insert(self.DBPaths[typ], path)

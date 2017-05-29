@@ -176,40 +176,16 @@ end
 
 function SpawnSelect:OpenSpawnPrefabDialog()
 	local prefabs = {}
-    for _, prefab in pairs(BeardLibEditor.Options._storage.Prefabs) do
-        if type(prefab) == "table" and type(prefab.value) == "table" then
-        	table.insert(prefabs, {
-        		name = prefab.value.name,
-        		prefab = prefab,
-        	})
-        end
+    for name, prefab in pairs(BeardLibEditor.Prefabs) do
+        table.insert(prefabs, {name = name, prefab = prefab})
     end
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = prefabs,
 	    callback = function(item)
-	    	self:SpawnPrefab(item.prefab.value.units)
+	    	self:Manager("static"):SpawnPrefab(item.prefab)
 	        BeardLibEditor.managers.ListDialog:hide()
 	    end
 	}) 
-end
-
-function SpawnSelect:SpawnPrefab(prefab)
-    local SE = self:Manager("static")
-    SE._selected_units = {}
-    for _, unit in pairs(prefab) do
-        self._parent:SpawnUnit(unit.name, nil, true)
-    end
-    local reference = SE._selected_units[1]
-    for k, unit in pairs(SE._selected_units) do
-        if unit ~= reference then
-            unit:unit_data().position = prefab[k].position
-            local pos = prefab[1].position
-            local rot = prefab[1].rotation
-            unit:unit_data().local_pos = prefab[k].position - pos 
-            unit:unit_data().local_rot = rot:inverse() * unit:rotation()
-        end
-    end
-    self._parent:set_unit_positions(reference:position())     
 end
 
 function SpawnSelect:OpenSpawnElementDialog()

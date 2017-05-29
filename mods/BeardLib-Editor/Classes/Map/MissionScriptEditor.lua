@@ -1,5 +1,5 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
-function MissionScriptEditor:init(element)
+function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
 	self._menu = self:Manager("static")._holder
 	MenuUtils:new(self)
@@ -8,6 +8,9 @@ function MissionScriptEditor:init(element)
 		self._element = element
 	else
 		self:create_element()
+		if old_element then
+			table.merge(self._element, old_element)
+		end
 		return managers.mission:add_element(self._element)
 	end
 end
@@ -53,7 +56,9 @@ end
 function MissionScriptEditor:get_on_executed_units()
     self._on_executed_units = {}
 	for _, u in pairs(self._element.values.on_executed) do
-		table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
+		if self:Manager("mission"):get_element_unit(u.id) then
+			table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
+		end
 	end
 end
 
@@ -65,12 +70,12 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
-	self._main_group = self:Group("Main")	
+	local SE = self:Manager("static")
+	self._main_group = self:Group("Main")
 	local quick_buttons = self:Group("QuickButtons")
 	local transform = self:Group("Transform")
 	self._class_group = self:Group(self._element.class:gsub("Element", "") .. "") 
 	self:Button("DeselectElement", callback(self, self, "deselect_element"), {group = quick_buttons})    
-	local SE = self:Manager("static")
 	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
@@ -83,7 +88,7 @@ function MissionScriptEditor:_create_panel()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
     rot = type(rot) == "number" and Rotation() or rot
-    self:AxisControls(callback(self, self, "set_element_position"), {group = transform})
+    SE:AxisControls(callback(self, self, "set_element_position"), {group = transform})
     self:update_positions(pos, rot)
     self:NumberCtrl("trigger_times", {help = "Specifies how many time this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
@@ -122,12 +127,13 @@ function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
 end
 
 function MissionScriptEditor:update_positions(pos, rot)
-	if not self.x or not pos or not rot then
+	local SE = self:Manager("static")
+	if not SE.x or not pos or not rot then
 		return
 	end
-    self:SetAxisControls(pos, rot)
+    SE:SetAxisControls(pos, rot)
     for i, control in pairs(self._axis_controls) do
-    	self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
+    	SE[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
     end
     self:update_element()  
 end
@@ -283,8 +289,9 @@ function MissionScriptEditor:set_element_data(menu, item)
 end
 
 function MissionScriptEditor:set_element_position(menu)
-	self._element.values.position = self:AxisControlsPosition()
-	self._element.values.rotation = self:AxisControlsRotation()
+	local SE = self:Manager("static")
+	self._element.values.position = SE:AxisControlsPosition()
+	self._element.values.rotation = SE:AxisControlsRotation()
 	self:update_element()
 end
 

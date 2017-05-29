@@ -11,8 +11,8 @@ end
 
 function StaticEditor:enable()
     self:bind_opt("DeleteSelection", callback(self, self, "delete_selected_dialog"))
-    self:bind_opt("CopyUnit", callback(self, self, "KeyCPressed"))
-    self:bind_opt("PasteUnit", callback(self, self, "KeyVPressed"))
+    self:bind_opt("CopyUnit", callback(self, self, "CopySelection"))
+    self:bind_opt("PasteUnit", callback(self, self, "Paste"))
     self:bind_opt("TeleportToSelection", callback(self, self, "KeyFPressed"))
     local menu = self:Manager("menu")
     self:bind_opt("ToggleRotationWidget", callback(menu, menu, "toggle_widget", "rotation"))
@@ -29,7 +29,7 @@ function StaticEditor:mouse_pressed(button, x, y)
             if self._parent._move_widget:enabled() then
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
-                    if (alt() and not ctrl()) then self:clone() end
+                    if (alt() and not ctrl()) then self:Clone() end
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
                     self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
                     self._parent._using_move_widget = true
@@ -74,7 +74,7 @@ function StaticEditor:build_quick_buttons()
     local quick_buttons = self:Group("QuickButtons")
     self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
     self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
-    --self:Button("CreatePrefab", callback(self, self, "add_units_to_prefabs"), {group = quick_buttons})
+    self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
     self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal"})
 end
 
@@ -205,45 +205,19 @@ function StaticEditor:set_unit_data()
 end
 
 function StaticEditor:StorePreviousPosRot()
-    for _, unit in pairs(self._selected_units) do
-        unit:unit_data()._prev_pos = unit:position()
-        unit:unit_data()._prev_rot = unit:rotation()
+    if #self._selected_units > 1 then
+        for _, unit in pairs(self._selected_units) do
+            unit:unit_data()._prev_pos = unit:position()
+            unit:unit_data()._prev_rot = unit:rotation()
+        end
     end
 end
 
-function StaticEditor:add_units_to_prefabs(menu, item)
-    BeardLibEditor.managers.Dialog:show({
-        title = "Add new prefab",
-        items = {
-            {
-                type = "TextBox",
-                name = "prefab_name",
-                text = "Name",
-                value = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or "Prefab",
-            },           
-            {
-                type = "Toggle",
-                name = "save_prefab",
-                text = "Save",
-                value = true,
-            }
-        },
-        yes = "Add",
-        no = "Cancel",
-        callback = function(items)
-            local prefab = {
-                name = items[1]:Value(),
-                units = {},
-            }
-            for _, unit in pairs(self._selected_units) do
-                table.insert(prefab.units, unit:unit_data())
-            end
-            table.insert(BeardLibEditor.Options._storage.Prefabs, {_meta = "option", name = #BeardLibEditor.Options._storage.Prefabs + 1, value = prefab})
-            BeardLibEditor.Options:Save()
-        end,
-        w = 600,
-        h = 200,
-    })    
+function StaticEditor:add_selection_to_prefabs(menu, item)
+    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or "Prefab", callback = function(prefab_name)
+        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData()
+        FileIO:WriteScriptDataTo(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+    end})
 end
 
 function StaticEditor:mouse_moved(x, y)
@@ -514,52 +488,109 @@ function StaticEditor:update(t, dt)
     end
 end
 
-function StaticEditor:KeyCPressed()
-    if #self._selected_units > 0 and not self._parent._menu._highlighted then
-        self:set_unit_data()
-        local all_unit_data = {}
-        for _, unit in pairs(self._selected_units) do
-            table.insert(all_unit_data, {
-                unit_data = unit:unit_data(),
-                wire_data = unit:wire_data(),
-                ai_editor_data = unit:ai_editor_data()
-            })
-        end
-        Application:set_clipboard(json.custom_encode(all_unit_data))
-    end
-end
-
-function StaticEditor:KeyVPressed()
-    if not self._parent._menu._highlighted then
-        local ret, data = pcall(function() return json.custom_decode(Application:get_clipboard()) end)
-        if ret and type(data) == "table" then
-            self:reset_selected_units()
-            for _, sub_data in pairs(data) do
-                self._parent:SpawnUnit(sub_data.unit_data.name, sub_data, true)
-            end
-
-            if #self._selected_units > 1 then
-                self:StorePreviousPosRot()
-            end
-        else
-            log(tostring(data))
-        end
-    end
-end
-
-function StaticEditor:clone()
-    if #self._selected_units > 1 then
-        self:StorePreviousPosRot()
-    end
+function StaticEditor:GetCopyData()
     self:set_unit_data()
-    local all_unit_data = clone(self._selected_units)
-    self:reset_selected_units()
-    for _, unit in pairs(all_unit_data) do
-        self._parent:SpawnUnit(unit:unit_data().name or unit:name(), unit, true)
-        if #self._selected_units > 1 then
-            self:StorePreviousPosRot()
+    local copy_data = {}    
+    local id
+    local unit_id
+    for _, unit in pairs(self._selected_units) do
+        local typ = unit:mission_element() and "element" or "unit"
+        local copy = {
+            type = typ,
+            mission_element_data = typ == "element" and unit:mission_element().element and deep_clone(unit:mission_element().element) or nil,
+            unit_data = typ == "unit" and unit:unit_data() and deep_clone(unit:unit_data()) or nil,
+            wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
+            ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
+        }
+        --Get smallest id
+        if typ == "element" then
+            id = math.min(copy.mission_element_data.id, id or copy.mission_element_data.id)
+        elseif typ == "unit" then
+            unit_id = math.min(copy.unit_data.unit_id, unit_id or copy.unit_data.unit_id)
+        end
+        table.insert(copy_data, copy)
+    end
+
+    --The id is now used as the number it should add to the latest id before spawning the prefab
+    --Why we need to save ids? so elements can function even after copy pasting
+    for _, v in pairs(copy_data) do
+        local is_element = v.type == "element"
+        local is_unit = v.type == "unit"
+        if v.type == "element" and id then
+            v.mission_element_data.script = nil
+            local new_id = v.mission_element_data.id - id
+            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
+                link.tbl[link.key] = 1000000 + new_id
+            end
+            v.mission_element_data.id = new_id
+        elseif v.type == "unit" and unit_id then
+            v.unit_data.continent = nil
+            local new_id = v.unit_data.unit_id - unit_id
+            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
+                link.tbl[link.key] = 1000000 + new_id
+            end
+            v.unit_data.unit_id = new_id
         end
     end
+    return copy_data
+end
+
+function StaticEditor:CopySelection()
+    if #self._selected_units > 0 and not self._parent._menu._highlighted then
+        self._copy_data = self:GetCopyData() --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
+    end
+end
+
+function StaticEditor:Paste()
+    if not self._parent._menu._highlighted and self._copy_data then
+        self:SpawnCopyData(self._copy_data)
+    end
+end
+
+function StaticEditor:SpawnPrefab(prefab)
+    self:SpawnCopyData(prefab)
+    if self.x then
+        local cam = managers.viewport:get_current_camera()
+        self:SetAxisControls(cam:position() + cam:rotation():y(), self:AxisControlsRotation())
+        self:set_unit_data()
+    end
+end
+
+function StaticEditor:SpawnCopyData(copy_data)
+    self:reset_selected_units()
+    local new_id = managers.mission:get_new_id(self._parent._current_continent)
+    local new_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "")
+    local new_world_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "wire")
+    for _, v in pairs(copy_data) do
+        local is_element = v.type == "element"
+        local is_unit = v.type == "unit"
+        if v.type == "element" then
+            local new_final_id = new_id + v.mission_element_data.id
+            for _, link in pairs(managers.mission:get_links_paths(1000000 + v.mission_element_data.id, true, copy_data)) do
+                link.tbl[link.key] = new_final_id
+            end
+            v.mission_element_data.id = new_final_id
+        elseif v.type == "unit" and unit_id then
+            local new_final_id = (old_unit:wire_data() or old_unit:ai_editor_data() and new_world_unit_id or new_unit_id) + v.unit_data.unit_id
+            for _, link in pairs(managers.mission:get_links_paths(1000000 + v.unit_data.unit_id, false, copy_data)) do
+                link.tbl[link.key] = new_final_id
+            end
+            v.unit_data.unit_id = new_final_id
+        end
+    end
+    for _, v in pairs(copy_data) do
+        if v.type == "element" then
+            self:Manager("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
+        elseif v.unit_data then
+            self._parent:SpawnUnit(v.unit_data.name, v, true)
+        end
+    end
+    self:StorePreviousPosRot()
+end
+
+function StaticEditor:Clone()
+    self:CopySelection()
+    self:Paste()
 end
 
 function StaticEditor:KeyFPressed()

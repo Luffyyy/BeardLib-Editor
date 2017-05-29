@@ -421,6 +421,10 @@ function MapProjectManager:new_project_dialog_clbk(clbk, success, name)
             QuickMenuPlus:new("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
             self:new_project_dialog(name, clbk)
             return
+        elseif name:lower() == "backups" or name:lower() == "prefabs" then
+            QuickMenuPlus:new("Error", string.format("Invalid Id"))
+            self:new_project_dialog(name, clbk)
+            return            
         elseif name == "" then
             QuickMenuPlus:new("Error", string.format("Id cannot be empty!", name))
             self:new_project_dialog(name, clbk)

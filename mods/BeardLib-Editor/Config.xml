@@ -73,9 +73,6 @@
                 <option type="boolean" default_value="false" name="ShowElements"/>
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
             </option_group>
-            <option_set name="Prefabs" not_pre_generated="true">
-                <item_parameters />
-            </option_set>
         </options>
     </Options>    
     <AddFiles directory="Assets">

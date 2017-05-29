@@ -190,7 +190,7 @@ function me:DeleteUnit(unit)
     end
 end
 
-function me:SpawnUnit(unit_path, old_unit, add)   
+function me:SpawnUnit(unit_path, old_unit, add, unit_id)   
     local cam = managers.viewport:get_current_camera()
     if self.managers.wdata.managers.env:is_env_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit or {}
@@ -209,7 +209,7 @@ function me:SpawnUnit(unit_path, old_unit, add)
         }
         t = old_unit:wire_data() and "wire" or old_unit:ai_editor_data() and "ai" or ""
         data.unit_data.name_id = nil
-        data.unit_data.unit_id = managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
+        data.unit_data.unit_id = unit_id or managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
     else
         t = BeardLibEditor.Utils:GetUnitType(unit_path)
         local ud = old_unit and old_unit.unit_data
@@ -217,7 +217,7 @@ function me:SpawnUnit(unit_path, old_unit, add)
         local ad = old_unit and old_unit.ai_editor_data
         data = {
             unit_data = {
-                unit_id = managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
+                unit_id = unit_id or managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
                 position = ud and ud.position or (self.managers.spwsel._currently_spawning and self._spawn_position) or cam:position() + cam:rotation():y(),
@@ -306,20 +306,24 @@ end
 
 function me:set_unit_positions(pos)
     local reference = self:widget_unit()
-    BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
-    for _, unit in pairs(self.managers.static._selected_units) do
-        if unit ~= self:selected_unit() then
-            self:set_unit_position(unit, pos)
+    if alive(reference) then
+        BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
+        for _, unit in pairs(self.managers.static._selected_units) do
+            if unit ~= self:selected_unit() then
+                self:set_unit_position(unit, pos)
+            end
         end
     end
 end
 
 function me:set_unit_rotations(rot)
     local reference = self:widget_unit()
-    BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
-    for _, unit in pairs(self.managers.static._selected_units) do
-        if unit ~= self:selected_unit() then
-            self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
+    if alive(reference) then
+        BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
+        for _, unit in pairs(self.managers.static._selected_units) do
+            if unit ~= self:selected_unit() then
+                self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
+            end
         end
     end
 end

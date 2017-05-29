@@ -5,7 +5,7 @@
 			<entry index="1" type="table">
 				<entry key="class" type="string" value="ElementPlayerSpawner"/>
 				<entry key="editor_name" type="string" value="Spawn"/>
-				<entry key="id" type="number" value="38799"/>
+				<entry key="id" type="number" value="200000"/>
 				<entry key="values" type="table">
 					<entry key="base_delay" type="number" value="0"/>
 					<entry key="enabled" type="boolean" value="true"/>
@@ -21,7 +21,7 @@
 			<entry index="2" type="table">
 				<entry key="class" type="string" value="MissionScriptElement"/>
 				<entry key="editor_name" type="string" value="Startup"/>
-				<entry key="id" type="number" value="55513"/>
+				<entry key="id" type="number" value="200001"/>
 				<entry key="module" type="string" value="CoreMissionScriptElement"/>
 				<entry key="values" type="table">
 					<entry key="base_delay" type="number" value="0"/>
@@ -30,7 +30,7 @@
 					<entry key="on_executed" type="table">
 						<entry index="1" type="table">
 							<entry key="delay" type="number" value="0"/>
-							<entry key="id" type="number" value="38799"/>
+							<entry key="id" type="number" value="200000"/>
 						</entry>
 					</entry>
 					<entry key="position" type="vector3" value="234.705 -591.314 210.064"/>

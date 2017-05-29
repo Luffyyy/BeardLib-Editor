@@ -80,10 +80,10 @@ function MissionEditor:set_element(element)
     end
 end
 
-function MissionEditor:add_element(name)
+function MissionEditor:add_element(name, add_to_selection, old_element)
     local clss = self:get_editor_class(name) 
     if clss then
-        self:Manager("static"):set_selected_unit(clss:init())
+        self:Manager("static"):set_selected_unit(clss:init(nil, old_element), add_to_selection)
     end
 end
  

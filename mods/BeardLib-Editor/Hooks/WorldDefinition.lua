@@ -391,7 +391,7 @@ function self:GetNewUnitID(continent, t)
 		self._unit_ids[continent] = self._unit_ids[continent] or {}
 		local tbl = self._unit_ids[continent]
 		local i = self._continents[continent] and self._continents[continent].base_id
-		if t == Idstring("wire") or t == Idstring("ai") then
+		if t:id() == Idstring("wire") or t:id() == Idstring("ai") then
 			tbl = self._world_unit_ids
 			i = 1
 		end

@@ -239,35 +239,33 @@ function MissionManager:delete_executors_of_element(element)
 	end
 end
  
-function MissionManager:get_links(id, is_element)	
- 	if not tonumber(id) or tonumber(id) <= 0 then
-		return {}
-	end
-	local modifiers = {}
-	local function IsLinked(upper_k, tbl, stop)
-		for k, v in pairs(tbl) do
-			local is_unit = k == "unit_id" or k == "notify_unit_id"
-			if tonumber(k) ~= nil then
-				is_unit = upper_k == "unit_ids"
-			end
-			if (is_element and not is_unit) or (not is_element and is_unit) then
-				if not stop and type(v) == "table" then
-					if IsLinked(k, v, true) then
-						return true
-					end
-				elseif v == id then 
+function MissionManager:is_linked(id, is_element, upper_k, tbl, stop)
+	for k, v in pairs(tbl) do
+		local is_unit = (tonumber(k) ~= nil and upper_k == "unit_ids") or (k == "unit_id" or k == "notify_unit_id")
+		if (is_element and not is_unit) or (not is_element and is_unit) then
+			if not stop and type(v) == "table" then
+				if self:is_linked(id, is_element, k, v, true) then
 					return true
 				end
+			elseif v == id then 
+				return true
 			end
 		end
 	end
+end
+
+function MissionManager:get_links(id, is_element)
+ 	if not tonumber(id) or tonumber(id) < 0 then
+		return {}
+	end
+	local modifiers = {}
 	for _, script in pairs(self._missions) do
 		for _, tbl in pairs(script) do
 			if tbl.elements then
 				for _, element in pairs(tbl.elements) do
 					for k, element_data in pairs(element.values) do
 						if type(element_data) == "table" then
-							if IsLinked(k, element_data) then
+							if self:is_linked(id, is_element, k, element_data) then
 								table.insert(modifiers, element)
 							end
 						end
@@ -277,6 +275,75 @@ function MissionManager:get_links(id, is_element)
 		end
 	end
 	return modifiers
+end
+
+function MissionManager:get_my_created_links(id, is_element)
+ 	if not tonumber(id) or tonumber(id) < 0 then
+		return {}
+	end
+	local modifiers = {}	
+	for k, element_data in pairs(element.values) do
+
+	end
+	for _, script in pairs(self._missions) do
+		for _, tbl in pairs(script) do
+			if tbl.elements then
+				for _, element in pairs(tbl.elements) do
+					if type(element_data) == "table" then
+						if self:is_linked(id, is_element, k, element_data) then
+							table.insert(modifiers, element)
+						end
+					end
+				end
+			end
+		end
+	end
+	return modifiers
+end
+
+function MissionManager:get_links_paths(id, is_element, elements)	
+ 	if not tonumber(id) or tonumber(id) < 0 then
+		return {}
+	end
+	local id_paths = {}
+	local function GetLinks(upper_k, tbl, stop)
+		for k, v in pairs(tbl) do
+			local is_unit = (tonumber(k) ~= nil and upper_k == "unit_ids") or (k == "unit_id" or k == "notify_unit_id")
+			if (is_element and not is_unit) or (not is_element and is_unit) then
+				if not stop and type(v) == "table" then
+					GetLinks(k, v, true)
+				elseif v == id then
+					table.insert(id_paths, {tbl = tbl, key = k})
+				end
+			end
+		end
+	end
+	if elements then
+		for _, element in pairs(elements) do
+			if element.mission_element_data then
+				for k, element_data in pairs(element.mission_element_data.values) do
+					if type(element_data) == "table" then
+						GetLinks(k, element_data)
+					end
+				end
+			end
+		end
+	else
+		for _, script in pairs(self._missions) do
+			for _, tbl in pairs(script) do
+				if tbl.elements then
+					for _, element in pairs(tbl.elements) do
+						for k, element_data in pairs(element.values) do
+							if type(element_data) == "table" then
+								GetLinks(k, element_data)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	return id_paths
 end
 
 function MissionManager:get_mission_element(id)
