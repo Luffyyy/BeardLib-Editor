@@ -22,7 +22,7 @@ function SpawnSelect:build_default_menu()
     self:Button("Select Unit", callback(self, self, "OpenSelectUnitDialog", {}))
     self:Button("Select Element", callback(self, self, "OpenSelectElementDialog"))
     local numerr = table.size(self._parent._errors)
-    self:Divider(tostring(numerr).." Errors", {color = numerr > 0 and Color.red or quick.color})
+    self:Divider("Errors", {text = tostring(numerr).." Errors", color = numerr > 0 and Color.red or quick.color})
     self:ShowErrors()
 end
 
@@ -47,9 +47,9 @@ function SpawnSelect:ShowErrors()
         local erritem = self:GetItem(typ.."/"..val)
         if erritem then
             erritem.count = erritem.count + 1
-            self:GetItem(erritem.name.."Div"):SetText(val.."("..tostring(erritem.count)..")")
+            erritem:SetText(val.."("..tostring(erritem.count)..")")
         else
-            erritem = self:DivGroup(typ.."/"..val, {text = val, items_size = 12, color = Color.red, align_method = "grid", group = errgroup})
+            erritem = self:DivGroup(typ.."/"..val, {text = val, items_size = 14, color = Color.red, align_method = "grid", group = errgroup})
             erritem.count = 1
             if typ == "missing_unit" then
                 self:Button("LoadUnitFromExtract", function()
