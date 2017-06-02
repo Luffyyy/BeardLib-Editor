@@ -25,7 +25,7 @@ function self:InitManagers()
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
     local dialogs_opt = {marker_highlight_color = acc_color, background_color = bg_color}
-    M.Dialog = MenuDialog:new()
+    M.Dialog = MenuDialog:new(dialogs_opt)
     M.ListDialog = ListDialog:new(dialogs_opt)
     M.SelectDialog = SelectListDialog:new(dialogs_opt)
     M.ColorDialog = ColorDialog:new(dialogs_opt)

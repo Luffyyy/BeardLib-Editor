@@ -413,7 +413,7 @@ function EnvEditor:update(t, dt)
 end
 
 function EnvEditor:open_environment()
-    BeardLibEditor.managers.FBD:Browse(string.gsub(Application:base_path(), "\\", "/"), {extensions = {"environment", "xml"}, file_click = function(file)
+    BeardLibEditor.managers.FBD:Show({where = string.gsub(Application:base_path(), "\\", "/"), extensions = {"environment", "xml"}, file_click = function(file)
         local read = FileIO:ReadFrom(file, "rb")
         local data
         if read then
