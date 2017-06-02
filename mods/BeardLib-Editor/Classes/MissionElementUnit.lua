@@ -52,22 +52,32 @@ function MissionElementUnit:init(unit)
         color = self._color,
         text = "",
     })
-
+    self._enabled = true
+    self._visible = true
     self._text:set_bottom(self._icon:top() - font_size)
 end
 
-function MissionElementUnit:update(t, dt)
+function MissionElementUnit:update_text(t, dt)
 	if self.element and self._text and alive(self._text) then
 		self._text:set_text(tostring(self.element.editor_name) .. "\n" .. tostring(self.element.class):gsub("Element", ""))
 	end
 end
 
-function MissionElementUnit:set_enabled(enabled)
-	if enabled then
-		self._ws:show()
+function MissionElementUnit:set_enabled(enabled, save)
+    if save then
+        self._enabled = enabled
+    end
+    self._visible = enabled and self._enabled
+	if self._visible then
+        self._ws:show()
 	else
 		self._ws:hide()
 	end
+    self._unit:set_enabled(self._visible)
+end
+
+function MissionElementUnit:visible()
+    return self._visible
 end
 
 function MissionElementUnit:select()

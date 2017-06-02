@@ -140,8 +140,8 @@ function EditorAreaTrigger:_build_panel(disable_params)
 end
 
 EditorAreaOperator = EditorAreaOperator or class(MissionScriptEditor)
-function EditorAreaOperator:init(unit)
-	self.super.init(self, unit)
+function EditorAreaOperator:init(...)
+	self.super.init(self, ...)
 	self._apply_on_checkboxes = {"interval", "use_disabled_shapes"}
 	for _,uses in ipairs(self._apply_on_checkboxes) do
 		self._element.values["apply_on_" .. uses] = false

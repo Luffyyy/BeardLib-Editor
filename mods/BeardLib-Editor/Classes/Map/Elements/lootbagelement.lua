@@ -38,6 +38,7 @@ function EditorLootBag:_build_panel()
 	self:NumberCtrl("push_multiplier", {floats = 1, min = 0, help = "Use this to add a velocity to a physic push on the spawned unit"})
 	self:ComboCtrl("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()), {help = "Select a carry_id to be created."})
 	self:BooleanCtrl("from_respawn")
+	self:Text("This element can spawn loot bags, control the spawn direction using your arrow keys")
 end
 
 EditorLootBagTrigger = EditorLootBagTrigger or class(MissionScriptEditor)

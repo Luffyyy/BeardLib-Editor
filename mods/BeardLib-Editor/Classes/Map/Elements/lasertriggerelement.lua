@@ -26,8 +26,8 @@ EditorLaserTrigger.COLORS = {
 		1
 	}
 }
-function EditorLaserTrigger:init(unit)
-	EditorLaserTrigger.super.init(self, unit)
+function EditorLaserTrigger:init(...)
+	EditorLaserTrigger.super.init(self, ...)
 	self._dummy_unit_name = Idstring("units/payday2/props/gen_prop_lazer_blaster_dome/gen_prop_lazer_blaster_dome")
 	self._element.class = "ElementLaserTrigger"
 	self._element.values.trigger_times = 1

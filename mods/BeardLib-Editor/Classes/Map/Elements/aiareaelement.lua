@@ -1,7 +1,7 @@
 EditorAIArea = EditorAIArea or class(MissionScriptEditor)
 EditorAIArea.SAVE_UNIT_ROTATION = false
-function EditorAIArea:create_element(unit)
-	EditorAIArea.super.create_element(self, unit)
+function EditorAIArea:create_element()
+	EditorAIArea.super.create_element(self)
 	self._element.class = "ElementAIArea"
 	self._element.values.nav_segs = {}
 	self._nav_seg_units = {}
@@ -30,7 +30,7 @@ function EditorAIArea:draw_links(t, dt, selected_unit, all_units)
 		return
 	end
 	for u_id, unit in pairs(self._nav_seg_units) do
-		self:_draw_link({
+		self:draw_link({
 			from_unit = self._unit,
 			to_unit = unit,
 			r = 0,

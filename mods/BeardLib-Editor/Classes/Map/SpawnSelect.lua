@@ -11,18 +11,27 @@ function SpawnSelect:build_default_menu()
         s = s .. "\nIf you wish to create the level please use the 'Clone Existing Heist' feature in projects menu."
         self:Divider(s, {color = Color.yellow, border_lock_height = false})
     end
-    local quick = self:Divider("QuickButtons")
-    self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"))
+    local quick = self:DivGroup("SpawnSelectLoad", {text = "Spawn/Select/Load"})
+    self:Button("Select Unit", callback(self, self, "OpenSelectUnitDialog", {}), {group = quick})
+    self:Button("Select Element", callback(self, self, "OpenSelectElementDialog"), {group = quick})
+    self:Button("Spawn Unit", callback(self, self, "OpenSpawnUnitDialog"), {group = quick})
+    self:Button("Spawn Element", callback(self, self, "OpenSpawnElementDialog"), {group = quick})
+    self:Button("Spawn Prefab", callback(self, self, "OpenSpawnPrefabDialog"), {group = quick})
     if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
-        self:Button("Spawn Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}))
-    	self:Button("Load Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtractNoSpawn"), not_loaded = true}))
+        self:Button("Spawn Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {group = quick})
+        self:Button("Load Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtractNoSpawn"), not_loaded = true}), {group = quick})
     end
-    self:Button("Spawn Element", callback(self, self, "OpenSpawnElementDialog"))
-    self:Button("Spawn Prefab", callback(self, self, "OpenSpawnPrefabDialog"))
-    self:Button("Select Unit", callback(self, self, "OpenSelectUnitDialog", {}))
-    self:Button("Select Element", callback(self, self, "OpenSelectElementDialog"))
     local numerr = table.size(self._parent._errors)
-    self:Divider("Errors", {text = tostring(numerr).." Errors", color = numerr > 0 and Color.red or quick.color})
+    local fixes = self:DivGroup("Fixes", {help = "Quick fixes for common issues"})
+    self:Button("Remove brush(massunits) layer", callback(self, self, "remove_brush_layer"), {
+        group = fixes,
+        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
+    })
+    self:Button("Fix mission elements' indexes", callback(self, self, "fix_elements_indexes"), {
+        group = fixes,
+        help = "This issue can happen after manually editing the mission scripts and will cause your mission to not work this simply reorders the elements so it works"
+    })
+    self:DivGroup("Errors", {text = tostring(numerr).." Errors", color = numerr > 0 and Color.red or quick.color})
     self:ShowErrors()
 end
 
@@ -43,7 +52,7 @@ function SpawnSelect:ShowErrors()
         local typ = error.type
         local val = error.value
 
-        local errgroup = self:GetItem(typ) or self:DivGroup(typ, {text = string.pretty(typ), color = Color.red})
+        local errgroup = self:GetItem(typ) or self:DivGroup(typ, {text = string.pretty(typ), color = Color.red, group = self:GetItem("Errors")})
         local erritem = self:GetItem(typ.."/"..val)
         if erritem then
             erritem.count = erritem.count + 1
@@ -86,6 +95,30 @@ function SpawnSelect:remove_dummy_unit()
         unit:set_slot(0)
         World:delete_unit(unit)
     end
+end
+
+function SpawnSelect:fix_elements_indexes()
+    for _, mission in pairs(managers.mission._missions) do
+        for _, script in pairs(mission) do
+            if type(script) == "table" and script.elements then
+                local temp = deep_clone(script.elements)
+                script.elements = {}
+                for _, element in pairs(temp) do
+                    table.insert(script.elements, element)
+                end
+            end
+        end
+    end
+    self:Manager("opt"):save()
+end
+
+function SpawnSelect:remove_brush_layer()
+    BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
+        self:Manager("wdata"):data().brush = nil
+        MassUnitManager:delete_all_units()
+        self:Manager("wdata"):save()
+        self:Manager("opt"):save()
+    end)
 end
 
 function SpawnSelect:mouse_pressed(button, x, y)
@@ -203,11 +236,11 @@ function SpawnSelect:OpenSelectUnitDialog(params)
 	local units = {}
  	for k, unit in pairs(managers.worlddefinition._all_units) do            
         if alive(unit) then
-    	    table.insert(units, table.merge(table.merge({
+    	    table.insert(units, table.merge({
     	   		name = tostring(unit:unit_data().name_id) .. " [" .. tostring(unit:unit_data().unit_id) .."]",
     	   		unit = unit,
     	   		color = params.choose_color and params.choose_color(unit),
-    	   	}, params), params.merge_with_item and params.merge_with_item(unit) or {}))
+    	   	}, params))
         end
     end
 	BeardLibEditor.managers.ListDialog:Show({

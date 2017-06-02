@@ -20,6 +20,7 @@ function MissionScriptEditor:create_element()
 	self._element = {}	
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"
+	self._element.script = self._parent._current_script
 	self._element.editor_name = "New Element"
 	self._element.values.position = cam:position() + cam:rotation():y()
 	self._element.values.rotation = Rotation()
@@ -42,7 +43,10 @@ function MissionScriptEditor:work()
 	local executors = managers.mission:get_executors(self._element)
 	self._executors_units = {}
 	for _, element in pairs(executors) do
-		table.insert(self._executors_units, self:Manager("mission"):get_element_unit(element.id))
+		local unit = self:Manager("mission"):get_element_unit(element.id)
+		if alive(unit) then
+			table.insert(self._executors_units, unit)
+		end
 	end
 	local temp = clone(self._links)
 	self._links = {}
@@ -94,7 +98,9 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
 	self:NumberBox("SelectedElementDelay", callback(self, self, "set_selected_on_executed_element_delay"), nil, {control_slice = 2.5, floats = 0, min = 0, group = self._main_group})  		
-	self:BuildElementsManage("on_executed", {key = "id", orig = {id = 0, delay = 0}}, nil, callback(self, self, "update_on_executed_list"), self._main_group, ", this list contains elements that this element will execute.")
+	self:BuildElementsManage("on_executed", {key = "id", orig = {id = 0, delay = 0}}, nil, callback(self, self, "update_on_executed_list"), false, {
+		group = self._main_group, help = "This list contains elements that this element will execute."
+	})
 	self:update_on_executed_list()
 end
 
@@ -143,6 +149,9 @@ function MissionScriptEditor:update(t, dt)
 end
 
 function MissionScriptEditor:draw_links()
+	if not alive(self._unit) then
+		return
+	end
 	self:draw_link_on_executed()
 	for _, unit in pairs(self._executors_units) do
 		self:draw_link_exec(unit, self._unit)
@@ -150,23 +159,28 @@ function MissionScriptEditor:draw_links()
 	self:draw_elements(self._links, true)
 	self:draw_elements(self._element.values.orientation_elements)
 	self:draw_elements(self._element.values.rules_elements)
+	self:draw_elements(self._element.values.elements)
 end
 
 function MissionScriptEditor:draw_elements(elements, is_link)
 	if not elements then
 		return
 	end
-	for _, id in ipairs(elements) do
+	for k, id in ipairs(elements) do
 		local unit = self:Manager("mission"):get_element_unit(id)
-		if self:should_draw_link(selected_unit, unit) then
-			local r, g, b = unit:mission_element()._color:unpack()
-			self:_draw_link({
-				from_unit = is_link and self._unit or unit,
-				to_unit = is_link and unit or self._unit,
-				r = r,
-				g = g,
-				b = b
-			})
+		if alive(unit) then
+			if self:should_draw_link(selected_unit, unit) then
+				local r, g, b = unit:mission_element()._color:unpack()
+				self:draw_link({
+					from_unit = is_link and self._unit or unit,
+					to_unit = is_link and unit or self._unit,
+					r = r,
+					g = g,
+					b = b
+				})
+			end
+		else
+			elements[k] = nil
 		end
 	end
 end
@@ -269,6 +283,9 @@ function MissionScriptEditor:update_element(old_script)
 end
 
 function MissionScriptEditor:set_element_data(menu, item)
+	if not item then
+		return
+	end
 	local old_script = self._element.script
 	function set_element_data()
 		local data = self:ItemData(item)
@@ -282,9 +299,13 @@ function MissionScriptEditor:set_element_data(menu, item)
 	if item.name == "script" and item:SelectedItem() ~= old_script then
 		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all executors will be removed!", function()
 			set_element_data()
+			self:Manager("mission"):set_elements_vis()
 		end)
 	else
 		set_element_data()
+	end
+	if item.name == "editor_name" and alive(self._unit) then
+		self._unit:mission_element():update_text()
 	end
 end
 
@@ -304,14 +325,18 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 	}), {text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list " .. help, group = group or self._class_group})
 end
 
-function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, group, help)
+function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, single_select, opt)
 	help = help or ""
+	opt = opt or {}
+	local group = opt.group
+	opt.group = nil
 	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {
 		value_name = value_name, 
-		update_clbk = update_clbk, 
-		table_data = table_data, 
+		update_clbk = update_clbk,
+		single_select = single_select,
+		table_data = table_data,
 		classes = classes
-	}), {text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list" .. help, group = group or self._class_group})
+	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list", group = group or self._class_group}, opt))
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
@@ -400,6 +425,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 	BeardLibEditor.managers.SelectDialog:Show({
 	    selected_list = selected_list,
 	    list = list,
+	    single_select = params.single_select,
 	    callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()

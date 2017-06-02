@@ -70,6 +70,7 @@
                 <option type="boolean" default_value="false" name="EditorUnits"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
+                <option type="boolean" default_value="true" name="DrawOnlyElementsOfCurrentScript"/>
                 <option type="boolean" default_value="false" name="ShowElements"/>
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
             </option_group>
@@ -121,6 +122,15 @@
         <value_node value="ElementPushInstigator"/>
         <!--Normal-->
         <value_node value="ElementShape"/>
+        <value_node value="ElementCounter"/>
+        <value_node value="ElementCounterOperator"/>
+        <value_node value="ElementCounterTrigger"/>
+        <value_node value="ElementCounterFilter"/>
+        <value_node value="ElementStopwatch"/>
+        <value_node value="ElementStopwatchOperator"/>
+        <value_node value="EElementStopwatchTrigger"/>
+        <value_node value="ElementStopwatchFilter"/>
+        <value_node value="ElementOperator"/>
         <value_node value="ElementEnemyPreferedAdd"/>
         <value_node value="ElementEnemyPreferedRemove"/>
         <value_node value="ElementSpawnUnit"/>
@@ -221,6 +231,7 @@
         <value_node value="ElementSpecialObjectiveTrigger"/>
         <value_node value="ElementSpotter"/>
         <value_node value="ElementStatistics"/>
+        <value_node value="ElementPlayEffect"/>
         <value_node value="ElementToggle"/>
         <value_node value="ElementRandom"/>
         <value_node value="ElementTimer"/>

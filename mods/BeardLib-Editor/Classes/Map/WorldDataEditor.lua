@@ -121,6 +121,14 @@ function wde:rename_continent(continent)
     })
 end
 
+function wde:remove_brush_layer()
+    BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
+        self:data().brush = nil
+        MassUnitManager:delete_all_units()
+        self:save()
+    end)
+end
+
 function wde:remove_continent(continent)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the continent!", function()
         self:clear_all_units_from_continent(continent, true, true)

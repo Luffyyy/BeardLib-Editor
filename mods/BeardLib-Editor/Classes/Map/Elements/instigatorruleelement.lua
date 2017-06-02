@@ -1,8 +1,8 @@
 EditorInstigatorRule = EditorInstigatorRule or class(MissionScriptEditor)
 EditorInstigatorRule.SAVE_UNIT_POSITION = false
 EditorInstigatorRule.SAVE_UNIT_ROTATION = false
-function EditorInstigatorRule:init(unit)
-	EditorInstigatorRule.super.init(self, unit)
+function EditorInstigatorRule:init(...)
+	EditorInstigatorRule.super.init(self, ...)
 	self._element.class = "ElementInstigatorRule"
 	self._element.values.instigator = "none"
 	self._element.values.rules = {}

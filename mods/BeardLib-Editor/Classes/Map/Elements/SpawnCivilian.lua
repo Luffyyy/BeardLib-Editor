@@ -8,8 +8,8 @@ EditorSpawnCivilian.INSTANCE_VAR_NAMES = {
 		value = "state"
 	}
 }
-function EditorSpawnCivilian:init(unit)
-	EditorSpawnCivilian.super.init(self, unit)
+function EditorSpawnCivilian:init(...)
+	EditorSpawnCivilian.super.init(self, ...)
 	self._enemies = {}
 	self._states = CopActionAct._act_redirects.civilian_spawn
 end

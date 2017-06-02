@@ -154,7 +154,7 @@ end
 
 function me:select_element(element)
     for _, unit in pairs(self.managers.mission:units()) do
-        if unit:mission_element() and unit:mission_element().element.id == element.id then
+        if unit:mission_element() and unit:mission_element().element.id == element.id and unit:mission_element().element.editor_name == element.editor_name then
             self:select_unit(unit)
             break
         end
@@ -330,7 +330,16 @@ end
 
 function me:load_continents(continents)
     self._continents = {}
+    self._current_script = managers.mission._scripts[self._current_script] and self._current_script
     self._current_continent = continents[self._current_continent] and self._current_continent
+    if not self._current_script then
+        for script, _ in pairs(managers.mission._scripts) do
+            self._current_script = self._current_script or script
+            if self._current_script then
+                break
+            end
+        end
+    end
     for continent, _ in pairs(continents) do
         self._current_continent = self._current_continent or continent
         table.insert(self._continents, continent)

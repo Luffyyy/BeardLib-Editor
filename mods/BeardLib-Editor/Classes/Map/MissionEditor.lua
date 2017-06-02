@@ -19,10 +19,11 @@ end
 
 function MissionEditor:set_elements_vis()
     local enabled = self:Value("ShowElements")
+    local draw_script = self:Value("DrawOnlyElementsOfCurrentScript")
     for _, unit in pairs(self:units()) do
-        if unit:mission_element() then
-            unit:mission_element():set_enabled(enabled)
-            unit:set_enabled(enabled)
+        local element_unit = unit:mission_element()
+        if element_unit then
+            element_unit:set_enabled(enabled and (not draw_script or element_unit.element.script == self._parent._current_script))
         end
     end
 end
@@ -46,9 +47,7 @@ end
 
 function MissionEditor:add_element_unit(unit)
     table.insert(self._units, unit)
-    local enabled = self:Value("ShowElements")
-    unit:mission_element():set_enabled(enabled)
-    unit:set_enabled(enabled)
+    unit:mission_element():set_enabled(self:Value("ShowElements"))
 end
 
 function MissionEditor:remove_element_unit(unit)

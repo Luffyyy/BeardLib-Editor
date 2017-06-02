@@ -1,7 +1,7 @@
 EditorSecurityCamera = EditorSecurityCamera or class(MissionScriptEditor)
 EditorSecurityCamera._object_original_rotations = {}
-function EditorSecurityCamera:create_element(unit)
-	EditorSecurityCamera.super.create_element(self, unit)
+function EditorSecurityCamera:create_element()
+	EditorSecurityCamera.super.create_element(self)
 	self._element.class = "ElementSecurityCamera"
 	self._element.values.yaw = 0
 	self._element.values.pitch = -30

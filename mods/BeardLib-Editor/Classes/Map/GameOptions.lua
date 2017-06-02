@@ -26,6 +26,7 @@ function GameOptions:build_default_menu()
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
+    self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentlScript"), {group = map})
     self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
     self:Toggle("DrawPortals", nil, false, {text = "Draw Portals", group = map})
 
@@ -47,7 +48,6 @@ function GameOptions:build_default_menu()
     local other = self:DivGroup("Other", groups_opt)
     self:Button("TeleportPlayer", callback(self, self, "drop_player"), {group = other})
     self:Button("LogPosition", callback(self, self, "position_debug"), {group = other})
-    self:Button("ClearMassUnit", callback(self, self, "clear_massunit"), {group = other})
     self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveNavigationData", callback(self, self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveCoverData", callback(self, self, "save_cover_data", false), {group = other})
@@ -79,22 +79,23 @@ function GameOptions:loaded_continents(continents, current_continent)
 end
 
 function GameOptions:update_option_value(menu, item)
-    BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
+    local name = item.name
+    BeardLibEditor.Options:SetValue("Map/"..name, item:Value())
     if item.name == "ShowElements" then
         self:Manager("mission"):set_elements_vis()
     end
-    if item.name == "EditorUnits" then
+    if name == "EditorUnits" then
         for _, unit in pairs(World:find_units_quick("all")) do
             if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
                 unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
             end
         end
-    end
-    if item.name == "GridSize" then
+    elseif name == "GridSize" then
         self._parent:update_grid_size(item:Value())
-    end
-    if item.name == "SnapRotation" then
+    elseif name == "SnapRotation" then
         self._parent:update_snap_rotation(item:Value())
+    elseif name == "DrawOnlyElementsOfCurrentScript" then
+        self:Manager("mission"):set_elements_vis()
     end
 end
 
@@ -113,6 +114,7 @@ end
 
 function GameOptions:set_current_script(menu, item)
     self._parent._current_script = item:SelectedItem()
+    self:Manager("mission"):set_elements_vis()
 end
 
 function GameOptions:draw_nav_segments(menu, item)
@@ -128,12 +130,6 @@ end
 function GameOptions:position_debug()
     BeardLibEditor:log("Camera Position: %s", tostring(self._parent._camera_pos))
 	BeardLibEditor:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
-end
-
-function GameOptions:clear_massunit()
-    BeardLibEditor.Utils:YesNoQuestion("This will clear the MassUnits in the world", function()
-        MassUnitManager:delete_all_units()
-    end)
 end
 
 function GameOptions:update(t, dt)

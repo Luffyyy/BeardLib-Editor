@@ -137,24 +137,38 @@ function MissionManager:add_element(element)
 	if rawget(_G, "CoreMissionManager")[m] or core:import_without_crashing(m) then
 		element.module = m
 	end
-	if not mission then
-		for _, v in pairs(self._missions) do mission = v break end
-	end
-	if mission then
-		script = mission.default
-		script_name = "default"
-		if not script then
-			for k, v in pairs(mission) do
-				if type(v) == "table" then
-					script = v
-					script_name = k
-					break
-				end
+	if element.script then
+		for _, v in pairs(self._missions) do 
+			if mission[element.script] then
+				script = mission[element.script]
+				script_name = element.script
+				break	
 			end
 		end
 	else
-		_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element")
+		_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element(1)")
 	end
+	if not script then
+		if not mission then
+			for _, v in pairs(self._missions) do mission = v break end
+		end
+		if mission then
+			script = mission.default
+			script_name = "default"
+			if not script then
+				for k, v in pairs(mission) do
+					if type(v) == "table" then
+						script = v
+						script_name = k
+						break
+					end
+				end
+			end
+		else
+			_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element(2)")
+		end
+	end
+
 	if script then
 		table.insert(script.elements, element)
 		return self._scripts[script_name]:create_element(element, true)
@@ -241,7 +255,7 @@ end
  
 function MissionManager:is_linked(id, is_element, upper_k, tbl, stop)
 	for k, v in pairs(tbl) do
-		local is_unit = (tonumber(k) ~= nil and upper_k == "unit_ids") or (k == "unit_id" or k == "notify_unit_id")
+		local is_unit = (tonumber(k) ~= nil and (upper_k == "unit_ids" or upper_k == "digital_gui_unit_ids")) or (k == "unit_id" or k == "notify_unit_id")
 		if (is_element and not is_unit) or (not is_element and is_unit) then
 			if not stop and type(v) == "table" then
 				if self:is_linked(id, is_element, k, v, true) then
@@ -394,16 +408,19 @@ function MissionScript:execute_element(element)
 end
 
 function MissionScript:create_mission_element_unit(element)
-	element.values.position = element.values.position or Vector3()
+	local enabled = element.values.position ~= nil
+	element.values.position = element.values.position or Vector3(math.random(9999), math.random(9999), 0)
 	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation()
 
 	local unit_name = "units/mission_element/element"
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
+	unit:mission_element():set_enabled(enabled, true)
     unit:unit_data().position = element.values.position   
    	unit:unit_data().rotation = element.values.rotation 
     unit:unit_data().local_pos = Vector3()
     unit:unit_data().local_rot = Rotation()
 	unit:mission_element().element = element
+	unit:mission_element():update_text()
 	if managers.editor then
 		managers.editor.managers.mission:add_element_unit(unit)
 	end

@@ -23,7 +23,7 @@ function LoadLevelMenu:load_levels()
     levels:ClearItems("levels")
 
     for id, level in pairs(tweak_data.levels) do
-        if level.world_name and (level.custom and custom) or (not level.custom and vanilla) then
+        if level.world_name and ((level.custom and custom) or (not level.custom and vanilla)) then
             local text = loc:Value() and managers.localization:text(tostring(level.name_id)) or id
             if not searching or searching == "" or text:match(searching) then
                 levels:Button({
