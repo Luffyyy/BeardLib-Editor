@@ -7,16 +7,7 @@ EditorSpawnEnemyDummy.INSTANCE_VAR_NAMES = {
 		value = "spawn_action"
 	}
 }
-EditorSpawnEnemyDummy._options = {}
 EditorSpawnEnemyDummy._enemies = {}
-for _, dlc in pairs(tweak_data.character:character_map()) do
-	for _, character in pairs(dlc.list) do
-		local character_path =  dlc.path .. character .. "/" .. character
-		if character:match("ene") and PackageManager:has(Idstring("unit"), Idstring(character_path)) then
-			table.insert(EditorSpawnEnemyDummy._options, character_path)
-		end
-	end
-end
 
 function EditorSpawnEnemyDummy:create_element()
 	self.super.create_element(self)
@@ -65,11 +56,7 @@ end
 
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-    local enemy = self:StringCtrl("enemy", {text = "Enemy Unit Path"})
-    self:Button("BrowseForEnemy", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
-    	slot = 12,
-        on_click = function(unit_path) enemy:SetValue(unit_path, true) end,
-    }), {group = self._class_group, offset = {enemy.offset[1] * 4, enemy.offset[2]}})
+	self:PathCtrl("enemy", "unit", 12)
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")

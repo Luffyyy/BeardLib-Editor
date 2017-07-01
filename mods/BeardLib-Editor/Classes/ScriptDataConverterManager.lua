@@ -19,7 +19,6 @@ function scm:init()
         {path = "%userprofile%/Documents/", name = "Documents"},
         {path = "%userprofile%/Desktop/", name = "Desktop"},
         {path = string.gsub(Application:base_path(), "\\", "/"), name = "PAYDAY 2 Directory"},
-        {name = "PAYDAY 2 Assets", assets = true},
         {path = "C:/", name = "C Drive"},
         {path = "D:/", name = "D Drive"},
         {path = "E:/", name = "E Drive"},
@@ -62,50 +61,19 @@ function scm:ConvertFile(file, from_i, to_i, filename_dialog)
     local convert_data = convert_data or PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())
     local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
     if filename_dialog then
-        managers.system_menu:show_keyboard_input({text = new_path, title = "File name", callback_func = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
+        BeardLibEditor.managers.InputDialog:Show({title = "File name", text = new_path, callback = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
     else
         self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
     end
 end
 
-function scm:SaveConvertedData(params, success, value)
-    if not success then
-        return
-    end
+function scm:SaveConvertedData(params, value)
     FileIO:WriteScriptDataTo(value, params.convert_data, params.to_data.name)
     self:RefreshFilesAndFolders()
 end
 
 function scm:GetFilesAndFolders(current_path)
-    local folders, files
-
-    if self.assets then
-        local path_split = string.split(current_path, "/")
-        local tbl = BeardLibEditor.DBEntries
-        for _, part in pairs(path_split) do
-            if tbl[part] then
-                tbl = tbl[part]
-            else
-                tbl = {}
-            end
-        end
-
-        folders = {}
-        files = {}
-
-        for i, j in pairs(tbl) do
-            if tonumber(i) ~= nil then
-                table.insert(files, j.name .. "." .. j.file_type)
-            else
-                table.insert(folders, i)
-            end
-        end
-    else
-        folders = file.GetDirectories(current_path)
-        files = file.GetFiles(current_path)
-    end
-
-    return files or {}, folders or {}
+    return file.GetFiles(current_path), file.GetDirectories(current_path)
 end
 
 function scm:RefreshFilesAndFolders()

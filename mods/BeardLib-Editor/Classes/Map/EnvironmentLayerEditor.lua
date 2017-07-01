@@ -152,30 +152,32 @@ function EnvironmentLayerEditor:update(t, dt)
 			end
 		end
 	end
-	for k, unit in ipairs(self._created_units) do
-		if alive(unit) then
-			if unit:unit_data().current_effect then
-				World:effect_manager():move(unit:unit_data().current_effect, unit:position())
-				World:effect_manager():rotate(unit:unit_data().current_effect, unit:rotation())
-			end
-			if unit:name() == Idstring(self._effect_unit) then
-				Application:draw(unit, 0, 0, 1)
-			end
-			if unit:name() == Idstring(self._environment_area_unit) then
-				local r, g, b = 0, 0.5, 0.5
-				if alive(self._selected_unit) and unit == self._selected_unit then
-					r, g, b = 0, 1, 1
+	if self:Value("EnvironmentUnits") then
+		for k, unit in ipairs(self._created_units) do
+			if alive(unit) then
+				if unit:unit_data().current_effect then
+					World:effect_manager():move(unit:unit_data().current_effect, unit:position())
+					World:effect_manager():rotate(unit:unit_data().current_effect, unit:rotation())
 				end
-				Application:draw(unit, r, g, b)
-				unit:unit_data().environment_area:draw(t, dt, r, g, b)
-			end		
-			if self._draw_occ_shape and self._draw_occ_shape:Value() and unit:name() == Idstring(self._dome_occ_shape_unit) then
-				local r, g, b = 0.5, 0, 0.5
-				if alive(self._selected_unit) and unit == self._selected_unit then
-					r, g, b = 1, 0, 1
+				if unit:name() == Idstring(self._effect_unit) then
+					Application:draw(unit, 0, 0, 1)
 				end
-				Application:draw(unit, r, g, b)
-				unit:unit_data().occ_shape:draw(t, dt, r, g, b)
+				if unit:name() == Idstring(self._environment_area_unit) then
+					local r, g, b = 0, 0.5, 0.5
+					if alive(self._selected_unit) and unit == self._selected_unit then
+						r, g, b = 0, 1, 1
+					end
+					Application:draw(unit, r, g, b)
+					unit:unit_data().environment_area:draw(t, dt, r, g, b)
+				end		
+				if self._draw_occ_shape and self._draw_occ_shape:Value() and unit:name() == Idstring(self._dome_occ_shape_unit) then
+					local r, g, b = 0.5, 0, 0.5
+					if alive(self._selected_unit) and unit == self._selected_unit then
+						r, g, b = 1, 0, 1
+					end
+					Application:draw(unit, r, g, b)
+					unit:unit_data().occ_shape:draw(t, dt, r, g, b)
+				end
 			end
 		end
 	end
@@ -195,7 +197,7 @@ function EnvironmentLayerEditor:build_menu()
 	local environment_values = data.environment_values
 
     local environment_group = self:Group("Environment")
-    self:PathItem("Environment", callback(self, self, "change_environment"), environment_values.environment, "environment", {group = environment_group}, true)
+    self:PathItem("Environment", callback(self, self, "change_environment"), environment_values.environment, "environment", true, nil, true, {group = environment_group})
     local sky = self:Group("Sky")
     self:Slider("SkyRotation", callback(self, self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360, group = sky})
     local colors = {
@@ -210,7 +212,9 @@ function EnvironmentLayerEditor:build_menu()
         "color_matrix"
     }
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
-
+    local utils = self:Manager("utils")
+    self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", "core/units/effect/effect"), {group = environment_group})
+    self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", "core/units/environment_area/environment_area"), {group = environment_group})
     local dome_occ = self:Group("DomeOcclusion", {visible = false}) 
     self._draw_occ_shape = self:Toggle("Draw", nul, false, {group = dome_occ})
     self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ, enabled = false})
@@ -230,6 +234,7 @@ end
 
 function EnvironmentLayerEditor:build_unit_menu()
 	local S = self:Manager("static")
+	s._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
 	if alive(unit) then
@@ -237,12 +242,12 @@ function EnvironmentLayerEditor:build_unit_menu()
     	S:AxisControls(callback(self, self, "set_unit_pos"), {step = self:Manager("opt")._menu:GetItem("GridSize"):Value()}, "", unit:position(), unit:rotation())
 		if unit:name() == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
-		    self._unit_effects = S:PathItem("Effect", callback(self, self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", nil, true)
+		    self._unit_effects = S:PathItem("Effect", callback(self, self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true)
 		elseif unit:name() == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
-		    self._environment_area_ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), area:environment() or managers.viewport:game_default_environment(), "environment", nil, true)
+		    self._environment_area_ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), area:environment() or managers.viewport:game_default_environment(), "environment", true)
 		    local env_filter = S:DivGroup("Filter", {align_method = "grid"})
 		    local filter_count = 0
 		    local environment_filter_row_sizer
@@ -479,6 +484,7 @@ end
 function EnvironmentLayerEditor:do_spawn_unit(unit_path, ud)
 	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
 	table.merge(unit:unit_data(), ud)
+	unit:unit_data().name = unit_path
 	unit:unit_data().position = unit:position()
 	unit:unit_data().rotation = unit:rotation()
 	table.insert(self._created_units, unit)

@@ -82,13 +82,13 @@ end
 
 function EditorSpecialObjective:apply_preset(menu, item)
 	local selection = item:SelectedItem()
-	QuickMenuPlus:new("Special objective", "Apply access flag preset " .. (selection or "")  .. "?", {{text = "Yes", callback = function()
+	BeardLibEditor.Utils:YesNoQuestion("This will apply the access flag preset " .. (selection or ""), function()
 		if selection == "clear all" then
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({})
 		elseif selection == "select all" then
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(NavigationManager.ACCESS_FLAGS)
 		end 	
-	end},{text = "No", is_cancel_button = true}})
+	end)
 end
 
 function EditorSpecialObjective:manage_flags()

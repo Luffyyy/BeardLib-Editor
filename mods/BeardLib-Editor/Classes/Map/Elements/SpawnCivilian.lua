@@ -24,13 +24,7 @@ end
 
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
-    self:StringCtrl("enemy", {text = "Civilian Unit Path"})
-    self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
-    	slot = 21,
-        on_click = function(unit_path)
-            self._menu:GetItem("enemy"):SetValue(unit_path, true)
-        end,
-    }), {group = other})
+	self:PathCtrl("enemy", "unit", 21, {text = "Civilian"})
  	self:ComboCtrl("state", table.list_add(self._states, {"none"}))
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")
@@ -45,4 +39,3 @@ function EditorSpawnCivilian:_resolve_team(unit)
 		return self._element.values.team
 	end
 end
- 

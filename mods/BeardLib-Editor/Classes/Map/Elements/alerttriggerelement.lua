@@ -51,7 +51,7 @@ end
 
 function EditorAlertTrigger:apply_preset(menu, item)
 	local value = item:SelectedItem()
-	QuickMenu:new("Alert Trigger", "Apply preset " .. (item:SelectedItem() or "")  .. "?", {[1] = {text = "Yes", callback = function()	
+	BeardLibEditor.Utils:YesNoQuestion("This will apply the preset" .. (item:SelectedItem() or ""), function()
 		if value == "clear" then
 			self:_set_filter_none()
 		elseif value == "all" then
@@ -59,7 +59,7 @@ function EditorAlertTrigger:apply_preset(menu, item)
 		else
 			BeardLibEditor:log(tostring(value) .. " Didn't have preset yet.")
 		end	
-	end},[2] = {text = "No", is_cancel_button = true}}, true)
+	end)
 end
 
 function EditorAlertTrigger:_set_filter_all()

@@ -2,6 +2,7 @@ MapEditor = MapEditor or class()
 core:import("CoreEditorWidgets")
 
 local me = MapEditor
+local m = {}
 function me:init()
     managers.editor = self
     if not PackageManager:loaded("core/packages/editor") then
@@ -9,7 +10,6 @@ function me:init()
     end
     self._current_continent = "world"
     self._grid_size = 1
-    self._errors = {}
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
     self._screen_borders = {x = 1280, y = 720}
@@ -36,48 +36,58 @@ function me:init()
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BeardLibEditor.Options:GetValue("Input/ToggleMapEditor"))
+    local normal = not Global.editor_safe_mode
     self._menu = MenuUI:new({
         marker_color = Color.transparent,
         accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
-        mouse_press = callback(self, self, "mouse_pressed"),
-        mouse_release = callback(self, self, "mouse_released"),
+        mouse_press = normal and callback(self, self, "mouse_pressed"),
+        mouse_release = normal and callback(self, self, "mouse_released"),
         create_items = callback(self, self, "post_init"),
     })
 end
 
+--Who doesn't like a short code :P
+function me:m() return m end
+
 function me:post_init(menu)
-    self.managers = {}    
-    self.managers.menu = UpperMenu:new(self, menu)
-    for k, v in pairs({mission = MissionEditor, static = StaticEditor, opt = GameOptions, spwsel = SpawnSelect, wdata = WorldDataEditor, console = EditorConsole, env = EnvEditor}) do
-        self.managers[k] = v:new(self, menu)
+    self.managers = m
+    m.menu = UpperMenu:new(self, menu)
+    m.mission = MissionEditor:new(self, menu)
+    m.static = StaticEditor:new(self, menu)
+    m.opt = GameOptions:new(self, menu)
+    m.utils = SpawnSelect:new(self, menu)
+    m.wdata = WorldDataEditor:new(self, menu)
+    m.console = EditorConsole:new(self, menu)
+    m.env = EnvEditor:new(self, menu)
+    m.instances = InstancesEditor:new(self, menu)
+    for name, manager in pairs(m) do
+        manager.manager_name = name
     end
-    self.managers.menu:build_tabs()
-    self.managers.menu:Switch("static")
-    menu.mouse_move = callback(self.managers.static, self.managers.static, "mouse_moved")
+
+    m.menu:build_tabs()
+    m.static:Switch()
+
+    menu.mouse_move = callback(m.static, m.static, "mouse_moved")
     if self._has_fix then
-        self.managers.menu:toggle_widget("move")
+        m.menu:toggle_widget("move")
+    end
+    if Global.editor_safe_mode then
+        m.utils:Switch()
     end
 end
 
 --functions
-
 function me:animate_bg_fade()
     local bg = self._menu._panel:rect({
         name = "Background",
         layer = 10000,
-        color = Color(0.3, 0.3, 0.3),
+        color = BeardLibEditor.Options:GetValue("BackgroundColor"):with_alpha(1),
     })
     QuickAnim:Work(bg, "alpha", 0, "callback", function(o)
         if alive(o) then
             o:parent():destroy(o)
         end
     end)
-end
-
-function me:add_error(data)
-    table.insert(self._errors, data)
-    self.managers.spwsel:build_default_menu()
-    self.managers.menu:Switch("spwsel")
 end
 
 function me:check_has_fix()
@@ -92,7 +102,7 @@ end
 
 function me:update_grid_size(value)
     self._grid_size = tonumber(value)
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(m) do
         if manager.update_grid_size then
             manager:update_grid_size()
         end
@@ -129,11 +139,11 @@ function me:use_widgets(use)
 end
 
 function me:mouse_moved(x, y)
-    self.managers.static:mouse_moved(x, y)
+    m.static:mouse_moved(x, y)
 end
 
 function me:mouse_released(button, x, y)
-    self.managers.static:mouse_released(button, x, y)
+    m.static:mouse_released(button, x, y)
     self._mouse_hold = false
     self:reset_widget_values()
 end
@@ -142,25 +152,24 @@ function me:mouse_pressed(button, x, y)
     if self._menu:MouseInside() then
         return
     end
-    if self.managers.spwsel:mouse_pressed(button, x, y) then
+    if m.utils:mouse_pressed(button, x, y) then
         return
     end
-    self.managers.static:mouse_pressed(button, x, y)
+    m.static:mouse_pressed(button, x, y)
 end
 
 function me:select_unit(unit, add)
-    self.managers.static:set_selected_unit(unit, add)
+    m.static:set_selected_unit(unit, add)
 end
 
-function me:select_element(element)
-    for _, unit in pairs(self.managers.mission:units()) do
+function me:select_element(element, add)
+    for _, unit in pairs(m.mission:units()) do
         if unit:mission_element() and unit:mission_element().element.id == element.id and unit:mission_element().element.editor_name == element.editor_name then
-            self:select_unit(unit)
+            self:select_unit(unit, add)
             break
         end
     end
-    self.managers.mission:set_element(element)
-    self.managers.menu:Switch("static")
+    m.static:Switch()
 end
 
 function me:DeleteUnit(unit)
@@ -168,7 +177,7 @@ function me:DeleteUnit(unit)
         if unit:mission_element() then 
             managers.mission:delete_element(unit:mission_element().element.id) 
             if managers.editor then
-                self.managers.mission:remove_element_unit(unit)
+                m.mission:remove_element_unit(unit)
             end
         end
         local ud = unit:unit_data()
@@ -191,11 +200,10 @@ function me:DeleteUnit(unit)
 end
 
 function me:SpawnUnit(unit_path, old_unit, add, unit_id)   
-    local cam = managers.viewport:get_current_camera()
-    if self.managers.wdata.managers.env:is_env_unit(unit_path) then
-        local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit or {}
-        data.position = data.position or cam:position() + cam:rotation():y()
-        local unit = self.managers.wdata.managers.env:do_spawn_unit(unit_path, data)
+    if m.wdata.managers.env:is_env_unit(unit_path) then
+        local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
+        data.position = data.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
+        local unit = m.wdata.managers.env:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
         return
     end
@@ -220,7 +228,7 @@ function me:SpawnUnit(unit_path, old_unit, add, unit_id)
                 unit_id = unit_id or managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
-                position = ud and ud.position or (self.managers.spwsel._currently_spawning and self._spawn_position) or cam:position() + cam:rotation():y(),
+                position = ud and ud.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos(),
                 rotation = ud and ud.rotation or Rotation(0,0,0),
                 continent = ud and ud.continent or self._current_continent,
                 material_variation = ud and ud.material_variation,
@@ -257,8 +265,8 @@ function me:SpawnUnit(unit_path, old_unit, add, unit_id)
     local unit = managers.worlddefinition:create_unit(data, t)
     if alive(unit) then
         self:select_unit(unit, add)
-        if unit:name() == self.managers.static._nav_surface then
-            table.insert(self.managers.static._nav_surfaces, unit)
+        if unit:name() == m.static._nav_surface then
+            table.insert(m.static._nav_surfaces, unit)
         end
     else
         BeardLibEditor:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
@@ -291,7 +299,7 @@ function me:set_enabled(enabled)
     if type(managers.enemy) == "table" then
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(m) do
         if enabled then
             if manager.enable then
                 manager:enable()
@@ -308,7 +316,7 @@ function me:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
-        for _, unit in pairs(self.managers.static._selected_units) do
+        for _, unit in pairs(m.static._selected_units) do
             if unit ~= self:selected_unit() then
                 self:set_unit_position(unit, pos)
             end
@@ -320,7 +328,7 @@ function me:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
-        for _, unit in pairs(self.managers.static._selected_units) do
+        for _, unit in pairs(m.static._selected_units) do
             if unit ~= self:selected_unit() then
                 self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
             end
@@ -344,7 +352,7 @@ function me:load_continents(continents)
         self._current_continent = self._current_continent or continent
         table.insert(self._continents, continent)
     end
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(m) do
         if manager.loaded_continents then
             manager:loaded_continents(self._continents, self._current_continent)
         end
@@ -364,16 +372,16 @@ end
 function me:set_unit_position(unit, pos, rot) BeardLibEditor.Utils:SetPosition(unit, pos and (pos + unit:unit_data().local_pos) or unit:position(), rot or unit:rotation()) end
 function me:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
 function me:destroy() self._vp:destroy() end
-function me:add_element(element, menu, item) self.managers.mission:add_element(element) end
-function me:Log(...) self.managers.console:Log(...) end
-function me:Error(...) self.managers.console:Error(...) end
+function me:add_element(element, menu, item) m.mission:add_element(element) end
+function me:Log(...) m.console:Log(...) end
+function me:Error(...) m.console:Error(...) end
 
 --Return functions
 function me:local_rot() return true end
 function me:enabled() return self._enabled end
 function me:selected_unit() return self:selected_units()[1] end
-function me:selected_units() return self.managers.static._selected_units end
-function me:widget_unit() return self.managers.static:widget_unit() or self.managers.wdata:widget_unit() or self:selected_unit() end
+function me:selected_units() return m.static._selected_units end
+function me:widget_unit() return m.static:widget_unit() or m.wdata:widget_unit() or self:selected_unit() end
 function me:widget_rot() return self:widget_unit():rotation() end
 function me:grid_size() return ctrl() and 1 or self._grid_size end
 function me:camera_rotation() return self._camera_object:rotation()  end
@@ -384,6 +392,11 @@ function me:screen_to_world(pos, dist) return self._camera_object:screen_to_worl
 function me:camera() return self._camera_object end
 function me:camera_fov() return self:camera():fov() end
 function me:set_camera_far_range(range) return self:camera():set_far_range(range) end
+
+function me:cam_spawn_pos()
+    local cam = managers.viewport:get_current_camera()
+    return cam:position() + (cam:rotation():y() * 100)
+end
 
 function me:_should_draw_body(body)
     if not body:enabled() then
@@ -405,7 +418,7 @@ end
 
 function me:select_unit_by_raycast(slot, clbk)
     local first = true
-    local ignore = self.managers.opt:GetItem("IgnoreFirstRaycast"):Value()
+    local ignore = m.opt:GetItem("IgnoreFirstRaycast"):Value()
     local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(200000), "ray_type", "body editor walk", "slot_mask", slot)
     if #rays > 0 then
         for _, r in pairs(rays) do
@@ -436,7 +449,7 @@ function me:update(t, dt)
         end
     end
     if self:enabled() then
-        for _, manager in pairs(self.managers) do
+        for _, manager in pairs(m) do
             if manager.update then
                 manager:update(t, dt)
             end
@@ -472,7 +485,7 @@ function MapEditor:draw_marker(t, dt)
     local spawn_pos
     local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
     for _, ray in pairs(rays) do
-        if ray and ray.unit ~= self.managers.spwsel._dummy_spawn_unit then
+        if ray and ray.unit ~= m.utils._dummy_spawn_unit then
             spawn_pos = ray.position
             break
         end
@@ -481,7 +494,7 @@ function MapEditor:draw_marker(t, dt)
 end
 
 function me:update_positions()
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(m) do
         if manager.update_positions then
             manager:update_positions()
         end

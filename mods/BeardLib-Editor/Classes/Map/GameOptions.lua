@@ -6,7 +6,7 @@ end
 
 function GameOptions:build_default_menu()
     self.super.build_default_menu(self)
-    local groups_opt = {offset = {8, 2}}
+    local groups_opt = {offset = {8, 4}}
     local main = self:DivGroup("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
@@ -23,10 +23,11 @@ function GameOptions:build_default_menu()
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
     self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = map, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
-    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map})
+    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editro units"})
+    self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
-    self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentlScript"), {group = map})
+    self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"), {group = map})
     self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
     self:Toggle("DrawPortals", nil, false, {text = "Draw Portals", group = map})
 
@@ -40,6 +41,7 @@ function GameOptions:build_default_menu()
     local raycast = self:DivGroup("Raycast", groups_opt)
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
+    self:Toggle("SelectInstances", self:Value("SelectInstances"), false, {group = raycast})
 
     local mission = self:DivGroup("Mission", groups_opt)
     self:Toggle("RandomizedElementsColor", callback(self, self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
@@ -163,6 +165,10 @@ function GameOptions:map_world_path()
 end
 
 function GameOptions:save()
+    if self._saving then
+        return
+    end
+    self._saving = true
     local save_in_binary = self:Value("SaveMapFilesInBinary")
     local xml = save_in_binary and "binary" or "generic_xml"
     local cusxml = save_in_binary and "binary" or "custom_xml"
@@ -176,44 +182,46 @@ function GameOptions:save()
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()
+    local function save()
+        local map_path = self:map_world_path()
+        self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
+        local missions = {}
+        for name, data in pairs(worlddef._continent_definitions) do
+            local dir = BeardLib.Utils.Path:Combine(map_path, name)
+            local continent_file = name .. ".continent"
+            local mission_file = name .. ".mission"
+            table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
+            table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
+            self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
+            self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
+            missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
+        end
+        self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
+        self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
+        self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, cusxml))
+        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, cusxml))
+        self:save_cover_data(include)
+        self:save_nav_data(include)
+        for _, folder in pairs(FileIO:GetFolders(map_path)) do
+            if not worlddef._continent_definitions[folder] then
+                FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
+            end
+        end
+        self:save_main_xml(include)
+    end
     if FileIO:Exists(path) then
         local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
-        if not FileIO:Exists(backups_dir) then
-            FileIO:MakeDir(backups_dir)
-        end
+        FileIO:MakeDir(backups_dir)
         local backup_dir = BeardLib.Utils.Path:Combine(backups_dir, table.remove(string.split(path, "/")))
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
         end
-        FileIO:CopyTo(path, backup_dir)
+        FileIO:CopyToAsync(path, backup_dir, save)
     else
         FileIO:MakeDir(path)
+        save()
     end
-    local map_path = self:map_world_path()
-    self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
-    local missions = {}
-    for name, data in pairs(worlddef._continent_definitions) do
-        local dir = BeardLib.Utils.Path:Combine(map_path, name)
-        local continent_file = name .. ".continent"
-        local mission_file = name .. ".mission"
-        table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
-        table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
-        self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
-        self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
-        missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
-    end
-    self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
-    self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
-    self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, cusxml))
-    self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, cusxml))
-    self:save_cover_data(include)
-    self:save_nav_data(include)
-    for _, folder in pairs(FileIO:GetFolders(map_path)) do
-        if not worlddef._continent_definitions[folder] then
-            FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
-        end
-    end
-    self:save_main_xml(include)
+    self._saving = false
 end
 
 function GameOptions:save_main_xml(include)
@@ -238,7 +246,7 @@ function GameOptions:save_main_xml(include)
                 end
             end
         end
-        FileIO:WriteScriptDataTo(mod:GetRealFilePath(BeardLib.Utils.Path:Combine(self:map_path(), "main.xml")), data, "custom_xml")
+        proj:map_editor_save_main_xml(data)
     end
 end
 
@@ -262,7 +270,7 @@ function GameOptions:save_nav_data(include)
         --This sucks
         self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
-        QuickMenuPlus:new("Save data is not ready yet")
+        BeardLibEditor.Utils:Notify("Save data is not ready yet")
         return
     end
     if not had_include then
@@ -334,7 +342,7 @@ function GameOptions:build_nav_segments() -- Add later the options to the menu
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
-            QuickMenuPlus:new("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one from world menu > AI layer > Add Nav surface")
+            BeardLibEditor.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one from world menu > AI layer > Add Nav surface")
         end       
     end)
 end

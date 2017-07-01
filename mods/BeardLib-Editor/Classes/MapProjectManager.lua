@@ -24,10 +24,10 @@ function MapProjectManager:init()
     self._menu = menu:make_page("Projects")
     MenuUtils:new(self)
     local btns = self:DivGroup("QuickActions", {w = 300})
-    self:Button("NewProject", callback(self, self, "new_project_dialog"), {group = btns})
+    self:Button("NewProject", callback(self, self, "new_project_dialog", ""), {group = btns})
     self:Button("CloneExistingHeist", callback(self, self, "select_narr_as_project"), {group = btns})
     self:Button("EditExistingProject", callback(self, self, "select_project_dialog"), {group = btns})
-    self._curr_editing = self:DivGroup("CurrEditing")
+    self._curr_editing = self:DivGroup("CurrEditing", {auto_height = false, h = 590})
     self:set_edit_title()
 end
 
@@ -48,8 +48,12 @@ function MapProjectManager:maps_path()
     return BeardLib.current_level._config.include.directory
 end
 
+function MapProjectManager:map_editor_save_main_xml(data)
+    FileIO:WriteScriptDataTo(self:current_mod():GetRealFilePath(BeardLib.Utils.Path:Combine(self:current_path(), "main.xml")), data, "custom_xml")
+end
+
 function MapProjectManager:current_path()
-    local mod = self:current_mod() 
+    local mod = self:current_mod()
     return mod and mod.ModPath
 end
 
@@ -225,6 +229,7 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
                         FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
                         BeardLib.managers.MapFramework:Load()
                         BeardLib.managers.MapFramework:RegisterHooks()
+                        BeardLibEditor.managers.LoadLevel:load_levels()
                         for _, p in pairs(to_unload) do
                             if PackageManager:loaded(p) then
                                 DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
@@ -256,7 +261,6 @@ function MapProjectManager:select_narr_as_project()
     })  
 end
 
-
 function MapProjectManager:select_project_dialog()
     BeardLibEditor.managers.ListDialog:Show({
         list = self:get_projects_list(),
@@ -268,24 +272,29 @@ function MapProjectManager:select_project(selection)
     self:_select_project(selection.mod)
 end
 
+function MapProjectManager:_reload_mod(name)
+    BeardLib.managers.MapFramework._loaded_mods[name] = nil
+    BeardLib.managers.MapFramework:Load()
+    BeardLib.managers.MapFramework:RegisterHooks()
+end
+
 function MapProjectManager:reload_mod(old_name, name, save_prev)
     local mod = self._current_mod
     for _, module in pairs(mod._modules) do
         module.Registered = false
     end
-    BeardLib.managers.MapFramework._loaded_mods[old_name] = nil
-    BeardLib.managers.MapFramework:Load()
-    BeardLib.managers.MapFramework:RegisterHooks()
+    self:_reload_mod(old_name)
     if BeardLib.managers.MapFramework._loaded_mods[name] then
         self:_select_project(BeardLib.managers.MapFramework._loaded_mods[name], save_prev)
     else
         BeardLibEditor:log("[Warning] Something went wrong while trying reload the project")
     end
+    BeardLibEditor.managers.LoadLevel:load_levels()
 end
 
 function MapProjectManager:_select_project(mod, save_prev)
     if save_prev then
-        local save = self:GetItem("SaveProject")
+        local save = self:GetItem("Save")
         if save then
             save:RunCallback()
         end
@@ -325,24 +334,15 @@ function MapProjectManager:_select_project(mod, save_prev)
 end
 
 function MapProjectManager:new_project_dialog(name, clbk)
-    managers.system_menu:show_keyboard_input({
-        text = name or "",
-        title = "Enter a name for the project:",
-        callback_func = callback(self, self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "new_project_clbk")),
-    }) 
+    BeardLibEditor.managers.InputDialog:Show({title = "Enter a name for the project", text = name or "", callback = callback(self, self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "new_project_clbk"))})
 end
 
 function MapProjectManager:new_level_dialog(name, clbk)
-    managers.system_menu:show_keyboard_input({
-        text = name or "",
-        title = "Enter a name for the level:",
-        callback_func = callback(self, self, "new_level_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "create_new_level")),
-    }) 
+    BeardLibEditor.managers.InputDialog:Show({title = "Enter a name for the level", text = name or "", callback = callback(self, self, "new_level_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "create_new_level"))})
 end
 
 function MapProjectManager:delete_level_dialog(level)
-    QuickMenuPlus:new("Are you sure?", "This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", 
-        {{text = "Yes", callback = callback(self, self, "delete_level_dialog_clbk", level)}, {text = "No"}})
+    BeardLibEditor.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", callback(self, self, "delete_level_dialog_clbk", level))
 end
 
 function MapProjectManager:delete_level_dialog_clbk(level)
@@ -361,8 +361,15 @@ function MapProjectManager:delete_level_dialog_clbk(level)
     end
     if type(level) == "table" then
         FileIO:Delete(U.Path:Combine(BeardLib.config.maps_dir, t.name, level.include.directory))
+        if tweak_data.levels[level_id].custom then
+            tweak_data.levels[level_id] = nil
+        end
         table.delete(t, level)
     end
+    local save = self:GetItem("Save")
+    if save then
+        save:RunCallback()
+    end   
     self:reload_mod(t.name, t.name, true)
 end
 
@@ -398,53 +405,45 @@ function MapProjectManager:create_new_narrative(name)
     return data 
 end
 
-function MapProjectManager:new_level_dialog_clbk(clbk, success, name)
-    if success then
-        if tweak_data.levels[name] then
-            QuickMenuPlus:new("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
-            self:new_level_dialog(name, clbk)
-            return
-        elseif name == "" then
-            QuickMenuPlus:new("Error", string.format("Id cannot be empty!", name))
-            self:new_level_dialog(name, clbk)
-            return
-        end
-    else
+function MapProjectManager:new_level_dialog_clbk(clbk, name)
+    local function tryagain() self:new_level_dialog(name, clbk) end
+    if tweak_data.levels[name] then
+        BeardLibEditor.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name), tryagain)
+        return
+    elseif name == "" then
+        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name), tryagain)
         return
     end
     clbk(name)
 end
 
-function MapProjectManager:new_project_dialog_clbk(clbk, success, name)
-    if success then
-        if tweak_data.narrative.jobs[name] then
-            QuickMenuPlus:new("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
-            self:new_project_dialog(name, clbk)
-            return
-        elseif name:lower() == "backups" or name:lower() == "prefabs" then
-            QuickMenuPlus:new("Error", string.format("Invalid Id"))
-            self:new_project_dialog(name, clbk)
-            return            
-        elseif name == "" then
-            QuickMenuPlus:new("Error", string.format("Id cannot be empty!", name))
-            self:new_project_dialog(name, clbk)
-            return
-        end
-    else
+function MapProjectManager:new_project_dialog_clbk(clbk, name)
+    if tweak_data.narrative.jobs[name] then
+        BeardLibEditor.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
+        self:new_project_dialog(name, clbk)
+        return
+    elseif name:lower() == "backups" or name:lower() == "prefabs" then
+        BeardLibEditor.Utils:Notify("Error", string.format("Invalid Id"))
+        self:new_project_dialog(name, clbk)
+        return            
+    elseif name == "" then
+        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        self:new_project_dialog(name, clbk)
         return
     end
     clbk(self:create_new_narrative(name), name)
 end
 function MapProjectManager:new_project_clbk(data, name)
-    local save = self:GetItem("SaveProject")
+    local save = self:GetItem("Save")
     if save then
         save:RunCallback()
     end
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
+    BeardLibEditor.managers.LoadLevel:load_levels()
     local mod = BeardLib.managers.MapFramework._loaded_mods[name]
     self:_select_project(mod, true)
-    QuickMenuPlus:new("New Project", "Do you want to create a new level for the project?", {{text = "Yes", callback = callback(self, self, "new_level_dialog")}, {text = "No"}})
+    BeardLibEditor.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
 end
 
 function MapProjectManager:add_exisiting_level_dialog()
@@ -470,7 +469,9 @@ function MapProjectManager:set_crimenet_videos_dialog()
     local crimenet_videos = U:GetNodeByMeta(self._current_data, "narrative").crimenet_videos
     BeardLibEditor.managers.SelectDialog:Show({
         selected_list = crimenet_videos,
-        list = BeardLibEditor.Utils:FromHashlist({type = "movie", path = "movies/"}),
+        list = BeardLibEditor.Utils:GetEntries({type = "movie", loaded = true, check = function(entry)
+            return entry:match("movies/")
+        end}),
         callback = function(list) crimenet_videos = list end
     })
 end
@@ -499,7 +500,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
     local chain = self:DivGroup("Chain", {group = self._curr_editing})
     self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
-    self:Button("AddNewLevel", callback(self, self, "new_level_dialog"), {group = chain})
+    self:Button("AddNewLevel", callback(self, self, "new_level_dialog", ""), {group = chain})
     local levels_group = self:DivGroup("Levels", {group = chain})
     local function get_level(level_id)
         for _, v in pairs(levels) do
@@ -513,8 +514,11 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
             local level_id = level_in_chain.level_id
             local level = get_level(level_id)
             local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = levels_group})
-            self:SmallButton(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), btn, {text = "x", marker_highlight_color = Color.red})
+            self:SmallButton(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), btn, {text = "x", w = btn.h, marker_highlight_color = Color.red})
         end
+    end
+    if #levels_group._my_items == 0 then
+        self:Divider("NoLevelsNotice", {text = "No levels found, sadly.", group = levels_group})
     end
     self._contract_costs = {}
     self._experience_multipliers = {}
@@ -542,9 +546,17 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
         self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, text = "Maximum mission XP"})
         self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, text = "Payout"})
     end 
-    self:Button("SaveProject", save_clbk, {group = self._curr_editing})
+   -- self:Button("Delete", callback(self, self, "delete_project"), {group = self._curr_editing, marker_highlight_color = Color.red})
+    self:Button("Save", save_clbk, {group = self._curr_editing})
     self:Button("Close", callback(self, self, "disable"), {group = self._curr_editing})
     self._current_data = data
+end
+
+function MapProjectManager:delete_project(menu, item)
+    BeardLibEditor.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
+        FileIO:Delete(Path:Combine("Maps", self._current_data.name))
+        self:disable()
+    end)
 end
 
 function MapProjectManager:set_project_data(menu, item)

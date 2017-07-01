@@ -102,7 +102,9 @@ function NavigationManager:set_debug_draw_state(options)
     local temp = {}
     if type(options) == "table" then
         for k, option in pairs(options) do
-            temp[k] = option.value 
+            if type(option) == "table" then
+                temp[k] = option.value
+            end
         end 
         options = temp
     end
@@ -120,7 +122,7 @@ function NavigationManager:build_complete_clbk(draw_options)
 		self._load_data = self:get_save_data()
         local c = managers.editor.managers.opt
         BeardLibEditor:log("Navigation data Progress: Done!")
-        QuickMenu:new("Info", "Done building navigation data do you wish to save it?", {{text = "Yes", callback = callback(c, c, "save_nav_data")}, {text = "No", is_cancel_button = true}}, true)        
+        BeardLibEditor.Utils.QuickDialog:Show({message = "Done building navigation data do you wish to save it?"}, {{"Yes", callback(c, c, "save_nav_data")}})
     end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()

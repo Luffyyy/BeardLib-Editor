@@ -55,14 +55,7 @@ function EditUnitLight:build_menu(units)
 		2048
 	}
 	self._shadow_resolution = self:ComboBox("ShadowResolution", callback(self, self, "set_unit_data_parent"), res, 4, {help = "Select an resolution from the combobox", group = light_options})
-	local textures = BeardLibEditor.Utils:FromHashlist({
-        path = "units/lights/spot_light_projection_textures",
-        type = "texture"
-    })
-	self._spot_texture = self:ComboBox("SpotTexture", callback(self, self, "set_unit_data_parent"), textures, table.get_key(textures, self.DEFAULT_SPOT_PROJECTION_TEXTURE),{
-		help = "Select a spot projection texture from the combobox",
-		group = light_options
-	})
+	self._spot_texture = self:PathItem("SpotTexture", callback(self, self, "set_unit_data_parent"), self.DEFAULT_SPOT_PROJECTION_TEXTURE, "texture", false, nil, false, {group = light_options}, true)
 end
 
 function EditUnitLight:update_light()
@@ -98,7 +91,7 @@ function EditUnitLight:update_light()
 	self._spot_texture:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "projection") and is_spot)
 	local projection_texture = unit:unit_data().projection_textures
 	projection_texture = projection_texture and projection_texture[name] or EditUnitLight.DEFAULT_SPOT_PROJECTION_TEXTURE
-	self._spot_texture:SetSelectedItem(projection_texture)
+	self._spot_texture:SetValue(projection_texture)
 end 
 
 function EditUnitLight:set_unit_data()	

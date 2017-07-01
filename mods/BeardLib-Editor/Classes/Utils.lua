@@ -2,10 +2,15 @@ getmetatable(Idstring()).s = function(s)
     local t = s:t()
     return managers.editor._idstrings[t] or t
 end
+getmetatable(Idstring()).construct = function(self, id)
+    local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="@ID%s@">', id))
+    return xml and xml.id or nil
+end
 
 BeardLibEditor.Utils = {}
+local self = BeardLibEditor.Utils
 --Sets the position of a unit/object correctly
-function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
+function self:SetPosition(unit, position, rotation, offset)
     if offset and unit:unit_data()._prev_pos and unit:unit_data()._prev_rot then
         local pos = mvector3.copy(unit:unit_data()._prev_pos)
         mvector3.add(pos, position)
@@ -36,18 +41,18 @@ function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
             local element = unit:mission_element().element
             element.values.position = unit:position()
             element.values.rotation = unit:rotation()
-        elseif unit:unit_data().name then
+        elseif unit:unit_data().name and not unit:unit_data().instance then
             managers.worlddefinition:set_unit(unit:unit_data().unit_id, unit, unit:unit_data().continent, unit:unit_data().continent)        
         end
     end
 end
 
-function BeardLibEditor.Utils:ParseXml(typ, path)
+function self:ParseXml(typ, path)
     local file = BeardLibEditor.ExtractDirectory .. "/" ..  path .. "." .. typ
     return SystemFS:exists(file) and SystemFS:parse_xml(file, "r")
 end
 
-function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
+function self:ReadUnitAndLoad(unit, load)
     local config = {}
     local path = BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, unit)
     log("Checking unit .. " .. tostring( unit ))
@@ -62,14 +67,14 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
             if name == "object" then
                 local object = child:parameter("file")
                 table.insert(config, {_meta = "object", path = object, force = true, unload = true})
-                local obj_node = BeardLibEditor.Utils:ParseXml("object", object)
+                local obj_node = self:ParseXml("object", object)
                 if obj_node then
                     for obj_child in obj_node:children() do
                         name = obj_child:name() 
                         if name == "diesel" and obj_child:has_parameter("materials") then
                             local material = obj_child:parameter("materials")
                             table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})                             
-                            local mat_node = BeardLibEditor.Utils:ParseXml("material_config", material)
+                            local mat_node = self:ParseXml("material_config", material)
                             for mat_child in mat_node:children() do
                                 if mat_child:name() == "material" then
                                     for mat_child_child in mat_child:children() do
@@ -91,14 +96,14 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
                         elseif name == "animation_def" then
                             local anim_def = obj_child:parameter("name") 
                             table.insert(config, {_meta = name, path = anim_def, force = true, unload = true})   
-                            local anim_node = BeardLibEditor.Utils:ParseXml(name, anim_def)
+                            local anim_node = self:ParseXml(name, anim_def)
                             for anim_child in anim_node:children() do    
                                 if anim_child:name() == "animation_set" then
                                     for anim_set in anim_child:children() do
                                         local anim_subset = anim_set:parameter("file") 
                                         log("Adding animation_subset" .. tostring(anim_subset))
                                         table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
-                                        local anim_set_node = BeardLibEditor.Utils:ParseXml("animation_subset", anim_subset)
+                                        local anim_set_node = self:ParseXml("animation_subset", anim_subset)
                                         for anim_set_child in anim_set_node:children() do       
                                             log("Adding animation " .. anim_set_child:parameter("file"))          
                                             table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
@@ -129,7 +134,7 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
                 local anim_state = child:parameter("name") 
                 log("Adding animation state machine " .. tostring(anim_state))
                 table.insert(config, {_meta = "animation_state_machine", path = anim_state, force = true, unload = true})   
-                local anim_state_node = BeardLibEditor.Utils:ParseXml("animation_state_machine", anim_state)
+                local anim_state_node = self:ParseXml("animation_state_machine", anim_state)
                 for anim_child in anim_state_node:children() do    
                     if anim_child:name() == "states" then
                         local anim_states = anim_child:parameter("file") 
@@ -157,70 +162,59 @@ function BeardLibEditor.Utils:ReadUnitAndLoad(unit, load)
     return config
 end
 
-function BeardLibEditor.Utils:GetPackagesOfUnit(unit, first)
-    local to_unload
+function self:FilterList(menu, search)
+    for _, item in pairs(search.override_parent._my_items) do
+        if type_name(item) == "Button" then
+            item:SetVisible(search:Value() == "" or item:Text():match(search:Value()), true)
+        end
+    end
+    search.override_parent:AlignItems()
+end
+
+function self:GetPackageSize(package)
+    local file = io.open("assets/" .. (package:match("/") and package:key() or package) .. ".bundle", "rb")
+    if file then
+        return tonumber(file:seek("end")) / (1024)^2
+    else
+        return false
+    end
+end
+
+function self:IsLoaded(asset, type, packages)
+    return #self:GetPackages(asset, type, false, true, packages) > 0
+end
+
+function self:GetPackagesOfUnit(unit, size_needed, packages, first)
+    return self:GetPackages(unit, "unit", size_needed, first, packages)
+end
+
+function self:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
-    local done = {}
-    local function pkgload(p)
-        if not PackageManager:loaded(p) then
-            if PackageManager:package_exists(p.."_init") then
-                PackageManager:load(p.."_init") 
-               table.insert(to_unload, p.."_init")
-            end
-            if PackageManager:package_exists(p) then
-                PackageManager:load(p)
-                table.insert(to_unload, p)
-            end
-        end
-    end
-    local function pkgunload()
-        for _, p in pairs(to_unload) do
-            if PackageManager:loaded(p) then
-                DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
-                    log("Unloading temp package " .. tostring(p))
-                    PackageManager:unload(p)
-                end)
-            end
-        end
-    end
-    PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
-    for id, level in pairs(tweak_data.levels) do
-        if level.world_name and not done[level.world_name] then
-            to_unload = {}
-            local level_dir = "levels/"..level.world_name .. "/"
-            pkgload(level_dir.."world")
-            for c in pairs(PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))) do
-                local p = level_dir..c.."/"..c
-                local p_init = p.."_init"
-                if PackageManager:package_exists(p_init) then
-                    PackageManager:load(p_init)
-                end
-                for _, static in pairs(PackageManager:script_data(Idstring("continent"), Idstring(p)).statics or {}) do
-                    if static.unit_data and static.unit_data.name == unit then
-                        table.insert(found_packages, p)
-                        if first then
-                            if PackageManager:loaded(p_init) then PackageManager:unload(p_init) end
-                            pkgunload()
-                            PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
-                            return found_packages[1]
-                        end
+    for name, package in pairs(packages or BeardLibEditor.DBPackages) do
+        for _, path in pairs(package[type] or {}) do
+            if path == asset then
+                local size = size_needed and self:GetPackageSize(name)
+                if not size_needed or size then
+                    table.insert(found_packages, {name = name, size = size})
+                    if first then
+                        return found_packages
                     end
                 end
-                if PackageManager:loaded(p_init) then PackageManager:unload(p_init) end
             end
-            done[level.world_name] = true
         end
     end
-    PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
     return found_packages
 end
 
-function BeardLibEditor.Utils:HasEditableLights(unit)
+function self:HasEditableLights(unit)
     local lights = self:GetLights(unit)
     return lights and #lights > 0
 end
 
-function BeardLibEditor.Utils:GetLights(unit)
+function self:GetLights(unit)
+    if not unit.get_objects_by_type then
+        return nil
+    end
     local has_lights = #unit:get_objects_by_type(Idstring("light")) > 0
     if not has_lights then
         return nil
@@ -247,9 +241,9 @@ for _, intensity in ipairs(LightIntensityDB:list()) do
     table.insert(t, LightIntensityDB:lookup(intensity))
 end
 table.sort(t)
-BeardLibEditor.Utils.IntensityValues = t
+self.IntensityValues = t
 
-function BeardLibEditor.Utils:GetIntensityPreset(multiplier)
+function self:GetIntensityPreset(multiplier)
     local intensity = LightIntensityDB:reverse_lookup(multiplier)
     if intensity ~= Idstring("undefined") then
         return intensity
@@ -273,7 +267,7 @@ function BeardLibEditor.Utils:GetIntensityPreset(multiplier)
     end
 end
 
-function BeardLibEditor.Utils:LightData(unit)
+function self:LightData(unit)
     local lights = self:GetLights(unit)
     if not lights then
         return nil
@@ -298,15 +292,18 @@ function BeardLibEditor.Utils:LightData(unit)
     return #t > 0 and t or nil
 end
 
-function BeardLibEditor.Utils:HasAnyProjectionLight(unit)
+function self:HasAnyProjectionLight(unit)
+    if not unit.get_objects_by_type then
+        return
+    end
     local has_lights = #unit:get_objects_by_type(Idstring("light")) > 0
     if not has_lights then
         return nil
     end
-    return BeardLibEditor.Utils:HasProjectionLight(unit, "shadow_projection") or BeardLibEditor.Utils:HasProjectionLight(unit, "projection")
+    return self:HasProjectionLight(unit, "shadow_projection") or self:HasProjectionLight(unit, "projection")
 end
 
-function BeardLibEditor.Utils:HasProjectionLight(unit, type)
+function self:HasProjectionLight(unit, type)
     type = type or "projection"
     local node = self:ParseXml("object", unit:unit_data().name)
     if node then
@@ -323,7 +320,7 @@ function BeardLibEditor.Utils:HasProjectionLight(unit, type)
     return nil
 end
 
-function BeardLibEditor.Utils:IsProjectionLight(unit)
+function self:IsProjectionLight(unit)
     type = type or "projection"
     local node = self:ParseXml("object", unit:unit_data().name)
     if node then
@@ -340,7 +337,7 @@ function BeardLibEditor.Utils:IsProjectionLight(unit)
     return false
 end
 
-function BeardLibEditor.Utils:TriggersData(unit)
+function self:TriggersData(unit)
     local triggers = managers.sequence:get_trigger_list(unit:name())
     if #triggers == 0 then
         return nil
@@ -370,7 +367,7 @@ function BeardLibEditor.Utils:TriggersData(unit)
     return #t > 0 and t or nil
 end
 
-function BeardLibEditor.Utils:EditableGuiData(unit)
+function self:EditableGuiData(unit)
     local t
     if unit:editable_gui() then
         t = {
@@ -391,7 +388,7 @@ function BeardLibEditor.Utils:EditableGuiData(unit)
     return t
 end
 
-function BeardLibEditor.Utils:LadderData(unit)
+function self:LadderData(unit)
     local t
     if unit:ladder() then
         t = {
@@ -402,7 +399,7 @@ function BeardLibEditor.Utils:LadderData(unit)
     return t
 end
 
-function BeardLibEditor.Utils:ZiplineData(unit)
+function self:ZiplineData(unit)
     local t
     if unit:zipline() then
         t = {
@@ -416,7 +413,7 @@ function BeardLibEditor.Utils:ZiplineData(unit)
     return t
 end
 
-function BeardLibEditor.Utils:InSlot(unit, slot)
+function self:InSlot(unit, slot)
     local ud = PackageManager:unit_data(Idstring(unit):id())
     if ud then
         local unit_slot = ud:slot()
@@ -429,90 +426,84 @@ function BeardLibEditor.Utils:InSlot(unit, slot)
     return false
 end
 
-function BeardLibEditor.Utils:GetEntries(type, loaded, filterout)
+function self:GetEntries(params)
     local entries = {}
-    for _, entry in pairs(BeardLibEditor.DBPaths[type]) do
-        local pass = true
-        if filterout then
-            for _, v in pairs(filterout) do
-                if entry:match(v) then
-                    pass = false
-                    break
-                end
-            end
-        end
-        if pass and (not loaded or PackageManager:has(Idstring(type), Idstring(entry))) then
-            table.insert(entries, entry)
+    local IsLoaded
+
+    if params.packages then
+        local type, packages = params.type, params.pacakges
+        IsLoaded = function(entry) return self:IsLoaded(entry, type, packages) end
+    else
+        local ids_type = params.type:id()
+        IsLoaded = function(entry) return PackageManager:has(ids_type, entry:id()) end
+    end
+
+    for _, entry in pairs(BeardLibEditor.DBPaths[params.type]) do
+        if (not params.loaded or IsLoaded(entry)) and (not check or check(params.entry)) then
+            table.insert(entries, filenames and Path:GetFileName(entry) or entry)
         end
     end
     return entries
 end
 
-function BeardLibEditor.Utils:GetUnits(params)
+--Any unit that exists only in editor(except mission element units)
+local allowed_units = {
+    ["core/units/effect/effect"] = true,
+    ["core/units/nav_surface/nav_surface"] = true,
+    ["units/dev_tools/level_tools/ai_coverpoint"] = true,
+    ["core/units/environment_area/environment_area"] = true,
+}
+function self:GetUnits(params)
     local units = {}
     for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
-        if (params.not_loaded or self:InSlot(unit, params.slot or managers.editor._editor_all)) and (not params.type or self:GetUnitType(unit) == Idstring(params.type)) then
+        local slot_fine = not params.slot or self:InSlot(unit, params.slot)
+        local unit_fine = params.not_loaded or allowed_units[unit] or self:IsLoaded(unit, "unit", params.packages or {})
+        if unit_fine and slot_fine and (not params.type or self:GetUnitType(unit) == Idstring(params.type)) and (not params.not_type or self:GetUnitType(unit) ~= Idstring(params.not_type)) then
             table.insert(units, unit)
         end
     end
     return units
 end
 
-function BeardLibEditor.Utils:GetUnitType(unit)
+function self:GetUnitType(unit)
     if not unit then
         log(debug.traceback())
+        return Idstring("none")
     end
     local ud = PackageManager:unit_data(Idstring(unit):id())
     return ud and ud:type() 
 end
 
-function BeardLibEditor.Utils:Unhash(ids, type)
+function self:Unhash(ids, type)
     for _, path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
         if Idstring(path) == ids then
             return path
         end
     end
-    return ids
+    return ids:key()
 end
 
-function BeardLibEditor.Utils:FromHashlist(params)
-    local d = {}
-    local f = {}
-    local dir_split = string.split(params.path, "/")
-    local dir = BeardLibEditor.DBEntries
-    for _, part in pairs(dir_split) do
-        dir = dir[part]
-    end          
-    for key, data in pairs(dir) do
-        if tonumber(key) ~= nil then
-            if params.files ~= false then
-                if not params.type or (data.file_type == params.type and (not params.loaded or PackageManager:has(Idstring(params.type), Idstring(data.path)))) then 
-                    table.insert(f, params.full_path and {name = data.name, path = data.path} or data.name)
-                end
-            end
-        elseif params.folders then
-            table.insert(d, key)
-        end
-    end     
-    return not check and f, d or false
+function self:Notify(title, msg, clbk)
+    BeardLibEditor.managers.Dialog:Show({title = title, message = msg, callback = clbk})
 end
 
-function BeardLibEditor.Utils:YesNoQuestion(title, clbk, no_clbk)
-    QuickMenuPlus:new("Are you sure you want to continue?", title, {{text = "Yes", callback = clbk}, {text = "No", callback = no_clbk}}, {no_background = true, position_func = function(panel, wsPanel)
-        panel:set_rightbottom(wsPanel:rightbottom())
-    end})
+function self:YesNoQuestion(msg, clbk, no_clbk)
+    self:QuickDialog({title = "Are you sure you want to continue?", message = msg, no = false}, {{"Yes", clbk}, {"No", no_clbk, no_clbk and true}})
+end
+
+function self:QuickDialog(opt, items)
+    QuickDialog(table.merge({dialog = BeardLibEditor.managers.Dialog}, opt), items)
 end
 
 FakeObject = FakeObject or class()
-function FakeObject:init(o)
+function FakeObject:init(o, unit_data)
+    self._fake = true
+    self._unit_data = unit_data or {}
     self._o = o
+    self._unit_data.positon = self:position()
+    self._unit_data.rotation = self:rotation()
 end
-function FakeObject:rotation()
-    return self:alive() and type(self._o.rotation) == "function" and self._o:rotation() or self._o.rotation
-end
-function FakeObject:position()
-    return self:alive() and type(self._o.position) == "function" and self._o:position() or self._o.position
-end
+
 function FakeObject:set_position(pos)
     if self:alive() then
         if type(self._o.position) == "function" then
@@ -522,6 +513,7 @@ function FakeObject:set_position(pos)
         end
     end
 end
+
 function FakeObject:set_rotation(rot)
     if self:alive() then
         if type(self._o.rotation) == "function" then
@@ -531,6 +523,18 @@ function FakeObject:set_rotation(rot)
         end
     end
 end
-function FakeObject:alive()
-    return self._o and not self._o.alive and true or self._o:alive()
-end
+
+function FakeObject:rotation() return self:alive() and type(self._o.rotation) == "function" and self._o:rotation() or self._o.rotation end
+function FakeObject:position() return self:alive() and type(self._o.position) == "function" and self._o:position() or self._o.position end
+function FakeObject:alive() return self._o and not self._o.alive and true or self._o:alive() end
+function FakeObject:enabled() return true end
+function FakeObject:fake() return self._fake end
+function FakeObject:object() return self._o end
+function FakeObject:unit_data() return self._unit_data end
+function FakeObject:mission_element() return nil end
+function FakeObject:wire_data() return nil end
+function FakeObject:ai_editor_data() return nil end
+function FakeObject:editable_gui() return nil end
+function FakeObject:zipline() return nil end
+function FakeObject:ladder() return nil end
+function FakeObject:name() return Idstring("blank") end

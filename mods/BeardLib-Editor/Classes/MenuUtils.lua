@@ -26,8 +26,8 @@ function MenuUtils:init(this, menu)
 	    return m, opt
 	end
 
-	function this:Divider(name, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:Divider(name, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:Divider(table.merge({
 	        name = name,
 	        text = name,
@@ -36,8 +36,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end	
 
-	function this:Group(name, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:Group(name, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:ItemsGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -45,22 +45,22 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end	
 
-	function this:DivGroup(name, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:DivGroup(name, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:DivGroup(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        color = color,
-	        automatic_height = true,
+	        auto_height = true,
 	        offset = {8, 4},
 	        background_visible = false
 	    }, opt))
 	end
 
-	function this:Menu(name, opt)
-		local m, opt = self:WorkMenuUtils(opt)
+	function this:Menu(name, o)
+		local m, opt = self:WorkMenuUtils(o)
 	    opt.background_visible = opt.background_visible ~= nil and opt.background_visible or false
-	    opt.automatic_height = opt.automatic_height == nil and true or opt.automatic_height
+	    opt.auto_height = opt.auto_height == nil and true or opt.auto_height
 	    return m:Menu(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -71,8 +71,8 @@ function MenuUtils:init(this, menu)
 		self:Button("Close", callback(menu.menu, menu.menu, "disable"))
 	end
 
-	function this:Button(name, callback, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:Button(name, callback, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -80,8 +80,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:KeyBind(name, callback, value, opt)
-		local m, opt = self:WorkMenuUtils(opt)
+	function this:KeyBind(name, callback, value, o)
+		local m, opt = self:WorkMenuUtils(o)
 		return m:KeyBind(table.merge({
 			name = name,
 			value = value,
@@ -90,14 +90,16 @@ function MenuUtils:init(this, menu)
 		}, opt))
 	end
 
-	function this:SmallButton(name, callback, parent, opt)    
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:SmallButton(name, callback, parent, o)    
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
 	        size_by_text = true,
-	        text_offset = 0,
+	        min_width = parent.items_size,
+	        min_height = parent.items_size,
+	        text_offset = 2,
 	        position = function(item)
 	        	item:SetPositionByString("CenterRight")
 	        	item:Panel():move(-1)
@@ -108,8 +110,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end	
 
-	function this:SmallImageButton(name, callback, texture, rect, parent, opt)    
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:SmallImageButton(name, callback, texture, rect, parent, o)    
+	    local m, opt = self:WorkMenuUtils(o)
 	    m = parent.type_name == "Menu" and parent or m
 	    opt.help = string.pretty2(name)
 	    return m:ImageButton(table.merge({
@@ -119,6 +121,7 @@ function MenuUtils:init(this, menu)
 	        	item:SetPositionByString("CenterRight")
 	        	item:Panel():move(-1)
 	        end,
+	        items_size = parent.items_size,
 	        size_by_icon = false,
 	        texture = texture,
 	        texture_rect = rect,
@@ -126,8 +129,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:ComboBox(name, callback, items, value, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:ComboBox(name, callback, items, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:ComboBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -138,8 +141,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:TextBox(name, callback, value, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:TextBox(name, callback, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:TextBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -149,8 +152,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:Slider(name, callback, value, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:Slider(name, callback, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:Slider(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -170,8 +173,8 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end
 
-	function this:Toggle(name, callback, value, opt)
-	    local m, opt = self:WorkMenuUtils(opt)
+	function this:Toggle(name, callback, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
 	    return m:Toggle(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -200,11 +203,14 @@ function MenuUtils:init(this, menu)
 
 	function this:SetAxisControlsEnabled(enabled, name)
 		name = name or ""
-	    for _, control in pairs(self._axis_controls) do
-	        if alive(self[name..control]) then
-	            self[name..control]:SetEnabled(enabled)
-	        end
-	    end
+		local translate = self:GetItem("Translate"..name)
+		if translate then
+			translate:SetEnabled(enabled)
+		end
+		local rotate = self:GetItem("Rotate"..name)
+		if rotate then
+			rotate:SetEnabled(enabled)
+		end
 	end
 
 	function this:AxisControlsPosition(name)
@@ -219,11 +225,10 @@ function MenuUtils:init(this, menu)
 
 	function this:SetShapeControlsEnabled(enabled, name)
 		name = name or ""
-	    for _, control in pairs(self._shape_controls) do
-	        if alive(self[name..control]) then
-	            self[name..control]:SetEnabled(enabled)
-	        end
-	    end
+		local shape = self:GetItem("Shape"..name)
+		if shape then
+			shape:SetEnabled(enabled)
+		end
 	end
 
 	function this:AxisControls(callback, opt, name, pos, rot)
@@ -234,11 +239,9 @@ function MenuUtils:init(this, menu)
 	    local rotation
 	    local group = opt.group
 	    if not opt.no_pos then
-	    	opt.border_lock_height = false
 			translation = self:DivGroup("Translate"..name, opt)
 	    end
 	    if not opt.no_rot then
-	    	opt.border_lock_height = false
 	    	opt.group = group
 	    	rotation = self:DivGroup("Rotate"..name, opt)
 	    end
@@ -262,10 +265,9 @@ function MenuUtils:init(this, menu)
 	    opt = opt or {}
 	    opt.floats = 0
 	    opt.align_method = "grid"
+	    local shapegroup = self:DivGroup("Shape"..name, opt)
 	    opt.color = false
-	    self:Divider("Shape", opt)
-	    local shapegroup = self:Menu("ShapeGroup", opt)
-	    opt.w = shapegroup.w / 2
+	    opt.w = (shapegroup.w / 2)
 	    opt.offset = 0
 	    opt.group = shapegroup
 	    for i, control in pairs(self._shape_controls) do
@@ -278,7 +280,7 @@ function MenuUtils:init(this, menu)
 	    end
 	end	
 
-	function this:PathItem(name, callback, value, typ, opt, loaded, filterout, close)
+	function this:PathItem(name, callback, value, typ, loaded, check, not_close, opt)
 		opt = opt or {}
 		opt.control_slice = opt.control_slice or 1.5
 		opt.callback = opt.callback or callback
@@ -289,10 +291,10 @@ function MenuUtils:init(this, menu)
 		opt.callback = opt.btn_callback
 	    local btn = self:Button("SelectPath"..name, function()
 	       BeardLibEditor.managers.ListDialog:Show({
-		        list = BeardLibEditor.Utils:GetEntries(typ, loaded, filterout),
+		        list = BeardLibEditor.Utils:GetEntries({type = typ, loaded = loaded, filenames = false, check = check}),
 		        callback = function(path) 
 		        	t:SetValue(path, true)
-		        	if close then
+		        	if not not_close then
 		        		BeardLibEditor.managers.ListDialog:Hide()
 		        	end
 		        end
@@ -324,7 +326,7 @@ function MenuUtils:init(this, menu)
 		return menu:GetItem(name)
 	end
 
-	function this:RemoveItem(name)
-		return menu:RemoveItem(name)
+	function this:RemoveItem(item)
+		return menu:RemoveItem(item)
 	end
 end

@@ -67,25 +67,65 @@ end
 function StaticEditor:build_default_menu()
     StaticEditor.super.build_default_menu(self)
     self._editors = {}
+    self:SetTitle("Selection")
     self:Divider("No Selection")
 end
 
-function StaticEditor:build_quick_buttons()
+function StaticEditor:build_quick_buttons(cannot_be_saved)
+    self:SetTitle("Selection")
     local quick_buttons = self:Group("QuickButtons")
     self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
     self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
-    self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
-    self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal"})
+    if not cannot_be_saved then
+        self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
+        self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = false})
+        local group = self:Group("Group", {visible = false}) --lmao
+        self:build_group_options()
+    end
+end
+
+function StaticEditor:build_group_options()
+    local selected_unit = self:selected_unit()
+    local selected_units = self:selected_units()
+    local all_same_continent
+    if #selected_units > 1 then
+        all_same_continent = true
+        for _, unit in pairs(selected_units) do
+        	if not selected_unit:unit_data().unit_id or not selected_unit:unit_data().continent then
+        		all_same_continent = false
+        		return
+        	end
+            if selected_unit:unit_data().continent ~= unit:unit_data().continent then
+                all_same_continent = false
+                break
+            end
+        end
+    end
+    local group = self:GetItem("Group")
+    group:ClearItems()
+    group:SetVisible(all_same_continent)
+    if all_same_continent then
+        if self._selected_group then
+            self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
+            self:TextBox("GroupName", callback(self, self, "set_group_name"), self._selected_group.name, {group = group})
+            self:Button("UngroupUnits", callback(self, self, "remove_group"), {group = group})
+        else
+            self:Button("GroupUnits", callback(self, self, "add_group"), {group = group})
+        end
+    end
 end
 
 function StaticEditor:build_unit_editor_menu()
     StaticEditor.super.build_default_menu(self)
     self._editors = {}
+    self:SetTitle("Selection")
     local other = self:Group("Main")    
     self:build_positions_items()
     self:TextBox("Name", callback(self, self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
-    self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other})
-    self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", {group = other}, true, false, true)
+    self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other, enabled = false})
+    self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", true, function(unit)
+        return BeardLibEditor.Utils:GetUnitType(unit) ~= "being"
+    end, false, {group = other})
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
     self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
@@ -101,8 +141,8 @@ function StaticEditor:build_extension_items()
     end
 end
 
-function StaticEditor:build_positions_items()
-    self:build_quick_buttons()    
+function StaticEditor:build_positions_items(cannot_be_saved)
+    self:build_quick_buttons(cannot_be_saved)
     local transform = self:Group("Transform")
     self:Button("IgnoreRaycastOnce", function()
         for _, unit in pairs(self:selected_units()) do
@@ -127,6 +167,7 @@ function StaticEditor:update_positions()
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
+            self:Manager("instances"):update_positions()
             if self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
                 self:Manager("wdata").managers.env:save()
             end
@@ -213,8 +254,57 @@ function StaticEditor:StorePreviousPosRot()
     end
 end
 
-function StaticEditor:add_selection_to_prefabs(menu, item)
-    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or "Prefab", callback = function(prefab_name)
+function StaticEditor:set_group_name(menu, item)
+    local exists
+    for _, group in pairs(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups) do
+        if group.name == item:Value() then
+            exists = true
+        end
+    end
+    if not exists then
+        self._selected_group.name = item:Value()
+    end
+end
+
+function StaticEditor:remove_group(menu, item)
+	if self._selected_group then
+	    table.delete(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups, self._selected_group)
+	    self._selected_group = nil
+	    self:build_group_options()
+	end
+end
+
+function StaticEditor:add_group(menu, item)
+    local unit = self:selected_unit()
+    BeardLibEditor.managers.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
+        local continent = managers.worlddefinition:get_continent_of_static(unit)
+        local exists
+        for _, group in pairs(continent.editor_groups) do
+            if group.name == name then
+                exists = true
+            end
+        end
+        if not exists then
+            local group = {continent = unit:unit_data().continent, reference = unit:unit_data().unit_id, name = name, units = {}}
+            for _, unit in pairs(self:selected_units()) do
+                table.insert(group.units, unit:unit_data().unit_id)
+            end
+            table.insert(continent.editor_groups, group)        
+            self._selected_group = group
+            self:build_group_options()
+        end
+    end})
+end
+
+
+function StaticEditor:add_selection_to_prefabs(menu, item, prefab_name)
+    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or prefab_name or "Prefab", callback = function(prefab_name)
+    	if prefab_name:len() > 200 then
+    		BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
+    			self:add_selection_to_prefabs(menu, item, prefab_name)
+    		end})
+    		return
+    	end
         BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData()
         FileIO:WriteScriptDataTo(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end})
@@ -232,11 +322,6 @@ end
 
 function StaticEditor:widget_unit()
     local unit = self:selected_unit()
-    if alive(unit) and unit:unit_data().instance then
-        local instance = managers.world_instance:get_instance_data_by_name(unit:unit_data().instance)
-        self._fake_object = self._fake_object or FakeObject:new(instance)
-        return self._fake_object
-    end
     if self:Enabled() then
         for _, editor in pairs(self._editors) do
             if editor.widget_unit then
@@ -261,10 +346,11 @@ function StaticEditor:recalc_all_locals()
 end
 
 function StaticEditor:recalc_locals(unit, reference)
-    local pos = reference:position()
-    local rot = reference:rotation()
-    unit:unit_data().local_pos = unit:unit_data().position - pos --:rotate_with(rot:inverse()) Trying to improve widget rotation but sadly failing.
-    unit:unit_data().local_rot = rot:inverse() * unit:rotation()
+    local pos = unit:position()
+    local ref_pos = reference:position()
+    local ref_rot = reference:rotation()
+    unit:unit_data().local_pos = pos - ref_pos --:rotate_with(rot:inverse()) Trying to improve widget rotation but sadly failing.
+    unit:unit_data().local_rot = ref_rot:inverse() * unit:rotation()
 end
 
 function StaticEditor:check_unit_ok(unit)
@@ -274,6 +360,9 @@ function StaticEditor:check_unit_ok(unit)
     end
     if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
         self._ignore_raycast[ud.unit_id] = nil
+        return false
+    end
+    if ud.instance and not self:Value("SelectInstances") then
         return false
     end
     local mission_element = unit:mission_element() and unit:mission_element().element
@@ -291,28 +380,63 @@ function StaticEditor:reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
-    self._fake_object = nil
-    self._instance_units = nil
     self._selected_units = {}
+    self._selected_group = nil
 end
 
 function StaticEditor:set_selected_unit(unit, add)
     self:recalc_all_locals()
     local units = {unit}
-    if alive(unit) and self:Manager("opt"):get_value("SelectEditorGroups") then
-        local continent = managers.worlddefinition:get_continent_of_static(unit)
-        if not add then
-            add = true
-            self:reset_selected_units()
+    if alive(unit) then
+        local ud = unit:unit_data()
+        if ud and ud.instance then
+            local instance = managers.world_instance:get_instance_data_by_name(ud.instance)
+            local fake_unit
+            for _, u in pairs(self:selected_units()) do
+                if u:fake() and u:object().name == ud.instance then
+                    fake_unit = u
+                    break
+                end
+            end 
+            unit = fake_unit or FakeObject:new(instance)
+            units[1] = unit
         end
-        if continent then
-            continent.editor_groups = continent.editor_groups or {}
-            for _, group in pairs(continent.editor_groups) do
-                if group.units then
-                    for _, unit_id in pairs(group.units) do
-                        local u = managers.worlddefinition:get_unit(unit_id)
-                        if alive(u) and not table.contains(units, u) then
-                            table.insert(units, u)
+        if add and self._selected_group and ctrl() then
+            if not unit:fake() and ud.continent == self._selected_group.continent then
+                if table.contains(self._selected_group.units, ud.unit_id) then
+                    table.delete(self._selected_group.units, ud.unit_id)
+                else
+                    table.insert(self._selected_group.units, ud.unit_id)
+                end
+                if #self._selected_group.units <= 1 then
+                    self:remove_group()
+                end
+            end
+        else
+            if self:Manager("opt"):get_value("SelectEditorGroups") then
+                local continent = managers.worlddefinition:get_continent_of_static(unit)
+                if not add then
+                    add = true
+                    self:reset_selected_units()
+                end
+                if continent then
+                    continent.editor_groups = continent.editor_groups or {}
+                    for _, group in pairs(continent.editor_groups) do
+                        if group.units then
+                            if table.contains(group.units, unit:unit_data().unit_id) then
+                                for _, unit_id in pairs(group.units) do
+                                    local u = managers.worlddefinition:get_unit(unit_id)
+                                    if alive(u) and not table.contains(units, u) then
+                                        table.insert(units, u)
+                                    end
+                                end
+                                if self._selected_group then
+                                    self._selected_group = nil
+                                else
+                                    self._selected_group = group
+                                end
+                                break
+                            end
                         end
                     end
                 end
@@ -338,7 +462,7 @@ function StaticEditor:set_selected_unit(unit, add)
     self:StorePreviousPosRot()
     local unit = self:selected_unit()
     self._parent:use_widgets(unit and alive(unit) and unit:enabled())
-    if (alive(unit) and unit:unit_data().instance) or #self._selected_units > 1 then
+    if #self._selected_units > 1 then
         self:set_multi_selected()
     else
         if alive(unit) then
@@ -346,6 +470,8 @@ function StaticEditor:set_selected_unit(unit, add)
                 self:Manager("mission"):set_element(unit:mission_element().element)
             elseif self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
                 self:Manager("wdata").managers.env:build_unit_menu()
+            elseif unit:fake() then
+                self:Manager("instances"):set_instance()
             else
                 self:set_unit()
             end
@@ -371,6 +497,11 @@ function StaticEditor:select_unit(mouse2)
 end
 
 function StaticEditor:set_multi_selected()
+    if self._built_multi then
+        self:update_positions()
+        return
+    end
+    self._built_multi = true
     self._editors = {}
     self:ClearItems()
     self:build_positions_items()
@@ -381,6 +512,7 @@ function StaticEditor:set_unit(reset)
     if reset then
         self:reset_selected_units()
     end
+    self._built_multi = false
     local unit = self._selected_units[1]
     if alive(unit) and unit:unit_data() and not unit:mission_element() then
         if not reset then
@@ -435,13 +567,17 @@ function StaticEditor:addremove_unit_portal(menu, item)
             end
         end
     else
-        QuickMenuPlus:new("Error", "No portal selected")  
+        BeardLibEditor.Utils:Notify("Error", "No portal selected")  
     end    
 end      
 
-function StaticEditor:delete_selected(menu, item)    
+function StaticEditor:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
-        self._parent:DeleteUnit(unit)
+        if unit:fake() then
+            self:Manager("instances"):delete_instance()
+        else
+            self._parent:DeleteUnit(unit)
+        end
     end
     self:reset_selected_units()
     self:set_unit()      
@@ -450,11 +586,8 @@ end
 function StaticEditor:delete_selected_dialog(menu, item)
     if not self:selected_unit() then
         return
-    end        
-    QuickMenuPlus:new("Warning", "This will delete the selection, Continue?",{
-        {text = "Yes", callback = callback(self, self, "delete_selected")},
-        {text = "No", is_cancel_button = true}
-    })
+    end
+    BeardLibEditor.Utils:YesNoQuestion("This will delete the selection", callback(self, self, "delete_selected")) 
 end
 
 function StaticEditor:update(t, dt)
@@ -472,7 +605,7 @@ function StaticEditor:update(t, dt)
     local draw_bodies = self:Value("DrawBodies")
     if managers.viewport:get_current_camera() then
         for _, unit in pairs(self._selected_units) do
-            if alive(unit) then
+            if alive(unit) and not unit:fake() then
                 if draw_bodies then
                     for i = 0, unit:num_bodies() - 1 do
                         local body = unit:body(i)
@@ -494,7 +627,7 @@ function StaticEditor:GetCopyData()
     local id
     local unit_id
     for _, unit in pairs(self._selected_units) do
-        local typ = unit:mission_element() and "element" or "unit"
+        local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
         local copy = {
             type = typ,
             mission_element_data = typ == "element" and unit:mission_element().element and deep_clone(unit:mission_element().element) or nil,
@@ -508,7 +641,9 @@ function StaticEditor:GetCopyData()
         elseif typ == "unit" then
             unit_id = math.min(copy.unit_data.unit_id, unit_id or copy.unit_data.unit_id)
         end
-        table.insert(copy_data, copy)
+        if typ ~= "unsupported" then
+            table.insert(copy_data, copy)
+        end
     end
 
     --The id is now used as the number it should add to the latest id before spawning the prefab
@@ -520,14 +655,14 @@ function StaticEditor:GetCopyData()
             v.mission_element_data.script = nil
             local new_id = v.mission_element_data.id - id
             for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
-                link.tbl[link.key] = 1000000 + new_id
+                link.tbl[link.key] = new_id
             end
             v.mission_element_data.id = new_id
-        elseif v.type == "unit" and unit_id then
+        elseif v.type == "unit" and v.unit_data.unit_id and unit_id then
             v.unit_data.continent = nil
             local new_id = v.unit_data.unit_id - unit_id
             for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
-                link.tbl[link.key] = 1000000 + new_id
+                link.tbl[link.key] = new_id
             end
             v.unit_data.unit_id = new_id
         end
@@ -538,11 +673,14 @@ end
 function StaticEditor:CopySelection()
     if #self._selected_units > 0 and not self._parent._menu._highlighted then
         self._copy_data = self:GetCopyData() --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
+        if #self._copy_data == 0 then
+        	self._copy_data = nil
+        end
     end
 end
 
 function StaticEditor:Paste()
-    if not self._parent._menu._highlighted and self._copy_data then
+    if not Global.editor_safe_mode and not self._parent._menu._highlighted and self._copy_data then
         self:SpawnCopyData(self._copy_data)
     end
 end
@@ -559,20 +697,20 @@ end
 function StaticEditor:SpawnCopyData(copy_data)
     self:reset_selected_units()
     local new_id = managers.mission:get_new_id(self._parent._current_continent)
-    local new_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "")
-    local new_world_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "wire")
+    local new_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "", true)
+    local new_world_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "wire", true)
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
         if v.type == "element" then
             local new_final_id = new_id + v.mission_element_data.id
-            for _, link in pairs(managers.mission:get_links_paths(1000000 + v.mission_element_data.id, true, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.mission_element_data.id = new_final_id
-        elseif v.type == "unit" and unit_id then
-            local new_final_id = (old_unit:wire_data() or old_unit:ai_editor_data() and new_world_unit_id or new_unit_id) + v.unit_data.unit_id
-            for _, link in pairs(managers.mission:get_links_paths(1000000 + v.unit_data.unit_id, false, copy_data)) do
+        elseif v.type == "unit" and v.unit_data.unit_id then
+            local new_final_id = ((v.wire_data or v.ai_editor_data) and new_world_unit_id or new_unit_id) + v.unit_data.unit_id
+            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id
@@ -582,7 +720,7 @@ function StaticEditor:SpawnCopyData(copy_data)
         if v.type == "element" then
             self:Manager("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
         elseif v.unit_data then
-            self._parent:SpawnUnit(v.unit_data.name, v, true)
+            self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
         end
     end
     self:StorePreviousPosRot()

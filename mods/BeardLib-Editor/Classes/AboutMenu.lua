@@ -7,6 +7,7 @@ function AboutMenu:init()
 		icon_w = 256,
 		icon_h = 256,
 		offset = 0,
+		marker_highlight_color = false,
 		texture = "textures/editor_logo",
 	})
     local info = self:Menu("Info", {w = 512, border_color = BeardLibEditor.Options:GetValue("AccentColor"), position = "center_x"})

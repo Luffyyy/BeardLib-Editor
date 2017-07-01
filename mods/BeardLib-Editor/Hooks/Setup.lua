@@ -13,12 +13,12 @@ Hooks:PreHook(Setup, "start_loading_screen", "BeardLibEditorStartLoadingScreen",
 			Global.LoadingText = panel:text({
 				name = "Loading",
 				font = "fonts/font_large_mf",
-				font_size = 42,
+				font_size = 32,
 				color = bgcolor:contrast(),
 				align = "center",
 				vertical = "center",
 			})
-			BeardLibEditor:SetLoadingText("Waiting For Response")
+			Global.LoadingText:set_text(BeardLibEditor:SetLoadingText("Waiting For Response"))
 			Global.level_data.editor_load = true
 		end
 	end

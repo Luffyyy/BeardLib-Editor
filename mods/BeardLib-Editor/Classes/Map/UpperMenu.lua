@@ -1,15 +1,16 @@
 UpperMenu = UpperMenu or class()
 function UpperMenu:init(parent, menu)
     self._parent = parent
+    local normal = not Global.editor_safe_mode
     self._tabs = {
-        {name = "static", rect = {256, 262, 115, 115}},
-        {name = "wdata", rect = {135, 271, 115, 115}},
-        {name = "spwsel", rect = {377, 267, 115, 115}},
+        {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
+        {name = "wdata", rect = {135, 271, 115, 115}, enabled = normal},
+        {name = "utils", rect = {377, 267, 115, 115}},
         {name = "env", rect = {15, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
-        {name = "save", rect = {260, 385, 115, 115}, callback = callback(self, self, "save")},
-        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = callback(self, self, "toggle_widget", "move"), enabled = self._parent._has_fix},
-        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = callback(self, self, "toggle_widget", "rotation"), enabled = self._parent._has_fix},
+        {name = "save", rect = {260, 385, 115, 115}, callback = callback(self, self, "save"), enabled = normal},
+        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = callback(self, self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
+        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = callback(self, self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
     }
     local w = 300
     self._menu = menu:Menu({
@@ -59,22 +60,7 @@ function UpperMenu:select_tab(clbk, menu, item)
     if clbk then
         clbk(menu, item)
     else
-        self._parent.managers[item.name]:Switch()
-        for manager in pairs(self._parent.managers) do
-            local mitem = self:GetItem(manager)
-            if mitem and mitem.is_page then
-                mitem.marker_color = menu.marker_color
-                mitem.marker_highlight_color = menu.marker_highlight_color
-                mitem:UnHighlight()
-                mitem.bg:set_h(mitem:Panel():h())
-            end
-        end
-        item.marker_color = menu.marker_highlight_color
-        item.marker_highlight_color = item.marker_color
-        item:UnHighlight()
-        QuickAnim:Work(item.bg, "speed", 10, "h", 2, "after", function()
-            item.bg:set_bottom(item:Panel():bottom())
-        end)
+        self:Switch(self._parent.managers[item.name])
     end
 end
 
@@ -99,16 +85,30 @@ function UpperMenu:toggle_widget(name, menu, item)
     item:UnHighlight()
 end
 
-function UpperMenu:Switch(name)
-    self:GetItem(name):RunCallback()
-end
+function UpperMenu:Switch(manager)
+    local item = self:GetItem(manager.manager_name)
+    local menu = manager._menu
 
-function UpperMenu:SwitchMenu(menu)
     if self._parent._current_menu then
         self._parent._current_menu:SetVisible(false)
     end
     self._parent._current_menu = menu
     menu:SetVisible(true)
+    for manager in pairs(self._parent.managers) do
+        local mitem = self:GetItem(manager)
+        if mitem and mitem.is_page then
+            mitem.marker_color = item.parent.marker_color
+            mitem.marker_highlight_color = item.parent.marker_highlight_color
+            mitem:UnHighlight()
+            mitem.bg:set_h(mitem:Panel():h())
+        end
+    end
+    item.marker_color = item.parent.marker_highlight_color
+    item.marker_highlight_color = item.marker_color
+    item:UnHighlight()
+    QuickAnim:Work(item.bg, "speed", 10, "h", 2, "after", function()
+        item.bg:set_bottom(item:Panel():bottom())
+    end)
 end
 
 function UpperMenu:save()

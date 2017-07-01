@@ -1,4 +1,4 @@
-_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Config.xml", false, true)
+_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
 local self = BeardLibEditor
 function self:Init()
     self:init_modules()
@@ -24,13 +24,14 @@ function self:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
-    local dialogs_opt = {marker_highlight_color = acc_color, background_color = bg_color}
-    M.Dialog = MenuDialog:new(dialogs_opt)
-    M.ListDialog = ListDialog:new(dialogs_opt)
-    M.SelectDialog = SelectListDialog:new(dialogs_opt)
-    M.ColorDialog = ColorDialog:new(dialogs_opt)
-    M.InputDialog = InputDialog:new(dialogs_opt)
-    M.FBD = FileBrowserDialog:new(dialogs_opt)
+    self._dialogs_opt = {marker_highlight_color = acc_color, background_color = bg_color}
+    M.Dialog = MenuDialog:new(self._dialogs_opt)
+    M.ListDialog = ListDialog:new(self._dialogs_opt)
+    M.SelectDialog = SelectListDialog:new(self._dialogs_opt)
+    M.SelectDialogValue = SelectListDialogValue:new(self._dialogs_opt)
+    M.ColorDialog = ColorDialog:new(self._dialogs_opt)
+    M.InputDialog = InputDialog:new(self._dialogs_opt)
+    M.FBD = FileBrowserDialog:new(self._dialogs_opt)
        
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
@@ -83,73 +84,54 @@ function self:RegisterModule(key, module)
     end
 end
 
-function BeardLibEditor:LoadHashlist()
+function self:LoadHashlist()
     local t = os.clock()
-    self:log("Loading Hashlist")
-    local has_hashlist = DB:has("idstring_lookup", "idstring_lookup")     
-    local types = clone(BeardLib.config.script_data_types)
-    table.insert(types, "unit")
-    table.insert(types, "texture")
-    table.insert(types, "movie")
-    table.insert(types, "effect")
-    table.insert(types, "scene")
-    local remove = table.remove
-    local insert = table.insert
-    local split = string.split
-    local entries = self.DBEntries
-    for k, typ in pairs(types) do
-        self.DBPaths[typ] = {}
-    end
-    local function ProcessLine(line)
-        local path
-        local path_split = split(line, "/")
-        local filename = remove(path_split)
-        local curr_tbl = entries
-        for _, part in pairs(path_split) do
-            curr_tbl[part] = curr_tbl[part] or {}
-            curr_tbl = curr_tbl[part]
-        end
-        local line_split = split(line, ";")
-        local t = split(line_split[2] or "", ",")
-        line = line_split[1]
-        if line and t then
-            for _, typ in pairs(t) do
-                typ = types[tonumber(typ)]
-                insert(self.DBPaths[typ], line)
-                insert(curr_tbl, {
-                    path = line,
-                    name = filename,
-                    file_type = typ
-                })
-            end
-        end
-    end
-    if Global.DBPaths and Global.DBEntries then
+    self:log("Loading DBPaths")
+    if Global.DBPaths and Global.DBPackages then
         self.DBPaths = Global.DBPaths
-        self.DBEntries = Global.DBEntries
-        self:log("Hashlist is Already Loaded.")
+        self.DBPackages = Global.DBPackages
+        self:log("DBPaths already loaded")
     else
-        if has_hashlist then 
-            local file = DB:open("idstring_lookup", "idstring_lookup")
-            if file ~= nil then
-                local gmatch = string.gmatch
-                local sub = string.sub
-                --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-                for line in gmatch(file:read(), "[%w_/]+%z") do ProcessLine(sub(line, 1, #line - 1)) end
-                file:close()
-            end
-        else
-            local lines = io.lines(self.ModPath .. "list.txt", "r")
-            if lines then for line in lines do ProcessLine(line) end
-            else self:log("Failed Loading Outside Hashlist") end
-        end  
-        self:log("%s Hashlist Loaded, It took %.2f seconds", has_hashlist and "Inside" or "Outside", os.clock() - t)   
+        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary") 
+        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary") 
+        self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
-        Global.DBEntries = self.DBEntries 
+        Global.DBPackages = self.DBPackages
     end
-    for typ, filetbl in pairs(self.DBPaths) do
-        self:log(typ .. " Count: " .. #filetbl)
+end
+
+--Converts a list of packages - assets of packages to premade tables to be used in the editor
+function BeardLibEditor:GenerateData()
+    local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
+    local lines = io.lines(self.ModPath .. "packages.txt", "r")
+    local packages_paths = {}
+    local paths = {}
+    local current_pkg
+    if lines then 
+        for line in lines do 
+            if string.sub(line, 1, 1) == "@" then
+                current_pkg = string.sub(line, 2)
+            elseif current_pkg then
+                packages_paths[current_pkg] = packages_paths[current_pkg] or {}
+                local pkg = packages_paths[current_pkg]
+                local path, typ = unpack(string.split(line, "%."))
+                pkg[typ] = pkg[typ] or {}
+                paths[typ] = paths[typ] or {}
+                if DB:has(typ, path) then
+                	if not table.contains(paths[typ], path) then
+                    	table.insert(paths[typ], path)
+                    end
+                    if not table.contains(pkg[typ], path) then
+                    	table.insert(pkg[typ], path)
+                    end
+                end
+            end
+        end
     end
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
+    Global.DBPaths = nil
+    self:LoadHashlist()
 end
 
 function self:LoadCustomAssetsToHashListt(add)
@@ -184,9 +166,14 @@ function self:SetLoadingText(text)
         local project = BeardLib.current_level and BeardLib.current_level._mod
         local s = "Level ".. tostring(Global.game_settings.level_id)
         if project then
-            s = "Project " .. tostring(project.Name) .. " - " .. tostring(Global.game_settings.level_id)
+            s = "Project " .. tostring(project.Name) .. ":" .. tostring(Global.game_settings.level_id)
         end
-        Global.LoadingText:set_name(s .. "\n" .. tostring(text))
+        if Global.editor_safe_mode then
+        	s = "[SAFE MODE]" .. "\n" .. s
+        end
+        s = s .. "\n" .. tostring(text)
+        Global.LoadingText:set_name(s)
+        return s
     end
 end
 

@@ -62,11 +62,12 @@ function EnvEditor:build_default_menu()
     self:add_underlay_param("sky", self:Slider("color0_scale", nil, 1, {text = "Color top scale", step = 0.1, min = 0, max = 10, group = skydome}))
     self:add_underlay_param("sky", self:ColorEnvItem("color2", {text = "Color low", group = skydome}))
     self:add_underlay_param("sky", self:Slider("color2_scale", nil, 1, {text = "Color low scale", step = 0.1, min = 0, max = 10, group = skydome}))
-    self:add_sky_param(self:PathItem("underlay", nil, "", "scene", {text = "Underlay", group = skydome}, true, {"core/levels", "levels/zone"}))
-    self:add_sky_param(self:PathItem("sky_texture", nil, "", "texture", {text = "Sky Texture", group = skydome}))
-    self:add_sky_param(self:PathItem("global_texture", nil, "", "texture", {text = "Global cubemap", group = skydome}))
-    self:add_sky_param(self:PathItem("global_world_overlay_texture", nil, "", "texture", {text = "Global world overlay texture", group = global_textures}))
-    self:add_sky_param(self:PathItem("global_world_overlay_mask_texture", nil, "", "texture", {text = "Global world overlay mask texture", group = global_textures}))
+
+    self:add_sky_param(self:PathItem("underlay", nil, "", "scene", true, function(entry) return not (entry:match("core/levels") or entry:match("levels/zone")) end), true, {text = "Underlay", group = skydome})
+    self:add_sky_param(self:PathItem("sky_texture", nil, "", "texture", false, nil, true, {text = "Sky Texture", group = skydome}))
+    self:add_sky_param(self:PathItem("global_texture", nil, "", "texture", false, nil, true, {text = "Global cubemap", group = skydome}))
+    self:add_sky_param(self:PathItem("global_world_overlay_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay texture", group = global_textures}))
+    self:add_sky_param(self:PathItem("global_world_overlay_mask_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay mask texture", group = global_textures}))
 
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d0", nil, 1, {text = "1st slice depth start", min = 0, max = 10000, group = global_illumination}))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d1", nil, 1, {text = "2nd slice depth start", min = 0, max = 10000, group = global_illumination}))
@@ -439,46 +440,45 @@ function EnvEditor:open_environment()
                 self._last_custom = file
                 self._last_saved_file_name = BeardLib.Utils.Path:GetFileNameWithoutExtension(file)
                 self:load_env(data)
-                QuickMenuPlus:new("Success!", "Environment is loaded "..file)
+                BeardLibEditor.Utils:Notify("Success!", "Environment is loaded "..file)
             else
                 BeardLibEditor.managers.FBD:hide()
-                QuickMenuPlus:new("ERROR!", "Could not loaded environment because underlay scene is unloaded "..file)
+                BeardLibEditor.Utils:Notify("ERROR!", "Could not loaded environment because underlay scene is unloaded "..file)
             end
         else
             BeardLibEditor.managers.FBD:hide()
-            QuickMenuPlus:new("ERROR!", "This is not a valid environment file!! "..file)
+            BeardLibEditor.Utils:Notify("ERROR!", "This is not a valid environment file!! "..file)
         end
     end})
 end
 
 function EnvEditor:write_to_disk()
-    managers.system_menu:show_keyboard_input({
-        text = self._last_saved_file_name or "new_environment",
-        title = "New Environment file path: ",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            self._last_saved_file_name = name  
-            local filepath = name..".environment"  
-            local file = FileIO:Open(filepath, "w")
-            if file then
-                file:print("<environment>\n")
-                file:print("\t<metadata>\n")
-                file:print("\t</metadata>\n")
-                file:print("\t<data>\n")
-                self:write_sky_orientation(file)
-                self:write_sky(file)
-                self:write_posteffect(file)
-                self:write_underlayeffect(file)
-                self:write_environment_effects(file)
-                file:print("\t</data>\n")
-                file:print("</environment>\n")
-                file:close()
-                QuickMenuPlus:new("Success!", "Saved environment "..filepath)
-            end
+    BeardLibEditor.managers.InputDialog:Show({title = "New Environment file path:", text = self._last_saved_file_name or "new_environment", callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Environment file path cannot be empty!", callback = function()
+                self:write_to_disk()
+            end})
+            return
         end
-    })
+        self._last_saved_file_name = name  
+        local filepath = name..".environment"  
+        local file = FileIO:Open(filepath, "w")
+        if file then
+            file:print("<environment>\n")
+            file:print("\t<metadata>\n")
+            file:print("\t</metadata>\n")
+            file:print("\t<data>\n")
+            self:write_sky_orientation(file)
+            self:write_sky(file)
+            self:write_posteffect(file)
+            self:write_underlayeffect(file)
+            self:write_environment_effects(file)
+            file:print("\t</data>\n")
+            file:print("</environment>\n")
+            file:close()
+            BeardLibEditor.Utils:Notify("Success!", "Saved environment "..filepath)
+        end        
+    end})
 end
 
 function EnvEditor:write_sky_orientation(file)

@@ -37,13 +37,18 @@ function wde:build_default_menu()
         local tbl = type(layer) == "table"
         self:Button(tbl and layer.name or layer, callback(self, self, "build_menu", tbl and layer.class or layer), {group = layers})
     end
+    self:build_continents()
+end
+
+--Continents
+function wde:build_continents()
     local function base_button_pos(item)
         local p = item:Panel():parent()
         item:Panel():set_world_righttop(p:world_righttop())
     end
     if managers.worlddefinition then
-        local continents = self:DivGroup("Continents", {text = "Continents and Missions"})
-        self:Button("NewContinent..", callback(self, self, "new_continent"), {group = continents})
+        local continents = self:DivGroup("Continents")
+        self:SmallButton("NewContinent", callback(self, self, "new_continent"), continents, {text = "+", position = "TopRight"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:DivGroup(name, {group = continents, text = name, border_lock_height = false})
             local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = base_button_pos}
@@ -57,7 +62,7 @@ function wde:build_default_menu()
             local btn = self:SmallImageButton("Rename", callback(self, self, "rename_continent", name), nil, {66, 1, 48, 48}, continent, opt)
             opt.position = callback(self, self, "button_pos", btn)
             self:SmallImageButton("SelectUnits", callback(self, self, "select_all_units_from_continent", name), nil, {122, 1, 48, 48}, continent, opt)
-            self:Button("NewMissionScript..", callback(self, self, "add_new_mission_script"), {group = continent, offset = {16, 2}, continent = name})
+            self:Button("NewMissionScript", callback(self, self, "add_new_mission_script"), {group = continent, offset = {16, 2}, continent = name})
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {group = continent, text = sname, offset = {16, 4}})
                 opt.marker_highlight_color = Color.red
@@ -76,49 +81,47 @@ function wde:build_default_menu()
     end
 end
 
---Continents
 function wde:rename_continent(continent)
-    managers.system_menu:show_keyboard_input({
-        text = continent,
-        title = "Rename continent to:",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            local worlddef = managers.worlddefinition
-            local mission = managers.mission
-            if worlddef._continent_definitions[name] then
+    BeardLibEditor.managers.InputDialog:Show({title = "Rename continent to", text = continent, callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
                 self:rename_continent(continent)
-                return
+            end})
+            return
+        end
+        local worlddef = managers.worlddefinition
+        local mission = managers.mission
+        if worlddef._continent_definitions[name] then
+            self:rename_continent(continent)
+            return
+        end
+        worlddef._continent_definitions[name] = deep_clone(worlddef._continent_definitions[continent])
+        mission._missions[name] = deep_clone(mission._missions[continent])
+        worlddef._continents[name] = deep_clone(worlddef._continents[continent])
+        worlddef._continent_definitions[continent] = nil
+        mission._missions[continent] = nil
+        worlddef._continents[continent] = nil
+        for _, script in pairs(mission._scripts) do
+            if script._continent == continent then
+                script._continent = name
             end
-            worlddef._continent_definitions[name] = deep_clone(worlddef._continent_definitions[continent])
-            mission._missions[name] = deep_clone(mission._missions[continent])
-            worlddef._continents[name] = deep_clone(worlddef._continents[continent])
-            worlddef._continent_definitions[continent] = nil
-            mission._missions[continent] = nil
-            worlddef._continents[continent] = nil
-            for _, script in pairs(mission._scripts) do
-                if script._continent == continent then
-                    script._continent = name
-                end
-            end
-            for k, static in pairs(worlddef._continent_definitions[name].statics) do
-                if static.unit_data and static.unit_data.unit_id then
-                    static.unit_data.continent = name
-                    local unit = worlddef:get_unit_on_load(static.unit_data.unit_id)
-                    if alive(unit) then
-                        local ud = unit:unit_data()
-                        if ud then
-                            ud.continent = name
-                        else
-                            BeardLibEditor:log("[Warning] Unit with no unit data inside continent")
-                        end
+        end
+        for k, static in pairs(worlddef._continent_definitions[name].statics) do
+            if static.unit_data and static.unit_data.unit_id then
+                static.unit_data.continent = name
+                local unit = worlddef:get_unit_on_load(static.unit_data.unit_id)
+                if alive(unit) then
+                    local ud = unit:unit_data()
+                    if ud then
+                        ud.continent = name
+                    else
+                        BeardLibEditor:log("[Warning] Unit with no unit data inside continent")
                     end
                 end
             end
-            self:build_default_menu()
         end
-    })
+        self:build_default_menu()        
+    end})
 end
 
 function wde:remove_brush_layer()
@@ -182,51 +185,49 @@ function wde:clear_all_units_from_continent(continent, no_refresh, no_dialog)
 end
 
 function wde:new_continent()
-    managers.system_menu:show_keyboard_input({
-        text = "",
-        title = "New continent name:",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            local worlddef = managers.worlddefinition
-            managers.mission._missions[name] = managers.mission._missions[name] or {}
-            worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
-                editor_groups = {},
-                statics = {},
-                values = {workviews = {}}
-            }            
-            worlddef._continents[name] = {base_id = worlddef._start_id  * #worlddef._continent_definitions, name = name}
-            self._parent:load_continents(worlddef._continent_definitions)
-            self:build_default_menu()
+    BeardLibEditor.managers.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+                self:new_continent()
+            end})
+            return
         end
-    }) 
+        local worlddef = managers.worlddefinition
+        managers.mission._missions[name] = managers.mission._missions[name] or {}
+        worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
+            editor_groups = {},
+            statics = {},
+            values = {workviews = {}}
+        }            
+        worlddef._continents[name] = {base_id = worlddef._start_id  * #worlddef._continent_definitions, name = name}
+        self._parent:load_continents(worlddef._continent_definitions)
+        self:build_default_menu()
+    end})
 end
 
 function wde:add_new_mission_script(menu, item)
-    managers.system_menu:show_keyboard_input({
-        text = "",
-        title = "New mission script name:",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            local mission = managers.mission
-            local cname = item.continent
-            mission._missions[cname][name] = mission._missions[cname][name] or {
-                activate_on_parsed = true,
-                elements = {},
-                instances = {}   
-            }
-            local data = clone(mission._missions[cname][name])
-            data.name = name
-            data.continent = cname
-            if not mission._scripts[name] then
-                mission:_add_script(data)
-            end
-            self._parent:load_continents(managers.worlddefinition._continent_definitions)
+    BeardLibEditor.managers.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+                self:add_new_mission_script()
+            end})
+            return
         end
-    })
+        local mission = managers.mission
+        local cname = item.continent
+        mission._missions[cname][name] = mission._missions[cname][name] or {
+            activate_on_parsed = true,
+            elements = {},
+            instances = {}   
+        }
+        local data = clone(mission._missions[cname][name])
+        data.name = name
+        data.continent = cname
+        if not mission._scripts[name] then
+            mission:_add_script(data)
+        end
+        self._parent:load_continents(managers.worlddefinition._continent_definitions)
+    end})
 end
 
 function wde:remove_script(script, menu, item)
@@ -240,26 +241,25 @@ function wde:remove_script(script, menu, item)
 end
 
 function wde:rename_script(script, menu, item)
-    managers.system_menu:show_keyboard_input({
-        text = script,
-        title = "Rename script to:",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            local mission = managers.mission
-            if mission._scripts[name] then
-                self:rename_script(script)
-                return
-            end
-            mission._scripts[script]._name = name
-            mission._scripts[name] = mission._scripts[script]
-            mission._scripts[script] = nil
-            mission._missions[item.continent][name] = deep_clone(mission._missions[item.continent][script])
-            mission._missions[item.continent][script] = nil
-            self._parent:load_continents(managers.worlddefinition._continent_definitions)
+    BeardLibEditor.managers.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+                self:rename_script(script, menu, item)
+            end})
+            return
         end
-    })
+        local mission = managers.mission
+        if mission._scripts[name] then
+            self:rename_script(script)
+            return
+        end
+        mission._scripts[script]._name = name
+        mission._scripts[name] = mission._scripts[script]
+        mission._scripts[script] = nil
+        mission._missions[item.continent][name] = deep_clone(mission._missions[item.continent][script])
+        mission._missions[item.continent][script] = nil
+        self._parent:load_continents(managers.worlddefinition._continent_definitions)
+    end})
 end
 
 function wde:clear_all_elements_from_script(script, menu, item)
@@ -308,7 +308,7 @@ end
 
 --World Data
 function wde:back_button()
-    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25)})
+    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25), font_size = 18})
 end
 
 function wde:build_menu(layer)
@@ -380,59 +380,55 @@ function wde:build_ai_layer_menu()
     self:ComboBox("GroupState", function(menu, item)
         self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
-    self:Button("AddNavSurface", callback(self._parent, self._parent, "SpawnUnit", "core/units/nav_surface/nav_surface"))
+    local utils = self:Manager("utils")
+    self:Button("SpawnNavSurface", callback(utils, utils, "BeginSpawning", "core/units/nav_surface/nav_surface"))
+    self:Button("SpawnCoverPoint", callback(utils, utils, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
 end
 
 function wde:rename_portal(menu, item, selection)
-    managers.system_menu:show_keyboard_input({
-        text = item.name,
-        title = "New portal name:",
-        callback_func = function(success, new_name)
-            if not success or new_name == "" then
-                return
-            end
-            managers.portal:rename_unit_group(item.name, new_name)
-            self:load_portals()
+    BeardLibEditor.managers.InputDialog:Show({title = "Rename portal to", text = item.name, callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+                self:rename_portal(menu, item, selection)
+            end})
+            return
         end
-    }) 
-    self:save()
+        managers.portal:rename_unit_group(item.name, new_name)
+        self:load_portals()
+        self:save() 
+    end})
 end
 
 function wde:remove_portal(menu, item, selection)
-    QuickMenu:new("Warning", "Remove portal? " .. tostring(item.name),
-        {{text = "Yes", callback = function()
-            managers.portal:remove_unit_group(item.name)
-            self:load_portals()
-            self:save()            
-        end
-    },{text = "No", is_cancel_button = true}}, true)
+    BeardLibEditor.Utils:YesNoQuestion("This will remove the portal", function()
+        managers.portal:remove_unit_group(item.name)
+        self:load_portals()
+        self:save()   
+    end)
 end
 
 function wde:remove_shape(menu, item)
-    QuickMenu:new("Warning", "Remove shape?",
-        {{text = "Yes", callback = function()
-            if self._selected_shape == self._selected_portal._shapes[tonumber(item.name)] then
-                self._selected_shape = nil
-            end
-            self._selected_portal:remove_shape(self._selected_portal._shapes[tonumber(item.name)])
-            self:load_portal_shapes()
-            self:save()              
+    BeardLibEditor.Utils:YesNoQuestion("This will remove the portal shape", function()
+        if self._selected_shape == self._selected_portal._shapes[tonumber(item.name)] then
+            self._selected_shape = nil
         end
-    },{text = "No", is_cancel_button = true}}, true)    
+        self._selected_portal:remove_shape(self._selected_portal._shapes[tonumber(item.name)])
+        self:load_portal_shapes()
+        self:save()        
+    end)
 end
 
 function wde:add_portal(menu, item)
-    managers.system_menu:show_keyboard_input({
-        text = "",
-        title = "Portal name:",
-        callback_func = function(success, name)
-            if not success or name == "" then
-                return
-            end
-            managers.portal:add_unit_group(name)
-            self:load_portals()
+    BeardLibEditor.managers.InputDialog:Show({title = "Portal name", text = item.name, callback = function(name)
+        if name == "" then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+                self:add_portal(menu, item)
+            end})
+            return
         end
-    })    
+        managers.portal:add_unit_group(name)
+        self:load_portals()
+    end})
     self:save()
 end
 

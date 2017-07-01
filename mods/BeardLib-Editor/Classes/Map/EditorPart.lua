@@ -12,10 +12,11 @@ function EditorPart:init(parent, menu, name, opt)
         w = 300,
         h = self:Manager("menu"):get_menu_h()
     }, opt or {}))
+    self._menu.marker_highlight_color = self._menu.text_color:with_alpha(0.1)
     MenuUtils:new(self)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
     self:Divider("Title", {items_size = 24, offset = 0, marker_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
-    self._holder = self:Menu("Holder", {automatic_height = false, h = self._menu.h - 24, scroll_width = 4})
+    self._holder = self:Menu("Holder", {auto_height = false, h = self._menu.h - 24, scroll_width = 4})
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
@@ -37,13 +38,12 @@ function EditorPart:bind(opt, clbk)
 end
 
 function EditorPart:update() 
-    --and not shift() and not alt()
-    local In = BeardLib.Utils.Input
-    if not self._parent._menu:Focused() then
-        for _, trigger in pairs(self._triggers) do
-            if BeardLib.Utils.Input:Triggered(trigger) then
-                trigger.clbk()
-            end
+    if BeardLib.managers.dialog:DialogOpened() or self._parent._menu:Focused() then
+        return
+    end
+    for _, trigger in pairs(self._triggers) do
+        if BeardLib.Utils.Input:Triggered(trigger) then
+            trigger.clbk()
         end
     end
 end
@@ -74,7 +74,7 @@ function EditorPart:Enabled()
 end
 
 function EditorPart:Switch()
-    self:Manager("menu"):SwitchMenu(self._menu)
+    self:Manager("menu"):Switch(self)
 end
 
 function EditorPart:Value(v)

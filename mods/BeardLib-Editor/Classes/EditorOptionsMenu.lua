@@ -31,13 +31,13 @@ end
 function EditorOptionsMenu:set_theme(menu, item)
 	local theme = item.name
 	if theme == "Dark" then
-		self:set("AccentColor", Color(0.26, 0.52, 0.93))
-		self:set("BackgroundColor", Color(0.4, 0.2, 0.2, 0.2))
+		self:set("AccentColor", Color(0.26, 0.45, 0.80))
+		self:set("BackgroundColor", Color(0.5, 0.19, 0.19, 0.19))
 	else
-		self:set("AccentColor", Color("3b4ffb"))
-		self:set("BackgroundColor", Color(0.4, 0.86, 0.86, 0.86))
+		self:set("AccentColor", Color(0.40, 0.38, 1))
+		self:set("BackgroundColor", Color(0.64, 0.70, 0.70, 0.70))
 	end
-    QuickMenuPlus:new("Theme has been set, please restart.")
+    BeardLibEditor.Utils:Notify("Theme has been set, please restart")
 end
 
 function EditorOptionsMenu:reset_options(menu)

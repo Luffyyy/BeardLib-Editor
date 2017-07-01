@@ -7,6 +7,7 @@ function EditorTimer:create_element()
 	EditorTimer.super.create_element(self)
 	self._digital_gui_units = {}
 	self._element.class = "ElementTimer"
+	self._element.module = "CoreElementTimer"
 	self._element.values.timer = {0, 0}
 	self._element.values.digital_gui_unit_ids = {}
 end
@@ -28,6 +29,7 @@ EditorTimerOperator.LINK_ELEMENTS = {"elements"}
 function EditorTimerOperator:create_element()
 	EditorTimerOperator.super.create_element(self)
 	self._element.class = "ElementTimerOperator"
+	self._element.module = "CoreElementTimer"
 	self._element.values.operation = "none"
 	self._element.values.time = {0, 0}
 	self._element.values.elements = {}
@@ -46,6 +48,7 @@ EditorTimerTrigger.LINK_ELEMENTS = {"elements"}
 function EditorTimerTrigger:create_element()
 	EditorTimerTrigger.super.create_element(self)
 	self._element.class = "ElementTimerTrigger"
+	self._element.module = "CoreElementTimer"
 	self._element.values.time = 0
 	self._element.values.elements = {}
 end

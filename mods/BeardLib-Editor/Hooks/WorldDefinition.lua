@@ -16,6 +16,7 @@ function self:init(params)
 	self._definition = self:_serialize_to_script(params.file_type, params.file_path)
 	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self._continent_definitions = {}
+	self._needed_to_spawn = {}
 	self._continents = {}
 	self._portal_slot_mask = World:make_slot_mask(1)
 	self._massunit_replace_names = {}
@@ -38,7 +39,39 @@ function self:init(params)
 	self._mission_element_units = {}
 	self._termination_counter = 0
 	self._delayed_units = {}
+	self._all_names = {}
 	self:create("ai")
+end
+
+local Create = self.create
+function self:create(layer, offset)
+	local return_data = Create(self, layer, offset)
+	if layer == "statics" or layer == "all" then
+		self:spawn_quick(return_data, offset)
+	end
+	return return_data
+end
+
+function self:spawn_quick(return_data, offset)
+	offset = offset or Vector3()
+	if self._needed_to_spawn then
+		for _, values in ipairs(self._needed_to_spawn) do
+			local unit_data = values.unit_data
+			if unit_data.delayed_load then
+				self._delayed_units[unit_data.unit_id] = {
+					unit_data,
+					offset,
+					return_data
+				}
+			else
+				self:_create_statics_unit(values, offset)
+				if unit and return_data then
+					table.insert(return_data, unit)
+				end
+			end
+		end
+		self._needed_to_spawn = nil
+	end
 end
 
 function self:is_world_unit(unit)
@@ -54,7 +87,7 @@ function self:set_unit(unit_id, unit, old_continent, new_continent)
 		statics = managers.worlddefinition._world_data.wires
 	elseif unit:ai_editor_data() then
 		statics = managers.worlddefinition._world_data.ai
-	else
+	elseif not unit:unit_data().instance then
 		statics = self._continent_definitions[old_continent]
 		new_statics = self._continent_definitions[new_continent]
 		move = (old_continent ~= new_continent)		
@@ -178,17 +211,18 @@ end
 function self:init_done()
 	if self._continent_init_packages then
 		for _, package in ipairs(self._continent_init_packages) do
-			self:_unload_package(package)
+			--self:_unload_package(package)
 		end
 	end
-	self:_unload_package(self._current_world_init_package)
+	--self:_unload_package(self._current_world_init_package)
 	managers.editor:load_continents(self._continent_definitions)
 	local i = 1 
-	for continent, _ in pairs(self._continent_definitions) do
+	for continent, data in pairs(self._continent_definitions) do
 		self._continents[continent].base_id = self._continents[continent].base_id or self._start_id * i
 		i = i + 1
 	end
 	BLE:SetLoadingText("Done Initializing World Definition")
+	self._init_done = true
 end
 
 function self:delete_unit(unit)
@@ -208,13 +242,13 @@ function self:delete_unit(unit)
 			statics = managers.worlddefinition._world_data.wires
 		elseif unit:ai_editor_data() then
 			statics = managers.worlddefinition._world_data.ai
-		else
+		elseif not unit:unit_data().instance then
 			statics = self._continent_definitions[continent_name]
 			statics = statics and statics.statics
 		end
 		if statics then
 			for k, static in pairs(statics) do
-				if static.unit_data and (static.unit_data.unit_id == unit_id or static.unit_data.name_id == name_id) then
+				if static.unit_data and (static.unit_data.unit_id == unit_id) then
 					table.remove(statics, k)
 					managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
 					return
@@ -236,11 +270,13 @@ function self:add_unit(unit)
 	else
 		statics = self._continent_definitions[ud.continent].statics
 	end
-	table.insert(statics, {
-		unit_data = unit:unit_data(),
-		wire_data = unit:wire_data(),
-		ai_editor_data = unit:ai_editor_data(),
-	})
+	if statics then
+		table.insert(statics, {
+			unit_data = unit:unit_data(),
+			wire_data = unit:wire_data(),
+			ai_editor_data = unit:ai_editor_data(),
+		})
+	end
 end
 
 function self:_set_only_visible_in_editor(unit, data)
@@ -298,8 +334,8 @@ function self:_setup_editor_unit_data(unit, data)
 	ud.continent = data.continent
 	ud.position = unit:position()
 	ud.rotation = unit:rotation()
-	ud.local_pos = Vector3()
-	ud.local_rot = Vector3()
+	ud.local_pos = data.local_pos or Vector3()
+	ud.local_rot = data.local_rot or Rotation()
 	ud.projection_lights = data.projection_lights
 	ud.lights = data.lights
 	ud.triggers = data.triggers
@@ -336,12 +372,16 @@ function self:make_unit(data, offset)
 		end
 	end
 	local unit
-	if MassUnitManager:can_spawn_unit(Idstring(name)) then
-		unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
-	elseif PackageManager:has(Idstring("unit"), Idstring(name)) then
-		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
-	else
-		managers.editor:add_error({type = "missing_unit", value = name, data = data})
+	if not Global.editor_safe_mode then
+		if MassUnitManager:can_spawn_unit(Idstring(name)) then
+			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
+		else
+			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+		end
+	end
+	if not data.instance and data.name ~= "core/units/nav_surface/nav_surface" then
+		self._all_names[name] = self._all_names[name] or 0
+		self._all_names[name] = self._all_names[name] + 1
 	end
 	if unit then
 		self:assign_unit_data(unit, data)
@@ -386,27 +426,27 @@ function self:_setup_unit_id(unit, data)
 	end
 end
 
-function self:GetNewUnitID(continent, t)
-	if continent then		
-		self._unit_ids[continent] = self._unit_ids[continent] or {}
-		local tbl = self._unit_ids[continent]
-		local i = self._continents[continent] and self._continents[continent].base_id
-		if t:id() == Idstring("wire") or t:id() == Idstring("ai") then
-			tbl = self._world_unit_ids
-			i = 1
-		end
-		if not i then
-			BLE:log("[ERROR] Something went wrong in GetNewUnitID...")
-		end
-		i = i or 1
-		while tbl[i] do
-			i = i + 1
-		end
-		tbl[i] = true
-		return i
-	else
-		BLE:log("[ERROR] continent needed for unit id")
-	end
+function self:GetNewUnitID(continent, t, temp)
+    if continent then       
+        self._unit_ids[continent] = self._unit_ids[continent] or {}
+        local tbl = self._unit_ids[continent]
+        local i = self._continents[continent] and self._continents[continent].base_id
+        if t:id() == Idstring("wire") or t:id() == Idstring("ai") then
+            tbl = self._world_unit_ids
+            i = 1
+        end
+        if not i then
+            BLE:log("[ERROR] Something went wrong in GetNewUnitID...")
+        end
+        i = i or 1
+        while tbl[i] do
+            i = i + 1
+        end
+        tbl[i] = not temp and true
+        return i
+    else
+        BLE:log("[ERROR] continent needed for unit id")
+    end
 end
 
 function self:_create_sounds(data)
@@ -517,33 +557,45 @@ function self:parse_continents(node, t)
 	self:_insert_instances()
 end
 
+function self:prepare_for_spawn_instance(instance)
+	local package_data = managers.world_instance:packages_by_instance(instance)
+	if self._init_done then
+		PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
+	else
+		local s = "Loading Instance Package: %s"
+		BLE:SetLoadingText(string.format(s, package_data.package))
+	end
+	self:_load_continent_init_package(package_data.init_package)
+	self:_load_continent_package(package_data.package)
+	if Application:editor() or not instance.mission_placed then
+		local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
+		if prepared_unit_data.statics then
+			self._needed_to_spawn = self._needed_to_spawn or {}
+			for _, static in ipairs(prepared_unit_data.statics) do
+				table.insert(self._needed_to_spawn, static)
+			end
+		end
+		if prepared_unit_data.dynamics then
+			--[[for _, dynamic in ipairs(prepared_unit_data.dynamics) do
+				data.dynamics = data.dynamics or {}
+				table.insert(data.dynamics, dynamic)
+			end]]
+		end
+	else
+		managers.world_instance:prepare_serialized_instance_data(instance)
+	end
+	if self._init_done then
+		self:spawn_quick()
+		PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+	end
+end
+
 function self:_insert_instances()
 	BLE:SetLoadingText("Loading Instances Packages")
-	local s = "Loading Instance Package: %s"
 	for name, data in pairs(self._continent_definitions) do
 		if data.instances then
 			for i, instance in ipairs(data.instances) do
-				local package_data = managers.world_instance:packages_by_instance(instance)
-				BLE:SetLoadingText(string.format(s, package_data.package))
-				self:_load_continent_init_package(package_data.init_package)
-				self:_load_continent_package(package_data.package)
-				if Application:editor() or not instance.mission_placed then
-					local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
-					if prepared_unit_data.statics then
-						for _, static in ipairs(prepared_unit_data.statics) do
-							data.statics = data.statics or {}
-							table.insert(data.statics, static)
-						end
-					end
-					if prepared_unit_data.dynamics then
-						for _, dynamic in ipairs(prepared_unit_data.dynamics) do
-							data.dynamics = data.dynamics or {}
-							table.insert(data.dynamics, dynamic)
-						end
-					end
-				else
-					managers.world_instance:prepare_serialized_instance_data(instance)
-				end
+				self:prepare_for_spawn_instance(instance)
 			end
 		end
 	end

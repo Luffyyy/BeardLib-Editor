@@ -18,7 +18,7 @@ function MissionEditor:units()
 end
 
 function MissionEditor:set_elements_vis()
-    local enabled = self:Value("ShowElements")
+    local enabled = self:Value("ShowElements") and not Global.editor_safe_mode
     local draw_script = self:Value("DrawOnlyElementsOfCurrentScript")
     for _, unit in pairs(self:units()) do
         local element_unit = unit:mission_element()
@@ -47,7 +47,7 @@ end
 
 function MissionEditor:add_element_unit(unit)
     table.insert(self._units, unit)
-    unit:mission_element():set_enabled(self:Value("ShowElements"))
+    unit:mission_element():set_enabled(false)
 end
 
 function MissionEditor:remove_element_unit(unit)
@@ -57,12 +57,21 @@ end
 function MissionEditor:get_editor_class(c)
     local clss = rawget(_G, c:gsub("Element", "Editor"))
     if not clss then
+        EditorActionMessage = EditorActionMessage or class(MissionScriptEditor)
         BeardLibEditor:log("[Warning] Element class %s has no editor class(Report this)", c)
     end
     return clss
 end
 
+function MissionEditor:alert_missing_element_editor(c)
+    BeardLibEditor.Utils:QuickDialog({title = "Well that's embarrassing..", no = "No", message = "Seems like there is no editor class for this element, report this to us?"}, {{"Yes", function()
+        local url = "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/new?labels[]=bug&title=No editor class for the element "..c:gsub("Element", "")
+        os.execute('start "" "'..url..'"')
+    end}})
+end
+
 function MissionEditor:set_element(element)
+    self:Manager("static")._built_multi = false
     if element then
         local clss = self:get_editor_class(element.class)
         if clss then
@@ -75,7 +84,7 @@ function MissionEditor:set_element(element)
             end
         end
     else
-        BeardLibEditor:log("[ERROR] Nil element!")
+        self:alert_missing_element_editor(element.class)
     end
 end
 
@@ -83,6 +92,9 @@ function MissionEditor:add_element(name, add_to_selection, old_element)
     local clss = self:get_editor_class(name) 
     if clss then
         self:Manager("static"):set_selected_unit(clss:init(nil, old_element), add_to_selection)
+        self:set_elements_vis()
+    else
+        self:alert_missing_element_editor(name)
     end
 end
  
