@@ -98,7 +98,7 @@ end
 
 function InstancesEditor:update(menu, item)
 	local unit = self:selected_unit()
-	if unit and unit:fake() then
+	if unit and alive(unit) and unit:fake() then
 		Application:draw_sphere(unit:position(), 30, 0, 0, 0.7)
 	end
 end

@@ -696,7 +696,7 @@ end
 
 function StaticEditor:SpawnCopyData(copy_data)
     self:reset_selected_units()
-    local new_id = managers.mission:get_new_id(self._parent._current_continent)
+    local new_id = managers.mission:get_new_id(self._parent._current_continent, true)
     local new_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "", true)
     local new_world_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "wire", true)
     for _, v in pairs(copy_data) do

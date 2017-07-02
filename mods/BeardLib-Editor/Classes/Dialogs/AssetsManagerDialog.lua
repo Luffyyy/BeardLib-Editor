@@ -65,7 +65,6 @@ function AssetsManagerDialog:Show()
     self:Button("RemoveFromMap", callback(self, self, "remove_units_from_map"), {offset = 0, group = actions, enabled = false})
 
     self:reload()
-    self._menu:AlignItems(true)
 end
 
 function AssetsManagerDialog:load_units()
@@ -363,6 +362,7 @@ end
 function AssetsManagerDialog:reload()
     self:load_packages()
     self:load_units()
+    self._menu:AlignItems(true)
 end
 
 function AssetsManagerDialog:hide(yes)
