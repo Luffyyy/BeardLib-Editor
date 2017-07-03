@@ -439,7 +439,7 @@ function self:GetEntries(params)
     end
 
     for _, entry in pairs(BeardLibEditor.DBPaths[params.type]) do
-        if (not params.loaded or IsLoaded(entry)) and (not check or check(params.entry)) then
+        if (not params.loaded or IsLoaded(entry)) and (not params.check or params.check(entry)) then
             table.insert(entries, filenames and Path:GetFileName(entry) or entry)
         end
     end

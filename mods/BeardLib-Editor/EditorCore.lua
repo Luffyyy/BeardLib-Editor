@@ -1,3 +1,8 @@
+if not ModCore then
+    log("[ERROR][BeardLibEditor] BeardLib is not installed!")
+    return
+end
+
 _G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
 local self = BeardLibEditor
 function self:Init()
@@ -196,6 +201,15 @@ if MenuManager then
     end
 end
 
+if not self.InitDone then
+    if BeardLib.Version and BeardLib.Version >= 2.2 then
+        BeardLibEditor:Init()
+    else
+        log("[ERROR] BeardLibEditor requires at least version 2.2 of Beardlib installed!")
+        return
+    end
+end
+
 if Hooks then
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", function( t, dt )
         BeardLibEditor:Update(t, dt)
@@ -223,12 +237,4 @@ if Hooks then
     end)
 
     Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", callback(self, self, "InitManagers"))
-end
-
-if not self.InitDone then
-    if BeardLib.Version and BeardLib.Version >= 2.2 then
-        BeardLibEditor:Init()
-    else
-        log("[ERROR], BeardLibEditor requires at least version 2.2 of Beardlib installed!")
-    end
 end

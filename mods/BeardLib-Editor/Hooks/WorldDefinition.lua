@@ -417,12 +417,12 @@ function self:_setup_unit_id(unit, data)
 	ud.unit_id = tonumber(data.unit_id)
 	unit:set_editor_id(ud.unit_id)
 	self._all_units[ud.unit_id] = unit
-	if data.continent then
+	if self:is_world_unit(unit) then
+		self._world_unit_ids[ud.unit_id] = true
+	elseif data.continent then
 		self._unit_ids[data.continent] = self._unit_ids[data.continent] or {}
 		self._unit_ids[data.continent][ud.unit_id] = true
 		self:use_me(unit, Application:editor())
-	elseif self:is_world_unit(unit) then
-		self._world_unit_ids[ud.unit_id] = true
 	end
 end
 

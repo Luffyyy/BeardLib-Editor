@@ -396,6 +396,15 @@ function MissionManager:get_mission_element(id)
 end
 
 --Instance elements--
+function MissionScript:_preload_instance_class_elements(prepare_mission_data)
+	prepare_mission_data.instance_name = nil
+	for _, instance_mission_data in pairs(prepare_mission_data) do
+		for _, element in ipairs(instance_mission_data.elements) do
+			self:_element_class(element.module, element.class)
+		end
+	end
+end
+
 function MissionScript:create_instance_elements(prepare_mission_data)
 	local new_elements = {}
 	local instance_name = prepare_mission_data.instance_name
@@ -409,7 +418,6 @@ end
 
 function MissionScript:_create_elements(elements, instance_name)
 	local new_elements = {}
-	log(tostring( instance_name ))
 	for _, element in pairs(elements) do
 		element.instance = instance_name
 		new_elements[element.id] = self:create_element(element, false, instance_name)
