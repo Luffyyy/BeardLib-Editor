@@ -91,8 +91,9 @@ end
 function MissionEditor:add_element(name, add_to_selection, old_element)
     local clss = self:get_editor_class(name) 
     if clss then
-        self:Manager("static"):set_selected_unit(clss:init(nil, old_element), add_to_selection)
+        local unit = clss:init(nil, old_element)
         self:set_elements_vis()
+        self:Manager("static"):set_selected_unit(unit, add_to_selection)
     else
         self:alert_missing_element_editor(name)
     end

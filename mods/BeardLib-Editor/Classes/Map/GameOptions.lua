@@ -208,6 +208,7 @@ function GameOptions:save()
             end
         end
         self:save_main_xml(include)
+        self._saving = false
     end
     if FileIO:Exists(path) then
         local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
@@ -221,7 +222,6 @@ function GameOptions:save()
         FileIO:MakeDir(path)
         save()
     end
-    self._saving = false
 end
 
 function GameOptions:save_main_xml(include)

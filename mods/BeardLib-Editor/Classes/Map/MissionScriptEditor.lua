@@ -585,7 +585,7 @@ end
 
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:PathItem(value_name, callback(self, self, "set_element_data"), type, opt, false, check_slot and function(unit)
+    return self:PathItem(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], type, false, check_slot and function(unit)
 		return BeardLibEditor.Utils:InSlot(unit, check_slot) and not unit:match("husk")
-	end, true, self:ItemData(opt)[value_name])
+	end, true, opt)
 end

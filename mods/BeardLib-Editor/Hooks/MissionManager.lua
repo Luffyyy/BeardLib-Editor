@@ -54,7 +54,7 @@ function MissionManager:delete_element_id(continent, id)
 	self._ids[continent][id] = nil
 end
 
-function MissionManager:get_new_id(continent, temp)
+function MissionManager:get_new_id(continent)
 	if continent then		
 		self._ids = self._ids or {}
 		self._ids[continent] = self._ids[continent] or {}
@@ -63,7 +63,7 @@ function MissionManager:get_new_id(continent, temp)
 		while tbl[i] do
 			i = i + 1
 		end
-		tbl[i] = not temp and true
+		tbl[i] = true
 		return i
 	else
 		_G.BeardLibEditor:log("[ERROR] continent needed for element id")

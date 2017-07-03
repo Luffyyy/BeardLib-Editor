@@ -234,7 +234,7 @@ end
 
 function EnvironmentLayerEditor:build_unit_menu()
 	local S = self:Manager("static")
-	s._built_multi = false
+	S._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
 	if alive(unit) then

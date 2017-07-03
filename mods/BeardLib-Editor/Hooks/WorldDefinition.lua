@@ -426,7 +426,7 @@ function self:_setup_unit_id(unit, data)
 	end
 end
 
-function self:GetNewUnitID(continent, t, temp)
+function self:GetNewUnitID(continent, t)
     if continent then       
         self._unit_ids[continent] = self._unit_ids[continent] or {}
         local tbl = self._unit_ids[continent]
@@ -442,7 +442,7 @@ function self:GetNewUnitID(continent, t, temp)
         while tbl[i] do
             i = i + 1
         end
-        tbl[i] = not temp and true
+        tbl[i] = true
         return i
     else
         BLE:log("[ERROR] continent needed for unit id")

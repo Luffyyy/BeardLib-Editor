@@ -624,8 +624,6 @@ end
 function StaticEditor:GetCopyData()
     self:set_unit_data()
     local copy_data = {}    
-    local id
-    local unit_id
     for _, unit in pairs(self._selected_units) do
         local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
         local copy = {
@@ -635,12 +633,6 @@ function StaticEditor:GetCopyData()
             wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
             ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
         }
-        --Get smallest id
-        if typ == "element" then
-            id = math.min(copy.mission_element_data.id, id or copy.mission_element_data.id)
-        elseif typ == "unit" then
-            unit_id = math.min(copy.unit_data.unit_id, unit_id or copy.unit_data.unit_id)
-        end
         if typ ~= "unsupported" then
             table.insert(copy_data, copy)
         end
@@ -648,23 +640,31 @@ function StaticEditor:GetCopyData()
 
     --The id is now used as the number it should add to the latest id before spawning the prefab
     --Why we need to save ids? so elements can function even after copy pasting
+    local unit_id = 0
+    local world_unit_id = 0
+    local element_id = 0
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
-        if v.type == "element" and id then
+        if v.type == "element" then
             v.mission_element_data.script = nil
-            local new_id = v.mission_element_data.id - id
             for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
-                link.tbl[link.key] = new_id
+                link.tbl[link.key] = element_id
             end
-            v.mission_element_data.id = new_id
-        elseif v.type == "unit" and v.unit_data.unit_id and unit_id then
+            v.mission_element_data.id = element_id
+            element_id = element_id + 1
+        elseif v.type == "unit" and v.unit_data.unit_id then
+            local is_world = v.wire_data or v.ai_editor_data
             v.unit_data.continent = nil
-            local new_id = v.unit_data.unit_id - unit_id
             for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
-                link.tbl[link.key] = new_id
+                link.tbl[link.key] = is_world and world_unit_id or unit_id
             end
-            v.unit_data.unit_id = new_id
+            v.unit_data.unit_id = is_world and world_unit_id or unit_id
+            if is_world then
+                world_unit_id = world_unit_id + 1
+            else
+                unit_id = unit_id + 1
+            end
         end
     end
     return copy_data
@@ -695,21 +695,20 @@ function StaticEditor:SpawnPrefab(prefab)
 end
 
 function StaticEditor:SpawnCopyData(copy_data)
+    copy_data = deep_clone(copy_data)
     self:reset_selected_units()
-    local new_id = managers.mission:get_new_id(self._parent._current_continent, true)
-    local new_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "", true)
-    local new_world_unit_id = managers.worlddefinition:GetNewUnitID(self._parent._current_continent, "wire", true)
+    local continent = self._parent._current_continent
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
         if v.type == "element" then
-            local new_final_id = new_id + v.mission_element_data.id
+            local new_final_id = managers.mission:get_new_id(continent)
             for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
-            local new_final_id = ((v.wire_data or v.ai_editor_data) and new_world_unit_id or new_unit_id) + v.unit_data.unit_id
+            local new_final_id = managers.worlddefinition:GetNewUnitID(continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
             for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
