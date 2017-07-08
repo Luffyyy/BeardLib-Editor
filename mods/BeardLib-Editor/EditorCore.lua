@@ -136,7 +136,7 @@ function self:LoadHashlist()
 end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
-function BeardLibEditor:GenerateData()
+function self:GenerateData()
     local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
     local lines = io.lines(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
