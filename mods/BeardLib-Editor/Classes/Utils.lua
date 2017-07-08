@@ -433,7 +433,7 @@ function self:GetEntries(params)
     local IsLoaded
 
     if params.packages then
-        local type, packages = params.type, params.pacakges
+        local type, packages = params.type, params.packages
         IsLoaded = function(entry) return self:IsLoaded(entry, type, packages) end
     else
         local ids_type = params.type:id()

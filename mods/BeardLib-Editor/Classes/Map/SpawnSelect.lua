@@ -357,7 +357,7 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
                     end
                 else
                     BeardLibEditor.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
-                        self._assets_manager:find_pacakge(unit, true)
+                        self._assets_manager:find_package(unit, true)
                     end}})
                 end
 			end
@@ -373,7 +373,7 @@ function SpawnSelect:OpenLoadUnitDialog(params)
         force = true,
 	    callback = function(unit)
             BeardLibEditor.managers.ListDialog:hide()
-            self._assets_manager:find_pacakge(unit)
+            self._assets_manager:find_package(unit)
 	    end
 	}) 
 end

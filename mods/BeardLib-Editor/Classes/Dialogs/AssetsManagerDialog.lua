@@ -342,7 +342,7 @@ function AssetsManagerDialog:add_package_dialog()
 end
 
 function AssetsManagerDialog:remove_package(package, menu, item)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the pacakge)", function()
+    BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
         local project = BeardLibEditor.managers.MapProject
         local packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
         for i, pkg in ipairs(packages) do
