@@ -28,10 +28,11 @@ function AssetsManagerDialog:init(params, menu)
     MenuUtils:new(self)
 end
 
-function AssetsManagerDialog:Show()
-    if not self.super.Show(self, {yes = false}) then
+function AssetsManagerDialog:_Show()
+    if not self.super._Show(self, {yes = false}) then
         return
     end
+    self._params = nil
     self._missing_units = {}
     local btn = self:Button("Close", callback(self, self, "hide", true), {position = "Bottom", count_height = true})
     local group_h = (self._menu:Height() / 2) - 24
@@ -60,8 +61,8 @@ function AssetsManagerDialog:Show()
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
-    self:Button("FindPackage", callback(self, self, "find_pacakge"), {offset = 0, group = actions, enabled = false})
-    --self:Button("LoadFromExtract", callback(self, self, "load_from_extract"), {offset = 0, group = actions, enabled = false})
+    self:Button("FindPackage", SimpleClbk(self.find_package, self, false, false), {offset = 0, group = actions, enabled = false})
+    self:Button("LoadFromExtract", callback(self, self, "load_from_extract"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
     self:Button("RemoveFromMap", callback(self, self, "remove_units_from_map"), {offset = 0, group = actions, enabled = false})
 
     self:reload()
@@ -74,12 +75,22 @@ function AssetsManagerDialog:load_units()
     end
     units:ClearItems("units")
     self._missing_units = {}
+    local add
+    local project = BeardLibEditor.managers.MapProject
+    local mod = project:current_mod()
+    if self._tbl._data then
+        add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
+    end
     local panic
     for unit, times in pairs(managers.worlddefinition._all_names) do
-        local loaded = #self:get_packages_of_asset(unit, "unit", false, true) > 0
+        local loaded = self:is_asset_loaded(unit, "unit")
         if not loaded then
-            self._missing_units[unit] = true
-            panic = true
+            if add then
+                loaded = FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))
+            else
+                self._missing_units[unit] = true
+                panic = true            
+            end
         end
         self:Button(unit, callback(self, self, "set_unit_selected"), {group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, text_color = not loaded and Color.red, text_highlight_color = units.text_color})
     end
@@ -112,11 +123,16 @@ function AssetsManagerDialog:load_packages()
 end
 
 function AssetsManagerDialog:load_from_extract()
-    managers.editor.managers.utils:SpawnUnitFromExtract(self._tbl._selected.name, false, true)
+    BeardLibEditor.Utils:YesNoQuestion(
+        "This will search for assets of the unit to load it, it's not recommended to use this method without knowing what you're doing, it's recommended to use package load instead.", 
+        function()
+            managers.editor.managers.utils:SpawnUnitFromExtractNoSpawn(self._tbl._selected.name, true)
+        end
+    )
 end
 
-function AssetsManagerDialog:find_pacakge(unit, dontask)
-    function find_pacakge()
+function AssetsManagerDialog:find_package(unit, dontask)
+    function find_package()
         local items = {}
         for _, pkg in pairs(BeardLibEditor.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
             table.insert(items, {name = string.format("%s(%.2fmb)", pkg.name, pkg.size), size = pkg.size, package = pkg.name})
@@ -126,6 +142,7 @@ function AssetsManagerDialog:find_pacakge(unit, dontask)
         end)
         BeardLibEditor.managers.ListDialog:Show({
             list = items,
+            force = true,
             callback = function(selection)
                 self:add_package(selection.package)
                 BeardLibEditor.managers.ListDialog:hide()
@@ -134,10 +151,10 @@ function AssetsManagerDialog:find_pacakge(unit, dontask)
     end
     if not dontask then
         BeardLibEditor.Utils:YesNoQuestion("This will search for packages that contain this unit, it's recommended to choose the smallest one so your level will load faster", function()
-            find_pacakge()
+            find_package()
         end)
     else
-        find_pacakge()
+        find_package()
     end
 end
 
@@ -164,6 +181,7 @@ function AssetsManagerDialog:find_packages()
     end)
     BeardLibEditor.managers.ListDialog:Show({
         list = items,
+        force = true,
         callback = function(selection)
             self:add_package(selection.package)
             BeardLibEditor.managers.ListDialog:hide()
@@ -203,7 +221,7 @@ function AssetsManagerDialog:get_level_packages()
         self._current_level = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     end
     local packages = {}
-    for _, package in pairs(self._current_level.packages) do
+    for _, package in pairs(table.merge(BeardLibEditor.ConstPackages, self._current_level.packages)) do
         packages[package] = BeardLibEditor.DBPackages[package]
     end
     return packages
@@ -230,7 +248,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
     if self._tbl._selected then
         local unit = self._tbl._selected.name
         local project = BeardLibEditor.managers.MapProject
-        local pkgs_s
+        local load_from
         local short_path = function(path, times)
             local path_splt = string.split(path, "/")
             for i=1, #path_splt - times do table.remove(path_splt, 1) end
@@ -241,20 +259,29 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
             return path
         end
         for _, pkg in pairs(self:get_packages_of_asset(unit, "unit", true)) do
-            pkgs_s = pkgs_s or ""
+            load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
                 name = short_path(name, 3)
             end
             local pkg_s = string.format("%s(%.2fmb)", name, pkg.size)
-            pkgs_s = pkgs_s.."\n"..pkg_s
+            load_from = load_from.."\n"..pkg_s
         end
-        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..short_path(unit, 2) .. "\n| " .. (pkgs_s and "Loaded From:"..pkgs_s or "Unloaded, please load the unit using one of the methods below"))
+        local add
+        local project = BeardLibEditor.managers.MapProject
+        local mod = project:current_mod()
+        if self._tbl._data then
+            add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
+        end
+        if FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")) then
+            load_from = (load_from or "") .. "\n".."Map Assets"
+        end
+        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..short_path(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
     else
         self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
     end
     self._unit_info:GetItem("FindPackage"):SetEnabled(self._tbl._selected ~= nil)
-   --self._unit_info:GetItem("LoadFromExtract"):SetEnabled(self._tbl._selected ~= nil)
+    self._unit_info:GetItem("LoadFromExtract"):SetEnabled(self._tbl._selected ~= nil)
     self._unit_info:GetItem("RemoveFromMap"):SetEnabled(self._tbl._selected ~= nil)
     self._unit_info:AlignItems(true)
 end
@@ -305,6 +332,7 @@ function AssetsManagerDialog:add_package_dialog()
     end
     BeardLibEditor.managers.ListDialog:Show({
         list = packages,
+        force = true,
         callback = function(item)
             self:add_package(item)
             BeardLibEditor.managers.ListDialog:hide()
@@ -312,13 +340,6 @@ function AssetsManagerDialog:add_package_dialog()
     })
     self:reload()
 end
-
-function MapProjectManager:_reload_mod(name)
-    BeardLib.managers.MapFramework._loaded_mods[name] = nil
-    BeardLib.managers.MapFramework:Load()
-    BeardLib.managers.MapFramework:RegisterHooks()
-end
-
 
 function AssetsManagerDialog:remove_package(package, menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the pacakge)", function()

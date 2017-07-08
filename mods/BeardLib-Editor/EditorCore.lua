@@ -55,14 +55,44 @@ function self:InitManagers()
             self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptDataFrom(Path:Combine(self.PrefabsDirectory, prefab), "binary")
         end
     end
+    --Packages that are always loaded
+    self.ConstPackages = {
+        "packages/game_base_init",
+        "packages/game_base",
+        "packages/start_menu",
+        "packages/load_level",
+        "packages/load_default",
+        "packages/boot_screen",
+        "packages/toxic",
+        "packages/dyn_resources",
+        "packages/wip/game_base",
+        "core/packages/base",
+        "core/packages/editor"
+    }
+    local prefix = "packages/dlcs/"
+    local sufix = "/game_base"
+    for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
+        table.insert(self.ConstPackages, prefix .. tostring(dlc_package) .. sufix)
+    end
+    for i, difficulty in ipairs(tweak_data.difficulties) do
+        table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
+    end
+    
+    self:LoadCustomAssets()
+end
 
-    self:LoadCustomAssetsToHashListt(self._config.AddFiles)
-    local mod = self.managers.MapProject:current_mod()
-    if mod and mod._config.level.add then
-        self:log("Loading Custom Assets to Hashlist")
-        local level = mod._config.level
-        self:LoadCustomAssetsToHashListt(mod._config.level.add)   
-        if level.include then
+function self:LoadCustomAssets()
+    local project = self.managers.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(mod._clean_config)
+    if data then
+        if data.AddFiles then
+            self:LoadCustomAssetsToHashList(data.AddFiles)
+        end
+        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        if level then
+            self:log("Loading Custom Assets to Hashlist")
+            self:LoadCustomAssetsToHashList(level.add)
             for i, include_data in ipairs(level.include) do
                 if include_data.file then
                     local file_split = string.split(include_data.file, "[.]")
@@ -75,7 +105,7 @@ function self:InitManagers()
                         end     
                     end
                 end
-            end
+            end            
         end
     end
 end
@@ -139,7 +169,7 @@ function BeardLibEditor:GenerateData()
     self:LoadHashlist()
 end
 
-function self:LoadCustomAssetsToHashListt(add)
+function self:LoadCustomAssetsToHashList(add)
     for _, v in pairs(add) do
         if type(v) == "table" then
             self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}

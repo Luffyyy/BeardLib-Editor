@@ -7,7 +7,7 @@ function EditorAIGraph:create_element()
 	self._element.values.operation = NavigationManager.nav_states[1]
 end
 
-function EditorAIGraph:check_unit()
+function EditorAIGraph:check_unit(unit)
 	return unit:type() == Idstring("ai")
 end
 

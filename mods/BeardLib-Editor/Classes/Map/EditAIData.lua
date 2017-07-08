@@ -29,4 +29,3 @@ function EditAIData:set_unit_data()
  		self:UpdateLoc()
 	end
 end
- 

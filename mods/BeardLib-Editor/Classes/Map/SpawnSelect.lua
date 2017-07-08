@@ -29,11 +29,15 @@ function SpawnSelect:build_default_menu()
 
     local load = self:DivGroup("Load", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     if BeardLib.current_level then
-        self:Button("Units", callback(self, self, "OpenSpawnUnitDialog", {not_loaded = true}), {group = load, size_by_text = true})
-    end
-    if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
-        --self:Button("Spawn Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {group = spawn})
-        --self:Button("Load Unit from extract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtractNoSpawn"), not_loaded = true}), {group = load})
+        self:Button("Units", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
+        if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
+            self:Button("UnitsExtract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {
+                group = load, size_by_text = true, text = "Unit(From Extract)", help = [[Load a unit from extract, 
+the editor will read the unit file and determine what assets it needs(except the ones that are loaded already)
+afterwards it will copy them from your extract directory to the map's assets and add them to AddFiles module
+this load method should be used only if you know what you're doing(ex: unit is missing from the packages)]]
+            })
+        end
     end
     local fixes = self:DivGroup("Fixes", {help = "Quick fixes for common issues"})
     self:Button("Remove brush(massunits) layer", callback(self, self, "remove_brush_layer"), {
@@ -136,7 +140,7 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
     local level = data and proj:current_level(data)
     local to_copy = {}
     if map_mod then
-        level.add = level.add or {_meta = "add", directory = "Assets"}
+        level.add = level.add or {_meta = "add", directory = "assets", units = {}}
         for k,v in pairs(config) do
             local exists 
             for _, tbl in pairs(level.add) do
@@ -181,6 +185,7 @@ function SpawnSelect:OpenSpawnPrefabDialog()
     end
     BeardLibEditor.managers.ListDialog:Show({
         list = prefabs,
+        force = true,
         callback = function(item)
             self:Manager("static"):SpawnPrefab(item.prefab)
             BeardLibEditor.managers.ListDialog:hide()
@@ -197,6 +202,7 @@ function SpawnSelect:OpenSpawnInstanceDialog()
     end
     BeardLibEditor.managers.ListDialog:Show({
         list = instances,
+        force = true,
         callback = function(item)
             local continent = managers.worlddefinition._continent_definitions[self._parent._current_continent]
             if continent then
@@ -245,6 +251,7 @@ function SpawnSelect:OpenSpawnElementDialog()
     local held_ctrl
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = BeardLibEditor._config.MissionElements,
+        force = true,
 	    callback = function(item)
             self._parent:add_element(item, held_ctrl)
             held_ctrl = ctrl()
@@ -258,10 +265,11 @@ end
 function SpawnSelect:OpenSelectUnitDialog(params)
     params = params or {}
     local units = {}
-    for k, unit in pairs(managers.worlddefinition._all_units) do            
-        if alive(unit) and unit:unit_data() and not unit:unit_data().instance then
+    for k, unit in pairs(World:find_units_quick("all")) do
+        local ud = unit:unit_data()
+        if ud and ud.name and not ud.instance then
             table.insert(units, table.merge({
-                name = tostring(unit:unit_data().name_id) .. " [" .. tostring(unit:unit_data().unit_id) .."]",
+                name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "env" or tostring(ud.unit_id)) .."]",
                 unit = unit,
                 color = params.choose_color and params.choose_color(unit),
             }, params))
@@ -269,6 +277,7 @@ function SpawnSelect:OpenSelectUnitDialog(params)
     end
     BeardLibEditor.managers.ListDialog:Show({
         list = units,
+        force = true,
         callback = params.on_click or function(item)
             self._parent:select_unit(item.unit)         
             BeardLibEditor.managers.ListDialog:hide()
@@ -280,6 +289,7 @@ function SpawnSelect:OpenSelectInstanceDialog(params)
 	params = params or {}
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = managers.world_instance:instance_names(),
+        force = true,
 	    callback = params.on_click or function(name)
 	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))	        
 	    	BeardLibEditor.managers.ListDialog:hide()
@@ -306,6 +316,7 @@ function SpawnSelect:OpenSelectElementDialog(params)
     end
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = elements,
+        force = true,
 	    callback = params.on_click or function(item)
             self._parent:select_element(item.element, held_ctrl)
             held_ctrl = ctrl()
@@ -329,21 +340,40 @@ end
 
 function SpawnSelect:OpenSpawnUnitDialog(params)
 	params = params or {}
+    local pkgs = self._assets_manager:get_level_packages()
 	BeardLibEditor.managers.ListDialog:Show({
-	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = self._assets_manager:get_level_packages(), slot = params.slot, type = params.type, not_type = "being"}),
+	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = pkgs, slot = params.slot, type = params.type, not_type = "being"}),
+        force = true,
 	    callback = function(unit)
             BeardLibEditor.managers.ListDialog:hide()
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(unit)
 	    	else
                 if self._assets_manager:is_asset_loaded(unit, "unit") or not params.not_loaded then
-                    self:BeginSpawning(unit)
+                    if PackageManager:has(Idstring("unit"), unit:id()) then
+                        self:BeginSpawning(unit)
+                    else
+                        BeardLibEditor.Utils:Notify("Error", "Cannot spawn the unit")
+                    end
                 else
                     BeardLibEditor.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
                         self._assets_manager:find_pacakge(unit, true)
                     end}})
                 end
 			end
+	    end
+	}) 
+end
+
+function SpawnSelect:OpenLoadUnitDialog(params)
+	BeardLibEditor.managers.ListDialog:Show({
+	    list = BeardLibEditor.Utils:GetUnits({not_loaded = true, packages = self._assets_manager:get_level_packages(), check = function(unit)
+            return not self._assets_manager:is_asset_loaded(unit, "unit") and not unit:match("wpn_") and not unit:match("msk_")
+        end}),
+        force = true,
+	    callback = function(unit)
+            BeardLibEditor.managers.ListDialog:hide()
+            self._assets_manager:find_pacakge(unit)
 	    end
 	}) 
 end

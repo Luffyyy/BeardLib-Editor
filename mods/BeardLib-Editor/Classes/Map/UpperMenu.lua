@@ -30,7 +30,9 @@ end
 function UpperMenu:build_tabs()
     for _, tab in pairs(self._tabs) do
         local s = self._menu.w / #self._tabs
-        self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
+        local tab = self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
+        tab.bg:set_h(2)
+        tab.bg:set_bottom(tab:Panel():bottom())
     end
 end
 

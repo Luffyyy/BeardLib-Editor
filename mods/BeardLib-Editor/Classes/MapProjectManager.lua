@@ -127,11 +127,113 @@ function MapProjectManager:get_clean_data(t)
     return data
 end
 
+function MapProjectManager:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, done_clbk)
+    self:new_level_dialog(tostring(level_in_chain.level_id), function(name)
+        local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
+        local levels_path = U.Path:Combine(mod_path, "levels")
+        local level = clone(tweak_data.levels[level_in_chain.level_id])
+        table.insert(data, level)
+        level._meta = "level"
+        level.assets = {}
+        level.id = name
+        level_in_chain.level_id = level.id
+        level.name_id = nil
+        level.briefing_id = nil 
+        level.add = {directory = "assets"}
+        level.script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
+        local level_path = U.Path:Combine(levels_path, level.id)
+        local level_dir = "levels/"..level.world_name .. "/"
+        local packages = type(level.package) == "string" and {level.package} or level.package or {}
+        if narr_pkg then
+            table.insert(packages, narr_pkg)
+        end
+        table.insert(packages, level_dir.."world")
+        for _, p in pairs(packages) do
+            if not PackageManager:loaded(p) then
+                if PackageManager:package_exists(p.."_init") then
+                    PackageManager:load(p.."_init") 
+                table.insert(self._packages_to_unload, p.."_init")
+                end
+                if PackageManager:package_exists(p) then
+                    PackageManager:load(p)
+                    table.insert(self._packages_to_unload, p)
+                end
+            end
+        end
+        level.include = {directory = U.Path:Combine("levels", level.id)}
+        local world_data = PackageManager:script_data(Idstring("world"), Idstring(level_dir.."world"))
+        local continents_data = PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))
+        table.insert(level.include, {_meta = "file", file = "world.world", type = "binary", data = world_data})
+        table.insert(level.include, {_meta = "file", file = "continents.continents", type = "binary", data = continents_data})
+        table.insert(level.include, {_meta = "file", file = "mission.mission", type = "binary", data = PackageManager:script_data(Idstring("mission"), Idstring(level_dir.."mission"))})
+        table.insert(level.include, {_meta = "file", file = "nav_manager_data.nav_data", type = "binary", data = PackageManager:script_data(Idstring("nav_data"), Idstring(level_dir.."nav_manager_data"))})
+        if DB:has(Idstring("cover_data"), Idstring(level_dir.."cover_data")) then
+            table.insert(level.include, {_meta = "file", file = "cover_data.cover_data", type = "binary", data = PackageManager:script_data(Idstring("cover_data"), Idstring(level_dir.."cover_data"))})
+        end        
+        if DB:has(Idstring("world_sounds"), Idstring(level_dir.."world_sounds")) then
+            table.insert(level.include, {_meta = "file", file = "world_sounds.world_sounds", type = "binary", data = PackageManager:script_data(Idstring("world_sounds"), Idstring(level_dir.."world_sounds"))})
+        end
+        if DB:has(Idstring("world_cameras"), Idstring(level_dir.."world_cameras")) then
+            table.insert(level.include, {_meta = "file", file = "world_cameras.world_cameras", type = "binary", data = PackageManager:script_data(Idstring("world_cameras"), Idstring(level_dir.."world_cameras"))})
+        end
+        local continents = {}
+        local missions = {}
+        for c in pairs(continents_data) do
+            local p = level_dir..c.."/"..c          
+            if PackageManager:package_exists(p) then
+                table.insert(packages, p)
+            end                        
+            local p_init = p.."_init"
+            if PackageManager:package_exists(p_init) then
+                PackageManager:load(p_init)
+                continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
+                missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))
+                PackageManager:unload(p_init)
+            end
+        end
+        world_data.brush = nil --Figure out what to do with brushes...
+        level.world_name = nil      
+        level.package = nil      
+        level.packages = packages
+        for name, c in pairs(continents) do
+            local c_path = U.Path:Combine(name, name)
+            table.insert(level.include, {_meta = "file", file = c_path..".continent", type = "binary", data = c})
+            table.insert(level.include, {_meta = "file", file = c_path..".mission", type = "binary", data = missions[name]})
+        end
+        for k, include in pairs(level.include) do
+            if type(include) == "table" then
+                FileIO:WriteScriptDataTo(U.Path:Combine(level_path, include.file), include.data, include.type)
+                include.data = nil
+            end
+        end
+        if done_clbk then
+            done_clbk()
+        end
+    end, done_clbk)
+end
+
+function MapProjectManager:existing_narr_new_project_clbk_finish(data, narr)
+    local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+    FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
+    BeardLib.managers.MapFramework:Load()
+    BeardLib.managers.MapFramework:RegisterHooks()
+    BeardLibEditor.managers.LoadLevel:load_levels()
+    for _, p in pairs(self._packages_to_unload) do
+        if PackageManager:loaded(p) then
+            DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
+                log("Unloading temp package " .. tostring(p))
+                PackageManager:unload(p)
+            end)
+        end
+    end
+end
+
 function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
     if t then
-        local data = self:get_clean_data(self._main_xml_template)
+        local data = deep_clone(self:get_clean_data(self._main_xml_template))
         local narr = U:GetNodeByMeta(data, "narrative")
-        table.merge(narr, selection.narr)
+        table.merge(narr, deep_clone(selection.narr))
         data.name = t.name
         narr.id = t.name
         local cv = narr.contract_visuals
@@ -142,104 +244,19 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
         narr.briefing_id = nil
         local narr_pkg = narr.package
         narr.package = nil --packages should only be in levels.
-        local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
-        local levels_path = U.Path:Combine(mod_path, "levels")
-        local to_unload = {}
+        self._packages_to_unload = {}
         PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
+        local clbk = SimpleClbk(self.existing_narr_new_project_clbk_finish, self, data, narr)
         for i, level_in_chain in pairs(narr.chain) do
+            local last = i == #narr.chain
             if type(level_in_chain) == "table" then
-                self:new_level_dialog(level_in_chain.level_id, function(name)
-                    local level = clone(tweak_data.levels[level_in_chain.level_id])
-                    table.insert(data, level)
-                    level._meta = "level"
-                    level.assets = {}
-                    level.id = name
-                    level_in_chain.level_id = level.id
-                    level.name_id = nil
-                    level.briefing_id = nil 
-                    level.add = {directory = "assets"}
-                    level.script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
-                    local level_path = U.Path:Combine(levels_path, level.id)
-                    local level_dir = "levels/"..level.world_name .. "/"
-                    local packages = type(level.package) == "string" and {level.package} or level.package or {}
-                    if narr_pkg then
-                        table.insert(packages, narr_pkg)
+                if #level_in_chain > 0 then
+                    for k, level in pairs(level_in_chain) do
+                        self:add_existing_level_to_project(data, narr, level, narr_pkg, last and (k == #level_in_chain) and clbk)
                     end
-                    table.insert(packages, level_dir.."world")
-                    for _, p in pairs(packages) do
-                        if not PackageManager:loaded(p) then
-                            if PackageManager:package_exists(p.."_init") then
-                                PackageManager:load(p.."_init") 
-                               table.insert(to_unload, p.."_init")
-                            end
-                            if PackageManager:package_exists(p) then
-                                PackageManager:load(p)
-                                table.insert(to_unload, p)
-                            end
-                        end
-                    end
-                    level.include = {directory = U.Path:Combine("levels", level.id)}
-                    local world_data = PackageManager:script_data(Idstring("world"), Idstring(level_dir.."world"))
-                    local continents_data = PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))
-                    table.insert(level.include, {_meta = "file", file = "world.world", type = "binary", data = world_data})
-                    table.insert(level.include, {_meta = "file", file = "continents.continents", type = "binary", data = continents_data})
-                    table.insert(level.include, {_meta = "file", file = "mission.mission", type = "binary", data = PackageManager:script_data(Idstring("mission"), Idstring(level_dir.."mission"))})
-                    table.insert(level.include, {_meta = "file", file = "nav_manager_data.nav_data", type = "binary", data = PackageManager:script_data(Idstring("nav_data"), Idstring(level_dir.."nav_manager_data"))})
-                    if DB:has(Idstring("cover_data"), Idstring(level_dir.."cover_data")) then
-                        table.insert(level.include, {_meta = "file", file = "cover_data.cover_data", type = "binary", data = PackageManager:script_data(Idstring("cover_data"), Idstring(level_dir.."cover_data"))})
-                    end        
-                    if DB:has(Idstring("world_sounds"), Idstring(level_dir.."world_sounds")) then
-                        table.insert(level.include, {_meta = "file", file = "world_sounds.world_sounds", type = "binary", data = PackageManager:script_data(Idstring("world_sounds"), Idstring(level_dir.."world_sounds"))})
-                    end
-                    if DB:has(Idstring("world_cameras"), Idstring(level_dir.."world_cameras")) then
-                        table.insert(level.include, {_meta = "file", file = "world_cameras.world_cameras", type = "binary", data = PackageManager:script_data(Idstring("world_cameras"), Idstring(level_dir.."world_cameras"))})
-                    end
-                    local continents = {}
-                    local missions = {}
-                    for c in pairs(continents_data) do
-                        local p = level_dir..c.."/"..c          
-                        if PackageManager:package_exists(p) then
-                            table.insert(packages, p)
-                        end                        
-                        local p_init = p.."_init"
-                        if PackageManager:package_exists(p_init) then
-                            PackageManager:load(p_init)
-                            continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
-                            missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))
-                            PackageManager:unload(p_init)
-                        end
-                    end
-                    world_data.brush = nil --Figure out what to do with brushes...
-                    level.world_name = nil      
-                    level.package = nil      
-                    level.packages = packages
-                    for name, c in pairs(continents) do
-                        local c_path = U.Path:Combine(name, name)
-                        table.insert(level.include, {_meta = "file", file = c_path..".continent", type = "binary", data = c})
-                        table.insert(level.include, {_meta = "file", file = c_path..".mission", type = "binary", data = missions[name]})
-                    end
-                    for k, include in pairs(level.include) do
-                        if type(include) == "table" then
-                            FileIO:WriteScriptDataTo(U.Path:Combine(level_path, include.file), include.data, include.type)
-                            include.data = nil
-                        end
-                    end
-                    if i == #narr.chain then -- temp
-                        PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
-                        FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
-                        BeardLib.managers.MapFramework:Load()
-                        BeardLib.managers.MapFramework:RegisterHooks()
-                        BeardLibEditor.managers.LoadLevel:load_levels()
-                        for _, p in pairs(to_unload) do
-                            if PackageManager:loaded(p) then
-                                DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
-                                    log("Unloading temp package " .. tostring(p))
-                                    PackageManager:unload(p)
-                                end)
-                            end
-                        end
-                    end
-                end)
+                else
+                    self:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, last and clbk)
+                end
             end
         end
     end
@@ -333,12 +350,24 @@ function MapProjectManager:_select_project(mod, save_prev)
     end)
 end
 
-function MapProjectManager:new_project_dialog(name, clbk)
-    BeardLibEditor.managers.InputDialog:Show({title = "Enter a name for the project", text = name or "", callback = callback(self, self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "new_project_clbk"))})
+function MapProjectManager:new_project_dialog(name, clbk, no_callback)
+    BeardLibEditor.managers.InputDialog:Show({
+        title = "Enter a name for the project",
+        text = name or "",
+        no_callback = no_callback,
+        check_value = callback(self, self, "check_narrative_name"),
+        callback = callback(self, self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "new_project_clbk"))
+    })
 end
 
-function MapProjectManager:new_level_dialog(name, clbk)
-    BeardLibEditor.managers.InputDialog:Show({title = "Enter a name for the level", text = name or "", callback = callback(self, self, "new_level_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "create_new_level"))})
+function MapProjectManager:new_level_dialog(name, clbk, no_callback)
+    BeardLibEditor.managers.InputDialog:Show({
+        title = "Enter a name for the level", 
+        text = name or "",
+        no_callback = no_callback,
+        check_value = callback(self, self, "check_level_name"),
+        callback = clbk or callback(self, self, "create_new_level")
+    })
 end
 
 function MapProjectManager:delete_level_dialog(level)
@@ -405,34 +434,36 @@ function MapProjectManager:create_new_narrative(name)
     return data 
 end
 
-function MapProjectManager:new_level_dialog_clbk(clbk, name)
-    local function tryagain() self:new_level_dialog(name, clbk) end
+function MapProjectManager:check_level_name(name)
     if tweak_data.levels[name] then
-        BeardLibEditor.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name), tryagain)
-        return
-    elseif name == "" then
-        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name), tryagain)
-        return
-    end
-    clbk(name)
-end
-
-function MapProjectManager:new_project_dialog_clbk(clbk, name)
-    if tweak_data.narrative.jobs[name] then
-        BeardLibEditor.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
-        self:new_project_dialog(name, clbk)
-        return
-    elseif name:lower() == "backups" or name:lower() == "prefabs" then
-        BeardLibEditor.Utils:Notify("Error", string.format("Invalid Id"))
-        self:new_project_dialog(name, clbk)
-        return            
+        BeardLibEditor.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
+        return false
     elseif name == "" then
         BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name))
-        self:new_project_dialog(name, clbk)
-        return
+        return false
+    elseif string.begins(name, " ") then
+        BeardLibEditor.Utils:Notify("Error", "Invalid ID!")
+        return false
     end
-    clbk(self:create_new_narrative(name), name)
+    return true
 end
+
+function MapProjectManager:check_narrative_name(name)
+    if tweak_data.narrative.jobs[name] then
+        BeardLibEditor.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
+        return false
+    elseif name:lower() == "backups" or name:lower() == "prefabs" or string.begins(name, " ") then
+        BeardLibEditor.Utils:Notify("Error", string.format("Invalid Id"))
+        return false
+    elseif name == "" then
+        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        return false
+    end
+    return true
+end
+
+function MapProjectManager:new_project_dialog_clbk(clbk, name) clbk(self:create_new_narrative(name), name) end
+
 function MapProjectManager:new_project_clbk(data, name)
     local save = self:GetItem("Save")
     if save then

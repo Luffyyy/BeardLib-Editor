@@ -30,6 +30,12 @@ end
 
 function EnvironmentLayerEditor:loaded_continents()
 	local data = self:data()
+	data.environment_values.environment = managers.worlddefinition:convert_mod_path(data.environment_values.environment)
+    for _, area in pairs(data.environment_areas) do
+        if type(area) == "table" and area.environment then
+            area.environment = managers.worlddefinition:convert_mod_path(area.environment)
+        end
+    end
 	self:_load_wind(data.wind)
 	self:_load_effects(data.effects)
 	self:_load_environment_areas()
@@ -256,7 +262,7 @@ function EnvironmentLayerEditor:build_unit_menu()
 		    for name in table.sorted_map_iterator(managers.viewport:get_predefined_environment_filter_map()) do
 		        self._environment_area_ctrls.env_filter_cb_map[name] = S:Toggle(name, callback(self, self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {group = env_filter, size_by_text = true})
 		    end
-		    self._environment_area_ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time())
+		    self._environment_area_ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {floats = 2})
 		    self._environment_area_ctrls.prio = S:NumberBox("Prio", callback(self, self, "set_prio"), area:prio() or managers.environment_area:default_prio())
 		    self._environment_area_ctrls.permanent_cb = S:Toggle("Permanent", callback(self, self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT)
 		    if area then
@@ -327,7 +333,7 @@ function EnvironmentLayerEditor:set_transition_time()
 	local area = self:selected_unit():unit_data().environment_area
 	local value = tonumber(self._environment_area_ctrls.transition_time:Value())
 	value = math.clamp(value, 0, 100000000)
-	self._environment_area_ctrls.transition_time:change_value(string.format("%.2f", value))
+	self._environment_area_ctrls.transition_time:SetValue(value)
 	area:set_transition_time(value)
 	self:save()
 end
@@ -336,7 +342,7 @@ function EnvironmentLayerEditor:set_prio()
 	local area = self:selected_unit():unit_data().environment_area
 	local value = tonumber(self._environment_area_ctrls.prio:Value())
 	value = math.clamp(value, 1, 100000000)
-	self._environment_area_ctrls.prio:change_value(tostring(value))
+	self._environment_area_ctrls.prio:SetValue(value)
 	area:set_prio(value)
 	self:save()
 end
@@ -485,6 +491,7 @@ function EnvironmentLayerEditor:do_spawn_unit(unit_path, ud)
 	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
 	table.merge(unit:unit_data(), ud)
 	unit:unit_data().name = unit_path
+	unit:unit_data().environment_unit = true
 	unit:unit_data().position = unit:position()
 	unit:unit_data().rotation = unit:rotation()
 	table.insert(self._created_units, unit)

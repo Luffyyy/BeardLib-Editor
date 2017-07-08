@@ -184,7 +184,22 @@ function GameOptions:save()
     local path = self:map_path()
     local function save()
         local map_path = self:map_world_path()
-        self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(worlddef._world_data, xml))
+    
+        local world_data = deep_clone(worlddef._world_data)
+        if BeardLib.current_level then
+            local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
+            local environment_values = world_data.environment.environment_values
+            if string.begins(environment_values.environment, map_dbpath) then
+                environment_values.environment = string.gsub(environment_values.environment, map_dbpath, ".map")
+            end
+            for _, area in pairs(world_data.environment.environment_areas) do
+                if type(area) == "table" and area.environment then
+                    area.environment = string.gsub(area.environment, map_dbpath, ".map")
+                end
+            end
+        end
+        self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(world_data, xml))
+
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
             local dir = BeardLib.Utils.Path:Combine(map_path, name)
@@ -199,7 +214,16 @@ function GameOptions:save()
         self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
         self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, cusxml))
-        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data or {}, cusxml))
+
+        local wcd = deep_clone(worlddef._world_cameras_data)
+        if wcd.sequences and #wcd.sequences == 0 then
+            wcd.sequences = nil
+        end
+        if wcd.worldcameras and #wcd.worldcameras == 0 then
+            wcd.worldcameras = nil
+        end
+        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(wcd, cusxml))
+
         self:save_cover_data(include)
         self:save_nav_data(include)
         for _, folder in pairs(FileIO:GetFolders(map_path)) do
@@ -230,7 +254,7 @@ function GameOptions:save_main_xml(include)
     local data = mod and proj:get_clean_data(mod._clean_config)
     if data then
         local level = proj:get_level_by_id(data, Global.game_settings.level_id)
-        local temp = table.list_add(include, clone(level.include))        
+        local temp = include and table.list_add(include, clone(level.include)) or level.include
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do
             include_data.type = include_data.type or "binary"           

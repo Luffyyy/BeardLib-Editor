@@ -70,7 +70,7 @@ function EditorMenu:set_enabled(enabled)
     local opened = BeardLib.managers.dialog:DialogOpened(self)
     if enabled then
         if not opened then
-            BeardLib.managers.dialog:OpenDialog(self)
+            BeardLib.managers.dialog:ShowDialog(self)
             self._main_menu:Enable()
             if in_editor then
                 managers.editor._enabled = false

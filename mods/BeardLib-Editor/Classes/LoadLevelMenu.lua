@@ -4,7 +4,7 @@ function LoadLevelMenu:init()
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
 	MenuUtils:new(self)
 	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, auto_height = true})
-	local opt = {size_by_text = true, group = tabs, color = tabs.marker_highlight_color, offset = 0}
+	local opt = {size_by_text = true, group = tabs, color = tabs.accent_color, offset = 0}
 	local w = self:Toggle("Localized", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w

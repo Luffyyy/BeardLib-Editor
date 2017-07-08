@@ -191,13 +191,15 @@ end
 function self:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
-        for _, path in pairs(package[type] or {}) do
-            if path == asset then
-                local size = size_needed and self:GetPackageSize(name)
-                if not size_needed or size then
-                    table.insert(found_packages, {name = name, size = size})
-                    if first then
-                        return found_packages
+        if not name:match("all_") then
+            for _, path in pairs(package[type] or {}) do
+                if path == asset then
+                    local size = size_needed and self:GetPackageSize(name)
+                    if not size_needed or size then
+                        table.insert(found_packages, {name = name, size = size})
+                        if first then
+                            return found_packages
+                        end
                     end
                 end
             end
@@ -457,7 +459,7 @@ function self:GetUnits(params)
     local units = {}
     for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
         local slot_fine = not params.slot or self:InSlot(unit, params.slot)
-        local unit_fine = params.not_loaded or allowed_units[unit] or self:IsLoaded(unit, "unit", params.packages or {})
+        local unit_fine = (not params.check or params.check(unit)) and params.not_loaded or allowed_units[unit] or self:IsLoaded(unit, "unit", params.packages or {})
         if unit_fine and slot_fine and (not params.type or self:GetUnitType(unit) == Idstring(params.type)) and (not params.not_type or self:GetUnitType(unit) ~= Idstring(params.not_type)) then
             table.insert(units, unit)
         end
@@ -484,11 +486,11 @@ function self:Unhash(ids, type)
 end
 
 function self:Notify(title, msg, clbk)
-    BeardLibEditor.managers.Dialog:Show({title = title, message = msg, callback = clbk})
+    BeardLibEditor.managers.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
 end
 
 function self:YesNoQuestion(msg, clbk, no_clbk)
-    self:QuickDialog({title = "Are you sure you want to continue?", message = msg, no = false}, {{"Yes", clbk}, {"No", no_clbk, no_clbk and true}})
+    self:QuickDialog({title = "Are you sure you want to continue?", message = msg, no = false, force = true}, {{"Yes", clbk}, {"No", no_clbk, no_clbk and true}})
 end
 
 function self:QuickDialog(opt, items)

@@ -14,10 +14,11 @@ function ObjectivesManagerDialog:init(params, menu)
     MenuUtils:new(self)
 end
 
-function ObjectivesManagerDialog:Show()
-    if not self.super.Show(self, {yes = false}) then
+function ObjectivesManagerDialog:_Show()
+    if not self.super._Show(self, {yes = false}) then
         return
     end
+    self._params = nil
     self._objectives = nil
     local project = BeardLibEditor.managers.MapProject
     local mod = project:current_mod()
@@ -45,8 +46,8 @@ function ObjectivesManagerDialog:Show()
     local group_h = self._menu:Height() - 24
     local objectives = self:DivGroup("Objectives", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})    
     local add = self:Button("Add", callback(self, self, "rename_or_add_objective", false), {override_parent = objectives, size_by_text = true, text = "+", position = function(item)
-        item:SetPositionByString("Top")
-        item:Panel():set_world_right(item.override_parent.items_panel:world_right() - 8)
+        item:SetPositionByString("TopRight")
+        item:Panel():move(-8)
     end})
     self:TextBox("Search", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", {override_parent = objectives, w = 300, control_slice = 1.25, lines = 1, marker_highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
@@ -58,7 +59,7 @@ function ObjectivesManagerDialog:Show()
 end
 
 function ObjectivesManagerDialog:rename_or_add_objective(objective)
-    BeardLibEditor.managers.InputDialog:Show({title = "Objective Id", text = objective and objective.id or "", callback = function(name)
+    BeardLibEditor.managers.InputDialog:Show({title = "Objective Id", force = true, text = objective and objective.id or "", callback = function(name)
         for _, o in ipairs(self._objectives) do
             if o ~= objective and o.id == name then
                 BeardLibEditor.Utils:Notify("Error!", "Objective with the Id "..tostring(name).. " already exists!")
