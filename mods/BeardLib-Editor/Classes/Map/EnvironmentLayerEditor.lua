@@ -71,7 +71,7 @@ function EnvironmentLayerEditor:_load_effects(effects)
 end
 
 function EnvironmentLayerEditor:_load_environment_areas()
-	for _, area in ipairs(managers.environment_area:areas()) do
+	for _, area in ipairs(clone(managers.environment_area:areas())) do
 		local unit = self:do_spawn_unit(self._environment_area_unit, {environment_area = area, position = area:position(), rotation = area:rotation()})
 		local new_name_id = unit:unit_data().environment_area:set_unit(unit)
 		if new_name_id then

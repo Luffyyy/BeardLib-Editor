@@ -109,10 +109,12 @@ function MapProjectManager:get_level_by_id(t, id)
     end
 end
 
+local ignore_modules = {["GlobalValue"] = true}
+
 function MapProjectManager:get_clean_mod_config(mod)
     local config = deep_clone(mod._clean_config)
     for i, module in pairs(mod._modules) do
-        if module.clean_table and config[i] then
+        if module.clean_table and not ignore_modules[module.type_name] and config[i] then
             module:do_clean_table(config[i])
         end
     end
@@ -123,6 +125,8 @@ function MapProjectManager:get_clean_data(t, no_clone)
     local data = U:CleanCustomXmlTable(not no_clone and deep_clone(t) or t, true)
     local narrative = U:GetNodeByMeta(data, "narrative")
     U:RemoveAllNumberIndexes(narrative, true)
+    local AddFiles = U:GetNodeByMeta(data, "AddFiles")
+    AddFiles = BeardLib.Utils:CleanCustomXmlTable(AddFiles)
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
         for _, v in pairs({"include", "assets", "script_data_mods", "add"}) do
@@ -805,6 +809,9 @@ function MapProjectManager:set_project_level_data(level_in_chain)
 end
 
 function MapProjectManager:reset_menu()
+    for _, item in pairs(self._curr_editing._adopted_items) do
+        item:Destroy()
+    end
     self._curr_editing:ClearItems()
     for _, item in pairs(self._curr_editing._adopted_items) do
         item:Destroy()

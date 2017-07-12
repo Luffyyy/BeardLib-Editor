@@ -92,7 +92,9 @@ function self:LoadCustomAssets()
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         if level then
             self:log("Loading Custom Assets to Hashlist")
-            self:LoadCustomAssetsToHashList(level.add)
+            if level.add then
+                self:LoadCustomAssetsToHashList(level.add)
+            end
             for i, include_data in ipairs(level.include) do
                 if include_data.file then
                     local file_split = string.split(include_data.file, "[.]")
