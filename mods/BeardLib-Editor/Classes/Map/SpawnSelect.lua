@@ -27,8 +27,8 @@ function SpawnSelect:build_default_menu()
     self:Button("Element", callback(self, self, "OpenSelectElementDialog"), {group = select, size_by_text = true})
     self:Button("Instance", callback(self, self, "OpenSelectInstanceDialog", {}), {group = select, size_by_text = true})
 
-    local load = self:DivGroup("Load", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     if BeardLib.current_level then
+        local load = self:DivGroup("Load", {enabled = not Global.editor_safe_mode, align_method = "grid"})
         self:Button("Units", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
         if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
             self:Button("UnitsExtract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {
@@ -340,7 +340,7 @@ end
 
 function SpawnSelect:OpenSpawnUnitDialog(params)
 	params = params or {}
-    local pkgs = self._assets_manager:get_level_packages()
+    local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = pkgs, slot = params.slot, type = params.type, not_type = "being"}),
         force = true,
@@ -349,7 +349,7 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
 	    	if type(params.on_click) == "function" then
 	    		params.on_click(unit)
 	    	else
-                if self._assets_manager:is_asset_loaded(unit, "unit") or not params.not_loaded then
+                if not self._assets_manager or self._assets_manager:is_asset_loaded(unit, "unit") or not params.not_loaded then
                     if PackageManager:has(Idstring("unit"), unit:id()) then
                         self:BeginSpawning(unit)
                     else

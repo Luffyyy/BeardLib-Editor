@@ -55,6 +55,7 @@ function AssetsManagerDialog:_Show()
     self:Divider("AssetsManagerStatus", {
         text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
         group = self._unit_info,
+        visible = false,
         color = false,
     })
     self:Button("FixBySearchingPackages", callback(self, self, "find_packages", false), {group = self._unit_info})
@@ -87,15 +88,20 @@ function AssetsManagerDialog:load_units()
         if not loaded then
             if add then
                 loaded = FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))
-            else
+            end
+            if not loaded then
                 self._missing_units[unit] = true
-                panic = true            
+                panic = true
             end
         end
         self:Button(unit, callback(self, self, "set_unit_selected"), {group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, text_color = not loaded and Color.red, text_highlight_color = units.text_color})
     end
+    local panicked = self._unit_info:GetItem("AssetsManagerStatus"):Visible()
     self._unit_info:GetItem("AssetsManagerStatus"):SetVisible(panic)
     self._unit_info:GetItem("FixBySearchingPackages"):SetVisible(panic)
+    if panicked and not panic then
+        self:all_ok_dialog()
+    end
 end
 
 function AssetsManagerDialog:load_packages()
@@ -212,7 +218,6 @@ function AssetsManagerDialog:remove_units_from_map()
             end
         end
         managers.editor:m().opt:save()
-        self:all_ok_dialog()
         self:reload()
     end)
 end
@@ -225,7 +230,7 @@ function AssetsManagerDialog:get_level_packages()
         self._current_level = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     end
     local packages = {}
-    for _, package in pairs(table.merge(BeardLibEditor.ConstPackages, self._current_level.packages)) do
+    for _, package in ipairs(table.merge(clone(BeardLibEditor.ConstPackages), clone(self._current_level.packages))) do
         packages[package] = BeardLibEditor.DBPackages[package]
     end
     return packages
@@ -307,13 +312,12 @@ function AssetsManagerDialog:add_package(package)
     project:map_editor_save_main_xml(self._tbl._data)
     project:_reload_mod(self._tbl._data.name)
     self:reload()
-    self:all_ok_dialog()
 end
 
 function AssetsManagerDialog:all_ok_dialog()
     local status = self._unit_info:GetItem("AssetsManagerStatus")
     if status and not status:Visible() then
-        local opt = {title = "Hooray!", message = "All units are now loaded!"}
+        local opt = {title = "Hooray!", message = "All units are now loaded!", force = true}
         if Global.editor_safe_mode then
             opt.message = opt.message .. " Load to normal mode?"
             BeardLibEditor.Utils:QuickDialog(opt, {"Yes", function()

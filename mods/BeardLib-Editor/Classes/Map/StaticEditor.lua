@@ -703,6 +703,7 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
     local missing
     local assets = self:Manager("utils")._assets_manager
     local data = mod and project:get_clean_data(mod._clean_config)
+    local unit_ids = Idstring("unit")
     local add
     if data then
         add = project:get_level_by_id(data, Global.game_settings.level_id).add
@@ -726,7 +727,7 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
             v.unit_data.unit_id = new_final_id
             local unit = v.unit_data.name
             if not missing_units[unit] then
-                if not (assets:is_asset_loaded(unit, "unit") or (add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")))) then
+                if not assets and not PackageManager:has(unit_ids, unit:id()) or (assets and assets:is_asset_loaded(unit, "unit") or (add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")))) then
                     missing_units[unit] = true
                     missing = true
                 end
@@ -744,22 +745,26 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
         self:StorePreviousPosRot()
     end
     if missing then
-        BeardLibEditor.Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
-            local function find_packages()
-                for unit, _ in pairs(missing_units) do
-                    if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
-                        missing_units[unit] = nil
+        if assets then
+            BeardLibEditor.Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
+                local function find_packages()
+                    for unit, _ in pairs(missing_units) do
+                        if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                            missing_units[unit] = nil
+                        end
+                    end
+                    if table.size(missing_units) > 0 then
+                        assets:find_packages(missing_units, find_packages)
+                    else
+                        BeardLibEditor.Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
+                        all_ok_spawn()
                     end
                 end
-                if table.size(missing_units) > 0 then
-                    assets:find_packages(missing_units, find_packages)
-                else
-                    BeardLibEditor.Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
-                    all_ok_spawn()
-                end
-            end
-            find_packages()
-        end}})
+                find_packages()
+            end}})
+        else
+            BeardLibEditor.Utils:Notify("ERROR!", "Cannot spawn the prefab[Unloaded units]")
+        end
     else
         all_ok_spawn()
     end
