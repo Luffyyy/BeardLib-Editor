@@ -383,18 +383,17 @@ function wde:build_menu(layer)
 end
 
 function wde:build_wires_layer_menu()
-    local loaded_wires = self:Group("SpawnWire")
-    for _, wire in pairs(BeardLibEditor.Utils:GetUnits({type = "wire"})) do
-        self:Button(wire, function()
-            self._parent:SpawnUnit(wire)
-            self:build_menu("wires")
-        end)
-    end
-    local existing_wires = self:Group("ExistingWires")
+    local existing_wires = self:Group("Existing")
     managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
     for _, wire in pairs(managers.worlddefinition._world_data.wires) do
         local ud = wire.unit_data
         self:Button(ud.name_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
+    end
+    local loaded_wires = self:Group("Spawn")
+    for _, wire in pairs(BeardLibEditor.Utils:GetUnits({type = "wire", packages = self:Manager("utils")._assets_manager:get_level_packages()})) do
+        self:Button(wire, function()
+            self:Manager("utils"):BeginSpawning(wire)
+        end, {group = loaded_wires})
     end
 end
 

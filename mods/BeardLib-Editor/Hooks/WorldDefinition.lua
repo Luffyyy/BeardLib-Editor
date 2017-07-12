@@ -237,6 +237,38 @@ function self:delete_unit(unit)
 			self._unit_ids[continent_name][unit_id] = nil
 		end
 		self._all_units[unit_id] = nil
+		local unit_exists
+		local unit_name = unit:unit_data().name
+		for _, continent in pairs(self._continent_definitions) do
+			if unit_exists then
+				break
+			end
+			for _, static in pairs(continent.statics or {}) do
+				if static.name == unit_name then
+					unit_exists = true
+					break
+				end
+			end
+		end
+		if not unit_exists then
+			for _, static in pairs(managers.worlddefinition._world_data.wires or {}) do
+				if static.name == unit_name then
+					unit_exists = true
+					break
+				end
+			end
+		end
+		if not unit_exists then
+			for _, static in pairs(managers.worlddefinition._world_data.ai or {}) do
+				if static.name == unit_name then
+					unit_exists = true
+					break
+				end
+			end
+		end
+		if not unit_exists then
+			self._all_names[unit_name] = nil
+		end
 		local statics
 		if unit:wire_data() then
 			statics = managers.worlddefinition._world_data.wires

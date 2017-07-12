@@ -687,7 +687,7 @@ function StaticEditor:Paste()
 end
 
 function StaticEditor:SpawnPrefab(prefab)
-    self:SpawnCopyData(prefab)
+    self:SpawnCopyData(prefab, true)
     if self.x then
         local cam = managers.viewport:get_current_camera()
         self:SetAxisControls(cam:position() + cam:rotation():y(), self:AxisControlsRotation())
@@ -695,8 +695,18 @@ function StaticEditor:SpawnPrefab(prefab)
     end
 end
 
-function StaticEditor:SpawnCopyData(copy_data)
+function StaticEditor:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
+    local project = BeardLibEditor.managers.MapProject
+    local mod = project:current_mod()
+    local missing_units = {}
+    local missing
+    local assets = self:Manager("utils")._assets_manager
+    local data = mod and project:get_clean_data(mod._clean_config)
+    local add
+    if data then
+        add = project:get_level_by_id(data, Global.game_settings.level_id).add
+    end
     self:reset_selected_units()
     local continent = self._parent._current_continent
     for _, v in pairs(copy_data) do
@@ -714,16 +724,45 @@ function StaticEditor:SpawnCopyData(copy_data)
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id
+            local unit = v.unit_data.name
+            if not missing_units[unit] then
+                if not (assets:is_asset_loaded(unit, "unit") or (add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")))) then
+                    missing_units[unit] = true
+                    missing = true
+                end
+            end
         end
     end
-    for _, v in pairs(copy_data) do
-        if v.type == "element" then
-            self:Manager("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
-        elseif v.unit_data then
-            self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
+    local function all_ok_spawn()
+        for _, v in pairs(copy_data) do
+            if v.type == "element" then
+                self:Manager("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
+            elseif v.unit_data then
+                self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
+            end
         end
+        self:StorePreviousPosRot()
     end
-    self:StorePreviousPosRot()
+    if missing then
+        BeardLibEditor.Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
+            local function find_packages()
+                for unit, _ in pairs(missing_units) do
+                    if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                        missing_units[unit] = nil
+                    end
+                end
+                if table.size(missing_units) > 0 then
+                    assets:find_packages(missing_units, find_packages)
+                else
+                    BeardLibEditor.Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
+                    all_ok_spawn()
+                end
+            end
+            find_packages()
+        end}})
+    else
+        all_ok_spawn()
+    end
 end
 
 function StaticEditor:Clone()

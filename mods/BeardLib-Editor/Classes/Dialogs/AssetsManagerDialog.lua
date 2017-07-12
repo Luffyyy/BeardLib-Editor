@@ -57,7 +57,7 @@ function AssetsManagerDialog:_Show()
         group = self._unit_info,
         color = false,
     })
-    self:Button("FixBySearchingPackages", callback(self, self, "find_packages"), {group = self._unit_info})
+    self:Button("FixBySearchingPackages", callback(self, self, "find_packages", false), {group = self._unit_info})
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
@@ -158,18 +158,19 @@ function AssetsManagerDialog:find_package(unit, dontask)
     end
 end
 
-function AssetsManagerDialog:find_packages()
+function AssetsManagerDialog:find_packages(missing_units, clbk)
+    missing_units = missing_units or self._missing_units
     local packages = {}
     for name, package in pairs(BeardLibEditor.DBPackages) do
         for _, unit in pairs(package.unit or {}) do
-            if self._missing_units[unit] == true then
+            if missing_units[unit] == true then
                 packages[name] = packages[name] or {}
                 table.insert(packages[name], unit)
             end
         end
     end
     local items = {}
-    local missing_amount = table.size(self._missing_units)
+    local missing_amount = table.size(missing_units)
     for name, package in pairs(packages) do
         local size = BeardLibEditor.Utils:GetPackageSize(name)
         if size then
@@ -184,6 +185,9 @@ function AssetsManagerDialog:find_packages()
         force = true,
         callback = function(selection)
             self:add_package(selection.package)
+            if type(clbk) == "function" then
+                clbk()
+            end
             BeardLibEditor.managers.ListDialog:hide()
         end
     })
