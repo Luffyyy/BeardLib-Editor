@@ -168,8 +168,8 @@ function StaticEditor:update_positions()
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
             self:Manager("instances"):update_positions()
-            if self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
-                self:Manager("wdata").managers.env:save()
+            if self:Manager("wdata"):is_world_unit(unit:name()) then
+                self:Manager("wdata"):update_positions()
             end
             for i, control in pairs(self._axis_controls) do
                 self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
@@ -377,6 +377,7 @@ end
 function StaticEditor:reset_selected_units()
     self:Manager("mission"):remove_script()
     self:Manager("wdata").managers.env:check_units()
+    self:Manager("wdata").managers.sound:check_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
@@ -468,8 +469,8 @@ function StaticEditor:set_selected_unit(unit, add)
         if alive(unit) then
             if unit:mission_element() then
                 self:Manager("mission"):set_element(unit:mission_element().element)
-            elseif self:Manager("wdata").managers.env:is_env_unit(unit:name()) then
-                self:Manager("wdata").managers.env:build_unit_menu()
+            elseif self:Manager("wdata"):is_world_unit(unit:name()) then
+                self:Manager("wdata"):build_unit_menu()
             elseif unit:fake() then
                 self:Manager("instances"):set_instance()
             else

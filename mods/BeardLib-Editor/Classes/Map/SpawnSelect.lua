@@ -269,7 +269,7 @@ function SpawnSelect:OpenSelectUnitDialog(params)
         local ud = unit:unit_data()
         if ud and ud.name and not ud.instance then
             table.insert(units, table.merge({
-                name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "env" or tostring(ud.unit_id)) .."]",
+                name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "environment" or ud.sound_unit and "sound" or tostring(ud.unit_id)) .."]",
                 unit = unit,
                 color = params.choose_color and params.choose_color(unit),
             }, params))

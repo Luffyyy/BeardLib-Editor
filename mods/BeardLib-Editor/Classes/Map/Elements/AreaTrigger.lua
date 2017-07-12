@@ -8,6 +8,7 @@ end
 function EditorAreaTrigger:create_element()
 	EditorAreaTrigger.super.create_element(self)
 	self._element.class = "ElementAreaTrigger"
+	self._element.module = "CoreElementArea"
 	self._element.values.trigger_times = 1
 	self._element.values.interval = 0.1
 	self._element.values.trigger_on = "on_enter"
@@ -151,6 +152,7 @@ end
 function EditorAreaOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementAreaOperator"
+	self._element.module = "CoreElementArea"
 	self._element.values.elements = {}
 	self._element.values.interval = 0.1
 	self._element.values.trigger_on = "on_enter"
@@ -177,6 +179,7 @@ EditorAreaReportTrigger.ON_EXECUTED_ALTERNATIVES = {"enter", "leave", "empty", "
 function EditorAreaReportTrigger:create_element()
 	EditorAreaReportTrigger.super.create_element(self)
 	self._element.class = "ElementAreaReportTrigger"
+	self._element.module = "CoreElementArea"
 	self._element.values.trigger_on = nil
 end
 

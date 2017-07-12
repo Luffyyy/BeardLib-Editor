@@ -29,6 +29,7 @@
         <class file="Map/EditUnitLight.lua"/>
         <class file="Map/MissionScriptEditor.lua"/>
         <class file="Map/EnvironmentLayerEditor.lua"/>
+        <class file="Map/SoundLayerEditor.lua"/>
         <class file="ScriptDataConverterManager.lua"/>
         <class file="MapEditor.lua"/>
         <class file="EnvEditor.lua"/>
@@ -38,6 +39,7 @@
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
+        <hook source_file="core/lib/managers/coresoundenvironmentmanager" file="SoundEnvironmentManager.lua"/>
         <hook source_file="core/lib/managers/coreshapemanager" file="ShapeManager.lua"/>
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
@@ -71,6 +73,7 @@
                 <option type="number" default_value="1" name="GridSize" min="1" max="10000" step="1"/>
                 <option type="number" default_value="90" name="SnapRotation" min="1" max="360" step="1"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
+                <option type="boolean" default_value="false" name="SoundUnits"/>
                 <option type="boolean" default_value="false" name="EnvironmentUnits"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
@@ -97,11 +100,11 @@
         <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <cooked_physics path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>\
+        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>
         <unit path="core/units/environment_area/environment_area" force="true"/>
         <object path="core/units/environment_area/environment_area" force="true"/>
         <model path="core/units/environment_area/environment_area" force="true"/>
-        <cooked_physics path="core/units/environment_area/environment_area" force="true"/>        
+        <cooked_physics path="core/units/environment_area/environment_area" force="true"/>
         <unit path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
         <object path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
         <model path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
@@ -109,7 +112,20 @@
         <unit path="core/units/effect/effect" force="true"/>
         <object path="core/units/effect/effect" force="true"/>
         <model path="core/units/effect/effect" force="true"/>
-        <cooked_physics path="core/units/effect/effect" force="true"/> 
+        <cooked_physics path="core/units/effect/effect" force="true"/>
+        <unit path="core/units/sound_environment/sound_environment" force="true"/>
+        <object path="core/units/sound_environment/sound_environment" force="true"/>
+        <model path="core/units/sound_environment/sound_environment" force="true"/>
+        <cooked_physics path="core/units/sound_environment/sound_environment" force="true"/>
+        <unit path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <object path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <model path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <cooked_physics path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <unit path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <object path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <model path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <cooked_physics path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+
     </AddFiles>
     <MissionElements>
         <!--Custom Elements-->

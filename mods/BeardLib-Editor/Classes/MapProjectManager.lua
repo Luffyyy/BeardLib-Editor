@@ -109,13 +109,20 @@ function MapProjectManager:get_level_by_id(t, id)
     end
 end
 
-function MapProjectManager:get_clean_data(t)
-    local data = U:CleanCustomXmlTable(deep_clone(t), true)
+function MapProjectManager:get_clean_mod_config(mod)
+    local config = deep_clone(mod._clean_config)
+    for i, module in pairs(mod._modules) do
+        if module.clean_table and config[i] then
+            module:do_clean_table(config[i])
+        end
+    end
+    return config
+end
+
+function MapProjectManager:get_clean_data(t, no_clone)
+    local data = U:CleanCustomXmlTable(not no_clone and deep_clone(t) or t, true)
     local narrative = U:GetNodeByMeta(data, "narrative")
     U:RemoveAllNumberIndexes(narrative, true)
-    for _, v in pairs(narrative.chain) do
-        v = U:RemoveAllNumberIndexes(v, true)
-    end
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
         for _, v in pairs({"include", "assets", "script_data_mods", "add"}) do
@@ -124,6 +131,7 @@ function MapProjectManager:get_clean_data(t)
             end
         end
     end
+
     return data
 end
 
@@ -318,7 +326,7 @@ function MapProjectManager:_select_project(mod, save_prev)
     end
     self._current_mod = mod
     BeardLibEditor.managers.ListDialog:hide()
-    self:edit_main_xml(mod._clean_config, function()        
+    self:edit_main_xml(self:get_clean_mod_config(mod), function()        
         local t = self._current_data
         local id = t.orig_id or t.name
         local map_path = U.Path:Combine(BeardLib.config.maps_dir, id)
@@ -508,7 +516,7 @@ function MapProjectManager:set_crimenet_videos_dialog()
 end
 
 function MapProjectManager:edit_main_xml(data, save_clbk)
-    self._curr_editing:ClearItems()
+    self:reset_menu()
     self:set_edit_title(tostring(data.name))
     data = self:get_clean_data(data)
     local narr = U:GetNodeByMeta(data, "narrative")
@@ -517,11 +525,12 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
         BeardLibEditor:log("[ERROR] Narrative data is missing from the main.xml!")
         return
     end
+    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, border_bottom = true, border_left = false, last_y_offset = 0}
     local up = callback(self, self, "set_project_data")
-    local narrative = self:DivGroup("Narrative", {group = self._curr_editing})
+    local narrative = self:DivGroup("Narrative", divgroup_opt)
     self:TextBox("ProjectName", up, data.name, {group = narrative})
     local contacts = table.map_keys(tweak_data.narrative.contacts)
-    self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact), {group = narrative})
+    self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact or "custom"), {group = narrative})
     self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
     narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
     narr.debrief_event = type(narr.debrief_event) == "table" and narr.debrief_event or {narr.debrief_event}
@@ -529,10 +538,10 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
     self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
     self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
-    local chain = self:DivGroup("Chain", {group = self._curr_editing})
+    local chain = self:DivGroup("Chain", divgroup_opt)
     self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
     self:Button("AddNewLevel", callback(self, self, "new_level_dialog", ""), {group = chain})
-    local levels_group = self:DivGroup("Levels", {group = chain})
+    local levels_group = self:DivGroup("Levels", {group = chain, last_y_offset = 6})
     local function get_level(level_id)
         for _, v in pairs(levels) do
             if v.id == level_id then
@@ -540,12 +549,45 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
             end
         end
     end
-    for _, level_in_chain in pairs(narr.chain) do
-        if type(level_in_chain) == "table" then
-            local level_id = level_in_chain.level_id
-            local level = get_level(level_id)
-            local btn = self:Button(level_id, level and function() self:edit_main_xml_level(data, level, level_in_chain, save_clbk) end, {group = levels_group})
-            self:SmallButton(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), btn, {text = "x", w = btn.h, marker_highlight_color = Color.red})
+    local function build_level_ctrls(level_in_chain, chain_group, btn)
+        local narr_chain = chain_group or narr.chain
+        local my_index = table.get_key(narr_chain, level_in_chain)
+
+        local near
+        local function small_button(name, clbk, texture_rect, opt)
+            near = self:SmallImageButton(name, clbk, "textures/editor_icons_df", texture_rect, btn, table.merge({
+                size_by_text = true,
+                position = near and function(item) item:Panel():set_righttop(near:Panel():left(), 0) end
+            }, opt or {}))
+        end
+        if level_in_chain.level_id then
+            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), {184, 2, 48, 48}, {marker_highlight_color = Color.red})
+            if chain_group then
+                small_button("Ungroup", SimpleClbk(self.ungroup_level, self, narr, level_in_chain, chain_group), {156, 54, 48, 48})
+            else
+                small_button("Group", SimpleClbk(self.group_level, self, narr, level_in_chain), {104, 55, 48, 48})
+            end        
+        end
+        small_button("MoveDown", SimpleClbk(self.set_chain_index, self, narr_chain, level_in_chain, my_index + 1), {57, 55, 48, 48}, {enabled = my_index < #narr_chain})
+        small_button("MoveUp", SimpleClbk(self.set_chain_index, self, narr_chain, level_in_chain, my_index - 1), {4, 55, 48, 48}, {enabled = my_index > 1})
+    end
+    local function build_level_button(level_in_chain, chain_group, group)
+        local level_id = level_in_chain.level_id
+        local level = get_level(level_id)
+        local btn = self:Button(level_id, level and SimpleClbk(self.edit_main_xml_level, self, data, level, level_in_chain, chain_group, save_clbk), {group = group or levels_group})
+        return level_in_chain, chain_group, btn
+    end
+    for i, v in pairs(narr.chain) do
+        if type(v) == "table" then
+            if v.level_id then
+                build_level_ctrls(build_level_button(v, false))
+            else
+                local grouped = self:DivGroup("Day "..tostring(i).."[Grouped]", {group = levels_group})
+                build_level_ctrls(v, nil, grouped)
+                for k, level in pairs(v) do
+                    build_level_ctrls(build_level_button(level, v, grouped, k == 1))
+                end
+            end
         end
     end
     if #levels_group._my_items == 0 then
@@ -558,9 +600,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     self._payouts = {}  
     local function convertnumber(n)
         local t = {}
-        for i=1, #self._diffs do
-            table.insert(t, n)
-        end
+        for i=1, #self._diffs do table.insert(t, n) end
         return t
     end
     narr.contract_cost = type(narr.contract_cost) == "table" and narr.contract_cost or convertnumber(narr.contract_cost)
@@ -568,19 +608,40 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
     narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
     narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
-    local diff_settings = self:DivGroup("DifficultySettings", {group = self._curr_editing})
+    local diff_settings = self:DivGroup("DifficultySettings", divgroup_opt)
+    local diff_settings_holder = self:Menu("DifficultySettingsHolder", {group = diff_settings, align_method = "grid", offset = {diff_settings.offset[1], 0}})
+    local diff_settings_opt = {group = diff_settings_holder, w = 150, offset = {2, 6}, items_size = 18}
+    local diff_settings_texts = self:DivGroup("Setting", diff_settings_opt)
+    local div_texts_opt = {group = diff_settings_texts, size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
+    self:Divider("Contract Cost", div_texts_opt)
+    self:Divider("Payout", div_texts_opt)
+    self:Divider("Stealth XP bonus", div_texts_opt)
+    self:Divider("Minimum mission XP", div_texts_opt)
+    self:Divider("Maximum mission XP", div_texts_opt)
+    diff_settings_opt.w = (diff_settings_holder:ItemsWidth() - diff_settings_texts:Width() - 1) / #self._diffs
     for i, diff in pairs(self._diffs) do
-        local group = self:Group(diff, {group = diff_settings, closed = true})
-        self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, text = "Contract Cost"})
-        self._experience_multipliers[i] = self:NumberBox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, group = group, text = "Stealth XP bonus"})
-        self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, text = "Minimum mission XP"})
-        self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, text = "Maximum mission XP"})
-        self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, text = "Payout"})
+        local group = self:DivGroup(diff, diff_settings_opt)
+        self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
+        self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
+        self._experience_multipliers[i] = self:NumberBox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
+        self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
+        self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
     end 
-   -- self:Button("Delete", callback(self, self, "delete_project"), {group = self._curr_editing, marker_highlight_color = Color.red})
-    self:Button("Save", save_clbk, {group = self._curr_editing})
-    self:Button("Close", callback(self, self, "disable"), {group = self._curr_editing})
+    local near
+    local function small_button(name, clbk, texture_rect)
+        near = self:SmallButton(name, clbk, self._curr_editing, {
+            w = 100,
+            size_by_text = false,
+            border_bottom = true,
+            position = near and function(item) item:Panel():set_righttop(near:Panel():left() - 4, 0) end or "RightTop"
+        })
+    end
+
+    small_button("Save", save_clbk)
+    --small_button("Delete", callback(self, self, "delete_project"))
+    small_button("Close", callback(self, self, "disable"))
     self._current_data = data
+    self._refresh_func = function() self:edit_main_xml(data, save_clbk) end
 end
 
 function MapProjectManager:delete_project(menu, item)
@@ -624,47 +685,108 @@ function MapProjectManager:set_project_data(menu, item)
     self:set_edit_title(title)
 end
 
-function MapProjectManager:set_mission_assets_dialog()
-    local assets = U:GetNodeByMeta(self._current_data, "level").assets
-    BeardLibEditor.managers.SelectDialog:Show({
-        selected_list = assets,
-        list = table.map_keys(tweak_data.assets),
-        callback = function(list) assets = list end
-    })
-end
-
-function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, save_clbk)
+function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
     self._curr_editing:ClearItems()
-    local level_group = self:Group("Level", {group = self._curr_editing})
     local up = callback(self, self, "set_project_level_data", level_in_chain)
-    self:TextBox("LevelId", up, level.id, {group = level_group})    
-    --self:Button("ManagePackages", nil, {group = level_group}) Should be managed in the map editor imo
+    self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
+    self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
+    self:TextBox("IntroEvent", up, type(level.intro_event) == "table" and table.concat(level.intro_event, ",") or level.intro_event, {group = self._curr_editing})
+    self:TextBox("OutroEvent", up, type(level.intro_event) == "table" and table.concat(level.outro_event, ",") or level.outro_event, {group = self._curr_editing})
+    self:NumberBox("GhostBonus", up, level.ghost_bonus, {max = 1, min = 0, group = self._curr_editing})
+    self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = self._curr_editing})
     local aitype = table.map_keys(LevelsTweakData.LevelType)
-    self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = level_group})
-    self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = level_group}, {group = level_group})
-    self:NumberBox("GhostBonus", up, level.ghost_bonus, {max = 1, min = 0, group = level_group})
-    self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = level_group})    
-    self:Toggle("TeamAiOff", up, level.team_ai_off, {group = level_group})
+    self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
     level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
     level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
-    self:TextBox("IntroEvent", up, table.concat(level.intro_event, ","), {group = level_group})
-    self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = level_group})
-    --self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = level_group})
-    self:Button("SaveAndGoBackToProject", save_clbk, {group = self._curr_editing})
-    self:Button("GoBackToProject", function() self:edit_main_xml(data, save_clbk) end, {group = self._curr_editing})
-    self:set_edit_title(tostring(data.name) .. " > " .. tostring( level.id ))
-end 
+    self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
+    self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = self._curr_editing})
+    local near = self:GetItem("Close")
+    local function small_button(name, clbk, texture_rect)
+        near = self:SmallButton(name, clbk, self._curr_editing, {
+            w = 100,
+            size_by_text = false,
+            border_bottom = true,
+            position = near and function(item) item:Panel():set_righttop(near:Panel():left() - 4, 0) end or "RightTop"
+        })
+    end
+    small_button("Back", SimpleClbk(self.edit_main_xml, self, data, save_clbk))
+    self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))
+    self._refresh_func = function() self:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk) end
+end
+
+function MapProjectManager:set_mission_assets_dialog()
+    local selected_assets = {}
+    for _, asset in pairs(U:GetNodeByMeta(self._current_data, "level").assets) do
+        if type(asset) == "table" and asset._meta == "asset" then
+            table.insert(selected_assets, {name = asset.name, value = asset.exclude == true})
+        end
+    end
+    local assets = {}
+    for _, asset in pairs(table.map_keys(tweak_data.assets)) do
+        table.insert(assets, {name = asset, value = false})
+    end
+	BeardLibEditor.managers.SelectDialogValue:Show({
+		selected_list = selected_assets,
+		list = assets,
+		values_name = "Exclude",
+        values_list_width = 100,
+		callback = function(list)
+            local new_assets = {}
+            for _, asset in pairs(list) do
+                table.insert(new_assets, {_meta = "asset", name = asset.name, exclude = asset.value == true and true or nil})
+            end
+            U:GetNodeByMeta(self._current_data, "level").assets = new_assets
+        end
+	})
+end
+
+function MapProjectManager:set_chain_index(narr_chain, chain_tbl, index)
+    table.delete(narr_chain, chain_tbl)
+    table.insert(narr_chain, tonumber(index), chain_tbl)
+    self._refresh_func()
+end
+
+function MapProjectManager:ungroup_level(narr, level_in_chain, chain_group)
+    table.delete(chain_group, level_in_chain)
+    if #chain_group == 1 then
+        chain_group = chain_group[1]
+    end
+    table.insert(narr.chain, level_in_chain)
+    self._refresh_func()
+end
+
+function MapProjectManager:group_level(narr, level_in_chain)
+    local chain = {}
+    for i, v in pairs(narr.chain) do
+        if v ~= level_in_chain then
+            table.insert(chain, {name = v.level_id or "Day "..tostring(i).."[Grouped]", value = v})
+        end
+    end
+    BeardLibEditor.managers.ListDialog:Show({
+        list = chain,
+        callback = function(selection)
+            table.delete(narr.chain, level_in_chain)
+            local chain_group = selection.value
+            if chain_group.level_id then
+                chain_group = {chain_group}
+            end
+            table.insert(chain_group, level_in_chain)
+            BeardLibEditor.managers.ListDialog:hide()
+            self._refresh_func()
+        end
+    })
+end
 
 function MapProjectManager:set_project_level_data(level_in_chain)
     local t = self._current_data
     local level = U:GetNodeByMeta(t, "level")   
     local old_name = level.orig_id or level.id
     level.id = self:GetItem("LevelId"):Value()
-    local title = tostring(t.name) .. " > " .. tostring(level.id)
+    local title = tostring(t.name) .. ":" .. tostring(level.id)
     if old_name ~= level.id then
         if level.id == "" and tweak_data.levels[level.id] then
             level.id = old_name
-            title = tostring(t.name) .. " > " .. tostring(level.id).."[Warning: current level id already exists or id is empty, not saving Id]"
+            title = tostring(t.name) .. ":" .. tostring(level.id).."[Warning: current level id already exists or id is empty, not saving Id]"
         else
             level.orig_id = level.orig_id or old_name
         end
@@ -682,9 +804,17 @@ function MapProjectManager:set_project_level_data(level_in_chain)
     self:set_edit_title(title)
 end
 
+function MapProjectManager:reset_menu()
+    self._curr_editing:ClearItems()
+    for _, item in pairs(self._curr_editing._adopted_items) do
+        item:Destroy()
+    end
+    self:set_edit_title()
+end
+
 function MapProjectManager:disable()
     self._current_data = nil
     self._current_mod = nil
-    self._curr_editing:ClearItems()
-    self:set_edit_title()
+    self._refresh_func = nil
+    self:reset_menu()
 end

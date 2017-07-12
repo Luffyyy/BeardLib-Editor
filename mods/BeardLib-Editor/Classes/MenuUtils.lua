@@ -117,12 +117,9 @@ function MenuUtils:init(this, menu)
 	    return m:ImageButton(table.merge({
 	        name = name,
 	        callback = callback,
-	        position = function(item)
-	        	item:SetPositionByString("CenterRight")
-	        	item:Panel():move(-1)
-	        end,
+	        position = "TopRight",
 	        items_size = parent.items_size,
-	        size_by_icon = false,
+	        size_by_text = true,
 	        texture = texture,
 	        texture_rect = rect,
 	        override_parent = parent,
@@ -147,7 +144,6 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
-	        line_color = color,
 	        value = value
 	    }, opt))
 	end
@@ -167,7 +163,6 @@ function MenuUtils:init(this, menu)
 	    return m:NumberBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	       	line_color = color,
 	        value = value,
 	        callback = callback,
 	    }, opt))

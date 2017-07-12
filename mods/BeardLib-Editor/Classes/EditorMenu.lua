@@ -1,11 +1,13 @@
 EditorMenu = EditorMenu or class() 
 function EditorMenu:init()
     self._menus = {}
+    local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
 	self._main_menu = MenuUI:new({
         name = "Editor",
         layer = 400,
         background_blur = true,
-        marker_highlight_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        accent_color = accent_color,
+        marker_highlight_color = accent_color,
 		create_items = callback(self, self, "create_items"),
 	})
 	MenuCallbackHandler.BeardLibEditorMenu = callback(self, self, "set_enabled", true)
@@ -23,7 +25,6 @@ function EditorMenu:make_page(name, clbk, opt)
         name = name,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         items_size = 20,
-        disabled_alpha = 1,
         visible = false,
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,

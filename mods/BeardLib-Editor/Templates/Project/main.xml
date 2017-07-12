@@ -1,6 +1,6 @@
 <table name="map">
 	<Localization default="english.txt" directory="loc"/>
-	<narrative contact="bain" id="map">
+	<narrative contact="custom" id="map">
 		<chain>
 		</chain>
 		<contract_cost>

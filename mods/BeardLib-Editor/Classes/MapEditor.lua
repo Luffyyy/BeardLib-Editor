@@ -182,17 +182,7 @@ function me:DeleteUnit(unit)
         end
         local ud = unit:unit_data()
         if ud then
-            if ud.occ_shape then
-                ud.occ_shape:set_unit()
-                ud.occ_shape:destroy()
-            end
-            if ud.environment_area then
-                ud.environment_area:set_unit()
-                managers.environment_area:remove_area(ud.environment_area)
-            end
-            if ud.current_effect then
-                World:effect_manager():kill(ud.current_effect)
-            end
+            m.wdata:delete_unit(unit)
             managers.worlddefinition:delete_unit(unit)
         end
         World:delete_unit(unit)
@@ -200,10 +190,10 @@ function me:DeleteUnit(unit)
 end
 
 function me:SpawnUnit(unit_path, old_unit, add, unit_id)   
-    if m.wdata.managers.env:is_env_unit(unit_path) then
+    if m.wdata:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = data.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
-        local unit = m.wdata.managers.env:do_spawn_unit(unit_path, data)
+        local unit = m.wdata:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
         return
     end

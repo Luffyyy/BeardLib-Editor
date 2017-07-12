@@ -46,14 +46,11 @@ function EnvironmentLayerEditor:data()
 	return self._parent:data().environment
 end
 
-function EnvironmentLayerEditor:is_env_unit(unit)
-	if not unit then
-		return false
-	end
-	unit = unit:id()
+function EnvironmentLayerEditor:is_my_unit(unit)
 	if unit == self._environment_area_unit:id() or unit == self._effect_unit:id() or unit == self._dome_occ_shape_unit:id() then
 		return true
 	end
+	return false
 end
 
 function EnvironmentLayerEditor:_load_wind(wind)
@@ -159,6 +156,7 @@ function EnvironmentLayerEditor:update(t, dt)
 		end
 	end
 	if self:Value("EnvironmentUnits") then
+		local selected_units = self:selected_units()
 		for k, unit in ipairs(self._created_units) do
 			if alive(unit) then
 				if unit:unit_data().current_effect then
@@ -170,7 +168,7 @@ function EnvironmentLayerEditor:update(t, dt)
 				end
 				if unit:name() == Idstring(self._environment_area_unit) then
 					local r, g, b = 0, 0.5, 0.5
-					if alive(self._selected_unit) and unit == self._selected_unit then
+					if table.contains(selected_units, unit) then
 						r, g, b = 0, 1, 1
 					end
 					Application:draw(unit, r, g, b)
@@ -178,7 +176,7 @@ function EnvironmentLayerEditor:update(t, dt)
 				end		
 				if self._draw_occ_shape and self._draw_occ_shape:Value() and unit:name() == Idstring(self._dome_occ_shape_unit) then
 					local r, g, b = 0.5, 0, 0.5
-					if alive(self._selected_unit) and unit == self._selected_unit then
+					if table.contains(selected_units, unit) then
 						r, g, b = 1, 0, 1
 					end
 					Application:draw(unit, r, g, b)
@@ -219,8 +217,8 @@ function EnvironmentLayerEditor:build_menu()
     }
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
     local utils = self:Manager("utils")
-    self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", "core/units/effect/effect"), {group = environment_group})
-    self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", "core/units/environment_area/environment_area"), {group = environment_group})
+    self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
+    self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
     local dome_occ = self:Group("DomeOcclusion", {visible = false}) 
     self._draw_occ_shape = self:Toggle("Draw", nul, false, {group = dome_occ})
     self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ, enabled = false})
@@ -236,6 +234,23 @@ function EnvironmentLayerEditor:build_menu()
     self._wind_text = self:Divider("Beaufort/WindDesc")
     self:update_wind_speed_labels()
     self:Slider("SpeedVariation", callback(self, self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
+end
+
+function EnvironmentLayerEditor:delete_unit(unit)
+	local ud = unit:unit_data()
+	if ud then
+		if ud.occ_shape then
+			ud.occ_shape:set_unit()
+			ud.occ_shape:destroy()
+		end
+		if ud.environment_area then
+			ud.environment_area:set_unit()
+			managers.environment_area:remove_area(ud.environment_area)
+		end
+		if ud.current_effect then
+			World:effect_manager():kill(ud.current_effect)
+		end
+	end
 end
 
 function EnvironmentLayerEditor:build_unit_menu()
@@ -497,8 +512,9 @@ function EnvironmentLayerEditor:do_spawn_unit(unit_path, ud)
 	table.insert(self._created_units, unit)
 	if alive(unit) then
 		if unit:name() == Idstring(self._environment_area_unit) then
-			if not unit:unit_data().environment_area then
-				unit:unit_data().environment_area = managers.environment_area:add_area({})
+			local area = unit:unit_data().environment_area
+			if not area or area:unit() ~= unit then
+				unit:unit_data().environment_area = managers.environment_area:add_area(area and area:save_level_data() or {})
 				unit:unit_data().environment_area:set_unit(unit)
 			end
 		end

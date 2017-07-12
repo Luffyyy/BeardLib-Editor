@@ -13,6 +13,33 @@ function wde:loaded_continents()
     end
 end
 
+function wde:do_spawn_unit(unit, data)
+    for _, manager in pairs(self.managers) do
+        if manager.is_my_unit and manager:is_my_unit(unit:id())  then
+            return manager:do_spawn_unit(unit, data)
+        end
+    end
+end
+
+function wde:is_world_unit(unit)
+    unit = unit:id()
+    for _, manager in pairs(self.managers) do
+        if manager.is_my_unit and manager:is_my_unit(unit) then
+            return true
+        end
+    end
+    return false
+end
+
+function wde:build_unit_menu()
+    local selected_unit = self:selected_unit()
+    for _, manager in pairs(self.managers) do
+        if manager.build_unit_menu and manager:is_my_unit(selected_unit:name():id()) then
+            manager:build_unit_menu()
+        end
+    end
+end
+
 function wde:update_positions()
     local shape = self._selected_shape
     self:SetAxisControlsEnabled(shape ~= nil)
@@ -20,6 +47,12 @@ function wde:update_positions()
     if shape then
         self:SetAxisControls(shape:position(), shape:rotation())
         self:SetShapeControls(shape._properties)
+    end
+    local selected_unit = self:selected_unit()
+    for _, manager in pairs(self.managers) do
+        if manager.save and manager:is_my_unit(selected_unit:name():id()) then
+            manager:save()
+        end
     end
 end
 
@@ -29,11 +62,11 @@ end
 
 function wde:build_default_menu()
     self.super.build_default_menu(self)
-    self.managers = self.managers or {env = EnvironmentLayerEditor:new(self)}
+    self.managers = self.managers or {env = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self)}
     self._selected_portal = nil
     self._selected_shape = nil
     local layers = self:DivGroup("Layers")
-    for _, layer in pairs({"ai", {name = "environment", class = self.managers.env}, "portals", "wires"}) do
+    for _, layer in pairs({"ai", {name = "environment", class = self.managers.env}, {name = "sound", class = self.managers.sound}, "portals", "wires"}) do
         local tbl = type(layer) == "table"
         self:Button(tbl and layer.name or layer, callback(self, self, "build_menu", tbl and layer.class or layer), {group = layers})
     end
@@ -85,6 +118,11 @@ function wde:rename_continent(continent)
     BeardLibEditor.managers.InputDialog:Show({title = "Rename continent to", text = continent, callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+                self:rename_continent(continent)
+            end})
+            return
+        elseif name == "environments" or string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_continent(continent)
             end})
             return
@@ -191,6 +229,11 @@ function wde:new_continent()
                 self:new_continent()
             end})
             return
+        elseif name == "environments" or string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:new_continent()
+            end})
+            return
         end
         local worlddef = managers.worlddefinition
         managers.mission._missions[name] = managers.mission._missions[name] or {}
@@ -209,6 +252,11 @@ function wde:add_new_mission_script(menu, item)
     BeardLibEditor.managers.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+                self:add_new_mission_script()
+            end})
+            return
+        elseif string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:add_new_mission_script()
             end})
             return
@@ -247,6 +295,11 @@ function wde:rename_script(script, menu, item)
                 self:rename_script(script, menu, item)
             end})
             return
+        elseif string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:rename_script(script, menu, item)
+            end})
+            return
         end
         local mission = managers.mission
         if mission._scripts[name] then
@@ -264,6 +317,14 @@ end
 
 function wde:clear_all_elements_from_script(script, menu, item)
     self:_clear_all_elements_from_script(script, item.continent)
+end
+
+function wde:delete_unit(unit)
+    for  _, manager in pairs(self.managers) do
+        if manager.delete_unit then
+            manager:delete_unit(unit)
+        end
+    end
 end
 
 function wde:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)
@@ -392,6 +453,11 @@ function wde:rename_portal(menu, item, selection)
                 self:rename_portal(menu, item, selection)
             end})
             return
+        elseif string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:rename_portal(menu, item, selection)
+            end})
+            return
         end
         managers.portal:rename_unit_group(item.name, new_name)
         self:load_portals()
@@ -422,6 +488,11 @@ function wde:add_portal(menu, item)
     BeardLibEditor.managers.InputDialog:Show({title = "Portal name", text = item.name, callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+                self:add_portal(menu, item)
+            end})
+            return
+        elseif string.begins(name, " ") then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:add_portal(menu, item)
             end})
             return

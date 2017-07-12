@@ -29,7 +29,7 @@ function self:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
-    self._dialogs_opt = {marker_highlight_color = acc_color, background_color = bg_color}
+    self._dialogs_opt = {marker_highlight_color = acc_color, accent_color = acc_color, background_color = bg_color}
     M.Dialog = MenuDialog:new(self._dialogs_opt)
     M.ListDialog = ListDialog:new(self._dialogs_opt)
     M.SelectDialog = SelectListDialog:new(self._dialogs_opt)
@@ -125,18 +125,21 @@ function self:LoadHashlist()
     if Global.DBPaths and Global.DBPackages then
         self.DBPaths = Global.DBPaths
         self.DBPackages = Global.DBPackages
+        self.WorldSounds = Global.WorldSounds
         self:log("DBPaths already loaded")
     else
         self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary") 
         self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary") 
+        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), "binary") 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
         Global.DBPackages = self.DBPackages
+        Global.WorldSounds = self.WorldSounds
     end
 end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
-function self:GenerateData()
+function self:GeneratePackageData()
     local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
     local lines = io.lines(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
@@ -167,6 +170,49 @@ function self:GenerateData()
     FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
     Global.DBPaths = nil
     self:LoadHashlist()
+end
+
+--Gets all emitters and occasionals from extracted .world_sounds
+function self:GenerateSoundData()
+    local sounds = {}
+    local function get_sounds(path)
+        for _, file in pairs(FileIO:GetFiles(path)) do
+            if string.ends(file, ".world_sounds") then
+                local data = FileIO:ReadScriptDataFrom(Path:Combine(path, file), "binary")
+                if not table.contains(sounds, data.default_ambience) then
+                    table.insert(sounds, data.default_ambience)
+                end
+                if not table.contains(sounds, data.default_occasional) then
+                    table.insert(sounds, data.default_occasional)
+                end
+                for _, v in pairs(data.sound_area_emitters) do
+                    if not table.contains(sounds, v.emitter_event) then
+                        table.insert(sounds, v.emitter_event)
+                    end
+                end
+                for _, v in pairs(data.sound_emitters) do
+                    if not table.contains(sounds, v.emitter_event) then
+                        table.insert(sounds, v.emitter_event)
+                    end
+                end
+                for _, v in pairs(data.sound_environments) do
+                    if not table.contains(sounds, v.ambience_event) then
+                        table.insert(sounds, v.ambience_event)
+                    end
+                    if not table.contains(sounds, v.occasional_event) then
+                        table.insert(sounds, v.occasional_event)
+                    end
+                end
+            end
+        end
+        for _, folder in pairs(FileIO:GetFolders(path)) do
+            get_sounds(Path:Combine(path, folder))
+        end
+    end
+    get_sounds("assets/extract/levels")
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
+    self.WorldSounds = sounds
+    Global.WorldSounds = sounds
 end
 
 function self:LoadCustomAssetsToHashList(add)

@@ -16,15 +16,16 @@ function GameOptions:build_default_menu()
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1, group = main})
     self:Slider("GridSize", callback(self, self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
     self:Slider("SnapRotation", callback(self, self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})
+    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     local map = self:DivGroup("Map", groups_opt)
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
-    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = map, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editro units"})
     self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
+    self:Toggle("SoundUnits", callback(self, self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
     self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"), {group = map})
@@ -177,7 +178,7 @@ function GameOptions:save()
         {_meta = "file", file = "continents.continents", type = cusxml},
         {_meta = "file", file = "mission.mission", type = cusxml},
         {_meta = "file", file = "nav_manager_data.nav_data", type = xml},
-        {_meta = "file", file = "world_sounds.world_sounds", type = cusxml},
+        {_meta = "file", file = "world_sounds.world_sounds", type = xml},
         {_meta = "file", file = "world_cameras.world_cameras", type = cusxml}
     }
     local worlddef = managers.worlddefinition
@@ -213,7 +214,7 @@ function GameOptions:save()
         end
         self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
-        self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, cusxml))
+        self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, xml))
 
         local wcd = deep_clone(worlddef._world_cameras_data)
         if wcd.sequences and #wcd.sequences == 0 then
@@ -227,7 +228,7 @@ function GameOptions:save()
         self:save_cover_data(include)
         self:save_nav_data(include)
         for _, folder in pairs(FileIO:GetFolders(map_path)) do
-            if not worlddef._continent_definitions[folder] then
+            if folder ~= "environments" and not worlddef._continent_definitions[folder] then
                 FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
             end
         end
@@ -249,11 +250,11 @@ function GameOptions:save()
 end
 
 function GameOptions:save_main_xml(include)
-    local proj = BeardLibEditor.managers.MapProject
-    local mod = proj:current_mod()
-    local data = mod and proj:get_clean_data(mod._clean_config)
+    local project = BeardLibEditor.managers.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
     if data then
-        local level = proj:get_level_by_id(data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local temp = include and table.list_add(include, clone(level.include)) or level.include
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do
@@ -270,7 +271,7 @@ function GameOptions:save_main_xml(include)
                 end
             end
         end
-        proj:map_editor_save_main_xml(data)
+        project:map_editor_save_main_xml(data)
     end
 end
 

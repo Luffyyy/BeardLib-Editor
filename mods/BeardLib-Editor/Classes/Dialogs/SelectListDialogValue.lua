@@ -13,9 +13,10 @@ function SelectListDialogValue:MakeListItems(params)
     self._list_menu:ClearItems()
     self._tbl.values_name = self._tbl.values_name or params and params.values_name
     self._tbl.combo_items_func = self._tbl.combo_items_func or params and params.combo_items_func
-    self._list_items_menu = self:DivGroup("Select or Deselect", {w = self._list_menu:ItemsWidth() - (self._tbl.values_name and 200 or 0), offset = 0, auto_align = false})
+    self._tbl.values_list_width = self._tbl.values_list_width or params and params.values_list_width or 200
+    self._list_items_menu = self:DivGroup("Select or Deselect", {w = self._list_menu:ItemsWidth() - (self._tbl.values_name and self._tbl.values_list_width or 0), offset = 0, auto_align = false})
     if self._tbl.values_name then
-    	self._values_list_menu = self:DivGroup(self._tbl.values_name, {w = 200, offset = 0, auto_align = false})
+    	self._values_list_menu = self:DivGroup(self._tbl.values_name, {w = self._tbl.values_list_width, offset = 0, auto_align = false})
     end
     self.super.MakeListItems(self, params)
 end
@@ -31,6 +32,8 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
     if self._tbl.values_name then
 	    if tonumber(value.value) then
 	        self:NumberBox("", callback(self, self, "ValueClbk", value), value.value, opt)
+        elseif type(value.value) == "boolean" then
+            self:Toggle("", callback(self, self, "ValueClbk", value), value.value, opt)
 	    elseif value.value then
             if self._tbl.combo_items_func then
                 local items = self._tbl.combo_items_func(name, value)

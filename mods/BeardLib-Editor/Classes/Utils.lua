@@ -454,6 +454,9 @@ local allowed_units = {
     ["core/units/nav_surface/nav_surface"] = true,
     ["units/dev_tools/level_tools/ai_coverpoint"] = true,
     ["core/units/environment_area/environment_area"] = true,
+    ["core/units/sound_environment/sound_environment"] = true,
+    ["core/units/sound_emitter/sound_emitter"] = true,
+    ["core/units/sound_area_emitter/sound_area_emitter"] = true,
 }
 function self:GetUnits(params)
     local units = {}

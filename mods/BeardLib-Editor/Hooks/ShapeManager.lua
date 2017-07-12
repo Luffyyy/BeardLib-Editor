@@ -1,3 +1,7 @@
+if not Global.editor_mode then
+	return
+end
+
 core:module("CoreShapeManager")
 core:import("CoreXml")
 core:import("CoreMath")
@@ -13,6 +17,16 @@ function Shape:init(params)
 		self._min_value = 10
 		self._max_value = 10000000
 	end
+end
+
+function Shape:get_params()
+	local params = {}
+	for k, v in pairs(self) do
+		if string.begins(k, "_") and not (k == "position" or k == "rotation")  then
+			params[string.sub(k, 2)] = v
+		end
+	end
+	return params
 end
 
 function Shape:create_panel() end
