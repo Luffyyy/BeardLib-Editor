@@ -365,6 +365,7 @@ end
 function MapProjectManager:new_project_dialog(name, clbk, no_callback)
     BeardLibEditor.managers.InputDialog:Show({
         title = "Enter a name for the project",
+        yes = "Create project",
         text = name or "",
         no_callback = no_callback,
         check_value = callback(self, self, "check_narrative_name"),
@@ -375,6 +376,7 @@ end
 function MapProjectManager:new_level_dialog(name, clbk, no_callback)
     BeardLibEditor.managers.InputDialog:Show({
         title = "Enter a name for the level", 
+        yes = "Create level",
         text = name or "",
         no_callback = no_callback,
         check_value = callback(self, self, "check_level_name"),

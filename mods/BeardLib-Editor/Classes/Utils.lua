@@ -514,7 +514,7 @@ function self:YesNoQuestion(msg, clbk, no_clbk)
 end
 
 function self:QuickDialog(opt, items)
-    QuickDialog(table.merge({dialog = BeardLibEditor.managers.Dialog}, opt), items)
+    QuickDialog(table.merge({dialog = BeardLibEditor.managers.Dialog, no = "No"}, opt), items)
 end
 
 FakeObject = FakeObject or class()
