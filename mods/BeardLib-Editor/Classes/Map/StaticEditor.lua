@@ -726,10 +726,14 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
             end
             v.unit_data.unit_id = new_final_id
             local unit = v.unit_data.name
-            if not missing_units[unit] then
-                if not assets and not PackageManager:has(unit_ids, unit:id()) or (assets and assets:is_asset_loaded(unit, "unit") or (add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")))) then
+            if missing_units[unit] == nil then
+                local is_preview_not_loaded = (not assets and not PackageManager:has(unit_ids, unit:id()))
+                local not_loaded = not ((assets and assets:is_asset_loaded(unit, "unit") or (add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")))))
+                if is_preview_not_loaded or not_loaded then
                     missing_units[unit] = true
                     missing = true
+                else
+                    missing_units[unit] = false
                 end
             end
         end
@@ -748,8 +752,12 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
         if assets then
             BeardLibEditor.Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
                 local function find_packages()
-                    for unit, _ in pairs(missing_units) do
-                        if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                    for unit, is_missing in pairs(missing_units) do
+                        if is_missing then
+                            if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                                missing_units[unit] = nil
+                            end
+                        else
                             missing_units[unit] = nil
                         end
                     end

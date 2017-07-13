@@ -373,7 +373,7 @@ function SpawnSelect:OpenLoadUnitDialog(params)
         force = true,
 	    callback = function(unit)
             BeardLibEditor.managers.ListDialog:hide()
-            self._assets_manager:find_package(unit)
+            self._assets_manager:find_package(unit, true)
 	    end
 	}) 
 end
