@@ -365,6 +365,9 @@ function StaticEditor:check_unit_ok(unit)
     if ud.instance and not self:Value("SelectInstances") then
         return false
     end
+    if ud.unit_id == 0 and ud.name_id == "none" and not ud.name and not ud.position then
+        return false
+    end
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:Manager("opt")._wanted_elements
     if mission_element then    

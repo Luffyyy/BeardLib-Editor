@@ -102,6 +102,10 @@ end
 
 function MapProjectManager:get_level_by_id(t, id)
     local levels = U:GetNodeByMeta(t, "level", true)
+    if not levels then
+        log(tostring(t))
+        log(debug.traceback())
+    end
     for _, level in pairs(levels) do
         if level.id == id then
             return level

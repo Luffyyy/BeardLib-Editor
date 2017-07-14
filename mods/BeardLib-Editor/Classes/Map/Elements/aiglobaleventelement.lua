@@ -4,13 +4,16 @@ function EditorAiGlobalEvent:create_element()
 	self._element.class = "ElementAiGlobalEvent"
 	self._element.values.blame = "none"
 end
+
 function EditorAiGlobalEvent:init(...)
-	EditorAiGlobalEvent.super.init(self, ...)
+	local unit = EditorAiGlobalEvent.super.init(self, ...)
 	if self._element.values.event then
 		self._element.values.wave_mode = self._element.values.event
 		self._element.values.event = nil
 	end
+	return unit
 end
+
 function EditorAiGlobalEvent:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("wave_mode", ElementAiGlobalEvent._wave_modes)

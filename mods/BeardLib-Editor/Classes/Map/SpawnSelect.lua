@@ -28,7 +28,7 @@ function SpawnSelect:build_default_menu()
     self:Button("Instance", callback(self, self, "OpenSelectInstanceDialog", {}), {group = select, size_by_text = true})
 
     if BeardLib.current_level then
-        local load = self:DivGroup("Load", {enabled = not Global.editor_safe_mode, align_method = "grid"})
+        local load = self:DivGroup("Load", {align_method = "grid"})
         self:Button("Units", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
         if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
             self:Button("UnitsExtract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {
@@ -249,11 +249,17 @@ end
 
 function SpawnSelect:OpenSpawnElementDialog()
     local held_ctrl
+    local elements = {}
+    for _, element in pairs(BeardLibEditor._config.MissionElements) do
+        local name = element:gsub("Element", "")
+        table.insert(elements, {name = name, element = element})
+    end
+    table.sort(elements, function(a,b) return b.name > a.name end)
 	BeardLibEditor.managers.ListDialog:Show({
-	    list = BeardLibEditor._config.MissionElements,
+	    list = elements,
         force = true,
 	    callback = function(item)
-            self._parent:add_element(item, held_ctrl)
+            self._parent:add_element(item.element, held_ctrl)
             held_ctrl = ctrl()
             if not held_ctrl then
 	           BeardLibEditor.managers.ListDialog:hide()

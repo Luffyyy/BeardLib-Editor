@@ -24,8 +24,9 @@ EditorInstanceInputEvent = EditorInstanceInputEvent or class(MissionScriptEditor
 EditorInstanceInputEvent.SAVE_UNIT_POSITION = false
 EditorInstanceInputEvent.SAVE_UNIT_ROTATION = false
 function EditorInstanceInputEvent:init(...)
-	EditorInstanceInputEvent.super.init(self, ...)
+	local unit = EditorInstanceInputEvent.super.init(self, ...)
 	self._type = "input"
+	return unit
 end
 
 function EditorInstanceInputEvent:create_element()
@@ -67,8 +68,9 @@ end
 
 EditorInstanceOutputEvent = EditorInstanceOutputEvent or class(EditorInstanceInputEvent)
 function EditorInstanceOutputEvent:init(...)
-	EditorInstanceOutputEvent.super.init(self, ...)
+	local unit = EditorInstanceOutputEvent.super.init(self, ...)
 	self._type = "output"
+	return unit
 end
 
 function EditorInstanceOutputEvent:create_element()
@@ -102,7 +104,7 @@ function EditorInstancePoint:_build_panel()
 			table.insert(names, name)
 		end
 	end
-	self:ComboCtrl("instance", names) --List & Button hybrid needed.
+	self:ComboCtrl("instance", names)
 end
 
 EditorInstanceSetParams = EditorInstanceSetParams or class(MissionScriptEditor)

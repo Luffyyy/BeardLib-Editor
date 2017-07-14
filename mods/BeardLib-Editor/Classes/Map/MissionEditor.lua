@@ -88,12 +88,26 @@ function MissionEditor:set_element(element)
     end
 end
 
+function MissionEditor:mouse_pressed(...)
+    if self._current_script and self._current_script.mouse_pressed and self._current_script:mouse_pressed(...) then
+        return true
+    end
+end
+
+function MissionEditor:mouse_released(...)
+    if self._current_script and self._current_script.mouse_released and self._current_script:mouse_released(...) then
+        return true
+    end
+end
+
 function MissionEditor:add_element(name, add_to_selection, old_element)
     local clss = self:get_editor_class(name) 
     if clss then
         local unit = clss:init(nil, old_element)
-        self:set_elements_vis()
-        self:Manager("static"):set_selected_unit(unit, add_to_selection)
+        if unit then
+            self:set_elements_vis()
+            self:Manager("static"):set_selected_unit(unit, add_to_selection)
+        end
     else
         self:alert_missing_element_editor(name)
     end

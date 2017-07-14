@@ -1,8 +1,8 @@
 EditorInstigatorRule = EditorInstigatorRule or class(MissionScriptEditor)
 EditorInstigatorRule.SAVE_UNIT_POSITION = false
 EditorInstigatorRule.SAVE_UNIT_ROTATION = false
-function EditorInstigatorRule:init(...)
-	EditorInstigatorRule.super.init(self, ...)
+function EditorInstigatorRule:create_element(...)
+	EditorInstigatorRule.super.create_element(self, ...)
 	self._element.class = "ElementInstigatorRule"
 	self._element.values.instigator = "none"
 	self._element.values.rules = {}
@@ -21,7 +21,6 @@ function EditorInstigatorRule:_build_panel()
 	self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type for the area"})
 	self:BooleanCtrl("invert", {text = "Invert Rule", help = "Check this to have the rule inverted, i.e. exclude one unit from triggering the connected element"})
 	self:_update_rules_panel()
---	managers.vehicle:add_listener(self._unit:name():s(), {"on_add", "on_remove"}, callback(self, self, "_update_rules_panel")) test later
 end
 
 function EditorInstigatorRule:_update_rules_panel()

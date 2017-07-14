@@ -3,8 +3,9 @@ EditorCounter.SAVE_UNIT_POSITION = false
 EditorCounter.SAVE_UNIT_ROTATION = false
 EditorCounter.INSTANCE_VAR_NAMES = {{type = "number", value = "counter_target"}}
 function EditorCounter:init(...)
-	EditorCounter.super.init(self, ...)
+	local unit = EditorCounter.super.init(self, ...)
 	self:get_units()
+	return unit
 end
 
 function EditorCounter:create_element()

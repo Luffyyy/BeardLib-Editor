@@ -26,6 +26,8 @@ end
 EditorStopEffect = EditorStopEffect or class(MissionScriptEditor)
 function EditorStopEffect:create_element()
 	self.super.create_element(self)
+	self._element.class = "ElementPlayEffect"
+	self._element.module = "CoreElementPlayEffect"
 	self._element.values.operation = "fade_kill"
 	self._element.values.elements = {}
 end

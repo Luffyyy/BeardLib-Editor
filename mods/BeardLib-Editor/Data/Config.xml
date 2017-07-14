@@ -44,6 +44,7 @@
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
+        <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
         <hook source_file="lib/setups/setup" file="Setup.lua"/>
         <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
@@ -134,6 +135,35 @@
         <value_node value="ElementEnvironment"/>
         <value_node value="ElementPushInstigator"/>
         <!--Normal-->
+        <value_node value="ElementChangeVanSkin"/>
+        <value_node value="ElementCharacterDamage"/>
+        <value_node value="ElementCheckDLC"/>
+        <value_node value="ElementInvulnerable"/>
+        <value_node value="ElementCustomSafehouseFilter"/>
+        <value_node value="ElementCustomSafehouseTrophyFilter"/>
+        <value_node value="ElementCustomSafehouseAwardTrophy"/>
+        <value_node value="ElementEnableSoundEnvironment"/>
+        <value_node value="ElementLoadDelayed"/>
+        <value_node value="ElementLootPile"/>
+        <value_node value="ElementLootPile"/>
+        <value_node value="ElementPlayerCharacterTrigger"/>
+        <value_node value="ElementScenarioEvent"/>
+        <value_node value="ElementTeamAICommands"/>
+        <value_node value="ElementUnitDamage"/>
+        <value_node value="ElementUnloadStatic"/>
+        <value_node value="ElementVariableGet"/>
+        <value_node value="ElementVariableSet"/>
+        <value_node value="ElementActivateScript"/>
+        <value_node value="ElementDebug"/>
+        <value_node value="ElementExecuteInOtherMission"/>
+        <value_node value="ElementMusic"/>
+        <value_node value="ElementAIForceAttention"/>
+        <value_node value="ElementAIForceAttentionOperator"/>
+        <value_node value="ElementStatisticsJobs"/>
+        <value_node value="ElementStatisticsContact"/>
+        <value_node value="ElementPhysicsPush"/>
+        <value_node value="ElementOverlayEffect"/>
+        <value_node value="ElementGlobalEventTrigger"/>
         <value_node value="ElementInstanceInput"/>
         <value_node value="ElementInstanceInputEvent"/>
         <value_node value="ElementInstanceOutput"/>

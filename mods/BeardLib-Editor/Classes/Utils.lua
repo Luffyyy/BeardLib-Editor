@@ -7,6 +7,11 @@ getmetatable(Idstring()).construct = function(self, id)
     return xml and xml.id or nil
 end
 
+function string.underscore_name(str)
+    str = tostring(str)
+    return str:gsub("([^A-Z%W])([A-Z])", "%1%_%2"):gsub("([A-Z]+)([A-Z][^A-Z$])", "%1%_%2"):lower()
+end
+
 BeardLibEditor.Utils = {}
 local self = BeardLibEditor.Utils
 --Sets the position of a unit/object correctly

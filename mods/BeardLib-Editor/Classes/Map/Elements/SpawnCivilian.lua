@@ -8,11 +8,6 @@ EditorSpawnCivilian.INSTANCE_VAR_NAMES = {
 		value = "state"
 	}
 }
-function EditorSpawnCivilian:init(...)
-	EditorSpawnCivilian.super.init(self, ...)
-	self._enemies = {}
-	self._states = CopActionAct._act_redirects.civilian_spawn
-end
 function EditorSpawnCivilian:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnCivilian"
@@ -25,7 +20,7 @@ end
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
 	self:PathCtrl("enemy", "unit", 21, {text = "Civilian"})
- 	self:ComboCtrl("state", table.list_add(self._states, {"none"}))
+ 	self:ComboCtrl("state", table.list_add(clone(CopActionAct._act_redirects.civilian_spawn), {"none"}))
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")
 	self:ComboCtrl("force_pickup", pickups)

@@ -1,5 +1,5 @@
 EditorVehicleOperator = EditorVehicleOperator or class(MissionScriptEditor)
-function EditorVehicleOperator:create_element() --Purpose of the element? 
+function EditorVehicleOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementVehicleOperator"
 	self._element.values.operation = "none"

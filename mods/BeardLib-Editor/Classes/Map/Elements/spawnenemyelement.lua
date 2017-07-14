@@ -25,7 +25,6 @@ end
 
 function EditorSpawnEnemyDummy:test_element() 
 	if not managers.navigation:is_data_ready() then
-		--EWS:message_box(Global.frame_panel, "Can't test spawn unit without ready navigation data (AI-graph)", "Spawn", "OK,ICON_ERROR", Vector3(-1, -1, 0))
 		return
 	end
 	if self._element.values.enemy ~= "none" and managers.groupai:state():is_AI_enabled() then
@@ -82,8 +81,4 @@ function EditorSpawnEnemyDummy:_resolve_team(unit)
 	else
 		return self._element.values.team
 	end
-end
-
-function EditorSpawnEnemyDummy:destroy(...)
-	--self:stop_test_element()
 end

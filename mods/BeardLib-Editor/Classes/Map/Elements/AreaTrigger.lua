@@ -1,8 +1,9 @@
 core:import("CoreShapeManager")
 EditorAreaTrigger = EditorAreaTrigger or class(MissionScriptEditor)
 function EditorAreaTrigger:init(...)
-	EditorAreaTrigger.super.init(self, ...)
+	local unit = EditorAreaTrigger.super.init(self, ...)
 	self._scripts = {}
+	return unit
 end
 
 function EditorAreaTrigger:create_element()
@@ -142,11 +143,12 @@ end
 
 EditorAreaOperator = EditorAreaOperator or class(MissionScriptEditor)
 function EditorAreaOperator:init(...)
-	self.super.init(self, ...)
+	local unit = EditorAreaOperator.super.init(self, ...)
 	self._apply_on_checkboxes = {"interval", "use_disabled_shapes"}
 	for _,uses in ipairs(self._apply_on_checkboxes) do
 		self._element.values["apply_on_" .. uses] = false
 	end
+	return unit
 end
 
 function EditorAreaOperator:create_element()

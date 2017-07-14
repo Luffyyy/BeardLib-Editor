@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<unit name="sound_environment" type="environment" slot="10">
+<unit name="sound_environment" type="sound" slot="10">
   <object file="core/units/sound_environment/sound_environment" />
   <movers />
   <dependencies />

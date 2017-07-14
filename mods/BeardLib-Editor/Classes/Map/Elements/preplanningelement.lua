@@ -8,15 +8,11 @@ function EditorPrePlanning:create_element()
 	self._element.values.upgrade_lock = "none"
 	self._element.values.dlc_lock = "none"	
 end
-function EditorPrePlanning:_create_dynamic_on_executed_alternatives() --?
-	EditorPrePlanning.ON_EXECUTED_ALTERNATIVES = {"any"}
-	for _, type in ipairs(managers.preplanning:types()) do
-		table.insert(EditorPrePlanning.ON_EXECUTED_ALTERNATIVES, type)
-	end
-end
+
 function EditorPrePlanning:_data_updated(value_type, value)
 	self._element.values[value_type] = value
 end
+
 function EditorPrePlanning:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("upgrade_lock", tweak_data.preplanning.upgrade_locks, {help =  "Select a upgrade lock from the combobox"})
@@ -30,7 +26,6 @@ function EditorPrePlanning:_build_panel()
 	for k, v in pairs(managers.preplanning:types()) do
 		disables_types[v] = self._element.values.disables_types[v] == true
 	end
-	--test later
 	self:Button("SelectAllowedTypes", function()
 	    BeardLibEditor.managers.SelectDialog:Show({
 	        selected_list = self._element.values.allowed_types,

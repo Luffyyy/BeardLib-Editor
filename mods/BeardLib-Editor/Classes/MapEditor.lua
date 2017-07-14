@@ -17,7 +17,8 @@ function me:init()
     self._camera_object:set_near_range(20)
 	self._camera_object:set_far_range(250000)
     self._camera_object:set_fov(75)
-	self._camera_object:set_position(Vector3(0, 0, 220))
+	self._camera_object:set_position(Vector3(864, -789, 458))
+	self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
 	self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
 	self._vp:set_camera(self._camera_object)
 	self._camera_pos = self._camera_object:position()
@@ -144,6 +145,7 @@ end
 
 function me:mouse_released(button, x, y)
     m.static:mouse_released(button, x, y)
+    m.static:mouse_released(button, x, y)
     self._mouse_hold = false
     self:reset_widget_values()
 end
@@ -153,6 +155,9 @@ function me:mouse_pressed(button, x, y)
         return
     end
     if m.utils:mouse_pressed(button, x, y) then
+        return
+    end
+    if m.mission:mouse_pressed(button, x, y) then
         return
     end
     m.static:mouse_pressed(button, x, y)
@@ -189,7 +194,7 @@ function me:DeleteUnit(unit)
     end
 end
 
-function me:SpawnUnit(unit_path, old_unit, add, unit_id)   
+function me:SpawnUnit(unit_path, old_unit, add, unit_id)
     if m.wdata:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = data.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()

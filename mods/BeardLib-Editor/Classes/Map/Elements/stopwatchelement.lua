@@ -1,7 +1,8 @@
 EditorStopwatch = EditorStopwatch or class(MissionScriptEditor)
 function EditorStopwatch:init(...)
-	EditorStopwatch.super.init(self, ...)
+	local unit = EditorStopwatch.super.init(self, ...)
 	self:get_units()
+	return unit
 end
 
 function EditorStopwatch:create_element()
@@ -162,7 +163,8 @@ function EditorStopwatchFilter:_build_panel()
 	self:BuildElementsManage("elements", nil, {"ElementCounter"})
 	self:ComboCtrl("needed_to_execute", {"all", "any"}, {help = "Select how many counter elements are needed to execute"})
 	self._value_ctrl = self:NumberCtrl("value", {help = "Specify value to trigger on.", enabled = self._element.values.Stopwatch_value_ids[1] == nil})
-	self:BuildElementsManage("Stopwatch_value_ids", nil, {"ElementStopwatch"}, callback(self, self, "set_Stopwatch_value"), true,{
+	self:BuildElementsManage("Stopwatch_value_ids", nil, {"ElementStopwatch"}, callback(self, self, "set_Stopwatch_value"), {
+		single_select = true,
 		text = "Stopwatch Element as value",
 		help = "Select a Stopwatch element as the value of this filter element"
 	})

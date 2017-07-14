@@ -34,12 +34,7 @@ end
 
 function EditorSpawnUnit:_build_panel()
 	self:_create_panel()
-    self:StringCtrl("unit_name", {text = "Unit Path"})
-    self:Button("SelectUnitPath", callback(self, SpawnSelect, "OpenSpawnUnitDialog", {
-        on_click = function(unit_path)
-            self._menu:GetItem("unit_name"):SetValue(unit_path, true)
-        end,
-    }), {group = other})
+	self:PathCtrl("unit_name", "unit")
 	self:NumberCtrl("unit_spawn_velocity", {floats = 0, min = 0, text = "Velocity", help = "Use this to add a velocity to a physic push on the spawned unit(will need mass as well)"})
 	self:NumberCtrl("unit_spawn_mass", {floats = 0, min = 0, text = "Mass", help = "Use this to add a mass to a physic push on the spawned unit(will need velocity as well)"})
 end

@@ -8,6 +8,9 @@ function MissionScriptEditor:init(element, old_element)
 		self._element = element
 	else
 		self:create_element()
+		if not self._element.editor_name then
+			self._element.editor_name = string.underscore_name(self._element.class:gsub("Element", ""))
+		end
 		if old_element then
 			table.merge(self._element, old_element)
 		end
@@ -21,7 +24,6 @@ function MissionScriptEditor:create_element()
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"
 	self._element.script = self._parent._current_script
-	self._element.editor_name = "New Element"
 	self._element.values.position = self._parent:cam_spawn_pos()
 	self._element.values.rotation = Rotation()
 	self._element.values.enabled = true
@@ -99,7 +101,7 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
-	self:BuildElementsManage("on_executed", {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}, nil, nil, false, {
+	self:BuildElementsManage("on_executed", {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}, nil, nil, {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
 end
@@ -301,8 +303,12 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 	local group = opt.group
 	opt.group = nil
 	self:Button("Manage"..value_name.."List", callback(self, self, "OpenUnitsManageDialog", {
-		value_name = value_name, 
+		value_name = value_name,
 		update_clbk = update_clbk, 
+		check_unit = opt.check_unit,
+		not_table = opt.not_table,
+		single_select = opt.single_select,
+		need_name_id = opt.need_name_id, 
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list", group = group or self._class_group}, opt))
 end
@@ -318,14 +324,15 @@ function MissionScriptEditor:BuildInstancesManage(value_name, table_data, update
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(instances)", help = "Decide which instances are in this list", group = group or self._class_group}, opt))
 end
 
-function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, single_select, opt)
+function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
 	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk,
-		single_select = single_select,
+		single_select = opt.single_select,
+		not_table = opt.not_table,
 		table_data = table_data,
 		classes = classes
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list", group = group or self._class_group}, opt))
@@ -355,7 +362,7 @@ end
 
 function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
     local current_list = self._element.values[params.value_name] or {}
-    self._element.values[params.value_name] = {}
+    self._element.values[params.value_name] = not params.not_table and {} or nil
     for _, data in pairs(final_selected_list) do
         local id
         local value
@@ -363,7 +370,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
             local unit = data.unit
             local element = data.element
             local instance = data.instance
-            id = (unit and unit:unit_data().unit_id) or instance or element.id
+            id = (unit and params.need_name_id and unit:unit_data().name_id or unit:unit_data().unit_id) or instance or element.id
             value = data.value
         else
             id = data
@@ -379,12 +386,17 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
             if not add then
                 add = clone(params.table_data.orig)
                 add[params.table_data.key] = id
-
             end
             if value and params.table_data.value_key then
                 add[params.table_data.value_key] = value
             end
-            table.insert(self._element.values[params.value_name], add)
+            if params.not_table then
+            	self._element.values[params.value_name] = add
+            else
+            	table.insert(self._element.values[params.value_name], add)
+            end
+        elseif params.not_table then
+        	self._element.values[params.value_name] = id
         else
             table.insert(self._element.values[params.value_name], id)
         end 
@@ -398,6 +410,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
     local selected_list = {}
     local list = {}
     local current_list = self._element.values[params.value_name] or {}
+    current_list = type(current_list) ~= "table" and {current_list} or current_list
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
@@ -439,6 +452,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
         list = list,
         values_name = params.table_data and params.table_data.values_name,
         single_select = params.single_select,
+        not_table = params.not_table,
         callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
     })
     self:update_element()
@@ -448,6 +462,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 	local selected_list = {}
 	local list = {}
 	local current_list = self._element.values[params.value_name] or {}
+	current_list = type(current_list) ~= "table" and {current_list} or current_list
     for k, unit in pairs(managers.worlddefinition._all_units) do
     	if alive(unit) then
 	 		local ud = unit:unit_data()
@@ -484,6 +499,9 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 	    list = list,
 		values_name = params.table_data and params.table_data.values_name,
 		combo_items_func = params.table_data and params.table_data.combo_items_func,
+		need_name_id = params.need_name_id,
+		single_select = params.single_select,
+		not_table = params.not_table,
 	    callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()
@@ -493,6 +511,7 @@ function MissionScriptEditor:OpenInstancesManageDialog(params)
 	local selected_list = {}
 	local list = {}
 	local current_list = self._element.values[params.value_name] or {}
+	current_list = type(current_list) ~= "table" and {current_list} or current_list
     for k, instance in pairs(managers.world_instance:instance_names_by_script(self._element.script)) do
  		local data = {
 	   		name = instance,

@@ -234,12 +234,15 @@ function MenuUtils:init(this, menu)
 	    local rotation
 	    local group = opt.group
 	    if not opt.no_pos then
+			opt.text = opt.translate_text
 			translation = self:DivGroup("Translate"..name, opt)
 	    end
 	    if not opt.no_rot then
 	    	opt.group = group
+			opt.text = opt.rotate_text
 	    	rotation = self:DivGroup("Rotate"..name, opt)
 	    end
+	   	opt.text = nil
 	   	opt.color = false
 	    opt.w = translation.w / 3
 	    opt.offset = 0

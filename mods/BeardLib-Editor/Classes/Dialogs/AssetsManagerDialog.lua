@@ -222,13 +222,17 @@ function AssetsManagerDialog:remove_units_from_map()
     end)
 end
 
-function AssetsManagerDialog:get_level_packages()
+function AssetsManagerDialog:check_data()
     if not self._current_level or not self._tbl._data then
         local project = BeardLibEditor.managers.MapProject
         local mod = project:current_mod()
         self._tbl._data = mod and project:get_clean_data(mod._clean_config)
         self._current_level = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     end
+end
+
+function AssetsManagerDialog:get_level_packages()
+    self:check_data()
     local packages = {}
     for _, package in ipairs(table.merge(clone(BeardLibEditor.ConstPackages), clone(self._current_level.packages))) do
         packages[package] = BeardLibEditor.DBPackages[package]
@@ -296,6 +300,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
 end
 
 function AssetsManagerDialog:add_package(package)
+    self:check_data()
     local project = BeardLibEditor.managers.MapProject
     local level_packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     table.insert(level_packages, package)
