@@ -259,27 +259,43 @@ function EnvironmentLayerEditor:build_unit_menu()
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
 	if alive(unit) then
-		S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "")
-    	S:AxisControls(callback(self, self, "set_unit_pos"), {step = self:Manager("opt")._menu:GetItem("GridSize"):Value()}, "", unit:position(), unit:rotation())
+		S:build_positions_items(true)
+		S:update_positions()
+        S:Button("CreatePrefab", callback(S, S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
 		if unit:name() == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
-		    self._unit_effects = S:PathItem("Effect", callback(self, self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true)
+            local effect = S:Group("Effect", {index = 1})
+		    S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = effect})
+		    self._unit_effects = S:PathItem("Effect", callback(self, self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true, nil, nil, {group = effect})
 		elseif unit:name() == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
-		    self._environment_area_ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), area:environment() or managers.viewport:game_default_environment(), "environment", true)
-		    local env_filter = S:DivGroup("Filter", {align_method = "grid"})
+            local ctrls = self._environment_area_ctrls
+            local environment_area = S:Group("Environment Area", {index = 1})
+		    S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = environment_area})
+
+            local env = area:environment() or managers.viewport:game_default_environment()
+		    ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), env, "environment", true, nil, nil, {
+                group = environment_area,
+                control_slice = 1.75
+            })
+		    ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
+                floats = 2,
+                group = environment_area
+            })
+		    ctrls.prio = S:NumberBox("Prio", callback(self, self, "set_prio"), area:prio() or managers.environment_area:default_prio(), {group = environment_area})
+		    ctrls.permanent_cb = S:Toggle("Permanent", callback(self, self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT, {group = environment_area})
+
+		    local env_filter = S:DivGroup("Filter", {align_method = "grid", group = environment_area})
 		    local filter_count = 0
-		    local environment_filter_row_sizer
 		    local filter_map = managers.viewport:get_predefined_environment_filter_map()
 		    local filter_list = area:filter_list()
 		    for name in table.sorted_map_iterator(managers.viewport:get_predefined_environment_filter_map()) do
-		        self._environment_area_ctrls.env_filter_cb_map[name] = S:Toggle(name, callback(self, self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {group = env_filter, size_by_text = true})
+		        ctrls.env_filter_cb_map[name] = S:Toggle(name, callback(self, self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {
+                    group = env_filter, size_by_text = true
+                })
 		    end
-		    self._environment_area_ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {floats = 2})
-		    self._environment_area_ctrls.prio = S:NumberBox("Prio", callback(self, self, "set_prio"), area:prio() or managers.environment_area:default_prio())
-		    self._environment_area_ctrls.permanent_cb = S:Toggle("Permanent", callback(self, self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT)
 		    if area then
 		    	area:create_panel(S)
 		    end  

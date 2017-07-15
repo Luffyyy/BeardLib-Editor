@@ -177,11 +177,14 @@ function SoundLayerEditor:build_unit_menu()
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
 	if alive(unit) then
-		S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "")
-    	S:AxisControls(callback(self, self, "set_unit_pos"), {step = self:Manager("opt")._menu:GetItem("GridSize"):Value()}, "", unit:position(), unit:rotation())
+		S:build_positions_items(true)
+		S:update_positions()
+        S:Button("CreatePrefab", callback(S, S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
+
 		if unit:name() == self._environment_unit:id() then
 			S:SetTitle("Sound Environment Selection")
-			local sound_environment = S:Group("SoundEnvironment")
+			local sound_environment = S:Group("SoundEnvironment", {index = 1})
+            S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = sound_environment})
 			local environments = managers.sound_environment:environments()
 			self._effect = S:ComboBox("Effect", callback(self, self, "select_sound_environment"), managers.sound_environment:environments(), table.get_key(environments, managers.sound_environment:default_environment()), {
 				group = sound_environment
@@ -207,7 +210,8 @@ function SoundLayerEditor:build_unit_menu()
 			elseif unit:name() == self._area_emitter_unit:id() then
 				S:SetTitle("Sound Area Emitter Selection")	
 			end
-			local sound_emitter = S:Group("SoundEmitter")
+			local sound_emitter = S:Group("SoundEmitter", {index = 1})
+            S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = sound_emitter})
 
 			local events = self:emitter_events{}
 			self._emitter_events_combobox = S:ComboBox("Events", callback(self, self, "select_emitter_event"), events, table.get_key(events, default_emitter_path and managers.sound_environment:emitter_events(default_emitter_path)[1]), {group = sound_emitter})

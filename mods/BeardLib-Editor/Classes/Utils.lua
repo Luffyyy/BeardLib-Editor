@@ -185,7 +185,20 @@ function self:GetPackageSize(package)
     end
 end
 
+local allowed_units = {
+    ["core/units/effect/effect"] = true,
+    ["core/units/nav_surface/nav_surface"] = true,
+    ["units/dev_tools/level_tools/ai_coverpoint"] = true,
+    ["core/units/environment_area/environment_area"] = true,
+    ["core/units/sound_environment/sound_environment"] = true,
+    ["core/units/sound_emitter/sound_emitter"] = true,
+    ["core/units/sound_area_emitter/sound_area_emitter"] = true,
+}
+
 function self:IsLoaded(asset, type, packages)
+    if allowed_units[asset] then
+        return true
+    end
     return #self:GetPackages(asset, type, false, true, packages) > 0
 end
 
@@ -454,15 +467,6 @@ function self:GetEntries(params)
 end
 
 --Any unit that exists only in editor(except mission element units)
-local allowed_units = {
-    ["core/units/effect/effect"] = true,
-    ["core/units/nav_surface/nav_surface"] = true,
-    ["units/dev_tools/level_tools/ai_coverpoint"] = true,
-    ["core/units/environment_area/environment_area"] = true,
-    ["core/units/sound_environment/sound_environment"] = true,
-    ["core/units/sound_emitter/sound_emitter"] = true,
-    ["core/units/sound_area_emitter/sound_area_emitter"] = true,
-}
 function self:GetUnits(params)
     local units = {}
     local unit_ids = Idstring("unit")

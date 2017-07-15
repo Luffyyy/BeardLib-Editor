@@ -299,7 +299,8 @@ end
 
 function StaticEditor:add_selection_to_prefabs(menu, item, prefab_name)
     local remove_old_links
-    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
+    local name_id = self._selected_units[1]:unit_data().name_id
+    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
     		BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
     			self:add_selection_to_prefabs(menu, item, prefab_name)
