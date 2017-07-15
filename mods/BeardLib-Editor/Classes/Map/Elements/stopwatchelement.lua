@@ -48,10 +48,8 @@ end
 
 function EditorStopwatch:_build_panel()
 	self:_create_panel()
-	self:Button("DigitalGuiUnits", callback(self, self, "OpenUnitsManageDialog", {
-		value_name = "digital_gui_unit_ids", check_unit = callback(self, self, "check_unit"), update_clbk = callback(self, self, "get_units")
-	}), {group = self._class_group})
-	self:Text("Creates a Stopwatch element. Continuously counts up once started until stopped or paused. Can be operated on using the logic_Stopwatch_operator. Can be displayed on a digital gui.")
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, callback(self, self, "get_units"), {text = "Digital GUI Units", check_unit = callback(self, self, "check_unit")})
+	self:Text("Creates a Stopwatch element. Continuously counts up once started until stopped or paused. Can be operated on using the StopwatchOperator element. Can be displayed on a digital gui.")
 end
 
 EditorStopwatchOperator = EditorStopwatchOperator or class(MissionScriptEditor)
@@ -114,7 +112,7 @@ function EditorStopwatchOperator:_build_panel()
 	self._combo_save_condition = self:ComboCtrl("condition", {"always", "equal", "less_than", "greater_than", "less_or_equal", "greater_or_equal"}, {
 		help ="Select a condition for which the Stopwatch value will be saved if a value for the Stopwatch is already saved. eg. save if less than the saved value.", text = "Save Condition"
 	})
-	self._default_help_text = "This element can modify logic_Stopwatch element. Select Stopwatch to modify by inserting it."
+	self._default_help_text = "This element can modify stopwatch elements. Select Stopwatch to modify by inserting it."
 	self._help_text = self:Text(self._default_help_text)
 	self:set_element_data({})
 end
@@ -132,7 +130,7 @@ function EditorStopwatchTrigger:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementStopwatch"})
 	self:NumberCtrl("time", {floats = 1, min = 0, help = "Specify at what time on the Stopwatch this should trigger."})
-	self:Text("This element is a trigger to logic_Stopwatch element.")
+	self:Text("This element is a trigger to stopwatch elements.")
 end
 
 EditorStopwatchFilter = EditorStopwatchFilter or class(MissionScriptEditor)
@@ -169,5 +167,5 @@ function EditorStopwatchFilter:_build_panel()
 		help = "Select a Stopwatch element as the value of this filter element"
 	})
 	self:ComboCtrl("check_type", {"equal", "less_than", "greater_than", "less_or_equal", "greater_or_equal"}, {help = "Select which check operation to perform"})
-	self:Text("This element is a filter to logic_Stopwatch element.")
+	self:Text("This element is a filter to stopwatchs element.")
 end

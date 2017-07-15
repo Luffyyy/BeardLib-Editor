@@ -13,7 +13,7 @@ end
 
 function EditorAIGraph:_build_panel()
 	self:_create_panel()
-	self:Button("GraphUnitIds", callback(self, self, "OpenUnitsManageDialog", {value_name = "graph_ids", check_unit = callback(self, self, "check_unit")}), {group = self._class_group})
+	self:BuildUnitsManage("graph_ids", nil, nil, {text = "Graph Units", check_unit = callback(self, self, "check_unit")})
 	self:ComboCtrl("operation", NavigationManager.nav_states)
 	self:Text("The operation defines what to do with the selected graphs")
 end

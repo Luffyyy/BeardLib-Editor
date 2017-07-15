@@ -51,7 +51,7 @@ end
 
 function EditorCounter:_build_panel()
 	self:_create_panel()
-	self:Button("TimerUnits", callback(self, self, "OpenUnitsManageDialog", {value_name = "digital_gui_unit_ids", check_unit = callback(self, self, "check_unit")}), {group = self._class_group})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, nil, {text = "Timer Units", check_unit = callback(self, self, "check_unit")})
 	self:NumberCtrl("counter_target", {floats = 0, min = 0, help = "Specifies how many times the counter should be executed before running its on executed"})
 	self:Text("Units with number gui extension can have their value updated from a counter.")
 end
@@ -77,7 +77,7 @@ function EditorCounterOperator:_build_panel()
 	self:BuildElementsManage("elements", nil, {"ElementCounter"})
 	self:ComboCtrl("operation", {"none", "add", "subtract", "reset", "set"}, {help = "Select an operation for the selected elements"})
 	self:NumberCtrl("amount", {floats = 0, min = 0, help = "Amount to add, subtract or set to the counters."})
-	self:Text("This element can modify logic_counter element. Select counters to modify using insert and clicking on the elements.")
+	self:Text("This element can modify counter elements. Select counters to modify using insert and clicking on the elements.")
 end
 
 EditorCounterTrigger = EditorCounterTrigger or class(MissionScriptEditor)
@@ -98,7 +98,7 @@ function EditorCounterTrigger:_build_panel()
 	self:BuildElementsManage("elements", nil, {"ElementCounter"})
 	self:ComboCtrl("trigger_type", {"none", "value", "add", "subtract", "reset", "set"}, {help = "Select a trigger type for the selected elements"})
 	self:NumberCtrl("amount", {floats = 0, help = "Specify value to trigger on."})
-	self:Text("This element is a trigger to logic_counter element.")
+	self:Text("This element is a trigger to counter elements.")
 end
 
 EditorCounterFilter = EditorCounterFilter or class(MissionScriptEditor)
@@ -123,5 +123,5 @@ function EditorCounterFilter:_build_panel()
 	self:ComboCtrl("check_type", {"equal", "less_than", "greater_than", "less_or_equal", "greater_or_equal", "counters_equal", "counters_not_equal"},{
 		help = "Select which check operation to perform"
 	})
-	self:Text("This element is a filter to logic_counter element.")
+	self:Text("This element is a filter to counter elements.")
 end

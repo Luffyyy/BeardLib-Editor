@@ -28,5 +28,5 @@ end
 function EditorAIArea:_build_panel()
 	self:_create_panel()
 	self._element.values.nav_segs = self._element.values.nav_segs or {}
-	self:Button("SelectNavSurfacesForArea", callback(self, self, "OpenUnitsManageDialog", {value_name = "nav_segs", units = {"core/units/nav_surface/nav_surface"}}), {group = self._class_group})
+	self:BuildUnitsManage("nav_segs", nil, nil, {text = "Navigation Surfaces", units = {"core/units/nav_surface/nav_surface"}})
 end

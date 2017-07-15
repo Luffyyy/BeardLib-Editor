@@ -85,11 +85,10 @@ function MissionScriptEditor:_create_panel()
 	SE:SetTitle(element)
 	self:Button("DeselectElement", callback(self, self, "deselect_element"), {group = quick_buttons})    
 	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
+    self:Button("CreatePrefab", callback(SE, SE, "add_selection_to_prefabs"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
  	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
  	self:StringCtrl("id", {group = self._main_group, data = self._element, enabled = false})
- 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
-    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element, group = self._main_group})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
@@ -101,6 +100,8 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
+ 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
+    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
 	self:BuildElementsManage("on_executed", {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}, nil, nil, {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
@@ -307,6 +308,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		update_clbk = update_clbk, 
 		check_unit = opt.check_unit,
 		not_table = opt.not_table,
+		units = opt.units,
 		single_select = opt.single_select,
 		need_name_id = opt.need_name_id, 
 		table_data = table_data
@@ -370,7 +372,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
             local unit = data.unit
             local element = data.element
             local instance = data.instance
-            id = (unit and params.need_name_id and unit:unit_data().name_id or unit:unit_data().unit_id) or instance or element.id
+            id = (unit and (params.need_name_id and unit:unit_data().name_id or unit:unit_data().unit_id)) or instance or element and element.id
             value = data.value
         else
             id = data

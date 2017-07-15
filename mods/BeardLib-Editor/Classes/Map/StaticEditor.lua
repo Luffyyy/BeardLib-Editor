@@ -298,15 +298,18 @@ end
 
 
 function StaticEditor:add_selection_to_prefabs(menu, item, prefab_name)
-    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or prefab_name or "Prefab", callback = function(prefab_name)
+    local remove_old_links
+    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and self._selected_units[1]:unit_data().name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
     		BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
     			self:add_selection_to_prefabs(menu, item, prefab_name)
     		end})
     		return
     	end
-        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData()
+        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(remove_old_links and remove_old_links:Value() or true)
         FileIO:WriteScriptDataTo(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+    end, create_items = function(input_menu)
+        remove_old_links = self:Toggle("RemoveOldLinks", nil, true, {text = "Remove Old Links Of Copied Elements", group = input_menu})
     end})
 end
 
@@ -468,6 +471,9 @@ function StaticEditor:set_selected_unit(unit, add)
     self._parent:use_widgets(unit and alive(unit) and unit:enabled())
     if #self._selected_units > 1 then
         self:set_multi_selected()
+        if self:Value("SelectAndGoToMenu") then
+            self:Switch()
+        end
     else
         if alive(unit) then
             if unit:mission_element() then
@@ -478,6 +484,9 @@ function StaticEditor:set_selected_unit(unit, add)
                 self:Manager("instances"):set_instance()
             else
                 self:set_unit()
+            end
+            if self:Value("SelectAndGoToMenu") then
+                self:Switch()
             end
         else
             self:set_unit()
@@ -625,7 +634,7 @@ function StaticEditor:update(t, dt)
     end
 end
 
-function StaticEditor:GetCopyData()
+function StaticEditor:GetCopyData(remove_old_links)
     self:set_unit_data()
     local copy_data = {}    
     for _, unit in pairs(self._selected_units) do
@@ -648,16 +657,15 @@ function StaticEditor:GetCopyData()
     local world_unit_id = 0
     local element_id = 0
     for _, v in pairs(copy_data) do
-        local is_element = v.type == "element"
-        local is_unit = v.type == "unit"
-        if v.type == "element" then
+        local typ = v.type
+        if typ == "element" then
             v.mission_element_data.script = nil
             for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
                 link.tbl[link.key] = element_id
             end
             v.mission_element_data.id = element_id
             element_id = element_id + 1
-        elseif v.type == "unit" and v.unit_data.unit_id then
+        elseif typ == "unit" and v.unit_data.unit_id then
             local is_world = v.wire_data or v.ai_editor_data
             v.unit_data.continent = nil
             for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
@@ -668,6 +676,31 @@ function StaticEditor:GetCopyData()
                 world_unit_id = world_unit_id + 1
             else
                 unit_id = unit_id + 1
+            end
+        end
+    end
+    --Remove old links
+    if remove_old_links or self:Value("RemoveOldLinks") then
+        for _, v in pairs(copy_data) do
+            if v.type == "element" then
+                for _, script in pairs(managers.mission._missions) do
+                    for _, tbl in pairs(script) do
+                        if tbl.elements then
+                            for k, element in pairs(tbl.elements) do
+                                local id = element.id
+                                for _, link in pairs(managers.mission:get_links_paths(id, true, {v})) do
+                                    if tonumber(link.key) then
+                                        table.remove(link.tbl, link.key)
+                                    elseif link.upper_tbl[link.upper_k][link.key] == id then
+                                        link.upper_tbl[link.upper_k][link.key] = nil
+                                    else
+                                        table.delete(link.upper_tbl[link.upper_k], link.tbl)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
             end
         end
     end

@@ -6,7 +6,7 @@ end
 
 function EditorInstigator:_build_panel()
 	self:_create_panel()
-	self:Text("This element is a storage for an instigator. It can be used, set, etc from logic_instigator_operator.")
+	self:Text("This element is a storage for an instigator. It can be used, set, etc from instigator operator elements")
 end
 
 EditorInstigatorOperator = EditorInstigatorOperator or class(MissionScriptEditor)
@@ -33,7 +33,7 @@ function EditorInstigatorOperator:_build_panel()
 		"use_all"
 	}, {help = "Select an operation for the selected elements"})
 	self:BooleanCtrl("keep_on_use")
-	self:Text("This element is an operator to logic_instigator element.")
+	self:Text("This element is an operator to instigator elements.")
 end
 
 EditorInstigatorTrigger = EditorInstigatorTrigger or class(MissionScriptEditor)
@@ -53,5 +53,5 @@ function EditorInstigatorTrigger:_build_panel()
 		"changed",
 		"cleared"
 	}, {help = "Select a trigger type for the selected elements"})
-	self:Text("This element is a trigger to logic_instigator element.")
+	self:Text("This element is a trigger to instigator elements.")
 end

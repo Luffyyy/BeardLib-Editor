@@ -39,7 +39,7 @@ function EditorLogicChanceOperator:_build_panel()
 		max = 100,
 		help = "Amount of chance to add, subtract or set to the logic chance elements."
 	})
-	self:Text("This element can modify logic_chance element. Select logic chance elements to modify using insert and clicking on the elements.")
+	self:Text("This element can modify logic chance elements. Select logic chance elements to modify using insert and clicking on the elements.")
 end
 
 EditorLogicChanceTrigger = EditorLogicChanceTrigger or class(MissionScriptEditor)
@@ -54,5 +54,5 @@ function EditorLogicChanceTrigger:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementLogicChance"})
 	self:ComboCtrl("outcome", {"fail", "success"}, {help = "Select an outcome to trigger on"})
-	self:Text("This element is a trigger to logic_chance element.")
+	self:Text("This element is a trigger to logic chance elements.")
 end

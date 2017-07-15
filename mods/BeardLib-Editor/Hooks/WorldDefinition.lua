@@ -278,6 +278,7 @@ function self:delete_unit(unit)
 			statics = self._continent_definitions[continent_name]
 			statics = statics and statics.statics
 		end
+		managers.mission:delete_links(unit_id)
 		if statics then
 			for k, static in pairs(statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id) then

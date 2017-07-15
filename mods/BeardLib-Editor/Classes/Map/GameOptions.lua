@@ -10,20 +10,25 @@ function GameOptions:build_default_menu()
     local main = self:DivGroup("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
-    self:Button("AccentColor", callback(self, self, "open_set_color_dialog", "AccentColor"), {group = main})
     local grid_size = self:Value("GridSize")
     local snap_rotation = self:Value("SnapRotation")
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1, group = main})
     self:Slider("GridSize", callback(self, self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
-    self:Slider("SnapRotation", callback(self, self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})
-    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    self:Slider("SnapRotation", callback(self, self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})    
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
-    local map = self:DivGroup("Map", groups_opt)
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
-    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editro units"})
+    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    self:Toggle("RemoveOldLinks", callback(self, self, "update_option_value"), self:Value("RemoveOldLinks"), {
+        group = main,
+        text = "Remove Old Links Of Copied Elements",
+        help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
+    })
+
+    local map = self:DivGroup("Map", groups_opt)
+    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
     self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
     self:Toggle("SoundUnits", callback(self, self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
@@ -40,6 +45,7 @@ function GameOptions:build_default_menu()
         self._draw_options[opt] = self:Toggle(opt, callback(self, self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
     end
     local raycast = self:DivGroup("Raycast", groups_opt)
+    self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
     self:Toggle("SelectInstances", self:Value("SelectInstances"), false, {group = raycast})

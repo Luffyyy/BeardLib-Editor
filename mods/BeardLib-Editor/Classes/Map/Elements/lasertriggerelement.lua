@@ -14,9 +14,9 @@ function EditorLaserTrigger:init(...)
 		end}})
 		return
 	end
-	EditorLaserTrigger.super.init(self, ...)
 	self:destroy()
 	self._dummy_unit = World:spawn_unit(Idstring(unit), Vector3(), Rotation())
+	return EditorLaserTrigger.super.init(self, ...)
 end
 
 function EditorLaserTrigger:destroy()

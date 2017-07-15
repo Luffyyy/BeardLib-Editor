@@ -96,7 +96,7 @@ function MissionManager:set_element(element, old_script)
 	local old_continent = old_script and self._scripts[old_script]._continent
 	if old_script and element.script ~= old_script then
 		if new_continent ~= old_continent then
-			self:delete_executors_of_element(element)
+			self:delete_links(element.id, true)
 			self:delete_element_id(old_continent, element.id)
 			local new_id = self:get_new_id(new_continent)
 			self:store_element_id(new_continent, new_id)
@@ -183,7 +183,7 @@ function MissionManager:add_element(element)
 end
 
 function MissionManager:delete_element(id)	
-	self:delete_executors_of_element(element)
+	self:delete_links(id, true)
 	for m_name, mission in pairs(self._missions) do
 		for s_name, script in pairs(mission) do
 			for i, element in pairs(script.elements) do
@@ -232,40 +232,26 @@ function MissionManager:get_executors(element)
 	return executors
 end
 
-function MissionManager:delete_executors_of_element(element)
-	if element then
-		for _, script in pairs(self._missions) do
-			for _, tbl in pairs(script) do
-				if tbl.elements then
-					for i, script_element in pairs(tbl.elements) do
-						if script_element.values.on_executed then
-							for k, on_executed_element in pairs(script_element.values.on_executed) do									
-								if on_executed_element.id == element.id then
-									table.remove(script_element.values.on_executed, k)
-								end
-							end
-						elseif script_element.values.elements then
-							for k, _element in pairs(script_element.values.elements) do									
-								if _element.id == element.id then
-									table.remove(script_element.values.elements, k)
-								end
-							end
-						end
-					end
-				end
-			end	
+function MissionManager:delete_links(id, is_element)
+	for _, link in pairs(managers.mission:get_links_paths(id, is_element)) do
+		if tonumber(link.key) then
+			table.remove(link.tbl, link.key)
+		elseif link.upper_tbl[link.upper_k][link.key] == id then
+            link.upper_tbl[link.upper_k][link.key] = nil
+        else
+			table.delete(link.upper_tbl[link.upper_k], link.tbl)
 		end
 	end
 end
 
-local units_upper_keys = {"unit_ids"}
-local units_keys = {"unit_id", "notify_unit_id"}
+local units_upper_keys = {"unit_ids", "graph_ids", "nav_segs", "digital_gui_unit_ids", "obstacle_list"}
+local units_keys = {"unit_id", "notify_unit_id", "camera_u_id", "att_unit_id"}
 local elements_upper_keys = {
     "elements", "instigator_ids", "spawn_unit_elements", "use_shape_element_ids", "rules_element_ids", "spawn_groups", "spawn_points", "sequence", "followup_elements", "spawn_instigator_ids", "Stopwatch_value_ids"
 }
-local elements_keys = {"id"}
+local elements_keys = {{upper_k = "on_executed", k = "id"}, "counter_id"}
 function MissionManager:identify_key_and_upper_key(upper_k, k)
-    local current_is_unit, currnet_is_element
+    local current_is_unit, current_is_element
     for _, key in pairs(units_upper_keys) do
         if upper_k == key then
             current_is_unit = true
@@ -283,31 +269,32 @@ function MissionManager:identify_key_and_upper_key(upper_k, k)
     if not current_is_unit then
         for _, key in pairs(elements_upper_keys) do
             if upper_k == key then
-                currnet_is_element = true
+                current_is_element = true
                 break
             end
         end
-        if not currnet_is_element and upper_k == "on_executed" then
+        if not current_is_element then
             for _, key in pairs(elements_keys) do
-                if k == key then
-                    currnet_is_element = true
+				local tbl = type(key) == "table"
+                if k == (tbl and key.k or key) and (not tbl or upper_k == key.upper_k) then
+                    current_is_element = true
                     break
                 end
             end
         end
     end
-    return current_is_unit, currnet_is_element
+    return current_is_unit, current_is_element
 end
 
 function MissionManager:is_linked(id, is_element, upper_k, tbl, stop)
     for k, v in pairs(tbl) do
-        local current_is_unit, currnet_is_element = self:identify_key_and_upper_key(upper_k, k)
+        local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
         if not stop and type(v) == "table" then
             local new_upper_key = not tonumber(k) and k or upper_k
             if self:is_linked(id, is_element, new_upper_key, v) then
                 return true
             end
-        elseif ((is_element and currnet_is_element) or (not is_element and current_is_unit)) and v == id then
+        elseif ((is_element and current_is_element) or (not is_element and current_is_unit)) and v == id then
             return true
         end
     end
@@ -322,12 +309,8 @@ function MissionManager:get_links(id, is_element)
 		for _, tbl in pairs(script) do
 			if tbl.elements then
 				for _, element in pairs(tbl.elements) do
-					for k, element_data in pairs(element.values) do
-						if type(element_data) == "table" then
-							if self:is_linked(id, is_element, k, element_data) then
-								table.insert(modifiers, element)
-							end
-						end
+					if self:is_linked(id, is_element, "values", element.values) then
+						table.insert(modifiers, element)
 					end
 				end
 			end
@@ -341,37 +324,30 @@ function MissionManager:get_links_paths(id, is_element, elements)
         return {}
     end
     local id_paths = {}
-    local function GetLinks(upper_k, tbl, stop)
+    local function GetLinks(upper_k, upper_tbl, tbl, stop)
         for k, v in pairs(tbl) do
-            local current_is_unit, currnet_is_element = self:identify_key_and_upper_key(upper_k, k)
+            local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
             if not stop and type(v) == "table" then
                 local new_upper_key = not tonumber(k) and k or upper_k
-                GetLinks(new_upper_key, v)
-            elseif ((is_element and currnet_is_element) or (not is_element and current_is_unit)) and v == id then
-                table.insert(id_paths, {tbl = tbl, key = k})
+                local new_upper_tbl = not tonumber(k) and tbl or upper_tbl
+                GetLinks(new_upper_key, new_upper_tbl, v)
+            elseif ((is_element and current_is_element) or (not is_element and current_is_unit)) and v == id then
+                table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl})
             end
         end
     end
     if elements then
         for _, element in pairs(elements) do
-            if element.mission_element_data then
-                for k, element_data in pairs(element.mission_element_data.values) do
-                    if type(element_data) == "table" then
-                        GetLinks(k, element_data)
-                    end
-                end
+            if element.mission_element_data and element.mission_element_data.values then
+                GetLinks("values", element_data, element.mission_element_data.values)
             end
         end
     else
         for _, script in pairs(self._missions) do
             for _, tbl in pairs(script) do
                 if tbl.elements then
-                    for _, element in pairs(tbl.elements) do
-                        for k, element_data in pairs(element.values) do
-                            if type(element_data) == "table" then
-                                GetLinks(k, element_data)
-                            end
-                        end
+                    for k, element in pairs(tbl.elements) do
+                        GetLinks("values", element, element.values)
                     end
                 end
             end
@@ -471,9 +447,10 @@ function MissionScript:create_mission_element_unit(element)
 end
 
 function MissionScript:delete_element(element)
-	managers.mission:delete_element_id(self._continent, element.id)
-	self._elements[element.id]:set_enabled(false)
-	self._elements[element.id] = nil
+	local id = element.id
+	managers.mission:delete_element_id(self._continent, id)
+	self._elements[id]:set_enabled(false)
+	self._elements[id] = nil
 	self._element_groups[element.class] = nil
 end
 
