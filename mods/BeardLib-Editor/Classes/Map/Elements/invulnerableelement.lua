@@ -14,7 +14,7 @@ function EditorInvulnerable:draw_links()
 		local unit = self:Manager("mission"):get_element_unit(id)
 		local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
 		if draw then
-			self:_draw_link({
+			self:draw_link({
 				from_unit = unit,
 				to_unit = self._unit,
 				r = 0,

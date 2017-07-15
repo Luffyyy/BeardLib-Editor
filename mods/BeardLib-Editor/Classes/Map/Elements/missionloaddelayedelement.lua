@@ -11,7 +11,7 @@ function EditorLoadDelayed:update()
 	for _, id in pairs(self._element.values.unit_ids) do
 		local unit = managers.worlddefinition:get_unit(id)
 		if alive(unit) then
-			self:_draw_link({
+			self:draw_link({
 				from_unit = self._unit,
 				to_unit = unit,
 				r = 1,
