@@ -9,11 +9,6 @@ Bunch of stuff, currently most apparent is the level editor including the enviro
 Yep! you can create new levels from scratch using BeardLib Editor
 Don't know how to? begin reading the guide in here https://modworkshop.net/wiki.php?action=view&id=11
 
-## Feedback
-Please report the issues in GitHub not here, it's much easier to manage issues in GitHub.
-If you'll comment issues/crash reports here, I will either delete the comment or ignore it.
-so post it here https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
-
 ## Before you stop reading!
 This mod requires first of all BeardLib itself https://modworkshop.net/mydownloads.php?action=view_down&did=14924
 and then requires the pdmod https://www.dropbox.com/s/hwjimqxjg7ehrmm/BeardLibEditor%20Physics%20Fix.pdmod?dl=0 to be installed, it will change the physics settings to allow collisions
