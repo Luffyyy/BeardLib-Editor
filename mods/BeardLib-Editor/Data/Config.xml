@@ -1,0 +1,305 @@
+<mod name="BeardLib-Editor" global_key="BeardLibEditor" ignore_errors="true">
+    <Classes directory="Classes">
+        <class file="Utils.lua"/>
+        <class file="MenuUtils.lua"/>
+        <class file="EditorMenu.lua"/>
+        <class file="EditorOptionsMenu.lua"/>
+        <class file="AboutMenu.lua"/>
+        <class file="MissionElementUnit.lua"/>
+        <class file="MapProjectManager.lua"/>
+        <class file="Dialogs/AssetsManagerDialog.lua"/>
+        <class file="Dialogs/ObjectivesManagerDialog.lua"/>
+        <class file="Dialogs/SelectListDialogValue.lua"/>
+        <class file="Map/EditorPart.lua"/>
+        <class file="Map/EditUnit.lua"/>
+        <class file="Map/MissionEditor.lua"/>
+        <class file="Map/StaticEditor.lua"/>        
+        <class file="Map/EditWire.lua"/>
+        <class file="Map/EditAIData.lua"/>
+        <class file="Map/EditMeshVariation.lua"/>
+        <class file="Map/InEditorOptions.lua"/>
+        <class file="Map/EditorUtils.lua"/>
+        <class file="Map/UpperMenu.lua"/>
+        <class file="Map/EditorConsole.lua"/>
+        <class file="Map/InstancesEditor.lua"/>
+        <class file="Map/WorldDataEditor.lua"/>
+        <class file="Map/EditUnitEditableGui.lua"/>
+        <class file="Map/EditLadder.lua"/>
+        <class file="Map/EditZipLine.lua"/>
+        <class file="Map/EditUnitLight.lua"/>
+        <class file="Map/MissionScriptEditor.lua"/>
+        <class file="Map/EnvironmentLayerEditor.lua"/>
+        <class file="Map/PortalLayerEditor.lua"/>
+        <class file="Map/SoundLayerEditor.lua"/>
+        <class file="ScriptDataConverterManager.lua"/>
+        <class file="MapEditor.lua"/>
+        <class file="EnvEditor.lua"/>
+        <class file="LoadLevelMenu.lua"/>
+    </Classes>
+    <AssetUpdates id="16837" version="2.0" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
+    <Hooks directory="Hooks">
+        <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
+        <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
+        <hook source_file="core/lib/managers/coresoundenvironmentmanager" file="SoundEnvironmentManager.lua"/>
+        <hook source_file="core/lib/managers/coreshapemanager" file="ShapeManager.lua"/>
+        <hook source_file="core/lib/managers/coreportalmanager" file="PortalManager.lua"/>
+        <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
+        <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
+        <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
+        <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
+        <hook source_file="lib/setups/setup" file="Setup.lua"/>
+        <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
+        <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
+        <hook source_file="lib/managers/navigationmanager" file="NavigationManager.lua"/>
+        <hook source_file="lib/managers/navfieldbuilder" file="NavFieldBuilder.lua"/>
+        <hook source_file="core/lib/managers/viewport/environment/coreenvironmentmanager" file="EnvironmentManager.lua"/>
+    </Hooks>
+    <Options build_menu="false" auto_load="true">
+        <options>                
+            <option type="number" default_value="3" name="LevelsColumns"/>
+            <option type="Color" default_value="Color(0.26, 0.52, 0.93)" name="AccentColor"/>
+            <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
+            <option_group name="Input">
+                <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
+                <option type="string" default_value="left ctrl+c" name="CopyUnit"/>
+                <option type="string" default_value="left ctrl+v" name="PasteUnit"/>
+                <option type="string" default_value="left ctrl+s" name="SaveMap"/>
+                <option type="string" default_value="t" name="ToggleMoveWidget"/>
+                <option type="string" default_value="f10" name="ToggleMapEditor"/>
+                <option type="string" default_value="r" name="ToggleRotationWidget"/>
+                <option type="string" default_value="delete" name="DeleteSelection"/>
+            </option_group>
+            <option_group name="Map">
+                <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
+                <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>
+                <option type="number" default_value="1" name="GridSize" min="1" max="10000" step="1"/>
+                <option type="number" default_value="90" name="SnapRotation" min="1" max="360" step="1"/>
+                <option type="boolean" default_value="true" name="DrawOnlyElementsOfCurrentScript"/>
+                <option type="boolean" default_value="true" name="SelectInstances"/>
+                <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
+                <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
+                <option type="boolean" default_value="true" name="RemoveOldLinks"/>
+                <option type="boolean" default_value="false" name="SelectAndGoToMenu"/>
+                <option type="boolean" default_value="false" name="EditorUnits"/>
+                <option type="boolean" default_value="false" name="SoundUnits"/>
+                <option type="boolean" default_value="false" name="EnvironmentUnits"/>
+                <option type="boolean" default_value="false" name="HighlightUnits"/>
+                <option type="boolean" default_value="false" name="DrawBodies"/>
+                <option type="boolean" default_value="false" name="ShowElements"/>
+            </option_group>
+        </options>
+    </Options>    
+    <AddFiles directory="Assets">
+        <material_config path="core/material_configs/hub_elements" force="true"/>
+        <texture path="textures/editor_logo" force="true"/>
+        <texture path="textures/editor_icons_df" force="true"/>
+        <unit path="units/mission_element/element" force="true"/>
+        <object path="units/mission_element/element" force="true"/>
+        <model path="units/mission_element/element" force="true"/>
+        <cooked_physics path="units/mission_element/element" force="true"/>
+        <unit path="core/units/nav_surface/nav_surface" force="true"/>
+        <object path="core/units/nav_surface/nav_surface" force="true"/>
+        <model path="core/units/nav_surface/nav_surface" force="true"/>
+        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>
+        <unit path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <cooked_physics path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
+        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>
+        <unit path="core/units/environment_area/environment_area" force="true"/>
+        <object path="core/units/environment_area/environment_area" force="true"/>
+        <model path="core/units/environment_area/environment_area" force="true"/>
+        <cooked_physics path="core/units/environment_area/environment_area" force="true"/>
+        <unit path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <object path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <model path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <cooked_physics path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
+        <unit path="core/units/effect/effect" force="true"/>
+        <object path="core/units/effect/effect" force="true"/>
+        <model path="core/units/effect/effect" force="true"/>
+        <cooked_physics path="core/units/effect/effect" force="true"/>
+        <unit path="core/units/sound_environment/sound_environment" force="true"/>
+        <object path="core/units/sound_environment/sound_environment" force="true"/>
+        <model path="core/units/sound_environment/sound_environment" force="true"/>
+        <cooked_physics path="core/units/sound_environment/sound_environment" force="true"/>
+        <unit path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <object path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <model path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <cooked_physics path="core/units/sound_emitter/sound_emitter" force="true"/>
+        <unit path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <object path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <model path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <cooked_physics path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <unit path="core/units/portal_shape/portal_shape" force="true"/>
+        <object path="core/units/portal_shape/portal_shape" force="true"/>
+        <model path="core/units/portal_shape/portal_shape" force="true"/>
+        <cooked_physics path="core/units/portal_shape/portal_shape" force="true"/>
+
+    </AddFiles>
+    <MissionElements>
+        <!--Custom Elements-->
+        <value_node value="ElementMoveUnit"/>
+        <value_node value="ElementTeleportPlayer"/>
+        <value_node value="ElementEnvironment"/>
+        <value_node value="ElementPushInstigator"/>
+        <!--Normal-->
+        <value_node value="ElementChangeVanSkin"/>
+        <value_node value="ElementCharacterDamage"/>
+        <value_node value="ElementCheckDLC"/>
+        <value_node value="ElementInvulnerable"/>
+        <value_node value="ElementCustomSafehouseFilter"/>
+        <value_node value="ElementCustomSafehouseTrophyFilter"/>
+        <value_node value="ElementCustomSafehouseAwardTrophy"/>
+        <value_node value="ElementEnableSoundEnvironment"/>
+        <value_node value="ElementLoadDelayed"/>
+        <value_node value="ElementLootPile"/>
+        <value_node value="ElementLootPile"/>
+        <value_node value="ElementPlayerCharacterTrigger"/>
+        <value_node value="ElementScenarioEvent"/>
+        <value_node value="ElementTeamAICommands"/>
+        <value_node value="ElementUnitDamage"/>
+        <value_node value="ElementUnloadStatic"/>
+        <value_node value="ElementVariableGet"/>
+        <value_node value="ElementVariableSet"/>
+        <value_node value="ElementActivateScript"/>
+        <value_node value="ElementDebug"/>
+        <value_node value="ElementExecuteInOtherMission"/>
+        <value_node value="ElementMusic"/>
+        <value_node value="ElementAIForceAttention"/>
+        <value_node value="ElementAIForceAttentionOperator"/>
+        <value_node value="ElementStatisticsJobs"/>
+        <value_node value="ElementStatisticsContact"/>
+        <value_node value="ElementPhysicsPush"/>
+        <value_node value="ElementOverlayEffect"/>
+        <value_node value="ElementGlobalEventTrigger"/>
+        <value_node value="ElementInstanceInput"/>
+        <value_node value="ElementInstanceInputEvent"/>
+        <value_node value="ElementInstanceOutput"/>
+        <value_node value="ElementInstanceOutputEvent"/>
+        <value_node value="ElementInstancePoint"/>
+        <value_node value="ElementInstanceSetParams"/>
+        <value_node value="ElementShape"/>
+        <value_node value="ElementCounter"/>
+        <value_node value="ElementCounterOperator"/>
+        <value_node value="ElementCounterTrigger"/>
+        <value_node value="ElementCounterFilter"/>
+        <value_node value="ElementStopwatch"/>
+        <value_node value="ElementStopwatchOperator"/>
+        <value_node value="ElementStopwatchTrigger"/>
+        <value_node value="ElementStopwatchFilter"/>
+        <value_node value="ElementOperator"/>
+        <value_node value="ElementEnemyPreferedAdd"/>
+        <value_node value="ElementEnemyPreferedRemove"/>
+        <value_node value="ElementSpawnUnit"/>
+        <value_node value="ElementAccessCamera"/>
+        <value_node value="ElementAccessCameraOperator"/>
+        <value_node value="ElementAccessCameraTrigger"/>
+        <value_node value="ElementActionMessage"/>
+        <value_node value="ElementAIArea"/>
+        <value_node value="ElementAIAttention"/>
+        <value_node value="ElementAiGlobalEvent"/>
+        <value_node value="ElementAIGraph"/>
+        <value_node value="ElementAIRemove"/>
+        <value_node value="ElementAlertTrigger"/>
+        <value_node value="ElementPhysicsPush"/>
+        <value_node value="ElementAreaMinPoliceForce"/>
+        <value_node value="ElementAreaTrigger"/>
+        <value_node value="ElementAreaReportTrigger"/>
+        <value_node value="ElementAreaOperator"/>
+        <value_node value="ElementAssetTrigger"/>
+        <value_node value="ElementAwardAchievment"/>
+        <value_node value="ElementBainState"/>
+        <value_node value="ElementBlackscreenVariant"/>
+        <value_node value="ElementBlurZone"/>
+        <value_node value="ElementCarry"/>
+        <value_node value="ElementVariable"/>
+        <value_node value="ElementCharacterOutline"/>
+        <value_node value="ElementCharacterSequence"/>
+        <value_node value="ElementCharacterTeam"/>
+        <value_node value="ElementDangerZone"/>
+        <value_node value="ElementUnitSequenceTrigger"/>
+        <value_node value="ElementDialogue"/>
+        <value_node value="ElementDifficulty"/>
+        <value_node value="ElementDifficultyLevelCheck"/>
+        <value_node value="ElementDisableShout"/>
+        <value_node value="ElementDisableUnit"/>
+        <value_node value="ElementDropinState"/>
+        <value_node value="ElementEnableUnit"/>
+        <value_node value="ElementEnemyDummyTrigger"/>
+        <value_node value="ElementEquipment"/>
+        <value_node value="ElementExperience"/>
+        <value_node value="ElementExplosion"/>
+        <value_node value="ElementExplosionDamage"/>
+        <value_node value="ElementFadeToBlack"/>
+        <value_node value="ElementFakeAssaultState"/>
+        <value_node value="ElementFeedback"/>
+        <value_node value="ElementFilter"/>
+        <value_node value="ElementFlashlight"/>
+        <value_node value="ElementFleePoint"/>
+        <value_node value="ElementGameDirection"/>
+        <value_node value="ElementHeat"/>
+        <value_node value="ElementHint"/>
+        <value_node value="ElementInstigator"/>
+        <value_node value="ElementInstigatorRule"/>
+        <value_node value="ElementInteraction"/>
+        <value_node value="ElementInventoryDummy"/>
+        <value_node value="ElementJobStageAlternative"/>
+        <value_node value="ElementJobValue"/>
+        <value_node value="ElementUnitSequence"/>
+        <value_node value="ElementKillZone"/>
+        <value_node value="ElementLaserTrigger"/>
+        <value_node value="ElementLookAtTrigger"/>
+        <value_node value="ElementLootBag"/>
+        <value_node value="ElementLootSecuredTrigger"/>
+        <value_node value="ElementMandatoryBags"/>
+        <value_node value="ElementMissionEnd"/>
+        <value_node value="ElementMissionFilter"/>
+        <value_node value="ElementModifyPlayer"/>
+        <value_node value="ElementMoney"/>
+        <value_node value="ElementNavObstacle"/>
+        <value_node value="ElementObjective"/>
+        <value_node value="ElementPickup"/>
+        <value_node value="ElementPlayerNumberCheck"/>
+        <value_node value="ElementPlayerSpawner"/>
+        <value_node value="ElementPlayerState"/>
+        <value_node value="ElementPlaySound"/>
+        <value_node value="ElementPlayerStyle"/>
+        <value_node value="ElementPointOfNoReturn"/>
+        <value_node value="ElementPrePlanning"/>
+        <value_node value="ElementLogicChance"/>
+        <value_node value="MissionScriptElement"/>
+        <value_node value="ElementPressure"/>
+        <value_node value="ElementProfileFilter"/>
+        <value_node value="ElementScenarioEvent"/>
+        <value_node value="ElementSecurityCamera"/>
+        <value_node value="ElementSequenceCharacter"/>
+        <value_node value="ElementSetOutline"/>
+        <value_node value="ElementSlowMotion"/>
+        <value_node value="ElementSmokeGrenade"/>
+        <value_node value="ElementSpawnCivilian"/>
+        <value_node value="ElementSpawnCivilianGroup"/>
+        <value_node value="ElementSpawnDeployable"/>
+        <value_node value="ElementSpawnEnemyDummy"/>
+        <value_node value="ElementSpawnEnemyGroup"/>
+        <value_node value="ElementSpawnGageAssignment"/>
+        <value_node value="ElementSpawnGrenade"/>
+        <value_node value="ElementSpecialObjective"/>
+        <value_node value="ElementSpecialObjectiveGroup"/>
+        <value_node value="ElementSpecialObjectiveTrigger"/>
+        <value_node value="ElementSpotter"/>
+        <value_node value="ElementStatistics"/>
+        <value_node value="ElementPlayEffect"/>
+        <value_node value="ElementToggle"/>
+        <value_node value="ElementRandom"/>
+        <value_node value="ElementTimer"/>
+        <value_node value="ElementTimerOperator"/>
+        <value_node value="ElementTimerTrigger"/>
+        <value_node value="ElementTeammateComment"/>
+        <value_node value="ElementTeamRelation"/>
+        <value_node value="ElementVehicleOperator"/>
+        <value_node value="ElementVehicleSpawner"/>
+        <value_node value="ElementVehicleTrigger"/>
+        <value_node value="ElementWaypoint"/>
+        <value_node value="ElementWhisperState"/>
+    </MissionElements>
+</mod>

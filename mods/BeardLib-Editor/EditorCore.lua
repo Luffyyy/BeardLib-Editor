@@ -1,90 +1,234 @@
-if not _G.BeardLibEditor then
-    _G.BeardLibEditor = ModCore:new(ModPath .. "mod_config.xml", false, true)
+if not ModCore then
+    log("[ERROR][BeardLibEditor] BeardLib is not installed!")
+    return
+end
 
-    local self = BeardLibEditor
-
+_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
+local BLE = BeardLibEditor
+function BLE:Init()
+    self:init_modules()
+    self.ExtractDirectory = "assets/extract/"
+    self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
+    self.MapClassesDir = self.ClassDirectory .. "Map/"
+    self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
+    self.ElementsDir = self.MapClassesDir .. "Elements/"
+    self.Version = 2
+    
     self.managers = {}
-    self._replace_script_data = {}
-
+    self.modules = {}
     self.DBPaths = {}
     self.DBEntries = {}
+    self.Prefabs = {}
+    self:LoadHashlist()
+    self.InitDone = true
 end
 
-function BeardLibEditor:_init()
-    self:init_modules()
-    if not PackageManager:loaded("core/packages/editor") then
-        PackageManager:load("core/packages/editor")
-    end
-    self.managers.EnvironmentEditor = EnvironmentEditorManager:new()
-    self.managers.ScriptDataConveter = ScriptDataConveterManager:new()
+function BLE:InitManagers()
+    local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
+    local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
+    local M = BeardLibEditor.managers
+    self._dialogs_opt = {marker_highlight_color = acc_color, accent_color = acc_color, background_color = bg_color}
+    M.Dialog = MenuDialog:new(self._dialogs_opt)
+    M.ListDialog = ListDialog:new(self._dialogs_opt)
+    M.SelectDialog = SelectListDialog:new(self._dialogs_opt)
+    M.SelectDialogValue = SelectListDialogValue:new(self._dialogs_opt)
+    M.ColorDialog = ColorDialog:new(self._dialogs_opt)
+    M.InputDialog = InputDialog:new(self._dialogs_opt)
+    M.FBD = FileBrowserDialog:new(self._dialogs_opt)
+       
+    if Global.editor_mode then
+        M.MapEditor = MapEditor:new()
+    end 
 
+    M.Menu = EditorMenu:new()
+    M.ScriptDataConverter = ScriptDataConverterManager:new()
+    M.MapProject = MapProjectManager:new()
+    M.LoadLevel = LoadLevelMenu:new()
+    M.EditorOptions = EditorOptionsMenu:new()
+    AboutMenu:new()
+
+    local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
+    if prefabs then
+        for _, prefab in pairs(prefabs) do
+            self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptDataFrom(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+        end
+    end
+    --Packages that are always loaded
+    self.ConstPackages = {
+        "packages/game_base_init",
+        "packages/game_base",
+        "packages/start_menu",
+        "packages/load_level",
+        "packages/load_default",
+        "packages/boot_screen",
+        "packages/toxic",
+        "packages/dyn_resources",
+        "packages/wip/game_base",
+        "core/packages/base",
+        "core/packages/editor"
+    }
+    local prefix = "packages/dlcs/"
+    local sufix = "/game_base"
+    for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
+        table.insert(self.ConstPackages, prefix .. tostring(dlc_package) .. sufix)
+    end
+    for i, difficulty in ipairs(tweak_data.difficulties) do
+        table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
+    end
+    
+    self:LoadCustomAssets()
+end
+
+function BLE:LoadCustomAssets()
+    local project = self.managers.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(mod._clean_config)
+    if data then
+        if data.AddFiles then
+            self:LoadCustomAssetsToHashList(data.AddFiles)
+        end
+        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        if level then
+            self:log("Loading Custom Assets to Hashlist")
+            if level.add then
+                self:LoadCustomAssetsToHashList(level.add)
+            end
+            for i, include_data in ipairs(level.include) do
+                if include_data.file then
+                    local file_split = string.split(include_data.file, "[.]")
+                    local typ = file_split[2]
+                    local path = Path:Combine("levels/mods/", level.id, file_split[1])
+                    if FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+                        self.DBPaths[typ] = self.DBPaths[typ] or {}
+                        if not table.contains(self.DBPaths[typ], path) then
+                            table.insert(self.DBPaths[typ], path)
+                        end     
+                    end
+                end
+            end            
+        end
+    end
+end
+
+function BLE:RegisterModule(key, module)
+    if not self.modules[key] then
+        self:log("Registered module editor with key %s", key)
+        self.modules[key] = module
+    else
+        self:log("[ERROR] Module editor with key %s already exists", key or "")
+    end
+end
+
+function BLE:LoadHashlist()
+    local t = os.clock()
+    self:log("Loading DBPaths")
+    if Global.DBPaths and Global.DBPackages then
+        self.DBPaths = Global.DBPaths
+        self.DBPackages = Global.DBPackages
+        self.WorldSounds = Global.WorldSounds
+        self:log("DBPaths already loaded")
+    else
+        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary") 
+        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary") 
+        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), "binary") 
+        self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
+        Global.DBPaths = self.DBPaths
+        Global.DBPackages = self.DBPackages
+        Global.WorldSounds = self.WorldSounds
+    end
+end
+
+--Converts a list of packages - assets of packages to premade tables to be used in the editor
+function BLE:GeneratePackageData()
+    local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
+    local lines = io.lines(self.ModPath .. "packages.txt", "r")
+    local packages_paths = {}
+    local paths = {}
+    local current_pkg
+    if lines then 
+        for line in lines do 
+            if string.sub(line, 1, 1) == "@" then
+                current_pkg = string.sub(line, 2)
+            elseif current_pkg then
+                packages_paths[current_pkg] = packages_paths[current_pkg] or {}
+                local pkg = packages_paths[current_pkg]
+                local path, typ = unpack(string.split(line, "%."))
+                pkg[typ] = pkg[typ] or {}
+                paths[typ] = paths[typ] or {}
+                if DB:has(typ, path) then
+                	if not table.contains(paths[typ], path) then
+                    	table.insert(paths[typ], path)
+                    end
+                    if not table.contains(pkg[typ], path) then
+                    	table.insert(pkg[typ], path)
+                    end
+                end
+            end
+        end
+    end
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
+    Global.DBPaths = nil
     self:LoadHashlist()
 end
-function BeardLibEditor:LoadHashlist()        
-    self:log("Loading Hashlist")
-    local has_hashlist = DB:has("idstring_lookup", "idstring_lookup") 
-    local function AddPathEntry(line, typ)
-        local path_split = string.split(line, "/")
-        local curr_tbl = self.DBEntries
 
-        local filename = table.remove(path_split)
-
-        for _, part in pairs(path_split) do
-            curr_tbl[part] = curr_tbl[part] or {}
-            curr_tbl = curr_tbl[part]
-        end
-        table.insert(curr_tbl, {
-            path = line,
-            name = filename,
-            file_type = typ
-        })
-    end
-    local types = clone(BeardLib.script_data_types)
-    table.insert(types, "unit")
-	if has_hashlist then 
-        local file = DB:open("idstring_lookup", "idstring_lookup")
-        if file ~= nil then
-            --Iterate through each string which contains _ or /, which should include all the filepaths in the idstring_lookup
-            for line in string.gmatch(file:read(), "[%w_/]+%z") do
-                --Remove the Zero byte at the end of the path
-                line = string.sub(line, 1, #line - 1)
-
-                for _, typ in pairs(types) do
-                    self.DBPaths[typ] = self.DBPaths[typ] or {}
-                    if DB:has(typ, line) then
-                        table.insert(self.DBPaths[typ], line)
-                        AddPathEntry(line, typ)
-                        --I wish I could break so we don't have to iterate more than needed, but some files exist with the same name but a different type
-                        --break
+--Gets all emitters and occasionals from extracted .world_sounds
+function BLE:GenerateSoundData()
+    local sounds = {}
+    local function get_sounds(path)
+        for _, file in pairs(FileIO:GetFiles(path)) do
+            if string.ends(file, ".world_sounds") then
+                local data = FileIO:ReadScriptDataFrom(Path:Combine(path, file), "binary")
+                if not table.contains(sounds, data.default_ambience) then
+                    table.insert(sounds, data.default_ambience)
+                end
+                if not table.contains(sounds, data.default_occasional) then
+                    table.insert(sounds, data.default_occasional)
+                end
+                for _, v in pairs(data.sound_area_emitters) do
+                    if not table.contains(sounds, v.emitter_event) then
+                        table.insert(sounds, v.emitter_event)
+                    end
+                end
+                for _, v in pairs(data.sound_emitters) do
+                    if not table.contains(sounds, v.emitter_event) then
+                        table.insert(sounds, v.emitter_event)
+                    end
+                end
+                for _, v in pairs(data.sound_environments) do
+                    if not table.contains(sounds, v.ambience_event) then
+                        table.insert(sounds, v.ambience_event)
+                    end
+                    if not table.contains(sounds, v.occasional_event) then
+                        table.insert(sounds, v.occasional_event)
                     end
                 end
             end
-            file:close()
         end
-    else
-        local lines = io.lines(self.ModPath .. "list.txt", "r")
-        if lines then
-            for line in lines do
-                for _, typ in pairs(types) do
-                    self.DBPaths[typ] = self.DBPaths[typ] or {}
-                    if DB:has(typ, line) then
-                        table.insert(self.DBPaths[typ], line)
-                        AddPathEntry(line, typ)                    
-                    end
-                end
-            end
-        else
-            self:log("Failed Loading Hashlist.")
+        for _, folder in pairs(FileIO:GetFolders(path)) do
+            get_sounds(Path:Combine(path, folder))
         end
-    end       
-    for typ, filetbl in pairs(self.DBPaths) do
-        self:log(typ .. " Count: " .. #filetbl)
     end
-    self:log("Hashlist Loaded[Method %s]", has_hashlist and "A" or "B")
+    get_sounds("assets/extract/levels")
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
+    self.WorldSounds = sounds
+    Global.WorldSounds = sounds
 end
-function BeardLibEditor:update(t, dt)
+
+function BLE:LoadCustomAssetsToHashList(add)
+    for _, v in pairs(add) do
+        if type(v) == "table" then
+            self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
+            if not table.contains(self.DBPaths[v._meta], v.path) then
+                table.insert(self.DBPaths[v._meta], v.path)
+            end
+        end
+    end
+end
+
+function BLE:Update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
             manager:update(t, dt)
@@ -92,7 +236,7 @@ function BeardLibEditor:update(t, dt)
     end
 end
 
-function BeardLibEditor:paused_update(t, dt)
+function BLE:PausedUpdate(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.paused_update then
             manager:paused_update(t, dt)
@@ -100,8 +244,23 @@ function BeardLibEditor:paused_update(t, dt)
     end
 end
 
-if MenuManager then
+function BLE:SetLoadingText(text)
+    if alive(Global.LoadingText) then
+        local project = BeardLib.current_level and BeardLib.current_level._mod
+        local s = "Level ".. tostring(Global.game_settings.level_id)
+        if project then
+            s = "Project " .. tostring(project.Name) .. ":" .. tostring(Global.game_settings.level_id)
+        end
+        if Global.editor_safe_mode then
+        	s = "[SAFE MODE]" .. "\n" .. s
+        end
+        s = s .. "\n" .. tostring(text)
+        Global.LoadingText:set_name(s)
+        return s
+    end
+end
 
+if MenuManager then
     function MenuManager:create_controller()
         if not self._controller then
             self._controller = managers.controller:create_controller("MenuManager", nil, true)
@@ -113,97 +272,28 @@ if MenuManager then
             end
         end
     end
-    function MenuCallbackHandler:_dialog_end_game_yes()
+    local o = MenuCallbackHandler._dialog_end_game_yes
+    function MenuCallbackHandler:_dialog_end_game_yes(...)
         Global.editor_mode = nil
-        managers.platform:set_playing(false)
-        managers.job:clear_saved_ghost_bonus()
-        managers.statistics:stop_session({quit = true})
-        managers.savefile:save_progress()
-        managers.job:deactivate_current_job()
-        managers.gage_assignment:deactivate_assignments()
-        if Network:multiplayer() then
-            Network:set_multiplayer(false)
-            managers.network:session():send_to_peers("set_peer_left")
-            managers.network:queue_stop_network()
-        end
-        managers.network.matchmake:destroy_game()
-        managers.network.voice_chat:destroy_voice()
-        managers.groupai:state():set_AI_enabled(false)
-        managers.menu:post_event("menu_exit")
-        managers.menu:close_menu("menu_pause")
-        setup:load_start_menu()
-    end    
+        o(self, ...)
+    end
+end
+
+if not BLE.InitDone then
+    if BeardLib.Version and BeardLib.Version >= 2.2 then
+        BeardLibEditor:Init()
+    else
+        log("[ERROR] BeardLibEditor requires at least version 2.2 of Beardlib installed!")
+        return
+    end
 end
 
 if Hooks then
-    Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", function( t, dt )
-        BeardLibEditor:update(t, dt)
-    end)
-
-    Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", function( t, dt )
-        BeardLibEditor:update(t, dt)
-    end)
-
-    Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", function(t, dt)
-        BeardLibEditor:paused_update(t, dt)
-    end)
-
+    Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", ClassClbk(BLE, "PausedUpdate"))
     Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
-        LocalizationManager:add_localized_strings({
-            ["BeardLibEditorEnvMenu"] = "Environment Mod Menu",
-            ["BeardLibEditorEnvMenuHelp"] = "Modify the params of the current Environment",
-            ["BeardLibEditorSaveEnvTable_title"] = "Save Current modifications",
-            ["BeardLibEditorResetEnv_title"] = "Reset Values",
-            ["BeardLibEditorScriptDataMenu_title"] = "ScriptData Converter",
-            ["BeardLibEditorLoadLevel_title"] = "Load Level"
-        })
+        LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
     end)
-
-    Hooks:Add("MenuManagerSetupCustomMenus", "Base_SetupBeardLibEditorMenu", function( menu_manager, nodes )
-        --I'm going to leave this here, but I really don't like it being here
-        if Global.editor_mode then
-            BeardLibEditor.managers.MapEditor = MapEditor:new()
-        end
-        BeardLibEditor.managers.Dialog = MenuDialog:new()
-        BeardLibEditor.managers.LoadLevel = LoadLevelMenu:new()
-
-        local main_node = MenuHelperPlus:GetNode(nil, BeardLib.MainMenu)
-        BeardLibEditor.managers.EnvironmentEditor:BuildNode(main_node)
-        BeardLibEditor.managers.ScriptDataConveter:BuildNode(main_node)
-        BeardLibEditor.managers.LoadLevel:BuildNode(main_node)
-    end)
-
-    function BeardLibEditor:ProcessScriptData(data, path, extension, name)
-        for _, sub_data in ipairs(data) do
-            if sub_data._meta == "param" then
-                local next_data_path = name and name .. "/" .. sub_data.key or sub_data.key
-
-                local next_data_path_key = next_data_path:key()
-                BeardLibEditor.managers.EnvironmentEditor:AddHandlerValue(path:key(), next_data_path_key, sub_data.value, next_data_path)
-            else
-                local next_data_path = name and name .. "/" .. sub_data._meta or sub_data._meta
-                self:ProcessScriptData(sub_data, path, extension, next_data_path)
-            end
-        end
-    end
-
-    Hooks:Add("BeardLibPreProcessScriptData", "BeardLibEditorLoadEnvParams", function(PackManager, filepath, extension, data)
-        if extension ~= Idstring("environment") then
-            return
-        end
-
-        if not data or (data and not data.data) then
-            return
-        end
-
-        BeardLibEditor:ProcessScriptData(data.data, filepath, extension)
-    end)
-
-
-
-end
-
-if not BeardLibEditor.setup then
-    BeardLibEditor:_init()
-    BeardLibEditor.setup = true
+    Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", callback(BLE, BLE, "InitManagers"))
 end

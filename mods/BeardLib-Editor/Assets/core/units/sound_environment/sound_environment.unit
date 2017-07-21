@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<unit name="sound_environment" type="sound" slot="10">
+  <object file="core/units/sound_environment/sound_environment" />
+  <movers />
+  <dependencies />
+  <extensions>
+    <extension name="unit_data" class="ScriptUnitData" />
+  </extensions>
+  <sounds>
+    <default_soundsource />
+  </sounds>
+</unit>
