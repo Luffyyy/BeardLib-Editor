@@ -11,6 +11,7 @@ end
 function EditorCounter:create_element()
 	EditorCounter.super.create_element(self)
 	self._element.class = "ElementCounter"
+	self._element.module = "CoreElementCounter"
 	self._element.values.counter_target = 0
 	self._element.values.digital_gui_unit_ids = {}
 end
@@ -67,6 +68,7 @@ CounterOperatorUnitElement = CounterOperatorUnitElement or class(EditorCounterOp
 function EditorCounterOperator:create_element()
 	EditorCounterOperator.super.create_element(self)
 	self._element.class = "ElementCounterOperator"
+	self._element.module = "CoreElementCounter"
 	self._element.values.operation = "none"
 	self._element.values.amount = 0
 	self._element.values.elements = {}
@@ -88,6 +90,7 @@ CounterTriggerUnitElement = CounterTriggerUnitElement or class(EditorCounterTrig
 function EditorCounterTrigger:create_element()
 	EditorCounterTrigger.super.create_element(self)
 	self._element.class = "ElementCounterTrigger"
+	self._element.module = "CoreElementCounter"
 	self._element.values.trigger_type = "value"
 	self._element.values.amount = 0
 	self._element.values.elements = {}
@@ -109,6 +112,7 @@ CounterFilterUnitElement = CounterFilterUnitElement or class(EditorCounterFilter
 function EditorCounterFilter:create_element()
 	EditorCounterFilter.super.create_element(self)
 	self._element.class = "ElementCounterFilter"
+	self._element.module = "CoreElementCounter"
 	self._element.values.needed_to_execute = "all"
 	self._element.values.value = 0
 	self._element.values.elements = {}

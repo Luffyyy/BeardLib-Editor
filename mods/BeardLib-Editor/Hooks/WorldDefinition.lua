@@ -1,12 +1,13 @@
 if not Global.editor_mode then
 	return
 end
+
 core:module("CoreWorldDefinition")
-local self = class(WorldDefinition)
-WorldDefinition = self
+local WorldDef = class(WorldDefinition)
+WorldDefinition = WorldDef
 
 local BLE = _G.BeardLibEditor
-function self:init(params)
+function WorldDef:init(params)
 	BLE:SetLoadingText("Initializing World Definition")
 	managers.worlddefinition = self
 	self._world_dir = params.world_dir
@@ -43,8 +44,8 @@ function self:init(params)
 	self:create("ai")
 end
 
-local Create = self.create
-function self:create(layer, offset)
+local Create = WorldDef.create
+function WorldDef:create(layer, offset)
 	local return_data = Create(self, layer, offset)
 	if layer == "statics" or layer == "all" then
 		self:spawn_quick(return_data, offset)
@@ -52,7 +53,7 @@ function self:create(layer, offset)
 	return return_data
 end
 
-function self:spawn_quick(return_data, offset)
+function WorldDef:spawn_quick(return_data, offset)
 	offset = offset or Vector3()
 	if self._needed_to_spawn then
 		for _, values in ipairs(self._needed_to_spawn) do
@@ -74,11 +75,11 @@ function self:spawn_quick(return_data, offset)
 	end
 end
 
-function self:is_world_unit(unit)
+function WorldDef:is_world_unit(unit)
 	return unit:wire_data() or unit:ai_editor_data()
 end
 
-function self:set_unit(unit_id, unit, old_continent, new_continent)
+function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	local statics
 	local new_statics
 	local move 
@@ -116,7 +117,7 @@ function self:set_unit(unit_id, unit, old_continent, new_continent)
 	end
 end
 
-function self:get_continent_of_static(unit)
+function WorldDef:get_continent_of_static(unit)
 	local ud = unit:unit_data()
 	if ud and not unit:wire_data() and not unit:ai_editor_data() then
 		return self._continent_definitions[ud.continent]
@@ -124,14 +125,14 @@ function self:get_continent_of_static(unit)
 	return false
 end
 
-function self:insert_name_id(unit)
+function WorldDef:insert_name_id(unit)
 	local name = unit:unit_data().name
 	self._name_ids[name] = self._name_ids[name] or {}
 	local name_id = unit:unit_data().name_id
 	self._name_ids[name][name_id] = (self._name_ids[name][name_id] or 0) + 1
 end
 
-function self:set_up_name_id(unit)
+function WorldDef:set_up_name_id(unit)
 	local ud = unit:unit_data()
 	if ud.name_id ~= "none" then
 		self:insert_name_id(unit)
@@ -141,7 +142,7 @@ function self:set_up_name_id(unit)
 	self:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 end
 
-function self:get_name_id(unit, name)
+function WorldDef:get_name_id(unit, name)
 	local u_name = unit:unit_data().name
 	local start_number = 1
 	if name then
@@ -174,7 +175,7 @@ function self:get_name_id(unit, name)
 	end
 end
 
-function self:remove_name_id(unit)
+function WorldDef:remove_name_id(unit)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] and self._name_ids[unit_name][name_id] then
 		local name_id = unit:unit_data().name_id
@@ -185,7 +186,7 @@ function self:remove_name_id(unit)
 	end
 end
 
-function self:set_name_id(unit, name_id)
+function WorldDef:set_name_id(unit, name_id)
 	local unit_name = unit:unit_data().name
 	if self._name_ids[unit_name] then
 		self:remove_name_id(unit)
@@ -194,7 +195,7 @@ function self:set_name_id(unit, name_id)
 	end
 end
 
-function self:get_unit_number(name)
+function WorldDef:get_unit_number(name)
 	local i = 1
 	for _, unit in pairs(World:find_units_quick("all")) do
 		if unit:unit_data() and unit:unit_data().name == name then
@@ -204,11 +205,11 @@ function self:get_unit_number(name)
 	return i
 end
 
-function self:_continent_editor_only(data)
+function WorldDef:_continent_editor_only(data)
 	return false
 end
 
-function self:init_done()
+function WorldDef:init_done()
 	if self._continent_init_packages then
 		for _, package in ipairs(self._continent_init_packages) do
 			--self:_unload_package(package)
@@ -225,7 +226,7 @@ function self:init_done()
 	self._init_done = true
 end
 
-function self:delete_unit(unit)
+function WorldDef:delete_unit(unit)
 	local unit_id = unit:unit_data().unit_id
 	local name_id = unit:unit_data().name_id
 	local continent_name = unit:unit_data().continent
@@ -291,7 +292,7 @@ function self:delete_unit(unit)
 	end
 end
 
-function self:add_unit(unit)
+function WorldDef:add_unit(unit)
 	local statics
 	local ud = unit:unit_data()
 	if unit:wire_data() then
@@ -312,20 +313,20 @@ function self:add_unit(unit)
 	end
 end
 
-function self:_set_only_visible_in_editor(unit, data)
+function WorldDef:_set_only_visible_in_editor(unit, data)
 	if unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor then
 		unit:set_visible(BLE.Options:GetOption("Map/EditorUnits").value)
 	end
 end
 
-function self:_setup_disable_on_ai_graph(unit, data)
+function WorldDef:_setup_disable_on_ai_graph(unit, data)
 	if not data.disable_on_ai_graph then
 		return
 	end
 	unit:unit_data().disable_on_ai_graph = data.disable_on_ai_graph
 end
 
-function self:_create_ai_editor_unit(data, offset)
+function WorldDef:_create_ai_editor_unit(data, offset)
 	local unit = self:_create_statics_unit(data, offset)
 	if unit and data.ai_editor_data then
 		for name, value in pairs(data.ai_editor_data) do
@@ -335,7 +336,7 @@ function self:_create_ai_editor_unit(data, offset)
 	return unit
 end
 
-function self:create_unit(data, type)		
+function WorldDef:create_unit(data, type)		
 	local offset = Vector3()
 	local unit 
 	if type == Idstring("wire") then
@@ -351,7 +352,7 @@ function self:create_unit(data, type)
 	return unit
 end
 
-function self:_setup_editor_unit_data(unit, data)		
+function WorldDef:_setup_editor_unit_data(unit, data)		
 	local ud = unit:unit_data()
 	ud.name_id = data.name_id
 	ud.name = data.name
@@ -390,7 +391,7 @@ function self:_setup_editor_unit_data(unit, data)
 	self:set_up_name_id(unit)
 end
 
-function self:make_unit(data, offset)
+function WorldDef:make_unit(data, offset)
 	local name = data.name
 	if table.has(self._replace_names, name) then
 		name = self._replace_names[name]
@@ -422,7 +423,7 @@ function self:make_unit(data, offset)
 	return unit
 end
 
-function self:assign_unit_data(unit, data)
+function WorldDef:assign_unit_data(unit, data)
 	unit:unit_data().instance = data.instance
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)
@@ -445,7 +446,7 @@ function self:assign_unit_data(unit, data)
 	self:_project_assign_unit_data(unit, data)
 end
 
-function self:_setup_unit_id(unit, data)
+function WorldDef:_setup_unit_id(unit, data)
 	local ud = unit:unit_data()
 	ud.unit_id = tonumber(data.unit_id)
 	unit:set_editor_id(ud.unit_id)
@@ -459,7 +460,7 @@ function self:_setup_unit_id(unit, data)
 	end
 end
 
-function self:GetNewUnitID(continent, t)
+function WorldDef:GetNewUnitID(continent, t)
     if continent then       
         self._unit_ids[continent] = self._unit_ids[continent] or {}
         local tbl = self._unit_ids[continent]
@@ -482,7 +483,7 @@ function self:GetNewUnitID(continent, t)
     end
 end
 
-function self:_create_sounds(data)
+function WorldDef:_create_sounds(data)
 	local path = self:world_dir() .. data.file
 	if not DB:has("world_sounds", path) then
 		Application:error("The specified sound file '" .. path .. ".world_sounds' was not found for this level! ", path, "No sound will be loaded!")
@@ -505,7 +506,7 @@ function self:_create_sounds(data)
 	end
 end
 
-function self:_create_world_cameras(data)
+function WorldDef:_create_world_cameras(data)
 	local path = self:world_dir() .. data.file
 	if not DB:has("world_cameras", path) then
 		self._world_cameras_data = {}
@@ -516,10 +517,10 @@ function self:_create_world_cameras(data)
 	self._world_cameras_data = values
 	managers.worldcamera:load(values)
 end
-function self:_add_to_portal(unit, data)
+function WorldDef:_add_to_portal(unit, data)
 end
 
-function self:parse_continents(node, t)
+function WorldDef:parse_continents(node, t)
 	local path = self:world_dir() .. self._definition.world_data.continents_file
 	if not DB:has("continents", path) then
 		Application:error("Continent file didn't exist " .. path .. ").")
@@ -554,7 +555,7 @@ function self:parse_continents(node, t)
 	self:_insert_instances()
 end
 
-function self:prepare_for_spawn_instance(instance)
+function WorldDef:prepare_for_spawn_instance(instance)
 	local package_data = managers.world_instance:packages_by_instance(instance)
 	if self._init_done then
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
@@ -587,7 +588,7 @@ function self:prepare_for_spawn_instance(instance)
 	end
 end
 
-function self:_insert_instances()
+function WorldDef:_insert_instances()
 	BLE:SetLoadingText("Loading Instances Packages")
 	for name, data in pairs(self._continent_definitions) do
 		if data.instances then

@@ -3,9 +3,8 @@ if not Global.editor_mode then
 end
 
 core:import("CoreShapeManager")
-
-CoreSoundEnvironmentManager = CoreSoundEnvironmentManager or class()
-function CoreSoundEnvironmentManager:init()
+local SoundEnv = CoreSoundEnvironmentManager
+function SoundEnv:init()
 	self._areas = {}
 	self._areas_per_frame = 1
 	self._check_objects = {}
@@ -42,7 +41,7 @@ function CoreSoundEnvironmentManager:init()
 	self._occasional_sound_source = SoundDevice:create_source("occasional")
 end
 
-function CoreSoundEnvironmentManager:_find_emitter_events()
+function SoundEnv:_find_emitter_events()
 	self._emitter = {
 		events = {},
 		paths = {},
@@ -63,7 +62,7 @@ function CoreSoundEnvironmentManager:_find_emitter_events()
 	table.sort(self._emitter.paths)
 end
 
-function CoreSoundEnvironmentManager:_find_ambience_events()
+function SoundEnv:_find_ambience_events()
 	self._ambience = {
 		events = {},
 		soundbanks = {}
@@ -79,7 +78,7 @@ function CoreSoundEnvironmentManager:_find_ambience_events()
 	table.sort(self._ambience.events)
 end
 
-function CoreSoundEnvironmentManager:_find_scene_events()
+function SoundEnv:_find_scene_events()
 	self._scene = {
 		events = {},
 		paths = {},
@@ -98,7 +97,7 @@ function CoreSoundEnvironmentManager:_find_scene_events()
 	table.sort(self._scene.paths)
 end
 
-function CoreSoundEnvironmentManager:_find_occasional_events()
+function SoundEnv:_find_occasional_events()
 	self._occasional = {
 		events = {},
 		soundbanks = {}
@@ -114,7 +113,7 @@ function CoreSoundEnvironmentManager:_find_occasional_events()
 	table.sort(self._occasional.events)
 end
 
-function CoreSoundEnvironmentManager:set_default_ambience(ambience_event)
+function SoundEnv:set_default_ambience(ambience_event)
 	if not ambience_event then
 		return
 	end
@@ -127,7 +126,7 @@ function CoreSoundEnvironmentManager:set_default_ambience(ambience_event)
 	end
 end
 
-function CoreSoundEnvironmentManager:set_default_occasional(occasional_event)
+function SoundEnv:set_default_occasional(occasional_event)
 	if not occasional_event then
 		return
 	end
@@ -143,7 +142,7 @@ function CoreSoundEnvironmentManager:set_default_occasional(occasional_event)
 	end
 end
 
-function CoreSoundEnvironmentManager:add_soundbank(soundbank)
+function SoundEnv:add_soundbank(soundbank)
 	if not soundbank then
 		Application:error("Cant load nil soundbank")
 		return
@@ -153,7 +152,6 @@ function CoreSoundEnvironmentManager:add_soundbank(soundbank)
 	end
 end
 
-SoundEnvironmentArea = SoundEnvironmentArea or class(CoreShapeManager.ShapeBox)
 function SoundEnvironmentArea:init(params)
 	params.type = "box"
 	SoundEnvironmentArea.super.init(self, params)

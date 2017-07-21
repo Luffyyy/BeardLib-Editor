@@ -1,21 +1,11 @@
 core:import("CoreEnvironmentFeeder")
-EnvEditor = EnvEditor or class(EditorPart)
 ShadowBlock = ShadowBlock or class()
-local env_ids = Idstring("environment")
+function ShadowBlock:init() self._parameters = {} end
+function ShadowBlock:map() return self._parameters end
+function ShadowBlock:set(key, value) self._parameters[key] = value end
+function ShadowBlock:get(key) return self._parameters[key] end
 
-function ShadowBlock:init()
-    self._parameters = {}
-end
-function ShadowBlock:map()
-    return self._parameters
-end
-function ShadowBlock:set(key, value)
-    self._parameters[key] = value
-end
-function ShadowBlock:get(key)
-    return self._parameters[key]
-end
-
+EnvEditor = EnvEditor or class(EditorPart)
 function EnvEditor:init(parent, menu)
     self.super.init(self, parent, menu, "Environment", {w = 300, items_size = 16, control_slice = 2})
     self._posteffect = {}
@@ -158,6 +148,7 @@ function EnvEditor:convert_to_block(values)
     return block
 end
 
+local env_ids = Idstring("environment")
 function EnvEditor:database_load_env(env_path)
     if self._last_custom then
         managers.viewport._env_manager._env_data_map[self._last_custom] = nil

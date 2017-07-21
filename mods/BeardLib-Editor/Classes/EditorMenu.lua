@@ -4,8 +4,9 @@ function EditorMenu:init()
     local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
 	self._main_menu = MenuUI:new({
         name = "Editor",
-        layer = 400,
+        layer = 900,
         background_blur = true,
+        auto_text_color = true,
         accent_color = accent_color,
         marker_highlight_color = accent_color,
 		create_items = callback(self, self, "create_items"),

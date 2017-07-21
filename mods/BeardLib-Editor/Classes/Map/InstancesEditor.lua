@@ -1,5 +1,7 @@
 InstancesEditor = InstancesEditor or class(EditorPart)
-function InstancesEditor:init(parent, menu)
+local Instance = InstancesEditor
+
+function Instance:init(parent, menu)
     self:init_basic(parent, name)
     self._units = {}
     self._triggers = {}
@@ -7,8 +9,8 @@ function InstancesEditor:init(parent, menu)
     MenuUtils:new(self, self._static:GetMenu())
 end
 
-function InstancesEditor:build_editor_menu()
-    InstancesEditor.super.build_default_menu(self)
+function Instance:build_editor_menu()
+    Instance.super.build_default_menu(self)
     self._editors = {}
     local other = self:Group("Main")    
     self._static:build_positions_items(true)
@@ -19,7 +21,7 @@ function InstancesEditor:build_editor_menu()
     self:Toggle("MissionPlaced", callback(self, self, "set_data"), false, {group = other})
 end
 
-function InstancesEditor:set_instance(reset)
+function Instance:set_instance(reset)
     self._static._built_multi = false
     if reset then
         self._static:reset_selected_units()
@@ -34,7 +36,7 @@ function InstancesEditor:set_instance(reset)
     self._static:build_default_menu()
 end
 
-function InstancesEditor:delete_instance(instance)
+function Instance:delete_instance(instance)
     instance = instance or self:selected_unit():object()
     local instances = managers.worlddefinition._continent_definitions[instance.continent].instances
     for _, mission in pairs(managers.mission._missions) do
@@ -72,7 +74,7 @@ function InstancesEditor:delete_instance(instance)
     end
 end
 
-function InstancesEditor:set_menu_unit(unit)
+function Instance:set_menu_unit(unit)
     self:build_editor_menu()
     local instance = unit:object()
     self:GetItem("Name"):SetValue(instance.name, false, true)
@@ -82,7 +84,7 @@ function InstancesEditor:set_menu_unit(unit)
     self._static:update_positions()
 end
 
-function InstancesEditor:update_positions()
+function Instance:update_positions()
     for _, unit in pairs(self:selected_units()) do
         if unit:fake() then
             local instance = unit:object()
@@ -96,14 +98,14 @@ function InstancesEditor:update_positions()
     end
 end
 
-function InstancesEditor:update(menu, item)
+function Instance:update(menu, item)
 	local unit = self:selected_unit()
 	if unit and alive(unit) and unit:fake() then
 		Application:draw_sphere(unit:position(), 30, 0, 0, 0.7)
 	end
 end
 
-function InstancesEditor:set_data(menu, item)
+function Instance:set_data(menu, item)
     local main = self:GetItem("Main")
     main:RemoveItem(self:GetItem("NameWarning"))
     local instance = self:selected_unit():object()

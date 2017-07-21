@@ -1,6 +1,7 @@
 MapProjectManager = MapProjectManager or class()
 local U = BeardLib.Utils
-function MapProjectManager:init()
+local Project = MapProjectManager
+function Project:init()
     self._templates_directory = U.Path:Combine(BeardLibEditor.ModPath, "Templates")
     local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
     if data then
@@ -31,7 +32,7 @@ function MapProjectManager:init()
     self:set_edit_title()
 end
 
-function MapProjectManager:current_level(data)
+function Project:current_level(data)
     for _, level in pairs(BeardLib.Utils:GetNodeByMeta(data, "level", true) or {}) do
         if level.id == Global.game_settings.level_id then
             return level
@@ -40,33 +41,33 @@ function MapProjectManager:current_level(data)
     return nil
 end
 
-function MapProjectManager:current_mod()
+function Project:current_mod()
     return BeardLib.current_level and BeardLib.current_level._mod
 end
 
-function MapProjectManager:maps_path()
+function Project:maps_path()
     return BeardLib.current_level._config.include.directory
 end
 
-function MapProjectManager:map_editor_save_main_xml(data)
+function Project:map_editor_save_main_xml(data)
     FileIO:WriteScriptDataTo(self:current_mod():GetRealFilePath(BeardLib.Utils.Path:Combine(self:current_path(), "main.xml")), data, "custom_xml")
 end
 
-function MapProjectManager:current_path()
+function Project:current_path()
     local mod = self:current_mod()
     return mod and mod.ModPath
 end
 
-function MapProjectManager:current_level_path()
+function Project:current_level_path()
     local path = self:current_path()
     return path and U.Path:Combine(path, self:maps_path())
 end
 
-function MapProjectManager:set_edit_title(title)
+function Project:set_edit_title(title)
     self:GetItem("CurrEditing"):SetText("Currently Editing: ".. (title or "None"))
 end
 
-function MapProjectManager:get_projects_list()
+function Project:get_projects_list()
     local list = {}
     for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
         table.insert(list, {name = mod._clean_config.name, mod = mod})
@@ -74,7 +75,7 @@ function MapProjectManager:get_projects_list()
     return list
 end
 
-function MapProjectManager:get_project_by_narrative_id(narr)
+function Project:get_project_by_narrative_id(narr)
     for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
         local narrative = U:GetNodeByMeta(data, "narrative")
         if narrative.id == narr.id then
@@ -83,7 +84,7 @@ function MapProjectManager:get_project_by_narrative_id(narr)
     end
 end
 
-function MapProjectManager:get_packages_of_level(level)
+function Project:get_packages_of_level(level)
     local dir = "levels/"..level.world_name .. "/"
     local packages = {dir.."world"}
     local ext = Idstring("mission")
@@ -100,7 +101,7 @@ function MapProjectManager:get_packages_of_level(level)
     return packages
 end
 
-function MapProjectManager:get_level_by_id(t, id)
+function Project:get_level_by_id(t, id)
     local levels = U:GetNodeByMeta(t, "level", true)
     if not levels then
         log(tostring(t))
@@ -115,7 +116,7 @@ end
 
 local ignore_modules = {["GlobalValue"] = true}
 
-function MapProjectManager:get_clean_mod_config(mod)
+function Project:get_clean_mod_config(mod)
     local config = deep_clone(mod._clean_config)
     for i, module in pairs(mod._modules) do
         if module.clean_table and not ignore_modules[module.type_name] and config[i] then
@@ -125,15 +126,17 @@ function MapProjectManager:get_clean_mod_config(mod)
     return config
 end
 
-function MapProjectManager:get_clean_data(t, no_clone)
+function Project:get_clean_data(t, no_clone)
     local data = U:CleanCustomXmlTable(not no_clone and deep_clone(t) or t, true)
     local narrative = U:GetNodeByMeta(data, "narrative")
     U:RemoveAllNumberIndexes(narrative, true)
-    local AddFiles = U:GetNodeByMeta(data, "AddFiles")
-    AddFiles = BeardLib.Utils:CleanCustomXmlTable(AddFiles)
+    for _, v in pairs({"AddFiles", "Hooks"}) do
+        BeardLib.Utils:CleanCustomXmlTable(U:GetNodeByMeta(data, v))
+    end
+
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
-        for _, v in pairs({"include", "assets", "script_data_mods", "add"}) do
+        for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks"}) do
             if level and level[v] then
                 level[v] = BeardLib.Utils:CleanCustomXmlTable(level[v])
             end
@@ -143,7 +146,7 @@ function MapProjectManager:get_clean_data(t, no_clone)
     return data
 end
 
-function MapProjectManager:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, done_clbk)
+function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, done_clbk)
     self:new_level_dialog(tostring(level_in_chain.level_id), function(name)
         local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
         local levels_path = U.Path:Combine(mod_path, "levels")
@@ -228,7 +231,7 @@ function MapProjectManager:add_existing_level_to_project(data, narr, level_in_ch
     end, done_clbk)
 end
 
-function MapProjectManager:existing_narr_new_project_clbk_finish(data, narr)
+function Project:existing_narr_new_project_clbk_finish(data, narr)
     local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
     FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
@@ -245,7 +248,7 @@ function MapProjectManager:existing_narr_new_project_clbk_finish(data, narr)
     end
 end
 
-function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
+function Project:existing_narr_new_project_clbk(selection, t, name)
     if t then
         local data = deep_clone(self:get_clean_data(self._main_xml_template))
         local narr = U:GetNodeByMeta(data, "narrative")
@@ -278,7 +281,7 @@ function MapProjectManager:existing_narr_new_project_clbk(selection, t, name)
     end
 end
 
-function MapProjectManager:select_narr_as_project()
+function Project:select_narr_as_project()
     local levels = {}
     for id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.custom then
@@ -294,24 +297,24 @@ function MapProjectManager:select_narr_as_project()
     })  
 end
 
-function MapProjectManager:select_project_dialog()
+function Project:select_project_dialog()
     BeardLibEditor.managers.ListDialog:Show({
         list = self:get_projects_list(),
         callback = callback(self, self, "select_project")
     }) 
 end
 
-function MapProjectManager:select_project(selection)
+function Project:select_project(selection)
     self:_select_project(selection.mod)
 end
 
-function MapProjectManager:_reload_mod(name)
+function Project:_reload_mod(name)
     BeardLib.managers.MapFramework._loaded_mods[name] = nil
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
 end
 
-function MapProjectManager:reload_mod(old_name, name, save_prev)
+function Project:reload_mod(old_name, name, save_prev)
     local mod = self._current_mod
     for _, module in pairs(mod._modules) do
         module.Registered = false
@@ -325,7 +328,7 @@ function MapProjectManager:reload_mod(old_name, name, save_prev)
     BeardLibEditor.managers.LoadLevel:load_levels()
 end
 
-function MapProjectManager:_select_project(mod, save_prev)
+function Project:_select_project(mod, save_prev)
     if save_prev then
         local save = self:GetItem("Save")
         if save then
@@ -366,7 +369,7 @@ function MapProjectManager:_select_project(mod, save_prev)
     end)
 end
 
-function MapProjectManager:new_project_dialog(name, clbk, no_callback)
+function Project:new_project_dialog(name, clbk, no_callback)
     BeardLibEditor.managers.InputDialog:Show({
         title = "Enter a name for the project",
         yes = "Create project",
@@ -377,22 +380,22 @@ function MapProjectManager:new_project_dialog(name, clbk, no_callback)
     })
 end
 
-function MapProjectManager:new_level_dialog(name, clbk, no_callback)
+function Project:new_level_dialog(name, clbk, no_callback)
     BeardLibEditor.managers.InputDialog:Show({
         title = "Enter a name for the level", 
         yes = "Create level",
         text = name or "",
         no_callback = no_callback,
         check_value = callback(self, self, "check_level_name"),
-        callback = clbk or callback(self, self, "create_new_level")
+        callback = type(clbk) == "function" and clbk or callback(self, self, "create_new_level")
     })
 end
 
-function MapProjectManager:delete_level_dialog(level)
+function Project:delete_level_dialog(level)
     BeardLibEditor.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", callback(self, self, "delete_level_dialog_clbk", level))
 end
 
-function MapProjectManager:delete_level_dialog_clbk(level)
+function Project:delete_level_dialog_clbk(level)
     local t = self._current_data
     if not t then
         BeardLibEditor:log("[ERROR] Project needed to delete levels!")
@@ -401,9 +404,21 @@ function MapProjectManager:delete_level_dialog_clbk(level)
     local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
     local level_id = type(level) == "table" and level.id or level
     for k, v in pairs(chain) do
-        if v.level_id == level_id then
-            chain[k] = nil
+        if success then
             break
+        end
+        if v.level_id and v.level_id == level_id then
+            table.remove(chain, k)
+            break
+        else
+            local success
+            for i, level in pairs(v) do
+                if level.level_id == level_id then
+                    table.remove(v, i)
+                    success = true
+                    break
+                end
+            end
         end
     end
     if type(level) == "table" then
@@ -420,7 +435,7 @@ function MapProjectManager:delete_level_dialog_clbk(level)
     self:reload_mod(t.name, t.name, true)
 end
 
-function MapProjectManager:create_new_level(name)
+function Project:create_new_level(name)
     local t = self._current_data
     if not t then
         BeardLibEditor:log("[ERROR] Project needed to create levels!")
@@ -435,11 +450,12 @@ function MapProjectManager:create_new_level(name)
     table.insert(narr.chain, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
     level.include.directory = level_path
     FileIO:WriteTo(U.Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(t, "custom_xml"))
-    FileIO:CopyTo(U.Path:Combine(self._templates_directory, "Level"), U.Path:Combine(proj_path, level_path))
+    FileIO:MakeDir(U.Path:Combine(proj_path, level_path))
+    FileIO:CopyToAsync(U.Path:Combine(self._templates_directory, "Level"), U.Path:Combine(proj_path, level_path))
     self:reload_mod(t.name, t.name, true)
 end
 
-function MapProjectManager:create_new_narrative(name)
+function Project:create_new_narrative(name)
     local data = self:get_clean_data(self._main_xml_template)
     local narr = U:GetNodeByMeta(data, "narrative")
     data.name = name
@@ -452,7 +468,7 @@ function MapProjectManager:create_new_narrative(name)
     return data 
 end
 
-function MapProjectManager:check_level_name(name)
+function Project:check_level_name(name)
     if tweak_data.levels[name] then
         BeardLibEditor.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
         return false
@@ -466,7 +482,7 @@ function MapProjectManager:check_level_name(name)
     return true
 end
 
-function MapProjectManager:check_narrative_name(name)
+function Project:check_narrative_name(name)
     if tweak_data.narrative.jobs[name] then
         BeardLibEditor.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
         return false
@@ -480,9 +496,9 @@ function MapProjectManager:check_narrative_name(name)
     return true
 end
 
-function MapProjectManager:new_project_dialog_clbk(clbk, name) clbk(self:create_new_narrative(name), name) end
+function Project:new_project_dialog_clbk(clbk, name) clbk(self:create_new_narrative(name), name) end
 
-function MapProjectManager:new_project_clbk(data, name)
+function Project:new_project_clbk(data, name)
     local save = self:GetItem("Save")
     if save then
         save:RunCallback()
@@ -495,7 +511,7 @@ function MapProjectManager:new_project_clbk(data, name)
     BeardLibEditor.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
 end
 
-function MapProjectManager:add_exisiting_level_dialog()
+function Project:add_exisiting_level_dialog()
     local levels = {}
     for k, level in pairs(tweak_data.levels) do
         if type(level) == "table" then
@@ -513,7 +529,7 @@ function MapProjectManager:add_exisiting_level_dialog()
     })
 end
 
-function MapProjectManager:set_crimenet_videos_dialog()
+function Project:set_crimenet_videos_dialog()
     local t = self._current_data
     local crimenet_videos = U:GetNodeByMeta(self._current_data, "narrative").crimenet_videos
     BeardLibEditor.managers.SelectDialog:Show({
@@ -525,7 +541,7 @@ function MapProjectManager:set_crimenet_videos_dialog()
     })
 end
 
-function MapProjectManager:edit_main_xml(data, save_clbk)
+function Project:edit_main_xml(data, save_clbk)
     self:reset_menu()
     self:set_edit_title(tostring(data.name))
     data = self:get_clean_data(data)
@@ -548,6 +564,19 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
     self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
     self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
+    local updating = self:DivGroup("Updating", divgroup_opt)
+    local mod_assets = U:GetNodeByMeta(data, "AssetUpdates")
+    if not mod_assets then
+        mod_assets = {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop", use_local_dir = true}
+        table.insert(data, mod_assets)
+    end
+    if mod_assets.provider == "lastbullet" then
+        mod_assets.provider = "modworkshop"
+    end
+    self:TextBox("DownloadId", up, mod_assets.id, {group = updating, filter = "number", floats = 0})
+    self:TextBox("Version", up, mod_assets.version, {group = updating, filter = "number"})
+    self:Toggle("Downloadable", up, mod_assets.is_standalone ~= false, {group = updating})
+
     local chain = self:DivGroup("Chain", divgroup_opt)
     self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
     self:Button("AddNewLevel", callback(self, self, "new_level_dialog", ""), {group = chain})
@@ -559,7 +588,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
             end
         end
     end
-    local function build_level_ctrls(level_in_chain, chain_group, btn)
+    local function build_level_ctrls(level_in_chain, chain_group, btn, level)
         local narr_chain = chain_group or narr.chain
         local my_index = table.get_key(narr_chain, level_in_chain)
 
@@ -571,7 +600,7 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
             }, opt or {}))
         end
         if level_in_chain.level_id then
-            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_id), {184, 2, 48, 48}, {marker_highlight_color = Color.red})
+            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {marker_highlight_color = Color.red})
             if chain_group then
                 small_button("Ungroup", SimpleClbk(self.ungroup_level, self, narr, level_in_chain, chain_group), {156, 54, 48, 48})
             else
@@ -584,18 +613,23 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
         local level = get_level(level_id)
-        local btn = self:Button(level_id, level and SimpleClbk(self.edit_main_xml_level, self, data, level, level_in_chain, chain_group, save_clbk), {group = group or levels_group})
-        return level_in_chain, chain_group, btn
+        local btn = self:Button(level_id, level and SimpleClbk(self.edit_main_xml_level, self, data, level, level_in_chain, chain_group, save_clbk), {
+            group = group or levels_group,
+            text = level_id
+        })
+        return btn, level
     end
     for i, v in pairs(narr.chain) do
         if type(v) == "table" then
             if v.level_id then
-                build_level_ctrls(build_level_button(v, false))
+                local btn, actual_level = build_level_button(v, false)
+                build_level_ctrls(v, false, btn, actual_level)
             else
                 local grouped = self:DivGroup("Day "..tostring(i).."[Grouped]", {group = levels_group})
                 build_level_ctrls(v, nil, grouped)
                 for k, level in pairs(v) do
-                    build_level_ctrls(build_level_button(level, v, grouped, k == 1))
+                    local btn, actual_level = build_level_button(level, v, grouped, k == 1)
+                    build_level_ctrls(level, v, btn, actual_level)
                 end
             end
         end
@@ -654,16 +688,17 @@ function MapProjectManager:edit_main_xml(data, save_clbk)
     self._refresh_func = function() self:edit_main_xml(data, save_clbk) end
 end
 
-function MapProjectManager:delete_project(menu, item)
+function Project:delete_project(menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
         FileIO:Delete(Path:Combine("Maps", self._current_data.name))
         self:disable()
     end)
 end
 
-function MapProjectManager:set_project_data(menu, item)
+function Project:set_project_data(menu, item)
     local t = self._current_data  
     local narr = U:GetNodeByMeta(t, "narrative")
+    local mod_assets = U:GetNodeByMeta(t, "AssetUpdates")
     local old_name = t.orig_id or t.name
     t.name = self:GetItem("ProjectName"):Value()
     local title = tostring(t.name)
@@ -692,22 +727,33 @@ function MapProjectManager:set_project_data(menu, item)
     narr.debrief_event = events:match(",") and string.split(events, ",") or {events}
     narr.briefing_event = self:GetItem("BriefingEvent"):Value()
     narr.contact = self:GetItem("Contact"):SelectedItem()
+
+    mod_assets.id = self:GetItem("DownloadId"):Value()
+    mod_assets.version = self:GetItem("Version"):Value()
+    mod_assets.is_standalone = self:GetItem("Downloadable"):Value()
+    if mod_assets.is_standalone == true then
+        mod_assets.is_standalone = nil
+    end
     self:set_edit_title(title)
 end
 
-function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
+function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
     self._curr_editing:ClearItems()
     local up = callback(self, self, "set_project_level_data", level_in_chain)
     self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
     self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
-    self:TextBox("IntroEvent", up, type(level.intro_event) == "table" and table.concat(level.intro_event, ",") or level.intro_event, {group = self._curr_editing})
-    self:TextBox("OutroEvent", up, type(level.intro_event) == "table" and table.concat(level.outro_event, ",") or level.outro_event, {group = self._curr_editing})
-    self:NumberBox("GhostBonus", up, level.ghost_bonus, {max = 1, min = 0, group = self._curr_editing})
+    level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
+    level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
+
+    self:TextBox("IntroEvent", up, table.concat(level.intro_event, ","), {group = self._curr_editing})
+    self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = self._curr_editing})
+    if level.ghost_bonus == 0 then
+        level.ghost_bonus = nil
+    end
+    self:NumberBox("GhostBonus", up, level.ghost_bonus or 0, {max = 1, min = 0, step = 0.1, group = self._curr_editing})
     self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = self._curr_editing})
     local aitype = table.map_keys(LevelsTweakData.LevelType)
     self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
-    level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
-    level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
     self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
     self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = self._curr_editing})
     local near = self:GetItem("Close")
@@ -724,7 +770,7 @@ function MapProjectManager:edit_main_xml_level(data, level, level_in_chain, chai
     self._refresh_func = function() self:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk) end
 end
 
-function MapProjectManager:set_mission_assets_dialog()
+function Project:set_mission_assets_dialog()
     local selected_assets = {}
     for _, asset in pairs(U:GetNodeByMeta(self._current_data, "level").assets) do
         if type(asset) == "table" and asset._meta == "asset" then
@@ -750,22 +796,22 @@ function MapProjectManager:set_mission_assets_dialog()
 	})
 end
 
-function MapProjectManager:set_chain_index(narr_chain, chain_tbl, index)
+function Project:set_chain_index(narr_chain, chain_tbl, index)
     table.delete(narr_chain, chain_tbl)
     table.insert(narr_chain, tonumber(index), chain_tbl)
     self._refresh_func()
 end
 
-function MapProjectManager:ungroup_level(narr, level_in_chain, chain_group)
+function Project:ungroup_level(narr, level_in_chain, chain_group)
     table.delete(chain_group, level_in_chain)
     if #chain_group == 1 then
-        chain_group = chain_group[1]
+        narr.chain[table.get_key(narr.chain, chain_group)] = chain_group[1]
     end
     table.insert(narr.chain, level_in_chain)
     self._refresh_func()
 end
 
-function MapProjectManager:group_level(narr, level_in_chain)
+function Project:group_level(narr, level_in_chain)
     local chain = {}
     for i, v in pairs(narr.chain) do
         if v ~= level_in_chain then
@@ -776,18 +822,19 @@ function MapProjectManager:group_level(narr, level_in_chain)
         list = chain,
         callback = function(selection)
             table.delete(narr.chain, level_in_chain)
+            local key = table.get_key(narr.chain, selection.value)
             local chain_group = selection.value
             if chain_group.level_id then
-                chain_group = {chain_group}
+                narr.chain[key] = {chain_group}
             end
-            table.insert(chain_group, level_in_chain)
+            table.insert(narr.chain[key], level_in_chain)
             BeardLibEditor.managers.ListDialog:hide()
             self._refresh_func()
         end
     })
 end
 
-function MapProjectManager:set_project_level_data(level_in_chain)
+function Project:set_project_level_data(level_in_chain)
     local t = self._current_data
     local level = U:GetNodeByMeta(t, "level")   
     local old_name = level.orig_id or level.id
@@ -805,6 +852,9 @@ function MapProjectManager:set_project_level_data(level_in_chain)
     level.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
     level.briefing_dialog = self:GetItem("BriefingDialog"):Value()
     level.ghost_bonus = self:GetItem("GhostBonus"):Value()
+    if level.ghost_bonus == 0 then
+        level.ghost_bonus = nil
+    end
     level.max_bags = self:GetItem("MaxBags"):Value()
     level.team_ai_off = self:GetItem("TeamAiOff"):Value()
     local intro = self:GetItem("IntroEvent"):Value()
@@ -814,7 +864,7 @@ function MapProjectManager:set_project_level_data(level_in_chain)
     self:set_edit_title(title)
 end
 
-function MapProjectManager:reset_menu()
+function Project:reset_menu()
     for _, item in pairs(self._curr_editing._adopted_items) do
         item:Destroy()
     end
@@ -825,7 +875,7 @@ function MapProjectManager:reset_menu()
     self:set_edit_title()
 end
 
-function MapProjectManager:disable()
+function Project:disable()
     self._current_data = nil
     self._current_mod = nil
     self._refresh_func = nil

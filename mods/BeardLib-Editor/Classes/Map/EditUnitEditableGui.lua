@@ -1,7 +1,5 @@
 EditUnitEditableGui = EditUnitEditableGui or class(EditUnit)
-function EditUnitEditableGui:editable(unit)	
-	return self.super.editable(self, unit) and unit:editable_gui() ~= nil
-end
+function EditUnitEditableGui:editable(unit)	return self.super.editable(self, unit) and unit:editable_gui() ~= nil end
 
 function EditUnitEditableGui:build_menu(units)
 	local gui_options = self:Group("EditableGui")
@@ -73,9 +71,6 @@ function EditUnitEditableGui:build_menu(units)
 end
 
 function EditUnitEditableGui:set_unit_data()
-	if not self._debug then
-		return
-	end	
 	local unit = self:selected_unit()
 	unit:editable_gui():set_debug(self._debug:Value())
 	unit:editable_gui():set_shape({self._shapes[1]:Value(),self._shapes[2]:Value(),self._shapes[3]:Value(),self._shapes[4]:Value()})

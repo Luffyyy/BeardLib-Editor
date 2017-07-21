@@ -1,4 +1,7 @@
-if Global.editor_mode then
+if not Global.editor_mode then
+	return
+end
+
 core:module("CoreMissionManager")
 core:import("CoreMissionScriptElement")
 core:import("CoreEvent")
@@ -7,8 +10,8 @@ core:import("CoreDebug")
 core:import("CoreCode")
 core:import("CoreTable")
 require("core/lib/managers/mission/CoreElementDebug")
-MissionManager = MissionManager or CoreClass.class(CoreEvent.CallbackHandler)
-function MissionManager:parse(params, stage_name, offset, file_type)
+local Mission = MissionManager
+function Mission:parse(params, stage_name, offset, file_type)
 	local file_path, activate_mission
 	if CoreClass.type_name(params) == "table" then
 		file_path = params.file_path
@@ -44,17 +47,17 @@ function MissionManager:parse(params, stage_name, offset, file_type)
 	return true
 end
 
-function MissionManager:store_element_id(continent, id)
+function Mission:store_element_id(continent, id)
 	self._ids = self._ids or {}
 	self._ids[continent] = self._ids[continent] or {}
 	self._ids[continent][id] = true
 end
 
-function MissionManager:delete_element_id(continent, id)
+function Mission:delete_element_id(continent, id)
 	self._ids[continent][id] = nil
 end
 
-function MissionManager:get_new_id(continent)
+function Mission:get_new_id(continent)
 	if continent then		
 		self._ids = self._ids or {}
 		self._ids[continent] = self._ids[continent] or {}
@@ -70,14 +73,14 @@ function MissionManager:get_new_id(continent)
 	end
 end
 
-function MissionManager:activate()
+function Mission:activate()
 	if not self._activated then
 		self._activated = true
 		self:_activate_mission(self._activate_script)
 	end
 end
 
-function MissionManager:_load_mission_file(name, file_dir, data)
+function Mission:_load_mission_file(name, file_dir, data)
 	self._missions = self._missions or {}
 	local file_path = file_dir .. data.file
 	self._missions[name] = self:_serialize_to_script("mission", file_path) 
@@ -88,7 +91,7 @@ function MissionManager:_load_mission_file(name, file_dir, data)
 	end
 end
 
-function MissionManager:set_element(element, old_script)
+function Mission:set_element(element, old_script)
 	if not element then
 		return
 	end
@@ -134,7 +137,7 @@ function core:import_without_crashing(module_name)
 	end
 end
 
-function MissionManager:add_element(element)
+function Mission:add_element(element)
 	local script
 	local script_name
 	local mission = self._missions.world
@@ -182,7 +185,7 @@ function MissionManager:add_element(element)
 	end
 end
 
-function MissionManager:delete_element(id)	
+function Mission:delete_element(id)	
 	self:delete_links(id, true)
 	for m_name, mission in pairs(self._missions) do
 		for s_name, script in pairs(mission) do
@@ -202,7 +205,7 @@ _G.Hooks:PreHook(MissionScript, "init", "BeardLibEditorMissionScriptPreInit", fu
 	self._continent = data.continent
 end)
 
-function MissionManager:execute_element(element)
+function Mission:execute_element(element)
     for _, script in pairs(self._scripts) do
         if script._elements[element.id] then
             script:execute_element(element)
@@ -210,7 +213,7 @@ function MissionManager:execute_element(element)
     end
 end
 
-function MissionManager:get_executors(element)
+function Mission:get_executors(element)
 	local executors = {}
 	if element then
 		for _, script in pairs(self._missions) do
@@ -232,7 +235,7 @@ function MissionManager:get_executors(element)
 	return executors
 end
 
-function MissionManager:delete_links(id, is_element)
+function Mission:delete_links(id, is_element)
 	for _, link in pairs(managers.mission:get_links_paths(id, is_element)) do
 		if tonumber(link.key) then
 			table.remove(link.tbl, link.key)
@@ -250,7 +253,7 @@ local elements_upper_keys = {
     "elements", "instigator_ids", "spawn_unit_elements", "use_shape_element_ids", "rules_element_ids", "spawn_groups", "spawn_points", "sequence", "followup_elements", "spawn_instigator_ids", "Stopwatch_value_ids"
 }
 local elements_keys = {{upper_k = "on_executed", k = "id"}, "counter_id"}
-function MissionManager:identify_key_and_upper_key(upper_k, k)
+function Mission:identify_key_and_upper_key(upper_k, k)
     local current_is_unit, current_is_element
     for _, key in pairs(units_upper_keys) do
         if upper_k == key then
@@ -286,7 +289,7 @@ function MissionManager:identify_key_and_upper_key(upper_k, k)
     return current_is_unit, current_is_element
 end
 
-function MissionManager:is_linked(id, is_element, upper_k, tbl, stop)
+function Mission:is_linked(id, is_element, upper_k, tbl, stop)
     for k, v in pairs(tbl) do
         local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
         if not stop and type(v) == "table" then
@@ -300,7 +303,7 @@ function MissionManager:is_linked(id, is_element, upper_k, tbl, stop)
     end
 end
 
-function MissionManager:get_links(id, is_element)
+function Mission:get_links(id, is_element)
  	if not tonumber(id) or tonumber(id) < 0 then
 		return {}
 	end
@@ -319,7 +322,7 @@ function MissionManager:get_links(id, is_element)
 	return modifiers
 end
 
-function MissionManager:get_links_paths(id, is_element, elements)   
+function Mission:get_links_paths(id, is_element, elements)   
     if not tonumber(id) or tonumber(id) < 0 then
         return {}
     end
@@ -356,7 +359,7 @@ function MissionManager:get_links_paths(id, is_element, elements)
     return id_paths
 end
 
-function MissionManager:get_mission_element(id)
+function Mission:get_mission_element(id)
 	for _, script in pairs(self._missions) do
 		for _, tbl in pairs(script) do
 			if tbl.elements then
@@ -372,7 +375,8 @@ function MissionManager:get_mission_element(id)
 end
 
 --Instance elements--
-function MissionScript:_preload_instance_class_elements(prepare_mission_data)
+local MScript = MissionScript
+function MScript:_preload_instance_class_elements(prepare_mission_data)
 	prepare_mission_data.instance_name = nil
 	for _, instance_mission_data in pairs(prepare_mission_data) do
 		for _, element in ipairs(instance_mission_data.elements) do
@@ -381,7 +385,7 @@ function MissionScript:_preload_instance_class_elements(prepare_mission_data)
 	end
 end
 
-function MissionScript:create_instance_elements(prepare_mission_data)
+function MScript:create_instance_elements(prepare_mission_data)
 	local new_elements = {}
 	local instance_name = prepare_mission_data.instance_name
 	prepare_mission_data.instance_name = nil
@@ -392,7 +396,7 @@ function MissionScript:create_instance_elements(prepare_mission_data)
 end
 --Instance elements code end
 
-function MissionScript:_create_elements(elements, instance_name)
+function MScript:_create_elements(elements, instance_name)
 	local new_elements = {}
 	for _, element in pairs(elements) do
 		element.instance = instance_name
@@ -401,7 +405,7 @@ function MissionScript:_create_elements(elements, instance_name)
 	return new_elements
 end
 
-function MissionScript:create_element(element, return_unit, instance_name)
+function MScript:create_element(element, return_unit, instance_name)
 	local class = element.class	
 	if not element.id then
 		element.id = managers.mission:get_new_id(self._continent)
@@ -422,11 +426,11 @@ function MissionScript:create_element(element, return_unit, instance_name)
 	return new_element
 end
 
-function MissionScript:execute_element(element)
+function MScript:execute_element(element)
 	self._elements[element.id]:on_executed(managers.player:player_unit())
 end
 
-function MissionScript:create_mission_element_unit(element)
+function MScript:create_mission_element_unit(element)
 	local enabled = element.values.position ~= nil
 	element.values.position = element.values.position or Vector3(math.random(9999), math.random(9999), 0)
 	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation()
@@ -446,7 +450,7 @@ function MissionScript:create_mission_element_unit(element)
 	return unit
 end
 
-function MissionScript:delete_element(element)
+function MScript:delete_element(element)
 	local id = element.id
 	managers.mission:delete_element_id(self._continent, id)
 	self._elements[id]:set_enabled(false)
@@ -454,9 +458,8 @@ function MissionScript:delete_element(element)
 	self._element_groups[element.class] = nil
 end
 
-function MissionScript:debug_output(debug, color)
+function MScript:debug_output(debug, color)
 	if managers.editor then
 		managers.editor.managers.console:LogMission(debug)
 	end
-end
 end

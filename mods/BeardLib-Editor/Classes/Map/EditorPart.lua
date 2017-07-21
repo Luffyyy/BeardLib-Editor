@@ -1,11 +1,13 @@
 EditorPart = EditorPart or class()
-function EditorPart:init(parent, menu, name, opt)
+local Part = EditorPart
+function Part:init(parent, menu, name, opt)
     self:init_basic(parent, name)
     self._menu = menu:Menu(table.merge({
         name = name,
         control_slice = 1.75,
         items_size = 18,
         offset = {4, 1},
+        auto_text_color = true,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
@@ -21,11 +23,7 @@ function EditorPart:init(parent, menu, name, opt)
     self:build_default_menu()
 end
 
-function EditorPart:bind_opt(opt, clbk)
-    self:bind("Input/"..opt, clbk)
-end
-
-function EditorPart:bind(opt, clbk)
+function Part:bind(opt, clbk)
     local key
     if opt:match("Input") then
         key = BeardLibEditor.Options:GetValue(opt)
@@ -37,7 +35,7 @@ function EditorPart:bind(opt, clbk)
     end
 end
 
-function EditorPart:update() 
+function Part:update() 
     if BeardLib.managers.dialog:DialogOpened() or self._parent._menu:Focused() then
         return
     end
@@ -48,15 +46,8 @@ function EditorPart:update()
     end
 end
 
-function EditorPart:selected_unit()
-    return self._parent:selected_unit()
-end
 
-function EditorPart:selected_units()
-    return self._parent:selected_units()
-end
-
-function EditorPart:init_basic(parent, name)
+function Part:init_basic(parent, name)
     self._name = name
     self._parent = parent    
     self._pen = Draw:pen(Color(1, 1, 1))
@@ -69,30 +60,13 @@ function EditorPart:init_basic(parent, name)
     self._shape_controls = {"width", "height", "depth", "radius"}
 end
 
-function EditorPart:Enabled()
-    return self._menu:Visible()
-end
-
-function EditorPart:Switch()
-    self:Manager("menu"):Switch(self)
-end
-
-function EditorPart:Value(v)
-    return BeardLibEditor.Options:GetValue("Map/" .. v)
-end
-
-function EditorPart:Manager(n)
-    return managers.editor.managers[n]
-end 
-
-function EditorPart:build_default_menu()
-    self:ClearItems()
-end
-
-function EditorPart:SetTitle(title)
-    self._menu:GetItem("Title"):SetText(title or self._menu.name)
-end
-
-function EditorPart:disable()
-    self._triggers = {}
-end
+function Part:bind_opt(opt, clbk) self:bind("Input/"..opt, clbk) end
+function Part:selected_unit() return self._parent:selected_unit() end
+function Part:selected_units() return self._parent:selected_units() end
+function Part:Enabled() return self._menu:Visible() end
+function Part:Switch() self:Manager("menu"):Switch(self) end
+function Part:Value(v) return BeardLibEditor.Options:GetValue("Map/" .. v) end
+function Part:Manager(n) return managers.editor.managers[n] end 
+function Part:build_default_menu() self:ClearItems() end
+function Part:SetTitle(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
+function Part:disable() self._triggers = {} end

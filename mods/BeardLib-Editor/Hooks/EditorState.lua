@@ -3,6 +3,7 @@ EditorState = EditorState or class(GameState)
 function EditorState:init(game_state_machine)
 	GameState.init(self, "editor", game_state_machine)
 end
+
 function EditorState:at_enter()
 	if not Global.editor_mode then
 		return
@@ -19,6 +20,7 @@ function EditorState:at_enter()
 	    tweak_data.narrative.jobs[job_id].contract_visuals.max_mission_xp = {0,0,0,0,0}
 	end
 end
+
 function EditorState:at_exit()
 	if Global.editor_mode then
 		managers.editor:set_enabled(false)

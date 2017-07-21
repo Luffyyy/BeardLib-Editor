@@ -1,3 +1,7 @@
+if not Global.editor_mode then
+	return
+end
+
 core:module("CoreEnvironmentManager")
 core:import("CoreClass")
 core:import("CoreEnvironmentHandler")

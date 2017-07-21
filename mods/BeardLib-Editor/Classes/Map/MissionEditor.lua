@@ -1,4 +1,5 @@
 MissionEditor = MissionEditor or class(EditorPart)
+function MissionEditor:units() return self._units end
 function MissionEditor:init(parent, menu)
     local elements = file.GetFiles(BeardLibEditor.ElementsDir)
     if not elements then
@@ -11,10 +12,6 @@ function MissionEditor:init(parent, menu)
     self._units = {}
     self._parent = parent
     self._triggers = {}
-end
-
-function MissionEditor:units()
-    return self._units
 end
 
 function MissionEditor:set_elements_vis()

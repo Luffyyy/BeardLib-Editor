@@ -100,6 +100,7 @@ function MenuUtils:init(this, menu)
 	        min_width = parent.items_size,
 	        min_height = parent.items_size,
 	        text_offset = 2,
+			text_highlight_color = false,
 	        position = function(item)
 	        	item:SetPositionByString("CenterRight")
 	        	item:Panel():move(-1)
@@ -112,6 +113,9 @@ function MenuUtils:init(this, menu)
 
 	function this:SmallImageButton(name, callback, texture, rect, parent, o)    
 	    local m, opt = self:WorkMenuUtils(o)
+		if not parent then
+			log(debug.traceback())
+		end
 	    m = parent.type_name == "Menu" and parent or m
 	    opt.help = string.pretty2(name)
 	    return m:ImageButton(table.merge({

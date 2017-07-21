@@ -1,12 +1,11 @@
 EditWire = EditWire or class(EditUnit)
 function EditWire:editable(unit) return unit:wire_data() end
+
 function EditWire:build_menu(parent)
 	self:NumberBox("Slack", callback(self._parent, self._parent, "set_unit_data"), 0, {group = self._menu:GetItem("Main")})
 end
 
-function EditWire:update_positions()   
-	self:set_unit_data()
-end
+function EditWire:update_positions() self:set_unit_data() end
 
 function EditWire:set_menu_unit(unit)   
 	self._menu:GetItem("Slack"):SetValue(unit and unit:wire_data() and unit:wire_data().slack)
@@ -30,4 +29,3 @@ function EditWire:set_unit_data()
 		CoreMath.wire_set_midpoint(unit, unit:orientation_object():name(), Idstring("a_target"), Idstring("a_bender"))
 	end
 end
- 

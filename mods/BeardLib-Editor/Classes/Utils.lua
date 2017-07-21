@@ -13,9 +13,9 @@ function string.underscore_name(str)
 end
 
 BeardLibEditor.Utils = {}
-local self = BeardLibEditor.Utils
+local Utils = BeardLibEditor.Utils
 --Sets the position of a unit/object correctly
-function self:SetPosition(unit, position, rotation, offset)
+function Utils:SetPosition(unit, position, rotation, offset)
     if offset and unit:unit_data()._prev_pos and unit:unit_data()._prev_rot then
         local pos = mvector3.copy(unit:unit_data()._prev_pos)
         mvector3.add(pos, position)
@@ -52,12 +52,12 @@ function self:SetPosition(unit, position, rotation, offset)
     end
 end
 
-function self:ParseXml(typ, path)
+function Utils:ParseXml(typ, path)
     local file = BeardLibEditor.ExtractDirectory .. "/" ..  path .. "." .. typ
     return SystemFS:exists(file) and SystemFS:parse_xml(file, "r")
 end
 
-function self:ReadUnitAndLoad(unit, load)
+function Utils:ReadUnitAndLoad(unit, load)
     local config = {}
     local path = BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, unit)
     log("Checking unit .. " .. tostring( unit ))
@@ -167,7 +167,7 @@ function self:ReadUnitAndLoad(unit, load)
     return config
 end
 
-function self:FilterList(menu, search)
+function Utils:FilterList(menu, search)
     for _, item in pairs(search.override_parent._my_items) do
         if type_name(item) == "Button" then
             item:SetVisible(search:Value() == "" or item:Text():match(search:Value()), true)
@@ -176,7 +176,7 @@ function self:FilterList(menu, search)
     search.override_parent:AlignItems()
 end
 
-function self:GetPackageSize(package)
+function Utils:GetPackageSize(package)
     local file = io.open("assets/" .. (package:match("/") and package:key() or package) .. ".bundle", "rb")
     if file then
         return tonumber(file:seek("end")) / (1024)^2
@@ -195,25 +195,34 @@ local allowed_units = {
     ["core/units/sound_area_emitter/sound_area_emitter"] = true,
 }
 
-function self:IsLoaded(asset, type, packages)
+function Utils:IsLoaded(asset, type, packages)
     if allowed_units[asset] then
         return true
     end
-    return #self:GetPackages(asset, type, false, true, packages) > 0
+    for name, package in pairs(packages or BeardLibEditor.DBPackages) do
+        for _, path in pairs(package[type] or {}) do
+            if path == asset then
+                if not name:match("all_") then
+                    return true
+                end
+            end
+        end
+    end
+    return false
 end
 
-function self:GetPackagesOfUnit(unit, size_needed, packages, first)
+function Utils:GetPackagesOfUnit(unit, size_needed, packages, first)
     return self:GetPackages(unit, "unit", size_needed, first, packages)
 end
 
-function self:GetPackages(asset, type, size_needed, first, packages)
+function Utils:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
-        if not name:match("all_") then
-            for _, path in pairs(package[type] or {}) do
-                if path == asset then
-                    local size = size_needed and self:GetPackageSize(name)
-                    if not size_needed or size then
+        for _, path in pairs(package[type] or {}) do
+            if path == asset then
+                local size = size_needed and self:GetPackageSize(name)
+                if not size_needed or size then
+                    if not name:match("all_") then
                         table.insert(found_packages, {name = name, size = size})
                         if first then
                             return found_packages
@@ -226,12 +235,12 @@ function self:GetPackages(asset, type, size_needed, first, packages)
     return found_packages
 end
 
-function self:HasEditableLights(unit)
+function Utils:HasEditableLights(unit)
     local lights = self:GetLights(unit)
     return lights and #lights > 0
 end
 
-function self:GetLights(unit)
+function Utils:GetLights(unit)
     if not unit.get_objects_by_type then
         return nil
     end
@@ -261,9 +270,9 @@ for _, intensity in ipairs(LightIntensityDB:list()) do
     table.insert(t, LightIntensityDB:lookup(intensity))
 end
 table.sort(t)
-self.IntensityValues = t
+Utils.IntensityValues = t
 
-function self:GetIntensityPreset(multiplier)
+function Utils:GetIntensityPreset(multiplier)
     local intensity = LightIntensityDB:reverse_lookup(multiplier)
     if intensity ~= Idstring("undefined") then
         return intensity
@@ -287,7 +296,7 @@ function self:GetIntensityPreset(multiplier)
     end
 end
 
-function self:LightData(unit)
+function Utils:LightData(unit)
     local lights = self:GetLights(unit)
     if not lights then
         return nil
@@ -312,7 +321,7 @@ function self:LightData(unit)
     return #t > 0 and t or nil
 end
 
-function self:HasAnyProjectionLight(unit)
+function Utils:HasAnyProjectionLight(unit)
     if not unit.get_objects_by_type then
         return
     end
@@ -323,7 +332,7 @@ function self:HasAnyProjectionLight(unit)
     return self:HasProjectionLight(unit, "shadow_projection") or self:HasProjectionLight(unit, "projection")
 end
 
-function self:HasProjectionLight(unit, type)
+function Utils:HasProjectionLight(unit, type)
     type = type or "projection"
     local node = self:ParseXml("object", unit:unit_data().name)
     if node then
@@ -340,7 +349,7 @@ function self:HasProjectionLight(unit, type)
     return nil
 end
 
-function self:IsProjectionLight(unit)
+function Utils:IsProjectionLight(unit)
     type = type or "projection"
     local node = self:ParseXml("object", unit:unit_data().name)
     if node then
@@ -357,7 +366,7 @@ function self:IsProjectionLight(unit)
     return false
 end
 
-function self:TriggersData(unit)
+function Utils:TriggersData(unit)
     local triggers = managers.sequence:get_trigger_list(unit:name())
     if #triggers == 0 then
         return nil
@@ -387,7 +396,7 @@ function self:TriggersData(unit)
     return #t > 0 and t or nil
 end
 
-function self:EditableGuiData(unit)
+function Utils:EditableGuiData(unit)
     local t
     if unit:editable_gui() then
         t = {
@@ -408,7 +417,7 @@ function self:EditableGuiData(unit)
     return t
 end
 
-function self:LadderData(unit)
+function Utils:LadderData(unit)
     local t
     if unit:ladder() then
         t = {
@@ -419,7 +428,7 @@ function self:LadderData(unit)
     return t
 end
 
-function self:ZiplineData(unit)
+function Utils:ZiplineData(unit)
     local t
     if unit:zipline() then
         t = {
@@ -433,7 +442,7 @@ function self:ZiplineData(unit)
     return t
 end
 
-function self:InSlot(unit, slot)
+function Utils:InSlot(unit, slot)
     local ud = PackageManager:unit_data(Idstring(unit):id())
     if ud then
         local unit_slot = ud:slot()
@@ -446,7 +455,7 @@ function self:InSlot(unit, slot)
     return false
 end
 
-function self:GetEntries(params)
+function Utils:GetEntries(params)
     local entries = {}
     local IsLoaded
 
@@ -467,24 +476,32 @@ function self:GetEntries(params)
 end
 
 --Any unit that exists only in editor(except mission element units)
-function self:GetUnits(params)
+function Utils:GetUnits(params)
     local units = {}
     local unit_ids = Idstring("unit")
     local check = params.check
     local slot = params.slot
     local not_loaded = params.not_loaded
     local packages = params.packages
+    local loaded_units = {}
+    for _, package in pairs(packages) do
+        if package.unit then
+            for _, unit in pairs(package.unit) do
+                loaded_units[unit] = true
+            end
+        end
+    end
     local type = params.type
     local not_type = params.not_type
     for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
         local slot_fine = not slot or self:InSlot(unit, slot)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
-        local type_fine = (not type or unit_type  == Idstring(type)) and (not not_type or unit_type ~= Idstring(not_type))
+        local type_fine = (not type or unit_type == Idstring(type)) and (not not_type or unit_type ~= Idstring(not_type))
         local unit_loaded = params.not_loaded or allowed_units[unit] 
         if not unit_loaded then
             if packages then
-                unit_loaded = self:IsLoaded(unit, "unit", packages)
+                unit_loaded = loaded_units[unit] == true
             else
                 unit_loaded = PackageManager:has(unit_ids, unit:id())
             end
@@ -496,7 +513,7 @@ function self:GetUnits(params)
     return units
 end
 
-function self:GetUnitType(unit)
+function Utils:GetUnitType(unit)
     if not unit then
         log(debug.traceback())
         return Idstring("none")
@@ -505,7 +522,7 @@ function self:GetUnitType(unit)
     return ud and ud:type() 
 end
 
-function self:Unhash(ids, type)
+function Utils:Unhash(ids, type)
     for _, path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
         if Idstring(path) == ids then
             return path
@@ -514,15 +531,15 @@ function self:Unhash(ids, type)
     return ids:key()
 end
 
-function self:Notify(title, msg, clbk)
+function Utils:Notify(title, msg, clbk)
     BeardLibEditor.managers.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
 end
 
-function self:YesNoQuestion(msg, clbk, no_clbk)
+function Utils:YesNoQuestion(msg, clbk, no_clbk)
     self:QuickDialog({title = "Are you sure you want to continue?", message = msg, no = false, force = true}, {{"Yes", clbk}, {"No", no_clbk, no_clbk and true}})
 end
 
-function self:QuickDialog(opt, items)
+function Utils:QuickDialog(opt, items)
     QuickDialog(table.merge({dialog = BeardLibEditor.managers.Dialog, no = "No"}, opt), items)
 end
 

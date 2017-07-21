@@ -1,4 +1,4 @@
-<level ai_group_type="america" ghost_bonus="0.1" id="map" max_bags="54">
+<level ai_group_type="america" id="map" max_bags="54">
 	<add directory="assets">
 	</add>
 	<assets>

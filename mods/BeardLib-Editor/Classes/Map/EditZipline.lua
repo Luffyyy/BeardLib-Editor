@@ -33,8 +33,7 @@ end
 function EditZipLine:use_camera_pos()
 	self:selected_unit():zipline():set_end_pos(managers.editor:camera_position())
 end
+
 function EditZipLine:use_camera_pos_for_line()
 	self:selected_unit():set_end_pos_by_line(managers.editor:camera_position())
 end
- 
- 

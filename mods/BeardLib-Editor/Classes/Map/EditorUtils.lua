@@ -1,9 +1,8 @@
-SpawnSelect = SpawnSelect or class(EditorPart)
-function SpawnSelect:init(parent, menu)
-    self.super.init(self, parent, menu, "Utilities")    
-end
+EditorUtils = EditorUtils or class(EditorPart)
+function EditorUtils:init(parent, menu) self.super.init(self, parent, menu, "Utilities") end
+function EditorUtils:SpawnUnitFromExtractNoSpawn(unit, dontask) self:SpawnUnitFromExtract(unit, dontask, true) end
 
-function SpawnSelect:build_default_menu()
+function EditorUtils:build_default_menu()
     self.super.build_default_menu(self)
     if not BeardLib.current_level then
         local s = "You're running the level on preview mode!"
@@ -57,7 +56,7 @@ this load method should be used only if you know what you're doing(ex: unit is m
     end
 end
 
-function SpawnSelect:remove_dummy_unit()
+function EditorUtils:remove_dummy_unit()
     local unit = self._dummy_spawn_unit
     if alive(unit) then
         unit:set_enabled(false)
@@ -66,7 +65,7 @@ function SpawnSelect:remove_dummy_unit()
     end
 end
 
-function SpawnSelect:fix_elements_indexes()
+function EditorUtils:fix_elements_indexes()
     for _, mission in pairs(managers.mission._missions) do
         for _, script in pairs(mission) do
             if type(script) == "table" and script.elements then
@@ -81,7 +80,7 @@ function SpawnSelect:fix_elements_indexes()
     self:Manager("opt"):save()
 end
 
-function SpawnSelect:remove_brush_layer()
+function EditorUtils:remove_brush_layer()
     BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
         self:Manager("wdata"):data().brush = nil
         MassUnitManager:delete_all_units()
@@ -90,7 +89,7 @@ function SpawnSelect:remove_brush_layer()
     end)
 end
 
-function SpawnSelect:mouse_pressed(button, x, y)
+function EditorUtils:mouse_pressed(button, x, y)
     if not self._currently_spawning then
         return false
     end
@@ -110,7 +109,7 @@ function SpawnSelect:mouse_pressed(button, x, y)
     return true
 end
 
-function SpawnSelect:update(t, dt)
+function EditorUtils:update(t, dt)
     self.super.update(self, t, dt)
     if alive(self._dummy_spawn_unit) then
         self._dummy_spawn_unit:set_position(self._parent._spawn_position)
@@ -119,11 +118,7 @@ function SpawnSelect:update(t, dt)
     end
 end
 
-function SpawnSelect:SpawnUnitFromExtractNoSpawn(unit, dontask)
-    self:SpawnUnitFromExtract(unit, dontask, true)
-end
-
-function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
+function EditorUtils:SpawnUnitFromExtract(unit, dontask, dontspawn)
     local config = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
     if not config then
         BeardLibEditor:log("[ERROR] Something went wrong when trying to load the unit!")
@@ -178,7 +173,7 @@ function SpawnSelect:SpawnUnitFromExtract(unit, dontask, dontspawn)
     end
 end
 
-function SpawnSelect:OpenSpawnPrefabDialog()
+function EditorUtils:OpenSpawnPrefabDialog()
     local prefabs = {}
     for name, prefab in pairs(BeardLibEditor.Prefabs) do
         table.insert(prefabs, {name = name, prefab = prefab})
@@ -193,7 +188,7 @@ function SpawnSelect:OpenSpawnPrefabDialog()
     }) 
 end
 
-function SpawnSelect:OpenSpawnInstanceDialog()
+function EditorUtils:OpenSpawnInstanceDialog()
     local instances = {}
     for _, path in pairs(BeardLibEditor.Utils:GetEntries({type = "world"})) do
         if path:match("levels/instances") then
@@ -247,7 +242,7 @@ function SpawnSelect:OpenSpawnInstanceDialog()
     })
 end
 
-function SpawnSelect:OpenSpawnElementDialog()
+function EditorUtils:OpenSpawnElementDialog()
     local held_ctrl
     local elements = {}
     for _, element in pairs(BeardLibEditor._config.MissionElements) do
@@ -268,17 +263,19 @@ function SpawnSelect:OpenSpawnElementDialog()
 	}) 
 end
 
-function SpawnSelect:OpenSelectUnitDialog(params)
+function EditorUtils:OpenSelectUnitDialog(params)
     params = params or {}
     local units = {}
-    for k, unit in pairs(World:find_units_quick("all")) do
+    for k, unit in pairs(World:find_units_quick("disabled", "all")) do
         local ud = unit:unit_data()
         if ud and ud.name and not ud.instance then
-            table.insert(units, table.merge({
-                name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "environment" or ud.sound_unit and "sound" or tostring(ud.unit_id)) .."]",
-                unit = unit,
-                color = params.choose_color and params.choose_color(unit),
-            }, params))
+            if unit:enabled() or (ud.name_id and ud.continent) then
+                table.insert(units, table.merge({
+                    name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "environment" or ud.sound_unit and "sound" or tostring(ud.unit_id)) .."]",
+                    unit = unit,
+                    color = not unit:enabled() and Color.grey,
+                }, params))
+            end
         end
     end
     BeardLibEditor.managers.ListDialog:Show({
@@ -291,7 +288,7 @@ function SpawnSelect:OpenSelectUnitDialog(params)
     })
 end
 
-function SpawnSelect:OpenSelectInstanceDialog(params)
+function EditorUtils:OpenSelectInstanceDialog(params)
 	params = params or {}
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = managers.world_instance:instance_names(),
@@ -303,7 +300,7 @@ function SpawnSelect:OpenSelectInstanceDialog(params)
 	})
 end
 
-function SpawnSelect:OpenSelectElementDialog(params)
+function EditorUtils:OpenSelectElementDialog(params)
     params = params or {}
 	local elements = {}
     local held_ctrl
@@ -333,7 +330,7 @@ function SpawnSelect:OpenSelectElementDialog(params)
 	}) 
 end
 
-function SpawnSelect:BeginSpawning(unit)
+function EditorUtils:BeginSpawning(unit)
     self:Switch()
     self._currently_spawning = unit
     self:remove_dummy_unit()
@@ -344,7 +341,7 @@ function SpawnSelect:BeginSpawning(unit)
     self:SetTitle("Press: LMB to spawn, RMB to cancel")
 end
 
-function SpawnSelect:OpenSpawnUnitDialog(params)
+function EditorUtils:OpenSpawnUnitDialog(params)
 	params = params or {}
     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
 	BeardLibEditor.managers.ListDialog:Show({
@@ -371,11 +368,16 @@ function SpawnSelect:OpenSpawnUnitDialog(params)
 	}) 
 end
 
-function SpawnSelect:OpenLoadUnitDialog(params)
+function EditorUtils:OpenLoadUnitDialog(params)
+    local units = {}
+    local unit_ids = Idstring("unit")
+    for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
+        if not PackageManager:has(unit_ids, unit:id()) and not unit:match("wpn_") and not unit:match("msk_") then
+            table.insert(units, unit)
+        end
+    end
 	BeardLibEditor.managers.ListDialog:Show({
-	    list = BeardLibEditor.Utils:GetUnits({not_loaded = true, packages = self._assets_manager:get_level_packages(), check = function(unit)
-            return not self._assets_manager:is_asset_loaded(unit, "unit") and not unit:match("wpn_") and not unit:match("msk_")
-        end}),
+	    list = units,
         force = true,
 	    callback = function(unit)
             BeardLibEditor.managers.ListDialog:hide()

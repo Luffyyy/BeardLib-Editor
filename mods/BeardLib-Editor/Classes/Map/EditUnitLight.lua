@@ -5,6 +5,7 @@ function EditUnitLight:editable(unit)
 	self._lights = BeardLibEditor.Utils:GetLights(unit) or {}
 	return #self._lights > 0
 end
+
 function EditUnitLight:build_menu(units)
 	local options = {}
 	self._idstrings = {}
@@ -122,9 +123,6 @@ function EditUnitLight:set_unit_data()
 	self:update_light()
 end
 
-function EditUnitLight:set_menu_unit(units) 
-	self:update_light()
-end
 
 function EditUnitLight:show_color_dialog()
 	local vc = self:selected_light():color()
@@ -133,9 +131,8 @@ function EditUnitLight:show_color_dialog()
     end})
 end
 
-function EditUnitLight:selected_light() 
-	return self:_reference_light(self:selected_unit())
-end
+function EditUnitLight:set_menu_unit(units) self:update_light() end
+function EditUnitLight:selected_light() return self:_reference_light(self:selected_unit()) end
 
 function EditUnitLight:_reference_light(unit)
 	if alive(unit) then

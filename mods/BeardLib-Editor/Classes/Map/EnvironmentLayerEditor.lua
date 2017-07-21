@@ -1,6 +1,7 @@
 EnvironmentLayerEditor = EnvironmentLayerEditor or class(EditorPart)
 local sky_rot_key = Idstring("sky_orientation/rotation"):key()
-function EnvironmentLayerEditor:init(parent)
+local EnvLayer = EnvironmentLayerEditor
+function EnvLayer:init(parent)
 	self:init_basic(parent, "EnvironmentLayerEditor")
 	self._menu = parent._holder
 	MenuUtils:new(self)
@@ -28,10 +29,10 @@ function EnvironmentLayerEditor:init(parent)
 	self._environment_modifier_id = managers.viewport:create_global_environment_modifier(sky_rot_key, true, callback(self, self, "sky_rotation_modifier"))
 end
 
-function EnvironmentLayerEditor:loaded_continents()
+function EnvLayer:loaded_continents()
 	local data = self:data()
 	data.environment_values.environment = managers.worlddefinition:convert_mod_path(data.environment_values.environment)
-    for _, area in pairs(data.environment_areas) do
+    for _, area in pairs(deep_clone(data.environment_areas)) do
         if type(area) == "table" and area.environment then
             area.environment = managers.worlddefinition:convert_mod_path(area.environment)
         end
@@ -42,18 +43,16 @@ function EnvironmentLayerEditor:loaded_continents()
 	self:_load_dome_occ_shapes(data.dome_occ_shapes)
 end
 
-function EnvironmentLayerEditor:data()
-	return self._parent:data().environment
-end
+function EnvLayer:data() return self._parent:data().environment end
 
-function EnvironmentLayerEditor:is_my_unit(unit)
+function EnvLayer:is_my_unit(unit)
 	if unit == self._environment_area_unit:id() or unit == self._effect_unit:id() or unit == self._dome_occ_shape_unit:id() then
 		return true
 	end
 	return false
 end
 
-function EnvironmentLayerEditor:_load_wind(wind)
+function EnvLayer:_load_wind(wind)
 	self._wind_rot = self._wind_rot or Rotation(wind.angle, 0, wind.tilt)
 	self._wind_dir_var = self._wind_dir_var or wind.angle_var
 	self._wind_tilt_var = self._wind_tilt_var or wind.tilt_var
@@ -62,7 +61,7 @@ function EnvironmentLayerEditor:_load_wind(wind)
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:_load_effects(effects)
+function EnvLayer:_load_effects(effects)
 	for _, effect in ipairs(effects) do
 		local unit = self:do_spawn_unit(self._effect_unit, {name_id = effect.name_id, effect = effect.effect, position = effect.position, rotation = effect.rotation})
 		self:play_effect(unit, effect.name)
@@ -70,7 +69,7 @@ function EnvironmentLayerEditor:_load_effects(effects)
 	self:save()
 end
 
-function EnvironmentLayerEditor:_load_environment_areas()
+function EnvLayer:_load_environment_areas()
 	for _, area in ipairs(clone(managers.environment_area:areas())) do
 		local unit = self:do_spawn_unit(self._environment_area_unit, {environment_area = area, position = area:position(), rotation = area:rotation()})
 		local new_name_id = unit:unit_data().environment_area:set_unit(unit)
@@ -81,7 +80,7 @@ function EnvironmentLayerEditor:_load_environment_areas()
 	self:save()
 end
 
-function EnvironmentLayerEditor:_load_dome_occ_shapes(dome_occ_shapes)
+function EnvLayer:_load_dome_occ_shapes(dome_occ_shapes)
 	if not dome_occ_shapes then
 		return
 	end
@@ -93,7 +92,7 @@ function EnvironmentLayerEditor:_load_dome_occ_shapes(dome_occ_shapes)
 	self:save()
 end
 
-function EnvironmentLayerEditor:save()
+function EnvLayer:save()
 	local effects = {}
 	local environment_areas = {}
 	local environment_paths = {}
@@ -138,7 +137,7 @@ function EnvironmentLayerEditor:save()
 	}
 end
 
-function EnvironmentLayerEditor:check_units()
+function EnvLayer:reset_selected_units()
 	for k, unit in ipairs(clone(self._created_units)) do
 		if not alive(unit) then
 			table.remove(self._created_units, k)
@@ -147,7 +146,7 @@ function EnvironmentLayerEditor:check_units()
 	self:save()
 end
 
-function EnvironmentLayerEditor:update(t, dt)
+function EnvLayer:update(t, dt)
 	if self._draw_wind and self._draw_wind:Value() then
 		for i = -0.9, 1.2, 0.3 do
 			for j = -0.9, 1.2, 0.3 do
@@ -187,7 +186,7 @@ function EnvironmentLayerEditor:update(t, dt)
 	end
 end
 
-function EnvironmentLayerEditor:draw_wind(pos)
+function EnvLayer:draw_wind(pos)
 	local rot = Rotation(self._wind_rot:yaw(), self._wind_rot:pitch(), self._wind_rot:roll() * -1)
 	self._pen:arrow(pos, pos + rot:x() * 300, 0.25)
 	self._pen:arc(pos, pos + rot:x() * 100, self._wind_dir_var, rot:z(), 32)
@@ -196,7 +195,7 @@ function EnvironmentLayerEditor:draw_wind(pos)
 	self._pen:arc(pos, pos + rot:x() * 100, -self._wind_tilt_var, rot:y(), 32)
 end
 
-function EnvironmentLayerEditor:build_menu()
+function EnvLayer:build_menu()
 	local data = self:data()
 	local environment_values = data.environment_values
 
@@ -236,7 +235,7 @@ function EnvironmentLayerEditor:build_menu()
     self:Slider("SpeedVariation", callback(self, self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
 end
 
-function EnvironmentLayerEditor:delete_unit(unit)
+function EnvLayer:delete_unit(unit)
 	local ud = unit:unit_data()
 	if ud then
 		if ud.occ_shape then
@@ -253,7 +252,7 @@ function EnvironmentLayerEditor:delete_unit(unit)
 	end
 end
 
-function EnvironmentLayerEditor:build_unit_menu()
+function EnvLayer:build_unit_menu()
 	local S = self:Manager("static")
 	S._built_multi = false
 	S.super.build_default_menu(S)
@@ -309,11 +308,9 @@ function EnvironmentLayerEditor:build_unit_menu()
 	end
 end
 
-function EnvironmentLayerEditor:update_positions()
-	self:set_unit_pos()
-end
+function EnvLayer:update_positions() self:set_unit_pos() end
 
-function EnvironmentLayerEditor:set_unit_pos(menu, item)
+function EnvLayer:set_unit_pos(menu, item)
 	local unit = self:selected_unit()
 	local S = self:Manager("static")
 	if unit then
@@ -325,7 +322,7 @@ function EnvironmentLayerEditor:set_unit_pos(menu, item)
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_unit_name_id(menu, item)
+function EnvLayer:set_unit_name_id(menu, item)
 	local unit = self:selected_unit()
 	if unit then
 		unit:unit_data().name_id = item:Value()
@@ -333,14 +330,14 @@ function EnvironmentLayerEditor:set_unit_name_id(menu, item)
 	self:save()
 end
 
-function EnvironmentLayerEditor:change_environment(menu, item)
+function EnvLayer:change_environment(menu, item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
 	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:save()
 end
 
-function EnvironmentLayerEditor:change_color_grading(menu, item)
+function EnvLayer:change_color_grading(menu, item)
 	local environment_values = self:data().environment_values
 	environment_values.color_grading = item:SelectedItem()
 	managers.environment_controller:set_default_color_grading(environment_values.color_grading)
@@ -348,19 +345,19 @@ function EnvironmentLayerEditor:change_color_grading(menu, item)
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_environment_area()
+function EnvLayer:set_environment_area()
 	local area = self:selected_unit():unit_data().environment_area
 	area:set_environment(self._environment_area_ctrls.environment_path.value)
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_permanent()
+function EnvLayer:set_permanent()
 	local area = self:selected_unit():unit_data().environment_area
 	area:set_permanent(self._environment_area_ctrls.permanent_cb:Value())
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_transition_time()
+function EnvLayer:set_transition_time()
 	local area = self:selected_unit():unit_data().environment_area
 	local value = tonumber(self._environment_area_ctrls.transition_time:Value())
 	value = math.clamp(value, 0, 100000000)
@@ -369,7 +366,7 @@ function EnvironmentLayerEditor:set_transition_time()
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_prio()
+function EnvLayer:set_prio()
 	local area = self:selected_unit():unit_data().environment_area
 	local value = tonumber(self._environment_area_ctrls.prio:Value())
 	value = math.clamp(value, 1, 100000000)
@@ -378,7 +375,7 @@ function EnvironmentLayerEditor:set_prio()
 	self:save()
 end
 
-function EnvironmentLayerEditor:set_env_filter(name)
+function EnvLayer:set_env_filter(name)
 	local area = self:selected_unit():unit_data().environment_area
 	local filter_list = {}
 	local filter_map = managers.viewport:get_predefined_environment_filter_map()
@@ -393,7 +390,7 @@ function EnvironmentLayerEditor:set_env_filter(name)
 	self:save()
 end
 
-function EnvironmentLayerEditor:_update_filter_list(area)
+function EnvLayer:_update_filter_list(area)
 	local filter_list = area:filter_list()
 	local filter_map = managers.viewport:get_predefined_environment_filter_map()
 	local categories = {}
@@ -416,7 +413,7 @@ end
 
 --Unfuctional, when attempting to copy ovk's code everything seems to work fine but the result of the dome occlusion is weird
 --and makes the shadows look wrong so sadly I would probably not bother with dome occlusion.
-function EnvironmentLayerEditor:generate_dome_occ()
+function EnvLayer:generate_dome_occ()
 	local shape
 	for _, unit in ipairs(self._created_units) do
 		if unit:name() == Idstring(self._dome_occ_shape_unit) then
@@ -432,18 +429,18 @@ function EnvironmentLayerEditor:generate_dome_occ()
 	managers.editor:init_create_dome_occlusion(shape, res)
 end
 
-function EnvironmentLayerEditor:set_dome_occ_resolution(menu, item)
+function EnvLayer:set_dome_occ_resolution(menu, item)
 	self:data().environment_values.dome_occ_resolution = tonumber(item:SelectedItem())
 	self:save()
 end
 
-function EnvironmentLayerEditor:update_wind_direction(menu, item)
+function EnvLayer:update_wind_direction(menu, item)
 	local dir = item:Value()
 	self._wind_rot = Rotation(dir, 0, self._wind_rot:roll())
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:set_wind()
+function EnvLayer:set_wind()
 	Wind:set_direction(self._wind_rot:yaw(), self._wind_dir_var, 5)
 	Wind:set_tilt(self._wind_rot:roll(), self._wind_tilt_var, 5)
 	Wind:set_speed_m_s(self._wind_speed, self._wind_speed_variation, 5)
@@ -451,63 +448,63 @@ function EnvironmentLayerEditor:set_wind()
 	self:save()
 end
 
-function EnvironmentLayerEditor:update_wind_variation(menu, item)
+function EnvLayer:update_wind_variation(menu, item)
 	self._wind_dir_var = item:Value()
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:update_tilt_angle(menu, item)
+function EnvLayer:update_tilt_angle(menu, item)
 	local dir = item:Value()
 	self._wind_rot = Rotation(self._wind_rot:yaw(), 0, dir)
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:update_tilt_variation(menu, item)
+function EnvLayer:update_tilt_variation(menu, item)
 	self._wind_tilt_var = item:Value()
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:update_wind_speed(menu, item)
+function EnvLayer:update_wind_speed(menu, item)
 	self._wind_speed = item:Value() / 10
 	self:update_wind_speed_labels()
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:update_wind_speed_variation(menu, item)
+function EnvLayer:update_wind_speed_variation(menu, item)
 	self._wind_speed_variation = item:Value() / 10
 	self:update_wind_speed_labels()
 	self:set_wind()
 end
 
-function EnvironmentLayerEditor:update_wind_speed_labels()
+function EnvLayer:update_wind_speed_labels()
 	self._wind_text:SetText("Beaufort Scale: " .. self:wind_beaufort(self._wind_speed) .. "(" .. self:wind_description(self._wind_speed)..")")
 end
 
-function EnvironmentLayerEditor:sky_rotation_modifier()
+function EnvLayer:sky_rotation_modifier()
 	return self:data().environment_values.sky_rot, true
 end
 
-function EnvironmentLayerEditor:change_sky_rotation(menu, item)
+function EnvLayer:change_sky_rotation(menu, item)
  	self:data().environment_values.sky_rot = item:Value()
 	managers.viewport:update_global_environment_value(sky_rot_key)
 	self:save()
 end
 
-function EnvironmentLayerEditor:kill_effect(unit)
+function EnvLayer:kill_effect(unit)
 	if unit:name() == Idstring(self._effect_unit) and unit:unit_data().current_effect then
 		World:effect_manager():kill(unit:unit_data().current_effect)
 		unit:unit_data().current_effect = nil
 	end
 end
 
-function EnvironmentLayerEditor:change_unit_effect()
+function EnvLayer:change_unit_effect()
 	local unit = self:selected_unit()
 	self:kill_effect(unit)
 	self:play_effect(unit, self._unit_effects:Value())
 	self:save()
 end
 
-function EnvironmentLayerEditor:play_effect(unit, effect)
+function EnvLayer:play_effect(unit, effect)
 	unit:unit_data().effect = effect
 	if PackageManager:has(Idstring("effect"), effect:id()) then
 		unit:unit_data().current_effect = World:effect_manager():spawn({
@@ -518,7 +515,7 @@ function EnvironmentLayerEditor:play_effect(unit, effect)
 	end
 end
 
-function EnvironmentLayerEditor:do_spawn_unit(unit_path, ud)
+function EnvLayer:do_spawn_unit(unit_path, ud)
 	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
 	table.merge(unit:unit_data(), ud)
 	unit:unit_data().name = unit_path
@@ -545,7 +542,7 @@ function EnvironmentLayerEditor:do_spawn_unit(unit_path, ud)
 	return unit
 end
 
-function EnvironmentLayerEditor:wind_description(speed)
+function EnvLayer:wind_description(speed)
 	local description
 	for _, data in ipairs(self._wind_speeds) do
 		if speed < data.speed then
@@ -556,7 +553,7 @@ function EnvironmentLayerEditor:wind_description(speed)
 	return description
 end
 
-function EnvironmentLayerEditor:wind_beaufort(speed)
+function EnvLayer:wind_beaufort(speed)
 	local beaufort
 	for _, data in ipairs(self._wind_speeds) do
 		if speed < data.speed then
@@ -567,7 +564,7 @@ function EnvironmentLayerEditor:wind_beaufort(speed)
 	return beaufort
 end
 
-function EnvironmentLayerEditor:reset_environment_values()
+function EnvLayer:reset_environment_values()
 	local environment_values = self:data().environment_values
 	environment_values.environment = managers.viewport:game_default_environment()
 	environment_values.sky_rot = 0

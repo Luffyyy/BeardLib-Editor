@@ -1,17 +1,13 @@
 {
-	"name" : "BeardLib Editor",
-	"description" : "",
+	"name" : "BeardLib-Editor",
+	"description" : "BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!",
 	"author" : "GREAT BIG BUSHY BEARD & Luffy",
-	"contact" : "simon@lastbullet.net",
+	"contact" : "https://twitter.com/LuffyDaFloffi",
 	"hooks" : [
-		{ "hook_id" : "core/lib/managers/viewport/environment/coreenvironmentmanager", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "core/lib/managers/viewport/corescriptviewport", "script_path" : "EditorCore.lua" },
-		{ "hook_id" : "core/lib/system/coresystem", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "lib/managers/menumanager", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "lib/managers/menu/menuscenemanager", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua" },
-        { "hook_id" : "core/lib/setups/coresetup", "script_path" : "EditorCore.lua" },
-        { "hook_id" : "lib/setups/setup", "script_path" : "EditorCore.lua" }
+        {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"},
+		{"hook_id" : "core/lib/managers/viewport/environment/coreenvironmentmanager", "script_path" : "EditorCore.lua"},
+        {"hook_id" : "lib/managers/menumanager", "script_path" : "EditorCore.lua"},
+        {"hook_id" : "lib/setups/setup", "script_path" : "EditorCore.lua"}
 	],
     "libraries" : [
         {

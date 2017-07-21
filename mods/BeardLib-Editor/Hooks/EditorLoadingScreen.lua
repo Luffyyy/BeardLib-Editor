@@ -1,23 +1,23 @@
-local self = class(LevelLoadingScreenGuiScript)
-LevelLoadingScreenGuiScript = self
-function self:init(gui, res, p, layer)
+local es = class(LevelLoadingScreenGuiScript)
+LevelLoadingScreenGuiScript = es
+function es:init(gui, res, p, layer)
 	self._gui = gui
 	if arg.load_level_data.level_data.editor_load then
 		self._is_editor = true
 	else
-		self.super.init(self, gui, res, p, layer)
+		es.super.init(self, gui, res, p, layer)
 	end
 end
 
-function self:update(...)
+function es:update(...)
 	if self._is_editor then
 		self:do_editor_stuff() 
 	else
-		self.super.update(self, ...)
+		es.super.update(self, ...)
 	end
 end
 
-function self:do_editor_stuff()
+function es:do_editor_stuff()
 	if alive(self._gui) and self._gui:workspaces()[1] then
 		local load = self._gui:workspaces()[1]:panel():child("Load")
 		if alive(load) then

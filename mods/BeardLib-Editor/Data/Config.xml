@@ -17,8 +17,8 @@
         <class file="Map/EditWire.lua"/>
         <class file="Map/EditAIData.lua"/>
         <class file="Map/EditMeshVariation.lua"/>
-        <class file="Map/GameOptions.lua"/>
-        <class file="Map/SpawnSelect.lua"/>
+        <class file="Map/InEditorOptions.lua"/>
+        <class file="Map/EditorUtils.lua"/>
         <class file="Map/UpperMenu.lua"/>
         <class file="Map/EditorConsole.lua"/>
         <class file="Map/InstancesEditor.lua"/>
@@ -29,6 +29,7 @@
         <class file="Map/EditUnitLight.lua"/>
         <class file="Map/MissionScriptEditor.lua"/>
         <class file="Map/EnvironmentLayerEditor.lua"/>
+        <class file="Map/PortalLayerEditor.lua"/>
         <class file="Map/SoundLayerEditor.lua"/>
         <class file="ScriptDataConverterManager.lua"/>
         <class file="MapEditor.lua"/>
@@ -41,6 +42,7 @@
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
         <hook source_file="core/lib/managers/coresoundenvironmentmanager" file="SoundEnvironmentManager.lua"/>
         <hook source_file="core/lib/managers/coreshapemanager" file="ShapeManager.lua"/>
+        <hook source_file="core/lib/managers/coreportalmanager" file="PortalManager.lua"/>
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
@@ -128,6 +130,10 @@
         <object path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
         <model path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
         <cooked_physics path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
+        <unit path="core/units/portal_shape/portal_shape" force="true"/>
+        <object path="core/units/portal_shape/portal_shape" force="true"/>
+        <model path="core/units/portal_shape/portal_shape" force="true"/>
+        <cooked_physics path="core/units/portal_shape/portal_shape" force="true"/>
 
     </AddFiles>
     <MissionElements>

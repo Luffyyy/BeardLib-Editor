@@ -1,20 +1,20 @@
 ScriptDataConverterManager = ScriptDataConverterManager or class()
-local scm = ScriptDataConverterManager
-function scm:init()
-    scm.script_file_from_types = {
+local SConverter = ScriptDataConverterManager
+function SConverter:init()
+    SConverter.script_file_from_types = {
         {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
         {name = "json", func = "json.custom_decode"},
         {name = "xml", func = "ScriptSerializer:from_xml"},
         {name = "generic_xml", func = "ScriptSerializer:from_generic_xml"},
         {name = "custom_xml", func = "ScriptSerializer:from_custom_xml"},
     }
-    scm.script_file_to_types = {
+    SConverter.script_file_to_types = {
         {name = "binary", open_type = "wb"},
         {name = "json"},
         {name = "generic_xml"},
         {name = "custom_xml"},
     }
-    scm.script_data_paths = {
+    SConverter.script_data_paths = {
         {path = "%userprofile%", name = "User Folder"},
         {path = "%userprofile%/Documents/", name = "Documents"},
         {path = "%userprofile%/Desktop/", name = "Desktop"},
@@ -48,7 +48,7 @@ function scm:init()
     self:CreateRootItems()
 end
 
-function scm:ConvertFile(file, from_i, to_i, filename_dialog)
+function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
     local to_data = self.script_file_to_types[to_i]
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
@@ -67,33 +67,20 @@ function scm:ConvertFile(file, from_i, to_i, filename_dialog)
     end
 end
 
-function scm:SaveConvertedData(params, value)
+function SConverter:SaveConvertedData(params, value)
     FileIO:WriteScriptDataTo(value, params.convert_data, params.to_data.name)
     self:RefreshFilesAndFolders()
 end
 
-function scm:GetFilesAndFolders(current_path)
-    return file.GetFiles(current_path), file.GetDirectories(current_path)
+function SConverter:GetFilesAndFolders(current_path)
+    return FileIO:GetFiles(current_path), FileIO:GetFolders(current_path)
 end
 
-function scm:RefreshFilesAndFolders()
+function SConverter:RefreshFilesAndFolders()
     self:ClearItems()
     local panel = self._menu:Panel()
-    self.path_text = self.path_text or panel:text({
-        name = "BeardLibEditorPathText",
-        text = "",
-        font =  tweak_data.menu.pd2_medium_font,
-        font_size = 25,
-        layer = 20,
-        color = Color.yellow
-    })
-    self.path_text:set_text(self.current_script_path)
-    self.path_text:set_visible(true)
-    local _,_,w,h = self.path_text:text_rect()
-    self.path_text:set_size(w, h)
-    self.path_text:set_position(0, 0)
-
-    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"), {offset = {2, 32}})
+    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
+    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
 
     if not self.assets then
         self:Button("OpenFolderInExplorer", callback(self, self, "OpenFolderInExplorer"))
@@ -106,8 +93,9 @@ function scm:RefreshFilesAndFolders()
         self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
 
-    local foldersgroup = self:Group("Folders")
-    local filesgroup = self:Group("Files")
+    local holder = self:Menu("Holder", {align_method = "grid"})
+    local foldersgroup = self:Group("Folders", {group = holder, w = holder:ItemsWidth() / 2})
+    local filesgroup = self:Group("Files", {group = holder, w = holder:ItemsWidth() / 2})
     local files, folders = self:GetFilesAndFolders(self.current_script_path)
     if folders then
         table.sort(folders)
@@ -131,9 +119,10 @@ function scm:RefreshFilesAndFolders()
     end
 end
 
-function scm:CreateScriptDataFileOption()
+function SConverter:CreateScriptDataFileOption()
     self:ClearItems()
-    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"), {offset = {2, 32}})
+    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
+    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 0 then
         table.remove(up_level, #up_level)
@@ -142,11 +131,8 @@ function scm:CreateScriptDataFileOption()
         self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
     if self.path_text then
-        self.path_text:set_visible(true)
-        self.path_text:set_text(self.current_selected_file_path)
-        local x, y, w, h = self.path_text:text_rect()
-        self.path_text:set_size(w, h)
-        self.path_text:set_position(0, 0)
+        self.path_text:SetVisible(true)
+        self.path_text:SetText(self.current_selected_file_path)
     end
 
     local file_parts = string.split(self.current_selected_file, "%.")
@@ -164,54 +150,49 @@ function scm:CreateScriptDataFileOption()
     self:Button("Cancel", callback(self, self, "FolderClick"), {base_path = self.current_script_path})
 end
 
-function scm:CreateRootItems()
+function SConverter:CreateRootItems()
     self:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
         self:Button(path_data.name, callback(self, self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
 end
 
-function scm:BackToRoot(menu, item)
+function SConverter:BackToRoot(menu, item)
     self:CreateRootItems()
     self.current_script_path = ""
-    if self.path_text then
-        self.path_text:set_visible(false)
+    if alive(self.path_text) then
+        self.path_text:SetVisible(false)
     end
 end
 
-function scm:FileClick(menu, item)
+function SConverter:FileClick(menu, item)
     self.current_selected_file = item.name
     self.current_selected_file_path = item.base_path
 
     self:CreateScriptDataFileOption()
 end
 
-function scm:FolderClick(menu, item)
+function SConverter:FolderClick(menu, item)
     self.current_script_path = item.base_path or ""
-    self.assets = self.assets or item.assets
     self:RefreshFilesAndFolders()
 end
 
-function scm:OpenFolderInExplorer(menu, item)
+function SConverter:OpenFolderInExplorer(menu, item)
     local open_path = string.gsub(self.current_script_path, "%./", "")
     open_path = string.gsub(self.current_script_path, "/", "\\")
 
     os.execute('start "" "' .. open_path .. '"')
 end
 
-function scm:BackToShortcuts(menu, item)
+function SConverter:BackToShortcuts(menu, item)
     local panel = self._menu:Panel()
-    if alive(self.path_text) then
-        self.path_text:parent():remove(self.path_text)
-        self.path_text = nil
-    end
     self:ClearItems()
     self.assets = false
     self.current_script_path = ""
     self:CreateRootItems()
 end
 
-function scm:ConvertClick(menu, item)
+function SConverter:ConvertClick(menu, item)
     local convertfrom_item = self:GetItem("From")
     local convertto_item = self:GetItem("To")
     if convertfrom_item and convertto_item then

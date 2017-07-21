@@ -25,7 +25,7 @@ function EditorInvulnerable:draw_links()
 	end
 end
 
-function EditorInvulnerable:_build_panel(panel, panel_sizer)
+function EditorInvulnerable:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {
 		"ElementSpawnEnemyDummy",

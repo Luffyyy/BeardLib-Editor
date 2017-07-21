@@ -6,7 +6,7 @@ function EditorChangeVanSkin:create_element(unit)
 	self._element.values.target_skin = "default"
 end
 
-function EditorChangeVanSkin:_build_panel(panel, panel_sizer)
+function EditorChangeVanSkin:_build_panel()
 	self:_create_panel()
 	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = callback(self, self, "can_select_unit")})
 	self:ComboCtrl("target_skin", table.sort(table.map_keys(tweak_data.van.skins), function(a, b) return a < b end))

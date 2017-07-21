@@ -1,5 +1,6 @@
 EditorOptionsMenu = EditorOptionsMenu or class()
-function EditorOptionsMenu:init()
+local Options = EditorOptionsMenu
+function Options:init()
 	local O = BeardLibEditor.Options
 	local EMenu = BeardLibEditor.managers.Menu
 	MenuUtils:new(self, EMenu:make_page("Options"))
@@ -8,7 +9,7 @@ function EditorOptionsMenu:init()
 	self:Button("AccentColor", callback(self, self, "open_set_color_dialog"), {group = visual})
 	self:Button("BackgroundColor", callback(self, self, "open_set_color_dialog"), {group = visual})
 	self:NumberBox("LevelsColumns", callback(self, self, "set_clbk"), O:GetValue("LevelsColumns"), {min = 1, floats = 0, group = visual})
-	--self:Toggle("UseEditorMenu", callback(self, self, "set_clbk"), BeardLibEditor.Options:GetValue("UseEditorMenu"), {text = "Use BeardLib-Editor menu instead of pause menu(editor mode)"})
+
 	local themes = self:DivGroup("Themes", {group = visual, last_y_offset = 0})
 	self:Button("Dark", callback(self, self, "set_theme"), {group = themes, text = "Dark[Default]"})
 	self:Button("Light", callback(self, self, "set_theme"), {group = themes})
@@ -28,7 +29,7 @@ function EditorOptionsMenu:init()
 	self:Button("ResetOptions", callback(self, self, "reset_options"))
 end
 
-function EditorOptionsMenu:set_theme(menu, item)
+function Options:set_theme(menu, item)
 	local theme = item.name
 	if theme == "Dark" then
 		self:set("AccentColor", Color(0.26, 0.45, 0.80))
@@ -40,7 +41,7 @@ function EditorOptionsMenu:set_theme(menu, item)
     BeardLibEditor.Utils:Notify("Theme has been set, please restart")
 end
 
-function EditorOptionsMenu:reset_options(menu)
+function Options:reset_options(menu)
 	for _, item in pairs(menu._my_items) do
 		if item.menu_type then
 			self:reset_options(item)
@@ -55,19 +56,19 @@ function EditorOptionsMenu:reset_options(menu)
 	end
 end
 
-function EditorOptionsMenu:set_clbk(menu, item)
+function Options:set_clbk(menu, item)
 	self:set(item.name, item:Value())
 	if item.name == "LevelsColumns" then
 		BeardLibEditor.managers.LoadLevel:load_levels()
 	end
 end
 
-function EditorOptionsMenu:set(option, value)
+function Options:set(option, value)
 	BeardLibEditor.Options:SetValue(option, value)
 	BeardLibEditor.Options:Save()
 end
 
-function EditorOptionsMenu:open_set_color_dialog(menu, item)
+function Options:open_set_color_dialog(menu, item)
 	option = item.name
     BeardLibEditor.managers.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
     	self:set(option, color)

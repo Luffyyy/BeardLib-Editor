@@ -1,27 +1,8 @@
-local mvec3_n_equal = mvector3.not_equal
-local mvec3_set = mvector3.set
-local mvec3_set_st = mvector3.set_static
-local mvec3_set_z = mvector3.set_z
-local mvec3_sub = mvector3.subtract
-local mvec3_norm = mvector3.normalize
-local mvec3_dir = mvector3.direction
-local mvec3_add = mvector3.add
-local mvec3_mul = mvector3.multiply
-local mvec3_div = mvector3.divide
-local mvec3_lerp = mvector3.lerp
+if not Global.editor_mode then
+	return
+end
+
 local mvec3_cpy = mvector3.copy
-local mvec3_set_l = mvector3.set_length
-local mvec3_dot = mvector3.dot
-local mvec3_cross = mvector3.cross
-local mvec3_dis = mvector3.distance
-local mvec3_rot = mvector3.rotate_with
-local math_abs = math.abs
-local math_max = math.max
-local math_clamp = math.clamp
-local math_ceil = math.ceil
-local math_floor = math.floor
-local temp_vec1 = Vector3()
-local temp_vec2 = Vector3()
 function NavigationManager:init()
 	self._debug = SystemInfo:platform() == Idstring("WIN32")
 	self._builder = NavFieldBuilder:new()
@@ -213,5 +194,4 @@ function NavigationManager:search_coarse(params)
 end
 
 function NavigationManager:_safe_remove_unit(unit) end
-
 function NavigationManager:remove_AI_blocker_units() end

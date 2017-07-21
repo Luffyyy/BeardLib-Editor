@@ -17,6 +17,7 @@ function EditUnit:is_editable(parent, name)
 	self:build_menu(units)
 	return self
 end
+
 function EditUnit:set_unit_data_parent()
 	self._parent:set_unit_data()
 end

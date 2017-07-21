@@ -1,5 +1,6 @@
 SoundLayerEditor = SoundLayerEditor or class(EnvironmentLayerEditor)
-function SoundLayerEditor:init(parent)
+local SndLayer = SoundLayerEditor
+function SndLayer:init(parent)
 	self:init_basic(parent, "SoundLayerEditor")
 	self._menu = parent._holder
 	MenuUtils:new(self)
@@ -9,7 +10,7 @@ function SoundLayerEditor:init(parent)
 	self._area_emitter_unit = "core/units/sound_area_emitter/sound_area_emitter"
 end
 
-function SoundLayerEditor:loaded_continents()
+function SndLayer:loaded_continents()
 	for _, area in ipairs(clone(managers.sound_environment:areas())) do
 		local unit = self:do_spawn_unit(self._environment_unit, {name_id = area:name(), position = area:position(), rotation = area:rotation()})
 		unit:unit_data().environment_area = area
@@ -27,7 +28,7 @@ function SoundLayerEditor:loaded_continents()
 	end
 end
 
-function SoundLayerEditor:save()
+function SndLayer:save()
 	local sound_environments = {}
 	local sound_emitters = {}
 	local sound_area_emitters = {}
@@ -74,7 +75,7 @@ function SoundLayerEditor:save()
 	}
 end
 
-function SoundLayerEditor:check_units()
+function SndLayer:reset_selected_units()
 	for k, unit in ipairs(clone(self._created_units)) do
 		if not alive(unit) then
 			table.remove(self._created_units, k)
@@ -83,7 +84,7 @@ function SoundLayerEditor:check_units()
 	self:save()
 end
 
-function SoundLayerEditor:update(t, dt)
+function SndLayer:update(t, dt)
 	if self:Value("SoundUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in ipairs(self._created_units) do
@@ -116,7 +117,7 @@ function SoundLayerEditor:update(t, dt)
 	end
 end
 
-function SoundLayerEditor:ambience_events()
+function SndLayer:ambience_events()
 	local events = {}
 	for _, sound in pairs(Global.WorldSounds) do
 		if string.begins(sound, "ambience_") then
@@ -126,7 +127,7 @@ function SoundLayerEditor:ambience_events()
 	return events
 end
 
-function SoundLayerEditor:occasional_events()
+function SndLayer:occasional_events()
 	local events = {}
 	for _, sound in pairs(Global.WorldSounds) do
 		if string.begins(sound, "occasionals_") then
@@ -136,7 +137,7 @@ function SoundLayerEditor:occasional_events()
 	return events
 end
 
-function SoundLayerEditor:emitter_events()
+function SndLayer:emitter_events()
 	local events = {}
 	for _, sound in pairs(Global.WorldSounds) do
 		if string.begins(sound, "emitter_") then
@@ -146,8 +147,7 @@ function SoundLayerEditor:emitter_events()
 	return events
 end
 
-function SoundLayerEditor:build_menu()
-	--self:Toggle("SoudnAlwaysOn", callback(self, self, "toggle_sound_always_on"), true)
+function SndLayer:build_menu()
 	local defaults = self:Group("Defaults")
 
 	local environments = managers.sound_environment:environments()
@@ -171,7 +171,7 @@ function SoundLayerEditor:build_menu()
     self:Button("SpawnSoundAreaEmitter", callback(utils, utils, "BeginSpawning", self._area_emitter_unit))
 end
 
-function SoundLayerEditor:build_unit_menu()
+function SndLayer:build_unit_menu()
 	local S = self:Manager("static")
 	S._built_multi = false
 	S.super.build_default_menu(S)
@@ -220,31 +220,27 @@ function SoundLayerEditor:build_unit_menu()
 	end
 end
 
-function SoundLayerEditor:toggle_sound_always_on(sound_always_on)
---	managers.editor:set_listener_always_enabled(sound_always_on:Value())
-end
-
-function SoundLayerEditor:select_default_ambience(menu, item)
+function SndLayer:select_default_ambience(menu, item)
 	managers.sound_environment:set_default_ambience(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:select_default_occasional(menu, item)
+function SndLayer:select_default_occasional(menu, item)
 	managers.sound_environment:set_default_occasional(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:set_ambience_enabled(menu, item)
+function SndLayer:set_ambience_enabled(menu, item)
 	managers.sound_environment:set_ambience_enabled(item:Value())
 	self:save()
 end
 
-function SoundLayerEditor:select_default_sound_environment(menu, item)
+function SndLayer:select_default_sound_environment(menu, item)
 	managers.sound_environment:set_default_environment(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:select_emitter_path(menu, item)
+function SndLayer:select_emitter_path(menu, item)
 	local path = item:SelectedItem()
 	local emitter = self:selected_unit():unit_data().emitter
 	emitter:set_emitter_path(path)
@@ -252,42 +248,42 @@ function SoundLayerEditor:select_emitter_path(menu, item)
 	self._emitter_events_combobox:SetSelectedItem(emitter:emitter_event())
 end
 
-function SoundLayerEditor:select_emitter_event(menu, item)
+function SndLayer:select_emitter_event(menu, item)
 	self:selected_unit():unit_data().emitter:set_emitter_event(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:select_sound_environment(menu, item)
+function SndLayer:select_sound_environment(menu, item)
 	self:selected_unit():unit_data().environment_area:set_environment(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:toggle_use_environment(menu, item)
+function SndLayer:toggle_use_environment(menu, item)
 	self:selected_unit():unit_data().environment_area:set_use_environment(item:Value())
 	self:save()
 end
 
-function SoundLayerEditor:select_environment_ambience(menu, item)
+function SndLayer:select_environment_ambience(menu, item)
 	self:selected_unit():unit_data().environment_area:set_environment_ambience(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:toggle_use_ambience(menu, item)
+function SndLayer:toggle_use_ambience(menu, item)
 	self:selected_unit():unit_data().environment_area:set_use_ambience(item:Value())
 	self:save()
 end
 
-function SoundLayerEditor:select_environment_occasional(menu, item)
+function SndLayer:select_environment_occasional(menu, item)
 	self:selected_unit():unit_data().environment_area:set_environment_occasional(item:SelectedItem())
 	self:save()
 end
 
-function SoundLayerEditor:toggle_use_occasional(menu, item)
+function SndLayer:toggle_use_occasional(menu, item)
 	self:selected_unit():unit_data().environment_area:set_use_occasional(item:Value())
 	self:save()
 end
 
-function SoundLayerEditor:on_restart_emitters()
+function SndLayer:on_restart_emitters()
 	for _, unit in ipairs(self._created_units) do
 		if unit:name() == Idstring(self._emitter_unit) or unit:name() == Idstring(self._area_emitter_unit) then
 			unit:unit_data().emitter:restart()
@@ -295,7 +291,7 @@ function SoundLayerEditor:on_restart_emitters()
 	end
 end
 
-function SoundLayerEditor:do_spawn_unit(unit_path, ud)
+function SndLayer:do_spawn_unit(unit_path, ud)
 	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
 	table.merge(unit:unit_data(), ud)
 	unit:unit_data().name = unit_path
@@ -328,14 +324,14 @@ function SoundLayerEditor:do_spawn_unit(unit_path, ud)
 	return unit
 end
 
-function SoundLayerEditor:is_my_unit(unit)
+function SndLayer:is_my_unit(unit)
 	if unit == self._emitter_unit:id() or unit == self._environment_unit:id() or unit == self._area_emitter_unit:id() then
 		return true
 	end
 	return false
 end
 
-function SoundLayerEditor:delete_unit(unit)
+function SndLayer:delete_unit(unit)
 	local ud = unit:unit_data()
 	table.delete(self._created_units, unit)
 	if ud then
@@ -352,7 +348,7 @@ function SoundLayerEditor:delete_unit(unit)
 	self:save()
 end
 
-function SoundLayerEditor:set_sound_environment_parameters()
+function SndLayer:set_sound_environment_parameters()
 	local S = self:Manager("static")
 	self._effect:SetEnabled(false)
 	self._ambience:SetEnabled(false)
@@ -380,7 +376,7 @@ function SoundLayerEditor:set_sound_environment_parameters()
 	end
 end
 
-function SoundLayerEditor:set_sound_emitter_parameters()
+function SndLayer:set_sound_emitter_parameters()
 	local S = self:Manager("static")
 	if alive(self:selected_unit()) and (self:selected_unit():name() == self._emitter_unit:id() or self:selected_unit():name() == self._area_emitter_unit:id()) then
 		local emitter = self:selected_unit():unit_data().emitter
@@ -396,13 +392,13 @@ function SoundLayerEditor:set_sound_emitter_parameters()
 	end
 end
 
-function SoundLayerEditor:activate()
+function SndLayer:activate()
 	SoundLayerEditor.super.activate(self)
 	managers.editor:set_listener_enabled(true)
 	managers.editor:set_wanted_mute(false)
 end
 
-function SoundLayerEditor:deactivate(params)
+function SndLayer:deactivate(params)
 	managers.editor:set_listener_enabled(false)
 	SoundLayerEditor.super.deactivate(self)
 	if not params or not params.simulation then

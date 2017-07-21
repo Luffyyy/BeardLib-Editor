@@ -1,4 +1,5 @@
 UpperMenu = UpperMenu or class()
+function UpperMenu:get_menu_h() return self._menu:Panel():parent():h() - self._menu.h - 1 end
 function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
@@ -30,14 +31,8 @@ end
 function UpperMenu:build_tabs()
     for _, tab in pairs(self._tabs) do
         local s = self._menu.w / #self._tabs
-        local tab = self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
-        tab.bg:set_h(2)
-        tab.bg:set_bottom(tab:Panel():bottom())
+        self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
     end
-end
-
-function UpperMenu:get_menu_h()
-    return self._menu:Panel():parent():h() - self._menu.h - 1
 end
 
 function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
@@ -82,9 +77,7 @@ function UpperMenu:toggle_widget(name, menu, item)
     
     self._parent["toggle_"..name.."_widget"](self._parent)
     self._parent:use_widgets(self._parent:selected_unit() ~= nil)
-    item.marker_color = self._parent[name.."_widget_enabled"](self._parent) and menu.marker_highlight_color or menu.marker_color
-    item.marker_highlight_color = item.marker_color
-    item:UnHighlight()
+    self:animate_bottom(item, self._parent[name.."_widget_enabled"](self._parent))
 end
 
 function UpperMenu:Switch(manager)
@@ -99,22 +92,38 @@ function UpperMenu:Switch(manager)
     for manager in pairs(self._parent.managers) do
         local mitem = self:GetItem(manager)
         if mitem and mitem.is_page then
-            mitem.marker_color = item.parent.marker_color
-            mitem.marker_highlight_color = item.parent.marker_highlight_color
-            mitem:UnHighlight()
-            mitem.bg:set_h(mitem:Panel():h())
+            self:animate_bottom(mitem, false)
         end
     end
-    item.marker_color = item.parent.marker_highlight_color
-    item.marker_highlight_color = item.marker_color
-    item:UnHighlight()
-    QuickAnim:Work(item.bg, "speed", 10, "h", 2, "after", function()
-        item.bg:set_bottom(item:Panel():bottom())
-    end)
+    self:animate_bottom(item, true)
+end
+
+function UpperMenu:animate_bottom(item, show)
+    if alive(item) then
+        local bottom
+        if show then
+            item:SetBorder({bottom = true})
+            bottom = item:Panel():child("bottom")
+            if alive(bottom) then
+                local h = bottom:parent():h()
+                bottom:set_h(h)
+                bottom:set_alpha(0)
+                QuickAnim:Work(bottom, "speed", 10, "h", 2, "alpha", 1, "sticky_bottom", h)
+            end
+        else
+            if item.border_bottom then
+                bottom = item:Panel():child("bottom")
+                if alive(bottom) then
+                    QuickAnim:Work(bottom, "speed", 10, "alpha", 0, "callback", function()
+                        item:SetBorder({bottom = false})
+                    end)
+                end
+            end
+        end
+    end
 end
 
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
     self._parent.managers.opt:save()
 end
- 

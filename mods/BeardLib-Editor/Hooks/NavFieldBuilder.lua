@@ -1,3 +1,7 @@
+if not Global.editor_mode then
+	return
+end
+
 function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
     BeardLibEditor:log("Navigation data Progress: " .. tostring(title))
 end

@@ -1,9 +1,9 @@
 MapEditor = MapEditor or class()
 core:import("CoreEditorWidgets")
 
-local me = MapEditor
+local Editor = MapEditor
 local m = {}
-function me:init()
+function Editor:init()
     managers.editor = self
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
@@ -48,15 +48,15 @@ function me:init()
 end
 
 --Who doesn't like a short code :P
-function me:m() return m end
+function Editor:m() return m end
 
-function me:post_init(menu)
+function Editor:post_init(menu)
     self.managers = m
     m.menu = UpperMenu:new(self, menu)
     m.mission = MissionEditor:new(self, menu)
     m.static = StaticEditor:new(self, menu)
-    m.opt = GameOptions:new(self, menu)
-    m.utils = SpawnSelect:new(self, menu)
+    m.opt = InEditorOptions:new(self, menu)
+    m.utils = EditorUtils:new(self, menu)
     m.wdata = WorldDataEditor:new(self, menu)
     m.console = EditorConsole:new(self, menu)
     m.env = EnvEditor:new(self, menu)
@@ -78,7 +78,7 @@ function me:post_init(menu)
 end
 
 --functions
-function me:animate_bg_fade()
+function Editor:animate_bg_fade()
     local bg = self._menu._panel:rect({
         name = "Background",
         layer = 10000,
@@ -91,7 +91,7 @@ function me:animate_bg_fade()
     end)
 end
 
-function me:check_has_fix()
+function Editor:check_has_fix()
     local unit = World:spawn_unit(Idstring("core/units/move_widget/move_widget"), Vector3())
     self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit) ~= nil
     unit:set_enabled(false)
@@ -101,7 +101,7 @@ function me:check_has_fix()
     end
 end
 
-function me:update_grid_size(value)
+function Editor:update_grid_size(value)
     self._grid_size = tonumber(value)
     for _, manager in pairs(m) do
         if manager.update_grid_size then
@@ -110,47 +110,47 @@ function me:update_grid_size(value)
     end
 end
 
-function me:reset_widget_values()
+function Editor:reset_widget_values()
     self._using_move_widget = false
     self._using_rotate_widget = false
     self._move_widget:reset_values()
     self._rotate_widget:reset_values()
 end
 
-function me:move_widget_enabled(use)
+function Editor:move_widget_enabled(use)
     return self._move_widget._use
 end
 
-function me:rotation_widget_enabled(use)
+function Editor:rotation_widget_enabled(use)
     return self._rotate_widget._use
 end
 
-function me:toggle_move_widget(use)
+function Editor:toggle_move_widget(use)
     self._move_widget:set_use(not self:move_widget_enabled())
 end
 
-function me:toggle_rotation_widget()
+function Editor:toggle_rotation_widget()
     self._rotate_widget:set_use(not self:rotation_widget_enabled())
 end
 
-function me:use_widgets(use)
+function Editor:use_widgets(use)
     use = use and self:enabled()
     self._move_widget:set_enabled(use)    
     self._rotate_widget:set_enabled(use)
 end
 
-function me:mouse_moved(x, y)
+function Editor:mouse_moved(x, y)
     m.static:mouse_moved(x, y)
 end
 
-function me:mouse_released(button, x, y)
+function Editor:mouse_released(button, x, y)
     m.static:mouse_released(button, x, y)
     m.static:mouse_released(button, x, y)
     self._mouse_hold = false
     self:reset_widget_values()
 end
 
-function me:mouse_pressed(button, x, y)
+function Editor:mouse_pressed(button, x, y)
     if self._menu:MouseInside() then
         return
     end
@@ -163,11 +163,11 @@ function me:mouse_pressed(button, x, y)
     m.static:mouse_pressed(button, x, y)
 end
 
-function me:select_unit(unit, add)
+function Editor:select_unit(unit, add)
     m.static:set_selected_unit(unit, add)
 end
 
-function me:select_element(element, add)
+function Editor:select_element(element, add)
     for _, unit in pairs(m.mission:units()) do
         if unit:mission_element() and unit:mission_element().element.id == element.id and unit:mission_element().element.editor_name == element.editor_name then
             self:select_unit(unit, add)
@@ -177,7 +177,7 @@ function me:select_element(element, add)
     m.static:Switch()
 end
 
-function me:DeleteUnit(unit)
+function Editor:DeleteUnit(unit)
     if alive(unit) then
         if unit:mission_element() then 
             managers.mission:delete_element(unit:mission_element().element.id) 
@@ -194,10 +194,18 @@ function me:DeleteUnit(unit)
     end
 end
 
-function me:SpawnUnit(unit_path, old_unit, add, unit_id)
+function Editor:GetSpawnPosition(data)
+    local position
+    if data then
+        position = data.position
+    end
+    return position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
+end
+
+function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
     if m.wdata:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
-        data.position = data.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
+        data.position = self:GetSpawnPosition(data)
         local unit = m.wdata:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
         return
@@ -223,7 +231,7 @@ function me:SpawnUnit(unit_path, old_unit, add, unit_id)
                 unit_id = unit_id or managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
-                position = ud and ud.position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos(),
+                position = self:GetSpawnPosition(ud),
                 rotation = ud and ud.rotation or Rotation(0,0,0),
                 continent = ud and ud.continent or self._current_continent,
                 material_variation = ud and ud.material_variation,
@@ -270,7 +278,7 @@ function me:SpawnUnit(unit_path, old_unit, add, unit_id)
     return unit
 end
 
-function me:set_camera(pos, rot)
+function Editor:set_camera(pos, rot)
     if pos then
         self._camera_object:set_position(pos)
         self._camera_pos = pos
@@ -281,7 +289,7 @@ function me:set_camera(pos, rot)
     end
 end
 
-function me:set_enabled(enabled)
+function Editor:set_enabled(enabled)
     self._enabled = enabled
     if enabled then
         self._menu:Enable()
@@ -307,7 +315,7 @@ function me:set_enabled(enabled)
     end
 end
 
-function me:set_unit_positions(pos)
+function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
@@ -319,7 +327,7 @@ function me:set_unit_positions(pos)
     end
 end
 
-function me:set_unit_rotations(rot)
+function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
@@ -331,7 +339,7 @@ function me:set_unit_rotations(rot)
     end
 end
 
-function me:load_continents(continents)
+function Editor:load_continents(continents)
     self._continents = {}
     self._current_script = managers.mission._scripts[self._current_script] and self._current_script
     self._current_continent = continents[self._current_continent] and self._current_continent
@@ -355,7 +363,7 @@ function me:load_continents(continents)
 end
 
 
-function me:set_camera_fov(fov)
+function Editor:set_camera_fov(fov)
     if math.round(self:camera():fov()) ~= fov then
         self._vp:pop_ref_fov()
         self._vp:push_ref_fov(fov)
@@ -364,36 +372,36 @@ function me:set_camera_fov(fov)
 end
 
 --Short functions
-function me:set_unit_position(unit, pos, rot) BeardLibEditor.Utils:SetPosition(unit, pos and (pos + unit:unit_data().local_pos) or unit:position(), rot or unit:rotation()) end
-function me:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
-function me:destroy() self._vp:destroy() end
-function me:add_element(element, menu, item) m.mission:add_element(element) end
-function me:Log(...) m.console:Log(...) end
-function me:Error(...) m.console:Error(...) end
+function Editor:set_unit_position(unit, pos, rot) BeardLibEditor.Utils:SetPosition(unit, pos and (pos + unit:unit_data().local_pos) or unit:position(), rot or unit:rotation()) end
+function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
+function Editor:destroy() self._vp:destroy() end
+function Editor:add_element(element, menu, item) m.mission:add_element(element) end
+function Editor:Log(...) m.console:Log(...) end
+function Editor:Error(...) m.console:Error(...) end
 
 --Return functions
-function me:local_rot() return true end
-function me:enabled() return self._enabled end
-function me:selected_unit() return self:selected_units()[1] end
-function me:selected_units() return m.static._selected_units end
-function me:widget_unit() return m.static:widget_unit() or m.wdata:widget_unit() or self:selected_unit() end
-function me:widget_rot() return self:widget_unit():rotation() end
-function me:grid_size() return ctrl() and 1 or self._grid_size end
-function me:camera_rotation() return self._camera_object:rotation()  end
-function me:snap_rotation() return ctrl() and 1 or self._snap_rotation end
-function me:get_cursor_look_point(dist) return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist)) end
-function me:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
-function me:screen_to_world(pos, dist) return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist)) end
-function me:camera() return self._camera_object end
-function me:camera_fov() return self:camera():fov() end
-function me:set_camera_far_range(range) return self:camera():set_far_range(range) end
+function Editor:local_rot() return true end
+function Editor:enabled() return self._enabled end
+function Editor:selected_unit() return self:selected_units()[1] end
+function Editor:selected_units() return m.static._selected_units end
+function Editor:widget_unit() return m.static:widget_unit() or self:selected_unit() end
+function Editor:widget_rot() return self:widget_unit():rotation() end
+function Editor:grid_size() return ctrl() and 1 or self._grid_size end
+function Editor:camera_rotation() return self._camera_object:rotation()  end
+function Editor:snap_rotation() return ctrl() and 1 or self._snap_rotation end
+function Editor:get_cursor_look_point(dist) return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist)) end
+function Editor:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
+function Editor:screen_to_world(pos, dist) return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist)) end
+function Editor:camera() return self._camera_object end
+function Editor:camera_fov() return self:camera():fov() end
+function Editor:set_camera_far_range(range) return self:camera():set_far_range(range) end
 
-function me:cam_spawn_pos()
+function Editor:cam_spawn_pos()
     local cam = managers.viewport:get_current_camera()
     return cam:position() + (cam:rotation():y() * 100)
 end
 
-function me:_should_draw_body(body)
+function Editor:_should_draw_body(body)
     if not body:enabled() then
         return false
     end
@@ -406,12 +414,12 @@ function me:_should_draw_body(body)
     return true
 end
 
-function me:cursor_pos()
+function Editor:cursor_pos()
     local x, y = managers.mouse_pointer._mouse:position()
     return Vector3(x / self._screen_borders.x * 2 - 1, y / self._screen_borders.y * 2 - 1, 0)
 end
 
-function me:select_unit_by_raycast(slot, clbk)
+function Editor:select_unit_by_raycast(slot, clbk)
     local first = true
     local ignore = m.opt:GetItem("IgnoreFirstRaycast"):Value()
     local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(200000), "ray_type", "body editor walk", "slot_mask", slot)
@@ -431,8 +439,8 @@ function me:select_unit_by_raycast(slot, clbk)
 end
 
 --Update functions
-function me:paused_update(t, dt) self:update(t, dt) end
-function me:update(t, dt)
+function Editor:paused_update(t, dt) self:update(t, dt) end
+function Editor:update(t, dt)
     if BeardLib.Utils.Input:Triggered(self._toggle_trigger) then
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()
@@ -456,7 +464,7 @@ function me:update(t, dt)
     end
 end
 
-function me:current_position()
+function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
     if true then
@@ -488,7 +496,7 @@ function MapEditor:draw_marker(t, dt)
     self._spawn_position = spawn_pos or self._current_pos
 end
 
-function me:update_positions()
+function Editor:update_positions()
     for _, manager in pairs(m) do
         if manager.update_positions then
             manager:update_positions()
@@ -496,7 +504,7 @@ function me:update_positions()
     end
 end
 
-function me:update_widgets(t, dt)
+function Editor:update_widgets(t, dt)
     if alive(self:widget_unit()) then
         local widget_pos  = self:world_to_screen(self:widget_unit():position())
         if widget_pos.z > 50 then
@@ -540,7 +548,7 @@ function me:update_widgets(t, dt)
     end
 end
 
-function me:update_camera(t, dt)
+function Editor:update_camera(t, dt)
     if self._menu:Focused() or not shift() then
         managers.mouse_pointer:_activate()
         return
@@ -562,6 +570,6 @@ function me:update_camera(t, dt)
 end
 
 --Empty/Unused functions
-function me:register_message()end
-function me:set_value_info_pos() end
-function me:set_value_info() end
+function Editor:register_message()end
+function Editor:set_value_info_pos() end
+function Editor:set_value_info() end

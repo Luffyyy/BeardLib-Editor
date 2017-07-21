@@ -1,8 +1,9 @@
 if not Global.editor_mode then
 	return
 end
-CoreWorldInstanceManager = CoreWorldInstanceManager or class()
-function CoreWorldInstanceManager:prepare_unit_data(instance, continent_data)
+
+local Instance = CoreWorldInstanceManager
+function Instance:prepare_unit_data(instance, continent_data)
 	local start_index = instance.start_index
 	local folder = instance.folder
 	local path = folder .. "/" .. "world"
@@ -29,7 +30,7 @@ function CoreWorldInstanceManager:prepare_unit_data(instance, continent_data)
 	return instance_data
 end
 
-function CoreWorldInstanceManager:get_mission_outputs(instance)
+function Instance:get_mission_outputs(instance)
 	local start_index = instance.start_index
 	local folder = instance.folder
 	local path = folder .. "/" .. "world"
@@ -47,7 +48,7 @@ function CoreWorldInstanceManager:get_mission_outputs(instance)
 	return mission_inputs
 end
 
-function CoreWorldInstanceManager:custom_create_instance(instance_name, custom_data)
+function Instance:custom_create_instance(instance_name, custom_data)
 	local instance = self:get_instance_data_by_name(instance_name)
 	local continent_data = managers.worlddefinition._continents[instance.continent]
 	local package_data = managers.world_instance:packages_by_instance(instance)
@@ -74,7 +75,7 @@ function CoreWorldInstanceManager:custom_create_instance(instance_name, custom_d
 	managers.mission:script(instance.script):external_create_instance_elements(prepare_mission_data, instance_name)
 end
 
-function CoreWorldInstanceManager:prepare_mission_data_by_name(name)
+function Instance:prepare_mission_data_by_name(name)
 	local instance_data = self:get_instance_data_by_name(name)
 	local mdata = self:prepare_mission_data(instance_data)
 	mdata.instance_name = name

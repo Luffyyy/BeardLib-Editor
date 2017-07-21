@@ -4,8 +4,8 @@ if not ModCore then
 end
 
 _G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
-local self = BeardLibEditor
-function self:Init()
+local BLE = BeardLibEditor
+function BLE:Init()
     self:init_modules()
     self.ExtractDirectory = "assets/extract/"
     self.AssetsDirectory = self.ModPath .. "Assets/"
@@ -14,7 +14,7 @@ function self:Init()
     self.MapClassesDir = self.ClassDirectory .. "Map/"
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
-    self.Version = 6
+    self.Version = 2
     
     self.managers = {}
     self.modules = {}
@@ -25,7 +25,7 @@ function self:Init()
     self.InitDone = true
 end
 
-function self:InitManagers()
+function BLE:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
@@ -81,7 +81,7 @@ function self:InitManagers()
     self:LoadCustomAssets()
 end
 
-function self:LoadCustomAssets()
+function BLE:LoadCustomAssets()
     local project = self.managers.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(mod._clean_config)
@@ -112,7 +112,7 @@ function self:LoadCustomAssets()
     end
 end
 
-function self:RegisterModule(key, module)
+function BLE:RegisterModule(key, module)
     if not self.modules[key] then
         self:log("Registered module editor with key %s", key)
         self.modules[key] = module
@@ -121,7 +121,7 @@ function self:RegisterModule(key, module)
     end
 end
 
-function self:LoadHashlist()
+function BLE:LoadHashlist()
     local t = os.clock()
     self:log("Loading DBPaths")
     if Global.DBPaths and Global.DBPackages then
@@ -141,7 +141,7 @@ function self:LoadHashlist()
 end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
-function self:GeneratePackageData()
+function BLE:GeneratePackageData()
     local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
     local lines = io.lines(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
@@ -175,7 +175,7 @@ function self:GeneratePackageData()
 end
 
 --Gets all emitters and occasionals from extracted .world_sounds
-function self:GenerateSoundData()
+function BLE:GenerateSoundData()
     local sounds = {}
     local function get_sounds(path)
         for _, file in pairs(FileIO:GetFiles(path)) do
@@ -217,7 +217,7 @@ function self:GenerateSoundData()
     Global.WorldSounds = sounds
 end
 
-function self:LoadCustomAssetsToHashList(add)
+function BLE:LoadCustomAssetsToHashList(add)
     for _, v in pairs(add) do
         if type(v) == "table" then
             self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
@@ -228,7 +228,7 @@ function self:LoadCustomAssetsToHashList(add)
     end
 end
 
-function self:Update(t, dt)
+function BLE:Update(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.update then
             manager:update(t, dt)
@@ -236,7 +236,7 @@ function self:Update(t, dt)
     end
 end
 
-function self:PausedUpdate(t, dt)
+function BLE:PausedUpdate(t, dt)
     for _, manager in pairs(self.managers) do
         if manager.paused_update then
             manager:paused_update(t, dt)
@@ -244,7 +244,7 @@ function self:PausedUpdate(t, dt)
     end
 end
 
-function self:SetLoadingText(text)
+function BLE:SetLoadingText(text)
     if alive(Global.LoadingText) then
         local project = BeardLib.current_level and BeardLib.current_level._mod
         local s = "Level ".. tostring(Global.game_settings.level_id)
@@ -279,7 +279,7 @@ if MenuManager then
     end
 end
 
-if not self.InitDone then
+if not BLE.InitDone then
     if BeardLib.Version and BeardLib.Version >= 2.2 then
         BeardLibEditor:Init()
     else
@@ -289,30 +289,11 @@ if not self.InitDone then
 end
 
 if Hooks then
-    Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", function( t, dt )
-        BeardLibEditor:Update(t, dt)
-    end)
-
-    Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", function( t, dt )
-        BeardLibEditor:Update(t, dt)
-    end)
-
-    Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", function(t, dt)
-        BeardLibEditor:PausedUpdate(t, dt)
-    end)
-
+    Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", ClassClbk(BLE, "PausedUpdate"))
     Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
-        LocalizationManager:add_localized_strings({
-            ["BeardLibEditorEnvMenu"] = "Environment Mod Menu",
-            ["BeardLibEditorEnvMenuHelp"] = "Modify the params of the current Environment",
-            ["BeardLibEditorSaveEnvTable_title"] = "Save Current modifications",
-            ["BeardLibEditorResetEnv_title"] = "Reset Values",
-            ["BeardLibEditorScriptDataMenu_title"] = "ScriptData Converter",
-            ["BeardLibEditorLoadLevel_title"] = "Load Level",
-            ["BeardLibLevelManage_title"] = "Manage Levels",
-            ["BeardLibEditorMenu"] = "BeardLibEditor Menu"
-        })
+        LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
     end)
-
-    Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", callback(self, self, "InitManagers"))
+    Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", callback(BLE, BLE, "InitManagers"))
 end

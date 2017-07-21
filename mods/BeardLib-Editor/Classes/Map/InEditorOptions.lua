@@ -1,10 +1,11 @@
-GameOptions = GameOptions or class(EditorPart)
-function GameOptions:init(parent, menu)
+InEditorOptions = InEditorOptions or class(EditorPart)
+local Options = InEditorOptions
+function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")    
     self._wanted_elements = {}
 end
 
-function GameOptions:build_default_menu()
+function Options:build_default_menu()
     self.super.build_default_menu(self)
     local groups_opt = {offset = {8, 4}}
     local main = self:DivGroup("Main", groups_opt)
@@ -63,31 +64,32 @@ function GameOptions:build_default_menu()
     self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
 end
 
-function GameOptions:enable()
-    self:bind_opt("SaveMap", callback(self, self, "KeySPressed"))
-end
+function Options:enable() self:bind_opt("SaveMap", callback(self, self, "KeySPressed")) end
+function Options:pause_game(menu, item) Application:set_pause(item.value) end
+function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
+function Options:set_current_continent(menu, item) self._parent._current_continent = item:SelectedItem() end
 
-function GameOptions:KeySPressed()
+function Options:KeySPressed()
     if ctrl() then
         self:save()
     end
 end
 
-function GameOptions:open_set_color_dialog(option)
+function Options:open_set_color_dialog(option)
     BeardLibEditor.managers.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
         BeardLibEditor.Options:SetValue(option, color)
         BeardLibEditor.Options:Save()
     end})
 end
 
-function GameOptions:loaded_continents(continents, current_continent)
+function Options:loaded_continents(continents, current_continent)
     self._current_continent:SetItems(continents)
     self._current_continent:SetSelectedItem(current_continent)   
     self._current_script:SetItems(table.map_keys(managers.mission._scripts))
     self._current_script:SetValue(1)
 end
 
-function GameOptions:update_option_value(menu, item)
+function Options:update_option_value(menu, item)
     local name = item.name
     BeardLibEditor.Options:SetValue("Map/"..name, item:Value())
     if item.name == "ShowElements" then
@@ -108,41 +110,30 @@ function GameOptions:update_option_value(menu, item)
     end
 end
 
-function GameOptions:get_value(opt)
+function Options:get_value(opt)
     local item = self:GetItem(opt)
     return item and item:Value()
 end
 
-function GameOptions:pause_game(menu, item)
-    Application:set_pause(item.value)
-end
-
-function GameOptions:set_current_continent(menu, item)
-    self._parent._current_continent = item:SelectedItem()
-end
-
-function GameOptions:set_current_script(menu, item)
+function Options:set_current_script(menu, item)
     self._parent._current_script = item:SelectedItem()
     self:Manager("mission"):set_elements_vis()
 end
 
-function GameOptions:draw_nav_segments(menu, item)
+function Options:draw_nav_segments(menu, item)
     if managers.navigation then
         managers.navigation:set_debug_draw_state(self._draw_options)
     end
 end
 
-function GameOptions:drop_player()
-	game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0))
-end
 
-function GameOptions:position_debug()
+function Options:position_debug()
     BeardLibEditor:log("Camera Position: %s", tostring(self._parent._camera_pos))
 	BeardLibEditor:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
 end
 
-function GameOptions:update(t, dt)
-    self.super.update(self, t, dt)
+function Options:update(t, dt)
+    Options.super.update(self, t, dt)
     if self:Value("HighlightUnits") and managers.viewport:get_current_camera() then
         for _, body in ipairs(World:find_bodies("intersect", "sphere", self._parent._camera_pos, 2500)) do
             if self._parent:_should_draw_body(body) then
@@ -159,11 +150,11 @@ function GameOptions:update(t, dt)
 	end
 end
 
-function GameOptions:map_path()
+function Options:map_path()
     return BeardLibEditor.managers.MapProject:current_path() or self._menu:GetItem("MapSavePath"):Value():gsub("\\" , "/") 
 end
 
-function GameOptions:map_world_path()    
+function Options:map_world_path()    
     local map_path = BeardLibEditor.managers.MapProject:current_level_path() or self:map_path()
     if not FileIO:Exists(map_path) then
         FileIO:MakeDir(map_path)
@@ -171,10 +162,13 @@ function GameOptions:map_world_path()
     return map_path
 end
 
-function GameOptions:save()
+function Options:save()
     if self._saving then
         return
     end
+    local savebtn = self:Manager("menu"):GetItem("save")
+    local bg = alive(savebtn) and savebtn:Panel():child("bg")
+    local h = bg and bg:parent():h()
     self._saving = true
     local save_in_binary = self:Value("SaveMapFilesInBinary")
     local xml = save_in_binary and "binary" or "generic_xml"
@@ -238,6 +232,11 @@ function GameOptions:save()
                 FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
             end
         end
+        if bg then
+            QuickAnim:Work(bg, "alpha", 0, "callback", function(o)
+                o:set_color(savebtn.marker_color)
+            end)
+        end
         self:save_main_xml(include)
         self._saving = false
     end
@@ -248,6 +247,11 @@ function GameOptions:save()
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
         end
+        if bg then
+            bg:set_color(savebtn.accent_color)
+            bg:set_alpha(0)
+            QuickAnim:Work(bg, "alpha", 1, "speed", 10)
+        end
         FileIO:CopyToAsync(path, backup_dir, save)
     else
         FileIO:MakeDir(path)
@@ -255,7 +259,7 @@ function GameOptions:save()
     end
 end
 
-function GameOptions:save_main_xml(include)
+function Options:save_main_xml(include)
     local project = BeardLibEditor.managers.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
@@ -281,7 +285,7 @@ function GameOptions:save_main_xml(include)
     end
 end
 
-function GameOptions:SaveData(path, file_name, data)
+function Options:SaveData(path, file_name, data)
     if not FileIO:Exists(path) then
         FileIO:MakeDir(path)
     end
@@ -289,7 +293,7 @@ function GameOptions:SaveData(path, file_name, data)
     FileIO:WriteTo(BeardLib.Utils.Path:Combine(path, file_name), data)
 end
 
-function GameOptions:save_nav_data(include)    
+function Options:save_nav_data(include)    
     local path = self:map_world_path()
     local had_include = not not include
     include = include or {}
@@ -309,7 +313,7 @@ function GameOptions:save_nav_data(include)
     end
 end
 
-function GameOptions:save_cover_data(include)
+function Options:save_cover_data(include)
     local path = self:map_world_path()
     local had_include = not not include
     include = include or {}
@@ -334,7 +338,7 @@ function GameOptions:save_cover_data(include)
     end
 end
 
-function GameOptions:build_nav_segments() -- Add later the options to the menu
+function Options:build_nav_segments() -- Add later the options to the menu
     BeardLibEditor.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
         local settings = {}
         local units = {}
@@ -378,7 +382,7 @@ function GameOptions:build_nav_segments() -- Add later the options to the menu
     end)
 end
 
-function GameOptions:build_visibility_graph()
+function Options:build_visibility_graph()
     local all_visible = true
     local exclude, include
     if not all_visible then

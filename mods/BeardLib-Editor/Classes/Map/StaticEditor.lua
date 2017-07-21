@@ -1,6 +1,7 @@
 StaticEditor = StaticEditor or class(EditorPart)
-function StaticEditor:init(parent, menu)
-    StaticEditor.super.init(self, parent, menu, "Selection")
+local Static = StaticEditor
+function Static:init(parent, menu)
+    Static.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
     self._disabled_units = {}
     self._nav_surfaces = {}
@@ -9,7 +10,7 @@ function StaticEditor:init(parent, menu)
     self._widget_slot_mask = World:make_slot_mask(1)
 end
 
-function StaticEditor:enable()
+function Static:enable()
     self:bind_opt("DeleteSelection", callback(self, self, "delete_selected_dialog"))
     self:bind_opt("CopyUnit", callback(self, self, "CopySelection"))
     self:bind_opt("PasteUnit", callback(self, self, "Paste"))
@@ -19,7 +20,7 @@ function StaticEditor:enable()
     self:bind_opt("ToggleMoveWidget", callback(menu, menu, "toggle_widget", "move"))
 end
 
-function StaticEditor:mouse_pressed(button, x, y)
+function Static:mouse_pressed(button, x, y)
     if button == Idstring("0") then
         self._parent:reset_widget_values()
         local from = self._parent:get_cursor_look_point(0)
@@ -55,7 +56,11 @@ function StaticEditor:mouse_pressed(button, x, y)
     end  
 end
 
-function StaticEditor:loaded_continents()
+function Static:update_grid_size() self:set_unit() end
+function Static:deselect_unit(menu, item) self:set_unit(true) end
+function Static:mouse_released(button, x, y) self._mouse_hold = false end
+
+function Static:loaded_continents()
     self._nav_surfaces = {}
     for _, unit in pairs(managers.worlddefinition._all_units) do
         if unit:name() == self._nav_surface then
@@ -64,14 +69,14 @@ function StaticEditor:loaded_continents()
     end
 end
 
-function StaticEditor:build_default_menu()
-    StaticEditor.super.build_default_menu(self)
+function Static:build_default_menu()
+    Static.super.build_default_menu(self)
     self._editors = {}
     self:SetTitle("Selection")
     self:Divider("No Selection")
 end
 
-function StaticEditor:build_quick_buttons(cannot_be_saved)
+function Static:build_quick_buttons(cannot_be_saved)
     self:SetTitle("Selection")
     local quick_buttons = self:Group("QuickButtons")
     self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
@@ -84,7 +89,7 @@ function StaticEditor:build_quick_buttons(cannot_be_saved)
     end
 end
 
-function StaticEditor:build_group_options()
+function Static:build_group_options()
     local selected_unit = self:selected_unit()
     local selected_units = self:selected_units()
     local all_same_continent
@@ -115,8 +120,8 @@ function StaticEditor:build_group_options()
     end
 end
 
-function StaticEditor:build_unit_editor_menu()
-    StaticEditor.super.build_default_menu(self)
+function Static:build_unit_editor_menu()
+    Static.super.build_default_menu(self)
     self._editors = {}
     self:SetTitle("Selection")
     local other = self:Group("Main")    
@@ -127,6 +132,7 @@ function StaticEditor:build_unit_editor_menu()
         return BeardLibEditor.Utils:GetUnitType(unit) ~= "being"
     end, false, {group = other})
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
+    self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
     self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableCollision", callback(self, self, "set_unit_data"), false, {group = other})
@@ -134,14 +140,14 @@ function StaticEditor:build_unit_editor_menu()
     self:build_extension_items()
 end
 
-function StaticEditor:build_extension_items()
+function Static:build_extension_items()
     self._editors = {}
     for k, v in pairs({light = EditUnitLight, ladder = EditLadder, editable_gui = EditUnitEditableGui, zipline = EditZipLine, wire = EditWire, mesh_variation = EditMeshVariation, ai_data = EditAIData}) do
         self._editors[k] = v:new():is_editable(self)
     end
 end
 
-function StaticEditor:build_positions_items(cannot_be_saved)
+function Static:build_positions_items(cannot_be_saved)
     self:build_quick_buttons(cannot_be_saved)
     local transform = self:Group("Transform")
     self:Button("IgnoreRaycastOnce", function()
@@ -154,15 +160,7 @@ function StaticEditor:build_positions_items(cannot_be_saved)
     self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
 end
 
-function StaticEditor:update_grid_size()
-    self:set_unit()
-end
-
-function StaticEditor:deselect_unit(menu, item)
-    self:set_unit(true)
-end
-
-function StaticEditor:update_positions()
+function Static:update_positions()
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
@@ -186,7 +184,7 @@ function StaticEditor:update_positions()
     self:recalc_all_locals()
 end
 
-function StaticEditor:set_unit_data()
+function Static:set_unit_data()
     self._parent:set_unit_positions(self:AxisControlsPosition())
     self._parent:set_unit_rotations(self:AxisControlsRotation())
 
@@ -210,6 +208,7 @@ function StaticEditor:set_unit_data()
             ud.disable_collision = self:GetItem("DisableCollision"):Value()
             ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
             ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
+            unit:set_enabled(self:GetItem("Enabled"):Value())
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data then
                     editor:set_unit_data()
@@ -245,7 +244,7 @@ function StaticEditor:set_unit_data()
     end
 end
 
-function StaticEditor:StorePreviousPosRot()
+function Static:StorePreviousPosRot()
     if #self._selected_units > 1 then
         for _, unit in pairs(self._selected_units) do
             unit:unit_data()._prev_pos = unit:position()
@@ -254,7 +253,7 @@ function StaticEditor:StorePreviousPosRot()
     end
 end
 
-function StaticEditor:set_group_name(menu, item)
+function Static:set_group_name(menu, item)
     local exists
     for _, group in pairs(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups) do
         if group.name == item:Value() then
@@ -266,7 +265,7 @@ function StaticEditor:set_group_name(menu, item)
     end
 end
 
-function StaticEditor:remove_group(menu, item)
+function Static:remove_group(menu, item)
 	if self._selected_group then
 	    table.delete(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups, self._selected_group)
 	    self._selected_group = nil
@@ -274,7 +273,7 @@ function StaticEditor:remove_group(menu, item)
 	end
 end
 
-function StaticEditor:add_group(menu, item)
+function Static:add_group(menu, item)
     local unit = self:selected_unit()
     BeardLibEditor.managers.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
         local continent = managers.worlddefinition:get_continent_of_static(unit)
@@ -297,7 +296,7 @@ function StaticEditor:add_group(menu, item)
 end
 
 
-function StaticEditor:add_selection_to_prefabs(menu, item, prefab_name)
+function Static:add_selection_to_prefabs(menu, item, prefab_name)
     local remove_old_links
     local name_id = self._selected_units[1]:unit_data().name_id
     BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
@@ -314,17 +313,13 @@ function StaticEditor:add_selection_to_prefabs(menu, item, prefab_name)
     end})
 end
 
-function StaticEditor:mouse_moved(x, y)
+function Static:mouse_moved(x, y)
     if self._mouse_hold then
         self:select_unit(true)
     end
 end
 
-function StaticEditor:mouse_released(button, x, y)
-    self._mouse_hold = false
-end
-
-function StaticEditor:widget_unit()
+function Static:widget_unit()
     local unit = self:selected_unit()
     if self:Enabled() then
         for _, editor in pairs(self._editors) do
@@ -336,7 +331,7 @@ function StaticEditor:widget_unit()
     return nil
 end
 
-function StaticEditor:recalc_all_locals()
+function Static:recalc_all_locals()
     if alive(self._selected_units[1]) then
         local reference = self._selected_units[1]
         reference:unit_data().local_pos = Vector3()
@@ -349,7 +344,7 @@ function StaticEditor:recalc_all_locals()
     end
 end
 
-function StaticEditor:recalc_locals(unit, reference)
+function Static:recalc_locals(unit, reference)
     local pos = unit:position()
     local ref_pos = reference:position()
     local ref_rot = reference:rotation()
@@ -357,7 +352,7 @@ function StaticEditor:recalc_locals(unit, reference)
     unit:unit_data().local_rot = ref_rot:inverse() * unit:rotation()
 end
 
-function StaticEditor:check_unit_ok(unit)
+function Static:check_unit_ok(unit)
     local ud = unit:unit_data()
     if not ud then
         return false
@@ -381,10 +376,9 @@ function StaticEditor:check_unit_ok(unit)
     end
 end
 
-function StaticEditor:reset_selected_units()
+function Static:reset_selected_units()
     self:Manager("mission"):remove_script()
-    self:Manager("wdata").managers.env:check_units()
-    self:Manager("wdata").managers.sound:check_units()
+    self:Manager("wdata"):reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
@@ -392,7 +386,7 @@ function StaticEditor:reset_selected_units()
     self._selected_group = nil
 end
 
-function StaticEditor:set_selected_unit(unit, add)
+function Static:set_selected_unit(unit, add)
     self:recalc_all_locals()
     local units = {unit}
     if alive(unit) then
@@ -493,11 +487,12 @@ function StaticEditor:set_selected_unit(unit, add)
             self:set_unit()
         end
     end 
+    self:Manager("wdata"):set_selected_unit()
 end
 
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
-function StaticEditor:select_unit(mouse2)
+function Static:select_unit(mouse2)
     local ray = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
     self:recalc_all_locals()
 	if ray then
@@ -510,7 +505,7 @@ function StaticEditor:select_unit(mouse2)
 	end
 end
 
-function StaticEditor:set_multi_selected()
+function Static:set_multi_selected()
     if self._built_multi then
         self:update_positions()
         return
@@ -522,7 +517,7 @@ function StaticEditor:set_multi_selected()
     self:update_positions()
 end
 
-function StaticEditor:set_unit(reset)
+function Static:set_unit(reset)
     if reset then
         self:reset_selected_units()
     end
@@ -537,9 +532,10 @@ function StaticEditor:set_unit(reset)
     self:build_default_menu()
 end
 
-function StaticEditor:set_menu_unit(unit)   
+function Static:set_menu_unit(unit)   
     self:build_unit_editor_menu()
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
+    self:GetItem("Enabled"):SetValue(unit:enabled())
     self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
     self:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
     self:GetItem("DisableShadows"):SetValue(unit:unit_data().disable_shadows, false, true)
@@ -559,7 +555,7 @@ function StaticEditor:set_menu_unit(unit)
     self:build_links(unit:unit_data().unit_id)
 end
 
-function StaticEditor:build_links(id, is_element)
+function Static:build_links(id, is_element)
     local links = managers.mission:get_links(id, is_element)
     if #links > 0 then
         local links_group = self:GetItem("Links") or self:Group("Links")
@@ -572,7 +568,7 @@ function StaticEditor:build_links(id, is_element)
     return links
 end
 
-function StaticEditor:addremove_unit_portal(menu, item)
+function Static:addremove_unit_portal(menu, item)
     local portal = self:Manager("wdata")._selected_portal
     if portal then
         for _, unit in pairs(self._selected_units) do
@@ -585,7 +581,7 @@ function StaticEditor:addremove_unit_portal(menu, item)
     end    
 end      
 
-function StaticEditor:delete_selected(menu, item)
+function Static:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
         if unit:fake() then
             self:Manager("instances"):delete_instance()
@@ -597,14 +593,14 @@ function StaticEditor:delete_selected(menu, item)
     self:set_unit()      
 end
 
-function StaticEditor:delete_selected_dialog(menu, item)
+function Static:delete_selected_dialog(menu, item)
     if not self:selected_unit() then
         return
     end
     BeardLibEditor.Utils:YesNoQuestion("This will delete the selection", callback(self, self, "delete_selected")) 
 end
 
-function StaticEditor:update(t, dt)
+function Static:update(t, dt)
     self.super.update(self, t, dt)
     for _, unit in pairs(self._nav_surfaces) do 
         Application:draw(unit, 0,0.8,1)
@@ -635,7 +631,7 @@ function StaticEditor:update(t, dt)
     end
 end
 
-function StaticEditor:GetCopyData(remove_old_links)
+function Static:GetCopyData(remove_old_links)
     self:set_unit_data()
     local copy_data = {}    
     for _, unit in pairs(self._selected_units) do
@@ -708,7 +704,7 @@ function StaticEditor:GetCopyData(remove_old_links)
     return copy_data
 end
 
-function StaticEditor:CopySelection()
+function Static:CopySelection()
     if #self._selected_units > 0 and not self._parent._menu._highlighted then
         self._copy_data = self:GetCopyData() --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
         if #self._copy_data == 0 then
@@ -717,13 +713,13 @@ function StaticEditor:CopySelection()
     end
 end
 
-function StaticEditor:Paste()
+function Static:Paste()
     if not Global.editor_safe_mode and not self._parent._menu._highlighted and self._copy_data then
         self:SpawnCopyData(self._copy_data)
     end
 end
 
-function StaticEditor:SpawnPrefab(prefab)
+function Static:SpawnPrefab(prefab)
     self:SpawnCopyData(prefab, true)
     if self.x then
         local cam = managers.viewport:get_current_camera()
@@ -732,7 +728,7 @@ function StaticEditor:SpawnPrefab(prefab)
     end
 end
 
-function StaticEditor:SpawnCopyData(copy_data, prefab)
+function Static:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
     local project = BeardLibEditor.managers.MapProject
     local mod = project:current_mod()
@@ -815,18 +811,18 @@ function StaticEditor:SpawnCopyData(copy_data, prefab)
     end
 end
 
-function StaticEditor:Clone()
+function Static:Clone()
     self:CopySelection()
     self:Paste()
 end
 
-function StaticEditor:KeyFPressed()
+function Static:KeyFPressed()
     if self._selected_units[1] then
         self._parent:set_camera(self._selected_units[1]:position())
     end
 end
 
-function StaticEditor:set_unit_enabled(enabled)
+function Static:set_unit_enabled(enabled)
 	for _, unit in pairs(self._selected_units) do
         if alive(unit) then
             unit:set_enabled(enabled)
