@@ -210,7 +210,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
                 PackageManager:unload(p_init)
             end
         end
-        world_data.brush = nil --Figure out what to do with brushes...
+        world_data.brush = nil
         level.world_name = nil      
         level.package = nil      
         level.packages = packages
@@ -284,8 +284,9 @@ end
 function Project:select_narr_as_project()
     local levels = {}
     for id, narr in pairs(tweak_data.narrative.jobs) do
-        if not narr.custom then
-            table.insert(levels, {name = id, narr = narr})
+        if not narr.custom and not narr.hidden then
+            --dunno why the name_id is nil for some of them..
+            table.insert(levels, {name = id.." / " .. managers.localization:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")), narr = narr})
         end
     end
     BeardLibEditor.managers.ListDialog:Show({
@@ -514,15 +515,15 @@ end
 function Project:add_exisiting_level_dialog()
     local levels = {}
     for k, level in pairs(tweak_data.levels) do
-        if type(level) == "table" then
-            table.insert(levels, k)
+        if type(level) == "table" and not level.custom and level.world_name and not string.begins(level.world_name, "wip/") then
+            table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
         end
     end
     BeardLibEditor.managers.ListDialog:Show({
         list = levels,
-        callback = function(id)
+        callback = function(seleciton)
             local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
-            table.insert(chain, {level_id = id, type = "d", type_id = "heist_type_assault"})
+            table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
             BeardLibEditor.managers.ListDialog:hide()
             self:_select_project(self._current_mod, true)
         end

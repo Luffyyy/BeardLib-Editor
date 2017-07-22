@@ -303,7 +303,7 @@ function MenuUtils:init(this, menu)
 		    })
 	    end, opt)
 	    t.SetEnabled = function(this, enabled)
-	    	TextBox.SetEnabled(this, enabled)
+	    	BeardLib.Items.TextBox.SetEnabled(this, enabled)
 	    	btn:SetEnabled(enabled)
 	    end
 	    return t
