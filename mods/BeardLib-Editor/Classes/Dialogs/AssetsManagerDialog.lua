@@ -94,7 +94,9 @@ function AssetsManagerDialog:load_units()
                 panic = true
             end
         end
-        self:Button(unit, callback(self, self, "set_unit_selected"), {group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, text_color = not loaded and Color.red, text_highlight_color = units.text_color})
+        self:Button(unit, callback(self, self, "set_unit_selected"), {
+            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, marker_color = not loaded and Color.red:with_alpha(0.65) or nil
+        })
     end
     local panicked = self._unit_info:GetItem("AssetsManagerStatus"):Visible()
     self._unit_info:GetItem("AssetsManagerStatus"):SetVisible(panic)
@@ -149,6 +151,7 @@ function AssetsManagerDialog:find_package(unit, dontask)
         BeardLibEditor.managers.ListDialog:Show({
             list = items,
             force = true,
+            sort = false,
             callback = function(selection)
                 self:add_package(selection.package)
                 BeardLibEditor.managers.ListDialog:hide()
@@ -189,6 +192,7 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     BeardLibEditor.managers.ListDialog:Show({
         list = items,
         force = true,
+        sort = false,
         callback = function(selection)
             self:add_package(selection.package)
             if type(clbk) == "function" then
@@ -325,10 +329,10 @@ function AssetsManagerDialog:all_ok_dialog()
         local opt = {title = "Hooray!", message = "All units are now loaded!", force = true}
         if Global.editor_safe_mode then
             opt.message = opt.message .. " Load to normal mode?"
-            BeardLibEditor.Utils:QuickDialog(opt, {"Yes", function()
+            BeardLibEditor.Utils:QuickDialog(opt, {{"Yes", function()
                 Global.editor_safe_mode = nil
                 managers.game_play_central:restart_the_game()
-            end})
+            end}})
         else
             BeardLibEditor.managers.Dialog:Show(opt)
         end        
