@@ -11,7 +11,7 @@ end
 
 function EditorAIRemove:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian"})
+	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
 	self:BooleanCtrl("use_instigator", {text = "Remove Instigator"})
 	self:BooleanCtrl("true_death")
 	self:BooleanCtrl("force_ragdoll")

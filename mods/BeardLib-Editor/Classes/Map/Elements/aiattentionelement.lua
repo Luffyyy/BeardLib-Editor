@@ -20,7 +20,7 @@ function EditorAIAttention:create_element()
 end
 function EditorAIAttention:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivlian", "ElementSpawnEnemyGroup", "ElementSpawnCivlianGroup"})
+	self:BuildElementsManage("instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"})
 	self:BooleanCtrl("use_instigator")
 	self:ComboCtrl("preset", table.list_add({"none"}, tweak_data.attention.indexes), {help = "Select the attention preset."})
 	self:ComboCtrl("operation", {"set","add","override"}, {help = "Select an operation."})
