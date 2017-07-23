@@ -1,7 +1,7 @@
 EditorGlobalEventTrigger = EditorGlobalEventTrigger or class(MissionScriptEditor)
 function EditorGlobalEventTrigger:create_element()
 	self.super.create_element(self)
-    self._element.values.class = "ElementGlobalEventTrigger"
+    self._element.class = "ElementGlobalEventTrigger"
 	self._element.values.trigger_times = 1
 	self._element.values.global_event = "none"
 end
