@@ -16,7 +16,7 @@ function EditorVariableGet:_build_panel()
 end
 
 EditorVariableSet = EditorVariableSet or class(EditorVariableGet)
-function EditorVariableGet:create_element(...)
-	EditorVariableGet.super.create_element(self, ...)
+function EditorVariableSet:create_element(...)
+	EditorVariableSet.super.create_element(self, ...)
 	self._element.class = "ElementVariableSet"
 end
