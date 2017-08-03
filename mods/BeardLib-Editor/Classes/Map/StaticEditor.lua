@@ -122,7 +122,6 @@ end
 
 function Static:build_unit_editor_menu()
     Static.super.build_default_menu(self)
-    self._editors = {}
     self:SetTitle("Selection")
     local other = self:Group("Main")    
     self:build_positions_items()
@@ -148,6 +147,7 @@ function Static:build_extension_items()
 end
 
 function Static:build_positions_items(cannot_be_saved)
+    self._editors = {}
     self:build_quick_buttons(cannot_be_saved)
     local transform = self:Group("Transform")
     self:Button("IgnoreRaycastOnce", function()
@@ -470,6 +470,7 @@ function Static:set_selected_unit(unit, add)
             self:Switch()
         end
     else
+        self._editors = {}
         if alive(unit) then
             if unit:mission_element() then
                 self:Manager("mission"):set_element(unit:mission_element().element)
