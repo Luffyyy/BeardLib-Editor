@@ -413,7 +413,11 @@ function WorldDef:make_unit(data, offset)
 			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
 		end
 	end
-	if not data.instance and data.name ~= "core/units/nav_surface/nav_surface" then
+	local not_allowed = {
+		["core/units/nav_surface/nav_surface"] = true,
+		["units/dev_tools/level_tools/ai_coverpoint"] = true
+	}
+	if not data.instance and not not_allowed[name] then
 		self._all_names[name] = self._all_names[name] or 0
 		self._all_names[name] = self._all_names[name] + 1
 	end
