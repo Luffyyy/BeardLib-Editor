@@ -46,5 +46,6 @@ function EditorInteraction:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("tweak_data_id", table.list_add({"none"}, table.map_keys(tweak_data.interaction)))
 	self:NumberCtrl("override_timer", {floats = 1, min = -1, help = "Can be used to override the interaction time specified in tweak data. -1 means that it should not override."})
+	self:StringCtrl("alternative", {help = "One of the alternative can be 'interacted' which will execute the element at the end of the interaction only."})
 	self:Text("This element creates an interaction. Override time is optional and will replace tweak data timer (-1 means do not overrride). Use disabled/enabled state on element to set active state on interaction.")
 end
