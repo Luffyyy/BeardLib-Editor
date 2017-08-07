@@ -69,12 +69,13 @@ end
  
 function EditorSecurityCamera:_build_panel()
 	self:_create_panel()
-    self._menu:Button({
-        name = "choose_camera_unit",
-        text = "Choose camera unit",
-        help = "Decide what camera unit this element should handle",
-        callback = callback(self, self, "show_all_units_dialog")
-    })    		
+    --self._menu:Button({
+    --    name = "choose_camera_unit",
+    --    text = "Choose camera unit",
+    --    help = "Decide what camera unit this element should handle",
+    --    callback = callback(self, self, "show_all_units_dialog")
+   -- })    		
+    self:NumberCtrl("camera_u_id", {min = 0, floats = 0, help = "Decide what camera unit ID this element should handle"})
  	self:BooleanCtrl("ai_enabled")
  	self:BooleanCtrl("apply_settings")
 	self:NumberCtrl("yaw", {min = -180, max = 180, help = "Specify camera yaw (degrees)."})
