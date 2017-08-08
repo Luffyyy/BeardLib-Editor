@@ -102,9 +102,19 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
     self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
-	self:BuildElementsManage("on_executed", {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}, nil, nil, {
+	local on_exec = {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}
+	self:BuildElementsManage("on_executed", on_exec, nil, nil, {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
+	if self.ON_EXECUTED_ALTERNATIVES then
+		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
+		table.insert(alts, "none")
+		on_exec.values_name = "Alternative"
+		on_exec.value_key = "alternative"
+		on_exec.default_value = "none"
+		on_exec.combo_items_func = function() return alts end 
+		self:BuildElementsManage("on_executed", on_exec, nil, nil, {text = "Manage On Executed list / Alternative"})
+	end
 end
 
 function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
@@ -426,8 +436,8 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
                             for _, v in pairs(current_list) do
                                 if type(v) == "table" then
                                     if v[params.table_data.key] == element.id then
-                                        if params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-                                            data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key]
+                                        if params.table_data.value_key then
+                                            data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
                                         end
                                         table.insert(selected_list, data)
                                     end
@@ -439,8 +449,8 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
                             end                         
                         end
                         if not params.classes or table.contains(params.classes, element.class) then
-                            if params.table_data and params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-                                data.value = data.value or params.table_data.orig[params.table_data.value_key]
+                            if params.table_data and params.table_data.value_key then
+                                data.value = data.value or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
                             end 
                             table.insert(list, data)
                         end
@@ -453,6 +463,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
         selected_list = selected_list,
         list = list,
         values_name = params.table_data and params.table_data.values_name,
+		combo_items_func = params.table_data and params.table_data.combo_items_func,
         single_select = params.single_select,
         not_table = params.not_table,
         callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)

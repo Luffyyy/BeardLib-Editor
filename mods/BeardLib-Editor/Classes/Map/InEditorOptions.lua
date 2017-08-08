@@ -87,6 +87,7 @@ function Options:loaded_continents(continents, current_continent)
     self._current_continent:SetSelectedItem(current_continent)   
     self._current_script:SetItems(table.map_keys(managers.mission._scripts))
     self._current_script:SetValue(1)
+    self:Manager("mission"):set_elements_vis()
 end
 
 function Options:update_option_value(menu, item)

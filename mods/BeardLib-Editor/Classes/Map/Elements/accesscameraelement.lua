@@ -3,23 +3,10 @@ function EditorAccessCamera:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementAccessCamera"
 	self._element.values.text_id = "debug_none"	
-	self._camera_unit = nil
 	self._element.values.yaw_limit = 25
 	self._element.values.pitch_limit = 25
-	self._element.values.camera_u_id = nil	
 end
-
-function EditorAccessCamera:_set_text()
-	self._text:set_value(managers.localization:text(self._element.values.text_id))
-end
-  
-function EditorAccessCamera:set_element_data(params, ...)
-	EditorAccessCamera.super.set_element_data(self, params, ...)
-	if params.name == "text_id" then
-		self:_set_text()
-	end
-end
-
+ 
 function EditorAccessCamera:_build_panel()
 	self:_create_panel()
 
