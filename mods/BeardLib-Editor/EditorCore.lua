@@ -14,7 +14,7 @@ function BLE:Init()
     self.MapClassesDir = self.ClassDirectory .. "Map/"
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
-    self.Version = 2
+    self.Version = self.AssetUpdates._config.version or 2
     
     self.managers = {}
     self.modules = {}

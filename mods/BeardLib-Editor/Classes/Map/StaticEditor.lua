@@ -210,7 +210,7 @@ function Static:set_unit_data()
             ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
             unit:set_enabled(self:GetItem("Enabled"):Value())
             for _, editor in pairs(self._editors) do
-                if editor.set_unit_data then
+                if editor.set_unit_data and editor:editable(unit) then
                     editor:set_unit_data()
                 end
             end
