@@ -7,7 +7,7 @@ _G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml
 local BLE = BeardLibEditor
 function BLE:Init()
     self:init_modules()
-    self.ExtractDirectory = "assets/extract/"
+    self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
@@ -211,7 +211,7 @@ function BLE:GenerateSoundData()
             get_sounds(Path:Combine(path, folder))
         end
     end
-    get_sounds("assets/extract/levels")
+    get_sounds(self.ExtractDirectory.."levels")
     FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
     self.WorldSounds = sounds
     Global.WorldSounds = sounds

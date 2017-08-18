@@ -12,7 +12,7 @@ function string.underscore_name(str)
     return str:gsub("([^A-Z%W])([A-Z])", "%1%_%2"):gsub("([A-Z]+)([A-Z][^A-Z$])", "%1%_%2"):lower()
 end
 
-BeardLibEditor.Utils = {}
+BeardLibEditor.Utils = BeardLibEditor.Utils or {}
 local Utils = BeardLibEditor.Utils
 --Sets the position of a unit/object correctly
 function Utils:SetPosition(unit, position, rotation, offset)
@@ -162,7 +162,7 @@ function Utils:ReadUnitAndLoad(unit, load)
                 table.insert(config, file)
             end
         end
-        CustomPackageManager:LoadPackageConfig("assets/extract", config)
+        CustomPackageManager:LoadPackageConfig(BeardLibEditor.ExtractDirectory, config)
     end
     return config
 end

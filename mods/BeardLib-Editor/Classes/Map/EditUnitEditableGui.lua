@@ -73,7 +73,7 @@ end
 function EditUnitEditableGui:set_unit_data()
 	local unit = self:selected_unit()
 	unit:editable_gui():set_debug(self._debug:Value())
-	unit:editable_gui():set_shape({self._shapes[1]:Value(),self._shapes[2]:Value(),self._shapes[3]:Value(),self._shapes[4]:Value()})
+	unit:editable_gui():set_shape({self._shapes[1]:Value(), self._shapes[2]:Value(), self._shapes[3]:Value(), self._shapes[4]:Value()})
 	unit:editable_gui():set_alpha(self._alpha:Value())
 	local render_template = self._render_template:SelectedItem()
 	self._blend_mode:SetEnabled(render_template == "Text")

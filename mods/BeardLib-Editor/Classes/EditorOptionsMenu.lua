@@ -4,6 +4,11 @@ function Options:init()
 	local O = BeardLibEditor.Options
 	local EMenu = BeardLibEditor.managers.Menu
 	MenuUtils:new(self, EMenu:make_page("Options"))
+	local main = self:DivGroup("Main")
+	self:TextBox("ExtractDirectory", callback(self, self, "set_clbk"), O:GetValue("ExtractDirectory"), {
+		help = "The extract directory will be used to load units from extract and be able to edit lights", group = main
+	})
+
 	local visual = self:DivGroup("Visual")
 	self:Button("ResetVisualOptions", callback(self, self, "reset_options", visual), {group = visual})
 	self:Button("AccentColor", callback(self, self, "open_set_color_dialog"), {group = visual})

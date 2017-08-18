@@ -174,7 +174,12 @@ function Static:update_positions()
             end
         elseif unit:mission_element() and self:Manager("mission")._current_script then
             self:Manager("mission")._current_script:update_positions(unit:position(), unit:rotation())
-        end      
+        end
+        for _, unit in pairs(self:selected_units()) do
+            if unit:editable_gui() then
+                unit:editable_gui():set_blend_mode(unit:editable_gui():blend_mode())
+            end
+        end
     end
     for _, editor in pairs(self._editors) do
         if editor.update_positions then

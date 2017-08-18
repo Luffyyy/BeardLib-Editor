@@ -17,7 +17,7 @@ function EditUnitLight:build_menu(units)
 	self._debug = self:Toggle("Debug", function(menu, item)
 		self._debugging = item:Value()
 	end, false, {group = light_options})
-	self._lights = self:ComboBox("Lights", callback(self, self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox", group = light_options})
+	self._lights_combo = self:ComboBox("Lights", callback(self, self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox", group = light_options})
 	self:Button("ChooseColor", callback(self, self, "show_color_dialog"), {group = light_options})
 	self._enabled = self:Toggle("Enabled", callback(self, self, "set_unit_data_parent"), true, {group = light_options})
 	self._near_range = self:NumberBox("NearRange[cm]", callback(self, self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the near range of the light in cm", group = light_options})
@@ -63,7 +63,7 @@ function EditUnitLight:update_light()
 	local unit = self:selected_unit()
 	local light = self:selected_light()
 	local name = self._idstrings[light:name():key()]
-	self._lights:SetSelectedItem(name)
+	self._lights_combo:SetSelectedItem(name)
 	self._enabled:SetValue(light:enable())
 	--self._color_ctrlr:set_background_colour(light:color().x * 255, light:color().y * 255, light:color().z * 255)
 	self._near_range:SetValue(light:near_range())
@@ -136,7 +136,7 @@ function EditUnitLight:selected_light() return self:_reference_light(self:select
 
 function EditUnitLight:_reference_light(unit)
 	if alive(unit) then
-		return unit:get_object(Idstring(self._lights:SelectedItem()))
+		return unit:get_object(Idstring(self._lights_combo:SelectedItem()))
 	end
 end
 
