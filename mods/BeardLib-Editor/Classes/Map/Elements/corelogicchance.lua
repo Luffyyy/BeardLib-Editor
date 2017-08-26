@@ -45,7 +45,7 @@ end
 EditorLogicChanceTrigger = EditorLogicChanceTrigger or class(MissionScriptEditor)
 function EditorLogicChanceTrigger:create_element()
 	self.super.create_element(self)
-	self._element.values.class = "ElementLogicChanceTrigger"
+	self._element.class = "ElementLogicChanceTrigger"
 	self._element.values.outcome = "fail"
 	self._element.values.elements = {}
 end
