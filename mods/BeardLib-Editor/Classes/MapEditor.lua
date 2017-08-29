@@ -313,6 +313,10 @@ function Editor:set_enabled(enabled)
             end
         end
     end
+    if Global.check_load_time then
+    	BeardLibEditor.Utils:Notify("Info", string.format("It took %.2f seconds to load your level into the editor", Global.check_load_time))
+        Global.check_load_time = nil
+    end
 end
 
 function Editor:set_unit_positions(pos)

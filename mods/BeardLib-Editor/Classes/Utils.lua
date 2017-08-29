@@ -58,14 +58,13 @@ function Utils:ParseXml(typ, path)
 end
 
 function Utils:ReadUnitAndLoad(unit, load)
+    log("Checking unit .. " .. tostring( unit ))    
     local config = {}
-    local path = BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, unit)
-    log("Checking unit .. " .. tostring( unit ))
-    if SystemFS:exists(path ..".unit") then
+    local path = Path:Combine(BeardLibEditor.ExtractDirectory, unit)
+    if FileIO:Exists(path ..".unit") then
         table.insert(config, {_meta = "cooked_physics", path = unit, force = true, unload = true})
-        table.insert(config, {_meta = "model", path = unit, force = true, unload = true})
         table.insert(config, {_meta = "unit", path = unit, force = true, unload = true})
-        log("Adding cooked_physics, moodel and unit of " .. tostring(unit))
+        log("Importing unit from extract to map assets" .. tostring(unit))
         local node = self:ParseXml("unit", unit)
         for child in node:children() do
             local name = child:name()
@@ -79,25 +78,11 @@ function Utils:ReadUnitAndLoad(unit, load)
                         if name == "diesel" and obj_child:has_parameter("materials") then
                             local material = obj_child:parameter("materials")
                             table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})                             
-                            local mat_node = self:ParseXml("material_config", material)
-                            for mat_child in mat_node:children() do
-                                if mat_child:name() == "material" then
-                                    for mat_child_child in mat_child:children() do
-                                        if mat_child_child:has_parameter("file") then
-                                            table.insert(config, {_meta = "texture", path = mat_child_child:parameter("file"), force = true, unload = true})   
-                                            log("Adding texture " .. tostring(mat_child_child:parameter("file")))
-                                        end
-                                    end
-                                end 
-                            end
                         elseif name == "sequence_manager" then
                             table.insert(config, {_meta = "sequence_manager", path = obj_child:parameter("file"), force = true, unload = true})   
-                            log("Adding sequence_manager " .. tostring(obj_child:parameter("file")))
                         elseif name == "effects" then
-                            for efct in child:children() do
-                                table.insert(config, {_meta = "effect", path = efct:parameter("effect"), force = true, unload = true})   
-                                log("Adding effect " .. tostring(efct:parameter("effect")))
-                            end
+                            BeardLibEditor:log("[Unit Import %s] Effect not supported!!", tostring(unit))
+                            return false
                         elseif name == "animation_def" then
                             local anim_def = obj_child:parameter("name") 
                             table.insert(config, {_meta = name, path = anim_def, force = true, unload = true})   
@@ -106,13 +91,13 @@ function Utils:ReadUnitAndLoad(unit, load)
                                 if anim_child:name() == "animation_set" then
                                     for anim_set in anim_child:children() do
                                         local anim_subset = anim_set:parameter("file") 
-                                        log("Adding animation_subset" .. tostring(anim_subset))
                                         table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
                                         local anim_set_node = self:ParseXml("animation_subset", anim_subset)
-                                        for anim_set_child in anim_set_node:children() do       
-                                            log("Adding animation " .. anim_set_child:parameter("file"))          
-                                            table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
-                                        end                      
+                                        if type(anim_set_node) == "table" then
+                                            for anim_set_child in anim_set_node:children() do
+                                                table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
+                                            end
+                                        end
                                     end   
                                 end
                             end                   
@@ -124,26 +109,28 @@ function Utils:ReadUnitAndLoad(unit, load)
                     if dep_child:has_parameter("unit") then
                         local read_unit = self:ReadUnitAndLoad(dep_child:parameter("unit"), false)
                         if read_unit then
-                            table.merge(config, read_unit)
+                            table.add_merge(config, read_unit)
                         else
                             return false
                         end
                     else
                         for ext, path in pairs(dep_child:parameters()) do
-                            log("Adding dependency " .. tostring(ext) .. ", " .. tostring(path))
-                            table.insert(config, {_meta = ext, path = path, force = true, unload = true})   
+                            if ext ~= "effect" then
+                                table.insert(config, {_meta = ext, path = path, force = true, unload = true})
+                            else
+                                BeardLibEditor:log("[Unit Import %s] Effect not supported!!", tostring(unit))
+                                return false
+                            end
                         end
                     end
                 end
             elseif name == "anim_state_machine" then
                 local anim_state = child:parameter("name") 
-                log("Adding animation state machine " .. tostring(anim_state))
                 table.insert(config, {_meta = "animation_state_machine", path = anim_state, force = true, unload = true})   
                 local anim_state_node = self:ParseXml("animation_state_machine", anim_state)
                 for anim_child in anim_state_node:children() do    
                     if anim_child:name() == "states" then
                         local anim_states = anim_child:parameter("file") 
-                        log("Adding animation_states " .. tostring(anim_states))
                         table.insert(config, {_meta = "animation_states", path = anim_states, force = true, unload = true}) 
                     end
                 end                 
@@ -158,11 +145,14 @@ function Utils:ReadUnitAndLoad(unit, load)
         local temp = deep_clone(config)
         config = {}
         for _, file in pairs(temp) do
-            if not PackageManager:has(Idstring(file._meta):id(), Idstring(file.path):id()) then
+            local file_path = Path:Combine(BeardLibEditor.ExtractDirectory, file.path.."."..file._meta)
+            if FileIO:Exists(file_path) then
                 table.insert(config, file)
+            else
+                BeardLibEditor:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                return false
             end
         end
-        CustomPackageManager:LoadPackageConfig(BeardLibEditor.ExtractDirectory, config)
     end
     return config
 end
@@ -185,7 +175,7 @@ function Utils:GetPackageSize(package)
     end
 end
 
-local allowed_units = {
+Utils.allowed_units = {
     ["core/units/effect/effect"] = true,
     ["core/units/nav_surface/nav_surface"] = true,
     ["units/dev_tools/level_tools/ai_coverpoint"] = true,
@@ -196,7 +186,7 @@ local allowed_units = {
 }
 
 function Utils:IsLoaded(asset, type, packages)
-    if allowed_units[asset] then
+    if self.allowed_units[asset] then
         return true
     end
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
@@ -498,7 +488,7 @@ function Utils:GetUnits(params)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_type or unit_type ~= Idstring(not_type))
-        local unit_loaded = params.not_loaded or allowed_units[unit] 
+        local unit_loaded = params.not_loaded or self.allowed_units[unit] 
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true

@@ -64,10 +64,22 @@ function Options:build_default_menu()
     self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
 end
 
-function Options:enable() self:bind_opt("SaveMap", callback(self, self, "KeySPressed")) end
+function Options:enable() 
+    self:bind_opt("SaveMap", callback(self, self, "KeySPressed"))
+    self:bind_opt("IncreaseCameraSpeed", callback(self, self, "ChangeCameraSpeed"))
+    self:bind_opt("DecreaseCameraSpeed", callback(self, self, "ChangeCameraSpeed", true))
+    self:bind_opt("ToggleGUI", callback(self, self, "ToggleEditorGUI"))
+end
+
 function Options:pause_game(menu, item) Application:set_pause(item.value) end
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function Options:set_current_continent(menu, item) self._parent._current_continent = item:SelectedItem() end
+function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
+
+function Options:ChangeCameraSpeed(decrease)
+    local cam_speed = self:GetItem("CameraSpeed")
+    cam_speed:SetValue(cam_speed:Value() + (decrease == true and -1 or 1), true)
+end
 
 function Options:KeySPressed()
     if ctrl() then

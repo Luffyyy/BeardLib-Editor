@@ -1,6 +1,6 @@
 EditorUtils = EditorUtils or class(EditorPart)
 function EditorUtils:init(parent, menu) self.super.init(self, parent, menu, "Utilities") end
-function EditorUtils:SpawnUnitFromExtractNoSpawn(unit, dontask) self:SpawnUnitFromExtract(unit, dontask, true) end
+function EditorUtils:LoadUnitFromExtract(unit) self._assets_manager:load_from_extract({[unit] = true}) end
 
 function EditorUtils:build_default_menu()
     self.super.build_default_menu(self)
@@ -28,13 +28,10 @@ function EditorUtils:build_default_menu()
 
     if BeardLib.current_level then
         local load = self:DivGroup("Load", {align_method = "grid"})
-        self:Button("Units", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
+        self:Button("Unit", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
         if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
-            self:Button("UnitsExtract", callback(self, self, "OpenSpawnUnitDialog", {on_click = callback(self, self, "SpawnUnitFromExtract"), not_loaded = true}), {
-                group = load, size_by_text = true, text = "Unit(From Extract)", help = [[Load a unit from extract, 
-the editor will read the unit file and determine what assets it needs(except the ones that are loaded already)
-afterwards it will copy them from your extract directory to the map's assets and add them to AddFiles module
-this load method should be used only if you know what you're doing(ex: unit is missing from the packages)]]
+            self:Button("UnitsExtract", callback(self, self, "OpenLoadUnitDialog", {on_click = callback(self, self, "LoadUnitFromExtract"), not_loaded = true}), {
+                group = load, size_by_text = true, text = "Unit(From Extract)", help = BeardLibEditor.ExtractImportHelp
             })
         end
     end
@@ -115,61 +112,6 @@ function EditorUtils:update(t, dt)
         self._dummy_spawn_unit:set_position(self._parent._spawn_position)
         Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
-    end
-end
-
-function EditorUtils:SpawnUnitFromExtract(unit, dontask, dontspawn)
-    local config = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
-    if not config then
-        BeardLibEditor:log("[ERROR] Something went wrong when trying to load the unit!")
-        return
-    end
-    if not dontspawn then
-        self._parent:SpawnUnit(unit)
-    end
-    local proj = BeardLibEditor.managers.MapProject
-    local map_mod = proj:current_mod()
-    local map_path = proj:current_path()
-    local mainxml_path =  map_mod and map_mod:GetRealFilePath(BeardLib.Utils.Path:Combine(map_path, "main.xml"))
-    local data = mainxml_path and proj:get_clean_data(FileIO:ReadScriptDataFrom(mainxml_path, "custom_xml"))
-    local level = data and proj:current_level(data)
-    local to_copy = {}
-    if map_mod then
-        level.add = level.add or {_meta = "add", directory = "assets", units = {}}
-        for k,v in pairs(config) do
-            local exists 
-            for _, tbl in pairs(level.add) do
-                if type(tbl) == "table" and tbl._meta == v._meta and tbl.path == v.path then
-                    exists = true
-                    break
-                end
-            end
-
-            if not exists then
-                table.insert(level.add, v)
-                table.insert(to_copy, v)
-            end
-        end      
-        
-        function save()
-            FileIO:WriteScriptDataTo(mainxml_path, data, "custom_xml")
-            for _, asset in pairs(to_copy) do
-                if type(asset) == "table" then
-                    local path = asset.path .. "." .. asset._meta
-                    FileIO:CopyFileTo(BeardLib.Utils.Path:Combine(BeardLibEditor.ExtractDirectory, path), BeardLib.Utils.Path:Combine(map_path, level.add.directory or "", path))
-                end
-            end
-        end
-        if not dontask then
-            BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your package proceed?", save, function()
-                if not dontspawn then
-                    self:Manager("static"):delete_selected()
-                end
-                CustomPackageManager:UnloadPackageConfig(config)
-            end)
-        else
-            save()
-        end
     end
 end
 
@@ -379,7 +321,7 @@ function EditorUtils:OpenLoadUnitDialog(params)
 	BeardLibEditor.managers.ListDialog:Show({
 	    list = units,
         force = true,
-	    callback = function(unit)
+	    callback = params.on_click or function(unit)
             BeardLibEditor.managers.ListDialog:hide()
             self._assets_manager:find_package(unit, true)
 	    end

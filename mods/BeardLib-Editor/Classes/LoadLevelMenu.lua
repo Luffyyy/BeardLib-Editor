@@ -9,7 +9,11 @@ function LoadLevelMenu:init()
 	w = w + self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
 	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 1.2, offset = 0})
-	local levels = self:Menu("Levels", {align_method = "grid", h = self._menu:Panel():h() - search:Panel():h(), auto_height = false})
+    local load_options = self:Menu("LoadOptions", {align_method = "grid", h = search:Panel():h(), auto_height = false})
+    local half_w = load_options:ItemsWidth() / 2
+    self:Toggle("Safemode", nil, false, {group = load_options, w = half_w, offset = 0})
+    self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = half_w, offset = 0})
+	self:Menu("Levels", {align_method = "grid", h = self._menu:Panel():h() - (search:Panel():h() * 2), auto_height = false})
 	self:load_levels()
 end
 
@@ -42,9 +46,13 @@ end
 
 function LoadLevelMenu:load_level(menu, item)
     local level_id = item.name
-    local function load(safe_mode)
+    local safe_mode = self:GetItem("Safemode"):Value()
+    local check_load = self:GetItem("CheckLoadTime"):Value()
+    
+    local function load()
         Global.editor_mode = true
         Global.editor_safe_mode = safe_mode == true
+        Global.check_load_time = check_load == true
         MenuCallbackHandler:play_single_player()
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"
@@ -53,11 +61,13 @@ function LoadLevelMenu:load_level(menu, item)
         MenuCallbackHandler:start_the_game()    
         BeardLibEditor.managers.Menu:set_enabled(false)
     end
+
+    local load_tbl = {{"Yes", load}}
     if item.vanilla then
-        BeardLibEditor.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, {{"Load", load}})
+        BeardLibEditor.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)
+    elseif safe_mode then
+        BeardLibEditor.Utils:QuickDialog({title = "Test level '" .. tostring(level_id).."'?", message = "Safemode is used to access the assets manager when the units fail to load by not spawning them"}, load_tbl)        
     else
-        BeardLibEditor.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "Choose load method, normal is the default load and safe is used to load/remove unloaded units"}, {
-            {"Load Normally", load}, {"Load Safely", SimpleClbk(load, true)}
-        })
+        BeardLibEditor.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "This will load the level in the editor and will allow you to edit it"}, load_tbl)
     end
 end

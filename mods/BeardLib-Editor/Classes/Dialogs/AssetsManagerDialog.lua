@@ -33,6 +33,7 @@ function AssetsManagerDialog:_Show()
         return
     end
     self._params = nil
+    self._assets_units = {}
     self._missing_units = {}
     local btn = self:Button("Close", callback(self, self, "hide", true), {position = "Bottom", count_height = true})
     local group_h = (self._menu:Height() / 2) - 24
@@ -59,14 +60,37 @@ function AssetsManagerDialog:_Show()
         color = false,
     })
     self:Button("FixBySearchingPackages", callback(self, self, "find_packages", false), {group = self._unit_info})
+    self:Button("FixByLoadingFromExtract", callback(self, self, "load_from_extract", false), {group = self._unit_info})
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
     self:Button("FindPackage", SimpleClbk(self.find_package, self, false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("LoadFromExtract", callback(self, self, "load_from_extract"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
-    self:Button("RemoveFromMap", callback(self, self, "remove_units_from_map"), {offset = 0, group = actions, enabled = false})
+    self:Button("LoadFromExtract", callback(self, self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
+
+    self:Button("RemoveAndUnloadAsset", callback(self, self, "remove_units_from_map", true), {offset = 0, group = actions, enabled = false})
+    self:Button("Remove", callback(self, self, "remove_units_from_map", false), {offset = 0, group = actions, enabled = false})
+    self:Button("UnloadAsset", callback(self, self, "unload_asset"), {offset = 0, group = actions, enabled = false})
 
     self:reload()
+end
+
+function AssetsManagerDialog:load_units_from_assets()
+    self._assets_units = {}
+    local project = BeardLibEditor.managers.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+    if data then
+        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+        local add = project:map_editor_read_xml(add_path, true)
+        if add then
+            for _, node in pairs(add) do
+                if type(node) == "table" and node._meta == "unit_load" then
+                    self._assets_units[node.name] = true
+                end
+            end
+        end
+    end
 end
 
 function AssetsManagerDialog:load_units()
@@ -83,11 +107,11 @@ function AssetsManagerDialog:load_units()
         add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
     end
     local panic
-    for unit, times in pairs(managers.worlddefinition._all_names) do
+    local new_unit = function(unit, times)
         local loaded = self:is_asset_loaded(unit, "unit")
         if not loaded then
             if add then
-                loaded = FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))
+                loaded = self._assets_units[unit] ~= nil
             end
             if not loaded then
                 self._missing_units[unit] = true
@@ -95,12 +119,21 @@ function AssetsManagerDialog:load_units()
             end
         end
         self:Button(unit, callback(self, self, "set_unit_selected"), {
-            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, marker_color = not loaded and Color.red:with_alpha(0.65) or nil
+            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, marker_color = not loaded and Color.red:with_alpha(0.65) or (times == 0 and Color.yellow:with_alpha(0.65)) or nil
         })
+    end
+    for unit, times in pairs(managers.worlddefinition._all_names) do
+        new_unit(unit, times)
+    end
+    for unit, _ in pairs(self._assets_units) do
+        if not managers.worlddefinition._all_names[unit] then
+            new_unit(unit, 0)
+        end
     end
     local panicked = self._unit_info:GetItem("AssetsManagerStatus"):Visible()
     self._unit_info:GetItem("AssetsManagerStatus"):SetVisible(panic)
     self._unit_info:GetItem("FixBySearchingPackages"):SetVisible(panic)
+    self._unit_info:GetItem("FixByLoadingFromExtract"):SetVisible(panic)
     if panicked and not panic then
         self:all_ok_dialog()
     end
@@ -130,11 +163,11 @@ function AssetsManagerDialog:load_packages()
     end
 end
 
-function AssetsManagerDialog:load_from_extract()
+function AssetsManagerDialog:load_from_extract_dialog()
     BeardLibEditor.Utils:YesNoQuestion(
-        "This will search for assets of the unit to load it, it's not recommended to use this method without knowing what you're doing, it's recommended to use package load instead.", 
+        BeardLibEditor.ExtractImportHelp,
         function()
-            managers.editor.managers.utils:SpawnUnitFromExtractNoSpawn(self._tbl._selected.name, true)
+            self:load_from_extract({[self._tbl._selected.name] = true})
         end
     )
 end
@@ -165,6 +198,72 @@ function AssetsManagerDialog:find_package(unit, dontask)
     else
         find_package()
     end
+end
+
+function AssetsManagerDialog:load_from_extract(missing_units)
+    missing_units = missing_units or self._missing_units
+    local config = {}
+    local failed_all = false
+    for unit, _ in pairs(missing_units) do
+        local cfg = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
+        if cfg then
+            table.insert(config, table.merge({_meta = "unit_load", name = unit}, cfg))
+        else
+            failed_all = true
+        end
+    end
+    local project = BeardLibEditor.managers.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+    local to_copy = {}
+    if data then
+        local level = project:current_level(data)
+        level.add = level.add or {}
+        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+        local add = project:map_editor_read_xml(add_path, true)
+        add = add or {_meta = "add", directory = "assets"}
+        for k,v in pairs(config) do
+            local exists 
+            for _, tbl in pairs(add) do
+                if type(tbl) == "table" and tbl._meta == v._meta and tbl.name == v.name then
+                    exists = true
+                    break
+                end
+            end
+            if not exists then
+                table.insert(add, v)
+                table.insert(to_copy, v)
+            end
+        end
+        local function save()
+            project:map_editor_save_xml(add_path, add)
+            local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
+            for _, unit_load in pairs(to_copy) do
+                if type(unit_load) == "table" then
+                    for _, asset in pairs(unit_load) do
+                        if type(asset) == "table" and asset.path then
+                            local path = asset.path .. "." .. asset._meta
+                            log("COPYING TO " .. tostring(path) )
+                            FileIO:CopyFileTo(Path:Combine(BeardLibEditor.ExtractDirectory, path), Path:Combine(assets_dir, path))
+                            BeardLibEditor.Utils.allowed_units[asset.path] = true
+                        end        
+                    end
+                end
+            end
+            CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
+            if failed_all then
+                BeardLibEditor.Utils:Notify("Info", "One of the units that you tried to load either has unsupported files(ex: .effect) or one of the files do not exist")
+            end
+            self:reload()
+        end
+        if not dontask then
+            BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your map assets proceed?", save, function()
+                CustomPackageManager:UnloadPackageConfig(config)
+            end)
+        else
+            save()
+        end
+    end    
 end
 
 function AssetsManagerDialog:find_packages(missing_units, clbk)
@@ -203,27 +302,84 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     })
 end
 
-function AssetsManagerDialog:remove_units_from_map()
+function AssetsManagerDialog:remove_units_from_map(remove_asset)
+    local name = self._tbl._selected.name
     BeardLibEditor.Utils:YesNoQuestion("This will remove all of the spawned units of that unit, this will not remove units that are inside an instance(save is required)", function()
         for k, unit in pairs(managers.worlddefinition._all_units) do
             local ud = alive(unit) and unit:unit_data()
-            if ud and not ud.instance and ud.name == self._tbl._selected.name then
+            if ud and not ud.instance and ud.name == name then
                 managers.editor:DeleteUnit(unit)
             end
         end
-        managers.worlddefinition._all_names[self._tbl._selected.name] = nil
+        managers.worlddefinition._all_names[name] = nil
         local continents = managers.worlddefinition._continent_definitions
         local temp = deep_clone(continents)
         for name, continent in pairs(temp) do
             for i, static in pairs(continent.statics) do
-                if static.unit_data and static.unit_data.name == self._tbl._selected.name then
+                if static.unit_data and static.unit_data.name == name then
                     table.remove(continents[name].statics, i)
                 end
             end
         end
+        if self._assets_units[name] and remove_asset == true then
+            self:unload_asset(name, true)
+        end
         managers.editor:m().opt:save()
         self:reload()
+        self:set_unit_selected()
     end)
+end
+
+function AssetsManagerDialog:unload_asset(no_dialog)
+    local name = self._tbl._selected.name
+    local function unload()
+        local project = BeardLibEditor.managers.MapProject
+        local mod = project:current_mod()
+        local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+        if data then
+            local level = project:current_level(data)
+            level.add = level.add or {}
+            local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+            local add = project:map_editor_read_xml(add_path, true)
+            if add then
+                for k, node in pairs(add) do
+                    if type(node) == "table" and node._meta == "unit_load" and node.name == name then
+                        for _, asset in pairs(node) do
+                            if type(asset) == "table" then
+                                local used
+                                for _, node in pairs(add) do
+                                    if type(node) == "table" and node.name ~= name then
+                                        for _, ass in pairs(node) do
+                                            if type(asset) == "table" and ass._meta == asset._meta and ass.path == asset.path then
+                                                used = true
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+                                if not used then
+                                    FileIO:Delete(Path:Combine(mod.ModPath, add.directory, asset.path.."."..asset._meta))
+                                end
+                            end
+                        end
+                        table.remove(add, k)
+                        BeardLibEditor.Utils.allowed_units[name] = nil
+                        break
+                    end
+                end
+            end
+            project:map_editor_save_xml(add_path, add)
+            FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, add.directory))
+            if no_dialog ~= false then
+                self:reload()
+            end
+        end
+    end
+    if no_dialog == true then
+        unload()
+    else
+        BeardLibEditor.Utils:YesNoQuestion("This will unload the unit from your map", unload)
+    end
 end
 
 function AssetsManagerDialog:check_data()
@@ -253,6 +409,10 @@ function AssetsManagerDialog:get_packages_of_asset(asset, type, size_needed, fir
 end
 
 function AssetsManagerDialog:set_unit_selected(menu, item)
+    local packages = self:GetItem("Packages")
+    if not packages then
+        return
+    end
     if self._tbl._selected then
         self._tbl._selected:SetBorder({left = false})
     end
@@ -260,10 +420,15 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
         self._tbl._selected = nil
     else
         self._tbl._selected = item
-        item:SetBorder({left = true})
+        if item then
+            item:SetBorder({left = true})
+        end
     end
+    local loaded_from_package
+    local unused
+    local unit
     if self._tbl._selected then
-        local unit = self._tbl._selected.name
+        unit = self._tbl._selected.name
         local project = BeardLibEditor.managers.MapProject
         local load_from
         local short_path = function(path, times)
@@ -276,6 +441,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
             return path
         end
         for _, pkg in pairs(self:get_packages_of_asset(unit, "unit", true)) do
+            loaded_from_package = true
             load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
@@ -290,16 +456,22 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
         if self._tbl._data then
             add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
         end
-        if FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit")) then
+        if self._assets_units[unit] then
             load_from = (load_from or "") .. "\n".."Map Assets"
+            if not managers.worlddefinition._all_names[unit] then
+                load_from = load_from .. "\n" .. "| Warning: Unused!"
+                unused = true
+            end
         end
         self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..short_path(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
     else
         self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
     end
-    self._unit_info:GetItem("FindPackage"):SetEnabled(self._tbl._selected ~= nil)
-    self._unit_info:GetItem("LoadFromExtract"):SetEnabled(self._tbl._selected ~= nil)
-    self._unit_info:GetItem("RemoveFromMap"):SetEnabled(self._tbl._selected ~= nil)
+    self._unit_info:GetItem("FindPackage"):SetEnabled(unit ~= nil)
+    self._unit_info:GetItem("LoadFromExtract"):SetEnabled(unit ~= nil)
+    self._unit_info:GetItem("RemoveAndUnloadAsset"):SetEnabled(not unused and unit ~= nil)
+    self._unit_info:GetItem("Remove"):SetEnabled(not unused and unit ~= nil)
+    self._unit_info:GetItem("UnloadAsset"):SetEnabled((unused or loaded_from_package) and unit and self._assets_units[unit])
     self._unit_info:AlignItems(true)
 end
 
@@ -398,8 +570,12 @@ function AssetsManagerDialog:remove_package(package, menu, item)
 end
 
 function AssetsManagerDialog:reload()
+    self:load_units_from_assets()
     self:load_packages()
     self:load_units()
+    local selected = self._tbl._selected
+    self:set_unit_selected()
+    self:set_unit_selected(nil, selected)
     self._menu:AlignItems(true)
 end
 

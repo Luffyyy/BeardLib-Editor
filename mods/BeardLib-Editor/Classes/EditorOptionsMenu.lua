@@ -31,6 +31,10 @@ function Options:init()
 	keybind("ToggleRotationWidget")
 	keybind("DeleteSelection")
 	keybind("ToggleMapEditor")
+	keybind("IncreaseCameraSpeed")
+	keybind("DecreaseCameraSpeed")
+	keybind("ToggleGUI")
+	
 	self:Button("ResetOptions", callback(self, self, "reset_options"))
 end
 

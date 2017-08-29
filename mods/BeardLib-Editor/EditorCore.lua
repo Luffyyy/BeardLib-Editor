@@ -15,7 +15,11 @@ function BLE:Init()
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
     self.Version = self.AssetUpdates._config.version or 2
-    
+    self.ExtractImportHelp = [[
+This will search for assets of the unit to load it, you shouldn't use this method for any networked units, 
+units that have animations(bags, drills, bags, npcs, etc) and you can't use this method to load any units that need an effect file.
+]]
+ 
     self.managers = {}
     self.modules = {}
     self.DBPaths = {}
@@ -92,8 +96,17 @@ function BLE:LoadCustomAssets()
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         if level then
             self:log("Loading Custom Assets to Hashlist")
-            if level.add then
-                self:LoadCustomAssetsToHashList(level.add)
+            level.add = level.add or {}
+            if not level.add.file then
+                local add = table.merge({directory = "assets"}, deep_clone(level.add))
+                local add_path = Path:Combine(level.include.directory, "add.xml")
+                project:map_editor_save_xml(add_path, add)
+                level.add = {file = add_path}
+                project:map_editor_save_main_xml(data)
+            end
+            local add = project:map_editor_read_xml(level.add.file)
+            if add then
+                self:LoadCustomAssetsToHashList(add)
             end
             for i, include_data in ipairs(level.include) do
                 if include_data.file then
@@ -220,9 +233,14 @@ end
 function BLE:LoadCustomAssetsToHashList(add)
     for _, v in pairs(add) do
         if type(v) == "table" then
-            self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
-            if not table.contains(self.DBPaths[v._meta], v.path) then
-                table.insert(self.DBPaths[v._meta], v.path)
+            if v._meta == "unit_load" then
+                self:LoadCustomAssetsToHashList(v)
+            else
+                self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
+                if not table.contains(self.DBPaths[v._meta], v.path) then
+                    table.insert(self.DBPaths[v._meta], v.path)
+                end
+                self.Utils.allowed_units[v.path] = true
             end
         end
     end

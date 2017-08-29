@@ -52,7 +52,8 @@ function EnvEditor:build_default_menu()
     end
     
     self:Button("Browse", callback(self, self, "open_environment_dialog"))
-    self:Button("LoadDefault", callback(self, self, "database_load_env", env_path))
+    self:Button("LoadGameDefault", callback(self, self, "database_load_env", "core/environments/default"))
+    self:Button("LoadCurrentDefault", callback(self, self, "database_load_env", env_path))
     self:Button("Save", callback(self, self, "write_to_disk_dialog"))
 
 
@@ -88,13 +89,13 @@ function EnvEditor:build_default_menu()
     self:add_sky_param(self:PathItem("global_world_overlay_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay texture", group = global_textures}))
     self:add_sky_param(self:PathItem("global_world_overlay_mask_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay mask texture", group = global_textures}))
 
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d0", nil, 1, {text = "1st slice depth start", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d1", nil, 1, {text = "2nd slice depth start", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o1", nil, 1, {text = "Blend overlap(1st & 2nd)", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d2", nil, 1, {text = "3rd slice depth start", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d3", nil, 1, {text = "3rd slice depth end", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, max = 10000, group = global_illumination}))
-    self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o3", nil, 1, {text = "Blend overlap(3rd & rth)", min = 0, max = 10000, group = global_illumination}))
+    self._shadow_params.d0 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d0", nil, 1, {text = "1st slice depth start", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.d1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d1", nil, 1, {text = "2nd slice depth start", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.o1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o1", nil, 1, {text = "Blend overlap(1st & 2nd)", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.d2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d2", nil, 1, {text = "3rd slice depth start", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.d3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d3", nil, 1, {text = "3rd slice depth end", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.o2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, max = 1000000, group = global_illumination}))
+    self._shadow_params.o3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o3", nil, 1, {text = "Blend overlap(3rd & 4th)", min = 0, max = 1000000, group = global_illumination}))
  
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice0"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice1"))
@@ -116,8 +117,10 @@ end
 
 function EnvEditor:load_shadow_data(block)
     for k, v in pairs(block:map()) do
+        log("is there item " ..tostring(k))
         local param = self._shadow_params[k]
         if param then
+            log("SET VALUE "..tostring(v))
             param:SetValue(v)
         end
     end
@@ -451,7 +454,8 @@ function EnvEditor:uninclude_environment_dialog(menu, item)
         local level = BeardLib.current_level
         FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, item.override_parent.name))
         self:Manager("opt"):save_main_xml()
-        table.delete(self.DBPaths.environment, Path:Combine("levels/mods/", level.id, item.override_parent.name:gsub(".environment", "")))
+        local env = item.override_parent.name:gsub(".environment", "")
+        table.delete(Global.DBPaths.environment, Path:Combine("levels/mods/", level.id, env))
         BeardLibEditor:LoadCustomAssets()
         self:load_included_environments()
     end)

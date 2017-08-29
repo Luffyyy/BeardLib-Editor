@@ -50,7 +50,20 @@ function Project:maps_path()
 end
 
 function Project:map_editor_save_main_xml(data)
-    FileIO:WriteScriptDataTo(self:current_mod():GetRealFilePath(BeardLib.Utils.Path:Combine(self:current_path(), "main.xml")), data, "custom_xml")
+    self:map_editor_save_xml("main.xml", self:get_clean_data(data))
+    self:_reload_mod(data.name)
+end
+
+function Project:map_editor_save_xml(file, data)
+    FileIO:WriteScriptDataTo(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml")
+end
+
+function Project:map_editor_read_xml(file, clean)
+    local data = FileIO:ReadScriptDataFrom(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), "custom_xml")
+    if clean and data then
+        data = BeardLib.Utils:CleanCustomXmlTable(data)
+    end
+    return data
 end
 
 function Project:current_path()
@@ -136,7 +149,7 @@ function Project:get_clean_data(t, no_clone)
 
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
-        for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks"}) do
+        for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks", "packages"}) do
             if level and level[v] then
                 level[v] = BeardLib.Utils:CleanCustomXmlTable(level[v])
             end
@@ -346,9 +359,12 @@ function Project:_select_project(mod, save_prev)
         local something_changed
         for _, level in pairs(levels) do
             if level.orig_id then
-                local include_dir = U.Path:Combine("levels", level.id)
+                local include_dir = Path:Combine("levels", level.id)
                 level.include.directory = include_dir
-                FileIO:MoveTo(U.Path:Combine(map_path, "levels", level.orig_id), U.Path:Combine(map_path, include_dir))
+                if level.add.file then
+                    level.add.file = Path:Combine(include_dir, "add.xml")
+                end
+                FileIO:MoveTo(Path:Combine(map_path, "levels", level.orig_id), Path:Combine(map_path, include_dir))
                 tweak_data.levels[level.orig_id] = nil
                 table.delete(tweak_data.levels._level_index, level.orig_id)
                 level.orig_id = nil
