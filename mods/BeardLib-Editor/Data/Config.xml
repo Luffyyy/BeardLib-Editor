@@ -157,9 +157,7 @@
         <value_node value="ElementEnableSoundEnvironment"/>
         <value_node value="ElementLoadDelayed"/>
         <value_node value="ElementLootPile"/>
-        <value_node value="ElementLootPile"/>
         <value_node value="ElementPlayerCharacterTrigger"/>
-        <value_node value="ElementScenarioEvent"/>
         <value_node value="ElementTeamAICommands"/>
         <value_node value="ElementUnitDamage"/>
         <value_node value="ElementUnloadStatic"/>
@@ -205,7 +203,6 @@
         <value_node value="ElementAIGraph"/>
         <value_node value="ElementAIRemove"/>
         <value_node value="ElementAlertTrigger"/>
-        <value_node value="ElementPhysicsPush"/>
         <value_node value="ElementAreaMinPoliceForce"/>
         <value_node value="ElementAreaTrigger"/>
         <value_node value="ElementAreaReportTrigger"/>
@@ -271,6 +268,8 @@
         <value_node value="ElementPointOfNoReturn"/>
         <value_node value="ElementPrePlanning"/>
         <value_node value="ElementLogicChance"/>
+        <value_node value="ElementLogicChanceOperator"/>
+        <value_node value="ElementLogicChanceTrigger"/>
         <value_node value="MissionScriptElement"/>
         <value_node value="ElementPressure"/>
         <value_node value="ElementProfileFilter"/>
