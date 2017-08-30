@@ -9,7 +9,9 @@ end
 function EditorChangeVanSkin:_build_panel()
 	self:_create_panel()
 	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = callback(self, self, "can_select_unit")})
-	self:ComboCtrl("target_skin", table.sort(table.map_keys(tweak_data.van.skins), function(a, b) return a < b end))
+	local tbl = table.map_keys(tweak_data.van.skins)
+	table.sort(tbl, function(a, b) return a < b end)
+	self:ComboCtrl("target_skin", tbl)
 	self:Text("Changes the equipped skin for the escape van, if it is owned. Can be pointed at a van to change the skin immediately.")
 end
 
