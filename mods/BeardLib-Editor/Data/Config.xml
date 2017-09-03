@@ -146,6 +146,7 @@
         <value_node value="ElementTeleportPlayer"/>
         <value_node value="ElementEnvironment"/>
         <value_node value="ElementPushInstigator"/>
+        <value_node value="ElementCustomSound"/>
         <!--Normal-->
         <value_node value="ElementChangeVanSkin"/>
         <value_node value="ElementCharacterDamage"/>
