@@ -1,4 +1,4 @@
-<mod name="BeardLib-Editor" global_key="BeardLibEditor" ignore_errors="true">
+<mod name="BeardLib-Editor" global_key="BeardLibEditor" ignore_errors="true" image="textures/editor_logo" color="Color(0.8,0.8,0.8)">
     <Classes directory="Classes">
         <class file="Utils.lua"/>
         <class file="MenuUtils.lua"/>

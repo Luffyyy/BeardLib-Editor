@@ -117,6 +117,11 @@ function WData:rename_continent(continent)
                 self:rename_continent(continent)
             end})
             return
+        elseif worlddef._continent_definitions[name] then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+                self:rename_continent(continent)
+            end})
+            return
         end
         local worlddef = managers.worlddefinition
         local mission = managers.mission
@@ -214,6 +219,7 @@ function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
 end
 
 function WData:new_continent()
+    local worlddef = managers.worlddefinition
     BeardLibEditor.managers.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
@@ -225,8 +231,12 @@ function WData:new_continent()
                 self:new_continent()
             end})
             return
+        elseif worlddef._continent_definitions[name] then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+                self:new_continent()
+            end})
+            return
         end
-        local worlddef = managers.worlddefinition
         managers.mission._missions[name] = managers.mission._missions[name] or {}
         worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
             editor_groups = {},
@@ -240,6 +250,7 @@ function WData:new_continent()
 end
 
 function WData:add_new_mission_script(menu, item)
+    local mission = managers.mission
     BeardLibEditor.managers.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
@@ -251,8 +262,12 @@ function WData:add_new_mission_script(menu, item)
                 self:add_new_mission_script()
             end})
             return
+        elseif mission._scripts[name] then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
+                self:add_new_mission_script()
+            end})
+            return
         end
-        local mission = managers.mission
         local cname = item.continent
         mission._missions[cname][name] = mission._missions[cname][name] or {
             activate_on_parsed = true,
@@ -280,6 +295,7 @@ function WData:remove_script(script, menu, item)
 end
 
 function WData:rename_script(script, menu, item)
+    local mission = managers.mission
     BeardLibEditor.managers.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
         if name == "" then
             BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
@@ -291,10 +307,10 @@ function WData:rename_script(script, menu, item)
                 self:rename_script(script, menu, item)
             end})
             return
-        end
-        local mission = managers.mission
-        if mission._scripts[name] then
-            self:rename_script(script)
+        elseif mission._scripts[name] then
+            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
+                self:rename_script(script, menu, item)
+            end})
             return
         end
         mission._scripts[script]._name = name
