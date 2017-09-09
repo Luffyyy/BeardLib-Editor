@@ -131,9 +131,11 @@ local ignore_modules = {["GlobalValue"] = true}
 
 function Project:get_clean_mod_config(mod)
     local config = deep_clone(mod._clean_config)
-    for i, module in pairs(mod._modules) do
-        if module.clean_table and not ignore_modules[module.type_name] and config[i] then
-            module:do_clean_table(config[i])
+    if mod._modules then
+        for i, module in pairs(mod._modules) do
+            if module.clean_table and not ignore_modules[module.type_name] and config[i] then
+                module:do_clean_table(config[i])
+            end
         end
     end
     return config
@@ -330,8 +332,10 @@ end
 
 function Project:reload_mod(old_name, name, save_prev)
     local mod = self._current_mod
-    for _, module in pairs(mod._modules) do
-        module.Registered = false
+    if mod._modules then
+        for _, module in pairs(mod._modules) do
+            module.Registered = false
+        end
     end
     self:_reload_mod(old_name)
     if BeardLib.managers.MapFramework._loaded_mods[name] then

@@ -53,6 +53,7 @@ function Editor:m() return m end
 function Editor:post_init(menu)
     self.managers = m
     m.menu = UpperMenu:new(self, menu)
+    m.status = StatusMenu:new(self, menu)
     m.mission = MissionEditor:new(self, menu)
     m.static = StaticEditor:new(self, menu)
     m.opt = InEditorOptions:new(self, menu)
