@@ -85,11 +85,11 @@ function Editor:animate_bg_fade()
         layer = 10000,
         color = BeardLibEditor.Options:GetValue("BackgroundColor"):with_alpha(1),
     })
-    QuickAnim:Work(bg, "alpha", 0, "callback", function(o)
+    QuickAnim:Play(bg, {alpha = 0, callback = function(o)
         if alive(o) then
             o:parent():destroy(o)
         end
-    end)
+    end})
 end
 
 function Editor:check_has_fix()

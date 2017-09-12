@@ -108,15 +108,15 @@ function UpperMenu:animate_bottom(item, show)
                 local h = bottom:parent():h()
                 bottom:set_h(h)
                 bottom:set_alpha(0)
-                QuickAnim:Work(bottom, "speed", 10, "h", 2, "alpha", 1, "sticky_bottom", h)
+                QuickAnim:Play(bottom, {speed = 10, h = 2, alpha = 1, sticky_bottom = h})
             end
         else
             if item.border_bottom then
                 bottom = item:Panel():child("bottom")
                 if alive(bottom) then
-                    QuickAnim:Work(bottom, "speed", 10, "alpha", 0, "callback", function()
+                    QuickAnim:Play(bottom, {speed = 10, alpha = 0, callback = function()
                         item:SetBorder({bottom = false})
-                    end)
+                    end})
                 end
             end
         end

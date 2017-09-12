@@ -350,7 +350,7 @@ function AssetsManagerDialog:unload_asset(no_dialog)
                                 for _, node in pairs(add) do
                                     if type(node) == "table" and node.name ~= name then
                                         for _, ass in pairs(node) do
-                                            if type(asset) == "table" and ass._meta == asset._meta and ass.path == asset.path then
+                                            if type(ass) == "table" and ass._meta == asset._meta and ass.path == asset.path then
                                                 used = true
                                                 break
                                             end

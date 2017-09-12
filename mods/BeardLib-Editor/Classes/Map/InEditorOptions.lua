@@ -246,9 +246,9 @@ function Options:save()
             end
         end
         if bg then
-            QuickAnim:Work(bg, "alpha", 0, "callback", function(o)
+            QuickAnim:Play(bg, {alpha = 0, callback = function(o)
                 o:set_color(savebtn.marker_color)
-            end)
+            end})
         end
         self:save_main_xml(include)
         self._saving = false
@@ -263,7 +263,7 @@ function Options:save()
         if bg then
             bg:set_color(savebtn.accent_color)
             bg:set_alpha(0)
-            QuickAnim:Work(bg, "alpha", 1, "speed", 10)
+            QuickAnim:Play(bg, {alpha = 1, speed = 10})
         end
         FileIO:CopyToAsync(path, backup_dir, save)
     else
