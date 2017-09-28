@@ -3,12 +3,14 @@ function EditorCustomSound:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementCustomSound"
 	self._element.values.sound_path = ""
+	self._element.values.volume_choice = "music"
 end
 
 function EditorCustomSound:_build_panel()
 	self:_create_panel()
 	self:Text("Basic Parameters")
 	self:StringCtrl("sound_path", {help = "Path to the custom sound that will play."})
+	self:ComboCtrl("volume_choice", {"music", "sfx"}, {help = "Which volume to base yourself on?"})
 	self:Text("Primary Channel")
 	self:BooleanCtrl("loop", {help = "Does the sound should loop or play once?"})
 	self:BooleanCtrl("force_stop", {help = "Stop all primary channel musics (custom and official)."})
