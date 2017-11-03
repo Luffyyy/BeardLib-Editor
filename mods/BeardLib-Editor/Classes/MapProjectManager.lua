@@ -675,7 +675,8 @@ function Project:edit_main_xml(data, save_clbk)
     narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
     local diff_settings = self:DivGroup("DifficultySettings", divgroup_opt)
     local diff_settings_holder = self:Menu("DifficultySettingsHolder", {group = diff_settings, align_method = "grid", offset = {diff_settings.offset[1], 0}})
-    local diff_settings_opt = {group = diff_settings_holder, w = 150, offset = {2, 6}, items_size = 18}
+
+    local diff_settings_opt = {group = diff_settings_holder, w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, items_size = 18}
     local diff_settings_texts = self:DivGroup("Setting", diff_settings_opt)
     local div_texts_opt = {group = diff_settings_texts, size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
     self:Divider("Contract Cost", div_texts_opt)
@@ -683,7 +684,7 @@ function Project:edit_main_xml(data, save_clbk)
     self:Divider("Stealth XP bonus", div_texts_opt)
     self:Divider("Minimum mission XP", div_texts_opt)
     self:Divider("Maximum mission XP", div_texts_opt)
-    diff_settings_opt.w = (diff_settings_holder:ItemsWidth() - diff_settings_texts:Width() - 1) / #self._diffs
+
     for i, diff in pairs(self._diffs) do
         local group = self:DivGroup(diff, diff_settings_opt)
         self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
