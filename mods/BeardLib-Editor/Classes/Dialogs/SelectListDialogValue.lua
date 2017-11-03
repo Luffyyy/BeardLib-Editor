@@ -1,4 +1,6 @@
 SelectListDialogValue = SelectListDialogValue or class(SelectListDialog)
+SelectListDialogValue.type_name = "SelectListDialogValue"
+
 function SelectListDialogValue:init(params, menu)
 	params = deep_clone(params)
     self.super.init(self, table.merge(params, {align_method = "grid"}), menu)
@@ -6,6 +8,19 @@ end
 
 function SelectListDialogValue:ItemsCount()
     return #self._list_items_menu._all_items
+end
+
+function SelectListDialogValue:ShowItem(t, selected)
+    if not selected and (self._single_select or not self._allow_multi_insert) and self._list_menu:GetItem(t) then
+        return false
+    end
+
+    if self:SearchCheck(t) then
+        if not self._limit or self:ItemsCount() <= 250 then
+            return true
+        end
+    end
+    return false    
 end
 
 function SelectListDialogValue:MakeListItems(params)
@@ -26,23 +41,43 @@ function SelectListDialogValue:ValueClbk(value, menu, item)
     value.value = selected and type(selected) == "table" and selected.value or selected or item:Value()
 end
 
+function SelectListDialogValue:ToggleClbk(...)
+    SelectListDialogValue.super.ToggleClbk(self, ...)
+    if self._allow_multi_insert and not self._single_select then
+        self:MakeListItems()
+    end
+end
+
 function SelectListDialogValue:ToggleItem(name, selected, value)
-    self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, {group = self._list_items_menu, offset = 4})
-    local opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false}
+    local opt = {group = self._list_items_menu, offset = 4}
+    if self._single_select then
+        self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, opt)
+    else
+        if selected then
+            opt.value = false
+            self:Button("- "..name, callback(self, self, "ToggleClbk", value), opt)
+        else
+            opt.value = true
+            self:Button("+ "..name, callback(self, self, "ToggleClbk", value), opt)
+        end                
+    end
+
+    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false}
+    local v = selected and value.value or nil
     if self._tbl.values_name then
-	    if tonumber(value.value) then
-	        self:NumberBox("", callback(self, self, "ValueClbk", value), value.value, opt)
-        elseif type(value.value) == "boolean" then
-            self:Toggle("", callback(self, self, "ValueClbk", value), value.value, opt)
-	    elseif value.value then
+	    if tonumber(v) then
+	        self:NumberBox("", callback(self, self, "ValueClbk", value), v, opt)
+        elseif type(v) == "boolean" then
+            self:Toggle("", callback(self, self, "ValueClbk", value), v, opt)
+	    elseif v then
             if self._tbl.combo_items_func then
                 local items = self._tbl.combo_items_func(name, value)
-                self:ComboBox("", callback(self, self, "ValueClbk", value), items, table.get_key(items, value.value), opt)
+                self:ComboBox("", callback(self, self, "ValueClbk", value), items, table.get_key(items, v), opt)
             else
-	           self:TextBox("", callback(self, self, "ValueClbk", value), value.value, opt)
+	           self:TextBox("", callback(self, self, "ValueClbk", value), v, opt)
             end
 	    else
-	        self:Divider("None", opt)
+	        self:Divider("...", opt)
 	    end
 	end
 end

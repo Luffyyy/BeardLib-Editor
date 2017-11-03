@@ -39,7 +39,7 @@ function Editor:init()
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BeardLibEditor.Options:GetValue("Input/ToggleMapEditor"))
     local normal = not Global.editor_safe_mode
     self._menu = MenuUI:new({
-        marker_color = Color.transparent,
+        background_color = Color.transparent,
         accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
         mouse_press = normal and callback(self, self, "mouse_pressed"),
         mouse_release = normal and callback(self, self, "mouse_released"),
@@ -85,11 +85,15 @@ function Editor:animate_bg_fade()
         layer = 10000,
         color = BeardLibEditor.Options:GetValue("BackgroundColor"):with_alpha(1),
     })
-    QuickAnim:Play(bg, {alpha = 0, callback = function(o)
-        if alive(o) then
-            o:parent():destroy(o)
-        end
-    end})
+    play_anim(bg, {
+        set = {alpha = 0},
+        callback = function(o)
+            if alive(o) then
+                o:parent():destroy(o)
+            end
+        end,
+        wait = 0.5,
+    })
 end
 
 function Editor:check_has_fix()
@@ -426,18 +430,25 @@ end
 
 function Editor:select_unit_by_raycast(slot, clbk)
     local first = true
-    local ignore = m.opt:GetItem("IgnoreFirstRaycast"):Value()
-    local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(200000), "ray_type", "body editor walk", "slot_mask", slot)
+    local ignore = m.opt:get_value("IgnoreFirstRaycast")
+    local distance = m.opt:get_value("RaycastDistance")
+    local select_all = m.opt:get_value("SelectAllRaycast")
+    local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(distance), "ray_type", "body editor walk", "slot_mask", slot)
+    local ret_rays = {}
     if #rays > 0 then
         for _, r in pairs(rays) do
             if clbk(r.unit) then
                 if not ignore or not first then
-                    return r
+                    table.insert(ret_rays, r)
+                    if not select_all then
+                        return ret_rays
+                    end
                 else
                     first = false
                 end
             end
         end
+        return ret_rays
     else
         return false
     end
@@ -553,6 +564,7 @@ function Editor:update_widgets(t, dt)
     end
 end
 
+local v0 = Vector3()
 function Editor:update_camera(t, dt)
     if self._menu:Focused() or not shift() then
         managers.mouse_pointer:_activate()
@@ -570,7 +582,14 @@ function Editor:update_camera(t, dt)
     local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
     local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
     local rot_new = Rotation(yaw_new, pitch_new, 0)
-    managers.mouse_pointer:_deactivate()
+    local keep_active = m.opt and m.opt:get_value("KeepMouseActiveWhileFlying")
+    if keep_active then
+        if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
+            self:mouse_moved(managers.mouse_pointer:world_position())
+        end
+    else
+        managers.mouse_pointer:_deactivate()
+    end
     self:set_camera(pos_new, rot_new)
 end
 

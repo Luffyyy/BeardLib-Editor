@@ -82,13 +82,13 @@ end
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	local statics
 	local new_statics
-	local move 
-	local uname = unit:unit_data().name
+	local move
+	local ud = unit:unit_data()
 	if unit:wire_data() then
 		statics = managers.worlddefinition._world_data.wires
 	elseif unit:ai_editor_data() then
 		statics = managers.worlddefinition._world_data.ai
-	elseif not unit:unit_data().instance then
+	elseif not ud.instance then
 		statics = self._continent_definitions[old_continent]
 		new_statics = self._continent_definitions[new_continent]
 		move = (old_continent ~= new_continent)		
@@ -102,7 +102,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 			if type(static) == "table" then
 				if static.unit_data.unit_id == unit_id then
 					--No more for loop the editor is safe enough now to simply set the data
-					static.unit_data = unit:unit_data()
+					static.unit_data = ud
 					static.wire_data = unit:wire_data()
 					static.ai_editor_data = unit:ai_editor_data()
 					BeardLib.Utils:RemoveAllNumberIndexes(static, true)
@@ -381,6 +381,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
     ud.disable_shadows = data.disable_shadows
     ud.disable_collision = data.disable_collision
     ud.hide_on_projection_light = data.hide_on_projection_light
+    ud.override_texture = data.override_texture
 
 	local wd = unit:wire_data()
     if wd then
@@ -410,7 +411,7 @@ function WorldDef:make_unit(data, offset)
 		if MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 		else
-			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)			
 		end
 	end
 	local not_allowed = {
@@ -421,7 +422,7 @@ function WorldDef:make_unit(data, offset)
 		self._all_names[name] = self._all_names[name] or 0
 		self._all_names[name] = self._all_names[name] + 1
 	end
-	if unit then
+	if alive(unit) then	
 		self:assign_unit_data(unit, data)
 	end
 	return unit

@@ -6,6 +6,7 @@ function EditorMoveUnit:create_element()
     self._element.values.speed = 500
     self._element.values.start_pos = self._element.values.position
     self._element.values.end_pos = self._element.values.start_pos
+    self._element.values.remember_unit_position = false
 end
 
 function EditorMoveUnit:update(t, dt)
@@ -69,6 +70,7 @@ function EditorMoveUnit:_build_panel()
     self:BuildUnitsManage("unit_ids")
     self:BooleanCtrl("is_displacement")
     self:BooleanCtrl("unit_position_as_start_position")
+    self:BooleanCtrl("remember_unit_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})
     self:AxisControls(callback(self, self, "set_element_position"), {no_rot = true, group = transform}, "EndPosition")

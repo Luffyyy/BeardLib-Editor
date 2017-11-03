@@ -6,9 +6,9 @@ function EditorMenu:init()
         name = "Editor",
         layer = 1500,
         background_blur = true,
-        auto_text_color = true,
+        auto_foreground = true,
         accent_color = accent_color,
-        marker_highlight_color = accent_color,
+        highlight_color = accent_color,
 		create_items = callback(self, self, "create_items"),
 	})
 	MenuCallbackHandler.BeardLibEditorMenu = callback(self, self, "set_enabled", true)
@@ -30,8 +30,8 @@ function EditorMenu:make_page(name, clbk, opt)
         position = "RightBottom",
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))
-    self._menus[name].marker_highlight_color = self._menus[name].text_color:with_alpha(0.1)
-    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4, marker_highlight_color = self._menus[name].marker_highlight_color})
+    self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
+    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end
@@ -50,9 +50,9 @@ function EditorMenu:create_items(menu)
         position = "Left",
 	})
 	MenuUtils:new(self, self._tabs)   
-    local div = self:Divider("BeardLibEditor", {items_size = 24, offset = 0, marker_color = self._tabs.marker_highlight_color}) 
+    local div = self:Divider("BeardLibEditor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color}) 
     self:SmallButton("x", callback(self, self, "set_enabled", false), div, {
-        marker_highlight_color = false,
+        highlight_color = false,
         w = self._tabs.items_size, h = self._tabs.items_size,
         text_align = "center", size_by_text = false
     })

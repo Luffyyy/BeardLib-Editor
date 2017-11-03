@@ -2,12 +2,11 @@ AboutMenu = AboutMenu or class()
 function AboutMenu:init()
 	local EMenu = BeardLibEditor.managers.Menu
 	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false}))
-	self:GetMenu():ImageButton({
+	self:GetMenu():Image({
 		name = "Logo",
 		icon_w = 256,
 		icon_h = 256,
 		offset = 0,
-		marker_highlight_color = false,
 		texture = "textures/editor_logo",
 	})
     local info = self:Menu("Info", {w = 512, border_color = BeardLibEditor.Options:GetValue("AccentColor"), position = "center_x"})

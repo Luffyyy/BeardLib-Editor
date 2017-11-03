@@ -621,7 +621,7 @@ function Project:edit_main_xml(data, save_clbk)
             }, opt or {}))
         end
         if level_in_chain.level_id then
-            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {marker_highlight_color = Color.red})
+            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
             if chain_group then
                 small_button("Ungroup", SimpleClbk(self.ungroup_level, self, narr, level_in_chain, chain_group), {156, 54, 48, 48})
             else

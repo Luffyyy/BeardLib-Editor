@@ -23,7 +23,7 @@ function EditorConsole:init(parent, menu)
     })
     MenuUtils:new(self, self._options_menu)
     self._options_menu:Panel():set_leftbottom(self._menu:Panel():lefttop())    
-    local opt = {border_bottom = true, text_align = "center", border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
+    local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
     self:Button("Console", callback(self, self, "ToggleConsole"), opt)
     self:Button("Clear", callback(self, self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
     self.info = self:Toggle("Info", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
@@ -52,7 +52,7 @@ function EditorConsole:PrintMessage(type, message, ...)
     self:Divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
 end
 
-function EditorConsole:FilterConsole()
+function EditorConsole:FilterConsole(menu, item)
     for _, item in pairs(self._menu._my_items) do
         item:SetVisible(self[item.type]:Value())
     end

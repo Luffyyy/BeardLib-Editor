@@ -76,27 +76,27 @@ function WData:build_continents()
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:DivGroup(name, {group = continents, text = name, border_lock_height = false})
             local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = base_button_pos}
-            opt.marker_highlight_color = Color.red
+            opt.highlight_color = Color.red
             local btn = self:SmallImageButton("Remove", callback(self, self, "remove_continent", name), nil, {184, 2, 48, 48}, continent, opt)
             local r = btn
             opt.position = callback(self, self, "button_pos", btn)
             local btn = self:SmallImageButton("ClearUnits", callback(self, self, "clear_all_units_from_continent", name), nil, {7, 2, 48, 48}, continent, opt)
             opt.position = callback(self, self, "button_pos", btn)
-            opt.marker_highlight_color = nil
+            opt.highlight_color = nil
             local btn = self:SmallImageButton("Rename", callback(self, self, "rename_continent", name), nil, {66, 1, 48, 48}, continent, opt)
             opt.position = callback(self, self, "button_pos", btn)
             self:SmallImageButton("SelectUnits", callback(self, self, "select_all_units_from_continent", name), nil, {122, 1, 48, 48}, continent, opt)
             self:Button("NewMissionScript", callback(self, self, "add_new_mission_script"), {group = continent, offset = {16, 2}, continent = name})
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {group = continent, text = sname, offset = {16, 4}})
-                opt.marker_highlight_color = Color.red
+                opt.highlight_color = Color.red
                 opt.position = base_button_pos
                 opt.continent = name
                 local btn = self:SmallImageButton("Remove", callback(self, self, "remove_script", sname), nil, {184, 2, 48, 48}, script, opt)
                 opt.position = callback(self, self, "button_pos", btn)
                 local btn = self:SmallImageButton("ClearElements", callback(self, self, "clear_all_elements_from_script", sname), nil, {7, 2, 48, 48}, script, opt)
                 opt.position = callback(self, self, "button_pos", btn)
-                opt.marker_highlight_color = nil
+                opt.highlight_color = nil
                 local btn = self:SmallImageButton("Rename", callback(self, self, "rename_script", sname), nil, {66, 1, 48, 48}, script, opt)
                 opt.position = callback(self, self, "button_pos", btn)
                 self:SmallImageButton("SelectElements", callback(self, self, "select_all_units_from_script", sname), nil, {122, 1, 48, 48}, script, opt)
@@ -376,7 +376,7 @@ end
 
 --World Data
 function WData:back_button()
-    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {marker_highlight_color = Color.black:with_alpha(0.25), font_size = 18})
+    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {highlight_color = Color.black:with_alpha(0.25), font_size = 18})
 end
 
 function WData:build_menu(layer)

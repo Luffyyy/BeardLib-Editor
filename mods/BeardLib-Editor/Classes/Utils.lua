@@ -157,10 +157,10 @@ function Utils:ReadUnitAndLoad(unit, load)
     return config
 end
 
-function Utils:FilterList(menu, search)
+function BeardLibEditor.Utils:FilterList(menu, search)
     for _, item in pairs(search.override_parent._my_items) do
         if type_name(item) == "Button" then
-            item:SetVisible(search:Value() == "" or item:Text():match(search:Value()), true)
+            item:SetVisible(search:Value() == "" or item:Text():match(search:Value()) ~= nil)
         end
     end
     search.override_parent:AlignItems()

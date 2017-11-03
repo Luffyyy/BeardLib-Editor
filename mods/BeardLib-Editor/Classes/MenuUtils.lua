@@ -100,7 +100,7 @@ function MenuUtils:init(this, menu)
 	        min_width = parent.items_size,
 	        min_height = parent.items_size,
 	        text_offset = 2,
-			text_highlight_color = false,
+			foreground_highlight = false,
 	        position = function(item)
 	        	item:SetPositionByString("CenterRight")
 	        	item:Panel():move(-1)
@@ -185,8 +185,8 @@ function MenuUtils:init(this, menu)
 	function this:SetAxisControls(pos, rot, name)
 		name = name or ""
 	    for i, control in pairs(self._axis_controls) do
-	        if alive(self[name..control]) then
-	            self[name..control]:SetValue(i < 4 and pos[control] or rot[control](rot))
+	        if alive(self[name..control]) and ((i < 4 and pos) or (i > 3 and rot)) then
+				self[name..control]:SetValue(i < 4 and pos[control] or rot[control](rot))
 	        end
 	    end
 	end
@@ -230,33 +230,67 @@ function MenuUtils:init(this, menu)
 		end
 	end
 
-	function this:AxisControls(callback, opt, name, pos, rot)
+	function this:CopyAxis(menu, item)
+		Application:set_clipboard(tostring(self["AxisControls"..item.override_parent.value_type](self, item.override_parent.axis_name)))
+	end
+	
+	function this:PasteAxis(menu, item)
+		menu = item.override_parent
+		local paste = Application:get_clipboard()
+		local result
+		pcall(function()
+            result = loadstring("return " .. paste)()
+		end)
+		if type_name(result) == "Vector3" and menu.value_type == "Position" then
+			self:SetAxisControls(result, nil, menu.axis_name)
+		end
+		if type_name(result) == "Rotation" and menu.value_type == "Rotation" then
+			self:SetAxisControls(nil, result, menu.axis_name)
+		end
+		if menu.callback then
+			menu.callback(menu, item)
+		end
+	end
+
+	function this:AxisControls(clbk, opt, name, pos, rot)
 		name = name or ""
 	    opt = opt or {}
-	    opt.align_method = "grid"
+		opt.align_method = "grid"
+		opt.axis_name = name
+		opt.callback = clbk
 	    local translation
 	    local rotation
 	    local group = opt.group
 	    if not opt.no_pos then
 			opt.text = opt.translate_text
+			opt.value_type = "Position"
 			translation = self:DivGroup("Translate"..name, opt)
+			local copy = self:SmallButton("p", callback(self, self, "PasteAxis"), translation, {position = "RightTop"})
+			self:SmallButton("c", callback(self, self, "CopyAxis"), translation, {position = function(item) 
+				item:Panel():set_righttop(copy:Panel():x() - 4, copy:Panel():y()) 
+			end})
 	    end
 	    if not opt.no_rot then
 	    	opt.group = group
 			opt.text = opt.rotate_text
-	    	rotation = self:DivGroup("Rotate"..name, opt)
-	    end
+			opt.value_type = "Rotation"
+			rotation = self:DivGroup("Rotate"..name, opt)
+			local copy = self:SmallButton("p", callback(self, self, "PasteAxis"), rotation, {position = "RightTop"})
+			self:SmallButton("c", callback(self, self, "CopyAxis"), rotation, {position = function(item) 
+				item:Panel():set_righttop(copy:Panel():x() - 4, copy:Panel():y()) 
+			end})
+		end
 	   	opt.text = nil
 	   	opt.color = false
 	    opt.w = translation.w / 3
 	    opt.offset = 0
-	    opt.control_slice = 1.75
+	    opt.control_slice = 0.6
 	    for i, control in pairs(self._axis_controls) do
 	    	opt.group = i < 4 and translation or rotation
 	    	if alive(opt.group) then
-	        	self[name..control] = self:NumberBox(control, callback, 0, opt)
+	        	self[name..control] = self:NumberBox(control, clbk, 0, opt)
 	        end
-	    end
+		end
 	   	if pos and rot then
 	   		self:SetAxisControls(pos, rot, name)
 	   	end
@@ -284,7 +318,7 @@ function MenuUtils:init(this, menu)
 
 	function this:PathItem(name, callback, value, typ, loaded, check, not_close, opt)
 		opt = opt or {}
-		opt.control_slice = opt.control_slice or 1.5
+		opt.control_slice = opt.control_slice or 0.66
 		opt.callback = opt.callback or callback
 	    local t = self:TextBox(name, nil, value, opt)
 	    opt.text = "Browse " .. tostring(typ).."s"

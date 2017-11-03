@@ -33,7 +33,7 @@ function BLE:InitManagers()
     local acc_color = BeardLibEditor.Options:GetValue("AccentColor")
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
-    self._dialogs_opt = {marker_highlight_color = acc_color, accent_color = acc_color, background_color = bg_color}
+    self._dialogs_opt = {accent_color = acc_color, background_color = bg_color}
     M.Dialog = MenuDialog:new(self._dialogs_opt)
     M.ListDialog = ListDialog:new(self._dialogs_opt)
     M.SelectDialog = SelectListDialog:new(self._dialogs_opt)
@@ -298,10 +298,10 @@ if MenuManager then
 end
 
 if not BLE.InitDone then
-    if BeardLib.Version and BeardLib.Version >= 2.2 then
+    if BeardLib.Version and BeardLib.Version >= 2.6 then
         BeardLibEditor:Init()
     else
-        log("[ERROR] BeardLibEditor requires at least version 2.2 of Beardlib installed!")
+        log("[ERROR] BeardLibEditor requires at least version 2.6 of Beardlib installed!")
         return
     end
 end

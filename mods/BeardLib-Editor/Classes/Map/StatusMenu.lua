@@ -2,7 +2,7 @@ StatusMenu = StatusMenu or class()
 function StatusMenu:init(parent, menu)
     self._menu = menu:Menu({
         name = "Status",
-        auto_text_color = true,
+        auto_foreground = true,
         scrollbar = false,
         visible = false,
         position = "RightTop",

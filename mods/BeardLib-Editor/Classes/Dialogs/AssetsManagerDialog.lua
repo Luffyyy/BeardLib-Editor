@@ -8,6 +8,7 @@ function AssetsManagerDialog:init(params, menu)
     self._unit_info = menu:Menu(table.merge({
         name = "unitinfo",
         visible = false,
+        auto_foreground = true,
         h = 600,
         w = 300,
     }, params))
@@ -44,7 +45,7 @@ function AssetsManagerDialog:_Show()
         item:Panel():set_world_right(item.override_parent.items_panel:world_right() - 8)
     end
     local add = self:Button("Add", callback(self, self, "add_package_dialog"), {override_parent = packages, text = "+", size_by_text = true, position = base_pos})
-    local search_opt = {override_parent = packages, w = 300, lines = 1, text = "Search", control_slice = 1.25, marker_highlight_color = false, position = function(item)
+    local search_opt = {override_parent = packages, w = 300, lines = 1, text = "Search", control_slice = 0.8, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end}
@@ -119,7 +120,7 @@ function AssetsManagerDialog:load_units()
             end
         end
         self:Button(unit, callback(self, self, "set_unit_selected"), {
-            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, marker_color = not loaded and Color.red:with_alpha(0.65) or (times == 0 and Color.yellow:with_alpha(0.65)) or nil
+            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, background_color = not loaded and Color.red:with_alpha(0.65) or (times == 0 and Color.yellow:with_alpha(0.65)) or nil
         })
     end
     for unit, times in pairs(managers.worlddefinition._all_names) do
@@ -238,23 +239,38 @@ function AssetsManagerDialog:load_from_extract(missing_units)
         local function save()
             project:map_editor_save_xml(add_path, add)
             local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
+            local copy_data = {}
             for _, unit_load in pairs(to_copy) do
                 if type(unit_load) == "table" then
                     for _, asset in pairs(unit_load) do
                         if type(asset) == "table" and asset.path then
                             local path = asset.path .. "." .. asset._meta
-                            log("COPYING TO " .. tostring(path) )
-                            FileIO:CopyFileTo(Path:Combine(BeardLibEditor.ExtractDirectory, path), Path:Combine(assets_dir, path))
+                            local to_path = Path:Combine(assets_dir, path)
+                            table.insert(copy_data, {Path:Combine(BeardLibEditor.ExtractDirectory, path), to_path})
+                            local dir = BeardLib.Utils.Path:GetDirectory(to_path)
+                            if not FileIO:Exists(dir) then
+                                FileIO:MakeDir(dir)
+                            end
                             BeardLibEditor.Utils.allowed_units[asset.path] = true
                         end        
                     end
                 end
             end
-            CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
-            if failed_all then
-                BeardLibEditor.Utils:Notify("Info", "One of the units that you tried to load either has unsupported files(ex: .effect) or one of the files do not exist")
+            if #copy_data > 0 then
+                FileIO:CopyFilesToAsync(copy_data, function(success)
+                    if success then
+                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
+                        if failed_all then
+                            BeardLibEditor.Utils:Notify("Info", "Copied some assets, some have failed because assets are missing or unit uses an effect file")
+                        else
+                            BeardLibEditor.Utils:Notify("Info", "Copied assets successfully")
+                        end
+                        self:reload()
+                    end
+                end)
+            else
+                BeardLibEditor.Utils:Notify("Info", "No to assets to copy, either assets are missing or unit uses an effect file")
             end
-            self:reload()
         end
         if not dontask then
             BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your map assets proceed?", save, function()
@@ -313,11 +329,10 @@ function AssetsManagerDialog:remove_units_from_map(remove_asset)
         end
         managers.worlddefinition._all_names[name] = nil
         local continents = managers.worlddefinition._continent_definitions
-        local temp = deep_clone(continents)
-        for name, continent in pairs(temp) do
+        for cname, continent in pairs(continents) do
             for i, static in pairs(continent.statics) do
                 if static.unit_data and static.unit_data.name == name then
-                    table.remove(continents[name].statics, i)
+                    table.remove(continent.statics, i)
                 end
             end
         end

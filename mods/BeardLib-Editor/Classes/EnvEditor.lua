@@ -7,7 +7,7 @@ function ShadowBlock:get(key) return self._parameters[key] end
 
 EnvEditor = EnvEditor or class(EditorPart)
 function EnvEditor:init(parent, menu)
-    self.super.init(self, parent, menu, "Environment", {w = 300, items_size = 16, control_slice = 2})
+    self.super.init(self, parent, menu, "Environment", {w = 300, items_size = 14, control_slice = 0.6})
     self._posteffect = {}
     self._underlayeffect = {}
     self._sky = {}
@@ -28,7 +28,7 @@ function EnvEditor:load_included_environments()
                 if FileIO:Exists(file) then
                     local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included})
                     self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
-                        size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", marker_highlight_color = Color.red
+                        size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
                     })
                 end
             end

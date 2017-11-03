@@ -160,7 +160,7 @@ function PortalLayer:load_portal_units()
             if unit then
                 local btn = self:Button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id), group = units})
                 self:SmallImageButton("Remove", callback(self, self, "remove_unit_from_portal", unit), nil, {184, 2, 48, 48}, btn, {
-                    marker_highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
+                    highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
                 })
             end
         end
@@ -268,7 +268,7 @@ function PortalLayer:load_portal_shapes()
             btn.id = i
 
             self:SmallImageButton("Remove", callback(self, self, "remove_shape"), nil, {184, 2, 48, 48}, btn, {
-                marker_highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
+                highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
             })
         end
     end
@@ -289,11 +289,11 @@ function PortalLayer:load_portals()
             local prtl = self:Button("portal_"..portal._name, callback(self, self, "select_portal"), {group = portals, text = portal._name})
             local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df"}
             
-            opt.marker_highlight_color = Color.red
+            opt.highlight_color = Color.red
             local btn = self:SmallImageButton("Remove", callback(self, self, "remove_portal"), nil, {184, 2, 48, 48}, prtl, opt)
 
             opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
-            opt.marker_highlight_color = nil
+            opt.highlight_color = nil
             local btn = self:SmallImageButton("Rename", callback(self, self, "rename_portal"), nil, {66, 1, 48, 48}, prtl, opt)
 
             opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)

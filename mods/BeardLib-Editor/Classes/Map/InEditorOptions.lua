@@ -33,10 +33,11 @@ function Options:build_default_menu()
     self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
     self:Toggle("SoundUnits", callback(self, self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
     self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
+    self:Toggle("HighlightOccluders", nil, false, {group = map})
     self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
     self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"), {group = map})
     self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
-    self:Toggle("DrawPortals", nil, false, {text = "Draw Portals", group = map})
+    self:Toggle("DrawPortals", nil, false, {group = map})
 
     local navigation_debug = self:DivGroup("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
     local group = self:Menu("Draw", {align_method = "grid", group = navigation_debug})
@@ -49,7 +50,10 @@ function Options:build_default_menu()
     self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
-    self:Toggle("SelectInstances", self:Value("SelectInstances"), false, {group = raycast})
+    self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
+    self:Toggle("SelectAllRaycast", nil, false, {group = raycast})
+    self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = raycast})
+    self:NumberBox("RaycastDistance", nil, 200000, {group = raycast})
 
     local mission = self:DivGroup("Mission", groups_opt)
     self:Toggle("RandomizedElementsColor", callback(self, self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
@@ -154,7 +158,15 @@ function Options:update(t, dt)
                 self._pen:body(body)
             end
         end
-	end
+    end
+    if self:get_value("HighlightOccluders") then
+        for _, unit in pairs(managers.worlddefinition._all_units) do
+            local ud = alive(unit) and unit:unit_data()
+            if ud and (ud.only_visible_in_editor or ud.only_exists_in_editor) and ud.name:match("occluder_") then
+                Application:draw(unit, 1, 0.25, 1)
+            end
+        end
+    end
     local draw_portals = self._menu:GetItem("draw_portals")
 	if draw_portals and draw_portals.value then
 		for _, portal in pairs(managers.portal:unit_groups()) do
@@ -179,8 +191,13 @@ function Options:save()
     if self._saving then
         return
     end
-    local savebtn = self:Manager("menu"):GetItem("save")
-    local bg = alive(savebtn) and savebtn:Panel():child("bg")
+    local panel = self:Manager("menu"):GetItem("save").panel
+    local bg = alive(panel) and panel:child("bg_save") or panel:rect({
+        name = "bg_save",
+		color = self._holder.accent_color,
+		halign = "grow",
+		valign = "grow",
+    })
     local h = bg and bg:parent():h()
     self._saving = true
     local save_in_binary = self:Value("SaveMapFilesInBinary")
@@ -246,9 +263,7 @@ function Options:save()
             end
         end
         if bg then
-            QuickAnim:Play(bg, {alpha = 0, callback = function(o)
-                o:set_color(savebtn.marker_color)
-            end})
+            play_anim(bg, {stop = false, wait = 0.5, set = {alpha = 0}})
         end
         self:save_main_xml(include)
         self._saving = false
@@ -261,9 +276,8 @@ function Options:save()
             FileIO:Delete(backup_dir)
         end
         if bg then
-            bg:set_color(savebtn.accent_color)
             bg:set_alpha(0)
-            QuickAnim:Play(bg, {alpha = 1, speed = 10})
+            play_anim(bg, {set = {alpha = 1}})
         end
         FileIO:CopyToAsync(path, backup_dir, save)
     else

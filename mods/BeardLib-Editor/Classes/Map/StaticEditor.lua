@@ -469,6 +469,9 @@ function Static:set_selected_unit(unit, add)
     self:StorePreviousPosRot()
     local unit = self:selected_unit()
     self._parent:use_widgets(unit and alive(unit) and unit:enabled())
+    for _, unit in pairs(self:selected_units()) do
+        if unit:mission_element() then unit:mission_element():select() end
+    end
     if #self._selected_units > 1 then
         self:set_multi_selected()
         if self:Value("SelectAndGoToMenu") then
@@ -499,16 +502,18 @@ end
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
 function Static:select_unit(mouse2)
-    local ray = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
+    local rays = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
     self:recalc_all_locals()
-	if ray then
-        if alive(ray.unit) and ray.unit:name() ~= bain_ids then
-            if not self._mouse_hold then
-                self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+    if rays then
+        for _, ray in pairs(rays) do
+            if alive(ray.unit) and ray.unit:name() ~= bain_ids then
+                if not self._mouse_hold then
+                    self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
+                end
+                self:set_selected_unit(ray.unit, mouse2) 
             end
-            self:set_selected_unit(ray.unit, mouse2) 
         end
-	end
+    end
 end
 
 function Static:set_multi_selected()

@@ -277,7 +277,7 @@ function EnvLayer:build_unit_menu()
             local env = area:environment() or managers.viewport:game_default_environment()
 		    ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), env, "environment", true, nil, nil, {
                 group = environment_area,
-                control_slice = 1.75
+                control_slice = 0.6,
             })
 		    ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
                 floats = 2,

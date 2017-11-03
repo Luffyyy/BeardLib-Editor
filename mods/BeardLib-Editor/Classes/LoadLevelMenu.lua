@@ -8,7 +8,7 @@ function LoadLevelMenu:init()
 	local w = self:Toggle("Localized", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
-	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 1.2, offset = 0})
+	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
     local load_options = self:Menu("LoadOptions", {align_method = "grid", h = search:Panel():h(), auto_height = false})
     local half_w = load_options:ItemsWidth() / 2
     self:Toggle("Safemode", nil, false, {group = load_options, w = half_w, offset = 0})
