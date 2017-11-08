@@ -7,9 +7,9 @@ function EditorFilter:create_element()
 	self._element.values.difficulty_hard = true
 	self._element.values.difficulty_overkill = true
 	self._element.values.difficulty_overkill_145 = true
-	self._element.values.difficulty_easy_wish = nil
-	self._element.values.difficulty_overkill_290 = nil
-	self._element.values.difficulty_sm_wish = nil
+	self._element.values.difficulty_easy_wish = true
+	self._element.values.difficulty_overkill_290 = true
+	self._element.values.difficulty_sm_wish = true
 	self._element.values.player_1 = true
 	self._element.values.player_2 = true
 	self._element.values.player_3 = true
@@ -20,9 +20,6 @@ function EditorFilter:create_element()
 end
 
 function EditorFilter:_build_panel()
-	if self._element.values.difficulty_overkill_290 == nil then
-		self._element.values.difficulty_overkill_290 = self._element.values.difficulty_overkill_145
-	end
 	self:_create_panel()
 	self:Text("Difficulty")
 	self:BooleanCtrl("difficulty_easy", {text = "Easy"})
