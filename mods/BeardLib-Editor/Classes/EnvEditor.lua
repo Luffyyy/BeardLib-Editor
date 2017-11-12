@@ -117,10 +117,8 @@ end
 
 function EnvEditor:load_shadow_data(block)
     for k, v in pairs(block:map()) do
-        log("is there item " ..tostring(k))
         local param = self._shadow_params[k]
         if param then
-            log("SET VALUE "..tostring(v))
             param:SetValue(v)
         end
     end

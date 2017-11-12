@@ -26,7 +26,6 @@ function EnvLayer:init(parent)
 	self._environment_area_unit = "core/units/environment_area/environment_area"
 	self._effect_unit = "core/units/effect/effect"
 	self._dome_occ_shape_unit = "core/units/dome_occ_shape/dome_occ_shape"
-	self._environment_modifier_id = managers.viewport:create_global_environment_modifier(sky_rot_key, true, callback(self, self, "sky_rotation_modifier"))
 end
 
 function EnvLayer:loaded_continents()
@@ -480,14 +479,10 @@ function EnvLayer:update_wind_speed_labels()
 	self._wind_text:SetText("Beaufort Scale: " .. self:wind_beaufort(self._wind_speed) .. "(" .. self:wind_description(self._wind_speed)..")")
 end
 
-function EnvLayer:sky_rotation_modifier()
-	return self:data().environment_values.sky_rot, true
-end
-
 function EnvLayer:change_sky_rotation(menu, item)
  	self:data().environment_values.sky_rot = item:Value()
-	managers.viewport:update_global_environment_value(sky_rot_key)
 	self:save()
+	managers.viewport:first_active_viewport()._env_handler:editor_set_value(sky_rot_key, item:Value()) -- I guess this works
 end
 
 function EnvLayer:kill_effect(unit)
