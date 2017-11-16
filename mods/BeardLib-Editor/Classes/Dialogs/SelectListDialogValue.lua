@@ -2,7 +2,9 @@ SelectListDialogValue = SelectListDialogValue or class(SelectListDialog)
 SelectListDialogValue.type_name = "SelectListDialogValue"
 
 function SelectListDialogValue:init(params, menu)
-	params = deep_clone(params)
+    if self.type_name == SelectListDialogValue.type_name then
+        params = params and clone(params) or {}
+    end
     self.super.init(self, table.merge(params, {align_method = "grid"}), menu)
 end
 

@@ -2,8 +2,9 @@ AssetsManagerDialog = AssetsManagerDialog or class(MenuDialog)
 AssetsManagerDialog.type_name = "AssetsManagerDialog"
 AssetsManagerDialog._no_reshaping_menu = true
 function AssetsManagerDialog:init(params, menu)
-    params = params or {}
-    params = deep_clone(params)
+    if self.type_name == AssetsManagerDialog.type_name then
+        params = params and clone(params) or {}
+    end
     menu = menu or BeardLib.managers.dialog:Menu()
     self._unit_info = menu:Menu(table.merge({
         name = "unitinfo",
@@ -12,7 +13,7 @@ function AssetsManagerDialog:init(params, menu)
         h = 600,
         w = 300,
     }, params))
-    self.super.init(self, table.merge({
+    AssetsManagerDialog.super.init(self, table.merge({
         w = 800,
         h = 600,
         position = function(item)

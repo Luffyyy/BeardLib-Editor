@@ -2,10 +2,11 @@ ObjectivesManagerDialog = ObjectivesManagerDialog or class(MenuDialog)
 ObjectivesManagerDialog.type_name = "ObjectivesManagerDialog"
 ObjectivesManagerDialog._no_reshaping_menu = true
 function ObjectivesManagerDialog:init(params, menu)
-    params = params or {}
-    params = deep_clone(params)
+    if self.type_name == ObjectivesManagerDialog.type_name then
+        params = params and clone(params) or {}
+    end
     menu = menu or BeardLib.managers.dialog:Menu()
-    self.super.init(self, table.merge({
+    ObjectivesManagerDialog.super.init(self, table.merge({
         w = 800,
         h = 400,
         auto_height = false,
