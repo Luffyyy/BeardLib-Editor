@@ -27,4 +27,5 @@ https://www.youtube.com/watch?v=Ot2muqwDfOg
     Q: How do I make a level?
     A: Go to the beginner guide if you missed: https://modworkshop.net/wiki.php?action=view&id=15.
     Q: There isn't a guide for 'X'
-    A: It takes time to write the guides and because of how busy I am, I'm unable to update it as much, hopefully someone would try making a walkthrough of making a map.
+    A: It takes time to write the guides and because of how busy I am,
+    I'm unable to update it as much, hopefully someone would try making a walkthrough of making a map.
