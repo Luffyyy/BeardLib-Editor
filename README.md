@@ -17,7 +17,7 @@ In order for the mod to fully work, you'll need to make sure you have those two:
 
 Mostly you only need BeardLib to run the mod. However, the fix makes sure you can select almost anything in the map, so install that too.
 
-If you don't know how to install PDMODs you can learn here:
+If you don't know how to install the physics settings fix you can learn here:
 https://www.youtube.com/watch?v=Ot2muqwDfOg
 
 ## FAQ
