@@ -6,7 +6,7 @@ end
 function EditZipLine:build_menu(units)
 	local zipline_options = self:Group("Zipline")
 	self:Divider(tostring(units[1]:zipline():end_pos()), {group = zipline_options})
-	self:Button("UseCameraPosForPositionEnd", callback(self._parent, self._parent, "use_camera_pos"), {group = zipline_options})
+	self:Button("UseCameraPosForPositionEnd", callback(self, self, "use_camera_pos"), {group = zipline_options})
 	self:Button("UseCameraPosForLinePositionEnd", callback(self, self, "use_camera_pos_for_line"), {group = zipline_options})
 	self._speed = self:NumberBox("Speed [cm/s]", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s", group = zipline_options})
 	self._slack = self:NumberBox("Slack [cm]", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm", group = zipline_options})

@@ -513,6 +513,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 	    list = list,
 		values_name = params.table_data and params.table_data.values_name,
 		combo_items_func = params.table_data and params.table_data.combo_items_func,
+		allow_multi_insert = NotNil(params.allow_multi_insert, true),
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
 		not_table = params.not_table,

@@ -57,9 +57,14 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
     else
         if selected then
             opt.value = false
+            opt.foreground = Color.green
+            opt.foreground_highlight = false            
+            opt.auto_foreground = false
             self:Button("- "..name, callback(self, self, "ToggleClbk", value), opt)
         else
             opt.value = true
+            opt.foreground_highlight = false
+            opt.auto_foreground = false
             self:Button("+ "..name, callback(self, self, "ToggleClbk", value), opt)
         end                
     end

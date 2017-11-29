@@ -6,12 +6,13 @@ function ObjectivesManagerDialog:init(params, menu)
         params = params and clone(params) or {}
     end
     menu = menu or BeardLib.managers.dialog:Menu()
-    ObjectivesManagerDialog.super.init(self, table.merge({
+    local p = table.merge({
         w = 800,
         h = 400,
         auto_height = false,
         items_size = 20,
-    }, params), menu)
+    }, params)
+    ObjectivesManagerDialog.super.init(self, p, menu)
     MenuUtils:new(self)
 end
 
