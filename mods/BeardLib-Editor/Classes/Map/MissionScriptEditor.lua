@@ -388,13 +388,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
             id = data
         end
         if params.table_data then           
-            local add   
-            for _, v in pairs(current_list) do
-                if type(v) == "table" and v[params.table_data.key] == id then
-                    add = v
-                    break
-                end
-            end
+			local add = data.orig_tbl
             if not add then
                 add = clone(params.table_data.orig)
                 add[params.table_data.key] = id
@@ -411,7 +405,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
         	self._element.values[params.value_name] = id
         else
             table.insert(self._element.values[params.value_name], id)
-        end 
+        end
     end
     if params.update_clbk then
         params.update_clbk(params.value_name)
@@ -434,24 +428,24 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
                         }
                         if params.table_data then
                             for _, v in pairs(current_list) do
-                                if type(v) == "table" then
-                                    if v[params.table_data.key] == element.id then
-                                        if params.table_data.value_key then
-                                            data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
-                                        end
-                                        table.insert(selected_list, data)
-                                    end
+                                if type(v) == "table" and v[params.table_data.key] == element.id then
+									if params.table_data.value_key then
+										data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
+									else
+										data.value = nil
+									end
+									data.orig_tbl = v
+									table.insert(selected_list, clone(data))
                                 end
                             end
-                        else
-                            if table.contains(current_list, element.id) then 
-                                table.insert(selected_list, data)
-                            end                         
+                        elseif table.contains(current_list, ud.unit_id) then 
+							table.insert(selected_list, data)
                         end
                         if not params.classes or table.contains(params.classes, element.class) then
                             if params.table_data and params.table_data.value_key then
-                                data.value = data.value or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
-                            end 
+                                data.value = params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
+							end
+							data.orig_tbl = nil
                             table.insert(list, data)
                         end
                     end
@@ -480,32 +474,34 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
     for k, unit in pairs(managers.worlddefinition._all_units) do
     	if alive(unit) then
 	 		local ud = unit:unit_data()
-	 		if ud and not ud.instance then
-		 		local data = {
-			   		name = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
-			   		unit = unit, 			
-		 		}
-		    	if params.table_data then
-		    		for _, v in pairs(current_list) do
-		    			if type(v) == "table" and v[params.table_data.key] == ud.unit_id then
-							if params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-								data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key]
+			 if ud and not ud.instance then
+				local data = {
+					name = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
+					unit = unit,
+				}
+				if params.table_data then
+					for _, v in pairs(current_list) do
+						if type(v) == "table" and v[params.table_data.key] == ud.unit_id then
+							if params.table_data.value_key then
+								data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
+							else
+								data.value = nil
 							end
-					 		table.insert(selected_list, data)
-		    			end
-		    		end
-		    	else
-			 		if table.contains(current_list, ud.unit_id) then
-			 			table.insert(selected_list, data)
-			 		end
-		    	end
-		    	if (not params.units or table.contains(params.units, ud.name)) and (not params.check_unit or params.check_unit(unit)) then
-					if params.table_data and params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-						data.value = data.value or params.table_data.orig[params.table_data.value_key]
+							data.orig_tbl = v
+							table.insert(selected_list, clone(data))
+						end
 					end
-		    		table.insert(list, data)
-		    	end
-	 		end
+				elseif table.contains(current_list, element.id) then
+					table.insert(selected_list, data)
+				end
+				if (not params.units or table.contains(params.units, ud.name)) and (not params.check_unit or params.check_unit(unit)) then
+					if params.table_data and params.table_data.value_key then
+						data.value = params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
+					end
+					data.orig_tbl = nil
+					table.insert(list, data)
+				end
+			end
 	 	end
     end
 	BeardLibEditor.managers.SelectDialogValue:Show({
@@ -517,7 +513,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
 		not_table = params.not_table,
-	    callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
+		callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()
 end

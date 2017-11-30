@@ -17,4 +17,3 @@ function EditorUnitSequenceTrigger:_build_panel()
 		end 
 	})
 end
- 
