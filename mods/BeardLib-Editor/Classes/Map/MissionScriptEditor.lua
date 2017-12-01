@@ -438,7 +438,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 									table.insert(selected_list, clone(data))
                                 end
                             end
-                        elseif table.contains(current_list, ud.unit_id) then 
+                        elseif table.contains(current_list, element.id) then 
 							table.insert(selected_list, data)
                         end
                         if not params.classes or table.contains(params.classes, element.class) then
@@ -491,7 +491,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 							table.insert(selected_list, clone(data))
 						end
 					end
-				elseif table.contains(current_list, element.id) then
+				elseif table.contains(current_list, ud.unit_id) then
 					table.insert(selected_list, data)
 				end
 				if (not params.units or table.contains(params.units, ud.name)) and (not params.check_unit or params.check_unit(unit)) then
