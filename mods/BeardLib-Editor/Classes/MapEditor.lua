@@ -396,7 +396,8 @@ function Editor:selected_units() return m.static._selected_units end
 function Editor:widget_unit() return m.static:widget_unit() or self:selected_unit() end
 function Editor:widget_rot() return self:widget_unit():rotation() end
 function Editor:grid_size() return ctrl() and 1 or self._grid_size end
-function Editor:camera_rotation() return self._camera_object:rotation()  end
+function Editor:camera_rotation() return self._camera_object:rotation() end
+function Editor:camera_position() return self._camera_object:position() end
 function Editor:snap_rotation() return ctrl() and 1 or self._snap_rotation end
 function Editor:get_cursor_look_point(dist) return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist)) end
 function Editor:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
