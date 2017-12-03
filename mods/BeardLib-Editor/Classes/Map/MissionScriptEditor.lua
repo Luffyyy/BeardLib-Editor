@@ -435,7 +435,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 										data.value = nil
 									end
 									data.orig_tbl = v
-									table.insert(selected_list, clone(data))
+									table.insert(selected_list, clone(data or {}))
                                 end
                             end
                         elseif table.contains(current_list, element.id) then 
@@ -488,7 +488,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 								data.value = nil
 							end
 							data.orig_tbl = v
-							table.insert(selected_list, clone(data))
+							table.insert(selected_list, clone(data or {}))
 						end
 					end
 				elseif table.contains(current_list, ud.unit_id) then
