@@ -185,7 +185,10 @@ function Static:update_positions()
         if editor.update_positions then
             editor:update_positions(unit)
         end
-    end    
+    end
+    if self._built_multi then
+        self:SetTitle("Selection - " .. tostring(#self._selected_units))
+    end
     self:recalc_all_locals()
 end
 
@@ -566,14 +569,51 @@ function Static:set_menu_unit(unit)
     self:build_links(unit:unit_data().unit_id)
 end
 
-function Static:build_links(id, is_element)
-    local links = managers.mission:get_links(id, is_element)
+function Static:build_links(id, is_element, element)
+    local links = managers.mission:get_links_paths(id, is_element)
+    local same_links = {}
+    local function create_link(element, group, linking_from, warn)
+        linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
+        warn = warn or ""
+        self:Button(element.editor_name, callback(self._parent, self._parent, "select_element", element), {
+            text = tostring(element.editor_name) .. "\n" .. tostring(element.id) .. linking_from .. " | " .. tostring(element.class):gsub("Element", "") .. warn,
+            group = group,
+            font_size = 16,
+            label = "elements"
+        })
+    end
     if #links > 0 then
-        local links_group = self:GetItem("Links") or self:Group("Links")
-        for _, element in pairs(links) do
-            self:Button(element.editor_name, callback(self._parent, self._parent, "select_element", element), {
-                group = links_group, font_size = 16, label = "elements", text = tostring(element.editor_name) .. " | " .. tostring(element.id) .. " | " .. tostring(element.class):gsub("Element", "")
-            })
+        local links_group = self:GetItem("Linked") or self:Group("Linked", {max_height = 200})
+        links_group:ClearItems()
+        for _, link in pairs(links) do
+            same_links[link.element.id] = true
+            create_link(link.element, links_group, link.upper_k or link.key)
+        end
+    end
+    if is_element then
+        local linking_group = self:GetItem("Linking")
+        if alive(linking_group) then
+            linking_group:ClearItems()
+        end
+        for _, script in pairs(managers.mission._missions) do
+            for _, tbl in pairs(script) do
+                if tbl.elements then
+                    for k, e in pairs(tbl.elements) do
+                        local id = e.id
+                        for _, link in pairs(managers.mission:get_links_paths(id, true, {{mission_element_data = element}})) do
+                            linking_group = linking_group or self:GetItem("Linking") or self:Group("Linking", {max_height = 200})
+                            local warn
+                            if link.upper_k == "on_executed" then
+                                if same_links[id] and link.tbl.delay == 0 then
+                                    warn = "\nWarning - link already exists and can cause an endless loop, add a delay."
+                                end
+                            end
+
+                            create_link(e, linking_group, link.upper_k or link.key, warn)
+                        end
+                    end
+                end
+            end
         end
     end
     return links

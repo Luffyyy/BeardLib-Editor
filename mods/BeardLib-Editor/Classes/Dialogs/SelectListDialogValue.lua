@@ -52,20 +52,23 @@ end
 
 function SelectListDialogValue:ToggleItem(name, selected, value)
     local opt = {group = self._list_items_menu, offset = 4}
+    local item
     if self._single_select then
-        self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, opt)
+        item = self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, opt)
     else
         if selected then
             opt.value = false
             opt.foreground = Color.green
             opt.foreground_highlight = false            
             opt.auto_foreground = false
-            self:Button("- "..name, callback(self, self, "ToggleClbk", value), opt)
+            opt.can_be_ticked = false
+            item = self:Button("- "..name, callback(self, self, "ToggleClbk", value), opt)
         else
             opt.value = true
             opt.foreground_highlight = false
             opt.auto_foreground = false
-            self:Button("+ "..name, callback(self, self, "ToggleClbk", value), opt)
+            opt.can_be_unticked = false
+            item = self:Button("+ "..name, callback(self, self, "ToggleClbk", value), opt)
         end                
     end
 
@@ -86,5 +89,6 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
 	    else
 	        self:Divider("...", opt)
 	    end
-	end
+    end
+    table.insert(self._visible_items, item)
 end

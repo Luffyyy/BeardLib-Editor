@@ -175,7 +175,7 @@ end
 function Editor:select_element(element, add)
     for _, unit in pairs(m.mission:units()) do
         if unit:mission_element() and unit:mission_element().element.id == element.id and unit:mission_element().element.editor_name == element.editor_name then
-            self:select_unit(unit, add)
+            self:select_unit(unit, add == true)
             break
         end
     end

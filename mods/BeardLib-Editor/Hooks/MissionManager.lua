@@ -327,22 +327,23 @@ function Mission:get_links_paths(id, is_element, elements)
         return {}
     end
     local id_paths = {}
-    local function GetLinks(upper_k, upper_tbl, tbl, stop)
+	local function GetLinks(upper_k, upper_tbl, tbl, element, stop)
+		upper_tbl = upper_tbl or element
         for k, v in pairs(tbl) do
             local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
             if not stop and type(v) == "table" then
                 local new_upper_key = not tonumber(k) and k or upper_k
                 local new_upper_tbl = not tonumber(k) and tbl or upper_tbl
-                GetLinks(new_upper_key, new_upper_tbl, v)
+                GetLinks(new_upper_key, new_upper_tbl, v, element)
             elseif ((is_element and current_is_element) or (not is_element and current_is_unit)) and v == id then
-                table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl})
+                table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl, element = element})
             end
         end
     end
     if elements then
         for _, element in pairs(elements) do
             if element.mission_element_data and element.mission_element_data.values then
-                GetLinks("values", element_data, element.mission_element_data.values)
+                GetLinks("values", nil, element.mission_element_data.values)
             end
         end
     else
@@ -350,7 +351,7 @@ function Mission:get_links_paths(id, is_element, elements)
             for _, tbl in pairs(script) do
                 if tbl.elements then
                     for k, element in pairs(tbl.elements) do
-                        GetLinks("values", element, element.values)
+                        GetLinks("values", nil, element.values, element)
                     end
                 end
             end

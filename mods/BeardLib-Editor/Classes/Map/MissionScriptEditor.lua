@@ -36,7 +36,7 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    self._links = self:Manager("static"):build_links(self._element.id, true)
+    self._links = self:Manager("static"):build_links(self._element.id, true, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
@@ -109,6 +109,7 @@ function MissionScriptEditor:_create_panel()
 	if self.ON_EXECUTED_ALTERNATIVES then
 		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
 		table.insert(alts, "none")
+		on_exec = clone(on_exec)
 		on_exec.values_name = "Alternative"
 		on_exec.value_key = "alternative"
 		on_exec.default_value = "none"
@@ -273,6 +274,7 @@ function MissionScriptEditor:update_element(old_script)
 		unit:set_position(self._element.values.position)
 		unit:set_rotation(self._element.values.rotation)
 	end
+	self:Manager("static"):build_links(self._element.id, true, self._element)
 end
 
 function MissionScriptEditor:set_element_data(menu, item)
@@ -409,7 +411,8 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
     end
     if params.update_clbk then
         params.update_clbk(params.value_name)
-    end
+	end
+	self:update_element()
 end
 
 function MissionScriptEditor:OpenElementsManageDialog(params)

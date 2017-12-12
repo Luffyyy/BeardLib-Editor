@@ -156,12 +156,13 @@ end
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
 function BLE:GeneratePackageData()
     local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
-    local lines = io.lines(self.ModPath .. "packages.txt", "r")
+    local file = io.open(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
     local paths = {}
     local current_pkg
-    if lines then 
-        for line in lines do 
+    self:log("[GeneratePackageData] Writing package data...")
+    if file then
+        for line in file:lines() do 
             if string.sub(line, 1, 1) == "@" then
                 current_pkg = string.sub(line, 2)
             elseif current_pkg then
@@ -171,16 +172,21 @@ function BLE:GeneratePackageData()
                 pkg[typ] = pkg[typ] or {}
                 paths[typ] = paths[typ] or {}
                 if DB:has(typ, path) then
-                	if not table.contains(paths[typ], path) then
-                    	table.insert(paths[typ], path)
+                    if not table.contains(paths[typ], path) then
+                        table.insert(paths[typ], path)
                     end
                     if not table.contains(pkg[typ], path) then
-                    	table.insert(pkg[typ], path)
+                        table.insert(pkg[typ], path)
                     end
                 end
             end
         end
+        file:close()
+        self:log("[GeneratePackageData] Done!")
+    else
+        self:log("[GeneratePackageData] packages.txt is missing...")
     end
+    
     FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
     FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
     Global.DBPaths = nil

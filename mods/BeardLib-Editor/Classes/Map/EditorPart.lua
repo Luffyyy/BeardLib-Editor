@@ -6,7 +6,7 @@ function Part:init(parent, menu, name, opt)
         name = name,
         control_slice = 0.6,
         items_size = 18,
-        offset = {4, 1},
+        offset = {4, 2},
         auto_foreground = true,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         scrollbar = false,
@@ -18,7 +18,7 @@ function Part:init(parent, menu, name, opt)
     MenuUtils:new(self)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1) 
     self:Divider("Title", {items_size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
-    self._holder = self:Menu("Holder", {auto_height = false, h = self._menu.h - 24, scroll_width = 4})
+    self._holder = self:Menu("Holder", {auto_height = false, h = self._menu.h - 32, scroll_width = 6})
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
