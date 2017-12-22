@@ -90,8 +90,18 @@ function MenuUtils:init(this, menu)
 		}, opt))
 	end
 
+	function this:CenterRight(item)
+		item:SetPosition("CenterRight")
+		item:Panel():move(-2)
+	end
+
 	function this:SmallButton(name, callback, parent, o)    
-	    local m, opt = self:WorkMenuUtils(o)
+		local m, opt = self:WorkMenuUtils(o)
+		if parent.type_name == "Menu" or parent.type_name == "Group" then
+			m = parent
+		elseif not o.group then
+			m = parent.parent
+		end
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -101,13 +111,10 @@ function MenuUtils:init(this, menu)
 	        min_height = parent.items_size,
 	        text_offset = 2,
 			foreground_highlight = false,
-	        position = function(item)
-	        	item:SetPositionByString("CenterRight")
-	        	item:Panel():move(-1)
-	        end,
+	        position = ClassClbk(self, "CenterRight"),
 	        text_align = "center",
 	        text_vertical = "center",
-	        override_parent = parent,
+	        override_panel = parent,
 	    }, opt))
 	end	
 
@@ -116,17 +123,21 @@ function MenuUtils:init(this, menu)
 		if not parent then
 			log(debug.traceback())
 		end
-	    m = parent.type_name == "Menu" and parent or m
+		if parent.type_name == "Menu" or parent.type_name == "Group" then
+			m = parent
+		elseif o and not o.group then
+			m = parent.parent
+		end
 	    opt.help = string.pretty2(name)
 	    return m:ImageButton(table.merge({
 	        name = name,
 	        callback = callback,
-	        position = "TopRight",
+	        position = ClassClbk(self, "CenterRight"),
 	        items_size = parent.items_size,
 	        size_by_text = true,
 	        texture = texture,
 	        texture_rect = rect,
-	        override_parent = parent,
+	        override_panel = parent,
 	    }, opt))
 	end
 
@@ -231,11 +242,11 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:CopyAxis(menu, item)
-		Application:set_clipboard(tostring(self["AxisControls"..item.override_parent.value_type](self, item.override_parent.axis_name)))
+		Application:set_clipboard(tostring(self["AxisControls"..item.override_panel.value_type](self, item.override_panel.axis_name)))
 	end
 	
 	function this:PasteAxis(menu, item)
-		menu = item.override_parent
+		menu = item.override_panel
 		local paste = Application:get_clipboard()
 		local result
 		pcall(function()

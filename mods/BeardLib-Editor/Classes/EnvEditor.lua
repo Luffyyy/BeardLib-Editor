@@ -433,7 +433,7 @@ function EnvEditor:update(t, dt)
 end
 
 function EnvEditor:open_default_custom_environment()
-    local data = self:Manager("wdata"):data()
+    local data = self:Manager("world"):data()
     local environment = data.environment.environment_values.environment
     local level = BeardLib.current_level
     local map_dbpath = Path:Combine("levels/mods/", level._config.id)
@@ -450,9 +450,9 @@ end
 function EnvEditor:uninclude_environment_dialog(menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
-        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, item.override_parent.name))
+        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, menu.name))
         self:Manager("opt"):save_main_xml()
-        local env = item.override_parent.name:gsub(".environment", "")
+        local env = menu.name:gsub(".environment", "")
         table.delete(Global.DBPaths.environment, Path:Combine("levels/mods/", level.id, env))
         BeardLibEditor:LoadCustomAssets()
         self:load_included_environments()

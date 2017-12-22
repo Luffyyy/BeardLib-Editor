@@ -214,7 +214,7 @@ function EnvLayer:build_menu()
         "color_matrix"
     }
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
-    local utils = self:Manager("utils")
+    local utils = self:Manager("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
     self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
     local dome_occ = self:Group("DomeOcclusion", {visible = false}) 

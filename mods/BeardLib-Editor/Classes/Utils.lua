@@ -157,13 +157,20 @@ function Utils:ReadUnitAndLoad(unit, load)
     return config
 end
 
-function BeardLibEditor.Utils:FilterList(menu, search)
-    for _, item in pairs(search.override_parent._my_items) do
+function BeardLibEditor.Utils:FilterList(menu, search, max_items)
+    local i = 0
+    for _, item in pairs(menu:Items()) do
+        local _end = i == max_items
         if type_name(item) == "Button" then
-            item:SetVisible(search:Value() == "" or item:Text():match(search:Value()) ~= nil)
+            if _end then
+                item:SetVisible(false, true)
+            else
+                item:SetVisible(search:Value() == "" or item:Text():match(search:Value()) ~= nil, true)
+                i = i + 1
+            end
         end
     end
-    search.override_parent:AlignItems()
+    menu:AlignItems()
 end
 
 function Utils:GetPackageSize(package)
@@ -465,19 +472,33 @@ function Utils:GetEntries(params)
     return entries
 end
 
+function Utils:ShortPath(path, times)
+    local path_splt = string.split(path, "/")
+    for i=1, #path_splt - times do table.remove(path_splt, 1) end
+    path = "..."
+    for _, s in pairs(path_splt) do
+        path = path.."/"..s
+    end
+    return path
+end
+
 --Any unit that exists only in editor(except mission element units)
 function Utils:GetUnits(params)
     local units = {}
+    local unloaded_units = {}
     local unit_ids = Idstring("unit")
     local check = params.check
     local slot = params.slot
     local not_loaded = params.not_loaded
     local packages = params.packages
+    local pack_unloaded = params.pack_unloaded
     local loaded_units = {}
-    for _, package in pairs(packages) do
-        if package.unit then
-            for _, unit in pairs(package.unit) do
-                loaded_units[unit] = true
+    if packages then
+        for _, package in pairs(packages) do
+            if package.unit then
+                for _, unit in pairs(package.unit) do
+                    loaded_units[unit] = true
+                end
             end
         end
     end
@@ -499,8 +520,11 @@ function Utils:GetUnits(params)
         if unit_fine and slot_fine and unit_loaded and type_fine then
             table.insert(units, unit)
         end
+        if pack_unloaded and not unit_loaded then
+            table.insert(unloaded_units, unit)
+        end
     end
-    return units
+    return units, unloaded_units
 end
 
 function Utils:GetUnitType(unit)

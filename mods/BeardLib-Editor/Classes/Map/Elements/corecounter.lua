@@ -2,10 +2,10 @@ EditorCounter = EditorCounter or class(MissionScriptEditor)
 EditorCounter.SAVE_UNIT_POSITION = false
 EditorCounter.SAVE_UNIT_ROTATION = false
 EditorCounter.INSTANCE_VAR_NAMES = {{type = "number", value = "counter_target"}}
-function EditorCounter:init(...)
-	local unit = EditorCounter.super.init(self, ...)
-	self:get_units()
-	return unit
+function EditorCounter:work(...)
+	self._draw = {key = "digital_gui_unit_ids"}
+	self:add_draw_units(self._draw)
+	EditorCounter.super.work(self, ...)
 end
 
 function EditorCounter:create_element()
@@ -16,43 +16,13 @@ function EditorCounter:create_element()
 	self._element.values.digital_gui_unit_ids = {}
 end
 
-function EditorCounter:get_units()
-	self._digital_gui_units = {}
-	for k, id in pairs(self._element.values.digital_gui_unit_ids) do
-		local unit = managers.worlddefinition:get_unit(id)
-		if alive(unit) then
-			self._digital_gui_units[unit:unit_data().unit_id] = unit
-		else
-			table.remove(self._element.values.digital_gui_unit_ids, k)
-		end
-	end
-end
-
-function EditorCounter:update()
-	for id, unit in pairs(self._digital_gui_units) do
-		if not alive(unit) then
-			self:get_units()
-			return
-		else
-			self:draw_link({
-				from_unit = self._unit,
-				to_unit = unit,
-				r = 0,
-				g = 1,
-				b = 0
-			})
-			Application:draw(unit, 0, 1, 0)
-		end
-	end
-end
-
 function EditorCounter:check_unit(unit)
 	return unit:digital_gui() and unit:digital_gui():is_timer()
 end
 
 function EditorCounter:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("digital_gui_unit_ids", nil, nil, {text = "Timer Units", check_unit = callback(self, self, "check_unit")})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Timer Units", check_unit = callback(self, self, "check_unit")})
 	self:NumberCtrl("counter_target", {floats = 0, min = 0, help = "Specifies how many times the counter should be executed before running its on executed"})
 	self:Text("Units with number gui extension can have their value updated from a counter.")
 end

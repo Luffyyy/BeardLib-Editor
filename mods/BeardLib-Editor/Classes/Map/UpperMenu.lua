@@ -4,9 +4,8 @@ function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
     self._tabs = {
+        {name = "world", rect = {135, 271, 115, 115}, enabled = normal},
         {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
-        {name = "wdata", rect = {135, 271, 115, 115}, enabled = normal},
-        {name = "utils", rect = {377, 267, 115, 115}},
         {name = "env", rect = {15, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
         {name = "save", rect = {260, 385, 115, 115}, callback = callback(self, self, "save"), enabled = normal},
@@ -19,7 +18,7 @@ function UpperMenu:init(parent, menu)
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
         w = w,
-        h = w / #self._tabs,
+        h = w / #self._tabs - 4,
         auto_foreground = true,
         offset = 0,
         align_method = "grid",
@@ -40,7 +39,7 @@ end
 
 function UpperMenu:build_tabs()
     for _, tab in pairs(self._tabs) do
-        local s = self._menu:W() / #self._tabs
+        local s = self._menu:H()
         local t = self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
         if tab.name:match("_widget_toggle") then
             self:update_toggle(t)
@@ -59,10 +58,10 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         cannot_be_enabled = enabled == false,
         callback = callback(self, self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
-        w = s,
-        h = s,
-        icon_w = s - 10,
-        icon_h = s - 10,      
+        w = self._menu:W() / #self._tabs,
+        h = self._menu:H(),
+        icon_w = s - 12,
+        icon_h = s - 12,      
     })    
 end
 

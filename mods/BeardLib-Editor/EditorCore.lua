@@ -44,7 +44,7 @@ function BLE:InitManagers()
        
     if Global.editor_mode then
         M.MapEditor = MapEditor:new()
-    end 
+    end
 
     M.Menu = EditorMenu:new()
     M.ScriptDataConverter = ScriptDataConverterManager:new()

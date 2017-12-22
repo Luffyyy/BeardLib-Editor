@@ -73,7 +73,8 @@ function Static:build_default_menu()
     Static.super.build_default_menu(self)
     self._editors = {}
     self:SetTitle("Selection")
-    self:Divider("No Selection")
+    self:Divider("No selection >.<", {bordr_left = false})
+    self:Button("World Menu", ClassClbk(self:Manager("world"), "Switch"))
 end
 
 function Static:build_quick_buttons(cannot_be_saved)
@@ -166,8 +167,8 @@ function Static:update_positions()
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
             self:Manager("instances"):update_positions()
-            if self:Manager("wdata"):is_world_unit(unit:name()) then
-                self:Manager("wdata"):update_positions()
+            if self:Manager("world"):is_world_unit(unit:name()) then
+                self:Manager("world"):update_positions()
             end
             for i, control in pairs(self._axis_controls) do
                 self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
@@ -386,7 +387,7 @@ end
 
 function Static:reset_selected_units()
     self:Manager("mission"):remove_script()
-    self:Manager("wdata"):reset_selected_units()
+    self:Manager("world"):reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
@@ -395,6 +396,7 @@ function Static:reset_selected_units()
 end
 
 function Static:set_selected_unit(unit, add)
+    add = add == true
     self:recalc_all_locals()
     local units = {unit}
     if alive(unit) then
@@ -485,8 +487,8 @@ function Static:set_selected_unit(unit, add)
         if alive(unit) then
             if unit:mission_element() then
                 self:Manager("mission"):set_element(unit:mission_element().element)
-            elseif self:Manager("wdata"):is_world_unit(unit:name()) then
-                self:Manager("wdata"):build_unit_menu()
+            elseif self:Manager("world"):is_world_unit(unit:name()) then
+                self:Manager("world"):build_unit_menu()
             elseif unit:fake() then
                 self:Manager("instances"):set_instance()
             else
@@ -499,7 +501,7 @@ function Static:set_selected_unit(unit, add)
             self:set_unit()
         end
     end 
-    self:Manager("wdata"):set_selected_unit()
+    self:Manager("world"):set_selected_unit()
 end
 
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
@@ -591,7 +593,7 @@ function Static:build_links(id, is_element, element)
         end
     end
     if is_element then
-        local linking_group = self:GetItem("Linking")
+        local linking_group = self:GetItem("Linking") or self:Group("Linking", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
         end
@@ -601,7 +603,6 @@ function Static:build_links(id, is_element, element)
                     for k, e in pairs(tbl.elements) do
                         local id = e.id
                         for _, link in pairs(managers.mission:get_links_paths(id, true, {{mission_element_data = element}})) do
-                            linking_group = linking_group or self:GetItem("Linking") or self:Group("Linking", {max_height = 200})
                             local warn
                             if link.upper_k == "on_executed" then
                                 if same_links[id] and link.tbl.delay == 0 then
@@ -615,12 +616,28 @@ function Static:build_links(id, is_element, element)
                 end
             end
         end
+
+        for id, unit in pairs(managers.worlddefinition._all_units) do
+            for _, link in pairs(managers.mission:get_links_paths(id, false, {{mission_element_data = element}})) do
+                local linking_from = link.upper_k or link.key
+                linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
+                self:Button(unit:unit_data().name_id, callback(self, self, "set_selected_unit", unit), {
+                    text = tostring(unit:unit_data().name_id) .. "\n" .. tostring(unit:unit_data().unit_id) .. linking_from,
+                    group = linking_group,
+                    font_size = 16,
+                    label = "elements"
+                })                
+            end
+        end
+        if #linking_group:Items() == 0 then
+            linking_group:Destroy()
+        end
     end
     return links
 end
 
 function Static:addremove_unit_portal(menu, item)
-    local portal = self:Manager("wdata")._selected_portal
+    local portal = self:Manager("world")._selected_portal
     if portal then
         for _, unit in pairs(self._selected_units) do
             if unit:unit_data().unit_id then
@@ -728,26 +745,25 @@ function Static:GetCopyData(remove_old_links)
         end
     end
     --Remove old links
+    local function remove_link(id, is_element, element)
+        for _, link in pairs(managers.mission:get_links_paths(id, is_element, {element})) do
+            if tonumber(link.key) then
+                table.remove(link.tbl, link.key)
+            elseif link.upper_tbl[link.upper_k][link.key] == id then
+                link.upper_tbl[link.upper_k][link.key] = nil
+            else
+                table.delete(link.upper_tbl[link.upper_k], link.tbl)
+            end
+        end
+    end
     if remove_old_links or self:Value("RemoveOldLinks") then
         for _, v in pairs(copy_data) do
             if v.type == "element" then
-                for _, script in pairs(managers.mission._missions) do
-                    for _, tbl in pairs(script) do
-                        if tbl.elements then
-                            for k, element in pairs(tbl.elements) do
-                                local id = element.id
-                                for _, link in pairs(managers.mission:get_links_paths(id, true, {v})) do
-                                    if tonumber(link.key) then
-                                        table.remove(link.tbl, link.key)
-                                    elseif link.upper_tbl[link.upper_k][link.key] == id then
-                                        link.upper_tbl[link.upper_k][link.key] = nil
-                                    else
-                                        table.delete(link.upper_tbl[link.upper_k], link.tbl)
-                                    end
-                                end
-                            end
-                        end
-                    end
+                for id, _ in pairs(managers.mission._ids) do
+                    remove_link(id, true, v)
+                end
+                for id, _ in pairs(managers.worlddefinition._all_units) do
+                    remove_link(id, false, v)
                 end
             end
         end
@@ -785,7 +801,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     local mod = project:current_mod()
     local missing_units = {}
     local missing
-    local assets = self:Manager("utils")._assets_manager
+    local assets = self:Manager("world")._assets_manager
     local data = mod and project:get_clean_data(mod._clean_config)
     local unit_ids = Idstring("unit")
     local add

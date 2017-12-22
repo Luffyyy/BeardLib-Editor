@@ -143,12 +143,12 @@ end
 
 function Project:get_clean_data(t, no_clone)
     local data = U:CleanCustomXmlTable(not no_clone and deep_clone(t) or t, true)
-    local narrative = U:GetNodeByMeta(data, "narrative")
-    U:RemoveAllNumberIndexes(narrative, true)
     for _, v in pairs({"AddFiles", "Hooks"}) do
         BeardLib.Utils:CleanCustomXmlTable(U:GetNodeByMeta(data, v))
     end
-
+    for _, narrative in pairs(U:GetNodeByMeta(data, "narrative", true)) do
+        U:RemoveAllNumberIndexes(narrative, true)
+    end
     for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
         U:RemoveAllNumberIndexes(level, true)
         for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks", "packages"}) do

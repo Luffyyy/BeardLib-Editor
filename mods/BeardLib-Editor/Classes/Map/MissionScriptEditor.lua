@@ -4,6 +4,7 @@ function MissionScriptEditor:init(element, old_element)
 	self._menu = self:Manager("static")._holder
 	MenuUtils:new(self)
 	self._on_executed_units = {}
+	self._draw_units = {}
 	if element then
 		self._element = element
 	else
@@ -138,8 +139,52 @@ function MissionScriptEditor:update_positions(pos, rot)
     self:update_element()  
 end
 
+function MissionScriptEditor:add_draw_units(draw)
+	draw.update_units = draw.update_units or callback(self, self, "update_draw_units", draw)
+	draw.update_units()
+	draw.units = draw.units or {}
+	table.insert(self._draw_units, draw)
+end
+
+function MissionScriptEditor:update_draw_units(draw)
+	draw.units = {}
+	for k, v in pairs(self._element.values[draw.key]) do
+		local id = v
+		if type(id) == "table" then
+			id = id[draw.id_key]
+		end
+		if type(id) == "number" then
+			local unit = managers.worlddefinition:get_unit(id)
+			if alive(unit) then
+				draw.units[unit:unit_data().unit_id] = unit
+			else
+				table.remove(self._element.values[draw.key], k)
+			end
+		end
+	end
+end
+
 function MissionScriptEditor:update(t, dt)
 	self:draw_links()
+	for _, draw in pairs(self._draw_units) do
+		for id, unit in pairs(draw.units) do
+			if not alive(unit) then
+				if draw.update_units then
+					draw.update_units()
+				end
+				return
+			else
+				self:draw_link({
+					from_unit = self._unit,
+					to_unit = unit,
+					r = draw.r or 0,
+					g = draw.g or 1,
+					b = draw.b or 0
+				})
+				Application:draw(unit, draw.r or 0, draw.g or 1, draw.b or 0)
+			end
+		end
+	end
 end
 
 function MissionScriptEditor:draw_links()

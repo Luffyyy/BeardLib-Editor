@@ -54,11 +54,10 @@ function Editor:post_init(menu)
     self.managers = m
     m.menu = UpperMenu:new(self, menu)
     m.status = StatusMenu:new(self, menu)
+    m.world = WorldDataEditor:new(self, menu)
     m.mission = MissionEditor:new(self, menu)
     m.static = StaticEditor:new(self, menu)
     m.opt = InEditorOptions:new(self, menu)
-    m.utils = EditorUtils:new(self, menu)
-    m.wdata = WorldDataEditor:new(self, menu)
     m.console = EditorConsole:new(self, menu)
     m.env = EnvEditor:new(self, menu)
     m.instances = InstancesEditor:new(self, menu)
@@ -67,14 +66,11 @@ function Editor:post_init(menu)
     end
 
     m.menu:build_tabs()
-    m.static:Switch()
+    m.world:Switch()
 
     menu.mouse_move = callback(m.static, m.static, "mouse_moved")
     if self._has_fix then
         m.menu:toggle_widget("move")
-    end
-    if Global.editor_safe_mode then
-        m.utils:Switch()
     end
 end
 
@@ -159,7 +155,7 @@ function Editor:mouse_pressed(button, x, y)
     if self._menu:MouseInside() then
         return
     end
-    if m.utils:mouse_pressed(button, x, y) then
+    if m.world:mouse_pressed(button, x, y) then
         return
     end
     if m.mission:mouse_pressed(button, x, y) then
@@ -168,18 +164,23 @@ function Editor:mouse_pressed(button, x, y)
     m.static:mouse_pressed(button, x, y)
 end
 
-function Editor:select_unit(unit, add)
+function Editor:select_unit(unit, add, switch)
+    add = NotNil(add, ctrl())
+    switch = NotNil(switch, not add)
     m.static:set_selected_unit(unit, add)
+    if switch then
+        m.static:Switch()
+    end
 end
 
-function Editor:select_element(element, add)
+function Editor:select_element(element, add, switch)
+    add = NotNil(add, ctrl())
     for _, unit in pairs(m.mission:units()) do
         if unit:mission_element() and unit:mission_element().element.id == element.id and unit:mission_element().element.editor_name == element.editor_name then
-            self:select_unit(unit, add == true)
+            self:select_unit(unit, add == true, NotNil(switch, not add))
             break
         end
     end
-    m.static:Switch()
 end
 
 function Editor:DeleteUnit(unit)
@@ -192,7 +193,7 @@ function Editor:DeleteUnit(unit)
         end
         local ud = unit:unit_data()
         if ud then
-            m.wdata:delete_unit(unit)
+            m.world:delete_unit(unit)
             managers.worlddefinition:delete_unit(unit)
         end
         World:delete_unit(unit)
@@ -204,14 +205,14 @@ function Editor:GetSpawnPosition(data)
     if data then
         position = data.position
     end
-    return position or (m.utils._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
+    return position or (m.world._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
-    if m.wdata:is_world_unit(unit_path) then
+    if m.world:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
-        local unit = m.wdata:do_spawn_unit(unit_path, data)
+        local unit = m.world:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
         return
     end
@@ -278,8 +279,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         end
     else
         BeardLibEditor:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
-    end
-
+    end    
     return unit
 end
 
@@ -505,7 +505,7 @@ function MapEditor:draw_marker(t, dt)
     local spawn_pos
     local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
     for _, ray in pairs(rays) do
-        if ray and ray.unit ~= m.utils._dummy_spawn_unit then
+        if ray and ray.unit ~= m.world._dummy_spawn_unit then
             spawn_pos = ray.position
             break
         end
@@ -567,9 +567,10 @@ end
 
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
-    if self._menu:Focused() or not shift() then
+    local shft = shift()
+    local move = not self._menu:Focused()
+    if not move or not shft then
         managers.mouse_pointer:_activate()
-        return
     end
     local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
     local axis_move = self._con:get_input_axis("freeflight_axis_move")
@@ -588,10 +589,12 @@ function Editor:update_camera(t, dt)
         if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
             self:mouse_moved(managers.mouse_pointer:world_position())
         end
-    else
+    elseif shft and move then
         managers.mouse_pointer:_deactivate()
     end
-    self:set_camera(pos_new, rot_new)
+    if move then
+        self:set_camera(pos_new, shft and rot_new or self:camera_rotation())
+    end
 end
 
 --Empty/Unused functions

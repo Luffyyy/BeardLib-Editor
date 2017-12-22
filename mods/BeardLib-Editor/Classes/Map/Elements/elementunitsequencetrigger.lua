@@ -1,4 +1,10 @@
 EditorUnitSequenceTrigger = EditorUnitSequenceTrigger or class(MissionScriptEditor)
+function EditorUnitSequenceTrigger:work(...)
+	self._draw = {key = "sequence_list", id_key = "unit_id"}
+	self:add_draw_units(self._draw)
+	EditorUnitSequenceTrigger.super.work(self, ...)
+end
+
 function EditorUnitSequenceTrigger:create_element()
     self.super.create_element(self)
 	self._element.class = "ElementUnitSequenceTrigger"
@@ -15,5 +21,5 @@ function EditorUnitSequenceTrigger:_build_panel()
 			local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
 			return sequences
 		end 
-	})
+	}, self._draw.update_units)
 end

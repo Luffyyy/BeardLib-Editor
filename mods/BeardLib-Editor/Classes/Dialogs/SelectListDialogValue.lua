@@ -9,7 +9,7 @@ function SelectListDialogValue:init(params, menu)
 end
 
 function SelectListDialogValue:ItemsCount()
-    return #self._list_items_menu._all_items
+    return #self._list_items_menu:Items()
 end
 
 function SelectListDialogValue:ShowItem(t, selected)

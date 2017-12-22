@@ -231,6 +231,18 @@ function Options:save()
         end
         self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(world_data, xml))
 
+        for _, mission in pairs(managers.mission._missions) do
+            for _, script in pairs(mission) do
+                if type(script) == "table" and script.elements then
+                    local temp = deep_clone(script.elements)
+                    script.elements = {}
+                    for _, element in pairs(temp) do
+                        table.insert(script.elements, element)
+                    end
+                end
+            end
+        end
+        
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
             local dir = BeardLib.Utils.Path:Combine(map_path, name)

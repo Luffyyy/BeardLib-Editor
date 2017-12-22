@@ -43,16 +43,16 @@ function AssetsManagerDialog:_Show()
     local units = self:DivGroup("Units", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
     local function base_pos(item)
         item:SetPositionByString("Top")
-        item:Panel():set_world_right(item.override_parent.items_panel:world_right() - 8)
+        item:Panel():set_world_right(item.override_panel.items_panel:world_right() - 8)
     end
-    local add = self:Button("Add", callback(self, self, "add_package_dialog"), {override_parent = packages, text = "+", size_by_text = true, position = base_pos})
-    local search_opt = {override_parent = packages, w = 300, lines = 1, text = "Search", control_slice = 0.8, highlight_color = false, position = function(item)
+    local add = self:Button("Add", callback(self, self, "add_package_dialog"), {override_panel = packages, text = "+", size_by_text = true, position = base_pos})
+    local search_opt = {override_panel = packages, w = 300, lines = 1, text = "Search", control_slice = 0.8, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end}
     local search = self:TextBox("Search", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", search_opt)
     search_opt.position = base_pos
-    search_opt.override_parent = units
+    search_opt.override_panel = units
     self:TextBox("Search2", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", search_opt)
 
     self:Divider("AssetsManagerStatus", {
@@ -154,7 +154,7 @@ function AssetsManagerDialog:load_packages()
     if self._tbl._data then
         local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
         if level.packages then
-            for i, package in ipairs(level.packages) do
+            for i, package in pairs(level.packages) do
                 local size = BeardLibEditor.Utils:GetPackageSize(package)
                 if size then
                     local pkg = self:Divider(package, {closed = true, text = string.format("%s(%.2fmb)", package, size), group = packages, label = "packages"})
@@ -447,21 +447,12 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
         unit = self._tbl._selected.name
         local project = BeardLibEditor.managers.MapProject
         local load_from
-        local short_path = function(path, times)
-            local path_splt = string.split(path, "/")
-            for i=1, #path_splt - times do table.remove(path_splt, 1) end
-            path = "..."
-            for _, s in pairs(path_splt) do
-                path = path.."/"..s
-            end
-            return path
-        end
         for _, pkg in pairs(self:get_packages_of_asset(unit, "unit", true)) do
             loaded_from_package = true
             load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
-                name = short_path(name, 3)
+                name = BeardLibEditor.Utils:ShortPath(name, 3)
             end
             local pkg_s = string.format("%s(%.2fmb)", name, pkg.size)
             load_from = load_from.."\n"..pkg_s
@@ -479,7 +470,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
                 unused = true
             end
         end
-        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..short_path(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
+        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..BeardLibEditor.Utils:ShortPath(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
     else
         self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
     end
@@ -578,7 +569,7 @@ function AssetsManagerDialog:remove_package(package, menu, item)
             managers.worlddefinition:_unload_package(package.."_init")
             managers.worlddefinition:_unload_package(package)
         end
-        menu:RemoveItem(item.override_parent)
+        menu:RemoveItem(item.override_panel)
         project:map_editor_save_main_xml(self._tbl._data)
         project:_reload_mod(self._tbl._data.name)
         self:reload()

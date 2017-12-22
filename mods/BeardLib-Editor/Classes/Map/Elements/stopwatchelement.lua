@@ -1,8 +1,8 @@
 EditorStopwatch = EditorStopwatch or class(MissionScriptEditor)
-function EditorStopwatch:init(...)
-	local unit = EditorStopwatch.super.init(self, ...)
-	self:get_units()
-	return unit
+function EditorStopwatch:work(...)
+	self._draw = {key = "digital_gui_unit_ids"}
+	self:add_draw_units(self._draw)
+	EditorStopwatch.super.work(self, ...)
 end
 
 function EditorStopwatch:create_element()
@@ -12,43 +12,13 @@ function EditorStopwatch:create_element()
 	self._element.values.digital_gui_unit_ids = {}
 end
 
-function EditorStopwatch:get_units()
-	self._digital_gui_units = {}
-	for k, id in pairs(self._element.values.digital_gui_unit_ids) do
-		local unit = managers.worlddefinition:get_unit(id)
-		if alive(unit) then
-			self._digital_gui_units[unit:unit_data().unit_id] = unit
-		else
-			table.remove(self._element.values.digital_gui_unit_ids, k)
-		end
-	end
-end
-
-function EditorStopwatch:update()
-	for id, unit in pairs(self._digital_gui_units) do
-		if not alive(unit) then
-			self:get_units()
-			return
-		else
-			self:draw_link({
-				from_unit = self._unit,
-				to_unit = unit,
-				r = 0,
-				g = 1,
-				b = 0
-			})
-			Application:draw(unit, 0, 1, 0)
-		end
-	end
-end
-
 function EditorStopwatch:check_unit(unit)
 	return unit:digital_gui() and unit:digital_gui():is_timer()
 end
 
 function EditorStopwatch:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("digital_gui_unit_ids", nil, callback(self, self, "get_units"), {text = "Digital GUI Units", check_unit = callback(self, self, "check_unit")})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Digital GUI Units", check_unit = callback(self, self, "check_unit")})
 	self:Text("Creates a Stopwatch element. Continuously counts up once started until stopped or paused. Can be operated on using the StopwatchOperator element. Can be displayed on a digital gui.")
 end
 

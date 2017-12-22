@@ -18,7 +18,6 @@
         <class file="Map/EditAIData.lua"/>
         <class file="Map/EditMeshVariation.lua"/>
         <class file="Map/InEditorOptions.lua"/>
-        <class file="Map/EditorUtils.lua"/>
         <class file="Map/UpperMenu.lua"/>
         <class file="Map/StatusMenu.lua"/>
         <class file="Map/EditorConsole.lua"/>
@@ -37,7 +36,7 @@
         <class file="EnvEditor.lua"/>
         <class file="LoadLevelMenu.lua"/>
     </Classes>
-    <AssetUpdates id="16837" version="2.2.5" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
+    <AssetUpdates id="16837" version="2.2.6" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
@@ -62,6 +61,12 @@
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
             <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
             <option_group name="Input">
+                <option type="string" default_value="f" name="SpawnUnit"/>
+                <option type="string" default_value="g" name="SpawnElement"/>
+                <option type="string" default_value="v" name="SelectUnit"/>
+                <option type="string" default_value="b" name="SelectElement"/>
+
+                <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+c" name="CopyUnit"/>
                 <option type="string" default_value="left ctrl+v" name="PasteUnit"/>

@@ -1,4 +1,10 @@
 EditorUnitSequence = EditorUnitSequence or class(MissionScriptEditor)
+function EditorUnitSequence:work(...)
+	self._draw = {key = "trigger_list", id_key = "notify_unit_id"}
+	self:add_draw_units(self._draw)
+	EditorUnitSequence.super.work(self, ...)
+end
+
 function EditorUnitSequence:create_element()
     self.super.create_element(self)
 	self._element.class = "ElementUnitSequence"
@@ -16,8 +22,8 @@ function EditorUnitSequence:_build_panel()
 			local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
 			return sequences
 		end 
-	}, nil, {text = "Manage trigger list"})
+	}, self._draw.update_units, {text = "Manage trigger list"})
 	self:BuildUnitsManage("trigger_list", {
 		key = "notify_unit_id", values_name = "Time To Trigger", value_key = "time", orig = {notify_unit_id = 0, name = "run_sequence", notify_unit_sequence = "", time = 0}
-	}, nil, {text = "Manage trigger list / trigger time"})
+	}, self._draw.update_units, {text = "Manage trigger list / trigger time"})
 end

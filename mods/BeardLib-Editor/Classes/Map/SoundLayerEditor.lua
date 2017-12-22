@@ -165,10 +165,9 @@ function SndLayer:build_menu()
 	self._ambience_enabled = self:Toggle("AmbienceEnabled", callback(self, self, "set_ambience_enabled"), managers.sound_environment:ambience_enabled(), {group = defaults, enabled = #events > 0})
 
 	self:Button("RestartAllEmitters", callback(self, self, "on_restart_emitters"))
-    local utils = self:Manager("utils")
-    self:Button("SpawnSoundEnvironment", callback(utils, utils, "BeginSpawning", self._environment_unit))
-    self:Button("SpawnSoundEmitter", callback(utils, utils, "BeginSpawning", self._emitter_unit))
-    self:Button("SpawnSoundAreaEmitter", callback(utils, utils, "BeginSpawning", self._area_emitter_unit))
+    self:Button("SpawnSoundEnvironment", callback(self._parent, self._parent, "BeginSpawning", self._environment_unit))
+    self:Button("SpawnSoundEmitter", callback(self._parent, self._parent, "BeginSpawning", self._emitter_unit))
+    self:Button("SpawnSoundAreaEmitter", callback(self._parent, self._parent, "BeginSpawning", self._area_emitter_unit))
 end
 
 function SndLayer:build_unit_menu()
