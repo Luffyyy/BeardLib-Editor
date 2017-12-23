@@ -36,7 +36,7 @@
         <class file="EnvEditor.lua"/>
         <class file="LoadLevelMenu.lua"/>
     </Classes>
-    <AssetUpdates id="16837" version="2.2.6.1" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
+    <AssetUpdates id="16837" version="2.2.7" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
@@ -102,8 +102,8 @@
     </Options>    
     <AddFiles directory="Assets">
         <material_config path="core/material_configs/hub_elements" force="true"/>
-        <texture path="textures/editor_logo" force="true"/>
-        <texture path="textures/editor_icons_df" force="true"/>
+        <png path="textures/editor_logo" force="true"/>
+        <png path="textures/editor_icons_df" force="true"/>
         <unit path="units/mission_element/element" force="true"/>
         <object path="units/mission_element/element" force="true"/>
         <model path="units/mission_element/element" force="true"/>

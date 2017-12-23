@@ -21,14 +21,14 @@ function EnvEditor:load_included_environments()
     local included = self:GetItem("IncludedEnvironments")
     local level = BeardLib.current_level
     if included and level then
-        included:ClearItems()
+        included:ClearItems("temp")
         for _, include in ipairs(level._config.include) do
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
                     local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included})
                     self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
-                        size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
+                        label = "temp", size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
                     })
                 end
             end
@@ -47,7 +47,7 @@ function EnvEditor:build_default_menu()
     local env_path = assert(managers.viewport:first_active_viewport():get_environment_path()) or "core/environments/default"
     if BeardLib.current_level then
         local included = self:DivGroup("IncludedEnvironments")
-        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {text = "Include current", position = "TopRight"})
+        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {text = "Include current"})
         self:load_included_environments()    
     end
     

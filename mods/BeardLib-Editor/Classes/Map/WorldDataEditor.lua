@@ -1,6 +1,4 @@
 --CLEAN THIS
---Rename to WorldEditor
-
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
 function WData:init(parent, menu) 

@@ -97,9 +97,6 @@ function Editor:check_has_fix()
     self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit) ~= nil
     unit:set_enabled(false)
     unit:set_slot(0)
-    if not self._has_fix then 
-        BeardLibEditor:log("Warning: PDMOD fix not found, Some editor features will not be available.")
-    end
 end
 
 function Editor:update_grid_size(value)
