@@ -4,7 +4,7 @@ function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
     self._tabs = {
-        {name = "world", rect = {135, 271, 115, 115}, enabled = normal},
+        {name = "world", rect = {135, 271, 115, 115}},
         {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
         {name = "env", rect = {15, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
