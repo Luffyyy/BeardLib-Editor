@@ -123,8 +123,8 @@ function WData:build_default_menu()
         {name = "portal", class = self.managers.portal},
     }
     local managers_group = self:DivGroup("Managers")
-    self:Button("Assets", ClassClbk(self._assets_manager, "Show"), {group = managers_group, enabled = BeardLib.current_level ~= nil})
-    self:Button("Objectives", ClassClbk(self._objectives_manager, "Show"), {group = managers_group, enabled = BeardLib.current_level ~= nil})
+    self:Button("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
+    self:Button("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
 
     for _, manager in pairs(managers) do
         local tbl = type(manager) == "table"
