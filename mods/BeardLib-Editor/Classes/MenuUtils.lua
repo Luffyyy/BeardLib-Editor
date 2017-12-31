@@ -18,10 +18,20 @@ function MenuUtils:init(this, menu)
 		return menu
 	end
 
-	function this:WorkMenuUtils(opt)
+	function this:WorkMenuUtils(opt, override_panel)
 	    opt = opt or {}
 	    opt = clone(opt)
-	    local m = opt.group or menu
+		local m = opt.group or menu
+
+		override_panel = override_panel or opt.override_panel
+		if override_panel then
+			if override_panel.menu_type then
+				m = override_panel
+			elseif opt.group then
+				m = override_panel.parent
+			end
+		end
+
 	    opt.group = nil
 	    return m, opt
 	end
@@ -96,12 +106,7 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:SmallButton(name, callback, parent, o)    
-		local m, opt = self:WorkMenuUtils(o)
-		if parent.type_name == "Menu" or parent.type_name == "Group" then
-			m = parent
-		elseif not o.group then
-			m = parent.parent
-		end
+		local m, opt = self:WorkMenuUtils(o, parent)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
@@ -119,14 +124,9 @@ function MenuUtils:init(this, menu)
 	end	
 
 	function this:SmallImageButton(name, callback, texture, rect, parent, o)    
-	    local m, opt = self:WorkMenuUtils(o)
+	    local m, opt = self:WorkMenuUtils(o, parent)
 		if not parent then
 			log(debug.traceback())
-		end
-		if parent.type_name == "Menu" or parent.type_name == "Group" then
-			m = parent
-		elseif o and not o.group then
-			m = parent.parent
 		end
 	    opt.help = string.pretty2(name)
 	    return m:ImageButton(table.merge({

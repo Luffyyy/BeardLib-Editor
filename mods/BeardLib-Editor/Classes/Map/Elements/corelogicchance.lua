@@ -19,6 +19,7 @@ EditorLogicChanceOperator = EditorLogicChanceOperator or class(MissionScriptEdit
 function EditorLogicChanceOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementLogicChanceOperator"
+	self._element.module = "CoreElementLogicChance"
 	self._element.values.operation = "none"
 	self._element.values.chance = 0
 	self._element.values.elements = {}
@@ -46,6 +47,7 @@ EditorLogicChanceTrigger = EditorLogicChanceTrigger or class(MissionScriptEditor
 function EditorLogicChanceTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementLogicChanceTrigger"
+	self._element.module = "CoreElementLogicChance"
 	self._element.values.outcome = "fail"
 	self._element.values.elements = {}
 end
