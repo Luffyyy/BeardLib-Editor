@@ -1,3 +1,7 @@
+# Notice
+Will not be updating this anymore, if anyone wishes to take on the project, fork the repo and upload the updated version on mws.
+I will accept pull requests.
+
 # BeardLib-Editor
 
 BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!
@@ -11,9 +15,8 @@ don't know how to? Begin reading the guide in here https://modworkshop.net/wiki.
 
 ## Before you stop reading!
 In order for the mod to fully work, you'll need to make sure you have those two:
-
+* SuperBLT(allows the fix to run without bundle modder): https://superblt.znix.xyz/ OR Physics settings fix: https://www.dropbox.com/s/hwjimqxjg7ehrmm/BeardLibEditor%20Physics%20Fix.pdmod?dl=0
 * BeardLib: https://modworkshop.net/mydownloads.php?action=view_down&did=14924
-* Physics settings fix: https://www.dropbox.com/s/hwjimqxjg7ehrmm/BeardLibEditor%20Physics%20Fix.pdmod?dl=0 
 
 Mostly you only need BeardLib to run the mod. However, the fix makes sure you can select almost anything in the map, so install that too.
 
