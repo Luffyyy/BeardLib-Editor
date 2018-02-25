@@ -5,7 +5,7 @@ function Instance:init(parent, menu)
     self:init_basic(parent, name)
     self._units = {}
     self._triggers = {}
-    self._static = self:Manager("static")
+    self._static = self:GetPart("static")
     MenuUtils:new(self, self._static:GetMenu())
 end
 

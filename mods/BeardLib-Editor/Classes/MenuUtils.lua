@@ -337,12 +337,12 @@ function MenuUtils:init(this, menu)
 		opt.callback = nil
 		opt.callback = opt.btn_callback
 	    local btn = self:Button("SelectPath"..name, function()
-	       BeardLibEditor.managers.ListDialog:Show({
+	       BeardLibEditor.ListDialog:Show({
 		        list = BeardLibEditor.Utils:GetEntries({type = typ, loaded = loaded, filenames = false, check = check}),
 		        callback = function(path) 
 		        	t:SetValue(path, true)
 		        	if not not_close then
-		        		BeardLibEditor.managers.ListDialog:Hide()
+		        		BeardLibEditor.ListDialog:Hide()
 		        	end
 		        end
 		    })
@@ -358,7 +358,7 @@ function MenuUtils:init(this, menu)
 		local col = DummyItem:new(name, Vector3(1,1,1))
 		local btn = self:Button("SetColor"..name, function()
 			local vc = col:Value()
-			BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+			BeardLibEditor.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
 		    	col:SetValue(Vector3(color.red, color.green, color.blue))
 		    end})
 		end, opt)

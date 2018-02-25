@@ -65,7 +65,7 @@ function EditorSpecialObjective:_draw_follow_up()
     local unit_sel = self._unit == selected_unit
 	if self._element.values.followup_elements then
 		for _, element_id in ipairs(self._element.values.followup_elements) do
-			local unit = self:Manager("mission"):get_element_unit(element_id)
+			local unit = self:GetPart("mission"):get_element_unit(element_id)
 			local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
 			if draw then
 				self:draw_link({
@@ -92,7 +92,7 @@ function EditorSpecialObjective:apply_preset(menu, item)
 end
 
 function EditorSpecialObjective:manage_flags()
-    BeardLibEditor.managers.SelectDialog:Show({
+    BeardLibEditor.SelectDialog:Show({
         selected_list = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access),
         list = NavigationManager.ACCESS_FLAGS,
         callback = function(list) self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(list) end

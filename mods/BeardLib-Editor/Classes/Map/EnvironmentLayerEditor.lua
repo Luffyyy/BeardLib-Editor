@@ -214,7 +214,7 @@ function EnvLayer:build_menu()
         "color_matrix"
     }
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
-    local utils = self:Manager("world")
+    local utils = self:GetPart("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
     self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
     local dome_occ = self:Group("DomeOcclusion", {visible = false}) 
@@ -252,7 +252,7 @@ function EnvLayer:delete_unit(unit)
 end
 
 function EnvLayer:build_unit_menu()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	S._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
@@ -311,7 +311,7 @@ function EnvLayer:update_positions() self:set_unit_pos() end
 
 function EnvLayer:set_unit_pos(menu, item)
 	local unit = self:selected_unit()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	if unit then
 		unit:set_position(S:AxisControlsPosition())
 		unit:set_rotation(S:AxisControlsRotation())

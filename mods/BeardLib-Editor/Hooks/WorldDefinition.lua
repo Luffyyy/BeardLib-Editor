@@ -84,9 +84,11 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	local new_statics
 	local move
 	local ud = unit:unit_data()
-	if unit:wire_data() then
+	local wd = unit:wire_data()
+	local ad = unit:ai_editor_data()
+	if wd then
 		statics = managers.worlddefinition._world_data.wires
-	elseif unit:ai_editor_data() then
+	elseif ad then
 		statics = managers.worlddefinition._world_data.ai
 	elseif not ud.instance then
 		statics = self._continent_definitions[old_continent]
@@ -103,8 +105,8 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 				if static.unit_data.unit_id == unit_id then
 					--No more for loop the editor is safe enough now to simply set the data
 					static.unit_data = ud
-					static.wire_data = unit:wire_data()
-					static.ai_editor_data = unit:ai_editor_data()
+					static.wire_data = wd
+					static.ai_editor_data = ad
 					BeardLib.Utils:RemoveAllNumberIndexes(static, true)
 					if move_continent then
 						statics[i] = nil

@@ -48,7 +48,6 @@ function UpperMenu:build_tabs()
 end
 
 function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
-    local menu = self._parent.managers[name]
     return self._menu:ImageButton({
         name = name,
         texture = texture,
@@ -69,12 +68,12 @@ function UpperMenu:select_tab(clbk, menu, item)
     if clbk then
         clbk(menu, item)
     else
-        self:Switch(self._parent.managers[item.name])
+        self:Switch(BeardLibEditor.Utils:GetPart(item.name))
     end
 end
 
 function UpperMenu:set_tabs_enabled(enabled)
-    for manager in pairs(self._parent.managers) do
+    for manager in pairs(self._parent.parts) do
         local item = self:GetItem(manager)
         if item and not item.cannot_be_enabled then
             item:SetEnabled(enabled)
@@ -119,5 +118,5 @@ end
 
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
-    self._parent.managers.opt:save()
+    BeardLibEditor.Utils:GetPart("opt"):save()
 end

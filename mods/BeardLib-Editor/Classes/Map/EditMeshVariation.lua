@@ -1,6 +1,6 @@
 EditMeshVariation = EditMeshVariation or class(EditUnit)
 function EditMeshVariation:editable(unit)
-    local mesh_variations = table.merge(managers.sequence:get_editable_state_sequence_list(unit:name()) or {}, managers.sequence:get_triggable_sequence_list(unit:name()) or {})
+    local mesh_variations = table.merge(managers.sequence:get_editable_state_sequence_list(unit:name()) or {}, managers.sequence:get_triggable_sequence_list(unit:name()))
     return #mesh_variations > 0
 end
 

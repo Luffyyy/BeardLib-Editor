@@ -6,6 +6,7 @@ function Static:init(parent, menu)
     self._disabled_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
+    self._ignored_collisions = {}
     self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
 end
@@ -15,13 +16,14 @@ function Static:enable()
     self:bind_opt("CopyUnit", callback(self, self, "CopySelection"))
     self:bind_opt("PasteUnit", callback(self, self, "Paste"))
     self:bind_opt("TeleportToSelection", callback(self, self, "KeyFPressed"))
-    local menu = self:Manager("menu")
+    local menu = self:GetPart("menu")
     self:bind_opt("ToggleRotationWidget", callback(menu, menu, "toggle_widget", "rotation"))
     self:bind_opt("ToggleMoveWidget", callback(menu, menu, "toggle_widget", "move"))
 end
 
 function Static:mouse_pressed(button, x, y)
     if button == Idstring("0") then
+        self._widget_hold = true
         self._parent:reset_widget_values()
         local from = self._parent:get_cursor_look_point(0)
         local to = self._parent:get_cursor_look_point(100000)
@@ -58,7 +60,14 @@ end
 
 function Static:update_grid_size() self:set_unit() end
 function Static:deselect_unit(menu, item) self:set_unit(true) end
-function Static:mouse_released(button, x, y) self._mouse_hold = false end
+function Static:mouse_released(button, x, y) 
+    self._mouse_hold = false
+    self._widget_hold = false
+    for key, ignored in pairs(self._ignored_collisions) do
+        BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, ignored, true)
+    end
+    self._ignored_collisions = {}
+end
 
 function Static:loaded_continents()
     self._nav_surfaces = {}
@@ -74,7 +83,7 @@ function Static:build_default_menu()
     self._editors = {}
     self:SetTitle("Selection")
     self:Divider("No selection >.<", {bordr_left = false})
-    self:Button("World Menu", ClassClbk(self:Manager("world"), "Switch"))
+    self:Button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
 end
 
 function Static:build_quick_buttons(cannot_be_saved)
@@ -158,23 +167,23 @@ function Static:build_positions_items(cannot_be_saved)
             end
         end      
     end, {group = transform})
-    self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:Manager("opt")._menu:GetItem("GridSize"):Value()})
+    self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
 
-function Static:update_positions()
+function StaticEditor:update_positions()
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
-            self:Manager("instances"):update_positions()
-            if self:Manager("world"):is_world_unit(unit:name()) then
-                self:Manager("world"):update_positions()
+            self:GetPart("instances"):update_positions()
+            if self:GetPart("world"):is_world_unit(unit:name()) then
+                self:GetPart("world"):update_positions()
             end
             for i, control in pairs(self._axis_controls) do
                 self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
             end
-        elseif unit:mission_element() and self:Manager("mission")._current_script then
-            self:Manager("mission")._current_script:update_positions(unit:position(), unit:rotation())
+        elseif unit:mission_element() and self:GetPart("mission")._current_script then
+            self:GetPart("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end
         for _, unit in pairs(self:selected_units()) do
             if unit:editable_gui() then
@@ -190,7 +199,6 @@ function Static:update_positions()
     if self._built_multi then
         self:SetTitle("Selection - " .. tostring(#self._selected_units))
     end
-    self:recalc_all_locals()
 end
 
 function Static:set_unit_data()
@@ -284,7 +292,7 @@ end
 
 function Static:add_group(menu, item)
     local unit = self:selected_unit()
-    BeardLibEditor.managers.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
         local continent = managers.worlddefinition:get_continent_of_static(unit)
         local exists
         for _, group in pairs(continent.editor_groups) do
@@ -308,9 +316,9 @@ end
 function Static:add_selection_to_prefabs(menu, item, prefab_name)
     local remove_old_links
     local name_id = self._selected_units[1]:unit_data().name_id
-    BeardLibEditor.managers.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
+    BeardLibEditor.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
-    		BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
+    		BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
     			self:add_selection_to_prefabs(menu, item, prefab_name)
     		end})
     		return
@@ -377,7 +385,7 @@ function Static:check_unit_ok(unit)
         return false
     end
     local mission_element = unit:mission_element() and unit:mission_element().element
-    local wanted_elements = self:Manager("opt")._wanted_elements
+    local wanted_elements = self:GetPart("opt")._wanted_elements
     if mission_element then    
         return BeardLibEditor.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
     else
@@ -386,8 +394,8 @@ function Static:check_unit_ok(unit)
 end
 
 function Static:reset_selected_units()
-    self:Manager("mission"):remove_script()
-    self:Manager("world"):reset_selected_units()
+    self:GetPart("mission"):remove_script()
+    self:GetPart("world"):reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
@@ -425,7 +433,7 @@ function Static:set_selected_unit(unit, add)
                 end
             end
         else
-            if self:Manager("opt"):get_value("SelectEditorGroups") then
+            if self:GetPart("opt"):get_value("SelectEditorGroups") then
                 local continent = managers.worlddefinition:get_continent_of_static(unit)
                 if not add then
                     add = true
@@ -486,11 +494,11 @@ function Static:set_selected_unit(unit, add)
         self._editors = {}
         if alive(unit) then
             if unit:mission_element() then
-                self:Manager("mission"):set_element(unit:mission_element().element)
-            elseif self:Manager("world"):is_world_unit(unit:name()) then
-                self:Manager("world"):build_unit_menu()
+                self:GetPart("mission"):set_element(unit:mission_element().element)
+            elseif self:GetPart("world"):is_world_unit(unit:name()) then
+                self:GetPart("world"):build_unit_menu()
             elseif unit:fake() then
-                self:Manager("instances"):set_instance()
+                self:GetPart("instances"):set_instance()
             else
                 self:set_unit()
             end
@@ -501,7 +509,8 @@ function Static:set_selected_unit(unit, add)
             self:set_unit()
         end
     end 
-    self:Manager("world"):set_selected_unit()
+    self:GetPart("world"):set_selected_unit()
+    self:recalc_all_locals()
 end
 
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
@@ -548,6 +557,7 @@ function Static:set_unit(reset)
     self:build_default_menu()
 end
 
+--Default menu for unit editing
 function Static:set_menu_unit(unit)   
     self:build_unit_editor_menu()
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
@@ -571,29 +581,66 @@ function Static:set_menu_unit(unit)
     self:build_links(unit:unit_data().unit_id)
 end
 
+local function element_link_text(element, link, warn)
+    --ugly
+    return tostring(element.editor_name) 
+        .. "\n" .. tostring(element.id) 
+        .. " | " .. (link and string.pretty2(link) 
+        .. " | " or "") .. tostring(element.class):gsub("Element", "") 
+        .. "\n" .. (warn or "")
+end
+
+local function unit_link_text(ud, link)
+    return tostring(ud.name_id) .. "\n" .. tostring(ud.unit_id) .. link
+end
+
+local function portal_link_text(name)
+    return "Inside portal " .. name
+end
+
 function Static:build_links(id, is_element, element)
-    local links = managers.mission:get_links_paths(id, is_element)
-    local same_links = {}
-    local function create_link(element, group, linking_from, warn)
-        linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
+    local function create_link(text, id, group, clbk)
         warn = warn or ""
-        self:Button(element.editor_name, callback(self._parent, self._parent, "select_element", element), {
-            text = tostring(element.editor_name) .. "\n" .. tostring(element.id) .. linking_from .. " | " .. tostring(element.class):gsub("Element", "") .. warn,
+        self:Button(id, clbk, {
+            text = text,
             group = group,
             font_size = 16,
             label = "elements"
         })
     end
-    if #links > 0 then
-        local links_group = self:GetItem("Linked") or self:Group("Linked", {max_height = 200})
-        links_group:ClearItems()
+
+    local links = managers.mission:get_links_paths(id, is_element)
+    local has_links = #links > 0
+    local same_links = {}
+
+    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200})
+    links_group:ClearItems()
+
+  --Get portals that have the unit attached to - https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/49
+
+    if has_links then
         for _, link in pairs(links) do
             same_links[link.element.id] = true
-            create_link(link.element, links_group, link.upper_k or link.key)
+            create_link(element_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", element))
         end
     end
+
+    local portal_layer = self:GetLayer("portal")
+    for _, portal in pairs(clone(managers.portal:unit_groups())) do
+        local ids = portal._ids
+        if ids and ids[id] then
+            local name = portal:name()
+            create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))               
+            has_links = true 
+        end
+    end
+
+    if not has_links then
+        links_group:Destroy()
+    end
+
     if is_element then
-        local linking_group = self:GetItem("Linking") or self:Group("Linking", {max_height = 200})
+        local linking_group = self:GetItem("LinkingTo") or self:Group("LinkingTo", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
         end
@@ -606,11 +653,10 @@ function Static:build_links(id, is_element, element)
                             local warn
                             if link.upper_k == "on_executed" then
                                 if same_links[id] and link.tbl.delay == 0 then
-                                    warn = "\nWarning - link already exists and can cause an endless loop, add a delay."
+                                    warn = "Warning - link already exists and can cause an endless loop, add a delay."
                                 end
                             end
-
-                            create_link(e, linking_group, link.upper_k or link.key, warn)
+                            create_link(element_text(e, link.upper_k or link.key, warn), e.id, linking_group, ClassClbk(self._parent, "select_element", element))
                         end
                     end
                 end
@@ -618,15 +664,11 @@ function Static:build_links(id, is_element, element)
         end
 
         for id, unit in pairs(managers.worlddefinition._all_units) do
+            local ud = unit:unit_data()
             for _, link in pairs(managers.mission:get_links_paths(id, false, {{mission_element_data = element}})) do
                 local linking_from = link.upper_k or link.key
                 linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                self:Button(unit:unit_data().name_id, callback(self, self, "set_selected_unit", unit), {
-                    text = tostring(unit:unit_data().name_id) .. "\n" .. tostring(unit:unit_data().unit_id) .. linking_from,
-                    group = linking_group,
-                    font_size = 16,
-                    label = "elements"
-                })                
+                create_link(unit_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
             end
         end
         if #linking_group:Items() == 0 then
@@ -637,7 +679,7 @@ function Static:build_links(id, is_element, element)
 end
 
 function Static:addremove_unit_portal(menu, item)
-    local portal = self:Manager("world")._selected_portal
+    local portal = self:GetPart("world")._selected_portal
     if portal then
         for _, unit in pairs(self._selected_units) do
             if unit:unit_data().unit_id then
@@ -652,7 +694,7 @@ end
 function Static:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
         if unit:fake() then
-            self:Manager("instances"):delete_instance()
+            self:GetPart("instances"):delete_instance()
         else
             self._parent:DeleteUnit(unit)
         end
@@ -797,11 +839,11 @@ end
 
 function Static:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     local missing_units = {}
     local missing
-    local assets = self:Manager("world")._assets_manager
+    local assets = self:GetPart("world")._assets_manager
     local data = mod and project:get_clean_data(mod._clean_config)
     local unit_ids = Idstring("unit")
     local add
@@ -841,7 +883,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     local function all_ok_spawn()
         for _, v in pairs(copy_data) do
             if v.type == "element" then
-                self:Manager("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
+                self:GetPart("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
             elseif v.unit_data then
                 self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
             end

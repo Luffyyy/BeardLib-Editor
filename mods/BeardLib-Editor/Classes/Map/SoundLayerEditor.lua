@@ -171,7 +171,7 @@ function SndLayer:build_menu()
 end
 
 function SndLayer:build_unit_menu()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	S._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
@@ -348,7 +348,7 @@ function SndLayer:delete_unit(unit)
 end
 
 function SndLayer:set_sound_environment_parameters()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	self._effect:SetEnabled(false)
 	self._ambience:SetEnabled(false)
 	self._occasional:SetEnabled(false)
@@ -376,7 +376,7 @@ function SndLayer:set_sound_environment_parameters()
 end
 
 function SndLayer:set_sound_emitter_parameters()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	if alive(self:selected_unit()) and (self:selected_unit():name() == self._emitter_unit:id() or self:selected_unit():name() == self._area_emitter_unit:id()) then
 		local emitter = self:selected_unit():unit_data().emitter
 		if emitter then

@@ -20,14 +20,14 @@ function EditorPrePlanning:_build_panel()
 	self:ComboCtrl("location_group", tweak_data.preplanning.location_groups, {help = "Select a location group from the combobox"})
 	local types = managers.preplanning:types()
 	self:Button("SelectAllowedTypes", function()
-	    BeardLibEditor.managers.SelectDialog:Show({
+	    BeardLibEditor.SelectDialog:Show({
 	        selected_list = self._element.values.allowed_types,
 	        list = types,
 	        callback = callback(self, self, "_data_updated", "allowed_types")
 	    })		
 	end)	
 	self:Button("SelectDisablesTypes", function()
-	    BeardLibEditor.managers.SelectDialog:Show({
+	    BeardLibEditor.SelectDialog:Show({
 	        selected_list = self._element.values.disables_types,
 	        list = types,
 	        callback = callback(self, self, "_data_updated", "disables_types")

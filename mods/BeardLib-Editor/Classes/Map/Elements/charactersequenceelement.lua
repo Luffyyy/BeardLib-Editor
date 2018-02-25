@@ -10,7 +10,7 @@ function EditorCharacterSequence:draw_links()
 	EditorCharacterSequence.super.draw_links(self)
 	local selected_unit = self:selected_unit()
 	for _, id in ipairs(self._element.values.elements) do
-		local unit = self:Manager("mission"):get_element_unit(id)
+		local unit = self:GetPart("mission"):get_element_unit(id)
 		local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
 		if draw then
 			self:draw_link({

@@ -1,6 +1,6 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
-	local EMenu = BeardLibEditor.managers.Menu
+	local EMenu = BeardLibEditor.Menu
 	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false}))
 	self:GetMenu():Image({
 		name = "Logo",

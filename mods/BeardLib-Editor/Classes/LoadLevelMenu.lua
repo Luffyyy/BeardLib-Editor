@@ -1,6 +1,6 @@
 LoadLevelMenu = LoadLevelMenu or class()
 function LoadLevelMenu:init()
-	local menu = BeardLibEditor.managers.Menu
+	local menu = BeardLibEditor.Menu
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
 	MenuUtils:new(self)
 	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, auto_height = true})
@@ -59,7 +59,7 @@ function LoadLevelMenu:load_level(menu, item)
         Global.game_settings.difficulty = "normal"
         Global.game_settings.world_setting = nil
         MenuCallbackHandler:start_the_game()    
-        BeardLibEditor.managers.Menu:set_enabled(false)
+        BeardLibEditor.Menu:set_enabled(false)
     end
 
     local load_tbl = {{"Yes", load}}

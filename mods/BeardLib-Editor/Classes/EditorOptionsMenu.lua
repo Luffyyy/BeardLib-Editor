@@ -2,7 +2,7 @@ EditorOptionsMenu = EditorOptionsMenu or class()
 local Options = EditorOptionsMenu
 function Options:init()
 	local O = BeardLibEditor.Options
-	local EMenu = BeardLibEditor.managers.Menu
+	local EMenu = BeardLibEditor.Menu
 	MenuUtils:new(self, EMenu:make_page("Options"))
 	local main = self:DivGroup("Main")
 	self:TextBox("ExtractDirectory", callback(self, self, "set_clbk"), O:GetValue("ExtractDirectory"), {
@@ -68,7 +68,7 @@ end
 function Options:set_clbk(menu, item)
 	self:set(item.name, item:Value())
 	if item.name == "LevelsColumns" then
-		BeardLibEditor.managers.LoadLevel:load_levels()
+		BeardLibEditor.LoadLevel:load_levels()
 	end
 end
 
@@ -79,7 +79,7 @@ end
 
 function Options:open_set_color_dialog(menu, item)
 	option = item.name
-    BeardLibEditor.managers.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
+    BeardLibEditor.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
     	self:set(option, color)
     end})
 end

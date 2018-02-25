@@ -126,7 +126,7 @@ end
 
 function EditUnitLight:show_color_dialog()
 	local vc = self:selected_light():color()
-    BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+    BeardLibEditor.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
     	self:selected_light():set_color(Vector3(color.red, color.green, color.blue))
     end})
 end

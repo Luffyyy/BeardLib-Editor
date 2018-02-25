@@ -68,7 +68,7 @@ function MissionEditor:alert_missing_element_editor(c)
 end
 
 function MissionEditor:set_element(element)
-    self:Manager("static")._built_multi = false
+    self:GetPart("static")._built_multi = false
     if element then
         local clss = self:get_editor_class(element.class)
         if clss then
@@ -103,7 +103,7 @@ function MissionEditor:add_element(name, add_to_selection, old_element)
         local unit = clss:init(nil, old_element)
         if unit then
             self:set_elements_vis()
-            self:Manager("static"):set_selected_unit(unit, add_to_selection)
+            self:GetPart("static"):set_selected_unit(unit, add_to_selection)
         end
     else
         self:alert_missing_element_editor(name)

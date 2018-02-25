@@ -101,14 +101,14 @@ function NavigationManager:build_complete_clbk(draw_options)
 	self:set_debug_draw_state(draw_options)
 	if self:is_data_ready() then
 		self._load_data = self:get_save_data()
-        local c = managers.editor.managers.opt
+        local c = BeardLibEditor.Utils:GetPart("opt")
         BeardLibEditor:log("Navigation data Progress: Done!")
         BeardLibEditor.Utils:QuickDialog({message = "Done building navigation data do you wish to save it?"}, {{"Yes", callback(c, c, "save_nav_data")}})
     end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end
-    local SE = managers.editor.managers.static
+    local SE = BeardLibEditor.Utils:GetPart("static")
     for _, unit in pairs(SE._disabled_units) do
         if alive(unit) then
             unit:set_enabled(true)

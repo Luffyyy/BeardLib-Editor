@@ -14,13 +14,48 @@ end
 
 BeardLibEditor.Utils = BeardLibEditor.Utils or {}
 local Utils = BeardLibEditor.Utils
+
+local MDL = Idstring("model")
+local static
+local editor_menu
+local optimization = {}
+
+function BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
+    Static = Static or self:GetPart("static")
+    editor_menu = editor_menu or managers.editor._menu
+    opt = opt or optimization[key]
+    if not opt then
+        return
+    end
+    if not collisions_only then
+        for _, object in pairs(opt.objects) do
+            if object:visibility() then --if it's not visible, it's either not important or it should update itself afterwards.
+                object:set_visibility(false)
+                object:set_visibility(true) 
+            end
+        end
+    end
+    if Static._widget_hold or EditorMenu._slider_hold then
+        Static._ignored_collisions[key] = opt
+    else
+        for _, body in pairs(opt.bodies) do    
+            if body:enabled() then --same thing here
+                body:set_enabled(false)
+                body:set_enabled(true)
+            end
+        end
+    end
+end
+
 --Sets the position of a unit/object correctly
-function Utils:SetPosition(unit, position, rotation, offset)
-    if offset and unit:unit_data()._prev_pos and unit:unit_data()._prev_rot then
-        local pos = mvector3.copy(unit:unit_data()._prev_pos)
+function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
+    local ud = unit:unit_data()
+    local me = unit:mission_element()
+    if offset and ud._prev_pos and ud._prev_rot then
+        local pos = mvector3.copy(ud._prev_pos)
         mvector3.add(pos, position)
         unit:set_position(pos)
-        local prev_rot = unit:unit_data()._prev_rot
+        local prev_rot = ud._prev_rot
         local rot = Rotation(prev_rot:yaw(), prev_rot:pitch(), prev_rot:roll())
         rot:yaw_pitch_roll(rot:yaw() + rotation:yaw(), rot:pitch() + rotation:pitch(), rot:roll() + rotation:roll())
         unit:set_rotation(rot)
@@ -28,26 +63,29 @@ function Utils:SetPosition(unit, position, rotation, offset)
     	unit:set_position(position)
     	unit:set_rotation(rotation)
     end
+    
     if unit.get_objects_by_type then
-        local objects = unit:get_objects_by_type(Idstring("model"))
-        for _, object in pairs(objects) do
-            object:set_visibility(not object:visibility())
-            object:set_visibility(not object:visibility())
+        local opt
+        local unit_key = unit:key()
+        if not optimization[unit_key] then --Should I run this on all units? yeah probably should not.
+            opt = {bodies = {}, objects = {}}
+            opt.objects = unit:get_objects_by_type(MDL)
+            opt.bodies = {}
+            for i = 0, unit:num_bodies() - 1 do
+                table.insert(opt.bodies, unit:body(i))
+            end
+            optimization[unit_key] = opt
         end
-        local num = unit:num_bodies()
-        for i = 0, num - 1 do
-            local unit_body = unit:body(i)
-            unit_body:set_enabled(not unit_body:enabled())
-            unit_body:set_enabled(not unit_body:enabled())
-        end
-        unit:unit_data().position = unit:position()
-        unit:unit_data().rotation = unit:rotation()
-        if unit:mission_element() then
-            local element = unit:mission_element().element
-            element.values.position = unit:position()
-            element.values.rotation = unit:rotation()
-        elseif unit:unit_data().name and not unit:unit_data().instance then
-            managers.worlddefinition:set_unit(unit:unit_data().unit_id, unit, unit:unit_data().continent, unit:unit_data().continent)        
+        
+        self:UpdateCollisionsAndVisuals(unit_key, opt)
+        ud.position = position
+        ud.rotation = rotation
+        if me then
+            local element = me.element.values
+            element.position = position
+            element.rotation = rotation
+        elseif ud.name and not ud.instance then
+            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)        
         end
     end
 end
@@ -546,7 +584,7 @@ function Utils:Unhash(ids, type)
 end
 
 function Utils:Notify(title, msg, clbk)
-    BeardLibEditor.managers.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
+    BeardLibEditor.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
 end
 
 function Utils:YesNoQuestion(msg, clbk, no_clbk)
@@ -554,7 +592,7 @@ function Utils:YesNoQuestion(msg, clbk, no_clbk)
 end
 
 function Utils:QuickDialog(opt, items)
-    QuickDialog(table.merge({dialog = BeardLibEditor.managers.Dialog, no = "No"}, opt), items)
+    QuickDialog(table.merge({dialog = BeardLibEditor.Dialog, no = "No"}, opt), items)
 end
 
 FakeObject = FakeObject or class()
@@ -600,3 +638,11 @@ function FakeObject:editable_gui() return nil end
 function FakeObject:zipline() return nil end
 function FakeObject:ladder() return nil end
 function FakeObject:name() return Idstring("blank") end
+
+function Utils:GetPart(name)
+    return managers.editor.parts[name]
+end
+
+function Utils:GetLayer(name)
+    return self:GetPart("world").layers[name]
+end

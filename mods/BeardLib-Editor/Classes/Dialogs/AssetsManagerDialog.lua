@@ -78,7 +78,7 @@ end
 
 function AssetsManagerDialog:load_units_from_assets()
     self._assets_units = {}
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
     if data then
@@ -103,7 +103,7 @@ function AssetsManagerDialog:load_units()
     units:ClearItems("units")
     self._missing_units = {}
     local add
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     if self._tbl._data then
         add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
@@ -147,10 +147,10 @@ function AssetsManagerDialog:load_packages()
         return
     end
     packages:ClearItems("packages")
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     self._tbl._data = mod and project:get_clean_data(mod._clean_config)
-    self._current_level = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+    self._current_level = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     if self._tbl._data then
         local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
         if level.packages then
@@ -183,13 +183,13 @@ function AssetsManagerDialog:find_package(unit, dontask)
         table.sort(items, function(a,b)
             return a.size < b.size
         end)
-        BeardLibEditor.managers.ListDialog:Show({
+        BeardLibEditor.ListDialog:Show({
             list = items,
             force = true,
             sort = false,
             callback = function(selection)
                 self:add_package(selection.package)
-                BeardLibEditor.managers.ListDialog:hide()
+                BeardLibEditor.ListDialog:hide()
             end
         })        
     end
@@ -214,7 +214,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
             failed_all = true
         end
     end
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
     local to_copy = {}
@@ -305,7 +305,7 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     table.sort(items, function(a,b)
         return a.amount > b.amount
     end)
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = items,
         force = true,
         sort = false,
@@ -314,7 +314,7 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
             if type(clbk) == "function" then
                 clbk()
             end
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
         end
     })
 end
@@ -349,7 +349,7 @@ end
 function AssetsManagerDialog:unload_asset(no_dialog)
     local name = self._tbl._selected.name
     local function unload()
-        local project = BeardLibEditor.managers.MapProject
+        local project = BeardLibEditor.MapProject
         local mod = project:current_mod()
         local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
         if data then
@@ -400,10 +400,10 @@ end
 
 function AssetsManagerDialog:check_data()
     if not self._current_level or not self._tbl._data then
-        local project = BeardLibEditor.managers.MapProject
+        local project = BeardLibEditor.MapProject
         local mod = project:current_mod()
         self._tbl._data = mod and project:get_clean_data(mod._clean_config)
-        self._current_level = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+        self._current_level = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     end
 end
 
@@ -445,7 +445,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
     local unit
     if self._tbl._selected then
         unit = self._tbl._selected.name
-        local project = BeardLibEditor.managers.MapProject
+        local project = BeardLibEditor.MapProject
         local load_from
         for _, pkg in pairs(self:get_packages_of_asset(unit, "unit", true)) do
             loaded_from_package = true
@@ -458,7 +458,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
             load_from = load_from.."\n"..pkg_s
         end
         local add
-        local project = BeardLibEditor.managers.MapProject
+        local project = BeardLibEditor.MapProject
         local mod = project:current_mod()
         if self._tbl._data then
             add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
@@ -484,7 +484,7 @@ end
 
 function AssetsManagerDialog:add_package(package)
     self:check_data()
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local level_packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     table.insert(level_packages, package)
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
@@ -513,25 +513,25 @@ function AssetsManagerDialog:all_ok_dialog()
                 managers.game_play_central:restart_the_game()
             end}})
         else
-            BeardLibEditor.managers.Dialog:Show(opt)
+            BeardLibEditor.Dialog:Show(opt)
         end        
     end
 end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
-    local level_packages = BeardLibEditor.managers.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
+    local level_packages = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     for name in pairs(BeardLibEditor.DBPackages) do
         if not table.contains(level_packages, name) then
             table.insert(packages, name)
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = packages,
         force = true,
         callback = function(item)
             self:add_package(item)
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
         end
     })
     self:reload()
@@ -539,7 +539,7 @@ end
 
 function AssetsManagerDialog:remove_package(package, menu, item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
-        local project = BeardLibEditor.managers.MapProject
+        local project = BeardLibEditor.MapProject
         local packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
         for i, pkg in ipairs(packages) do
             if pkg == package then

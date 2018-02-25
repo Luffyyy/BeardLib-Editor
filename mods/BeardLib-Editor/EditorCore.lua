@@ -20,7 +20,7 @@ This will search for assets of the unit to load it, you shouldn't use this metho
 units that have animations(bags, drills, bags, npcs, etc) and you can't use this method to load any units that need an effect file.
 ]]
  
-    self.managers = {}
+    self.updaters = {}
     self.modules = {}
     self.DBPaths = {}
     self.DBEntries = {}
@@ -34,23 +34,24 @@ function BLE:InitManagers()
     local bg_color = BeardLibEditor.Options:GetValue("BackgroundColor")
     local M = BeardLibEditor.managers
     self._dialogs_opt = {accent_color = acc_color, background_color = bg_color}
-    M.Dialog = MenuDialog:new(self._dialogs_opt)
-    M.ListDialog = ListDialog:new(self._dialogs_opt)
-    M.SelectDialog = SelectListDialog:new(self._dialogs_opt)
-    M.SelectDialogValue = SelectListDialogValue:new(self._dialogs_opt)
-    M.ColorDialog = ColorDialog:new(self._dialogs_opt)
-    M.InputDialog = InputDialog:new(self._dialogs_opt)
-    M.FBD = FileBrowserDialog:new(self._dialogs_opt)
+    self.Dialog = MenuDialog:new(self._dialogs_opt)
+    self.ListDialog = ListDialog:new(self._dialogs_opt)
+    self.SelectDialog = SelectListDialog:new(self._dialogs_opt)
+    self.SelectDialogValue = SelectListDialogValue:new(self._dialogs_opt)
+    self.ColorDialog = ColorDialog:new(self._dialogs_opt)
+    self.InputDialog = InputDialog:new(self._dialogs_opt)
+    self.FBD = FileBrowserDialog:new(self._dialogs_opt)
        
     if Global.editor_mode then
-        M.MapEditor = MapEditor:new()
+        self.MapEditor = MapEditor:new()
+        table.insert(self.updaters, self.MapEditor)
     end
 
-    M.Menu = EditorMenu:new()
-    M.ScriptDataConverter = ScriptDataConverterManager:new()
-    M.MapProject = MapProjectManager:new()
-    M.LoadLevel = LoadLevelMenu:new()
-    M.EditorOptions = EditorOptionsMenu:new()
+    self.Menu = EditorMenu:new()
+    self.ScriptDataConverter = ScriptDataConverterManager:new()
+    self.MapProject = MapProjectManager:new()
+    self.LoadLevel = LoadLevelMenu:new()
+    self.EditorOptions = EditorOptionsMenu:new()
     AboutMenu:new()
 
     local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
@@ -86,7 +87,7 @@ function BLE:InitManagers()
 end
 
 function BLE:LoadCustomAssets()
-    local project = self.managers.MapProject
+    local project = self.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(mod._clean_config)
     if data then
@@ -253,7 +254,7 @@ function BLE:LoadCustomAssetsToHashList(add)
 end
 
 function BLE:Update(t, dt)
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.updaters) do
         if manager.update then
             manager:update(t, dt)
         end
@@ -261,7 +262,7 @@ function BLE:Update(t, dt)
 end
 
 function BLE:PausedUpdate(t, dt)
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.updaters) do
         if manager.paused_update then
             manager:paused_update(t, dt)
         end

@@ -12,7 +12,7 @@ function Project:init()
     data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._level_module_template = ScriptSerializer:from_custom_xml(data)
 
-    local menu = BeardLibEditor.managers.Menu
+    local menu = BeardLibEditor.Menu
     self._diffs = {
         "Normal",
         "Hard",
@@ -252,7 +252,7 @@ function Project:existing_narr_new_project_clbk_finish(data, narr)
     FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
-    BeardLibEditor.managers.LoadLevel:load_levels()
+    BeardLibEditor.LoadLevel:load_levels()
     for _, p in pairs(self._packages_to_unload) do
         if PackageManager:loaded(p) then
             DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
@@ -304,17 +304,17 @@ function Project:select_narr_as_project()
             table.insert(levels, {name = id.." / " .. managers.localization:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")), narr = narr})
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = levels,
         callback = function(selection)
-            BeardLibEditor.managers.ListDialog:hide()   
+            BeardLibEditor.ListDialog:hide()   
             self:new_project_dialog("", callback(self, self, "existing_narr_new_project_clbk", selection))
         end
     })  
 end
 
 function Project:select_project_dialog()
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = self:get_projects_list(),
         callback = callback(self, self, "select_project")
     }) 
@@ -343,7 +343,7 @@ function Project:reload_mod(old_name, name, save_prev)
     else
         BeardLibEditor:log("[Warning] Something went wrong while trying reload the project")
     end
-    BeardLibEditor.managers.LoadLevel:load_levels()
+    BeardLibEditor.LoadLevel:load_levels()
 end
 
 function Project:_select_project(mod, save_prev)
@@ -354,7 +354,7 @@ function Project:_select_project(mod, save_prev)
         end
     end
     self._current_mod = mod
-    BeardLibEditor.managers.ListDialog:hide()
+    BeardLibEditor.ListDialog:hide()
     self:edit_main_xml(self:get_clean_mod_config(mod), function()        
         local t = self._current_data
         local id = t.orig_id or t.name
@@ -391,7 +391,7 @@ function Project:_select_project(mod, save_prev)
 end
 
 function Project:new_project_dialog(name, clbk, no_callback)
-    BeardLibEditor.managers.InputDialog:Show({
+    BeardLibEditor.InputDialog:Show({
         title = "Enter a name for the project",
         yes = "Create project",
         text = name or "",
@@ -402,7 +402,7 @@ function Project:new_project_dialog(name, clbk, no_callback)
 end
 
 function Project:new_level_dialog(name, clbk, no_callback)
-    BeardLibEditor.managers.InputDialog:Show({
+    BeardLibEditor.InputDialog:Show({
         title = "Enter a name for the level", 
         yes = "Create level",
         text = name or "",
@@ -526,7 +526,7 @@ function Project:new_project_clbk(data, name)
     end
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
-    BeardLibEditor.managers.LoadLevel:load_levels()
+    BeardLibEditor.LoadLevel:load_levels()
     local mod = BeardLib.managers.MapFramework._loaded_mods[name]
     self:_select_project(mod, true)
     BeardLibEditor.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
@@ -539,12 +539,12 @@ function Project:add_exisiting_level_dialog()
             table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = levels,
         callback = function(seleciton)
             local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
             table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
             self:_select_project(self._current_mod, true)
         end
     })
@@ -553,7 +553,7 @@ end
 function Project:set_crimenet_videos_dialog()
     local t = self._current_data
     local crimenet_videos = U:GetNodeByMeta(self._current_data, "narrative").crimenet_videos
-    BeardLibEditor.managers.SelectDialog:Show({
+    BeardLibEditor.SelectDialog:Show({
         selected_list = crimenet_videos,
         list = BeardLibEditor.Utils:GetEntries({type = "movie", loaded = true, check = function(entry)
             return entry:match("movies/")
@@ -803,7 +803,7 @@ function Project:set_mission_assets_dialog()
     for _, asset in pairs(table.map_keys(tweak_data.assets)) do
         table.insert(assets, {name = asset, value = false})
     end
-	BeardLibEditor.managers.SelectDialogValue:Show({
+	BeardLibEditor.SelectDialogValue:Show({
 		selected_list = selected_assets,
 		list = assets,
 		values_name = "Exclude",
@@ -840,7 +840,7 @@ function Project:group_level(narr, level_in_chain)
             table.insert(chain, {name = v.level_id or "Day "..tostring(i).."[Grouped]", value = v})
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = chain,
         callback = function(selection)
             table.delete(narr.chain, level_in_chain)
@@ -850,7 +850,7 @@ function Project:group_level(narr, level_in_chain)
                 narr.chain[key] = {chain_group}
             end
             table.insert(narr.chain[key], level_in_chain)
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
             self._refresh_func()
         end
     })

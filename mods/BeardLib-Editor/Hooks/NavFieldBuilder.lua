@@ -2,7 +2,7 @@ if not Global.editor_mode then
 	return
 end
 function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
-	local status = managers.editor.managers.status
+	local status = BeardLibEditor.Utils:GetPart("Status")
 	if not self._created_button then
 		status._menu:Button({name = "Cancel", text_align = "right", callback = function()
 			self._progress_dialog_cancel = true
@@ -13,7 +13,7 @@ function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
 end
 
 function NavFieldBuilder:_update_progress_bar(percent_complete, title)
-	managers.editor.managers.status:SetStatus(title)
+	BeardLibEditor.Utils:GetPart("Status"):SetStatus(title)
 end
 
 function NavFieldBuilder:update(t, dt)
@@ -39,7 +39,7 @@ function NavFieldBuilder:update(t, dt)
 end
 
 function NavFieldBuilder:_destroy_progress_bar()
-	local status = managers.editor.managers.status
+	local status = BeardLibEditor.Utils:GetPart("status")
 	status:SetStatus()
 	local cancel = status._menu:GetItem("Cancel")
 	if cancel then

@@ -51,7 +51,7 @@ end
 function Editor:m() return m end
 
 function Editor:post_init(menu)
-    self.managers = m
+    self.parts = m
     m.menu = UpperMenu:new(self, menu)
     m.status = StatusMenu:new(self, menu)
     m.world = WorldDataEditor:new(self, menu)
@@ -142,9 +142,7 @@ function Editor:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
-    m.static:mouse_released(button, x, y)
-    m.static:mouse_released(button, x, y)
-    self._mouse_hold = false
+    m.static:mouse_released(button, x, y)    
     self:reset_widget_values()
 end
 
@@ -530,7 +528,6 @@ function Editor:update_widgets(t, dt)
                 local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                 if self._last_pos ~= result_pos then 
                     self:set_unit_positions(result_pos)
-                    self:update_positions()
                 end
                 self._last_pos = result_pos
             end
@@ -538,7 +535,6 @@ function Editor:update_widgets(t, dt)
                 local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                 if self._last_rot ~= result_rot then
                     self:set_unit_rotations(result_rot)
-                    self:update_positions()
                 end
                 self._last_rot = result_rot
             end
@@ -558,6 +554,7 @@ function Editor:update_widgets(t, dt)
                 BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
                 self._rotate_widget:update(t, dt)
             end
+            self:update_positions() --unsure
         end
     end
 end

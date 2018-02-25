@@ -92,7 +92,7 @@ function Options:KeySPressed()
 end
 
 function Options:open_set_color_dialog(option)
-    BeardLibEditor.managers.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
+    BeardLibEditor.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
         BeardLibEditor.Options:SetValue(option, color)
         BeardLibEditor.Options:Save()
     end})
@@ -103,14 +103,14 @@ function Options:loaded_continents(continents, current_continent)
     self._current_continent:SetSelectedItem(current_continent)   
     self._current_script:SetItems(table.map_keys(managers.mission._scripts))
     self._current_script:SetValue(1)
-    self:Manager("mission"):set_elements_vis()
+    self:GetPart("mission"):set_elements_vis()
 end
 
 function Options:update_option_value(menu, item)
     local name = item.name
     BeardLibEditor.Options:SetValue("Map/"..name, item:Value())
     if item.name == "ShowElements" then
-        self:Manager("mission"):set_elements_vis()
+        self:GetPart("mission"):set_elements_vis()
     end
     if name == "EditorUnits" then
         for _, unit in pairs(World:find_units_quick("all")) do
@@ -123,7 +123,7 @@ function Options:update_option_value(menu, item)
     elseif name == "SnapRotation" then
         self._parent:update_snap_rotation(item:Value())
     elseif name == "DrawOnlyElementsOfCurrentScript" then
-        self:Manager("mission"):set_elements_vis()
+        self:GetPart("mission"):set_elements_vis()
     end
 end
 
@@ -134,7 +134,7 @@ end
 
 function Options:set_current_script(menu, item)
     self._parent._current_script = item:SelectedItem()
-    self:Manager("mission"):set_elements_vis()
+    self:GetPart("mission"):set_elements_vis()
 end
 
 function Options:draw_nav_segments(menu, item)
@@ -176,11 +176,11 @@ function Options:update(t, dt)
 end
 
 function Options:map_path()
-    return BeardLibEditor.managers.MapProject:current_path() or self._menu:GetItem("MapSavePath"):Value():gsub("\\" , "/") 
+    return BeardLibEditor.MapProject:current_path() or self._menu:GetItem("MapSavePath"):Value():gsub("\\" , "/") 
 end
 
 function Options:map_world_path()    
-    local map_path = BeardLibEditor.managers.MapProject:current_level_path() or self:map_path()
+    local map_path = BeardLibEditor.MapProject:current_level_path() or self:map_path()
     if not FileIO:Exists(map_path) then
         FileIO:MakeDir(map_path)
     end
@@ -191,7 +191,7 @@ function Options:save()
     if self._saving then
         return
     end
-    local panel = self:Manager("menu"):GetItem("save").panel
+    local panel = self:GetPart("menu"):GetItem("save").panel
     local bg = alive(panel) and panel:child("bg_save") or panel:rect({
         name = "bg_save",
 		color = self._holder.accent_color,
@@ -299,7 +299,7 @@ function Options:save()
 end
 
 function Options:save_main_xml(include)
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
     if data then
@@ -398,7 +398,7 @@ function Options:build_nav_segments() -- Add later the options to the menu
             end
         end
         if #settings > 0 then
-            local SE = self:Manager("static")
+            local SE = self:GetPart("static")
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:in_slot(managers.slot:get_mask("persons"))   then
                     unit:set_enabled(false)

@@ -2,6 +2,9 @@ if not Global.editor_mode then
 	return
 end
 
+local BeardLibEditor = BeardLibEditor
+local Utils = BeardLibEditor.Utils
+
 core:module("CoreMissionManager")
 core:import("CoreMissionScriptElement")
 core:import("CoreEvent")
@@ -43,7 +46,7 @@ function Mission:parse(params, stage_name, offset, file_type)
 		end
 	end
 	self._activate_script = activate_mission
-	managers.editor.managers.mission:set_elements_vis()
+	Utils:GetPart("mission"):set_elements_vis()
 	return true
 end
 
@@ -446,7 +449,7 @@ function MScript:create_mission_element_unit(element)
 	unit:mission_element().element = element
 	unit:mission_element():update_text()
 	if managers.editor then
-		managers.editor.managers.mission:add_element_unit(unit)
+		Utils:GetPart("mission"):add_element_unit(unit)
 	end
 	return unit
 end
@@ -461,6 +464,6 @@ end
 
 function MScript:debug_output(debug, color)
 	if managers.editor then
-		managers.editor.managers.console:LogMission(debug)
+		Utils:GetPart("console"):LogMission(debug)
 	end
 end

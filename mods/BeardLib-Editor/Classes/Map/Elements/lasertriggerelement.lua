@@ -7,7 +7,7 @@ EditorLaserTrigger.COLORS = {red = {1,0,0}, green = {0, 1, 0}, blue = {0, 0, 1}}
 EditorLaserTrigger.ON_EXECUTED_ALTERNATIVES = {"enter", "leave", "empty", "while_inside"}
 function EditorLaserTrigger:init(...)
 	local unit = "units/payday2/props/gen_prop_lazer_blaster_dome/gen_prop_lazer_blaster_dome"
-	local assets = self:Manager("world")._assets_manager
+	local assets = self:GetPart("world")._assets_manager
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
 		BeardLibEditor.Utils:QuickDialog({title = "Lasers ain't working!", message = "This element requires the 'gen_prop_lazer_blaster_dome' unit to be loaded or else it won't work!"}, {{"Load it", function()
             assets:find_package(unit, true)
@@ -298,7 +298,7 @@ function EditorLaserTrigger:fill_connections_box()
 end
 
 function EditorLaserTrigger:set_connection_from_position(menu, item)
-	local static = self:Manager("static")
+	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local from = self._element.values.points[connection.from]
 	from.pos = static:AxisControlsPosition("selected_connection_from")
@@ -307,7 +307,7 @@ function EditorLaserTrigger:set_connection_from_position(menu, item)
 end
 
 function EditorLaserTrigger:set_connection_to_position(menu, item)
-	local static = self:Manager("static")
+	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local to = self._element.values.points[connection.to]
 	to.pos = static:AxisControlsPosition("selected_connection_to")
@@ -316,7 +316,7 @@ function EditorLaserTrigger:set_connection_to_position(menu, item)
 end
 
 function EditorLaserTrigger:update_selection(menu, item)
-	local static = self:Manager("static")
+	local static = self:GetPart("static")
 	self._selected_connection_box:ClearItems()
 	if self._selected_connection then
 		local connection = self._element.values.connections[self._selected_connection]

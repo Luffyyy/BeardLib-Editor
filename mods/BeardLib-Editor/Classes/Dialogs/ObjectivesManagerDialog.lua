@@ -22,7 +22,7 @@ function ObjectivesManagerDialog:_Show()
     end
     self._params = nil
     self._objectives = nil
-    local project = BeardLibEditor.managers.MapProject
+    local project = BeardLibEditor.MapProject
     local mod = project:current_mod()
     local data = mod and project:get_clean_data(mod._clean_config)
     if data then
@@ -61,7 +61,7 @@ function ObjectivesManagerDialog:_Show()
 end
 
 function ObjectivesManagerDialog:rename_or_add_objective(objective)
-    BeardLibEditor.managers.InputDialog:Show({title = "Objective Id", force = true, text = objective and objective.id or "", callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Objective Id", force = true, text = objective and objective.id or "", callback = function(name)
         for _, o in ipairs(self._objectives) do
             if o ~= objective and o.id == name then
                 BeardLibEditor.Utils:Notify("Error!", "Objective with the Id "..tostring(name).. " already exists!")

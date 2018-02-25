@@ -1,7 +1,7 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
-	self._menu = self:Manager("static")._holder
+	self._menu = self:GetPart("static")._holder
 	MenuUtils:new(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
@@ -37,16 +37,16 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    self._links = self:Manager("static"):build_links(self._element.id, true, self._element)
+    self._links = self:GetPart("static"):build_links(self._element.id, true, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
-    self._unit = self:Manager("mission"):get_element_unit(self._element.id)
+    self._unit = self:GetPart("mission"):get_element_unit(self._element.id)
 	self:get_on_executed_units()
 	local executors = managers.mission:get_executors(self._element)
 	self._executors_units = {}
 	for _, element in pairs(executors) do
-		local unit = self:Manager("mission"):get_element_unit(element.id)
+		local unit = self:GetPart("mission"):get_element_unit(element.id)
 		if alive(unit) then
 			table.insert(self._executors_units, unit)
 		end
@@ -63,8 +63,8 @@ end
 function MissionScriptEditor:get_on_executed_units()
     self._on_executed_units = {}
 	for _, u in pairs(self._element.values.on_executed) do
-		if self:Manager("mission"):get_element_unit(u.id) then
-			table.insert(self._on_executed_units, self:Manager("mission"):get_element_unit(u.id))
+		if self:GetPart("mission"):get_element_unit(u.id) then
+			table.insert(self._on_executed_units, self:GetPart("mission"):get_element_unit(u.id))
 		end
 	end
 end
@@ -77,7 +77,7 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
-	local SE = self:Manager("static")
+	local SE = self:GetPart("static")
 	self._main_group = self:Group("Main")
 	local quick_buttons = self:Group("QuickButtons")
 	local transform = self:Group("Transform")
@@ -128,7 +128,7 @@ function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
 end
 
 function MissionScriptEditor:update_positions(pos, rot)
-	local SE = self:Manager("static")
+	local SE = self:GetPart("static")
 	if not SE.x or not pos or not rot then
 		return
 	end
@@ -206,7 +206,7 @@ function MissionScriptEditor:draw_elements(elements, is_link)
 		return
 	end
 	for k, id in ipairs(elements) do
-		local unit = self:Manager("mission"):get_element_unit(id)
+		local unit = self:GetPart("mission"):get_element_unit(id)
 		if alive(unit) then
 			if self:should_draw_link(selected_unit, unit) then
 				local r, g, b = unit:mission_element()._color:unpack()
@@ -308,7 +308,7 @@ function MissionScriptEditor:get(table_data, id, element)
 end
 
 function MissionScriptEditor:deselect_element()
-    self:Manager("static"):build_default_menu()
+    self:GetPart("static"):build_default_menu()
     self._parent._selected_element = nil
 end
 
@@ -319,7 +319,7 @@ function MissionScriptEditor:update_element(old_script)
 		unit:set_position(self._element.values.position)
 		unit:set_rotation(self._element.values.rotation)
 	end
-	self:Manager("static"):build_links(self._element.id, true, self._element)
+	self:GetPart("static"):build_links(self._element.id, true, self._element)
 end
 
 function MissionScriptEditor:set_element_data(menu, item)
@@ -339,7 +339,7 @@ function MissionScriptEditor:set_element_data(menu, item)
 	if item.name == "script" and item:SelectedItem() ~= old_script then
 		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all executors will be removed!", function()
 			set_element_data()
-			self:Manager("mission"):set_elements_vis()
+			self:GetPart("mission"):set_elements_vis()
 		end)
 	else
 		set_element_data()
@@ -350,7 +350,7 @@ function MissionScriptEditor:set_element_data(menu, item)
 end
 
 function MissionScriptEditor:set_element_position(menu)
-	local SE = self:Manager("static")
+	local SE = self:GetPart("static")
 	self._element.values.position = SE:AxisControlsPosition()
 	self._element.values.rotation = SE:AxisControlsRotation()
 	self:update_element()
@@ -398,7 +398,7 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
-	for k, unit in pairs(self:Manager("static")._selected_units) do
+	for k, unit in pairs(self:GetPart("static")._selected_units) do
 		if unit:unit_data() and not table.has(self._element.values[value_name], unit:unit_data().unit_id) then
 			table.insert(self._element.values[value_name], unit:unit_data().unit_id)
 		end
@@ -409,7 +409,7 @@ function MissionScriptEditor:add_selected_units(value_name, clbk)
 end
 
 function MissionScriptEditor:remove_selected_units(value_name)
-	for k, unit in pairs(self:Manager("static")._selected_units) do
+	for k, unit in pairs(self:GetPart("static")._selected_units) do
 		if unit:unit_data() then
 			table.delete(self._element.values[value_name], unit:unit_data().unit_id)
 		end
@@ -501,7 +501,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
             end
         end
     end
-    BeardLibEditor.managers.SelectDialogValue:Show({
+    BeardLibEditor.SelectDialogValue:Show({
         selected_list = selected_list,
         list = list,
         values_name = params.table_data and params.table_data.values_name,
@@ -552,7 +552,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 			end
 	 	end
     end
-	BeardLibEditor.managers.SelectDialogValue:Show({
+	BeardLibEditor.SelectDialogValue:Show({
 	    selected_list = selected_list,
 	    list = list,
 		values_name = params.table_data and params.table_data.values_name,
@@ -595,7 +595,7 @@ function MissionScriptEditor:OpenInstancesManageDialog(params)
         end
 		table.insert(list, data)
 	end
-	BeardLibEditor.managers.SelectDialogValue:Show({
+	BeardLibEditor.SelectDialogValue:Show({
 		selected_list = selected_list,
 		list = list,
 		values_name = params.table_data and params.table_data.values_name,
@@ -626,7 +626,7 @@ function MissionScriptEditor:Text(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
-    BeardLibEditor.managers.SelectDialog:Show({
+    BeardLibEditor.SelectDialog:Show({
         selected_list = params.selected_list,
         list = params.list,
         callback = function(list) 

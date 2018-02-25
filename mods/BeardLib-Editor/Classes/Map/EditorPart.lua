@@ -14,7 +14,7 @@ function Part:init(parent, menu, name, opt, mopt)
         scrollbar = false,
         visible = false,
         w = 300,
-        h = self:Manager("menu"):get_menu_h()
+        h = self:GetPart("menu"):get_menu_h()
     }, mopt))
     self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
     MenuUtils:new(self)
@@ -68,9 +68,10 @@ function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
 function Part:Enabled() return self._menu:Visible() end
-function Part:Switch() self:Manager("menu"):Switch(self) end
+function Part:Switch() self:GetPart("menu"):Switch(self) end
 function Part:Value(v) return BeardLibEditor.Options:GetValue("Map/" .. v) end
-function Part:Manager(n) return managers.editor.managers[n] end 
+function Part:GetPart(n) return BeardLibEditor.Utils:GetPart(n) end 
+function Part:GetLayer(n) return BeardLibEditor.Utils:GetLayer(n) end 
 function Part:build_default_menu() self:ClearItems() end
 function Part:SetTitle(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
 function Part:disable() self._triggers = {} end

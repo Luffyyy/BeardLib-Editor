@@ -21,7 +21,7 @@ end
 
 function WData:loaded_continents()
     self:build_default_menu()
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.layers) do
         if manager.loaded_continents then
             manager:loaded_continents()
         end
@@ -29,7 +29,7 @@ function WData:loaded_continents()
 end
 
 function WData:do_spawn_unit(unit, data)
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.layers) do
         if manager.is_my_unit and manager:is_my_unit(unit:id())  then
             return manager:do_spawn_unit(unit, data)
         end
@@ -38,7 +38,7 @@ end
 
 function WData:is_world_unit(unit)
     unit = unit:id()
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.layers) do
         if manager.is_my_unit and manager:is_my_unit(unit) then
             return true
         end
@@ -48,7 +48,7 @@ end
 
 function WData:build_unit_menu()
     local selected_unit = self:selected_unit()
-    for _, manager in pairs(self.managers) do
+    for _, manager in pairs(self.layers) do
         if manager.build_unit_menu and manager:is_my_unit(selected_unit:name():id()) then
             manager:build_unit_menu()
         end
@@ -58,7 +58,7 @@ end
 function WData:update_positions()
     local selected_unit = self:selected_unit()
     if selected_unit then
-        for _, manager in pairs(self.managers) do
+        for _, manager in pairs(self.layers) do
             if manager.save and manager:is_my_unit(selected_unit:name():id()) then
                 manager:save()
             end
@@ -114,22 +114,24 @@ function WData:build_default_menu()
         end
     end
 
-    self.managers = self.managers or {env = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
+    self.layers = self.layers or {env = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
     local managers = {
-        "AI", 
-        {name = "environment", class = self.managers.env},
-        {name = "sound", class = self.managers.sound},
-        "wires",
-        {name = "portal", class = self.managers.portal},
+        ["AI"] = true, 
+        ["environment"] = self.layers.env, 
+        ["sound"] = self.layers.sound, 
+        ["wires"] = true, 
+        ["portal"] = self.layers.portal, 
     }
     local managers_group = self:DivGroup("Managers")
     self:Button("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
     self:Button("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
 
-    for _, manager in pairs(managers) do
-        local tbl = type(manager) == "table"
-        local name = tbl and manager.name or manager
-        self:Button(name, ClassClbk(self, "build_menu", tbl and manager.class or string.lower(manager)), {enabled = not Global.editor_safe_mode, group = managers_group, text = string.capitalize(name)})
+    for name, layer in pairs(managers) do
+        self:Button(name, ClassClbk(self, "build_menu", name:lower(), layer), {
+            enabled = not Global.editor_safe_mode,
+            group = managers_group,
+            text = string.capitalize(name)
+        })
     end
  
     self:reset()
@@ -148,7 +150,7 @@ function WData:remove_brush_layer()
         self:data().brush = nil
         MassUnitManager:delete_all_units()
         self:save()
-        self:Manager("opt"):save()
+        self:GetPart("opt"):save()
     end)
 end
 
@@ -187,11 +189,11 @@ function WData:build_continents()
             toolbar_item("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), continent, {highlight_color = Color.red, texture_rect = {7, 2, 48, 48}})
             toolbar_item("Rename", ClassClbk(self, "rename_continent", name), continent, {texture_rect = {66, 1, 48, 48}})
             toolbar_item("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), continent, {texture_rect = {122, 1, 48, 48}})
-            toolbar_item("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), continent, {text = "+", help = "Add mission script"})
+            toolbar_item("AddScript", ClassClbk(self, "add_new_mission_script", name), continent, {text = "+", help = "Add mission script"})
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
                 opt.continent = name
-                toolbar_item("Add", ClassClbk(self, "add_new_mission_script", sname), script, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
+                toolbar_item("RemoveScript", ClassClbk(self, "remove_script", sname), script, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
                 toolbar_item("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), script, {highlight_color = Color.red, texture_rect = {7, 2, 48, 48}})
                 toolbar_item("Rename", ClassClbk(self, "rename_script", sname), script, {texture_rect = {66, 1, 48, 48}})
                 toolbar_item("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), script, {texture_rect = {122, 1, 48, 48}})
@@ -201,19 +203,19 @@ function WData:build_continents()
 end
 
 function WData:rename_continent(continent)
-    BeardLibEditor.managers.InputDialog:Show({title = "Rename continent to", text = continent, callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Rename continent to", text = continent, callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
                 self:rename_continent(continent)
             end})
             return
         elseif name == "environments" or string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_continent(continent)
             end})
             return
         elseif worlddef._continent_definitions[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
                 self:rename_continent(continent)
             end})
             return
@@ -282,9 +284,9 @@ function WData:select_all_units_from_continent(continent)
             end
         end
     end        
-    self:Manager("mission"):remove_script()
-    self:Manager("static")._selected_units = selected_units
-    self:Manager("static"):set_selected_unit()
+    self:GetPart("mission"):remove_script()
+    self:GetPart("static")._selected_units = selected_units
+    self:GetPart("static"):set_selected_unit()
 end
 
 function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
@@ -315,19 +317,19 @@ end
 
 function WData:new_continent()
     local worlddef = managers.worlddefinition
-    BeardLibEditor.managers.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
                 self:new_continent()
             end})
             return
         elseif name == "environments" or string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:new_continent()
             end})
             return
         elseif worlddef._continent_definitions[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
                 self:new_continent()
             end})
             return
@@ -344,26 +346,25 @@ function WData:new_continent()
     end})
 end
 
-function WData:add_new_mission_script(menu, item)
+function WData:add_new_mission_script(cname)
     local mission = managers.mission
-    BeardLibEditor.managers.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
-                self:add_new_mission_script()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+                self:add_new_mission_script(cname)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:add_new_mission_script()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:add_new_mission_script(cname)
             end})
             return
         elseif mission._scripts[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
-                self:add_new_mission_script()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
+                self:add_new_mission_script(cname)
             end})
             return
         end
-        local cname = item.continent
         mission._missions[cname][name] = mission._missions[cname][name] or {
             activate_on_parsed = true,
             elements = {},
@@ -391,19 +392,19 @@ end
 
 function WData:rename_script(script, menu, item)
     local mission = managers.mission
-    BeardLibEditor.managers.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
                 self:rename_script(script, menu, item)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_script(script, menu, item)
             end})
             return
         elseif mission._scripts[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
                 self:rename_script(script, menu, item)
             end})
             return
@@ -422,7 +423,7 @@ function WData:clear_all_elements_from_script(script, menu, item)
 end
 
 function WData:delete_unit(unit)
-    for  _, manager in pairs(self.managers) do
+    for  _, manager in pairs(self.layers) do
         if manager.delete_unit then
             manager:delete_unit(unit)
         end
@@ -464,9 +465,9 @@ function WData:select_all_units_from_script(script, menu, item)
             end
         end
     end
-    self:Manager("mission"):remove_script()
-    self:Manager("static")._selected_units = selected_units
-    self:Manager("static"):set_selected_unit()    
+    self:GetPart("mission"):remove_script()
+    self:GetPart("static")._selected_units = selected_units
+    self:GetPart("static"):set_selected_unit()    
 end
 
 --World Data
@@ -482,13 +483,14 @@ function WData:back_button()
     self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {highlight_color = Color.black:with_alpha(0.25), font_size = 18})
 end
 
-function WData:build_menu(layer)
+function WData:build_menu(name, layer)
     self.super.build_default_menu(self)
     self:back_button()
-    if type(layer) == "string" then
-        self["build_"..layer.."_layer_menu"](self)
-    else
+    self._current_layer = name
+    if type(layer) == "table" then
         layer:build_menu()
+    else
+        self["build_"..name.."_layer_menu"](self)
     end
 end
 
@@ -522,16 +524,8 @@ function WData:build_ai_layer_menu()
     self:Button("SpawnCoverPoint", callback(self, self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
 end
 
-function WData:update(t, dt)
-    for _, editor in pairs(self.managers) do
-        if editor.update then
-            editor:update(t, dt)
-        end
-    end
-end
-
 function WData:reset()
-    for _, editor in pairs(self.managers) do
+    for _, editor in pairs(self.layers) do
         if editor.reset then
             editor:reset()
         end
@@ -539,7 +533,7 @@ function WData:reset()
 end
 
 function WData:reset_selected_units()
-    for _, editor in pairs(self.managers) do
+    for _, editor in pairs(self.layers) do
         if editor.reset_selected_units then
             editor:reset_selected_units()
         end
@@ -547,7 +541,7 @@ function WData:reset_selected_units()
 end
 
 function WData:set_selected_unit()
-    for _, editor in pairs(self.managers) do
+    for _, editor in pairs(self.layers) do
         if editor.set_selected_unit then
             editor:set_selected_unit()
         end
@@ -578,9 +572,9 @@ function WData:mouse_pressed(button, x, y)
         self:remove_dummy_unit()
         self._currently_spawning = nil
         self:SetTitle()
-        self:Manager("menu"):set_tabs_enabled(true)
+        self:GetPart("menu"):set_tabs_enabled(true)
         if self._do_switch then
-            self:Manager("static"):Switch()
+            self:GetPart("static"):Switch()
             self._do_switch = false
         end
     end
@@ -589,6 +583,13 @@ end
 
 function WData:update(t, dt)
     self.super.update(self, t, dt)
+
+    for _, editor in pairs(self.layers) do
+        if editor.update then
+            editor:update(t, dt)
+        end
+    end
+
     if alive(self._dummy_spawn_unit) then
         self._dummy_spawn_unit:set_position(self._parent._spawn_position)
         Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
@@ -601,12 +602,12 @@ function WData:OpenSpawnPrefabDialog()
     for name, prefab in pairs(BeardLibEditor.Prefabs) do
         table.insert(prefabs, {name = name, prefab = prefab})
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = prefabs,
         force = true,
         callback = function(item)
-            self:Manager("static"):SpawnPrefab(item.prefab)
-            BeardLibEditor.managers.ListDialog:hide()
+            self:GetPart("static"):SpawnPrefab(item.prefab)
+            BeardLibEditor.ListDialog:hide()
         end
     }) 
 end
@@ -618,7 +619,7 @@ function WData:OpenSpawnInstanceDialog()
             table.insert(instances, path)
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = instances,
         force = true,
         callback = function(item)
@@ -660,7 +661,7 @@ function WData:OpenSpawnInstanceDialog()
                     script:_preload_instance_class_elements(prepare_mission_data)
                 end
             end
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
         end
     })
 end
@@ -677,7 +678,7 @@ function WData:OpenSpawnElementDialog()
         table.insert(elements, {name = name, element = element})
     end
     table.sort(elements, function(a,b) return b.name > a.name end)
-	BeardLibEditor.managers.ListDialog:Show({
+	BeardLibEditor.ListDialog:Show({
 	    list = elements,
         force = true,
 	    callback = function(item)
@@ -709,7 +710,7 @@ function WData:OpenSelectUnitDialog(params)
             end
         end
     end
-    BeardLibEditor.managers.ListDialog:Show({
+    BeardLibEditor.ListDialog:Show({
         list = units,
         force = true,
         callback = params.on_click or function(item)
@@ -721,12 +722,12 @@ end
 
 function WData:OpenSelectInstanceDialog(params)
 	params = params or {}
-	BeardLibEditor.managers.ListDialog:Show({
+	BeardLibEditor.ListDialog:Show({
 	    list = managers.world_instance:instance_names(),
         force = true,
 	    callback = params.on_click or function(name)
 	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))	        
-	    	BeardLibEditor.managers.ListDialog:hide()
+	    	BeardLibEditor.ListDialog:hide()
 	    end
 	})
 end
@@ -752,7 +753,7 @@ function WData:OpenSelectElementDialog(params)
             end
         end
     end
-	BeardLibEditor.managers.ListDialog:Show({
+	BeardLibEditor.ListDialog:Show({
 	    list = elements,
         force = true,
 	    callback = params.on_click or function(item)
@@ -772,12 +773,12 @@ function WData:BeginSpawning(unit)
     if self._parent._spawn_position then
         self._dummy_spawn_unit = World:spawn_unit(Idstring(unit), self._parent._spawn_position)
     end
-    self:Manager("menu"):set_tabs_enabled(false)
+    self:GetPart("menu"):set_tabs_enabled(false)
     self:SetTitle("Press: LMB to spawn, RMB to cancel")
 end
 
 function WData:CloseDialog()
-    BeardLibEditor.managers.ListDialog:hide()
+    BeardLibEditor.ListDialog:hide()
     self._opened = {}
 end
 
@@ -798,7 +799,7 @@ function WData:OpenSpawnUnitDialog(params)
 
 	params = params or {}
     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
-	BeardLibEditor.managers.ListDialog:Show({
+	BeardLibEditor.ListDialog:Show({
 	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = pkgs, slot = params.slot, type = params.type, not_type = "being"}),
         force = true,
         callback = function(unit)
@@ -830,11 +831,11 @@ function WData:OpenLoadUnitDialog(params)
             table.insert(units, unit)
         end
     end
-	BeardLibEditor.managers.ListDialog:Show({
+	BeardLibEditor.ListDialog:Show({
 	    list = units,
         force = true,
 	    callback = params.on_click or function(unit)
-            BeardLibEditor.managers.ListDialog:hide()
+            BeardLibEditor.ListDialog:hide()
             self._assets_manager:find_package(unit, true)
 	    end
 	}) 

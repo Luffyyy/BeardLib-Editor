@@ -89,7 +89,7 @@ function PortalLayer:build_menu()
 end
 
 function PortalLayer:build_unit_menu()
-	local S = self:Manager("static")
+	local S = self:GetPart("static")
 	S._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
@@ -143,7 +143,7 @@ function PortalLayer:select_shape(menu, item)
         self._selected_shape = item and self._selected_portal._shapes[tonumber(item.id)] 
     end
     if self._selected_shape and self:selected_unit() ~= self._selected_shape:unit() then
-        self:Manager("static"):set_selected_unit(self._selected_shape:unit())
+        self:GetPart("static"):set_selected_unit(self._selected_shape:unit())
     end
     if item then
         item:SetBorder({left = true})
@@ -173,19 +173,19 @@ function PortalLayer:remove_unit_from_portal(unit)
 end
 
 function PortalLayer:rename_portal(menu, item)
-    BeardLibEditor.managers.InputDialog:Show({title = "Rename portal to", text = item.override_panel.text, callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Rename portal to", text = item.override_panel.text, callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
                 self:rename_portal(menu, item)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_portal(menu, item)
             end})
             return
         elseif managers.portal:unit_groups()[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
                 self:add_portal(name)
             end})
             return
@@ -216,19 +216,19 @@ function PortalLayer:remove_shape(menu, item)
 end
 
 function PortalLayer:add_portal(name)
-    BeardLibEditor.managers.InputDialog:Show({title = "Portal name", text = type(name) == "string" and name or "group", callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Portal name", text = type(name) == "string" and name or "group", callback = function(name)
         if name == "" then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
                 self:add_portal(name)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:add_portal(name)
             end})
             return
         elseif managers.portal:unit_groups()[name] then
-            BeardLibEditor.managers.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
+            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
                 self:add_portal(name)
             end})
             return
@@ -239,23 +239,31 @@ function PortalLayer:add_portal(name)
     self:save()
 end
 
-function PortalLayer:select_portal(menu, item)
+function PortalLayer:select_portal(name, nounselect)
+    self._parent:Switch()
+    if self._parent._current_layer ~= "portal" then
+        self._parent:build_menu("portal", self) --TODO: change to less dumb
+    end
     self._selected_shape = nil
     self._menu:GetItem("Shapes"):ClearItems()
     self._menu:GetItem("Units"):ClearItems()
     if self._selected_portal then
         self._menu:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
-    if self._selected_portal and self._selected_portal._name == item.text  then
+    if self._selected_portal and self._selected_portal._name == name and nounselect ~= true then
         self._selected_portal = nil
     else
-        item:SetBorder({left = true})
-        self._selected_portal = managers.portal:unit_groups()[item.text]
+        self._menu:GetItem("portal_"..name):SetBorder({left = true})
+        self._selected_portal = managers.portal:unit_groups()[name]
         self:load_portal_shapes()
         self:load_portal_units()
     end        
     self:select_shape()
     self:save()
+end
+
+function PortalLayer:clbk_select_portal(menu, item)
+    self:select_portal(item.text)
 end
 
 function PortalLayer:load_portal_shapes()
@@ -286,7 +294,7 @@ function PortalLayer:load_portals()
         portals:ClearItems()
         self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
         for name, portal in pairs(managers.portal:unit_groups()) do
-            local prtl = self:Button("portal_"..portal._name, callback(self, self, "select_portal"), {group = portals, text = portal._name})
+            local prtl = self:Button("portal_"..portal._name, callback(self, self, "clbk_select_portal"), {group = portals, text = portal._name})
             local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df"}
             
             opt.highlight_color = Color.red

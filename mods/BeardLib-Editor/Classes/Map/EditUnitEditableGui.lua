@@ -97,7 +97,7 @@ end
 function EditUnitEditableGui:show_color_dialog() 
 	local unit = self:selected_unit()
 	local vc = unit:editable_gui():font_color()
-    BeardLibEditor.managers.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
+    BeardLibEditor.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
     	unit:editable_gui():set_font_color(Vector3(color.red, color.green, color.blue))
     end})
 end
