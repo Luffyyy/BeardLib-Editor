@@ -7,6 +7,7 @@ local WorldDef = class(WorldDefinition)
 WorldDefinition = WorldDef
 
 local BLE = _G.BeardLibEditor
+local Utils = BLE.Utils
 function WorldDef:init(params)
 	BLE:SetLoadingText("Initializing World Definition")
 	managers.worlddefinition = self
@@ -228,7 +229,7 @@ function WorldDef:init_done()
 	self._init_done = true
 end
 
-function WorldDef:delete_unit(unit)
+function WorldDef:delete_unit(unit, no_unlink)
 	local unit_id = unit:unit_data().unit_id
 	local name_id = unit:unit_data().name_id
 	local continent_name = unit:unit_data().continent
@@ -281,7 +282,9 @@ function WorldDef:delete_unit(unit)
 			statics = self._continent_definitions[continent_name]
 			statics = statics and statics.statics
 		end
-		managers.mission:delete_links(unit_id)
+		if not no_unlink then
+			managers.mission:delete_links(unit_id, Utils.LinkTypes.Unit)
+		end
 		if statics then
 			for k, static in pairs(statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id) then

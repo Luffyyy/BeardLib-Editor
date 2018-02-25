@@ -37,17 +37,25 @@ function EditorInstanceInputEvent:create_element()
 end
 
 function EditorInstanceInputEvent:_draw_instance_link(instance_name)
-	if self._type == "input" then
-		Application:draw_arrow(self._unit:position(), managers.world_instance:get_instance_data_by_name(instance_name).position, r, g, b, 0.2)
-	else
-		Application:draw_arrow(managers.world_instance:get_instance_data_by_name(instance_name).position, self._unit:position(), r, g, b, 0.2)
+	local instance = managers.world_instance:get_instance_data_by_name(instance_name)
+	if type(instance) ~= "table" then
+		return false
 	end
+
+	if self._type == "input" then
+		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
+	else
+		Application:draw_arrow(instance.position, self._unit:position(), r, g, b, 0.2)
+	end
+	return true
 end
 
 function EditorInstanceInputEvent:update(t, dt, instance_name)
 	local r, g, b = self._unit:mission_element()._color:unpack()
-	for _, data in ipairs(self._element.values.event_list) do
-		self:_draw_instance_link(data.instance)
+	for i, data in ipairs(self._element.values.event_list) do
+		if not self:_draw_instance_link(data.instance) then
+			table.remove(self._element.values.event_list, i)
+		end
 	end
 end
 
@@ -88,7 +96,9 @@ end
 
 function EditorInstancePoint:update(t, dt)
 	if self._element.values.instance then
-		EditorInstanceInputEvent._draw_instance_link(self, self._element.values.instance)
+		if not EditorInstanceInputEvent._draw_instance_link(self, self._element.values.instance) then
+			self._element.values.instance = nil
+		end
 	end
 end
 
@@ -117,7 +127,9 @@ end
 
 function EditorInstanceSetParams:update(t, dt)
 	if self._element.values.instance then
-		EditorInstanceInputEvent._draw_instance_link(self, self._element.values.instance)
+		if not EditorInstanceInputEvent._draw_instance_link(self, self._element.values.instance) then
+			self._element.values.instance = nil
+		end
 	end
 end
 

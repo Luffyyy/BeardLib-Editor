@@ -1,5 +1,6 @@
 StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
+local Utils = BeardLibEditor.Utils
 function Static:init(parent, menu)
     Static.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
@@ -64,7 +65,7 @@ function Static:mouse_released(button, x, y)
     self._mouse_hold = false
     self._widget_hold = false
     for key, ignored in pairs(self._ignored_collisions) do
-        BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, ignored, true)
+        Utils:UpdateCollisionsAndVisuals(key, ignored, true)
     end
     self._ignored_collisions = {}
 end
@@ -138,7 +139,7 @@ function Static:build_unit_editor_menu()
     self:TextBox("Name", callback(self, self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
     self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other, enabled = false})
     self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", true, function(unit)
-        return BeardLibEditor.Utils:GetUnitType(unit) ~= "being"
+        return Utils:GetUnitType(unit) ~= "being"
     end, false, {group = other})
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
     self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
@@ -233,11 +234,11 @@ function Static:set_unit_data()
             end
             BeardLib.Utils:RemoveAllNumberIndexes(ud, true) --Custom xml issues happen in here also 😂🔫 
 
-            ud.lights = BeardLibEditor.Utils:LightData(unit)
-            ud.triggers = BeardLibEditor.Utils:TriggersData(unit)
-            ud.editable_gui = BeardLibEditor.Utils:EditableGuiData(unit)
-            ud.ladder = BeardLibEditor.Utils:LadderData(unit)
-            ud.zipline = BeardLibEditor.Utils:ZiplineData(unit)
+            ud.lights = Utils:LightData(unit)
+            ud.triggers = Utils:TriggersData(unit)
+            ud.editable_gui = Utils:EditableGuiData(unit)
+            ud.ladder = Utils:LadderData(unit)
+            ud.zipline = Utils:ZiplineData(unit)
             unit:set_editor_id(ud.unit_id)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             for index = 0, unit:num_bodies() - 1 do
@@ -598,7 +599,7 @@ local function portal_link_text(name)
     return "Inside portal " .. name
 end
 
-function Static:build_links(id, is_element, element)
+function Static:build_links(id, match, element)
     local function create_link(text, id, group, clbk)
         warn = warn or ""
         self:Button(id, clbk, {
@@ -609,7 +610,7 @@ function Static:build_links(id, is_element, element)
         })
     end
 
-    local links = managers.mission:get_links_paths(id, is_element)
+    local links = managers.mission:get_links_paths(id, match)
     local has_links = #links > 0
     local same_links = {}
 
@@ -621,7 +622,7 @@ function Static:build_links(id, is_element, element)
     if has_links then
         for _, link in pairs(links) do
             same_links[link.element.id] = true
-            create_link(element_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", element))
+            create_link(element_link_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", element))
         end
     end
 
@@ -649,7 +650,7 @@ function Static:build_links(id, is_element, element)
                 if tbl.elements then
                     for k, e in pairs(tbl.elements) do
                         local id = e.id
-                        for _, link in pairs(managers.mission:get_links_paths(id, true, {{mission_element_data = element}})) do
+                        for _, link in pairs(managers.mission:get_links_paths(id, Utils.LinkTypes.Element, {{mission_element_data = element}})) do
                             local warn
                             if link.upper_k == "on_executed" then
                                 if same_links[id] and link.tbl.delay == 0 then
@@ -665,7 +666,7 @@ function Static:build_links(id, is_element, element)
 
         for id, unit in pairs(managers.worlddefinition._all_units) do
             local ud = unit:unit_data()
-            for _, link in pairs(managers.mission:get_links_paths(id, false, {{mission_element_data = element}})) do
+            for _, link in pairs(managers.mission:get_links_paths(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
                 local linking_from = link.upper_k or link.key
                 linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
                 create_link(unit_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
@@ -687,7 +688,7 @@ function Static:addremove_unit_portal(menu, item)
             end
         end
     else
-        BeardLibEditor.Utils:Notify("Error", "No portal selected")  
+        Utils:Notify("Error", "No portal selected")  
     end    
 end      
 
@@ -707,7 +708,7 @@ function Static:delete_selected_dialog(menu, item)
     if not self:selected_unit() then
         return
     end
-    BeardLibEditor.Utils:YesNoQuestion("This will delete the selection", callback(self, self, "delete_selected")) 
+    Utils:YesNoQuestion("This will delete the selection", callback(self, self, "delete_selected")) 
 end
 
 function Static:update(t, dt)
@@ -767,7 +768,7 @@ function Static:GetCopyData(remove_old_links)
         local typ = v.type
         if typ == "element" then
             v.mission_element_data.script = nil
-            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = element_id
             end
             v.mission_element_data.id = element_id
@@ -775,7 +776,7 @@ function Static:GetCopyData(remove_old_links)
         elseif typ == "unit" and v.unit_data.unit_id then
             local is_world = v.wire_data or v.ai_editor_data
             v.unit_data.continent = nil
-            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = is_world and world_unit_id or unit_id
             end
             v.unit_data.unit_id = is_world and world_unit_id or unit_id
@@ -787,8 +788,8 @@ function Static:GetCopyData(remove_old_links)
         end
     end
     --Remove old links
-    local function remove_link(id, is_element, element)
-        for _, link in pairs(managers.mission:get_links_paths(id, is_element, {element})) do
+    local function remove_link(id, match, element)
+        for _, link in pairs(managers.mission:get_links_paths(id, match, {element})) do
             if tonumber(link.key) then
                 table.remove(link.tbl, link.key)
             elseif link.upper_tbl[link.upper_k][link.key] == id then
@@ -857,13 +858,13 @@ function Static:SpawnCopyData(copy_data, prefab)
         local is_unit = v.type == "unit"
         if v.type == "element" then
             local new_final_id = managers.mission:get_new_id(continent)
-            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, true, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
             local new_final_id = managers.worlddefinition:GetNewUnitID(continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
-            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, false, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id
@@ -892,7 +893,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     end
     if missing then
         if assets then
-            BeardLibEditor.Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
+            Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
                 local function find_packages()
                     for unit, is_missing in pairs(missing_units) do
                         if is_missing then
@@ -906,14 +907,14 @@ function Static:SpawnCopyData(copy_data, prefab)
                     if table.size(missing_units) > 0 then
                         assets:find_packages(missing_units, find_packages)
                     else
-                        BeardLibEditor.Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
+                        Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
                         all_ok_spawn()
                     end
                 end
                 find_packages()
             end}})
         else
-            BeardLibEditor.Utils:Notify("ERROR!", "Cannot spawn the prefab[Unloaded units]")
+            Utils:Notify("ERROR!", "Cannot spawn the prefab[Unloaded units]")
         end
     else
         all_ok_spawn()

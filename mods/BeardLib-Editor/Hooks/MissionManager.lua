@@ -102,7 +102,7 @@ function Mission:set_element(element, old_script)
 	local old_continent = old_script and self._scripts[old_script]._continent
 	if old_script and element.script ~= old_script then
 		if new_continent ~= old_continent then
-			self:delete_links(element.id, true)
+			self:delete_links(element.id, Utils.LinkTypes.Element)
 			self:delete_element_id(old_continent, element.id)
 			local new_id = self:get_new_id(new_continent)
 			self:store_element_id(new_continent, new_id)
@@ -189,7 +189,7 @@ function Mission:add_element(element)
 end
 
 function Mission:delete_element(id)	
-	self:delete_links(id, true)
+	self:delete_links(id, Utils.LinkTypes.Element)
 	for m_name, mission in pairs(self._missions) do
 		for s_name, script in pairs(mission) do
 			for i, element in pairs(script.elements) do
@@ -238,8 +238,8 @@ function Mission:get_executors(element)
 	return executors
 end
 
-function Mission:delete_links(id, is_element)
-	for _, link in pairs(managers.mission:get_links_paths(id, is_element)) do
+function Mission:delete_links(id, match)
+	for _, link in pairs(self:get_links_paths(id, match)) do
 		if tonumber(link.key) then
 			table.remove(link.tbl, link.key)
 		elseif link.upper_tbl[link.upper_k][link.key] == id then
@@ -256,57 +256,52 @@ local elements_upper_keys = {
     "elements", "instigator_ids", "spawn_unit_elements", "use_shape_element_ids", "rules_element_ids", "spawn_groups", "spawn_points", "sequence", "followup_elements", "spawn_instigator_ids", "Stopwatch_value_ids"
 }
 local elements_keys = {{upper_k = "on_executed", k = "id"}, "counter_id"}
+local elements_keys_instance = {"instance"}
 function Mission:identify_key_and_upper_key(upper_k, k)
-    local current_is_unit, current_is_element
-    for _, key in pairs(units_upper_keys) do
-        if upper_k == key then
-            current_is_unit = true
-            break
-        end
-    end
-    if not current_is_unit then
-        for _, key in pairs(units_keys) do
-            if k == key then
-                current_is_unit = true
-                break
-            end
-        end
-    end
-    if not current_is_unit then
-        for _, key in pairs(elements_upper_keys) do
-            if upper_k == key then
-                current_is_element = true
-                break
-            end
-        end
-        if not current_is_element then
-            for _, key in pairs(elements_keys) do
-				local tbl = type(key) == "table"
-                if k == (tbl and key.k or key) and (not tbl or upper_k == key.upper_k) then
-                    current_is_element = true
-                    break
-                end
-            end
-        end
-    end
-    return current_is_unit, current_is_element
+	--this might be a huge mind fuck, but the point of this function is to find ids under conditions(on executed has to have the element id in 'id' for example)
+	local function find_key_or_upper_key(keys_tbl, mode)
+		local match_k = mode == 1
+		local match_upper_k = mode == 2
+		local match_all = mode == 3
+		for _, key in pairs(keys_tbl) do
+			if match_all then
+				local extra = type(key) == "table"
+				if k == (tbl and key.k or key) and (not extra or upper_k == key.upper_k) then
+					return true
+				end
+			elseif match_k and key == k or match_upper_k and key == upper_k then
+				return true
+			end
+		end
+		return false
+	end
+	if find_key_or_upper_key(units_upper_keys, 2) or find_key_or_upper_key(units_keys, 1) then
+		return Utils.LinkTypes.Unit
+	end
+	if find_key_or_upper_key(elements_upper_keys, 2) or find_key_or_upper_key(elements_keys, 3) then
+		return Utils.LinkTypes.Element
+	end
+	if find_key_or_upper_key(elements_keys_instance, 1) then
+		return Utils.LinkTypes.Instance
+	end
+	return false
 end
 
-function Mission:is_linked(id, is_element, upper_k, tbl, stop)
-    for k, v in pairs(tbl) do
-        local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
+function Mission:is_linked(id, match, upper_k, tbl, stop)
+	for k, v in pairs(tbl) do
+        local current = self:identify_key_and_upper_key(upper_k, k)
         if not stop and type(v) == "table" then
             local new_upper_key = not tonumber(k) and k or upper_k
-            if self:is_linked(id, is_element, new_upper_key, v) then
+            if self:is_linked(id, match, new_upper_key, v) then
                 return true
             end
-        elseif ((is_element and current_is_element) or (not is_element and current_is_unit)) and v == id then
-            return true
+		elseif current == match and v == id then
+			return true
         end
     end
 end
 
-function Mission:get_links(id, is_element)
+function Mission:get_links(id, match)
  	if not tonumber(id) or tonumber(id) < 0 then
 		return {}
 	end
@@ -315,7 +310,7 @@ function Mission:get_links(id, is_element)
 		for _, tbl in pairs(script) do
 			if tbl.elements then
 				for _, element in pairs(tbl.elements) do
-					if self:is_linked(id, is_element, "values", element.values) then
+					if self:is_linked(id, match, "values", element.values) then
 						table.insert(modifiers, element)
 					end
 				end
@@ -325,21 +320,21 @@ function Mission:get_links(id, is_element)
 	return modifiers
 end
 
-function Mission:get_links_paths(id, is_element, elements)   
-    if not tonumber(id) or tonumber(id) < 0 then
+function Mission:get_links_paths(id, match, elements)   
+    if type(id) ~= "string" and (not tonumber(id) or tonumber(id) < 0) then
         return {}
     end
     local id_paths = {}
 	local function GetLinks(upper_k, upper_tbl, tbl, element, stop)
 		upper_tbl = upper_tbl or element
         for k, v in pairs(tbl) do
-            local current_is_unit, current_is_element = self:identify_key_and_upper_key(upper_k, k)
+            local current = self:identify_key_and_upper_key(upper_k, k)
             if not stop and type(v) == "table" then
                 local new_upper_key = not tonumber(k) and k or upper_k
                 local new_upper_tbl = not tonumber(k) and tbl or upper_tbl
                 GetLinks(new_upper_key, new_upper_tbl, v, element)
-            elseif ((is_element and current_is_element) or (not is_element and current_is_unit)) and v == id then
-                table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl, element = element})
+			elseif current == match and v == id then
+				table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl, element = element})
             end
         end
     end
@@ -353,8 +348,10 @@ function Mission:get_links_paths(id, is_element, elements)
         for _, script in pairs(self._missions) do
             for _, tbl in pairs(script) do
                 if tbl.elements then
-                    for k, element in pairs(tbl.elements) do
-                        GetLinks("values", nil, element.values, element)
+					for k, element in pairs(tbl.elements) do
+						if not element.instance then
+							GetLinks("values", nil, element.values, element)
+						end
                     end
                 end
             end

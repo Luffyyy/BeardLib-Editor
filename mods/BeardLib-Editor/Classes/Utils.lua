@@ -15,10 +15,13 @@ end
 BeardLibEditor.Utils = BeardLibEditor.Utils or {}
 local Utils = BeardLibEditor.Utils
 
+
 local MDL = Idstring("model")
 local static
 local editor_menu
 local optimization = {}
+
+Utils.LinkTypes = {Unit = 1, Element = 2, Instance = 3}
 
 function BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
     Static = Static or self:GetPart("static")

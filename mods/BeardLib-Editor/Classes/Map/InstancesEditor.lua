@@ -46,19 +46,12 @@ function Instance:delete_instance(instance)
             end
         end
     end
-    local script = managers.mission._scripts[instance.script]
-    local temp = clone(script._elements)
-    for i, element in pairs(temp) do
-        if element.instance == instance.name then
-            script._elements[i] = nil
-            table.delete(script._element_groups[element.class], element)
-        end
-    end
+    managers.mission:delete_links(instance.name, BeardLibEditor.Utils.LinkTypes.Instance)
     for i, ins in pairs(instances) do
         if ins.name == instance.name then
             for _, unit in pairs(World:find_units_quick("all")) do
                 if unit:unit_data() and unit:unit_data().instance == instance.name then
-                    managers.worlddefinition:delete_unit(unit)
+                    managers.worlddefinition:delete_unit(unit, true)
                     World:delete_unit(unit)
                 end
             end
