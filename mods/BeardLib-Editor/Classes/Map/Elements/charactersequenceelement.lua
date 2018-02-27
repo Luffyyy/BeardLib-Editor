@@ -1,4 +1,4 @@
-EditorCharacterSequence = EditorCharacterSequence or class(MissionScriptEditor)
+EditorCharacterSequence = EditorCharacterSequence or class(MissionScriptEditor) --is this used?
 function EditorCharacterSequence:create_element()
 	EditorCharacterSequence.super.create_element(self)
 	self._element.class = "ElementCharacterSequence"

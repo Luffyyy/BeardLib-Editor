@@ -37,7 +37,7 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    self._links = self:GetPart("static"):build_links(self._element.id, true, self._element)
+    self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
@@ -319,7 +319,7 @@ function MissionScriptEditor:update_element(old_script)
 		unit:set_position(self._element.values.position)
 		unit:set_rotation(self._element.values.rotation)
 	end
-	self:GetPart("static"):build_links(self._element.id, true, self._element)
+	self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
 end
 
 function MissionScriptEditor:set_element_data(menu, item)

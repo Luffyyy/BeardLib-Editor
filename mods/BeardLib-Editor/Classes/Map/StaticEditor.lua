@@ -8,6 +8,7 @@ function Static:init(parent, menu)
     self._nav_surfaces = {}
     self._ignore_raycast = {}
     self._ignored_collisions = {}
+    self._set_units = {}
     self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
 end
@@ -64,10 +65,23 @@ function Static:deselect_unit(menu, item) self:set_unit(true) end
 function Static:mouse_released(button, x, y) 
     self._mouse_hold = false
     self._widget_hold = false
+    
     for key, ignored in pairs(self._ignored_collisions) do
         Utils:UpdateCollisionsAndVisuals(key, ignored, true)
     end
+
+    self:set_units()
     self._ignored_collisions = {}
+end
+
+function Static:set_units()
+    for key, unit in pairs(self._set_units) do
+        if alive(unit) then
+            local ud = unit:unit_data()
+            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)        
+        end
+    end
+    self._set_units = {}
 end
 
 function Static:loaded_continents()
@@ -239,6 +253,10 @@ function Static:set_unit_data()
             ud.editable_gui = Utils:EditableGuiData(unit)
             ud.ladder = Utils:LadderData(unit)
             ud.zipline = Utils:ZiplineData(unit)
+            if old_continent ~= new_continent then
+                managers.worlddefinition:ResetUnitID(unit, old_continent)
+                self:GetItem("Id"):SetValue(ud.unit_id)
+            end
             unit:set_editor_id(ud.unit_id)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             for index = 0, unit:num_bodies() - 1 do
@@ -600,6 +618,7 @@ local function portal_link_text(name)
 end
 
 function Static:build_links(id, match, element)
+    match = match or Utils.LinkTypes.Unit
     local function create_link(text, id, group, clbk)
         warn = warn or ""
         self:Button(id, clbk, {
@@ -609,21 +628,16 @@ function Static:build_links(id, match, element)
             label = "elements"
         })
     end
-
-    local links = managers.mission:get_links_paths(id, match)
-    local has_links = #links > 0
+    
+    local links = managers.mission:get_links_paths_new(id, match)
+    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200, h= 200})
     local same_links = {}
-
-    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200})
     links_group:ClearItems()
 
   --Get portals that have the unit attached to - https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/49
-
-    if has_links then
-        for _, link in pairs(links) do
-            same_links[link.element.id] = true
-            create_link(element_link_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", element))
-        end
+    for _, link in pairs(links) do
+        same_links[link.element.id] = true
+        create_link(element_link_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", link.element))
     end
 
     local portal_layer = self:GetLayer("portal")
@@ -632,15 +646,10 @@ function Static:build_links(id, match, element)
         if ids and ids[id] then
             local name = portal:name()
             create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))               
-            has_links = true 
         end
     end
 
-    if not has_links then
-        links_group:Destroy()
-    end
-
-    if is_element then
+    if match == Utils.LinkTypes.Element then
         local linking_group = self:GetItem("LinkingTo") or self:Group("LinkingTo", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
@@ -650,14 +659,14 @@ function Static:build_links(id, match, element)
                 if tbl.elements then
                     for k, e in pairs(tbl.elements) do
                         local id = e.id
-                        for _, link in pairs(managers.mission:get_links_paths(id, Utils.LinkTypes.Element, {{mission_element_data = element}})) do
+                        for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Element, {{mission_element_data = element}})) do
                             local warn
-                            if link.upper_k == "on_executed" then
+                            if link.location == "on_executed" then
                                 if same_links[id] and link.tbl.delay == 0 then
-                                    warn = "Warning - link already exists and can cause an endless loop, add a delay."
+                                    warn = "Warning - link already exists and can cause an endless loop, increase the delay."
                                 end
                             end
-                            create_link(element_text(e, link.upper_k or link.key, warn), e.id, linking_group, ClassClbk(self._parent, "select_element", element))
+                            create_link(element_link_text(e, link.location, warn), e.id, linking_group, ClassClbk(self._parent, "select_element", e))
                         end
                     end
                 end
@@ -666,16 +675,21 @@ function Static:build_links(id, match, element)
 
         for id, unit in pairs(managers.worlddefinition._all_units) do
             local ud = unit:unit_data()
-            for _, link in pairs(managers.mission:get_links_paths(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
-                local linking_from = link.upper_k or link.key
+            for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
+                local linking_from = link.location
                 linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                create_link(unit_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
+                create_link(unit_link_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
             end
         end
         if #linking_group:Items() == 0 then
             linking_group:Destroy()
         end
     end
+
+    if #links_group:Items() == 0 then
+        links_group:Destroy()
+    end
+
     return links
 end
 
@@ -694,10 +708,12 @@ end
 
 function Static:delete_selected(menu, item)
     for _, unit in pairs(self._selected_units) do
-        if unit:fake() then
-            self:GetPart("instances"):delete_instance()
-        else
-            self._parent:DeleteUnit(unit)
+        if alive(unit) then
+            if unit:fake() then
+                self:GetPart("instances"):delete_instance()
+            else
+                self._parent:DeleteUnit(unit)
+            end
         end
     end
     self:reset_selected_units()
@@ -744,7 +760,9 @@ end
 
 function Static:GetCopyData(remove_old_links)
     self:set_unit_data()
-    local copy_data = {}    
+    local copy_data = {}
+    local element_type = Utils.LinkTypes.Elment    
+    local unit_type = Utils.LinkTypes.Unit    
     for _, unit in pairs(self._selected_units) do
         local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
         local copy = {
@@ -768,7 +786,7 @@ function Static:GetCopyData(remove_old_links)
         local typ = v.type
         if typ == "element" then
             v.mission_element_data.script = nil
-            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = element_id
             end
             v.mission_element_data.id = element_id
@@ -776,7 +794,7 @@ function Static:GetCopyData(remove_old_links)
         elseif typ == "unit" and v.unit_data.unit_id then
             local is_world = v.wire_data or v.ai_editor_data
             v.unit_data.continent = nil
-            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = is_world and world_unit_id or unit_id
             end
             v.unit_data.unit_id = is_world and world_unit_id or unit_id
@@ -788,25 +806,14 @@ function Static:GetCopyData(remove_old_links)
         end
     end
     --Remove old links
-    local function remove_link(id, match, element)
-        for _, link in pairs(managers.mission:get_links_paths(id, match, {element})) do
-            if tonumber(link.key) then
-                table.remove(link.tbl, link.key)
-            elseif link.upper_tbl[link.upper_k][link.key] == id then
-                link.upper_tbl[link.upper_k][link.key] = nil
-            else
-                table.delete(link.upper_tbl[link.upper_k], link.tbl)
-            end
-        end
-    end
     if remove_old_links or self:Value("RemoveOldLinks") then
         for _, v in pairs(copy_data) do
             if v.type == "element" then
                 for id, _ in pairs(managers.mission._ids) do
-                    remove_link(id, true, v)
+                    managers.mission:delete_links(id, element_type, {element})
                 end
                 for id, _ in pairs(managers.worlddefinition._all_units) do
-                    remove_link(id, false, v)
+                    managers.mission:delete_links(id, unit_type, {element})
                 end
             end
         end
@@ -858,13 +865,13 @@ function Static:SpawnCopyData(copy_data, prefab)
         local is_unit = v.type == "unit"
         if v.type == "element" then
             local new_final_id = managers.mission:get_new_id(continent)
-            for _, link in pairs(managers.mission:get_links_paths(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
             local new_final_id = managers.worlddefinition:GetNewUnitID(continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
-            for _, link in pairs(managers.mission:get_links_paths(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id

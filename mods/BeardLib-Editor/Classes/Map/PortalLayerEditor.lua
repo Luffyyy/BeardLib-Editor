@@ -239,8 +239,18 @@ function PortalLayer:add_portal(name)
     self:save()
 end
 
-function PortalLayer:select_portal(name, nounselect)
-    self._parent:Switch()
+function PortalLayer:refresh()
+    if self._parent._current_layer == "portal" and self._selected_portal then
+        self:load_portal_shapes()
+        self:load_portal_units()
+        self:select_shape()
+    end
+end
+
+function PortalLayer:select_portal(name, nounselect, noswitch)
+    if noswitch ~= true then
+        self._parent:Switch()
+    end
     if self._parent._current_layer ~= "portal" then
         self._parent:build_menu("portal", self) --TODO: change to less dumb
     end

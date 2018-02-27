@@ -6,6 +6,7 @@ function EditUnitEditableGui:build_menu(units)
 	self._element_guis = {}
 	self._fonts = {
 		"core/fonts/diesel",
+		"fonts/font_futura",
 		"fonts/font_medium_shadow_mf",
 		"fonts/font_small_shadow_mf",
 		"fonts/font_eroded",

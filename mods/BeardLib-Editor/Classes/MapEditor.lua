@@ -375,8 +375,16 @@ function Editor:set_camera_fov(fov)
     end
 end
 
+function Editor:set_unit_position(unit, pos, rot) 
+    local ud = unit:unit_data()
+    if pos then
+        BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos, rot or ud.rotation, ud) 
+    else
+        BeardLibEditor.Utils:SetPosition(unit, ud.position, rot or unit:rotation(), ud) 
+    end
+end
+
 --Short functions
-function Editor:set_unit_position(unit, pos, rot) BeardLibEditor.Utils:SetPosition(unit, pos and (pos + unit:unit_data().local_pos) or unit:position(), rot or unit:rotation()) end
 function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
 function Editor:destroy() self._vp:destroy() end
 function Editor:add_element(element, menu, item) m.mission:add_element(element) end
@@ -518,7 +526,7 @@ end
 
 function Editor:update_widgets(t, dt)
     if alive(self:widget_unit()) then
-        local widget_pos  = self:world_to_screen(self:widget_unit():position())
+        local widget_pos = self:world_to_screen(self:widget_unit():position())
         if widget_pos.z > 50 then
             widget_pos = widget_pos:with_z(0)
             local widget_screen_pos = widget_pos
@@ -528,6 +536,7 @@ function Editor:update_widgets(t, dt)
                 local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                 if self._last_pos ~= result_pos then 
                     self:set_unit_positions(result_pos)
+                    self:update_positions()                    
                 end
                 self._last_pos = result_pos
             end
@@ -535,6 +544,7 @@ function Editor:update_widgets(t, dt)
                 local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
                 if self._last_rot ~= result_rot then
                     self:set_unit_rotations(result_rot)
+                    self:update_positions()
                 end
                 self._last_rot = result_rot
             end
@@ -554,7 +564,6 @@ function Editor:update_widgets(t, dt)
                 BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
                 self._rotate_widget:update(t, dt)
             end
-            self:update_positions() --unsure
         end
     end
 end

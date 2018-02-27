@@ -191,6 +191,7 @@ function Options:save()
     if self._saving then
         return
     end
+    self:GetPart("static"):set_units()
     local panel = self:GetPart("menu"):GetItem("save").panel
     local bg = alive(panel) and panel:child("bg_save") or panel:rect({
         name = "bg_save",
@@ -254,7 +255,8 @@ function Options:save()
             self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
             missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
         end
-        self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(worlddef._continents, cusxml))
+
+        self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(BeardLib.Utils:RemoveMetas(worlddef._continents), cusxml))
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
         self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, xml))
 
@@ -416,7 +418,16 @@ function Options:build_nav_segments() -- Add later the options to the menu
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
-            BeardLibEditor.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one from world menu > AI layer > Add Nav surface")
+            if #units > 0 then
+                BeardLibEditor.Utils:Notify("Error!", "at least one nav surface has to touch a surface for navigation to be built")
+            else
+                BeardLibEditor.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
+                local W = self:GetPart("world")
+                W:Switch()
+                if W._current_layer ~= "ai" then
+                    W:build_menu("ai")
+                end
+            end
         end       
     end)
 end

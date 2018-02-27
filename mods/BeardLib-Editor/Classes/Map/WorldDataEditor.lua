@@ -3,6 +3,7 @@ WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
 function WData:init(parent, menu) 
     if BeardLib.current_level then
+        self._continent_settings = ContinentSettingsDialog:new(BeardLibEditor._dialogs_opt)
         self._assets_manager = AssetsManagerDialog:new(BeardLibEditor._dialogs_opt)
         self._objectives_manager = ObjectivesManagerDialog:new(BeardLibEditor._dialogs_opt)
     end
@@ -187,7 +188,7 @@ function WData:build_continents()
             local continent = self:Group(name, {group = continents, text = name})
             toolbar_item("Remove", ClassClbk(self, "remove_continent", name), continent, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
             toolbar_item("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), continent, {highlight_color = Color.red, texture_rect = {7, 2, 48, 48}})
-            toolbar_item("Rename", ClassClbk(self, "rename_continent", name), continent, {texture_rect = {66, 1, 48, 48}})
+            toolbar_item("Settings", ClassClbk(self, "open_continent_settings", name), continent, {texture_rect = {385, 385, 115, 115}})
             toolbar_item("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), continent, {texture_rect = {122, 1, 48, 48}})
             toolbar_item("AddScript", ClassClbk(self, "add_new_mission_script", name), continent, {text = "+", help = "Add mission script"})
             for sname, data in pairs(managers.mission._missions[name]) do
@@ -202,57 +203,8 @@ function WData:build_continents()
     end
 end
 
-function WData:rename_continent(continent)
-    BeardLibEditor.InputDialog:Show({title = "Rename continent to", text = continent, callback = function(name)
-        if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
-                self:rename_continent(continent)
-            end})
-            return
-        elseif name == "environments" or string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:rename_continent(continent)
-            end})
-            return
-        elseif worlddef._continent_definitions[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
-                self:rename_continent(continent)
-            end})
-            return
-        end
-        local worlddef = managers.worlddefinition
-        local mission = managers.mission
-        if worlddef._continent_definitions[name] then
-            self:rename_continent(continent)
-            return
-        end
-        worlddef._continent_definitions[name] = deep_clone(worlddef._continent_definitions[continent])
-        mission._missions[name] = deep_clone(mission._missions[continent])
-        worlddef._continents[name] = deep_clone(worlddef._continents[continent])
-        worlddef._continent_definitions[continent] = nil
-        mission._missions[continent] = nil
-        worlddef._continents[continent] = nil
-        for _, script in pairs(mission._scripts) do
-            if script._continent == continent then
-                script._continent = name
-            end
-        end
-        for k, static in pairs(worlddef._continent_definitions[name].statics) do
-            if static.unit_data and static.unit_data.unit_id then
-                static.unit_data.continent = name
-                local unit = worlddef:get_unit_on_load(static.unit_data.unit_id)
-                if alive(unit) then
-                    local ud = unit:unit_data()
-                    if ud then
-                        ud.continent = name
-                    else
-                        BeardLibEditor:log("[Warning] Unit with no unit data inside continent")
-                    end
-                end
-            end
-        end
-        self:build_default_menu()        
-    end})
+function WData:open_continent_settings(continent)
+    self._continent_settings:Show({continent = continent, callback = callback(self, self, "build_default_menu")})
 end
 
 function WData:remove_brush_layer()

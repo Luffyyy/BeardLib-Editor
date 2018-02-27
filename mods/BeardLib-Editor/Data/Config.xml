@@ -10,6 +10,7 @@
         <class file="Dialogs/AssetsManagerDialog.lua"/>
         <class file="Dialogs/ObjectivesManagerDialog.lua"/>
         <class file="Dialogs/SelectListDialogValue.lua"/>
+        <class file="Dialogs/ContinentSettingsDialog.lua"/>
         <class file="Map/EditorPart.lua"/>
         <class file="Map/EditUnit.lua"/>
         <class file="Map/MissionEditor.lua"/>
@@ -91,8 +92,8 @@
                 <option type="boolean" default_value="true" name="RemoveOldLinks"/>
                 <option type="boolean" default_value="false" name="SelectAndGoToMenu"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
-                <option type="boolean" default_value="false" name="SoundUnits"/>
-                <option type="boolean" default_value="false" name="EnvironmentUnits"/>
+                <option type="boolean" default_value="true" name="SoundUnits"/>
+                <option type="boolean" default_value="true" name="EnvironmentUnits"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
                 <option type="boolean" default_value="false" name="ShowElements"/>

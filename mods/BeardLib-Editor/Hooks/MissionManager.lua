@@ -216,6 +216,11 @@ function Mission:execute_element(element)
     end
 end
 
+local tblinsert = table.insert
+local tblremove = table.remove
+local tbldel = table.delete
+local tblcont = table.contains
+
 function Mission:get_executors(element)
 	local executors = {}
 	if element then
@@ -226,7 +231,7 @@ function Mission:get_executors(element)
 						if s_element.values.on_executed then
 							for _, exec in pairs(s_element.values.on_executed) do									
 								if exec.id == element.id then
-									table.insert(executors, s_element)
+									tblinsert(executors, s_element)
 								end
 							end
 						end
@@ -238,14 +243,18 @@ function Mission:get_executors(element)
 	return executors
 end
 
-function Mission:delete_links(id, match)
-	for _, link in pairs(self:get_links_paths(id, match)) do
-		if tonumber(link.key) then
-			table.remove(link.tbl, link.key)
-		elseif link.upper_tbl[link.upper_k][link.key] == id then
-            link.upper_tbl[link.upper_k][link.key] = nil
-        else
-			table.delete(link.upper_tbl[link.upper_k], link.tbl)
+function Mission:delete_links(id, match, elements)
+	local links = self:get_links_paths_new(id, match, elements)
+	for i=1, #links do --pls no crash on large maps :((
+		local link = links[i]
+		if tonumber(link.upper_key) then
+			tblremove(link.upper_tbl, link.upper_key)
+		elseif link.tbl[link.key] == id then
+			if tonumber(link.key) then
+				tblremove(link.tbl, link.key)
+			else
+				link.tbl[link.key] = nil
+			end
 		end
 	end
 end
@@ -311,7 +320,7 @@ function Mission:get_links(id, match)
 			if tbl.elements then
 				for _, element in pairs(tbl.elements) do
 					if self:is_linked(id, match, "values", element.values) then
-						table.insert(modifiers, element)
+						tblinsert(modifiers, element)
 					end
 				end
 			end
@@ -325,16 +334,16 @@ function Mission:get_links_paths(id, match, elements)
         return {}
     end
     local id_paths = {}
-	local function GetLinks(upper_k, upper_tbl, tbl, element, stop)
+	local function GetLinks(upper_k, upper_tbl, tbl, element)
 		upper_tbl = upper_tbl or element
         for k, v in pairs(tbl) do
             local current = self:identify_key_and_upper_key(upper_k, k)
-            if not stop and type(v) == "table" then
+            if type(v) == "table" then
                 local new_upper_key = not tonumber(k) and k or upper_k
                 local new_upper_tbl = not tonumber(k) and tbl or upper_tbl
                 GetLinks(new_upper_key, new_upper_tbl, v, element)
 			elseif current == match and v == id then
-				table.insert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl, element = element})
+				tblinsert(id_paths, {tbl = tbl, key = k, upper_k = upper_k, upper_tbl = upper_tbl, element = element})
             end
         end
     end
@@ -351,6 +360,118 @@ function Mission:get_links_paths(id, match, elements)
 					for k, element in pairs(tbl.elements) do
 						if not element.instance then
 							GetLinks("values", nil, element.values, element)
+						end
+                    end
+                end
+            end
+        end
+    end
+    return id_paths
+end
+
+local unit_rules = {
+	keys = {"unit_id", "camera_u_id", "att_unit_id"},
+	tbl_keys = {"unit_ids", "graph_ids", "nav_segs", "digital_gui_unit_ids", "elements"},
+	tbl_value_keys = {
+		{"obstacle_list", "unit_id"}, {"trigger_list", "notify_unit_id"}, {"sequence_list", "unit_id"}
+	}
+}
+local element_rules = {
+	keys = {"counter_id", "sequence", "att_unit_id", "element_id"},
+	tbl_keys = {
+		"elements",
+		"instigator_ids",
+		"spawn_unit_elements", 
+		"use_shape_element_ids",
+		"rules_element_ids", 
+		"spawn_groups", 
+		"spawn_points", 
+		"followup_elements", 
+		"spawn_instigator_ids", 
+		"Stopwatch_value_ids",
+		"included_units",
+		"excluded_units"
+	},
+	tbl_value_keys = {{"on_executed", "id"}}
+}
+
+local instance_rules = {
+	keys = {"instance"},
+	tbl_value_keys = {{"event_list", "instance"}, {"instances", "instance"}}
+}
+-- This is me trying to understand this, it confused me so fucking much.
+-- key and id(located in values)
+	--Deleting: tbl[key] = nil
+	--Altering: tbl[key] = x
+	--upper_tbl[upper_key][key] / element.values.unit_id
+-- id inside tbl
+	--Deleting: table.remove(tbl, key)
+	--Altering: tbl[key] = x
+	--upper_tbl[upper_key][key] / values.elements[1]
+-- key and id inside tbl
+	--Deleting: table.remove(upper_tbl, upper_key)
+	--Altering: tbl[key] = x
+	--upper_tbl[upper_key][key] / on_executed[1].id
+
+local LinkTypes = Utils.LinkTypes
+local default_upper_k = "values"
+function Mission:get_links_paths_new(id, match, elements)   
+    if type(id) ~= "string" and (not tonumber(id) or tonumber(id) < 0) then
+        return {}
+    end
+	local id_paths = {}
+	local function GetLinks(values, element)
+		local function get_locations_of_links(rules)
+			for _, key in pairs(rules.keys) do
+				if values[key] == id then
+					tblinsert(id_paths, {tbl = values, key = key, upper_k = default_upper_k, upper_tbl = element, element = element, location = key})
+				end
+			end
+			if rules.tbl_keys then
+				for _, key in pairs(rules.tbl_keys) do
+					local t = values[key]
+					if t then
+						local k = table.get_key(t, id)
+						if k then
+							tblinsert(id_paths, {tbl = t, key = k, upper_k = key, upper_tbl = values, element = element, location = key})
+						end
+					end
+				end
+			end
+			for _, loc in pairs(rules.tbl_value_keys) do
+				local t = values[loc[1]]
+				if t then
+					for i,v in pairs(t) do
+						if v[loc[2]] == id then
+							tblinsert(id_paths, {tbl = v, key = loc[2], upper_k = i, upper_tbl = t, element = element, location = loc[1]})
+							break
+						end
+					end
+				end
+			end
+		end
+
+		if match == LinkTypes.Unit then
+			get_locations_of_links(unit_rules)
+		elseif match == LinkTypes.Instance then -- too short to be last :c
+			get_locations_of_links(instance_rules)
+		elseif match == LinkTypes.Element then
+			get_locations_of_links(element_rules)
+		end
+    end
+    if elements then
+        for _, element in pairs(elements) do
+            if element.mission_element_data and element.mission_element_data.values then
+                GetLinks(element.mission_element_data.values, element)
+            end
+        end
+    else
+        for _, script in pairs(self._missions) do
+            for _, tbl in pairs(script) do
+                if tbl.elements then
+					for k, element in pairs(tbl.elements) do
+						if not element.instance then
+							GetLinks(element.values, element)
 						end
                     end
                 end

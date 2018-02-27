@@ -42,6 +42,7 @@ function WorldDef:init(params)
 	self._termination_counter = 0
 	self._delayed_units = {}
 	self._all_names = {}
+	self._statics = {}
 	self:create("ai")
 end
 
@@ -111,6 +112,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 					BeardLib.Utils:RemoveAllNumberIndexes(static, true)
 					if move_continent then
 						statics[i] = nil
+						table.remove(statics, i)
 						table.insert(new_statics, static)
 					end
 					break
@@ -213,12 +215,6 @@ function WorldDef:_continent_editor_only(data)
 end
 
 function WorldDef:init_done()
-	if self._continent_init_packages then
-		for _, package in ipairs(self._continent_init_packages) do
-			--self:_unload_package(package)
-		end
-	end
-	--self:_unload_package(self._current_world_init_package)
 	managers.editor:load_continents(self._continent_definitions)
 	local i = 1 
 	for continent, data in pairs(self._continent_definitions) do
@@ -229,71 +225,58 @@ function WorldDef:init_done()
 	self._init_done = true
 end
 
+--currently I'm not sure if to check using world or world defintion for assets manager.
+function WorldDef:check_names()
+	local names = {}
+	for _, name in pairs(self._all_names) do
+		for _, unit in pairs(World:find_units_quick("all")) do
+			local ud = unit:unit_data()
+			if ud and ud.name == name then
+				names[name] = true
+			end
+		end
+	end
+	
+	for _, name in pairs(self._all_names) do
+		if not names[name] then
+			self._all_names[name] = nil
+		end
+	end
+end
+
 function WorldDef:delete_unit(unit, no_unlink)
-	local unit_id = unit:unit_data().unit_id
-	local name_id = unit:unit_data().name_id
-	local continent_name = unit:unit_data().continent
+	local ud = unit:unit_data()
+	local unit_id = ud.unit_id
+	local name_id = ud.name_id
+	local continent_name = ud.continent
 	self:remove_name_id(unit)
 	if unit_id > 0 then
-		if self:is_world_unit(unit) then
-			self._world_unit_ids[unit_id] = nil
-		elseif continent_name then
-			self._unit_ids[continent_name][unit_id] = nil
-		end
-		self._all_units[unit_id] = nil
-		local unit_exists
-		local unit_name = unit:unit_data().name
-		for _, continent in pairs(self._continent_definitions) do
-			if unit_exists then
-				break
-			end
-			for _, static in pairs(continent.statics or {}) do
-				if static.name == unit_name then
-					unit_exists = true
-					break
-				end
-			end
-		end
-		if not unit_exists then
-			for _, static in pairs(managers.worlddefinition._world_data.wires or {}) do
-				if static.name == unit_name then
-					unit_exists = true
-					break
-				end
-			end
-		end
-		if not unit_exists then
-			for _, static in pairs(managers.worlddefinition._world_data.ai or {}) do
-				if static.name == unit_name then
-					unit_exists = true
-					break
-				end
-			end
-		end
-		if not unit_exists then
-			self._all_names[unit_name] = nil
-		end
+		self:RemoveUnitID(unit)
 		local statics
 		if unit:wire_data() then
-			statics = managers.worlddefinition._world_data.wires
+			statics = self._world_data.wires
 		elseif unit:ai_editor_data() then
-			statics = managers.worlddefinition._world_data.ai
-		elseif not unit:unit_data().instance then
+			statics = self._world_data.ai
+		elseif not ud.instance then
 			statics = self._continent_definitions[continent_name]
 			statics = statics and statics.statics
 		end
 		if not no_unlink then
 			managers.mission:delete_links(unit_id, Utils.LinkTypes.Unit)
+			for _, portal in pairs(_G.clone(managers.portal:unit_groups())) do
+				portal._ids[unit_id] = nil
+			end
 		end
 		if statics then
 			for k, static in pairs(statics) do
 				if static.unit_data and (static.unit_data.unit_id == unit_id) then
 					table.remove(statics, k)
-					managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
+					--managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
 					return
 				end
 			end
 		end
+		Utils:GetLayer("portal"):refresh()
 	end
 end
 
@@ -310,11 +293,13 @@ function WorldDef:add_unit(unit)
 		statics = self._continent_definitions[ud.continent].statics
 	end
 	if statics then
-		table.insert(statics, {
+		local static = {
 			unit_data = unit:unit_data(),
 			wire_data = unit:wire_data(),
 			ai_editor_data = unit:ai_editor_data(),
-		})
+		}
+		self._statics[unit:key()] = static
+		table.insert(statics, static)
 	end
 end
 
@@ -429,6 +414,7 @@ function WorldDef:make_unit(data, offset)
 	end
 	if alive(unit) then	
 		self:assign_unit_data(unit, data)
+		self._statics[unit:key()] = data
 	end
 	return unit
 end
@@ -470,12 +456,53 @@ function WorldDef:_setup_unit_id(unit, data)
 	end
 end
 
-function WorldDef:GetNewUnitID(continent, t)
+function WorldDef:ResetUnitID(unit, continent_name)
+	local ud = unit:unit_data()
+	self:RemoveUnitID(unit, continent_name or ud.continent)
+	local is_world = self:is_world_unit(unit)
+	local continent = ud.continent
+	local unit_id = self:GetNewUnitID(continent, nil, is_world)
+	
+	for _, link in pairs(managers.mission:get_links_paths_new(ud.unit_id, Utils.LinkTypes.Unit)) do
+		link.tbl[link.key] = unit_id
+	end
+
+	for _, portal in pairs(_G.clone(managers.portal:unit_groups())) do
+		if portal._ids[ud.unit_id] then
+			portal._ids[ud.unit_id] = nil
+			portal._ids[unit_id] = true
+		end
+	end
+	
+	ud.unit_id = tonumber(unit_id)
+	unit:set_editor_id(unit_id)
+	
+	if is_world then
+		self._world_unit_ids[unit_id] = true
+	elseif continent then
+		self._unit_ids[continent] = self._unit_ids[continent] or {}
+		self._unit_ids[continent][unit_id] = true
+	end
+	self._all_units[unit_id] = unit
+	Utils:GetLayer("portal"):refresh()
+end
+
+function WorldDef:RemoveUnitID(unit, continent_name)
+	local unit_id = unit:unit_data().unit_id
+	if self:is_world_unit(unit) then
+		self._world_unit_ids[unit_id] = nil
+	elseif continent_name then
+		self._unit_ids[continent_name][unit_id] = nil
+	end
+	self._all_units[unit_id] = nil
+end
+
+function WorldDef:GetNewUnitID(continent, t, is_world)
     if continent then       
         self._unit_ids[continent] = self._unit_ids[continent] or {}
         local tbl = self._unit_ids[continent]
         local i = self._continents[continent] and self._continents[continent].base_id
-        if t:id() == Idstring("wire") or t:id() == Idstring("ai") then
+        if is_world or t and (t:id() == Idstring("wire") or t:id() == Idstring("ai")) then
             tbl = self._world_unit_ids
             i = 1
         end

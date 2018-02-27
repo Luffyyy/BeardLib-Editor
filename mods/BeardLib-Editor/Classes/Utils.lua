@@ -23,7 +23,7 @@ local optimization = {}
 
 Utils.LinkTypes = {Unit = 1, Element = 2, Instance = 3}
 
-function BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
+function Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
     Static = Static or self:GetPart("static")
     editor_menu = editor_menu or managers.editor._menu
     opt = opt or optimization[key]
@@ -51,22 +51,10 @@ function BeardLibEditor.Utils:UpdateCollisionsAndVisuals(key, opt, collisions_on
 end
 
 --Sets the position of a unit/object correctly
-function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
-    local ud = unit:unit_data()
-    local me = unit:mission_element()
-    if offset and ud._prev_pos and ud._prev_rot then
-        local pos = mvector3.copy(ud._prev_pos)
-        mvector3.add(pos, position)
-        unit:set_position(pos)
-        local prev_rot = ud._prev_rot
-        local rot = Rotation(prev_rot:yaw(), prev_rot:pitch(), prev_rot:roll())
-        rot:yaw_pitch_roll(rot:yaw() + rotation:yaw(), rot:pitch() + rotation:pitch(), rot:roll() + rotation:roll())
-        unit:set_rotation(rot)
-    else
-    	unit:set_position(position)
-    	unit:set_rotation(rotation)
-    end
-    
+function Utils:SetPosition(unit, position, rotation, ud)
+    ud = ud or unit:unit_data()
+    unit:set_position(position)
+    unit:set_rotation(rotation)
     if unit.get_objects_by_type then
         local opt
         local unit_key = unit:key()
@@ -83,12 +71,14 @@ function BeardLibEditor.Utils:SetPosition(unit, position, rotation, offset)
         self:UpdateCollisionsAndVisuals(unit_key, opt)
         ud.position = position
         ud.rotation = rotation
+
+        local me = unit:mission_element()
         if me then
             local element = me.element.values
             element.position = position
             element.rotation = rotation
         elseif ud.name and not ud.instance then
-            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)        
+            Static._set_units[unit_key] = unit
         end
     end
 end

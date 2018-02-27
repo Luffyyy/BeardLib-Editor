@@ -10,8 +10,11 @@ function DummyItem:SetValue(v)
 	self.value = v
 end
 
+--Dumb class, but helpful.
+
 MenuUtils = MenuUtils or class()
 function MenuUtils:init(this, menu)
+	this = this or self
 	menu = menu or this._menu
 	local color = BeardLibEditor.Options:GetValue("AccentColor")
 	function this:GetMenu()

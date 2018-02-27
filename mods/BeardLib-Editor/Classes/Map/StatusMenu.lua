@@ -12,8 +12,14 @@ function StatusMenu:init(parent, menu)
     self._text = self._menu:Divider({name = "Text", text = "", text_align = "right"})
 end
 
+function StatusMenu:SetVisible(visible)
+    self._menu:SetVisible(visible)
+end
+
 function StatusMenu:SetStatus(status)
-    self._menu:SetVisible(not not status)
+    if not status then
+        self:SetVisible(false)
+    end
     if status then
         self._text:SetText(status)
     end

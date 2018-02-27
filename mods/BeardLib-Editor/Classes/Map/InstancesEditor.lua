@@ -83,8 +83,9 @@ function Instance:update_positions()
             local instance = unit:object()
             local instance_name = instance.name
             for _, unit in pairs(World:find_units_quick("all")) do
-                if unit:unit_data() and unit:unit_data().instance == instance_name then
-                    BeardLibEditor.Utils:SetPosition(unit, instance.position + unit:unit_data().local_pos:rotate_with(instance.rotation), instance.rotation * unit:unit_data().local_rot)
+                local ud = unit:unit_data()
+                if ud and ud.instance == instance_name then
+                    BeardLibEditor.Utils:SetPosition(unit, instance.position + ud.local_pos:rotate_with(instance.rotation), instance.rotation * ud.local_rot, ud)
                 end
             end        
         end
