@@ -384,8 +384,8 @@ function Static:recalc_locals(unit, reference)
     local pos = unit:position()
     local ref_pos = reference:position()
     local ref_rot = reference:rotation()
-    unit:unit_data().local_pos = pos - ref_pos --:rotate_with(rot:inverse()) Trying to improve widget rotation but sadly failing.
-    unit:unit_data().local_rot = ref_rot:inverse() * unit:rotation()
+    unit:unit_data().local_pos = (pos - ref_pos):rotate_with(ref_rot:inverse())
+	unit:unit_data().local_rot = ref_rot:inverse() * unit:rotation()
 end
 
 function Static:check_unit_ok(unit)

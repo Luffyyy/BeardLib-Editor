@@ -51,10 +51,12 @@ function Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
 end
 
 --Sets the position of a unit/object correctly
-function Utils:SetPosition(unit, position, rotation, ud)
+function Utils:SetPosition(unit, position, rotation, ud, offset)
     ud = ud or unit:unit_data()
     unit:set_position(position)
-    unit:set_rotation(rotation)
+    if rotation then
+        unit:set_rotation(rotation)
+    end
     if unit.get_objects_by_type then
         local opt
         local unit_key = unit:key()
@@ -70,13 +72,16 @@ function Utils:SetPosition(unit, position, rotation, ud)
         
         self:UpdateCollisionsAndVisuals(unit_key, opt)
         ud.position = position
-        ud.rotation = rotation
-
+        if rotation then
+            ud.rotation = rotation
+        end
         local me = unit:mission_element()
         if me then
             local element = me.element.values
             element.position = position
-            element.rotation = rotation
+            if rotation then
+                element.rotation = rotation
+            end
         elseif ud.name and not ud.instance then
             Static._set_units[unit_key] = unit
         end

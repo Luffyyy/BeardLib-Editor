@@ -325,7 +325,8 @@ function Editor:set_unit_positions(pos)
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
             if unit ~= self:selected_unit() then
-                self:set_unit_position(unit, pos)
+                local ud = unit:unit_data()
+                BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
             end
         end
     end
@@ -335,11 +336,22 @@ function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
-        for _, unit in pairs(m.static._selected_units) do
+        for i, unit in pairs(m.static._selected_units) do
             if unit ~= self:selected_unit() then
-                self:set_unit_position(unit, nil, rot * unit:unit_data().local_rot)
+                local ud = unit:unit_data()
+                BeardLibEditor.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), ud.local_rot * rot, ud) 
             end
         end
+    end
+end
+
+function Editor:set_unit_position(unit, pos, rot) 
+    local ud = unit:unit_data()
+    rot = rot or ud.rotation
+    if pos then
+        BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(rot), rot, ud) 
+    else
+        BeardLibEditor.Utils:SetPosition(unit, ud.position, rot, ud) 
     end
 end
 
@@ -366,21 +378,11 @@ function Editor:load_continents(continents)
     end
 end
 
-
 function Editor:set_camera_fov(fov)
     if math.round(self:camera():fov()) ~= fov then
         self._vp:pop_ref_fov()
         self._vp:push_ref_fov(fov)
         self:camera():set_fov(fov)
-    end
-end
-
-function Editor:set_unit_position(unit, pos, rot) 
-    local ud = unit:unit_data()
-    if pos then
-        BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos, rot or ud.rotation, ud) 
-    else
-        BeardLibEditor.Utils:SetPosition(unit, ud.position, rot or unit:rotation(), ud) 
     end
 end
 

@@ -399,7 +399,7 @@ local instance_rules = {
 	keys = {"instance"},
 	tbl_value_keys = {{"event_list", "instance"}, {"instances", "instance"}}
 }
--- This is me trying to understand this, it confused me so fucking much.
+
 -- key and id(located in values)
 	--Deleting: tbl[key] = nil
 	--Altering: tbl[key] = x
