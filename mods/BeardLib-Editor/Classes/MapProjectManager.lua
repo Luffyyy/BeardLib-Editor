@@ -149,7 +149,8 @@ function Project:get_clean_data(t, no_clone)
     for _, narrative in pairs(U:GetNodeByMeta(data, "narrative", true)) do
         U:RemoveAllNumberIndexes(narrative, true)
     end
-    for _, level in pairs(U:GetNodeByMeta(data, "level", true)) do
+    --TODO: remove key tables, use metas only.
+    for _, level in pairs(table.list_add(U:GetNodeByMeta(data, "instance", true), U:GetNodeByMeta(data, "level", true))) do
         U:RemoveAllNumberIndexes(level, true)
         for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks", "packages"}) do
             if level and level[v] then

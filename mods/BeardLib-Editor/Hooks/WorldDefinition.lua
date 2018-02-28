@@ -593,6 +593,7 @@ function WorldDef:parse_continents(node, t)
 end
 
 function WorldDef:prepare_for_spawn_instance(instance)
+	self:try_loading_custom_instance(instance.folder)
 	local package_data = managers.world_instance:packages_by_instance(instance)
 	if self._init_done then
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)

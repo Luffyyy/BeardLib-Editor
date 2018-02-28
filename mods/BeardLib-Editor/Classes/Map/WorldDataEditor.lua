@@ -565,7 +565,7 @@ function WData:OpenSpawnPrefabDialog()
 end
 
 function WData:OpenSpawnInstanceDialog()
-    local instances = {}
+    local instances = table.map_keys(BeardLib.managers.MapFramework._loaded_instances)
     for _, path in pairs(BeardLibEditor.Utils:GetEntries({type = "world"})) do
         if path:match("levels/instances") then
             table.insert(instances, path)
