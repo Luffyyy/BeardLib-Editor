@@ -506,7 +506,8 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
         list = list,
         values_name = params.table_data and params.table_data.values_name,
 		combo_items_func = params.table_data and params.table_data.combo_items_func,
-        single_select = params.single_select,
+		single_select = params.single_select,
+		combo_free_typing = true,
         allow_multi_insert = NotNil(params.allow_multi_insert, true),
         not_table = params.not_table,
         callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
@@ -560,6 +561,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		allow_multi_insert = NotNil(params.allow_multi_insert, true),
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
+		combo_free_typing = true,
 		not_table = params.not_table,
 		callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
 	})
@@ -598,6 +600,7 @@ function MissionScriptEditor:OpenInstancesManageDialog(params)
 	BeardLibEditor.SelectDialogValue:Show({
 		selected_list = selected_list,
 		list = list,
+		combo_free_typing = true,
 		values_name = params.table_data and params.table_data.values_name,
 		combo_items_func = params.table_data and params.table_data.combo_items_func,
 		callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)

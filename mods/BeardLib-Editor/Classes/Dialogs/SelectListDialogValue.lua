@@ -72,7 +72,7 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
         end                
     end
 
-    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false}
+    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false, free_typing = self._params.combo_free_typing}
     local v = selected and value.value or nil
     if self._tbl.values_name then
 	    if tonumber(v) then
@@ -82,7 +82,7 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
 	    elseif v then
             if self._tbl.combo_items_func then
                 local items = self._tbl.combo_items_func(name, value)
-                self:ComboBox("", callback(self, self, "ValueClbk", value), items, table.get_key(items, v), opt)
+                self:ComboBox("", callback(self, self, "ValueClbk", value), items, table.get_key(items, v) or v, opt)
             else
 	           self:TextBox("", callback(self, self, "ValueClbk", value), v, opt)
             end
