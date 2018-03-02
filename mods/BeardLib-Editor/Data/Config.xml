@@ -90,6 +90,8 @@
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
                 <option type="boolean" default_value="true" name="RemoveOldLinks"/>
+                <option type="boolean" default_value="false" name="EndlessSelection"/>
+                <option type="number" default_value="1" name="EndlessSelectionReset"/>
                 <option type="boolean" default_value="false" name="SelectAndGoToMenu"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
                 <option type="boolean" default_value="true" name="SoundUnits"/>

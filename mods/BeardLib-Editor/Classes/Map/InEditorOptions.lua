@@ -46,13 +46,18 @@ function Options:build_default_menu()
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
         self._draw_options[opt] = self:Toggle(opt, callback(self, self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
     end
-    local raycast = self:DivGroup("Raycast", groups_opt)
+    local raycast = self:DivGroup("Raycast/Selecting", groups_opt)
     self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
     self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
     self:Toggle("SelectAllRaycast", nil, false, {group = raycast})
     self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = raycast})
+    self:Toggle("EndlessSelection", callback(self, self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)", group = raycast})
+    self:NumberBox("EndlessSelectionReset", callback(self, self, "update_option_value"), self:Value("EndlessSelectionReset"), {
+        help = "How much seconds should the editor wait before reseting the endless selection", group = raycast,
+        control_slice = 0.25,
+    })
     self:NumberBox("RaycastDistance", nil, 200000, {group = raycast})
 
     local mission = self:DivGroup("Mission", groups_opt)

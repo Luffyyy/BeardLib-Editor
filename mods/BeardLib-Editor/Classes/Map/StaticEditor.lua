@@ -25,6 +25,9 @@ end
 
 function Static:mouse_pressed(button, x, y)
     if button == Idstring("0") then
+        if self:Value("EndlessSelection") then
+            self._reset_raycast = TimerManager:game():time() + self:Value("EndlessSelectionReset")
+        end
         self._widget_hold = true
         self._parent:reset_widget_values()
         local from = self._parent:get_cursor_look_point(0)
@@ -55,6 +58,10 @@ function Static:mouse_pressed(button, x, y)
             self:select_unit()
         end
     elseif button == Idstring("1") then
+        if self:Value("EndlessSelection") then
+            self._reset_raycast = nil
+            self._ignore_raycast = {}
+        end
         self:select_unit(true)
         self._mouse_hold = true
     end  
@@ -393,9 +400,17 @@ function Static:check_unit_ok(unit)
     if not ud then
         return false
     end
-    if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
-        self._ignore_raycast[ud.unit_id] = nil
-        return false
+    if self:Value("EndlessSelection") then
+        if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
+            return false
+        else
+            self._ignore_raycast[ud.unit_id] = true
+        end
+    else
+        if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
+            self._ignore_raycast[ud.unit_id] = nil
+            return false
+        end
     end
     if ud.instance and not self:Value("SelectInstances") then
         return false
@@ -729,6 +744,10 @@ end
 
 function Static:update(t, dt)
     self.super.update(self, t, dt)
+    if self._reset_raycast and self._reset_raycast <= t then
+        self._ignore_raycast = {}
+        self._reset_raycast = nil
+    end
     for _, unit in pairs(self._nav_surfaces) do 
         Application:draw(unit, 0,0.8,1)
     end
