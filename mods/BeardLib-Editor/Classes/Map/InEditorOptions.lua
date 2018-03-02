@@ -22,6 +22,7 @@ function Options:build_default_menu()
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
     self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    self:Toggle("BackupMaps", callback(self, self, "update_option_value"), self:Value("BackupMaps"), {group = main})
     self:Toggle("RemoveOldLinks", callback(self, self, "update_option_value"), self:Value("RemoveOldLinks"), {
         group = main,
         text = "Remove Old Links Of Copied Elements",
@@ -287,7 +288,7 @@ function Options:save()
         self:save_main_xml(include)
         self._saving = false
     end
-    if FileIO:Exists(path) then
+    if FileIO:Exists(path) and self:Value("BackupMaps") then
         local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
         local backup_dir = BeardLib.Utils.Path:Combine(backups_dir, table.remove(string.split(path, "/")))

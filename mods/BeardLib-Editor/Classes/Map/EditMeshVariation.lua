@@ -5,7 +5,7 @@ function EditMeshVariation:editable(unit)
 end
 
 function EditMeshVariation:build_menu(units)
-	self:ComboBox("MeshVariation", callback(self._parent, self._parent, "set_unit_data"), {}, 1, {group = self._menu:GetItem("Main")})
+	self:ComboBox("MeshVariation", callback(self._parent, self._parent, "set_unit_data"), {}, 1, {free_typing = true, group = self._menu:GetItem("Main")})
 end
 
 function EditMeshVariation:set_unit_data()
