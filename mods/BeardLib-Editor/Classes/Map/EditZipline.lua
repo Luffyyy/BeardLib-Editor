@@ -5,7 +5,13 @@ end
 
 function EditZipLine:build_menu(units)
 	local zipline_options = self:Group("Zipline")
-	self:Divider(tostring(units[1]:zipline():end_pos()), {group = zipline_options})
+	self:AxisControls(callback(self, self, "set_unit_data"), {
+		text = "End position",
+		group = zipline_options,
+		no_rot = true,
+		step = self:Value("GridSize")
+	}, "EndPos", units[1]:zipline():end_pos())
+	self:Button("ResetPositionEnd", callback(self, self, "use_pos"), {group = zipline_options})
 	self:Button("UseCameraPosForPositionEnd", callback(self, self, "use_camera_pos"), {group = zipline_options})
 	self:Button("UseCameraPosForLinePositionEnd", callback(self, self, "use_camera_pos_for_line"), {group = zipline_options})
 	self._speed = self:NumberBox("Speed [cm/s]", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s", group = zipline_options})
@@ -19,7 +25,8 @@ function EditZipLine:set_unit_data()
 	unit:zipline():set_speed(self._speed:Value())
 	unit:zipline():set_slack(self._slack:Value())
 	unit:zipline():set_usage_type(self._type:SelectedItem())
-	unit:zipline():set_ai_ignores_bag(self._ai_ignore_bag:SelectedItem())
+	unit:zipline():set_ai_ignores_bag(self._ai_ignore_bag:Value())
+	unit:zipline():set_end_pos(self:AxisControlsPosition("EndPos"))
 end
 
 function EditZipLine:update(t, dt)
@@ -28,6 +35,12 @@ function EditZipLine:update(t, dt)
 			unit:zipline():debug_draw(t, dt)
 		end
 	end
+end
+
+function EditZipLine:use_pos()
+	local unit = self:selected_unit()
+	self:SetAxisControls(unit:position(), nil, "EndPos")
+	unit:zipline():set_end_pos(unit:position())
 end
 
 function EditZipLine:use_camera_pos()
