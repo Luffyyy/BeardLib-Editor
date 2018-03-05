@@ -101,8 +101,8 @@ function WData:build_default_menu()
     self:Button("Prefab", callback(self, self, "OpenSpawnPrefabDialog"), {group = spawn, size_by_text = true})
 
     local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    self:Button("Unit", callback(self, self, "OpenSelectUnitDialog", {}), {group = select, text = "Unit("..select_element..")", size_by_text = true})
-    self:Button("Element", callback(self, self, "OpenSelectElementDialog"), {group = select, text = "Element("..select_unit..")", size_by_text = true})
+    self:Button("Unit", callback(self, self, "OpenSelectUnitDialog", {}), {group = select, text = "Unit("..select_unit..")", size_by_text = true})
+    self:Button("Element", callback(self, self, "OpenSelectElementDialog"), {group = select, text = "Element("..select_element..")", size_by_text = true})
     self:Button("Instance", callback(self, self, "OpenSelectInstanceDialog", {}), {group = select, size_by_text = true})
 
     if BeardLib.current_level then
@@ -138,10 +138,14 @@ function WData:build_default_menu()
     self:reset()
 
     local fixes = self:DivGroup("Fixes", {help = "Quick fixes for common issues"})
+    if self._assets_manager then
+        self:Button("Clean add.xml", ClassClbk(self._assets_manager, "clean_add_xml"), {group = fixes, help = "This removes unused files from the add.xml and cleans duplicates"})
+    end
     self:Button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
         group = fixes,
         help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
     })
+
     self:build_continents()
 end
 
@@ -409,11 +413,11 @@ end
 
 function WData:select_all_units_from_script(script, menu, item)
     local selected_units = {}
-    for _, element in pairs(managers.mission._missions[item.continent][script].elements) do
-        for _, unit in pairs(World:find_units_quick("all")) do
-            if unit:mission_element() and unit:mission_element().element.id == element.id then
+    for _, unit in pairs(self:GetPart("mission")._units) do
+        if unit:mission_element() then
+            local element = unit:mission_element().element
+            if element.script == script then
                 table.insert(selected_units, unit)
-                break
             end
         end
     end

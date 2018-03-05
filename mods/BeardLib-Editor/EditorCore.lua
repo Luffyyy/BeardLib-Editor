@@ -92,7 +92,9 @@ function BLE:LoadCustomAssets()
     local data = mod and project:get_clean_data(mod._clean_config)
     if data then
         if data.AddFiles then
-            self:LoadCustomAssetsToHashList(data.AddFiles)
+            local config = data.AddFiles
+            local directory = config.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, config.directory)
+            self:LoadCustomAssetsToHashList(config, directory)
         end
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         if level then
@@ -107,7 +109,8 @@ function BLE:LoadCustomAssets()
             end
             local add = project:map_editor_read_xml(level.add.file)
             if add then
-                self:LoadCustomAssetsToHashList(add)
+                local directory = add.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, add.directory)
+                self:LoadCustomAssetsToHashList(add, directory)
             end
             for i, include_data in ipairs(level.include) do
                 if include_data.file then
@@ -138,9 +141,9 @@ end
 function BLE:LoadHashlist()
     local t = os.clock()
     self:log("Loading DBPaths")
-    if Global.DBPaths and Global.DBPackages then
-        self.DBPaths = Global.DBPaths
-        self.DBPackages = Global.DBPackages
+    if Global.DBPaths and Global.DBPackages and Global.WorldSounds then
+        self.DBPaths = clone(Global.DBPaths)
+        self.DBPackages = clone(Global.DBPackages)
         self.WorldSounds = Global.WorldSounds
         self:log("DBPaths already loaded")
     else
@@ -151,6 +154,35 @@ function BLE:LoadHashlist()
         Global.DBPaths = self.DBPaths
         Global.DBPackages = self.DBPackages
         Global.WorldSounds = self.WorldSounds
+    end
+    for _, pkg in pairs(CustomPackageManager.custom_packages) do
+        local id = pkg.id
+        self.DBPackages[id] = self.DBPackages[id] or table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
+        self:ReadCustomPackageConfig(id, pkg.config, pkg.dir)
+    end
+end
+
+function BLE:ReadCustomPackageConfig(id, config, directory)
+    for _, child in pairs(config) do
+        if type(child) == "table" then
+            local typ = child._meta
+            local path = child.path
+
+            if typ == "unit_load" or typ == "add" then
+                self:ReadCustomPackageConfig(id, child, directory)
+            elseif typ and path then
+                path = BeardLib.Utils.Path:Normalize(path)
+                local file_path = BeardLib.Utils.Path:Combine(directory, path) ..".".. typ
+                if SystemFS:exists(file_path) then
+                    self.DBPackages[id][typ] = self.DBPackages[id][typ] or {}
+                    self.DBPaths[typ] = self.DBPaths[typ] or {}
+                    table.insert(self.DBPackages[id][typ], path)
+                    table.insert(self.DBPaths[typ], path)
+                else
+                    self:log("[ERROR][ReadCustomPackageConfig] File does not exist! %s", tostring(file_path))
+                end
+            end
+        end
     end
 end
 
@@ -237,17 +269,26 @@ function BLE:GenerateSoundData()
     Global.WorldSounds = sounds
 end
 
-function BLE:LoadCustomAssetsToHashList(add)
+function BLE:LoadCustomAssetsToHashList(add, directory)
     for _, v in pairs(add) do
         if type(v) == "table" then
-            if v._meta == "unit_load" then
-                self:LoadCustomAssetsToHashList(v)
+            local path = v.path
+            local typ = v._meta
+            if typ == "unit_load" then
+                self:LoadCustomAssetsToHashList(v, directory)
             else
-                self.DBPaths[v._meta] = self.DBPaths[v._meta] or {}
-                if not table.contains(self.DBPaths[v._meta], v.path) then
-                    table.insert(self.DBPaths[v._meta], v.path)
+                path = BeardLib.Utils.Path:Normalize(path)
+
+                self.DBPaths[typ] = self.DBPaths[typ] or {}
+                if not table.contains(self.DBPaths[typ], path) then
+                    table.insert(self.DBPaths[typ], path)
                 end
-                self.Utils.allowed_units[v.path] = true
+
+                local file_path = BeardLib.Utils.Path:Combine(directory, path) ..".".. typ
+
+                if FileIO:Exists(file_path) then
+                    self.Utils.allowed_units[path] = true
+                end
             end
         end
     end

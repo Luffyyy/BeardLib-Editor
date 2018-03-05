@@ -398,6 +398,9 @@ function WorldDef:make_unit(data, offset)
 	end
 	local unit
 	if not Global.editor_safe_mode then
+		if Global.editor_log_on_spawn then
+			log("Attempt spawn - " .. tostring(name))
+		end
 		if MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 		else

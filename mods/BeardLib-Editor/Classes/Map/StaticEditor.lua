@@ -9,6 +9,7 @@ function Static:init(parent, menu)
     self._ignore_raycast = {}
     self._ignored_collisions = {}
     self._set_units = {}
+    self._set_elements = {}
     self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
 end
@@ -88,7 +89,14 @@ function Static:set_units()
             managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)        
         end
     end
+    for _, me in pairs(self._set_elements) do
+        local element = me.element
+        element.values.position = me._unit:position()
+        element.values.rotation = me._unit:rotation()
+        managers.mission:set_element(element)
+    end
     self._set_units = {}
+    self._set_elements = {}
 end
 
 function Static:loaded_continents()
@@ -254,7 +262,6 @@ function Static:set_unit_data()
                 end
             end
             BeardLib.Utils:RemoveAllNumberIndexes(ud, true) --Custom xml issues happen in here also 😂🔫 
-
             ud.lights = Utils:LightData(unit)
             ud.triggers = Utils:TriggersData(unit)
             ud.editable_gui = Utils:EditableGuiData(unit)
@@ -649,18 +656,20 @@ function Static:build_links(id, match, element)
     local same_links = {}
     links_group:ClearItems()
 
-  --Get portals that have the unit attached to - https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/49
     for _, link in pairs(links) do
         same_links[link.element.id] = true
         create_link(element_link_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", link.element))
     end
-
-    local portal_layer = self:GetLayer("portal")
-    for _, portal in pairs(clone(managers.portal:unit_groups())) do
-        local ids = portal._ids
-        if ids and ids[id] then
-            local name = portal:name()
-            create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))               
+    
+    if match == Utils.LinkTypes.Unit then
+        --Get portals that have the unit attached to - https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/49
+        local portal_layer = self:GetLayer("portal")
+        for _, portal in pairs(clone(managers.portal:unit_groups())) do
+            local ids = portal._ids
+            if ids and ids[id] then
+                local name = portal:name()
+                create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))               
+            end
         end
     end
 
@@ -689,11 +698,13 @@ function Static:build_links(id, match, element)
         end
 
         for id, unit in pairs(managers.worlddefinition._all_units) do
-            local ud = unit:unit_data()
-            for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
-                local linking_from = link.location
-                linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                create_link(unit_link_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
+            if alive(unit) then
+                local ud = unit:unit_data()
+                for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
+                    local linking_from = link.location
+                    linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
+                    create_link(unit_link_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
+                end
             end
         end
         if #linking_group:Items() == 0 then
@@ -778,7 +789,6 @@ function Static:update(t, dt)
 end
 
 function Static:GetCopyData(remove_old_links)
-    self:set_unit_data()
     local copy_data = {}
     local element_type = Utils.LinkTypes.Elment    
     local unit_type = Utils.LinkTypes.Unit    

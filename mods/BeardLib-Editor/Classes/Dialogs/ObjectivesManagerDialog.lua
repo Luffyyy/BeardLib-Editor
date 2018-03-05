@@ -118,13 +118,15 @@ function ObjectivesManagerDialog:load_objectvies()
         item:Panel():set_world_righttop(p:world_righttop())
     end
     local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = pos}
-    for _, objective in ipairs(self._objectives) do
-        if objective._meta == "objective" then
-            opt.position = pos
-            local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
-            local btn = self:SmallImageButton("Remove", callback(self, self, "remove_objective", objective), nil, {184, 2, 48, 48}, obj, opt)
-            opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
-            self:SmallImageButton("Rename", callback(self, self, "rename_or_add_objective", objective), nil, {66, 1, 48, 48}, obj, opt)
+    if self._objectives then
+        for _, objective in ipairs(self._objectives) do
+            if objective._meta == "objective" then
+                opt.position = pos
+                local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
+                local btn = self:SmallImageButton("Remove", callback(self, self, "remove_objective", objective), nil, {184, 2, 48, 48}, obj, opt)
+                opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
+                self:SmallImageButton("Rename", callback(self, self, "rename_or_add_objective", objective), nil, {66, 1, 48, 48}, obj, opt)
+            end
         end
     end
 end

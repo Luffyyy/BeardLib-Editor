@@ -10,9 +10,10 @@ function LoadLevelMenu:init()
 	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
 	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
     local load_options = self:Menu("LoadOptions", {align_method = "grid", h = search:Panel():h(), auto_height = false})
-    local half_w = load_options:ItemsWidth() / 2
+    local half_w = load_options:ItemsWidth() / 3
     self:Toggle("Safemode", nil, false, {group = load_options, w = half_w, offset = 0})
     self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = half_w, offset = 0})
+    self:Toggle("LogSpawnedUnits", nil, false, {group = load_options, w = half_w, offset = 0})
 	self:Menu("Levels", {align_method = "grid", h = self._menu:Panel():h() - (search:Panel():h() * 2), auto_height = false})
 	self:load_levels()
 end
@@ -48,15 +49,17 @@ function LoadLevelMenu:load_level(menu, item)
     local level_id = item.name
     local safe_mode = self:GetItem("Safemode"):Value()
     local check_load = self:GetItem("CheckLoadTime"):Value()
-    
+    local log_on_spawn = self:GetItem("LogSpawnedUnits"):Value()
+
     local function load()
         Global.editor_mode = true
         Global.editor_safe_mode = safe_mode == true
         Global.check_load_time = check_load == true
+        Global.editor_log_on_spawn = log_on_spawn == true
         MenuCallbackHandler:play_single_player()
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"
-        Global.game_settings.difficulty = "normal"
+        Global.game_settings.difficulty = "norLogSpawnedUnitsmal"
         Global.game_settings.world_setting = nil
         MenuCallbackHandler:start_the_game()    
         BeardLibEditor.Menu:set_enabled(false)

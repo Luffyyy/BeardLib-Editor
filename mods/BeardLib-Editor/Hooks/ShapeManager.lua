@@ -38,3 +38,11 @@ end
 function ShapeBox:create_panel(clss, group)
 	clss:ShapeControls(callback(self, self, "update_size"), {group = group}, "", self._properties, true)
 end
+
+function Shape:position()
+	return alive(self._unit) and self._unit:position() or self._position or Vector3()
+end
+
+function Shape:rotation()
+	return alive(self._unit) and self._unit:rotation() or self._rotation or Rotation()
+end

@@ -77,11 +77,7 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
         end
         local me = unit:mission_element()
         if me then
-            local element = me.element.values
-            element.position = position
-            if rotation then
-                element.rotation = rotation
-            end
+            Static._set_elements[me.element.id] = me
         elseif ud.name and not ud.instance then
             Static._set_units[unit_key] = unit
         end
@@ -253,10 +249,11 @@ function Utils:GetPackages(asset, type, size_needed, first, packages)
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
         for _, path in pairs(package[type] or {}) do
             if path == asset then
-                local size = size_needed and self:GetPackageSize(name)
-                if not size_needed or size then
-                    if not name:match("all_") then
-                        table.insert(found_packages, {name = name, size = size})
+                local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
+                local size = not custom and size_needed and self:GetPackageSize(name)
+                if not size_needed or size or custom then
+                    if not name:begins("all_") then
+                        table.insert(found_packages, {name = name, size = size, custom = custom})
                         if first then
                             return found_packages
                         end
@@ -304,6 +301,23 @@ for _, intensity in ipairs(LightIntensityDB:list()) do
 end
 table.sort(t)
 Utils.IntensityValues = t
+Utils.IntensityOptions = {
+    "none", 
+    "identity", 
+    "match", 
+    "candle", 
+    "desklight", 
+    "neonsign", 
+    "flashlight", 
+    "monitor", 
+    "dimilight", 
+    "streetlight", 
+    "searchlight",
+    "reddot",
+    "sun",
+    "inside of borg queen",
+    "megatron"
+}
 
 function Utils:GetIntensityPreset(multiplier)
     local intensity = LightIntensityDB:reverse_lookup(multiplier)
@@ -335,9 +349,16 @@ function Utils:LightData(unit)
         return nil
     end
     local t = {}
-    for _, light in ipairs(lights) do
+    for _, light in pairs(lights) do
         local obj = light.object
-        local data = {
+        local intensity_ids = self:GetIntensityPreset(obj:multiplier())
+        local intensity = "undefined"
+        for _, v in pairs(self.IntensityOptions) do
+            if v:id() == intensity_ids then
+                intensity = v
+            end
+        end
+        table.insert(t, {
             name = light.name,
             enabled = obj:enable(),
             far_range = obj:far_range(),
@@ -345,11 +366,10 @@ function Utils:LightData(unit)
             color = obj:color(),
             spot_angle_start = obj:spot_angle_start(),
             spot_angle_end = obj:spot_angle_end(),
-            multiplier = self:GetIntensityPreset(obj:multiplier()):s(),
+            multiplier = intensity,
             falloff_exponent = obj:falloff_exponent(),
             clipping_values = obj:clipping_values()
-        }
-        table.insert(t, data)
+        })
     end
     return #t > 0 and t or nil
 end

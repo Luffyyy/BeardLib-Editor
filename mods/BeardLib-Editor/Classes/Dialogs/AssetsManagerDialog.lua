@@ -50,10 +50,10 @@ function AssetsManagerDialog:_Show()
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end}
-    local search = self:TextBox("Search", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", search_opt)
+    local search = self:TextBox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList"), "", search_opt)
     search_opt.position = base_pos
     search_opt.override_panel = units
-    self:TextBox("Search2", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", search_opt)
+    self:TextBox("Search2", ClassClbk(BeardLibEditor.Utils, "FilterList"), "", search_opt)
 
     self:Divider("AssetsManagerStatus", {
         text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
@@ -61,17 +61,18 @@ function AssetsManagerDialog:_Show()
         visible = false,
         color = false,
     })
-    self:Button("FixBySearchingPackages", callback(self, self, "find_packages", false), {group = self._unit_info})
-    self:Button("FixByLoadingFromExtract", callback(self, self, "load_from_extract", false), {group = self._unit_info})
+    self:Button("FixBySearchingPackages", ClassClbk(self, "find_packages", false), {group = self._unit_info})
+    self:Button("FixByLoadingFromExtract", ClassClbk(self, "load_from_extract", false), {group = self._unit_info})
+    self:Button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false), {group = self._unit_info})
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
-    self:Button("FindPackage", SimpleClbk(self.find_package, self, false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("LoadFromExtract", callback(self, self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
+    self:Button("FindPackage", ClassClbk(self, "find_package", false, false), {offset = 0, group = actions, enabled = false})
+    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
 
-    self:Button("RemoveAndUnloadAsset", callback(self, self, "remove_units_from_map", true), {offset = 0, group = actions, enabled = false})
-    self:Button("Remove", callback(self, self, "remove_units_from_map", false), {offset = 0, group = actions, enabled = false})
-    self:Button("UnloadAsset", callback(self, self, "unload_asset"), {offset = 0, group = actions, enabled = false})
+    self:Button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, group = actions, enabled = false})
+    self:Button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, group = actions, enabled = false})
+    self:Button("UnloadAsset", ClassClbk(self, "unload_asset", false), {offset = 0, group = actions, enabled = false})
 
     self:reload()
 end
@@ -120,8 +121,14 @@ function AssetsManagerDialog:load_units()
                 panic = true
             end
         end
+        local unused = times == 0
+        local bgcolor = not loaded and Color.red:with_alpha(0.4) or (unused and Color.yellow:with_alpha(0.4)) or nil
         self:Button(unit, callback(self, self, "set_unit_selected"), {
-            group = units, text = unit.."("..times..")", label = "units", index = not loaded and 1, background_color = not loaded and Color.red:with_alpha(0.65) or (times == 0 and Color.yellow:with_alpha(0.65)) or nil
+            group = units,
+            text = unit.."("..times..")",
+            label = "units",
+            index = (not loaded or unused) and 1 or nil,
+            background_color = bgcolor,
         })
     end
     for unit, times in pairs(managers.worlddefinition._all_names) do
@@ -155,9 +162,11 @@ function AssetsManagerDialog:load_packages()
         local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
         if level.packages then
             for i, package in pairs(level.packages) do
-                local size = BeardLibEditor.Utils:GetPackageSize(package)
-                if size then
-                    local pkg = self:Divider(package, {closed = true, text = string.format("%s(%.2fmb)", package, size), group = packages, label = "packages"})
+                local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
+                local size = not custom and BeardLibEditor.Utils:GetPackageSize(package)
+                if size or custom then
+                    local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
+                    local pkg = self:Divider(package, {closed = true, text = text, group = packages, label = "packages"})
                     self:SmallImageButton("RemovePackage", callback(self, self, "remove_package", package), "textures/editor_icons_df", {184, 2, 48, 48}, pkg)
                 end
             end
@@ -178,9 +187,19 @@ function AssetsManagerDialog:find_package(unit, dontask)
     function find_package()
         local items = {}
         for _, pkg in pairs(BeardLibEditor.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
-            table.insert(items, {name = string.format("%s(%.2fmb)", pkg.name, pkg.size), size = pkg.size, package = pkg.name})
+            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.size)
+            table.insert(items, {name = text, size = pkg.size, package = pkg.name})
         end
         table.sort(items, function(a,b)
+            if a.custom then
+                return true
+            end
+            if not a.size then
+                return false
+            end
+            if not b.size then
+                return true
+            end
             return a.size < b.size
         end)
         BeardLibEditor.ListDialog:Show({
@@ -200,6 +219,42 @@ function AssetsManagerDialog:find_package(unit, dontask)
     else
         find_package()
     end
+end
+
+function AssetsManagerDialog:clean_add_xml()
+    local project = BeardLibEditor.MapProject
+    local mod = project:current_mod()
+    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)--SO SHIT
+
+    local level = project:current_level(data)
+    level.add = level.add or {}
+    local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+    local add = project:map_editor_read_xml(add_path, true) or {_meta = "add", directory = "assets"}
+    local new_add = {}
+
+    for k, v in pairs(add) do
+        if not tonumber(k) and type(v) ~= "table" then
+            new_add[k] = v
+        end
+    end
+
+    for k,v in pairs(add) do
+        if tonumber(k) and type(v) == "table" and v._meta then
+            local exists
+            for _, tbl in pairs(new_add) do
+                if type(tbl) == "table" and tbl._meta == v._meta and (tbl.name and tbl.name == v.name or tbl.path == v.path) then
+                    exists = true
+                    break
+                end
+            end
+            if not exists then
+                if not v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. v._meta) then
+                    table.insert(new_add, v)
+                end
+            end
+        end
+    end
+    project:map_editor_save_xml(add_path, new_add)
 end
 
 function AssetsManagerDialog:load_from_extract(missing_units)
@@ -319,9 +374,22 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     })
 end
 
-function AssetsManagerDialog:remove_units_from_map(remove_asset)
-    local name = self._tbl._selected.name
-    BeardLibEditor.Utils:YesNoQuestion("This will remove all of the spawned units of that unit, this will not remove units that are inside an instance(save is required)", function()
+function AssetsManagerDialog:remove_unused_units_from_map()
+    BeardLibEditor.Utils:YesNoQuestion("This will remove any unused units from your map and remove them from your map completely", function()
+        for unit in pairs(self._assets_units) do
+            if not managers.worlddefinition._all_names[unit] then
+                self:remove_unit_from_map(true, unit)
+            end
+        end
+        self:reload()
+        self:set_unit_selected()
+    end)
+end
+
+function AssetsManagerDialog:remove_unit_from_map(remove_asset, name)
+    local ask = not name
+    name = name or self._tbl._selected.name
+    local remove = function()
         for k, unit in pairs(managers.worlddefinition._all_units) do
             local ud = alive(unit) and unit:unit_data()
             if ud and not ud.instance and ud.name == name then
@@ -331,23 +399,35 @@ function AssetsManagerDialog:remove_units_from_map(remove_asset)
         managers.worlddefinition._all_names[name] = nil
         local continents = managers.worlddefinition._continent_definitions
         for cname, continent in pairs(continents) do
-            for i, static in pairs(continent.statics) do
-                if static.unit_data and static.unit_data.name == name then
-                    table.remove(continent.statics, i)
+            if continent.statics then
+                for i, static in pairs(continent.statics) do
+                    if static.unit_data and static.unit_data.name == name then
+                        table.remove(continent.statics, i)
+                    end
                 end
             end
         end
         if self._assets_units[name] and remove_asset == true then
             self:unload_asset(name, true)
         end
-        managers.editor:m().opt:save()
-        self:reload()
-        self:set_unit_selected()
-    end)
+        if ask then
+            managers.editor:m().opt:save()
+            self:reload()
+            self:set_unit_selected()
+        end
+    end
+    if ask then
+        BeardLibEditor.Utils:YesNoQuestion(
+            "This will remove all of the spawned units of that unit, this will not remove units that are inside an instance(save is required)",
+            remove
+        )
+    else
+        remove()
+    end
 end
 
-function AssetsManagerDialog:unload_asset(no_dialog)
-    local name = self._tbl._selected.name
+function AssetsManagerDialog:unload_asset(name, no_dialog)
+    name = name or self._tbl._selected.name
     local function unload()
         local project = BeardLibEditor.MapProject
         local mod = project:current_mod()
@@ -454,7 +534,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
             if name:sub(1, 6) == "levels" then
                 name = BeardLibEditor.Utils:ShortPath(name, 3)
             end
-            local pkg_s = string.format("%s(%.2fmb)", name, pkg.size)
+            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.2fmb)", name, pkg.size)
             load_from = load_from.."\n"..pkg_s
         end
         local add
@@ -522,16 +602,28 @@ function AssetsManagerDialog:add_package_dialog()
     local packages = {}
     local level_packages = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     for name in pairs(BeardLibEditor.DBPackages) do
-        if not table.contains(level_packages, name) then
-            table.insert(packages, name)
+        if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
+            local size = BeardLibEditor.Utils:GetPackageSize(name)
+            table.insert(packages, {package = name, name = size and string.format("%s(%.2fmb)", name, size) or name, size = size})
         end
     end
+    table.sort(packages, function(a,b)
+        if not a.size then
+            return false
+        end
+        if not b.size then
+            return true
+        end
+        return a.size < b.size
+    end)
     BeardLibEditor.ListDialog:Show({
         list = packages,
         force = true,
         callback = function(item)
-            self:add_package(item)
-            BeardLibEditor.ListDialog:hide()
+            self:add_package(item.package)
+            if not ctrl() then
+                BeardLibEditor.ListDialog:hide()
+            end
         end
     })
     self:reload()

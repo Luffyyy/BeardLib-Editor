@@ -136,7 +136,7 @@ function MissionScriptEditor:update_positions(pos, rot)
     for i, control in pairs(self._axis_controls) do
     	SE[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
     end
-    self:update_element()  
+    self:update_element(true)  
 end
 
 function MissionScriptEditor:add_draw_units(draw)
@@ -312,14 +312,16 @@ function MissionScriptEditor:deselect_element()
     self._parent._selected_element = nil
 end
 
-function MissionScriptEditor:update_element(old_script)
-	managers.mission:set_element(self._element, old_script)
+function MissionScriptEditor:update_element(position_only, old_script)
 	local unit = self:selected_unit()
 	if alive(unit) and unit.element then
 		unit:set_position(self._element.values.position)
 		unit:set_rotation(self._element.values.rotation)
 	end
-	self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+	if not position_only then
+		managers.mission:set_element(self._element, old_script)
+		self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+	end
 end
 
 function MissionScriptEditor:set_element_data(menu, item)
@@ -334,7 +336,7 @@ function MissionScriptEditor:set_element_data(menu, item)
 		if item.name == "base_delay_rand" then
 			data[item.name] = data[item.name] > 0 and data[item.name] or nil
 		end
-		self:update_element(old_script)	
+		self:update_element(false, old_script)	
 	end
 	if item.name == "script" and item:SelectedItem() ~= old_script then
 		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all executors will be removed!", function()
@@ -353,7 +355,7 @@ function MissionScriptEditor:set_element_position(menu)
 	local SE = self:GetPart("static")
 	self._element.values.position = SE:AxisControlsPosition()
 	self._element.values.rotation = SE:AxisControlsRotation()
-	self:update_element()
+	self:update_element(true)
 end
 
 function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clbk, opt)

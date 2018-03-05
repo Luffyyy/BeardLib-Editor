@@ -76,6 +76,10 @@ end
 
 --functions
 function Editor:animate_bg_fade()
+    if not self._menu then
+        return
+    end
+    
     local bg = self._menu._panel:rect({
         name = "Background",
         layer = 10000,
@@ -324,7 +328,7 @@ function Editor:set_unit_positions(pos)
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
-            if unit ~= self:selected_unit() then
+            if unit ~= reference then
                 local ud = unit:unit_data()
                 BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
             end
@@ -337,7 +341,7 @@ function Editor:set_unit_rotations(rot)
     if alive(reference) then
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
-            if unit ~= self:selected_unit() then
+            if unit ~= reference then
                 local ud = unit:unit_data()
                 BeardLibEditor.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), ud.local_rot * rot, ud) 
             end
