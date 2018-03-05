@@ -183,7 +183,7 @@ function AssetsManagerDialog:load_from_extract_dialog()
     )
 end
 
-function AssetsManagerDialog:find_package(unit, dontask)
+function AssetsManagerDialog:find_package(unit, dontask, clbk)
     function find_package()
         local items = {}
         for _, pkg in pairs(BeardLibEditor.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
@@ -208,6 +208,9 @@ function AssetsManagerDialog:find_package(unit, dontask)
             sort = false,
             callback = function(selection)
                 self:add_package(selection.package)
+                if type(clbk) == "function" then
+                    clbk()
+                end
                 BeardLibEditor.ListDialog:hide()
             end
         })        
@@ -262,7 +265,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
     local config = {}
     local failed_all = false
     for unit, _ in pairs(missing_units) do
-        local cfg = BeardLibEditor.Utils:ReadUnitAndLoad(unit)
+        local cfg = BeardLibEditor.Utils.Export:GetUnitDependencies(unit)
         if cfg then
             table.insert(config, table.merge({_meta = "unit_load", name = unit}, cfg))
         else
@@ -317,7 +320,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                     if success then
                         CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
                         if failed_all then
-                            BeardLibEditor.Utils:Notify("Info", "Copied some assets, some have failed because assets are missing or unit uses an effect file")
+                            BeardLibEditor.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
                         else
                             BeardLibEditor.Utils:Notify("Info", "Copied assets successfully")
                         end
@@ -325,7 +328,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                     end
                 end)
             else
-                BeardLibEditor.Utils:Notify("Info", "No to assets to copy, either assets are missing or unit uses an effect file")
+                BeardLibEditor.Utils:Notify("Info", "No to assets to copy")
             end
         end
         if not dontask then
@@ -354,12 +357,30 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     for name, package in pairs(packages) do
         local size = BeardLibEditor.Utils:GetPackageSize(name)
         if size then
-            table.insert(items, {name = string.format("%s has %s/%s of the missing units(%.2fmb)", name, #package, missing_amount, size), package = name, size = size, amount = #package})
+            table.insert(items, {
+                name = string.format("%s has %s/%s of the missing units(%.2fmb)", name, #package, missing_amount, size),
+                package = name,
+                size = size,
+                amount = #package,
+            })
         end
     end
     table.sort(items, function(a,b)
-        return a.amount > b.amount
+        if a.amount == b.amount then
+            return a.size < b.size
+        else
+            return a.amount > b.amount
+        end
     end)
+    --last, just to color relevant items
+    local curr_amount
+    for _, item in pairs(items) do
+        if item.amount ~= curr_amount then
+            item.background_color = BeardLibEditor._dialogs_opt.accent_color
+            item.highlight_color = item.background_color
+        end
+        curr_amount = item.amount
+    end
     BeardLibEditor.ListDialog:Show({
         list = items,
         force = true,

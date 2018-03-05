@@ -75,6 +75,27 @@ function EditorSpawnEnemyDummy:_build_panel()
 	self:ComboCtrl("team", table.list_add({"default"}, tweak_data.levels:get_team_names_indexed()), {help = "Select the character's team."})
 end
 
+
+local unit_ids = Idstring("unit")
+function EditorSpawnEnemyDummy:set_element_data(menu, item, ...)
+	if item.name == "enemy" then
+		local assets = self:GetPart("world")._assets_manager
+		local unit = item:Value()
+		local spawn_ids = unit:id()
+		if not DB:has(unit_ids, spawn_ids) then
+			return
+		end
+		if not PackageManager:has(unit_ids, spawn_ids) and assets then
+			BeardLibEditor.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
+				assets:find_package(unit, true, ClassClbk(self, "set_element_data", menu, item))
+			end}})
+			return
+		end
+	end
+	EditorSpawnEnemyDummy.super.set_element_data(self, menu, item, ...)
+end
+
+
 function EditorSpawnEnemyDummy:_resolve_team(unit)
 	if self._element.values.team == "default" then
 		return tweak_data.levels:get_default_team_ID(unit:base():char_tweak().access == "gangster" and "gangster" or "combatant")
