@@ -447,7 +447,7 @@ function Editor:select_unit_by_raycast(slot, clbk)
     local ret_rays = {}
     if #rays > 0 then
         for _, r in pairs(rays) do
-            if clbk(r.unit) then
+            if #rays == 1 or clbk(r.unit) then
                 if not ignore or not first then
                     table.insert(ret_rays, r)
                     if not select_all then

@@ -91,7 +91,7 @@ end
 function Project:get_project_by_narrative_id(narr)
     for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
         local narrative = U:GetNodeByMeta(data, "narrative")
-        if narrative.id == narr.id then
+        if narrative and narrative.id == narr.id then
             return mod
         end
     end

@@ -14,10 +14,10 @@ function EditZipLine:build_menu(units)
 	self:Button("ResetPositionEnd", callback(self, self, "use_pos"), {group = zipline_options})
 	self:Button("UseCameraPosForPositionEnd", callback(self, self, "use_camera_pos"), {group = zipline_options})
 	self:Button("UseCameraPosForLinePositionEnd", callback(self, self, "use_camera_pos_for_line"), {group = zipline_options})
-	self._speed = self:NumberBox("Speed [cm/s]", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s", group = zipline_options})
-	self._slack = self:NumberBox("Slack [cm]", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm", group = zipline_options})
- 	self._type = self:ComboBox("Type", callback(self._parent, self._parent, "set_unit_data"), ZipLine.TYPES, table.get_key(ZipLine.TYPES, units[1]:zipline():usage_type()), {group = zipline_options})
-	self._ai_ignore_bag = self:Toggle("AIIgnoreBag", callback(self._parent, self._parent, "set_unit_data"), units[1]:zipline():ai_ignores_bag(), {text = "AI Ignore Bag", group = zipline_options})
+	self._speed = self:NumberBox("Speed [cm/s]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s", group = zipline_options})
+	self._slack = self:NumberBox("Slack [cm]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm", group = zipline_options})
+ 	self._type = self:ComboBox("Type", ClassClbk(self, "set_unit_data_parent"), ZipLine.TYPES, table.get_key(ZipLine.TYPES, units[1]:zipline():usage_type()), {group = zipline_options})
+	self._ai_ignore_bag = self:Toggle("AIIgnoreBag", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():ai_ignores_bag(), {text = "AI Ignore Bag", group = zipline_options})
 end
 
 function EditZipLine:set_unit_data()
@@ -37,16 +37,22 @@ function EditZipLine:update(t, dt)
 	end
 end
 
+function EditZipLine:update_end_pos()
+	self:SetAxisControls(self:selected_unit():zipline():end_pos(), nil, "EndPos")
+	self:set_unit_data_parent()
+end
 function EditZipLine:use_pos()
 	local unit = self:selected_unit()
-	self:SetAxisControls(unit:position(), nil, "EndPos")
 	unit:zipline():set_end_pos(unit:position())
+	self:update_end_pos()
 end
 
 function EditZipLine:use_camera_pos()
 	self:selected_unit():zipline():set_end_pos(managers.editor:camera_position())
+	self:update_end_pos()
 end
 
 function EditZipLine:use_camera_pos_for_line()
 	self:selected_unit():set_end_pos_by_line(managers.editor:camera_position())
+	self:update_end_pos()
 end
