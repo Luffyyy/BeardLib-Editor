@@ -90,6 +90,8 @@
                 <option type="boolean" default_value="true" name="SelectInstances"/>
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
                 <option type="boolean" default_value="true" name="BackupMaps"/>
+                <option type="boolean" default_value="false" name="AutoSave"/>
+                <option type="number" default_value="5" name="AutoSaveMinutes"/>
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
                 <option type="boolean" default_value="true" name="RemoveOldLinks"/>
                 <option type="boolean" default_value="false" name="EndlessSelection"/>

@@ -5,6 +5,7 @@ function Options:init(parent, menu)
     self._wanted_elements = {}
 end
 
+--TODO: cleanup
 function Options:build_default_menu()
     self.super.build_default_menu(self)
     local groups_opt = {offset = {8, 4}}
@@ -21,6 +22,8 @@ function Options:build_default_menu()
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
+    self:NumberBox("AutoSaveMinutes", callback(self, self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})    
+    self:Toggle("AutoSave", callback(self, self, "update_option_value"), self:Value("AutoSave"), {group = main, help = "Saves your map automatically, unrecommended for large maps."})
     self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
     self:Toggle("BackupMaps", callback(self, self, "update_option_value"), self:Value("BackupMaps"), {group = main})
     self:Toggle("RemoveOldLinks", callback(self, self, "update_option_value"), self:Value("RemoveOldLinks"), {
@@ -72,6 +75,8 @@ function Options:build_default_menu()
     self:Button("SaveNavigationData", callback(self, self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveCoverData", callback(self, self, "save_cover_data", false), {group = other})
     self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
+    
+    self:toggle_autosaving()
 end
 
 function Options:enable() 
@@ -130,6 +135,8 @@ function Options:update_option_value(menu, item)
         self._parent:update_snap_rotation(item:Value())
     elseif name == "DrawOnlyElementsOfCurrentScript" then
         self:GetPart("mission"):set_elements_vis()
+    elseif name == "AutoSave" or name == "AutoSaveMinutes" then
+        self:toggle_autosaving()
     end
 end
 
@@ -157,6 +164,11 @@ end
 
 function Options:update(t, dt)
     Options.super.update(self, t, dt)
+    
+    if self._auto_save and t >= self._auto_save then
+        self:save()
+    end
+
     if self:Value("HighlightUnits") and managers.viewport:get_current_camera() then
         for _, body in ipairs(World:find_bodies("intersect", "sphere", self._parent._camera_pos, 2500)) do
             if self._parent:_should_draw_body(body) then
@@ -287,6 +299,7 @@ function Options:save()
         end
         self:save_main_xml(include)
         self._saving = false
+        self:toggle_autosaving()
     end
     if FileIO:Exists(path) and self:Value("BackupMaps") then
         local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
@@ -303,6 +316,14 @@ function Options:save()
     else
         FileIO:MakeDir(path)
         save()
+    end
+end
+
+function Options:toggle_autosaving()
+    if self:get_value("AutoSave") and BeardLib.current_level then
+        self._auto_save = TimerManager:main():time() + (self:get_value("AutoSaveMinutes") * 60)
+    else
+        self._auto_save = nil
     end
 end
 
