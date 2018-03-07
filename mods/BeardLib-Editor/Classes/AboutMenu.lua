@@ -14,7 +14,7 @@ function AboutMenu:init()
     local function center_text(text, opt) return self:Divider(text, table.merge({color = false, group = info, text_align = "center", text = text}, opt or {})) end
     local div = {color = false, border_bottom = true, group = info, border_width = 512, border_center_as_title = true}
     self:Divider("About", div)
-    center_text("Created by Luffy and GreatBigBushyBeaSrd")
+    center_text("Created by Luffy and Simon W")
     center_text("Version " .. BeardLibEditor.Version)
     self:Divider("Credits", div)
     center_text("Walrus - for helping developing the editor from the start and giving information on pd2 mapping")
