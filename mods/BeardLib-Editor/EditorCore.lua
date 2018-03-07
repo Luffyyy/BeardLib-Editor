@@ -14,7 +14,7 @@ function BLE:Init()
     self.MapClassesDir = self.ClassDirectory .. "Map/"
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
-    self.Version = self.AssetUpdates._config.version or 2
+    self.Version = self.AssetUpdates.version or 2
     self.ExtractImportHelp = [[
 This will search for assets of the unit to load it, you shouldn't use this method for any networked units, 
 units that have animations(bags, drills, bags, npcs, etc) and you can't use this method to load any units that need an effect file.
@@ -346,10 +346,10 @@ if MenuManager then
 end
 
 if not BLE.InitDone then
-    if BeardLib.Version and BeardLib.Version >= 2.6 then
+    if BeardLib.Version and BeardLib.Version >= 2.87 then
         BeardLibEditor:Init()
     else
-        log("[ERROR] BeardLibEditor requires at least version 2.6 of Beardlib installed!")
+        log("[ERROR] BeardLibEditor requires at least version 2.87 of Beardlib installed!")
         return
     end
 end

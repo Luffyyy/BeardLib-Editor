@@ -7,7 +7,7 @@ function ShadowBlock:get(key) return self._parameters[key] end
 
 EnvEditor = EnvEditor or class(EditorPart)
 function EnvEditor:init(parent, menu)
-    self.super.init(self, parent, menu, "Environment", {w = 300, items_size = 14, control_slice = 0.6})
+    self.super.init(self, parent, menu, "Environment", {items_size = 16, control_slice = 0.6, offset = 1})
     self._posteffect = {}
     self._underlayeffect = {}
     self._sky = {}
@@ -44,70 +44,86 @@ function EnvEditor:build_default_menu()
     if not managers.viewport:first_active_viewport() then
         return
     end
-    local env_path = assert(managers.viewport:first_active_viewport():get_environment_path()) or "core/environments/default"
+    local env_path = managers.viewport:first_active_viewport():get_environment_path() or "core/environments/default"
     if BeardLib.current_level then
         local included = self:DivGroup("IncludedEnvironments")
-        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {text = "Include current"})
+        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {max_width = false, text = "Include current"})
         self:load_included_environments()    
     end
     
-    self:Button("Browse", callback(self, self, "open_environment_dialog"))
-    self:Button("LoadGameDefault", callback(self, self, "database_load_env", "core/environments/default"))
-    self:Button("LoadCurrentDefault", callback(self, self, "database_load_env", env_path))
-    self:Button("Save", callback(self, self, "write_to_disk_dialog"))
+    local quick = self:DivGroup("Quick actions")
+    self:Button("Browse", callback(self, self, "open_environment_dialog"), {group = quick})
+    self:Button("LoadGameDefault", callback(self, self, "database_load_env", "core/environments/default"), {group = quick})
+    self:Button("LoadCurrentDefault", callback(self, self, "database_load_env", env_path), {group = quick})
+    self:Button("Save", callback(self, self, "write_to_disk_dialog"), {group = quick})
 
+    --SUN
+    local sun = self:DivGroup("Sun")
+    self:add_sky_param(self:ColorEnvItem("sun_ray_color", {text = "Color", group = sun}))
+    self:add_sky_param(self:Slider("sun_ray_color_scale", nil, 1, {text = "Intensity", step = 0.1, min = 0, max = 10, group = sun}))
 
-    local global_illumination = self:DivGroup("GlobalIllumination")
-    local skydome = self:DivGroup("Skydome")
-    local global_textures = self:DivGroup("GlobalTextures")    
-    local effects = self:DivGroup("Effects")    
-    self:add_sky_param(self:ColorEnvItem("sun_ray_color", {text = "Sun Color", group = global_illumination}))
-    self:add_sky_param(self:Slider("sun_ray_color_scale", nil, 1, {text = "Sun Intensity", step = 0.1, min = 0, max = 10, group = global_illumination}))
+    --FOG
+    local fog = self:DivGroup("Fog")
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_start_color", {text = "Start color", group = fog}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_far_low_color", {text = "Far low color", group = fog}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_min_range", nil, 1, {text = "Min range", min = 0, max = 5000, floats = 1, group = fog}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_range", nil, 1, {text = "Max range", min = 0, max = 500000, floats = 1, group = fog}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_density", nil, 1, {text = "Max density", min = 0, max = 1, group = fog}))
 
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_start_color", {text = "Fog start color", group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_far_low_color", {text = "Fog far low color", group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_min_range", nil, 1, {text = "Fog min range", min = 0, max = 5000, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_range", nil, 1, {text = "Fog max range", min = 0, max = 500000, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_density", nil, 1, {text = "Fog max density", min = 0, max = 1, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_top_color", {text = "Ambient top color", group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_top_color_scale", nil, 1, {text = "Ambient top scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_bottom_color", {text = "Ambient bottom color", group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_bottom_color_scale", nil, 1, {text = "Ambient bottom scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("ambient_color", {text = "Ambient color", group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_color_scale", nil, 1, {text = "Ambient color scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_scale", nil, 1, {text = "Ambient scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_falloff_scale", nil, 1, {text = "Ambient falloff scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("effect_light_scale", nil, 1, {text = "Effect lighting scale", step = 0.1, min = 0, max = 10, group = global_illumination}))
-    self:add_underlay_param("sky", self:ColorEnvItem("color0", {text = "Color top", group = skydome}))
-    self:add_underlay_param("sky", self:Slider("color0_scale", nil, 1, {text = "Color top scale", step = 0.1, min = 0, max = 10, group = skydome}))
-    self:add_underlay_param("sky", self:ColorEnvItem("color2", {text = "Color low", group = skydome}))
-    self:add_underlay_param("sky", self:Slider("color2_scale", nil, 1, {text = "Color low scale", step = 0.1, min = 0, max = 10, group = skydome}))
+    --SKY DOME LIGHT
+    local skydome = self:DivGroup("Sky Dome Light")
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_top_color", {text = "Top color", group = skydome}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_top_color_scale", nil, 1, {text = "Top scale", step = 0.1, min = 0, max = 10, group = skydome}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_bottom_color", {text = "Bottom color", group = skydome}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_bottom_color_scale", nil, 1, {text = "Bottom scale", step = 0.1, min = 0, max = 10, group = skydome}))
 
-    self:add_sky_param(self:PathItem("underlay", nil, "", "scene", true, function(entry) return not (entry:match("core/levels") or entry:match("levels/zone")) end), true, {text = "Underlay", group = skydome})
-    self:add_sky_param(self:PathItem("sky_texture", nil, "", "texture", false, nil, true, {text = "Sky Texture", group = skydome}))
-    self:add_sky_param(self:PathItem("global_texture", nil, "", "texture", false, nil, true, {text = "Global cubemap", group = skydome}))
-    self:add_sky_param(self:PathItem("global_world_overlay_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay texture", group = global_textures}))
-    self:add_sky_param(self:PathItem("global_world_overlay_mask_texture", nil, "", "texture", false, nil, true, {text = "Global world overlay mask texture", group = global_textures}))
+    -- AMBIENT
+    local ambient = self:DivGroup("Ambient")
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("ambient_color", {text = "Color", group = ambient}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_color_scale", nil, 1, {text = "Color scale", step = 0.1, min = 0, max = 10, group = ambient}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_scale", nil, 1, {text = "Scale", step = 0.1, min = 0, max = 10, group = ambient}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_falloff_scale", nil, 1, {text = "Falloff scale", step = 0.1, min = 0, max = 10, group = ambient}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("effect_light_scale", nil, 1, {text = "Effect lighting scale", step = 0.1, min = 0, max = 10, group = ambient}))
+    
+    -- BLOOM
+    local bloom = self:DivGroup("Bloom")
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("bloom_threshold", nil, 1, {text = "Threshold", min = 0, max = 1, floats = 2, group = bloom}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_intensity", nil, 1, {text = "Intensity", min = 0, max = 10, floats = 2, group = bloom}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_blur_size", nil, 1, {text = "Blur size", min = 1, max = 4, floats = 0, group = bloom}))
+    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("lense_intensity", nil, 1, {text = "Lense intensity", min = 0, max = 1, floats = 2, group = bloom}))
+    
+    -- SKY
+    local sky = self:DivGroup("Sky")
+    self:add_underlay_param("sky", self:ColorEnvItem("color0", {text = "Color top", group = sky}))
+    self:add_underlay_param("sky", self:Slider("color0_scale", nil, 1, {text = "Color top scale", step = 0.1, min = 0, max = 10, group = sky}))
+    self:add_underlay_param("sky", self:ColorEnvItem("color2", {text = "Color low", group = sky}))
+    self:add_underlay_param("sky", self:Slider("color2_scale", nil, 1, {text = "Color low scale", step = 0.1, min = 0, max = 10, group = sky}))
 
-    self._shadow_params.d0 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d0", nil, 1, {text = "1st slice depth start", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.d1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d1", nil, 1, {text = "2nd slice depth start", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.o1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o1", nil, 1, {text = "Blend overlap(1st & 2nd)", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.d2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d2", nil, 1, {text = "3rd slice depth start", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.d3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d3", nil, 1, {text = "3rd slice depth end", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.o2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, max = 1000000, group = global_illumination}))
-    self._shadow_params.o3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o3", nil, 1, {text = "Blend overlap(3rd & 4th)", min = 0, max = 1000000, group = global_illumination}))
- 
+    -- TEXTURES
+    local textures = self:DivGroup("Underlay / Textures", {control_slice = 0.5})
+    self:add_sky_param(self:PathItem("underlay", nil, "", "scene", true, function(entry) return not (entry:match("core/levels") or entry:match("levels/zone")) end, true, {text = "Underlay", group = textures}))
+    self:add_sky_param(self:PathItem("sky_texture", nil, "", "texture", false, nil, true, {text = "Sky Texture", group = textures}))
+    self:add_sky_param(self:PathItem("global_texture", nil, "", "texture", false, nil, true, {text = "Cubemap", group = textures}))
+    self:add_sky_param(self:PathItem("global_world_overlay_texture", nil, "", "texture", false, nil, true, {text = "World overlay texture", group = textures}))
+    self:add_sky_param(self:PathItem("global_world_overlay_mask_texture", nil, "", "texture", false, nil, true, {text = "World overlay mask", group = textures}))
+
+    -- SHADOWS
+    local shadows = self:DivGroup("Shadows", {control_slice = 0.5})
+    self._shadow_params.d0 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d0", nil, 1, {text = "1st slice depth start", min = 0, floats = 0, max = 1000000, group = shadows}))
+    self._shadow_params.d1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d1", nil, 1, {text = "2nd slice depth start", min = 0, floats = 0, max = 1000000, group = shadows}))
+    self._shadow_params.o1 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o1", nil, 1, {text = "Blend overlap(1st & 2nd)", min = 0, floats = 0, max = 1000000, group = shadows}))
+    self._shadow_params.d2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d2", nil, 1, {text = "3rd slice depth start", min = 0, floats = 0, max = 1000000, group = shadows}))
+    self._shadow_params.d3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("d3", nil, 1, {text = "3rd slice depth end", min = 0, floats = 0, max = 1000000, group = shadows}))
+    self._shadow_params.o2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, floats = 0,  max = 1000000, group = shadows}))
+    self._shadow_params.o3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", self:Slider("o3", nil, 1, {text = "Blend overlap(3rd & 4th)", min = 0, floats = 0, max = 1000000, group = shadows}))
+
+    -- DUMMY SHADOWS
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice0"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice1"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice2"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice3"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("shadow_slice_overlap"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("shadow_slice_depths"))
-
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("bloom_threshold", nil, 1, {text = "Bloom threshold", min = 0, max = 1, floats = 2, group = effects}))
-    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_intensity", nil, 1, {text = "Bloom intensity", min = 0, max = 10, floats = 2, group = effects}))
-    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("bloom_blur_size", nil, 1, {text = "Bloom blur size", min = 1, max = 4, floats = 0, group = effects}))
-    self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("lense_intensity", nil, 1, {text = "Lense intensity", min = 0, max = 1, floats = 2, group = effects}))
 
     self:database_load_env(env_path)
 

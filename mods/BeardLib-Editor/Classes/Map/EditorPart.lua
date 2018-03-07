@@ -64,11 +64,15 @@ function Part:init_basic(parent, name)
     self._shape_controls = {"width", "height", "depth", "radius"}
 end
 
+function Part:Switch()
+    if self:GetPart("menu"):is_tab_enabled(self.manager_name) then
+        self:GetPart("menu"):Switch(self)
+    end
+end
 function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_dialogs) end
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
 function Part:Enabled() return self._menu:Visible() end
-function Part:Switch() self:GetPart("menu"):Switch(self) end
 function Part:Value(v) return BeardLibEditor.Options:GetValue("Map/" .. v) end
 function Part:GetPart(n) return BeardLibEditor.Utils:GetPart(n) end 
 function Part:GetLayer(n) return BeardLibEditor.Utils:GetLayer(n) end 

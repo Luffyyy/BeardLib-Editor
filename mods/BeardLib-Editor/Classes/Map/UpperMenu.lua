@@ -72,6 +72,14 @@ function UpperMenu:select_tab(clbk, menu, item)
     end
 end
 
+function UpperMenu:is_tab_enabled(manager)
+    local item = self:GetItem(manager)
+    if item then
+        return item:Enabled()
+    end
+    return true
+end
+
 function UpperMenu:set_tabs_enabled(enabled)
     for manager in pairs(self._parent.parts) do
         local item = self:GetItem(manager)

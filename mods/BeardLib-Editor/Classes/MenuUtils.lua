@@ -110,14 +110,16 @@ function MenuUtils:init(this, menu)
 
 	function this:SmallButton(name, callback, parent, o)    
 		local m, opt = self:WorkMenuUtils(o, parent)
+		local s = parent:TextHeight()
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        callback = callback,
 	        size_by_text = true,
-	        min_width = parent.items_size,
-	        min_height = parent.items_size,
-	        text_offset = 2,
+	        min_width = s,
+	        min_height = s,
+	        max_width = s,
+	        max_height = s,
 			foreground_highlight = false,
 	        position = ClassClbk(self, "CenterRight"),
 	        text_align = "center",
@@ -131,13 +133,16 @@ function MenuUtils:init(this, menu)
 		if not parent then
 			log(debug.traceback())
 		end
-	    opt.help = string.pretty2(name)
+		opt.help = string.pretty2(name)
+		local s = parent:TextHeight()
 	    return m:ImageButton(table.merge({
 	        name = name,
 	        callback = callback,
 	        position = ClassClbk(self, "CenterRight"),
-	        items_size = parent.items_size,
-	        size_by_text = true,
+			size_by_text = true,
+	        w = s,
+	        h = s,
+			img_offset = 4,
 	        texture = texture,
 	        texture_rect = rect,
 	        override_panel = parent,
@@ -332,7 +337,6 @@ function MenuUtils:init(this, menu)
 
 	function this:PathItem(name, callback, value, typ, loaded, check, not_close, opt)
 		opt = opt or {}
-		opt.control_slice = opt.control_slice or 0.66
 		opt.callback = opt.callback or callback
 	    local t = self:TextBox(name, nil, value, opt)
 	    opt.text = "Browse " .. tostring(typ).."s"

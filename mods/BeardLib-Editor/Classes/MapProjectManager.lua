@@ -28,7 +28,7 @@ function Project:init()
     self:Button("NewProject", callback(self, self, "new_project_dialog", ""), {group = btns})
     self:Button("CloneExistingHeist", callback(self, self, "select_narr_as_project"), {group = btns})
     self:Button("EditExistingProject", callback(self, self, "select_project_dialog"), {group = btns})
-    self._curr_editing = self:DivGroup("CurrEditing", {auto_height = false, h = 590})
+    self._curr_editing = self:DivGroup("CurrEditing", {auto_height = false, h = 600})
     self:set_edit_title()
 end
 
@@ -573,7 +573,7 @@ function Project:edit_main_xml(data, save_clbk)
         BeardLibEditor:log("[ERROR] Narrative data is missing from the main.xml!")
         return
     end
-    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, border_bottom = true, border_left = false, last_y_offset = 0}
+    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, border_bottom = true, border_left = false}
     local up = callback(self, self, "set_project_data")
     local narrative = self:DivGroup("Narrative", divgroup_opt)
     self:TextBox("ProjectName", up, data.name, {group = narrative})
@@ -675,7 +675,8 @@ function Project:edit_main_xml(data, save_clbk)
     narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
     narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
     local diff_settings = self:DivGroup("DifficultySettings", divgroup_opt)
-    local diff_settings_holder = self:Menu("DifficultySettingsHolder", {group = diff_settings, align_method = "grid", offset = {diff_settings.offset[1], 0}})
+    local diff_settings_holder = self:Menu("DifficultySettingsHolder", {
+        group = diff_settings, text_offset_y = 0, align_method = "grid", offset = {diff_settings.offset[1], 0}})
 
     local diff_settings_opt = {group = diff_settings_holder, w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, items_size = 18}
     local diff_settings_texts = self:DivGroup("Setting", diff_settings_opt)
@@ -683,8 +684,8 @@ function Project:edit_main_xml(data, save_clbk)
     self:Divider("Contract Cost", div_texts_opt)
     self:Divider("Payout", div_texts_opt)
     self:Divider("Stealth XP bonus", div_texts_opt)
-    self:Divider("Minimum mission XP", div_texts_opt)
-    self:Divider("Maximum mission XP", div_texts_opt)
+    self:Divider("Minimum XP", div_texts_opt)
+    self:Divider("Maximum XP", div_texts_opt)
 
     for i, diff in pairs(self._diffs) do
         local group = self:DivGroup(diff, diff_settings_opt)
@@ -697,10 +698,19 @@ function Project:edit_main_xml(data, save_clbk)
     local near
     local function small_button(name, clbk, texture_rect)
         near = self:SmallButton(name, clbk, self._curr_editing, {
-            w = 100,
-            size_by_text = false,
+            min_width = 100,
+            text_offset = {8, 2},
+            max_width = false,
+            max_height = false,
             border_bottom = true,
-            position = near and function(item) item:Panel():set_righttop(near:Panel():left() - 4, 0) end or "RightTop"
+            position = function(item) 
+                if near then
+                    item:Panel():set_righttop(near:Panel():left() - 4, 0)
+                else
+                    item:SetPositionByString("RightTop")
+                    item:Panel():move(-16)
+                end
+            end
         })
     end
 
@@ -782,10 +792,19 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     local near = self:GetItem("Close")
     local function small_button(name, clbk, texture_rect)
         near = self:SmallButton(name, clbk, self._curr_editing, {
-            w = 100,
-            size_by_text = false,
+            min_width = 100,
+            text_offset = {8, 2},
+            max_width = false,
+            max_height = false,
             border_bottom = true,
-            position = near and function(item) item:Panel():set_righttop(near:Panel():left() - 4, 0) end or "RightTop"
+            position = function(item) 
+                if near then
+                    item:Panel():set_righttop(near:Panel():left() - 4, 0)
+                else
+                    item:SetPositionByString("RightTop")
+                    item:Panel():move(-16)
+                end
+            end
         })
     end
     small_button("Back", SimpleClbk(self.edit_main_xml, self, data, save_clbk))

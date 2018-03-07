@@ -4,9 +4,8 @@ function LoadLevelMenu:init()
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
 	MenuUtils:new(self)
 	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, auto_height = true})
-	local opt = {size_by_text = true, group = tabs, color = tabs.accent_color, offset = 0}
-	local w = self:Toggle("Localized", callback(self, self, "load_levels"), false, opt).w
-	w = w + self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
+	local opt = {size_by_text = true, group = tabs, offset = 0}
+	local w = self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
 	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
 	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
     local load_options = self:Menu("LoadOptions", {align_method = "grid", h = search:Panel():h(), auto_height = false})
@@ -14,10 +13,11 @@ function LoadLevelMenu:init()
     self:Toggle("Safemode", nil, false, {group = load_options, w = half_w, offset = 0})
     self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = half_w, offset = 0})
     self:Toggle("LogSpawnedUnits", nil, false, {group = load_options, w = half_w, offset = 0})
-	self:Menu("Levels", {align_method = "grid", h = self._menu:Panel():h() - (search:Panel():h() * 2), auto_height = false})
+	self:Menu("Levels", {align_method = "grid", auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
 	self:load_levels()
 end
 
+local texture_ids = Idstring("texture")
 function LoadLevelMenu:load_levels()
 	local searching = self:GetItem("Search"):Value()
 	local vanilla = self:GetItem("Vanilla"):Value()
@@ -25,24 +25,79 @@ function LoadLevelMenu:load_levels()
     local columns = BeardLibEditor.Options:GetValue("LevelsColumns")
     local loc = self:GetItem("Localized")
     local levels = self:GetItem("Levels")
-    levels:ClearItems("levels")
+    levels:ClearItems()
+    local loc = managers.localization
+    for id, narr in pairs(tweak_data.narrative.jobs) do
+        if not narr.hidden and narr.contract_visuals and ((narr.custom and custom) or (not narr.custom and vanilla)) then
+            local txt = loc:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")) .." / " .. id
 
-    for id, level in pairs(tweak_data.levels) do
-        if level.world_name and ((level.custom and custom) or (not level.custom and vanilla)) then
-            local text = loc:Value() and managers.localization:text(tostring(level.name_id)) or id
-            if not searching or searching == "" or text:match(searching) then
-                levels:Button({
-                    name = id,
-                    vanilla = not level.custom,
-                    w = levels:ItemsWidth() / columns,
-                    offset = {0, levels:Offset()[2]},
-                    text = text,
-                    callback = callback(self, self, "load_level"),
-                    label = "levels",
-                })  
+            local data = narr.contract_visuals.preview_image or {}
+            local texture, rect = nil
+    
+            if data.id then
+                texture = "guis/dlcs/" .. (data.folder or "bro") .. "/textures/pd2/crimenet/" .. data.id
+                rect = data.rect
+            elseif data.icon then
+                texture, rect = tweak_data.hud_icons:get_icon_data(data.icon)
+            end
+
+            if not texture or not DB:has(texture_ids, texture:id()) then
+                texture, rect = nil, nil
+            end
+            
+            local img_size = 100
+            local img = levels:Create(texture and "Image" or "Divider", {
+                text = "No preview image",
+                texture = texture,
+                texture_rect = rect,
+                background_color = levels.highlight_color or nil,
+                text_align = "center",
+                text_vertical = "bottom",
+                offset_y = 6,
+                w = img_size * 1.7777,
+                h = img_size
+            })
+
+            local narrative = levels:DivGroup({
+                foreground = levels.accent_color,
+                auto_foreground = false,
+                border_bottom = true,
+                border_position_below_title = true,
+                text = txt,
+                w = levels:ItemsWidth() - img:OuterWidth() - 8,
+                min_h = 250,
+            })
+
+            local has_items
+            for _, level in pairs(narr.chain) do
+                local id = level.level_id
+                if id then
+                    local level_t = tweak_data.levels[id]
+                    if level_t.world_name then
+                        local txt = loc:text(level_t.name_id) .." / " .. id
+                        local visible = not searching or searching == "" or txt:match(searching) ~= nil
+                        narrative:Button({
+                            name = id,
+                            auto_foreground = true,
+                            background_color = false,
+                            vanilla = not level_t.custom,
+                            offset = {12, 4},
+                            text = txt,
+                            visible = visible,
+                            callback = callback(self, self, "load_level"),
+                            label = "levels",
+                        })
+                        has_items = has_items or visible
+                    end
+                end
+            end
+            if not has_items then
+                narrative:Destroy()
+                img:Destroy()
             end
         end
     end
+    levels:AlignItems(true)
 end
 
 function LoadLevelMenu:load_level(menu, item)
@@ -56,6 +111,7 @@ function LoadLevelMenu:load_level(menu, item)
         Global.editor_safe_mode = safe_mode == true
         Global.check_load_time = check_load == true
         Global.editor_log_on_spawn = log_on_spawn == true
+        BeardLib.current_level = nil
         MenuCallbackHandler:play_single_player()
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"

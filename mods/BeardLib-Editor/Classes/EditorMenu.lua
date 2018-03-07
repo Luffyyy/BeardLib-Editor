@@ -50,9 +50,11 @@ function EditorMenu:create_items(menu)
         position = "Left",
 	})
 	MenuUtils:new(self, self._tabs)   
-    local div = self:Divider("BeardLibEditor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color}) 
-    self:SmallImageButton("Remove", callback(self, self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, div, {
-        highlight_color = false, w = self._tabs.items_size - 6, h = self._tabs.items_size - 6, inherit = div
+    local div = self:Divider("BeardLib-Editor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
+
+    local s = self._tabs.items_size - 2
+    self:SmallImageButton("Close", callback(self, self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, div, {
+        highlight_color = false, w = s, h = s, inherit = div
     })
 end
 

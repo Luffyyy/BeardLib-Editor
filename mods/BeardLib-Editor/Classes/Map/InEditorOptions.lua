@@ -31,6 +31,7 @@ function Options:build_default_menu()
         text = "Remove Old Links Of Copied Elements",
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
+    self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = main})
 
     local map = self:DivGroup("Map", groups_opt)
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
@@ -56,7 +57,6 @@ function Options:build_default_menu()
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
     self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
     self:Toggle("SelectAllRaycast", nil, false, {group = raycast})
-    self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = raycast})
     self:Toggle("EndlessSelection", callback(self, self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)", group = raycast})
     self:NumberBox("EndlessSelectionReset", callback(self, self, "update_option_value"), self:Value("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection", group = raycast,

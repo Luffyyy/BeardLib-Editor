@@ -94,8 +94,9 @@ function SConverter:RefreshFilesAndFolders()
     end
 
     local holder = self:Menu("Holder", {align_method = "grid"})
-    local foldersgroup = self:Group("Folders", {group = holder, w = holder:ItemsWidth() / 2})
-    local filesgroup = self:Group("Files", {group = holder, w = holder:ItemsWidth() / 2})
+    local w,h = (holder:ItemsWidth() - 16) / 2, self._menu:Height() - holder:Y()  - 8
+    local foldersgroup = self:Group("Folders", {group = holder, w = w, h = h, auto_height = false, auto_align = false})
+    local filesgroup = self:Group("Files", {group = holder, w = w, h = h, auto_height = false, auto_align = false})
     local files, folders = self:GetFilesAndFolders(self.current_script_path)
     if folders then
         table.sort(folders)
@@ -117,6 +118,8 @@ function SConverter:RefreshFilesAndFolders()
             end
         end
     end
+    foldersgroup:AlignItems(true)
+    filesgroup:AlignItems(true)
 end
 
 function SConverter:CreateScriptDataFileOption()

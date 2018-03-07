@@ -25,7 +25,7 @@ function MissionScriptEditor:create_element()
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"
 	self._element.script = self._parent._current_script
-	self._element.values.position = self._parent:cam_spawn_pos()
+	self._element.values.position = self._parent:GetSpawnPosition()
 	self._element.values.rotation = Rotation()
 	self._element.values.enabled = true
 	self._element.values.execute_on_startup = false

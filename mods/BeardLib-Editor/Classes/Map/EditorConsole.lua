@@ -5,7 +5,7 @@ function EditorConsole:init(parent, menu)
         name = "console_options",
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         w = 600,
-        h = 18,
+        auto_height = true,
         offset = 0,
         items_size = 18,
         scrollbar = false,

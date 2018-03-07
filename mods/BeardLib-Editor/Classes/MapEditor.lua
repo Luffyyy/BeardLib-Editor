@@ -165,7 +165,6 @@ end
 
 function Editor:select_unit(unit, add, switch)
     add = NotNil(add, ctrl())
-    switch = NotNil(switch, not add)
     m.static:set_selected_unit(unit, add)
     if switch then
         m.static:Switch()
@@ -204,7 +203,7 @@ function Editor:GetSpawnPosition(data)
     if data then
         position = data.position
     end
-    return position or (m.world._currently_spawning and self._spawn_position) or self:cam_spawn_pos()
+    return position or (m.world:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)

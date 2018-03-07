@@ -1,7 +1,7 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
 	local EMenu = BeardLibEditor.Menu
-	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false}))
+	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false, items_size = 18}))
 	self:GetMenu():Image({
 		name = "Logo",
 		icon_w = 256,
@@ -14,7 +14,7 @@ function AboutMenu:init()
     local function center_text(text, opt) return self:Divider(text, table.merge({color = false, group = info, text_align = "center", text = text}, opt or {})) end
     local div = {color = false, border_bottom = true, group = info, border_width = 512, border_center_as_title = true}
     self:Divider("About", div)
-    center_text("Created by Luffy and GreatBigBushyBeard")
+    center_text("Created by Luffy and GreatBigBushyBeaSrd")
     center_text("Version " .. BeardLibEditor.Version)
     self:Divider("Credits", div)
     center_text("Walrus - for helping developing the editor from the start and giving information on pd2 mapping")
@@ -23,6 +23,7 @@ function AboutMenu:init()
     center_text("Quackertree - for helping on testing the dev branch")
     center_text("TheRealDannyyy - for helping on testing the dev branch")
     center_text("Nepgearsy - for pushing quick bug fixes in github")
+    center_text("Shovel - for being a shovel -->")
     center_text("And anyone else who helped!")
     self:Divider("Links", div)
     link_button("GitHub", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor")

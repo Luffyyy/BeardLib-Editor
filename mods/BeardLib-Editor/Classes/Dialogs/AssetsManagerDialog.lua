@@ -245,7 +245,7 @@ function AssetsManagerDialog:clean_add_xml()
         if tonumber(k) and type(v) == "table" and v._meta then
             local exists
             for _, tbl in pairs(new_add) do
-                if type(tbl) == "table" and tbl._meta == v._meta and (tbl.name and tbl.name == v.name or tbl.path == v.path) then
+                if type(tbl) == "table" and tbl._meta == v._meta and ((tbl.path and tbl.path == v.path) or (tbl.name and tbl.name == v.name)) then
                     exists = true
                     break
                 end

@@ -13,7 +13,7 @@ function Options:init()
 	self:Button("ResetVisualOptions", callback(self, self, "reset_options", visual), {group = visual})
 	self:Button("AccentColor", callback(self, self, "open_set_color_dialog"), {group = visual})
 	self:Button("BackgroundColor", callback(self, self, "open_set_color_dialog"), {group = visual})
-	self:NumberBox("LevelsColumns", callback(self, self, "set_clbk"), O:GetValue("LevelsColumns"), {min = 1, floats = 0, group = visual})
+	--self:NumberBox("LevelsColumns", callback(self, self, "set_clbk"), O:GetValue("LevelsColumns"), {min = 1, floats = 0, group = visual})
 
 	local themes = self:DivGroup("Themes", {group = visual, last_y_offset = 0})
 	self:Button("Dark", callback(self, self, "set_theme"), {group = themes, text = "Dark[Default]"})
@@ -41,8 +41,8 @@ end
 function Options:set_theme(menu, item)
 	local theme = item.name
 	if theme == "Dark" then
-		self:set("AccentColor", Color(0.26, 0.45, 0.80))
-		self:set("BackgroundColor", Color(0.5, 0.19, 0.19, 0.19))
+		self:set("AccentColor", Color('4272d9'))
+		self:set("BackgroundColor", Color(0.6, 0.2, 0.2, 0.2))
 	else
 		self:set("AccentColor", Color(0.40, 0.38, 1))
 		self:set("BackgroundColor", Color(0.64, 0.70, 0.70, 0.70))

@@ -166,7 +166,7 @@ end
 
 --Continents
 function WData:build_continents()
-    local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "RightTop"}
+    local opt = {items_size = 18, size_by_text = true, texture = "textures/editor_icons_df", position = "RightTop"}
     local prev
     local function toolbar_item(name, clbk, toolbar, o)
         o = table.merge(clone(opt), o)
@@ -436,7 +436,11 @@ end
 
 function WData:back_button()
     self:destroy_back_button()
-    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {highlight_color = Color.black:with_alpha(0.25), font_size = 18})
+    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {
+        text_offset = 4,
+        max_width = false,
+        highlight_color = Color.black:with_alpha(0.25), font_size = 18
+    })
 end
 
 function WData:build_menu(name, layer)
@@ -517,24 +521,34 @@ function WData:remove_dummy_unit()
     end
 end
 
+function WData:is_spawning()
+    return self._currently_spawning_element or self._currently_spawning
+end
+
 function WData:mouse_pressed(button, x, y)
-    if not self._currently_spawning then
-        return false
-    end
     if button == Idstring("0") then
-        self._do_switch = true
-        self._parent:SpawnUnit(self._currently_spawning)
+        if self._currently_spawning_element then
+            self._do_switch = true
+            self._parent:add_element(self._currently_spawning_element)
+            return true
+        elseif self._currently_spawning then
+            self._do_switch = true
+            self._parent:SpawnUnit(self._currently_spawning)
+            return true
+        end
     elseif button == Idstring("1") then
         self:remove_dummy_unit()
         self._currently_spawning = nil
+        self._currently_spawning_element = nil
         self:SetTitle()
         self:GetPart("menu"):set_tabs_enabled(true)
-        if self._do_switch then
+        if self._do_switch and self:Value("SelectAndGoToMenu") then
             self:GetPart("static"):Switch()
             self._do_switch = false
         end
+        return true
     end
-    return true
+    return false
 end
 
 function WData:update(t, dt)
@@ -637,12 +651,10 @@ function WData:OpenSpawnElementDialog()
 	BeardLibEditor.ListDialog:Show({
 	    list = elements,
         force = true,
-	    callback = function(item)
-            self._parent:add_element(item.element, held_ctrl)
-            held_ctrl = ctrl()
-            if not held_ctrl then
-                self:CloseDialog()
-            end
+        no_callback = ClassClbk(self, "CloseDialog"),
+        callback = function(item)
+            self:BeginSpawningElements(item.element)
+            self:CloseDialog()
 	    end
 	}) 
 end
@@ -669,6 +681,7 @@ function WData:OpenSelectUnitDialog(params)
     BeardLibEditor.ListDialog:Show({
         list = units,
         force = true,
+        no_callback = ClassClbk(self, "CloseDialog"),
         callback = params.on_click or function(item)
             self._parent:select_unit(item.unit)         
             self:CloseDialog()
@@ -712,6 +725,7 @@ function WData:OpenSelectElementDialog(params)
 	BeardLibEditor.ListDialog:Show({
 	    list = elements,
         force = true,
+        no_callback = ClassClbk(self, "CloseDialog"),        
 	    callback = params.on_click or function(item)
             self._parent:select_element(item.element, held_ctrl)
             held_ctrl = ctrl()
@@ -722,12 +736,17 @@ function WData:OpenSelectElementDialog(params)
 	}) 
 end
 
+function WData:BeginSpawningElements(element)
+    self._currently_spawning_element = element
+    self:BeginSpawning()
+end
+
 function WData:BeginSpawning(unit)
     self:Switch()
     self._currently_spawning = unit
     self:remove_dummy_unit()
     if self._parent._spawn_position then
-        self._dummy_spawn_unit = World:spawn_unit(Idstring(unit), self._parent._spawn_position)
+        self._dummy_spawn_unit = World:spawn_unit(Idstring(unit or "units/mission_element/element"), self._parent._spawn_position)
     end
     self:GetPart("menu"):set_tabs_enabled(false)
     self:SetTitle("Press: LMB to spawn, RMB to cancel")
@@ -758,6 +777,7 @@ function WData:OpenSpawnUnitDialog(params)
 	BeardLibEditor.ListDialog:Show({
 	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = pkgs, slot = params.slot, type = params.type, not_type = "being"}),
         force = true,
+        no_callback = ClassClbk(self, "CloseDialog"),
         callback = function(unit)
             self:CloseDialog()
 	    	if type(params.on_click) == "function" then
