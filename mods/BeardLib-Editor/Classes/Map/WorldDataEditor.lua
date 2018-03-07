@@ -536,7 +536,7 @@ function WData:mouse_pressed(button, x, y)
             self._parent:SpawnUnit(self._currently_spawning)
             return true
         end
-    elseif button == Idstring("1") then
+    elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element) then
         self:remove_dummy_unit()
         self._currently_spawning = nil
         self._currently_spawning_element = nil
