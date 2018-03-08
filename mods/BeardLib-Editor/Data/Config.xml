@@ -117,13 +117,9 @@
         <cooked_physics path="units/mission_element/element" force="true"/>
         <unit path="core/units/nav_surface/nav_surface" force="true"/>
         <object path="core/units/nav_surface/nav_surface" force="true"/>
-        <model path="core/units/nav_surface/nav_surface" force="true"/>
-        <cooked_physics path="core/units/nav_surface/nav_surface" force="true"/>
         <unit path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
         <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <cooked_physics path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <texture path="units/dev_tools/level_tools/ai_coverpoint_df" force="true"/>
         <unit path="core/units/environment_area/environment_area" force="true"/>
         <object path="core/units/environment_area/environment_area" force="true"/>
         <model path="core/units/environment_area/environment_area" force="true"/>
