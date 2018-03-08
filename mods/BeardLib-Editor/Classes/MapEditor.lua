@@ -342,7 +342,7 @@ function Editor:set_unit_rotations(rot)
         for i, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
                 local ud = unit:unit_data()
-                BeardLibEditor.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), ud.local_rot * rot, ud) 
+                BeardLibEditor.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud) 
             end
         end
     end
