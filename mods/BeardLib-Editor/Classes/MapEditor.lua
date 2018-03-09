@@ -2,6 +2,7 @@ MapEditor = MapEditor or class()
 core:import("CoreEditorWidgets")
 
 local Editor = MapEditor
+local Utils = BeardLibEditor.Utils
 local m = {}
 function Editor:init()
     managers.editor = self
@@ -13,6 +14,7 @@ function Editor:init()
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
     self._screen_borders = BeardLibEditor.Utils:GetConvertedResolution()
+    self._mul = 80
 	self._camera_object = World:create_camera()
     self._camera_object:set_near_range(20)
 	self._camera_object:set_far_range(250000)
@@ -411,6 +413,7 @@ function Editor:get_cursor_look_point(dist) return self._camera_object:screen_to
 function Editor:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
 function Editor:screen_to_world(pos, dist) return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist)) end
 function Editor:camera() return self._camera_object end
+function Editor:viewport() return self._vp end
 function Editor:camera_fov() return self:camera():fov() end
 function Editor:set_camera_far_range(range) return self:camera():set_far_range(range) end
 
@@ -573,6 +576,36 @@ function Editor:update_widgets(t, dt)
     end
 end
 
+function Editor:set_orthographic_screen()
+	local res = Application:screen_resolution()
+	self._camera_object:set_orthographic_screen( -(res.x/2)*self._mul, (res.x/2)*self._mul, -(res.y/2)*self._mul, (res.y/2)*self._mul )
+end
+
+function Editor:toggle_orthographic(menu, item)
+    local camera = self._camera_object
+    local use = item:Value()
+	if use then
+        self._orthographic = true
+		self._camera_settings = {}
+		self._camera_settings.far_range = camera:far_range()
+		self._camera_settings.near_range = camera:near_range()
+		self._camera_settings.position = camera:position()
+		self._camera_settings.rotation = camera:rotation()
+		camera:set_projection_type(Idstring("orthographic"))
+		self:set_orthographic_screen()
+		camera:set_position(Vector3(0, 0, camera:position().z))
+		camera:set_rotation(Rotation(math.DOWN, Vector3(0, 1, 0)))
+		camera:set_far_range(75000)
+	else
+        self._orthographic = false
+		camera:set_projection_type(Idstring("perspective"))
+		camera:set_far_range(self._camera_settings.far_range)
+		camera:set_near_range(self._camera_settings.near_range)
+		camera:set_position(self._camera_settings.position)
+		camera:set_rotation(self._camera_settings.rotation)
+	end
+end
+
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
     local shft = shift()
@@ -580,14 +613,20 @@ function Editor:update_camera(t, dt)
     if not move or not shft then
         managers.mouse_pointer:_activate()
     end
+    local camera_speed = BeardLibEditor.Options:GetValue("Map/CameraSpeed")
     local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
     local axis_move = self._con:get_input_axis("freeflight_axis_move")
     local axis_look = self._con:get_input_axis("freeflight_axis_look")
     local btn_move_up = self._con:get_input_float("freeflight_move_up")
     local btn_move_down = self._con:get_input_float("freeflight_move_down")
     local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
+    if self._orthographic then
+        self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
+        self:set_orthographic_screen()
+    else
     move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
-    local move_delta = move_dir * BeardLibEditor.Options:GetValue("Map/CameraSpeed") * move_speed * dt
+    end
+    local move_delta = move_dir * camera_speed * move_speed * dt
     local pos_new = self._camera_pos + move_delta
     local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
     local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)

@@ -263,7 +263,7 @@ function BLE:GenerateSoundData()
             get_sounds(Path:Combine(path, folder))
         end
     end
-    get_sounds(self.ExtractDirectory.."levels")
+    get_sounds(self.ExtractDirectory)
     FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
     self.WorldSounds = sounds
     Global.WorldSounds = sounds
