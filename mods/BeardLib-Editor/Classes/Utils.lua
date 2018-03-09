@@ -165,6 +165,17 @@ function Utils:GetPackages(asset, type, size_needed, first, packages)
     return found_packages
 end
 
+function Utils:GetAllLights()
+	local lights = {}
+	local all_units = World:find_units_quick("all")
+	for _,unit in ipairs( all_units ) do
+		for _,light in ipairs( unit:get_objects_by_type( Idstring( "light" ) ) ) do
+			table.insert( lights, light )
+		end
+	end	
+	return lights
+end
+
 function Utils:HasEditableLights(unit)
     local lights = self:GetLights(unit)
     return lights and #lights > 0
