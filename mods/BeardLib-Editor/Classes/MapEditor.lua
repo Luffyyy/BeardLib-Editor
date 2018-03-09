@@ -12,7 +12,7 @@ function Editor:init()
     self._grid_size = 1
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
-    self._screen_borders = {x = 1280, y = 720}
+    self._screen_borders = BeardLibEditor.Utils:GetConvertedResolution()
 	self._camera_object = World:create_camera()
     self._camera_object:set_near_range(20)
 	self._camera_object:set_far_range(250000)
@@ -434,7 +434,7 @@ end
 
 function Editor:cursor_pos()
     local x, y = managers.mouse_pointer._mouse:position()
-    return Vector3(x / self._screen_borders.x * 2 - 1, y / self._screen_borders.y * 2 - 1, 0)
+    return Vector3(x / self._screen_borders.width * 2 - 1, y / self._screen_borders.height * 2 - 1, 0)
 end
 
 function Editor:select_unit_by_raycast(slot, clbk)
