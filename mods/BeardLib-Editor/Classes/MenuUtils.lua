@@ -333,7 +333,7 @@ function MenuUtils:init(this, menu)
 	    if shape then
 	    	self:SetShapeControls(shape)
 	    end
-	end	
+	end
 
 	function this:PathItem(name, callback, value, typ, loaded, check, not_close, opt)
 		opt = opt or {}
@@ -343,9 +343,14 @@ function MenuUtils:init(this, menu)
 		opt.offset = {t.offset[1] * 4, t.offset[2]}
 		opt.callback = nil
 		opt.callback = opt.btn_callback
-	    local btn = self:Button("SelectPath"..name, function()
-	       BeardLibEditor.ListDialog:Show({
-		        list = BeardLibEditor.Utils:GetEntries({type = typ, loaded = loaded, filenames = false, check = check}),
+		local btn = self:Button("SelectPath"..name, function()
+			local list = BeardLibEditor.Utils:GetEntries({type = typ, loaded = loaded, filenames = false, check = check})
+			if opt.sort_func then
+				opt.sort_func(list)
+			end
+	       	BeardLibEditor.ListDialog:Show({
+				list = list,
+				sort = opt.sort_func == nil,
 		        callback = function(path) 
 		        	t:SetValue(path, true)
 		        	if not not_close then

@@ -15,11 +15,7 @@ function BLE:Init()
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
     self.Version = self.AssetUpdates.version or 2
-    self.ExtractImportHelp = [[
-This will search for assets of the unit to load it, you shouldn't use this method for any networked units, 
-units that have animations(bags, drills, bags, npcs, etc) and you can't use this method to load any units that need an effect file.
-]]
- 
+
     self.updaters = {}
     self.modules = {}
     self.DBPaths = {}

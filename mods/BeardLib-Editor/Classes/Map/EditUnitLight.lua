@@ -40,7 +40,19 @@ function EditUnitLight:build_menu(units)
 		2048
 	}
 	self._shadow_resolution = self:ComboBox("ShadowResolution", callback(self, self, "set_unit_data_parent"), res, 4, {help = "Select an resolution from the combobox", group = light_options})
-	self._spot_texture = self:PathItem("SpotTexture", callback(self, self, "set_unit_data_parent"), self.DEFAULT_SPOT_PROJECTION_TEXTURE, "texture", false, nil, false, {group = light_options}, true)
+	self._spot_texture = self:PathItem("SpotTexture", callback(self, self, "set_unit_data_parent"), self.DEFAULT_SPOT_PROJECTION_TEXTURE, "texture", false, nil, false, {
+		group = light_options,
+		sort_func = function(list)
+			local begins = string.begins
+			local spot = "units/lights/spot_light_projection_textures"
+			table.sort(list, function(a,b)
+				if begins(a, spot) and not begins(b, spot) then
+					return true
+				end
+				return false
+			end)
+		end
+	})
 end
 
 function EditUnitLight:update_light()
@@ -65,14 +77,17 @@ function EditUnitLight:update_light()
 	self._falloff:SetValue(light:falloff_exponent())
 	self._start_angle:SetValue(light:spot_angle_start())
 	self._end_angle:SetValue(light:spot_angle_end())
-	local is_spot = string.match(light:properties(), "omni") -- Not sure about this(see decompiled code).
+
+	local is_spot = not (string.match(light:properties(), "omni") and true or false)
+
 	self._start_angle:SetEnabled(is_spot)
 	self._end_angle:SetEnabled(is_spot)
 	self._shadow_resolution:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "shadow_projection"))
 	local resolution = unit:unit_data().projection_lights
 	resolution = resolution and resolution[name] and resolution[name].x or EditUnitLight.DEFAULT_SHADOW_RESOLUTION
 	self._shadow_resolution:SetSelectedItem(resolution)
-	self._spot_texture:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "projection") and is_spot)
+	--self._spot_texture:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "projection") and is_spot)
+	self._spot_texture:SetEnabled(is_spot)
 	local projection_texture = unit:unit_data().projection_textures
 	projection_texture = projection_texture and projection_texture[name] or EditUnitLight.DEFAULT_SPOT_PROJECTION_TEXTURE
 	self._spot_texture:SetValue(projection_texture)
@@ -92,13 +107,13 @@ function EditUnitLight:set_unit_data()
 	light:set_clipping_values(clipping_values:with_y(self._lower_clipping:Value()))
 	light:set_spot_angle_start(self._start_angle:Value())
 	light:set_spot_angle_end(self._end_angle:Value())	
-	if self._shadow_resolution.enabled then
+	if self._shadow_resolution:Enabled() then
 		local res = self._shadow_resolution:SelectedItem()	
 		unit:unit_data().projection_lights = unit:unit_data().projection_lights or {}
 		unit:unit_data().projection_lights[self._idstrings[light:name():key()]] = {x = res, y = res}
 	end
-	if self._shadow_resolution.enabled then
-		local tex = "units/lights/spot_light_projection_textures/" .. self._spot_texture:SelectedItem()
+	if self._spot_texture:Enabled() then
+		local tex = self._spot_texture:Value()
 		light:set_projection_texture(Idstring(tex), false, false)
 		unit:unit_data().projection_textures = unit:unit_data().projection_textures or {}
 		unit:unit_data().projection_textures[self._idstrings[light:name():key()]] = tex		

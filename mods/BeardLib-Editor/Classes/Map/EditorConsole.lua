@@ -50,6 +50,9 @@ function EditorConsole:PrintMessage(type, message, ...)
     message = type == "info" and string.format(message, ...) or message
     local date = Application:date("%X")  
     self:Divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
+    if self._menu.items_panel:h() > self._menu.panel:h() and not self._menu._grabbed_scroll_bar then
+        self._menu.items_panel:set_bottom(self._menu.panel:h())
+    end
 end
 
 function EditorConsole:FilterConsole(menu, item)

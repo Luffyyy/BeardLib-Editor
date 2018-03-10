@@ -1,6 +1,12 @@
 AssetsManagerDialog = AssetsManagerDialog or class(MenuDialog)
 AssetsManagerDialog.type_name = "AssetsManagerDialog"
 AssetsManagerDialog._no_reshaping_menu = true
+AssetsManagerDialog.ImportHelp = [[
+This will search for dependencies that the unit requires in order to load.
+Units that have a network counterpart will have to be loaded manually(this will hopefully change in the future).
+Any missing dependency from your extract directory will fail the load. So be sure your extract is not outdated.
+]]
+
 function AssetsManagerDialog:init(params, menu)
     if self.type_name == AssetsManagerDialog.type_name then
         params = params and clone(params) or {}
@@ -176,7 +182,7 @@ end
 
 function AssetsManagerDialog:load_from_extract_dialog()
     BeardLibEditor.Utils:YesNoQuestion(
-        BeardLibEditor.ExtractImportHelp,
+        self.ImportHelp,
         function()
             self:load_from_extract({[self._tbl._selected.name] = true})
         end

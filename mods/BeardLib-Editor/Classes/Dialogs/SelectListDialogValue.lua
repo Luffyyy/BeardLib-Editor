@@ -51,7 +51,7 @@ function SelectListDialogValue:ToggleClbk(...)
 end
 
 function SelectListDialogValue:ToggleItem(name, selected, value)
-    local opt = {group = self._list_items_menu, offset = 4}
+    local opt = {group = self._list_items_menu, offset = 4, text_offset_y = 0}
     local item
     if self._single_select then
         item = self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, opt)
@@ -72,7 +72,7 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
         end                
     end
 
-    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false, free_typing = self._params.combo_free_typing}
+    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false, free_typing = self._params.combo_free_typing, text_offset_y = 0}
     local v = selected and value.value or nil
     if self._tbl.values_name then
 	    if tonumber(v) then

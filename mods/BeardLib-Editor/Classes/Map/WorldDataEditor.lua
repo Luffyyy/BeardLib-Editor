@@ -110,7 +110,7 @@ function WData:build_default_menu()
         self:Button("Unit", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
         if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
             self:Button("UnitsExtract", callback(self, self, "OpenLoadUnitDialog", {on_click = callback(self, self, "LoadUnitFromExtract"), not_loaded = true}), {
-                group = load, size_by_text = true, text = "Unit(From Extract)", help = BeardLibEditor.ExtractImportHelp
+                group = load, size_by_text = true, text = "Unit(From Extract)", help = AssetsManagerDialog.ImportHelp
             })
         end
     end

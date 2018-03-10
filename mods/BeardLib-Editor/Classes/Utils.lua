@@ -313,7 +313,7 @@ function Utils:HasProjectionLight(unit, type)
     return nil
 end
 
-function Utils:IsProjectionLight(unit)
+function Utils:IsProjectionLight(unit, light, type)
     type = type or "projection"
     local node = self:ParseXml("object", unit:unit_data().name)
     if node then
