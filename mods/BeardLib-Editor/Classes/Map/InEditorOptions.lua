@@ -9,13 +9,12 @@ end
 function Options:build_default_menu()
     self.super.build_default_menu(self)
     local groups_opt = {offset = {8, 4}}
+
     local main = self:DivGroup("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     local grid_size = self:Value("GridSize")
     local snap_rotation = self:Value("SnapRotation")
-    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), self:Value("CameraSpeed"), {max = 10, min = 0, step = 0.1, group = main})
-    
     self:Slider("GridSize", callback(self, self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
     self:Slider("SnapRotation", callback(self, self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})    
     self._parent:update_grid_size(grid_size)
@@ -23,8 +22,7 @@ function Options:build_default_menu()
     if not BeardLib.current_level then
         self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
-    self:NumberBox("AutoSaveMinutes", callback(self, self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})    
-    self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = main})
+    self:NumberBox("AutoSaveMinutes", callback(self, self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})
     self:Toggle("AutoSave", callback(self, self, "update_option_value"), self:Value("AutoSave"), {group = main, help = "Saves your map automatically, unrecommended for large maps."})
     self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
     self:Toggle("BackupMaps", callback(self, self, "update_option_value"), self:Value("BackupMaps"), {group = main})
@@ -34,6 +32,15 @@ function Options:build_default_menu()
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
     self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = main})
+
+    local camera = self:DivGroup("Camera", groups_opt)
+    local cam_speed = self:Value("CameraSpeed")
+    local fov = self:Value("CameraFOV")
+    local far_clip = self:Value("CameraFarClip")
+    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1, group = camera})
+    self:Slider("CameraFOV", ClassClbk(self._parent, "update_camera_fov"), fov, {max = 170, min = 40, step = 1, group = camera})
+    self:Slider("CameraFarClip", ClassClbk(self._parent, "update_camera_far_clip"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
+    self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = camera})
 
     local map = self:DivGroup("Map", groups_opt)
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
@@ -77,7 +84,7 @@ function Options:build_default_menu()
     self:Button("SaveNavigationData", callback(self, self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveCoverData", callback(self, self, "save_cover_data", false), {group = other})
     self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
-    
+
     self:toggle_autosaving()
 end
 

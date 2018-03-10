@@ -3,6 +3,7 @@ core:import("CoreEditorWidgets")
 
 local Editor = MapEditor
 local Utils = BeardLibEditor.Utils
+local Options = BeardLibEditor.Options
 local m = {}
 function Editor:init()
     managers.editor = self
@@ -13,12 +14,12 @@ function Editor:init()
     self._grid_size = 1
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
-    self._screen_borders = BeardLibEditor.Utils:GetConvertedResolution()
+    self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
 	self._camera_object = World:create_camera()
     self._camera_object:set_near_range(20)
-	self._camera_object:set_far_range(250000)
-    self._camera_object:set_fov(75)
+	self._camera_object:set_far_range(BeardLibEditor.Options:GetValue("Map/CameraFarClip"))
+    self._camera_object:set_fov(BeardLibEditor.Options:GetValue("Map/CameraFOV"))
 	self._camera_object:set_position(Vector3(864, -789, 458))
 	self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
 	self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
@@ -111,6 +112,27 @@ function Editor:update_grid_size(value)
         if manager.update_grid_size then
             manager:update_grid_size()
         end
+    end
+end
+
+--I don't like having Options:SetValue there. Maybe have something
+--like OnItemValueChanged that calls "update_options_value"
+--on option change instead
+function Editor:update_camera_fov(menu, item)
+    local fov = item:Value()
+    if fov and math.round(self:camera():fov()) ~= fov then
+		self:viewport():pop_ref_fov()
+		self:viewport():push_ref_fov(fov)
+        self:camera():set_fov(fov)
+        BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
+    end
+end
+
+function Editor:update_camera_far_clip(menu, item)
+    local far_clip = item:Value()
+    if far_clip and self:camera():far_range() ~= far_clip then
+        self:camera():set_far_range(far_clip)
+        BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
     end
 end
 

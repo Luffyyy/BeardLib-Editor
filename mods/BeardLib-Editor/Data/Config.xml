@@ -84,6 +84,8 @@
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
                 <option type="number" default_value="2" name="CameraSpeed" min="0" max="10" step="0.5"/>
+                <option type="number" default_value="90" name="CameraFOV" min="40" max="170" step="1"/>
+                <option type="number" default_value="250000" name="CameraFarClip" min="1000" max="500000" step="100"/>
                 <option type="number" default_value="1" name="GridSize" min="1" max="10000" step="1"/>
                 <option type="number" default_value="90" name="SnapRotation" min="1" max="360" step="1"/>
                 <option type="boolean" default_value="true" name="DrawOnlyElementsOfCurrentScript"/>
