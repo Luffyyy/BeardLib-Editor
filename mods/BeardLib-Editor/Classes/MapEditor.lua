@@ -14,6 +14,7 @@ function Editor:init()
     self._grid_size = 1
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
+    self._use_surface_move = true
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
 	self._camera_object = World:create_camera()
@@ -511,13 +512,14 @@ function Editor:update(t, dt)
         self:update_camera(t, dt)
         self:update_widgets(t, dt)
         self:draw_marker(t, dt)
+        self:draw_grid(t, dt)
     end
 end
 
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-    if true then
+    if not self._use_surface_move then
         local p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
@@ -529,7 +531,39 @@ function Editor:current_position()
                 current_pos = Vector3(x, y, z)
             end
         end
+    else
+        local p2 = self:get_cursor_look_point(25000)
+		local ray = nil
+		local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
+        local unit = self:selected_unit()
+		if rays then
+			for _, unit_r in ipairs(rays) do
+				if unit_r.unit ~= unit and unit_r.unit:visible() then
+					ray = unit_r
+					break
+				end
+			end
+		end
+
+		if ray then
+			local p = ray.position
+			local x = math.round(p.x / self:grid_size()) * self:grid_size()
+            local y = math.round(p.y / self:grid_size()) * self:grid_size()
+            local z = math.round(p.z / self:grid_size()) * self:grid_size()
+			current_pos = Vector3(x, y, z)
+			local n = ray.normal
+
+			if alive(unit) then
+				local u_rot = unit:rotation()
+				local z = n
+				local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
+				local y = z:cross(x)
+				local rot = Rotation(x, y, z)
+				current_rot = rot * unit:rotation():inverse()
+			end
+        end
     end
+
     self._current_pos = current_pos or self._current_pos
     return current_pos, current_rot
 end
@@ -596,6 +630,26 @@ function Editor:update_widgets(t, dt)
             end
         end
     end
+end
+
+function Editor:draw_grid(t, dt)
+
+	local rot = Rotation(0, 0, 0)
+	if alive(self:selected_unit()) and self:local_rot() then
+		rot = self:selected_unit():rotation()
+	end
+
+	for i = -5, 5, 1 do
+		local from_x = (self._current_pos + rot:x() * i * self:grid_size()) - rot:y() * 6 * self:grid_size()
+		local to_x = self._current_pos + rot:x() * i * self:grid_size() + rot:y() * 6 * self:grid_size()
+
+		Application:draw_line(from_x, to_x, 0, 0.5, 0)
+
+		local from_y = (self._current_pos + rot:y() * i * self:grid_size()) - rot:x() * 6 * self:grid_size()
+		local to_y = self._current_pos + rot:y() * i * self:grid_size() + rot:x() * 6 * self:grid_size()
+
+		Application:draw_line(from_y, to_y, 0, 0.5, 0)
+	end
 end
 
 function Editor:set_orthographic_screen()
