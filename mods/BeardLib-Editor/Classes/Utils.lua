@@ -575,3 +575,7 @@ end
 function Utils:GetLayer(name)
     return self:GetPart("world").layers[name]
 end
+
+function Utils:GetConvertedResolution()
+    return {width = managers.gui_data:full_1280_size().width, height = managers.gui_data:full_1280_size().height}
+end
