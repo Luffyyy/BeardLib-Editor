@@ -90,10 +90,11 @@ function UpperMenu:set_tabs_enabled(enabled)
 end
 
 function UpperMenu:toggle_widget(name, menu, item)
+    if ctrl() then return end
     item = item or self:GetItem(name.."_widget_toggle")
     menu = menu or item.parent
     if not item.enabled then return end
-    
+
     self._parent["toggle_"..name.."_widget"](self._parent)
     self._parent:use_widgets(self._parent:selected_unit() ~= nil)
     self:update_toggle(item)

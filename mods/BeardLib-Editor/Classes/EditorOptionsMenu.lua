@@ -34,7 +34,8 @@ function Options:init()
 	keybind("IncreaseCameraSpeed")
 	keybind("DecreaseCameraSpeed")
 	keybind("ToggleGUI")
-	
+	keybind("ToggleRuler")
+
 	self:Button("ResetOptions", callback(self, self, "reset_options"))
 end
 

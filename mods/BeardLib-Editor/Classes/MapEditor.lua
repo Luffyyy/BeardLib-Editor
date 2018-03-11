@@ -14,6 +14,7 @@ function Editor:init()
     self._grid_size = 1
     self._current_pos = Vector3(0, 0, 0)
     self._snap_rotation = 90
+    self._use_surface_move = true
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
 	self._camera_object = World:create_camera()
@@ -115,6 +116,25 @@ function Editor:update_grid_size(value)
     end
 end
 
+function Editor:SetRulerPoints()
+	if not self._ruler_points  then
+        self._ruler_points = {}
+    end
+
+	local start_position = nil
+    start_position = self._current_pos
+
+	if #self._ruler_points == 0 then
+        table.insert(self._ruler_points, start_position)
+        self:Log("[RULER]Start position: " .. tostring(start_position))
+    else
+        local len = (start_position - self._ruler_points[2]):length()
+        self:Log(string.format("[RULER]Length: %.2fm", len / 100))
+        self:Log("[RULER]End position: " .. tostring(self._ruler_points[2]))
+        self._ruler_points = {}
+	end
+end
+
 --I don't like having Options:SetValue there. Maybe have something
 --like OnItemValueChanged that calls "update_options_value"
 --on option change instead
@@ -161,7 +181,7 @@ end
 
 function Editor:use_widgets(use)
     use = use and self:enabled()
-    self._move_widget:set_enabled(use)    
+    self._move_widget:set_enabled(use)
     self._rotate_widget:set_enabled(use)
 end
 
@@ -511,13 +531,15 @@ function Editor:update(t, dt)
         self:update_camera(t, dt)
         self:update_widgets(t, dt)
         self:draw_marker(t, dt)
+        self:draw_grid(t, dt)
+        self:draw_ruler(t, dt)
     end
 end
 
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-    if true then
+    if not self._use_surface_move then
         local p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
@@ -529,103 +551,41 @@ function Editor:current_position()
                 current_pos = Vector3(x, y, z)
             end
         end
+    else
+        local p2 = self:get_cursor_look_point(25000)
+		local ray = nil
+		local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
+        local unit = self:selected_unit()
+		if rays then
+			for _, unit_r in ipairs(rays) do
+				if unit_r.unit ~= unit and unit_r.unit:visible() then
+					ray = unit_r
+					break
+				end
+			end
+		end
+
+		if ray then
+            local p = ray.position
+            local n = ray.normal
+			local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
+            local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
+            local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
+			current_pos = Vector3(x, y, z)
+
+			if alive(unit) then
+				local u_rot = unit:rotation()
+				local z = n
+				local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
+				local y = z:cross(x)
+				local rot = Rotation(x, y, z)
+				current_rot = rot * unit:rotation():inverse()
+			end
+        end
     end
+
     self._current_pos = current_pos or self._current_pos
     return current_pos, current_rot
-end
-
-function MapEditor:draw_marker(t, dt)
-    local spawn_pos
-    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
-    for _, ray in pairs(rays) do
-        if ray and ray.unit ~= m.world._dummy_spawn_unit then
-            spawn_pos = ray.position
-            break
-        end
-    end
-    self._spawn_position = spawn_pos or self._current_pos
-end
-
-function Editor:update_positions()
-    for _, manager in pairs(m) do
-        if manager.update_positions then
-            manager:update_positions()
-        end
-    end
-end
-
-function Editor:update_widgets(t, dt)
-    if alive(self:widget_unit()) then
-        local widget_pos = self:world_to_screen(self:widget_unit():position())
-        if widget_pos.z > 50 then
-            widget_pos = widget_pos:with_z(0)
-            local widget_screen_pos = widget_pos
-            widget_pos = self:screen_to_world(widget_pos, 1000)
-            local widget_rot = self:widget_rot()
-            if self._using_move_widget and self._move_widget:enabled() then
-                local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
-                if self._last_pos ~= result_pos then 
-                    self:set_unit_positions(result_pos)
-                    self:update_positions()                    
-                end
-                self._last_pos = result_pos
-            end
-            if self._using_rotate_widget and self._rotate_widget:enabled() then
-                local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
-                if self._last_rot ~= result_rot then
-                    self:set_unit_rotations(result_rot)
-                    self:update_positions()
-                end
-                self._last_rot = result_rot
-            end
-            if self._move_widget:enabled() then            
-                if self._last_pos ~= nil then
-                    self:set_unit_positions(self._last_pos)
-                    self._last_pos = nil
-                end
-                BeardLibEditor.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
-                self._move_widget:update(t, dt)
-            end
-            if self._rotate_widget:enabled() then
-                if self._last_rot ~= nil then
-                    self:set_unit_rotations(self._last_rot)
-                    self._last_rot = nil
-                end               
-                BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
-                self._rotate_widget:update(t, dt)
-            end
-        end
-    end
-end
-
-function Editor:set_orthographic_screen()
-	local res = Application:screen_resolution()
-	self._camera_object:set_orthographic_screen( -(res.x/2)*self._mul, (res.x/2)*self._mul, -(res.y/2)*self._mul, (res.y/2)*self._mul )
-end
-
-function Editor:toggle_orthographic(menu, item)
-    local camera = self._camera_object
-    local use = item:Value()
-	if use then
-        self._orthographic = true
-		self._camera_settings = {}
-		self._camera_settings.far_range = camera:far_range()
-		self._camera_settings.near_range = camera:near_range()
-		self._camera_settings.position = camera:position()
-		self._camera_settings.rotation = camera:rotation()
-		camera:set_projection_type(Idstring("orthographic"))
-		self:set_orthographic_screen()
-		camera:set_position(Vector3(0, 0, camera:position().z))
-		camera:set_rotation(Rotation(math.DOWN, Vector3(0, 1, 0)))
-		camera:set_far_range(75000)
-	else
-        self._orthographic = false
-		camera:set_projection_type(Idstring("perspective"))
-		camera:set_far_range(self._camera_settings.far_range)
-		camera:set_near_range(self._camera_settings.near_range)
-		camera:set_position(self._camera_settings.position)
-		camera:set_rotation(self._camera_settings.rotation)
-	end
 end
 
 local v0 = Vector3()
@@ -665,6 +625,141 @@ function Editor:update_camera(t, dt)
         self:set_camera(pos_new, shft and rot_new or self:camera_rotation())
     end
 end
+
+function Editor:update_widgets(t, dt)
+    if alive(self:widget_unit()) then
+        local widget_pos = self:world_to_screen(self:widget_unit():position())
+        if widget_pos.z > 50 then
+            widget_pos = widget_pos:with_z(0)
+            local widget_screen_pos = widget_pos
+            widget_pos = self:screen_to_world(widget_pos, 1000)
+            local widget_rot = self:widget_rot()
+            if self._using_move_widget and self._move_widget:enabled() then
+                local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                if self._last_pos ~= result_pos then 
+                    self:set_unit_positions(result_pos)
+                    self:update_positions()                    
+                end
+                self._last_pos = result_pos
+            end
+            if self._using_rotate_widget and self._rotate_widget:enabled() then
+                local result_rot = self._rotate_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                if self._last_rot ~= result_rot then
+                    self:set_unit_rotations(result_rot)
+                    self:update_positions()
+                end
+                self._last_rot = result_rot
+            end
+            if self._move_widget:enabled() then
+                if self._last_pos ~= nil then
+                    self:set_unit_positions(self._last_pos)
+                    self._last_pos = nil
+                end
+                BeardLibEditor.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
+                self._move_widget:update(t, dt)
+            end
+            if self._rotate_widget:enabled() then
+                if self._last_rot ~= nil then
+                    self:set_unit_rotations(self._last_rot)
+                    self._last_rot = nil
+                end               
+                BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
+                self._rotate_widget:update(t, dt)
+            end
+        end
+    end
+end
+
+function Editor:draw_marker(t, dt)
+    --[[local spawn_pos
+    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
+    for _, ray in pairs(rays) do
+        if ray and ray.unit ~= m.world._dummy_spawn_unit then
+            spawn_pos = ray.position
+            break
+        end
+    end]]
+    self._spawn_position = self._current_pos
+end
+
+-- TODO make the grid draw like the widgets
+function Editor:draw_grid(t, dt)
+
+	local rot = Rotation(0, 0, 0)
+	if alive(self:selected_unit()) and self:local_rot() then
+		rot = self:selected_unit():rotation()
+    end
+
+    if self._using_move_widget and self._move_widget:enabled() then
+        for i = -12, 12, 1 do
+            local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
+            local to_x = self:widget_unit():position() + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()
+
+            Application:draw_line(from_x, to_x, 0, 0.5, 0)
+
+            local from_y = (self:widget_unit():position() + rot:y() * i * self:grid_size()) - rot:x() * 12 * self:grid_size()
+            local to_y = self:widget_unit():position() + rot:y() * i * self:grid_size() + rot:x() * 12 * self:grid_size()
+
+            Application:draw_line(from_y, to_y, 0, 0.5, 0)
+        end
+    end
+end
+
+function Editor:draw_ruler(t, dt)
+	if not self._ruler_points or #self._ruler_points == 0 then
+		return
+	end
+
+	local pos = self._ruler_points[1]
+
+	Application:draw_sphere(pos, 10, 1, 1, 1)
+
+	local end_position = nil
+    end_position = self._current_pos
+    table.insert(self._ruler_points, end_position)
+
+	Application:draw_sphere(end_position, 10, 1, 1, 1)
+	Application:draw_line(pos, end_position, 1, 1, 1)
+end
+
+function Editor:update_positions()
+    for _, manager in pairs(m) do
+        if manager.update_positions then
+            manager:update_positions()
+        end
+    end
+end
+
+function Editor:set_orthographic_screen()
+	local res = Application:screen_resolution()
+	self._camera_object:set_orthographic_screen( -(res.x/2)*self._mul, (res.x/2)*self._mul, -(res.y/2)*self._mul, (res.y/2)*self._mul )
+end
+
+function Editor:toggle_orthographic(menu, item)
+    local camera = self._camera_object
+    local use = item:Value()
+	if use then
+        self._orthographic = true
+		self._camera_settings = {}
+		self._camera_settings.far_range = camera:far_range()
+		self._camera_settings.near_range = camera:near_range()
+		self._camera_settings.position = camera:position()
+		self._camera_settings.rotation = camera:rotation()
+		camera:set_projection_type(Idstring("orthographic"))
+		self:set_orthographic_screen()
+		camera:set_position(Vector3(0, 0, camera:position().z))
+		camera:set_rotation(Rotation(math.DOWN, Vector3(0, 1, 0)))
+		camera:set_far_range(75000)
+	else
+        self._orthographic = false
+		camera:set_projection_type(Idstring("perspective"))
+		camera:set_far_range(self._camera_settings.far_range)
+		camera:set_near_range(self._camera_settings.near_range)
+		camera:set_position(self._camera_settings.position)
+		camera:set_rotation(self._camera_settings.rotation)
+	end
+end
+
 
 --Empty/Unused functions
 function Editor:register_message()end
