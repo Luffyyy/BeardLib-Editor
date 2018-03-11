@@ -162,7 +162,7 @@ end
 
 function Editor:use_widgets(use)
     use = use and self:enabled()
-    self._move_widget:set_enabled(use)    
+    self._move_widget:set_enabled(use)
     self._rotate_widget:set_enabled(use)
 end
 
@@ -612,7 +612,7 @@ function Editor:update_widgets(t, dt)
                 end
                 self._last_rot = result_rot
             end
-            if self._move_widget:enabled() then            
+            if self._move_widget:enabled() then
                 if self._last_pos ~= nil then
                     self:set_unit_positions(self._last_pos)
                     self._last_pos = nil
@@ -637,19 +637,21 @@ function Editor:draw_grid(t, dt)
 	local rot = Rotation(0, 0, 0)
 	if alive(self:selected_unit()) and self:local_rot() then
 		rot = self:selected_unit():rotation()
-	end
+    end
 
-	for i = -5, 5, 1 do
-		local from_x = (self._current_pos + rot:x() * i * self:grid_size()) - rot:y() * 6 * self:grid_size()
-		local to_x = self._current_pos + rot:x() * i * self:grid_size() + rot:y() * 6 * self:grid_size()
+    if self._using_move_widget and self._move_widget:enabled() then
+        for i = -12, 12, 1 do
+            local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
+            local to_x = self:widget_unit():position() + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()
 
-		Application:draw_line(from_x, to_x, 0, 0.5, 0)
+            Application:draw_line(from_x, to_x, 0, 0.5, 0)
 
-		local from_y = (self._current_pos + rot:y() * i * self:grid_size()) - rot:x() * 6 * self:grid_size()
-		local to_y = self._current_pos + rot:y() * i * self:grid_size() + rot:x() * 6 * self:grid_size()
+            local from_y = (self:widget_unit():position() + rot:y() * i * self:grid_size()) - rot:x() * 12 * self:grid_size()
+            local to_y = self:widget_unit():position() + rot:y() * i * self:grid_size() + rot:x() * 12 * self:grid_size()
 
-		Application:draw_line(from_y, to_y, 0, 0.5, 0)
-	end
+            Application:draw_line(from_y, to_y, 0, 0.5, 0)
+        end
+    end
 end
 
 function Editor:set_orthographic_screen()
