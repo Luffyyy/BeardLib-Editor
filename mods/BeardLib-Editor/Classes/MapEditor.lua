@@ -116,6 +116,25 @@ function Editor:update_grid_size(value)
     end
 end
 
+function Editor:SetRulerPoints()
+	if not self._ruler_points  then
+        self._ruler_points = {}
+    end
+
+	local start_position = nil
+    start_position = self._current_pos
+
+	if #self._ruler_points == 0 then
+        table.insert(self._ruler_points, start_position)
+        self:Log("[RULER]Start position: " .. Vector3.ToString(start_position)) -- TODO prettify string
+    else
+        local len = (start_position - self._ruler_points[2]):length()
+        self:Log("[RULER]Length: ".. len)
+        self:Log("[RULER]End position: " .. Vector3.ToString(self._ruler_points[2]))
+        self._ruler_points = {}
+	end
+end
+
 --I don't like having Options:SetValue there. Maybe have something
 --like OnItemValueChanged that calls "update_options_value"
 --on option change instead
@@ -513,6 +532,7 @@ function Editor:update(t, dt)
         self:update_widgets(t, dt)
         self:draw_marker(t, dt)
         self:draw_grid(t, dt)
+        self:draw_ruler(t, dt)
     end
 end
 
@@ -568,23 +588,41 @@ function Editor:current_position()
     return current_pos, current_rot
 end
 
-function MapEditor:draw_marker(t, dt)
-    local spawn_pos
-    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
-    for _, ray in pairs(rays) do
-        if ray and ray.unit ~= m.world._dummy_spawn_unit then
-            spawn_pos = ray.position
-            break
-        end
+local v0 = Vector3()
+function Editor:update_camera(t, dt)
+    local shft = shift()
+    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
+    if not move or not shft then
+        managers.mouse_pointer:_activate()
     end
-    self._spawn_position = spawn_pos or self._current_pos
-end
-
-function Editor:update_positions()
-    for _, manager in pairs(m) do
-        if manager.update_positions then
-            manager:update_positions()
+    local camera_speed = BeardLibEditor.Options:GetValue("Map/CameraSpeed")
+    local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
+    local axis_move = self._con:get_input_axis("freeflight_axis_move")
+    local axis_look = self._con:get_input_axis("freeflight_axis_look")
+    local btn_move_up = self._con:get_input_float("freeflight_move_up")
+    local btn_move_down = self._con:get_input_float("freeflight_move_down")
+    local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
+    if self._orthographic then
+        self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
+        self:set_orthographic_screen()
+    else
+    move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
+    end
+    local move_delta = move_dir * camera_speed * move_speed * dt
+    local pos_new = self._camera_pos + move_delta
+    local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
+    local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
+    local rot_new = Rotation(yaw_new, pitch_new, 0)
+    local keep_active = m.opt and m.opt:get_value("KeepMouseActiveWhileFlying")
+    if keep_active then
+        if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
+            self:mouse_moved(managers.mouse_pointer:world_position())
         end
+    elseif shft and move then
+        managers.mouse_pointer:_deactivate()
+    end
+    if move then
+        self:set_camera(pos_new, shft and rot_new or self:camera_rotation())
     end
 end
 
@@ -632,6 +670,18 @@ function Editor:update_widgets(t, dt)
     end
 end
 
+function Editor:draw_marker(t, dt)
+    local spawn_pos
+    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
+    for _, ray in pairs(rays) do
+        if ray and ray.unit ~= m.world._dummy_spawn_unit then
+            spawn_pos = ray.position
+            break
+        end
+    end
+    self._spawn_position = spawn_pos or self._current_pos
+end
+
 function Editor:draw_grid(t, dt)
 
 	local rot = Rotation(0, 0, 0)
@@ -650,6 +700,31 @@ function Editor:draw_grid(t, dt)
             local to_y = self:widget_unit():position() + rot:y() * i * self:grid_size() + rot:x() * 12 * self:grid_size()
 
             Application:draw_line(from_y, to_y, 0, 0.5, 0)
+        end
+    end
+end
+
+function Editor:draw_ruler(t, dt)
+	if not self._ruler_points or #self._ruler_points == 0 then
+		return
+	end
+
+	local pos = self._ruler_points[1]
+
+	Application:draw_sphere(pos, 10, 1, 1, 1)
+
+	local end_position = nil
+    end_position = self._current_pos
+    table.insert(self._ruler_points, end_position)
+
+	Application:draw_sphere(end_position, 10, 1, 1, 1)
+	Application:draw_line(pos, end_position, 1, 1, 1)
+end
+
+function Editor:update_positions()
+    for _, manager in pairs(m) do
+        if manager.update_positions then
+            manager:update_positions()
         end
     end
 end
@@ -684,43 +759,6 @@ function Editor:toggle_orthographic(menu, item)
 	end
 end
 
-local v0 = Vector3()
-function Editor:update_camera(t, dt)
-    local shft = shift()
-    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
-    if not move or not shft then
-        managers.mouse_pointer:_activate()
-    end
-    local camera_speed = BeardLibEditor.Options:GetValue("Map/CameraSpeed")
-    local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
-    local axis_move = self._con:get_input_axis("freeflight_axis_move")
-    local axis_look = self._con:get_input_axis("freeflight_axis_look")
-    local btn_move_up = self._con:get_input_float("freeflight_move_up")
-    local btn_move_down = self._con:get_input_float("freeflight_move_down")
-    local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
-    if self._orthographic then
-        self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
-        self:set_orthographic_screen()
-    else
-    move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
-    end
-    local move_delta = move_dir * camera_speed * move_speed * dt
-    local pos_new = self._camera_pos + move_delta
-    local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
-    local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
-    local rot_new = Rotation(yaw_new, pitch_new, 0)
-    local keep_active = m.opt and m.opt:get_value("KeepMouseActiveWhileFlying")
-    if keep_active then
-        if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
-            self:mouse_moved(managers.mouse_pointer:world_position())
-        end
-    elseif shft and move then
-        managers.mouse_pointer:_deactivate()
-    end
-    if move then
-        self:set_camera(pos_new, shft and rot_new or self:camera_rotation())
-    end
-end
 
 --Empty/Unused functions
 function Editor:register_message()end

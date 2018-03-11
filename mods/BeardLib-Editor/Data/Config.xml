@@ -76,6 +76,7 @@
                 <option type="string" default_value="]" name="IncreaseCameraSpeed"/>
                 <option type="string" default_value="[" name="DecreaseCameraSpeed"/>
                 <option type="string" default_value="insert" name="ToggleGUI"/>
+                <option type="string" default_value="left ctrl+r" name="ToggleRuler"/>
                 <option type="string" default_value="t" name="ToggleMoveWidget"/>
                 <option type="string" default_value="f10" name="ToggleMapEditor"/>
                 <option type="string" default_value="r" name="ToggleRotationWidget"/>
