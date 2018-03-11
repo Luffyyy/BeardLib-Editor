@@ -126,11 +126,11 @@ function Editor:SetRulerPoints()
 
 	if #self._ruler_points == 0 then
         table.insert(self._ruler_points, start_position)
-        self:Log("[RULER]Start position: " .. Vector3.ToString(start_position)) -- TODO prettify string
+        self:Log("[RULER]Start position: " .. tostring(start_position))
     else
         local len = (start_position - self._ruler_points[2]):length()
-        self:Log("[RULER]Length: ".. len)
-        self:Log("[RULER]End position: " .. Vector3.ToString(self._ruler_points[2]))
+        self:Log(string.format("[RULER]Length: %.2fm", len / 100))
+        self:Log("[RULER]End position: " .. tostring(self._ruler_points[2]))
         self._ruler_points = {}
 	end
 end
@@ -682,6 +682,7 @@ function Editor:draw_marker(t, dt)
     self._spawn_position = spawn_pos or self._current_pos
 end
 
+-- TODO make the grid draw like the widgets
 function Editor:draw_grid(t, dt)
 
 	local rot = Rotation(0, 0, 0)
@@ -704,6 +705,7 @@ function Editor:draw_grid(t, dt)
     end
 end
 
+-- TODO make the lines and spheres adjust by normal so they dont appear slightly inside objects
 function Editor:draw_ruler(t, dt)
 	if not self._ruler_points or #self._ruler_points == 0 then
 		return
