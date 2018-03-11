@@ -566,12 +566,12 @@ function Editor:current_position()
 		end
 
 		if ray then
-			local p = ray.position
-			local x = math.round(p.x / self:grid_size()) * self:grid_size()
-            local y = math.round(p.y / self:grid_size()) * self:grid_size()
-            local z = math.round(p.z / self:grid_size()) * self:grid_size()
+            local p = ray.position
+            local n = ray.normal
+			local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
+            local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
+            local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
 			current_pos = Vector3(x, y, z)
-			local n = ray.normal
 
 			if alive(unit) then
 				local u_rot = unit:rotation()
@@ -671,15 +671,15 @@ function Editor:update_widgets(t, dt)
 end
 
 function Editor:draw_marker(t, dt)
-    local spawn_pos
+    --[[local spawn_pos
     local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
     for _, ray in pairs(rays) do
         if ray and ray.unit ~= m.world._dummy_spawn_unit then
             spawn_pos = ray.position
             break
         end
-    end
-    self._spawn_position = spawn_pos or self._current_pos
+    end]]
+    self._spawn_position = self._current_pos
 end
 
 -- TODO make the grid draw like the widgets
@@ -705,7 +705,6 @@ function Editor:draw_grid(t, dt)
     end
 end
 
--- TODO make the lines and spheres adjust by normal so they dont appear slightly inside objects
 function Editor:draw_ruler(t, dt)
 	if not self._ruler_points or #self._ruler_points == 0 then
 		return
