@@ -12,9 +12,8 @@ function Editor:init()
     end
     self._current_continent = "world"
     self._grid_size = 1
-    self._current_pos = Vector3(0, 0, 0)
+    self._current_pos = Vector3()
     self._snap_rotation = 90
-    self._use_surface_move = true
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
 	self._camera_object = World:create_camera()
@@ -116,22 +115,17 @@ function Editor:update_grid_size(value)
     end
 end
 
+local dis = mvector3.distance
 function Editor:SetRulerPoints()
-	if not self._ruler_points  then
-        self._ruler_points = {}
-    end
-
-	local start_position = nil
-    start_position = self._current_pos
-
-	if #self._ruler_points == 0 then
-        table.insert(self._ruler_points, start_position)
-        self:Log("[RULER]Start position: " .. tostring(start_position))
+    local start_pos = self._current_pos    
+	if not self._end_pos then
+        self._start_pos = start_pos
+        self:Log("[RULER]Start position: " .. tostring(start_pos))
     else
-        local len = (start_position - self._ruler_points[2]):length()
-        self:Log(string.format("[RULER]Length: %.2fm", len / 100))
-        self:Log("[RULER]End position: " .. tostring(self._ruler_points[2]))
-        self._ruler_points = {}
+        self:Log(string.format("[RULER]Length: %.2fm", dis(self._start_pos, self._end_pos) / 100))
+        self:Log("[RULER]End position: " .. tostring(self._end_pos))
+        self._end_pos = nil
+        self._start_pos = nil
 	end
 end
 
@@ -527,7 +521,7 @@ function Editor:update(t, dt)
                 manager:update(t, dt)
             end
         end
-        self._current_pos = managers.editor:current_position() or self._current_pos
+        self._current_pos = self:current_position() or self._current_pos
         self:update_camera(t, dt)
         self:update_widgets(t, dt)
         self:draw_marker(t, dt)
@@ -539,7 +533,7 @@ end
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-    if not self._use_surface_move then
+    if not ctrl() then
         local p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
@@ -606,7 +600,7 @@ function Editor:update_camera(t, dt)
         self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
         self:set_orthographic_screen()
     else
-    move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
+        move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
     end
     local move_delta = move_dir * camera_speed * move_speed * dt
     local pos_new = self._camera_pos + move_delta
@@ -706,20 +700,17 @@ function Editor:draw_grid(t, dt)
 end
 
 function Editor:draw_ruler(t, dt)
-	if not self._ruler_points or #self._ruler_points == 0 then
+	if not self._start_pos then
 		return
 	end
 
-	local pos = self._ruler_points[1]
+	local start_pos = self._start_pos
+    local end_pos = self._current_pos
+    self._end_pos = end_pos
 
-	Application:draw_sphere(pos, 10, 1, 1, 1)
-
-	local end_position = nil
-    end_position = self._current_pos
-    table.insert(self._ruler_points, end_position)
-
-	Application:draw_sphere(end_position, 10, 1, 1, 1)
-	Application:draw_line(pos, end_position, 1, 1, 1)
+	Application:draw_sphere(start_pos, 10, 1, 1, 1)
+	Application:draw_sphere(end_pos, 10, 1, 1, 1)
+	Application:draw_line(start_pos, end_pos, 1, 1, 1)
 end
 
 function Editor:update_positions()
