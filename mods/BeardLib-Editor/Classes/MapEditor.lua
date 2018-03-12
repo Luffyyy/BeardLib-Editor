@@ -161,11 +161,9 @@ end
 function Editor:OnWidgetGrabbed()
     self._old_pos = self:widget_unit():position() or self._old_pos -- TODO make on_widget_rot/pos_grabbed different things
     self._old_rot = self:widget_unit():rotation() or self._old_rot -- TODO as to not store old stuff when it's not needed
-    self._widget_released = false
 end
 
 function Editor:OnWidgetReleased()
-    self._widget_released = true
     if alive(self:widget_unit()) then
         if self._old_pos ~= self:widget_unit():position() then
             self:OnUnitPosChanged()
@@ -182,7 +180,7 @@ function Editor:OnUnitPosChanged()
 end
 
 function Editor:OnUnitRotChanged()
-    self:Log("Unit pos changed")
+    self:Log("Unit rot changed")
 end
 
 function Editor:OnUnitDeleted()
@@ -401,7 +399,8 @@ end
 function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
-        if not self._using_move_widget then
+        local old_pos = self:widget_unit():position()
+        if not self._using_move_widget and (old_pos ~= pos) then
             self:OnUnitPosChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
@@ -417,7 +416,8 @@ end
 function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
-        if not self._using_rotate_widget then
+        local old_rot = self:widget_unit():rotation()
+        if not self._using_rotate_widget and (old_rot ~= rot) then
             self:OnUnitRotChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)

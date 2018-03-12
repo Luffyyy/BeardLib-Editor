@@ -39,6 +39,7 @@ function Static:mouse_pressed(button, x, y)
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
+                    self._parent:OnWidgetGrabbed()
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
                     self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
                     self._parent._using_move_widget = true
@@ -47,6 +48,7 @@ function Static:mouse_pressed(button, x, y)
             if self._parent._rotate_widget:enabled() and not self._parent._using_move_widget then
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
                 if ray and ray.body then
+                    self._parent:OnWidgetGrabbed()
                     self._parent._rotate_widget:set_rotate_widget_axis(ray.body:name():s())
                     self._parent._rotate_widget:set_world_dir(ray.position)
                     self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
