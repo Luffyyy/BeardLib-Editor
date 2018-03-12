@@ -151,10 +151,46 @@ function Editor:update_camera_far_clip(menu, item)
 end
 
 function Editor:reset_widget_values()
+    if self:is_using_widget() then self:OnWidgetReleased() end
     self._using_move_widget = false
     self._using_rotate_widget = false
     self._move_widget:reset_values()
     self._rotate_widget:reset_values()
+end
+
+function Editor:OnWidgetGrabbed()
+    self._old_pos = self:widget_unit():position() or self._old_pos -- TODO make on_widget_rot/pos_grabbed different things
+    self._old_rot = self:widget_unit():rotation() or self._old_rot -- TODO as to not store old stuff when it's not needed
+    self._widget_released = false
+end
+
+function Editor:OnWidgetReleased()
+    self._widget_released = true
+    if alive(self:widget_unit()) then
+        if self._old_pos ~= self:widget_unit():position() then
+            self:OnUnitPosChanged()
+        end
+
+        if self._old_rot ~= self:widget_unit():rotation() then
+            self:OnUnitRotChanged()
+        end
+    end
+end
+
+function Editor:OnUnitPosChanged()
+    self:Log("Unit pos changed")
+end
+
+function Editor:OnUnitRotChanged()
+    self:Log("Unit pos changed")
+end
+
+function Editor:OnUnitDeleted()
+    self:Log("Unit deleted!")
+end
+
+function Editor:OnUnitSpawned()
+    self:Log("Unit spawned!")
 end
 
 function Editor:move_widget_enabled(use)
@@ -232,6 +268,7 @@ function Editor:DeleteUnit(unit)
             m.world:delete_unit(unit)
             managers.worlddefinition:delete_unit(unit)
         end
+        self:OnUnitDeleted()
         World:delete_unit(unit)
     end
 end
@@ -308,6 +345,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         end
     end
     local unit = managers.worlddefinition:create_unit(data, t)
+    self:OnUnitSpawned()
     if alive(unit) then
         self:select_unit(unit, add)
         if unit:name() == m.static._nav_surface then
@@ -363,6 +401,9 @@ end
 function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
+        if not self._using_move_widget then
+            self:OnUnitPosChanged()
+        end
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
@@ -376,6 +417,9 @@ end
 function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
+        if not self._using_rotate_widget then
+            self:OnUnitRotChanged()
+        end
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
@@ -441,6 +485,7 @@ function Editor:selected_unit() return self:selected_units()[1] end
 function Editor:selected_units() return m.static._selected_units end
 function Editor:widget_unit() return m.static:widget_unit() or self:selected_unit() end
 function Editor:widget_rot() return self:widget_unit():rotation() end
+function Editor:is_using_widget() return self._using_move_widget or self._using_rotate_widget end
 function Editor:grid_size() return ctrl() and 1 or self._grid_size end
 function Editor:camera_rotation() return self._camera_object:rotation() end
 function Editor:camera_position() return self._camera_object:position() end
