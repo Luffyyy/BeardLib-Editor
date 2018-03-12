@@ -115,9 +115,7 @@ function BLE:LoadCustomAssets()
                     local path = Path:Combine("levels/mods/", level.id, file_split[1])
                     if FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
                         self.DBPaths[typ] = self.DBPaths[typ] or {}
-                        if not table.contains(self.DBPaths[typ], path) then
-                            table.insert(self.DBPaths[typ], path)
-                        end     
+                        self.DBPaths[typ][path] = true
                     end
                 end
             end            
@@ -141,15 +139,19 @@ function BLE:LoadHashlist()
         self.DBPaths = clone(Global.DBPaths)
         self.DBPackages = clone(Global.DBPackages)
         self.WorldSounds = Global.WorldSounds
+        self.DefaultAssets = Global.DefaultAssets
         self:log("DBPaths already loaded")
     else
-        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary") 
-        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary") 
-        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), "binary") 
+        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary")
+        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary")
+        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), "binary")
+        self.DefaultAssets = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "DefaultAssets.bin"), "binary")
+
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
         Global.DBPackages = self.DBPackages
         Global.WorldSounds = self.WorldSounds
+        Global.DefaultAssets = self.DefaultAssets
     end
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
         local id = pkg.id
@@ -172,8 +174,9 @@ function BLE:ReadCustomPackageConfig(id, config, directory)
                 if SystemFS:exists(file_path) then
                     self.DBPackages[id][typ] = self.DBPackages[id][typ] or {}
                     self.DBPaths[typ] = self.DBPaths[typ] or {}
-                    table.insert(self.DBPackages[id][typ], path)
-                    table.insert(self.DBPaths[typ], path)
+
+                    self.DBPackages[id][typ][path] = true
+                    self.DBPaths[typ][path] = true
                 else
                     self:log("[ERROR][ReadCustomPackageConfig] File does not exist! %s", tostring(file_path))
                 end
@@ -201,12 +204,8 @@ function BLE:GeneratePackageData()
                 pkg[typ] = pkg[typ] or {}
                 paths[typ] = paths[typ] or {}
                 if DB:has(typ, path) then
-                    if not table.contains(paths[typ], path) then
-                        table.insert(paths[typ], path)
-                    end
-                    if not table.contains(pkg[typ], path) then
-                        table.insert(pkg[typ], path)
-                    end
+                    paths[typ][path] = true
+                    pkg[typ][path] = true
                 end
             end
         end
@@ -265,6 +264,22 @@ function BLE:GenerateSoundData()
     Global.WorldSounds = sounds
 end
 
+--Uses a completely empty map to find out which assets are always loaded, this will help save map file size, might be dangerous though.
+--We use _has instead of has so we can exclude any custom assets.
+function BLE:GenerateDefaultAssetsData()
+    self.DefaultAssets = {}
+    for typ, v in pairs(self.DBPaths) do
+        for path in pairs(v) do
+            if PackageManager:_has(typ:id(), path:id()) then
+                self.DefaultAssets[typ] = self.DefaultAssets[typ] or {}
+                self.DefaultAssets[typ][path] = true
+            end
+        end
+    end
+    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "DefaultAssets.bin"), self.DefaultAssets, "binary")
+    Global.DefaultAssets = self.DefaultAssets
+end
+
 function BLE:LoadCustomAssetsToHashList(add, directory)
     for _, v in pairs(add) do
         if type(v) == "table" then
@@ -276,9 +291,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                 path = BeardLib.Utils.Path:Normalize(path)
 
                 self.DBPaths[typ] = self.DBPaths[typ] or {}
-                if not table.contains(self.DBPaths[typ], path) then
-                    table.insert(self.DBPaths[typ], path)
-                end
+                self.DBPaths[typ][path] = true
 
                 local file_path = BeardLib.Utils.Path:Combine(directory, path) ..".".. typ
 

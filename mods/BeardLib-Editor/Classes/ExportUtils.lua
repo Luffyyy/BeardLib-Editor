@@ -4,9 +4,7 @@ local Utils = EditorUtils.Export
 Utils.Ignore = {
     ["model"] = true,
     ["texture"] = true,
-    ["animation"] = true,
-    ["cooked_physics"] = true,
-    ["bnk"] = true
+    ["cooked_physics"] = true
 }
 --TODO: stop in middle of reading if some file doesn't exist.
 --My current theory is that anything binary loads by itself except scriptdatas.
@@ -19,11 +17,13 @@ function Utils:GetUnitDependencies(unit, read_all)
     config = {}
     for _, file in pairs(temp) do
         local file_path = Path:Combine(BeardLibEditor.ExtractDirectory, file.path.."."..file._meta)
-        if FileIO:Exists(file_path) then
-            table.insert(config, file)
-        else
-            BeardLibEditor:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
-            return false
+        if not read_all and (not Global.DefaultAssets[file._meta] or not Global.DefaultAssets[file._meta][file.path]) then
+            if FileIO:Exists(file_path) then
+                table.insert(config, file)
+            else
+                BeardLibEditor:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                return false
+            end
         end
     end
     return config
@@ -121,11 +121,9 @@ end
 function Utils:ReadAnimationSubset(anim_subset, config, read_all)
     table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
     local anim_set_node = EditorUtils:ParseXml("animation_subset", anim_subset)
-    if read_all then
-        if type(anim_set_node) == "table" then
-            for anim_set_child in anim_set_node:children() do
-                table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
-            end
+    if anim_set_node then
+        for anim_set_child in anim_set_node:children() do
+            table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
         end
     end
 end

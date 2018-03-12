@@ -334,7 +334,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                     end
                 end)
             else
-                BeardLibEditor.Utils:Notify("Info", "No to assets to copy")
+                BeardLibEditor.Utils:Notify("Info", "No assets to copy")
             end
         end
         if not dontask then
@@ -351,10 +351,12 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     missing_units = missing_units or self._missing_units
     local packages = {}
     for name, package in pairs(BeardLibEditor.DBPackages) do
-        for _, unit in pairs(package.unit or {}) do
-            if missing_units[unit] == true then
-                packages[name] = packages[name] or {}
-                table.insert(packages[name], unit)
+        if package.unit then            
+            for unit in pairs(package.unit) do
+                if missing_units[unit] == true then
+                    packages[name] = packages[name] or {}
+                    table.insert(packages[name], unit)
+                end
             end
         end
     end
@@ -670,17 +672,10 @@ function AssetsManagerDialog:remove_package(package, menu, item)
         local can_remove = p_units ~= nil
         if can_remove then
             for k, unit in pairs(World:find_units_quick("all")) do
-                if not can_remove then
-                    break
-                end
                 local ud = unit:unit_data()
-                if ud then
-                    for _, u in pairs(p_units) do
-                        if u == ud.name then
-                            can_remove = false
-                            break
-                        end
-                    end
+                if ud and p_units[ud.name] then
+                    can_remove = false
+                    break
                 end
             end
         end

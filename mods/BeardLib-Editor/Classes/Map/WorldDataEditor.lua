@@ -802,8 +802,8 @@ end
 function WData:OpenLoadUnitDialog(params)
     local units = {}
     local unit_ids = Idstring("unit")
-    for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
-        if not PackageManager:has(unit_ids, unit:id()) and not unit:match("wpn_") and not unit:match("msk_") then
+    for unit in pairs(BeardLibEditor.DBPaths.unit) do
+        if not unit:match("wpn_") and not unit:match("msk_") then
             table.insert(units, unit)
         end
     end
