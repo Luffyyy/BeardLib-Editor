@@ -578,8 +578,38 @@ end
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-    if not ctrl() then
-        local p2 = self:get_cursor_look_point(100)
+    local p2 = self:get_cursor_look_point(25000)
+	local ray = nil
+	local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
+    local unit = self:selected_unit()
+	if rays then
+		for _, unit_r in ipairs(rays) do
+			if unit_r.unit ~= unit and unit_r.unit:visible() then
+				ray = unit_r
+				break
+			end
+		end
+	end
+
+	if ray then
+        local p = ray.position
+        local n = ray.normal
+		local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
+        local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
+        local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
+		current_pos = Vector3(x, y, z)
+
+		if alive(unit) then
+			local u_rot = unit:rotation()
+			local z = n
+			local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
+			local y = z:cross(x)
+			local rot = Rotation(x, y, z)
+			current_rot = rot * unit:rotation():inverse()
+        end
+
+    elseif not ctrl() then
+        p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
@@ -589,37 +619,6 @@ function Editor:current_position()
                 local z = math.round(p.z / self:grid_size()) * self:grid_size()
                 current_pos = Vector3(x, y, z)
             end
-        end
-    else
-        local p2 = self:get_cursor_look_point(25000)
-		local ray = nil
-		local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
-        local unit = self:selected_unit()
-		if rays then
-			for _, unit_r in ipairs(rays) do
-				if unit_r.unit ~= unit and unit_r.unit:visible() then
-					ray = unit_r
-					break
-				end
-			end
-		end
-
-		if ray then
-            local p = ray.position
-            local n = ray.normal
-			local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
-            local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
-            local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
-			current_pos = Vector3(x, y, z)
-
-			if alive(unit) then
-				local u_rot = unit:rotation()
-				local z = n
-				local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
-				local y = z:cross(x)
-				local rot = Rotation(x, y, z)
-				current_rot = rot * unit:rotation():inverse()
-			end
         end
     end
 
