@@ -183,8 +183,7 @@ end
 function SConverter:OpenFolderInExplorer(menu, item)
     local open_path = string.gsub(self.current_script_path, "%./", "")
     open_path = string.gsub(self.current_script_path, "/", "\\")
-
-    os.execute('start "" "' .. open_path .. '"')
+    Application:shell_explore_to_folder(open_path)
 end
 
 function SConverter:BackToShortcuts(menu, item)

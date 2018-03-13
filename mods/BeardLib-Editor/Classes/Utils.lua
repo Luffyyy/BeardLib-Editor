@@ -129,12 +129,8 @@ function Utils:IsLoaded(asset, type, packages)
         return true
     end
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
-        for _, path in pairs(package[type] or {}) do
-            if path == asset then
-                if not name:match("all_") then
-                    return true
-                end
-            end
+        if not name:match("all_") and package[type] and package[type][asset] then
+            return true
         end
     end
     return false
@@ -147,16 +143,14 @@ end
 function Utils:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
-        for _, path in pairs(package[type] or {}) do
-            if path == asset then
-                local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
-                local size = not custom and size_needed and self:GetPackageSize(name)
-                if not size_needed or size or custom then
-                    if not name:begins("all_") then
-                        table.insert(found_packages, {name = name, size = size, custom = custom})
-                        if first then
-                            return found_packages
-                        end
+        if not name:begins("all_") and package[type] and package[type][path] then
+            local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
+            local size = not custom and size_needed and self:GetPackageSize(name)
+            if not size_needed or size or custom then
+                if not name:begins("all_") then
+                    table.insert(found_packages, {name = name, size = size, custom = custom})
+                    if first then
+                        return found_packages
                     end
                 end
             end
@@ -431,7 +425,7 @@ function Utils:GetEntries(params)
         IsLoaded = function(entry) return PackageManager:has(ids_type, entry:id()) end
     end
 
-    for _, entry in pairs(BeardLibEditor.DBPaths[params.type]) do
+    for entry in pairs(BeardLibEditor.DBPaths[params.type]) do
         if (not params.loaded or IsLoaded(entry)) and (not params.check or params.check(entry)) then
             table.insert(entries, filenames and Path:GetFileName(entry) or entry)
         end
@@ -471,7 +465,7 @@ function Utils:GetUnits(params)
     end
     local type = params.type
     local not_type = params.not_type
-    for _, unit in pairs(BeardLibEditor.DBPaths.unit) do
+    for unit in pairs(BeardLibEditor.DBPaths.unit) do
         local slot_fine = not slot or self:InSlot(unit, slot)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
@@ -504,7 +498,7 @@ function Utils:GetUnitType(unit)
 end
 
 function Utils:Unhash(ids, type)
-    for _, path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
+    for path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
         if Idstring(path) == ids then
             return path
         end

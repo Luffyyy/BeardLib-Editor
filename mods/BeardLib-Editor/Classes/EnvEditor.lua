@@ -469,7 +469,7 @@ function EnvEditor:uninclude_environment_dialog(menu, item)
         FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, menu.name))
         self:GetPart("opt"):save_main_xml()
         local env = menu.name:gsub(".environment", "")
-        table.delete(Global.DBPaths.environment, Path:Combine("levels/mods/", level.id, env))
+        Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
         BeardLibEditor:LoadCustomAssets()
         self:load_included_environments()
     end)

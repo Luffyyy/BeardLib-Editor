@@ -17,6 +17,8 @@ function LoadLevelMenu:init()
 	self:load_levels()
 end
 
+--TODO: Optimize
+
 local texture_ids = Idstring("texture")
 function LoadLevelMenu:load_levels()
 	local searching = self:GetItem("Search"):Value()
@@ -27,6 +29,8 @@ function LoadLevelMenu:load_levels()
     local levels = self:GetItem("Levels")
     levels:ClearItems()
     local loc = managers.localization
+    local img_size = 100
+    local img_w, img_h = img_size * 1.7777, img_size
     for id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.hidden and narr.contract_visuals and ((narr.custom and custom) or (not narr.custom and vanilla)) then
             local txt = loc:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")) .." / " .. id
@@ -54,13 +58,14 @@ function LoadLevelMenu:load_levels()
                 text_align = "center",
                 text_vertical = "bottom",
                 offset_y = 6,
-                w = img_size * 1.7777,
-                h = img_size
+                w = img_w,
+                h = img_h
             })
 
             local narrative = levels:DivGroup({
                 foreground = levels.accent_color,
                 auto_foreground = false,
+                auto_align = false,
                 border_bottom = true,
                 border_position_below_title = true,
                 text = txt,
