@@ -151,7 +151,6 @@ function Editor:update_camera_far_clip(menu, item)
 end
 
 function Editor:reset_widget_values()
-    if self:is_using_widget() then self:OnWidgetReleased() end
     self._using_move_widget = false
     self._using_rotate_widget = false
     self._move_widget:reset_values()
@@ -218,6 +217,7 @@ function Editor:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
+    if self:is_using_widget() then self:OnWidgetReleased() end
     m.static:mouse_released(button, x, y)    
     self:reset_widget_values()
 end
