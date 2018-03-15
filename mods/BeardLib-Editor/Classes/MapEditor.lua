@@ -650,19 +650,17 @@ function Editor:update_widgets(t, dt)
 end
 
 function Editor:draw_marker(t, dt)
-    --It might seem the same but it's not, some units don't work that well with surface move(for example, helicopter glitches with it)
-    --This might be a reason why I didn't bother porting that portion and made this raycast thingy instead.
-    if self._use_surface_move or ctrl() then
-        self._spawn_position = self._current_pos
-    else
+    local pos = self._current_pos
+    if not self._use_surface_move and not ctrl() then
         local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
         for _, ray in pairs(rays) do
             if ray and ray.unit ~= m.world._dummy_spawn_unit then
-                self._spawn_position = ray.position
+                pos = ray.position
                 break
             end
         end
     end
+    self._spawn_position = pos
 end
 
 -- TODO make the grid draw like the widgets
