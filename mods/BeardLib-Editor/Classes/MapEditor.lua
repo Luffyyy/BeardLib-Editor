@@ -13,6 +13,7 @@ function Editor:init()
     self._current_continent = "world"
     self._grid_size = 1
     self._current_pos = Vector3()
+    self._spawn_position = Vector3()
     self._snap_rotation = 90
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
