@@ -143,7 +143,7 @@ end
 function Utils:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
-        if not name:begins("all_") and package[type] and package[type][path] then
+        if not name:begins("all_") and package[type] and package[type][asset] then
             local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
             local size = not custom and size_needed and self:GetPackageSize(name)
             if not size_needed or size or custom then
@@ -457,7 +457,7 @@ function Utils:GetUnits(params)
     if packages then
         for _, package in pairs(packages) do
             if package.unit then
-                for _, unit in pairs(package.unit) do
+                for unit in pairs(package.unit) do
                     loaded_units[unit] = true
                 end
             end

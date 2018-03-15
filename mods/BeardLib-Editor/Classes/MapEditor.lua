@@ -2,24 +2,25 @@ MapEditor = MapEditor or class()
 core:import("CoreEditorWidgets")
 
 local Editor = MapEditor
-local Utils = BeardLibEditor.Utils
-local Options = BeardLibEditor.Options
+local Utils = BLE.Utils
 local m = {}
 function Editor:init()
     managers.editor = self
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
     end
+
     self._current_continent = "world"
     self._grid_size = 1
     self._current_pos = Vector3()
+    self._spawn_position = Vector3()
     self._snap_rotation = 90
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
 	self._camera_object = World:create_camera()
     self._camera_object:set_near_range(20)
-	self._camera_object:set_far_range(BeardLibEditor.Options:GetValue("Map/CameraFarClip"))
-    self._camera_object:set_fov(BeardLibEditor.Options:GetValue("Map/CameraFOV"))
+	self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
+    self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
 	self._camera_object:set_position(Vector3(864, -789, 458))
 	self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
 	self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
@@ -30,7 +31,10 @@ function Editor:init()
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+
+    self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
     self:check_has_fix()
+
     self._idstrings = {
         ["@ID4f01cba97e94239b@"] = "x",
         ["@IDce15c901d9af3e30@"] = "y",
@@ -39,11 +43,12 @@ function Editor:init()
         ["@ID5dac81a18d09497c@"] = "xz",
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
-    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BeardLibEditor.Options:GetValue("Input/ToggleMapEditor"))
+    
+    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BLE.Options:GetValue("Input/ToggleMapEditor"))
     local normal = not Global.editor_safe_mode
     self._menu = MenuUI:new({
         background_color = Color.transparent,
-        accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        accent_color = BLE.Options:GetValue("AccentColor"),
         mouse_press = normal and callback(self, self, "mouse_pressed"),
         mouse_release = normal and callback(self, self, "mouse_released"),
         create_items = callback(self, self, "post_init"),
@@ -86,7 +91,7 @@ function Editor:animate_bg_fade()
     local bg = self._menu._panel:rect({
         name = "Background",
         layer = 10000,
-        color = BeardLibEditor.Options:GetValue("BackgroundColor"):with_alpha(1),
+        color = BLE.Options:GetValue("BackgroundColor"):with_alpha(1),
     })
     play_anim(bg, {
         set = {alpha = 0},
@@ -127,27 +132,6 @@ function Editor:SetRulerPoints()
         self._end_pos = nil
         self._start_pos = nil
 	end
-end
-
---I don't like having Options:SetValue there. Maybe have something
---like OnItemValueChanged that calls "update_options_value"
---on option change instead
-function Editor:update_camera_fov(menu, item)
-    local fov = item:Value()
-    if fov and math.round(self:camera():fov()) ~= fov then
-		self:viewport():pop_ref_fov()
-		self:viewport():push_ref_fov(fov)
-        self:camera():set_fov(fov)
-        BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
-    end
-end
-
-function Editor:update_camera_far_clip(menu, item)
-    local far_clip = item:Value()
-    if far_clip and self:camera():far_range() ~= far_clip then
-        self:camera():set_far_range(far_clip)
-        BeardLibEditor.Options:SetValue("Map/"..item.name, item:Value())
-    end
 end
 
 function Editor:reset_widget_values()
@@ -472,6 +456,7 @@ function Editor:set_camera_fov(fov)
 end
 
 --Short functions
+function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
 function Editor:destroy() self._vp:destroy() end
 function Editor:add_element(element, menu, item) m.mission:add_element(element) end
@@ -578,6 +563,7 @@ end
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
+<<<<<<< HEAD
     local p2 = self:get_cursor_look_point(25000)
 	local ray = nil
 	local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
@@ -610,6 +596,10 @@ function Editor:current_position()
 
     elseif not ctrl() then
         p2 = self:get_cursor_look_point(100)
+=======
+    if not self._use_surface_move and not ctrl() then
+        local p2 = self:get_cursor_look_point(100)
+>>>>>>> upstream/master
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
@@ -633,7 +623,7 @@ function Editor:update_camera(t, dt)
     if not move or not shft then
         managers.mouse_pointer:_activate()
     end
-    local camera_speed = BeardLibEditor.Options:GetValue("Map/CameraSpeed")
+    local camera_speed = BLE.Options:GetValue("Map/CameraSpeed")
     local move_speed, turn_speed, pitch_min, pitch_max = 1000, 1, -80, 80
     local axis_move = self._con:get_input_axis("freeflight_axis_move")
     local axis_look = self._con:get_input_axis("freeflight_axis_look")
@@ -709,15 +699,19 @@ function Editor:update_widgets(t, dt)
 end
 
 function Editor:draw_marker(t, dt)
-    --[[local spawn_pos
-    local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
-    for _, ray in pairs(rays) do
-        if ray and ray.unit ~= m.world._dummy_spawn_unit then
-            spawn_pos = ray.position
-            break
+    --It might seem the same but it's not, some units don't work that well with surface move(for example, helicopter glitches with it)
+    --This might be a reason why I didn't bother porting that portion and made this raycast thingy instead.
+    if self._use_surface_move or ctrl() then
+        self._spawn_position = self._current_pos
+    else
+        local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
+        for _, ray in pairs(rays) do
+            if ray and ray.unit ~= m.world._dummy_spawn_unit then
+                self._spawn_position = ray.position
+                break
+            end
         end
-    end]]
-    self._spawn_position = self._current_pos
+    end
 end
 
 -- TODO make the grid draw like the widgets
