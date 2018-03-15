@@ -9,12 +9,6 @@ end
 function Options:build_default_menu()
     self.super.build_default_menu(self)
     local groups_opt = {offset = {8, 4}}
-    local function value_clbk(upd_clbk)
-        self:update_option_value()
-        if upd_clbk then
-            upd_clbk()
-        end
-    end
 
     local main = self:DivGroup("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
@@ -44,9 +38,9 @@ function Options:build_default_menu()
     local fov = self:Value("CameraFOV")
     local far_clip = self:Value("CameraFarClip")
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1, group = camera})
-    self:Slider("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1, group = camera})
-    self:Slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
-    self:Toggle("Orthographic", ClassClbk(self, "toggle_orthographic"), false, {group = camera})
+    self:Slider("CameraFOV", ClassClbk(self._parent, "update_camera_fov"), fov, {max = 170, min = 40, step = 1, group = camera})
+    self:Slider("CameraFarClip", ClassClbk(self._parent, "update_camera_far_clip"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
+    self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = camera})
 
     local map = self:DivGroup("Map", groups_opt)
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
@@ -68,7 +62,6 @@ function Options:build_default_menu()
     end
     local raycast = self:DivGroup("Raycast/Selecting", groups_opt)
     self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
-    self:Toggle("UseSurfaceMove", callback(self, self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
     self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
@@ -136,29 +129,25 @@ function Options:loaded_continents(continents, current_continent)
 end
 
 function Options:update_option_value(menu, item)
-    local name, value = item:Name(), item:Value()
-    BeardLibEditor.Options:SetValue("Map/"..name, value)
-    --Clean this too
+    local name = item.name
+    BeardLibEditor.Options:SetValue("Map/"..name, item:Value())
+    if item.name == "ShowElements" then
+        self:GetPart("mission"):set_elements_vis()
+    end
     if name == "EditorUnits" then
         for _, unit in pairs(World:find_units_quick("all")) do
             if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
-                unit:set_visible(value)
+                unit:set_visible(self._menu:GetItem("EditorUnits"):Value())
             end
         end
     elseif name == "GridSize" then
-        self._parent:update_grid_size(value)
+        self._parent:update_grid_size(item:Value())
     elseif name == "SnapRotation" then
-        self._parent:update_snap_rotation(value)
-    elseif name == "DrawOnlyElementsOfCurrentScript" or name == "ShowElements" then
-        self:GetPart("mission"):set_elements_vis(value)
+        self._parent:update_snap_rotation(item:Value())
+    elseif name == "DrawOnlyElementsOfCurrentScript" then
+        self:GetPart("mission"):set_elements_vis()
     elseif name == "AutoSave" or name == "AutoSaveMinutes" then
         self:toggle_autosaving()
-    elseif name == "CameraFOV" then
-        self._parent:set_camera_fov(value)
-    elseif name == "CameraFarClip" then
-        self._parent:set_camera_far_range(value)
-    elseif name == "UseSurfaceMove" then
-        self._parent:set_use_surface_move(value)
     end
 end
 

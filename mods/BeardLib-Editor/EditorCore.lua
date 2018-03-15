@@ -3,9 +3,8 @@ if not ModCore then
     return
 end
 
-BeardLibEditor = BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
-BLE = BeardLibEditor
-
+_G.BeardLibEditor = _G.BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
+local BLE = BeardLibEditor
 function BLE:Init()
     self:init_modules()
     self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
