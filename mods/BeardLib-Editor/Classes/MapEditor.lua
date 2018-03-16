@@ -218,6 +218,7 @@ function Editor:DeleteUnit(unit)
         end
         World:delete_unit(unit)
     end
+    managers.worlddefinition:check_names()
 end
 
 function Editor:GetSpawnPosition(data)

@@ -78,7 +78,7 @@ function LoadLevelMenu:load_levels()
                 local id = level.level_id
                 if id then
                     local level_t = tweak_data.levels[id]
-                    if level_t.world_name then
+                    if level_t and level_t.world_name then
                         local txt = loc:text(level_t.name_id) .." / " .. id
                         local visible = not searching or searching == "" or txt:match(searching) ~= nil
                         narrative:Button({
