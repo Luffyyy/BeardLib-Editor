@@ -22,11 +22,19 @@ function UHandler:SaveUnitValues(units, action_type)
     if self._undo_stack:size() > self._undo_history_size then
         local dif = self._undo_stack:size() - self._undo_history_size
 
+        local last_element = self._undo_stack:stack_table()[1]
+        for _, key in pairs(last_element[1]) do
+            table.remove(self._unit_data[key].pos, #self._unit_data[key].pos)
+            if last_element[2] == "rot" then
+                table.remove(self._unit_data[key].rot, #self._unit_data[key].rot) -- slow and gay
+            end
+        end
+
 		table.remove(self._undo_stack:stack_table(), 1, dif)
 
         self._undo_stack._last = self._undo_stack._last - dif
         managers.editor:Log("Stack history too big, removing elements")
-    end                                                         -- TODO also remove the last unit value based on the last action in undo_stack
+    end
 
     local unit_keys = {}
     for _, unit in pairs(units) do
