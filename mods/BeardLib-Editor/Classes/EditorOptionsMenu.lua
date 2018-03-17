@@ -8,6 +8,7 @@ function Options:init()
 	self:TextBox("ExtractDirectory", callback(self, self, "set_clbk"), O:GetValue("ExtractDirectory"), {
 		help = "The extract directory will be used to load units from extract and be able to edit lights", group = main
 	})
+	--self:NumberBox("UndoHistorySize", callback(self, self, "set"), {group = main}) need to get this working
 
 	local visual = self:DivGroup("Visual")
 	self:Button("ResetVisualOptions", callback(self, self, "reset_options", visual), {group = visual})

@@ -31,6 +31,7 @@ function Editor:init()
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+    self._undo_handler = UndoUnitHandler:new()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
     self:check_has_fix()
@@ -142,28 +143,40 @@ function Editor:reset_widget_values()
 end
 
 function Editor:OnWidgetGrabbed()
-    self._old_pos = self:widget_unit():position() or self._old_pos -- TODO make on_widget_rot/pos_grabbed different things
-    self._old_rot = self:widget_unit():rotation() or self._old_rot -- TODO as to not store old stuff when it's not needed
+    self:StorePreviousPosRot()
+    self._old_units = self:selected_units()
+end
+
+function Editor:StorePreviousPosRot()
+    for _, unit in pairs(self:selected_units()) do
+        unit:unit_data()._prev_pos = unit:position()
+        unit:unit_data()._prev_rot = unit:rotation()
+    end
+end
+
+function Editor:Undo()
+    self._undo_handler:Undo()
 end
 
 function Editor:OnWidgetReleased()
+    local unit = self:selected_unit()
     if alive(self:widget_unit()) then
-        if self._old_pos ~= self:widget_unit():position() then
+        if unit:unit_data()._prev_pos ~= self:widget_unit():position() then
             self:OnUnitPosChanged()
         end
 
-        if self._old_rot ~= self:widget_unit():rotation() then
+        if unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
             self:OnUnitRotChanged()
         end
     end
 end
 
 function Editor:OnUnitPosChanged()
-    self:Log("Unit pos changed")
+    self._undo_handler:SaveUnitValues(self._old_units, "pos")
 end
 
 function Editor:OnUnitRotChanged()
-    self:Log("Unit rot changed")
+    self._undo_handler:SaveUnitValues(self._old_units, "rot")
 end
 
 function Editor:OnUnitDeleted()
@@ -385,6 +398,8 @@ function Editor:set_unit_positions(pos)
     if alive(reference) then
         local old_pos = self:widget_unit():position()
         if not self._using_move_widget and (old_pos ~= pos) then
+            self:StorePreviousPosRot()
+            self._old_units = self:selected_units()
             self:OnUnitPosChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
@@ -402,7 +417,9 @@ function Editor:set_unit_rotations(rot)
     if alive(reference) then
         local old_rot = self:widget_unit():rotation()
         if not self._using_rotate_widget and (old_rot ~= rot) then
-            self:OnUnitRotChanged()
+            self:StorePreviousPosRot()
+            self._old_units = self:selected_units()
+            self:OnUnitPosChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
@@ -563,7 +580,6 @@ end
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-<<<<<<< HEAD
     local p2 = self:get_cursor_look_point(25000)
 	local ray = nil
 	local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
@@ -596,10 +612,6 @@ function Editor:current_position()
 
     elseif not ctrl() then
         p2 = self:get_cursor_look_point(100)
-=======
-    if not self._use_surface_move and not ctrl() then
-        local p2 = self:get_cursor_look_point(100)
->>>>>>> upstream/master
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
