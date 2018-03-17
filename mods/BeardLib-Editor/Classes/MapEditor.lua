@@ -156,6 +156,7 @@ end
 
 function Editor:Undo()
     self._undo_handler:Undo()
+    m.static:recalc_all_locals()
 end
 
 function Editor:OnWidgetReleased()
