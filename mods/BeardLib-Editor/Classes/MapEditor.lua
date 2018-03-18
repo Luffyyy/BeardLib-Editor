@@ -181,7 +181,7 @@ function Editor:OnUnitRotChanged()
 end
 
 function Editor:OnUnitDeleted()
-    self:Log("Unit deleted!")
+    self._undo_handler:SaveUnitValues(self:selected_units(), "delete")
 end
 
 function Editor:OnUnitSpawned()
@@ -259,12 +259,12 @@ function Editor:DeleteUnit(unit)
                 m.mission:remove_element_unit(unit)
             end
         end
+        self:OnUnitDeleted()
         local ud = unit:unit_data()
         if ud then
             m.world:delete_unit(unit)
             managers.worlddefinition:delete_unit(unit)
         end
-        self:OnUnitDeleted()
         World:delete_unit(unit)
     end
 end

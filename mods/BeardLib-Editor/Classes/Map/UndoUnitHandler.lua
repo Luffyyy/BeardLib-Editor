@@ -7,7 +7,7 @@ function UHandler:init()
     self._unit_data = {}
     self._undo_stack = CoreStack.Stack:new()
     self._redo_data = {}
-    self._undo_history_size = BLE.Options:GetValue("UndoHistorySize")
+    self._undo_history_size = tonumber(BLE.Options:GetValue("UndoHistorySize"))
 end
 
 function UHandler:SaveUnitValues(units, action_type)
@@ -16,7 +16,8 @@ function UHandler:SaveUnitValues(units, action_type)
         rot = function(u)
             table.insert(self._unit_data[u:key()].rot, 1, u:unit_data()._prev_rot)
             table.insert(self._unit_data[u:key()].pos, 1, u:unit_data()._prev_pos)
-        end
+        end,
+        delete = function(u) self:build_unit_data(u) end
     }
 
     if self._undo_stack:size() > self._undo_history_size then
@@ -28,6 +29,10 @@ function UHandler:SaveUnitValues(units, action_type)
             if last_element[2] == "rot" then
                 table.remove(self._unit_data[key].rot, #self._unit_data[key].rot) -- slow and gay
             end
+            if last_element[2] == "delete" then
+                table.remove(self._unit_data[key].rot, #self._unit_data[key].rot)
+                table.remove(self._unit_data[key].unit_data, #self._unit_data[key].unit_data)
+            end
         end
 
 		table.remove(self._undo_stack:stack_table(), 1, dif)
@@ -37,11 +42,13 @@ function UHandler:SaveUnitValues(units, action_type)
     end
 
     local unit_keys = {}
+    self._copy_data = {}
     for _, unit in pairs(units) do
         table.insert(unit_keys, unit:key())
         if not self._unit_data[unit:key()] then
             self._unit_data[unit:key()] = {
-                unit_data = unit,
+                unit = unit,
+                unit_data = {},
                 pos = {},
                 rot = {}
             }
@@ -50,6 +57,7 @@ function UHandler:SaveUnitValues(units, action_type)
             jump_table[action_type](unit)
         end
     end
+
     local element = {unit_keys, action_type}
     self._undo_stack:push(element)
 end
@@ -60,21 +68,61 @@ function UHandler:Undo()
         return
     end
 
+    local jump_table = {
+        pos = function(k, a) self:restore_unit_pos_rot(k, a) end,
+        rot = function(k, a) self:restore_unit_pos_rot(k, a) end,
+        delete = function(k, a) self:restore_unit(k, a) end
+    }
     local element = self._undo_stack:pop()
     for _, key in pairs(element[1]) do
-        self:restore_unit_pos_rot(key, element[2])
+        jump_table[element[2]](key)
     end
+
 end
 
 function UHandler:set_redo_values(key)
 --empty
 end
 
+function UHandler:build_unit_data(unit)
+    local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
+    local copy = {
+        type = typ,
+        mission_element_data = typ == "element" and unit:mission_element().element and deep_clone(unit:mission_element().element) or nil,
+        unit_data = typ == "unit" and unit:unit_data() and deep_clone(unit:unit_data()) or nil,
+        wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
+        ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
+    }
+    if typ ~= "unsupported" then
+        table.insert(self._copy_data, copy)
+    end
+
+
+    --local data = type(unit) == "userdata" and unit:unit_data() or unit and unit.unit_data or {}
+    --data.unit_id = unit:unit_data().unit_id
+    table.insert(self._unit_data[unit:key()].unit_data, 1, copy)
+    table.insert(self._unit_data[unit:key()].pos, 1, unit:position())
+    managers.editor:Log("saved position: " .. tostring(unit:position()))
+    table.insert(self._unit_data[unit:key()].rot, 1, unit:rotation())
+end
+
 function UHandler:restore_unit_pos_rot(key, action)
-    local action_string = action == "rot" and "rotation " or "to position "
-    local pos = table.remove(self._unit_data[key].pos, 1)
-    local rot = action == "rot" and table.remove(self._unit_data[key].rot, 1) or nil
-    local unit = self._unit_data[key].unit_data
-    managers.editor:Log("Restoring unit " .. action_string .. tostring(rot or pos))
-    BLE.Utils:SetPosition(unit, pos, rot)
+    local unit = self._unit_data[key].unit
+    if alive(unit) then
+        local pos = table.remove(self._unit_data[key].pos, 1)
+        local rot = action == "rot" and table.remove(self._unit_data[key].rot, 1) or nil
+        BLE.Utils:SetPosition(unit, pos, rot)
+    end
+end
+
+function UHandler:restore_unit(key, action)
+    local unit = self._unit_data[key].unit
+    if not alive(unit) then
+        local unit_data = self._unit_data[key].unit_data[1].unit_data
+        if not unit_data then managers.editor:Log("Element restoration is unhandled, skipping") return end
+        local pos = table.remove(self._unit_data[key].pos, 1)
+        local rot = table.remove(self._unit_data[key].rot, 1)   -- workaround for the unit itself being deleted
+        local new_unit = managers.editor:SpawnUnit(unit_data.name, nil, true, unit_data.unit_id)
+        BLE.Utils:SetPosition(new_unit, pos, rot)
+    end
 end
