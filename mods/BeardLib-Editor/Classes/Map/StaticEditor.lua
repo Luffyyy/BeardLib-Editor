@@ -735,6 +735,7 @@ function Static:addremove_unit_portal(menu, item)
 end      
 
 function Static:delete_selected(menu, item)
+    self._parent._undo_handler:SaveUnitValues(self._selected_units, "delete")
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
             if unit:fake() then

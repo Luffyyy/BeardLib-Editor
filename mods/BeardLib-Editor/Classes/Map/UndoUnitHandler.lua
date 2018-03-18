@@ -42,18 +42,17 @@ function UHandler:SaveUnitValues(units, action_type)
     end
 
     local unit_keys = {}
-    self._copy_data = {}
     for _, unit in pairs(units) do
-        table.insert(unit_keys, unit:key())
-        if not self._unit_data[unit:key()] then
-            self._unit_data[unit:key()] = {
-                unit = unit,
-                unit_data = {},
-                pos = {},
-                rot = {}
-            }
-            jump_table[action_type](unit)                       -- ugly
-        else
+        if alive(unit) and not unit:fake() then
+            table.insert(unit_keys, unit:key())
+            if not self._unit_data[unit:key()] then
+                self._unit_data[unit:key()] = {
+                    unit = unit,
+                    unit_data = {},
+                    pos = {},
+                    rot = {}
+                }
+            end
             jump_table[action_type](unit)
         end
     end
@@ -93,16 +92,9 @@ function UHandler:build_unit_data(unit)
         wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
         ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
     }
-    if typ ~= "unsupported" then
-        table.insert(self._copy_data, copy)
-    end
 
-
-    --local data = type(unit) == "userdata" and unit:unit_data() or unit and unit.unit_data or {}
-    --data.unit_id = unit:unit_data().unit_id
     table.insert(self._unit_data[unit:key()].unit_data, 1, copy)
     table.insert(self._unit_data[unit:key()].pos, 1, unit:position())
-    managers.editor:Log("saved position: " .. tostring(unit:position()))
     table.insert(self._unit_data[unit:key()].rot, 1, unit:rotation())
 end
 
@@ -122,7 +114,7 @@ function UHandler:restore_unit(key, action)
         if not unit_data then managers.editor:Log("Element restoration is unhandled, skipping") return end
         local pos = table.remove(self._unit_data[key].pos, 1)
         local rot = table.remove(self._unit_data[key].rot, 1)   -- workaround for the unit itself being deleted
-        local new_unit = managers.editor:SpawnUnit(unit_data.name, nil, true, unit_data.unit_id)
+        local new_unit = managers.editor:SpawnUnit(unit_data.name, nil, false, unit_data.unit_id)
         BLE.Utils:SetPosition(new_unit, pos, rot)
     end
 end

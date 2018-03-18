@@ -163,29 +163,13 @@ function Editor:OnWidgetReleased()
     local unit = self:selected_unit()
     if alive(self:widget_unit()) then
         if unit:unit_data()._prev_pos ~= self:widget_unit():position() then
-            self:OnUnitPosChanged()
+            self._undo_handler:SaveUnitValues(self._old_units, "pos")
         end
 
         if unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
-            self:OnUnitRotChanged()
+            self._undo_handler:SaveUnitValues(self._old_units, "rot")
         end
     end
-end
-
-function Editor:OnUnitPosChanged()
-    self._undo_handler:SaveUnitValues(self._old_units, "pos")
-end
-
-function Editor:OnUnitRotChanged()
-    self._undo_handler:SaveUnitValues(self._old_units, "rot")
-end
-
-function Editor:OnUnitDeleted()
-    self._undo_handler:SaveUnitValues(self:selected_units(), "delete")
-end
-
-function Editor:OnUnitSpawned()
-    self:Log("Unit spawned!")
 end
 
 function Editor:move_widget_enabled(use)
@@ -259,7 +243,6 @@ function Editor:DeleteUnit(unit)
                 m.mission:remove_element_unit(unit)
             end
         end
-        self:OnUnitDeleted()
         local ud = unit:unit_data()
         if ud then
             m.world:delete_unit(unit)
