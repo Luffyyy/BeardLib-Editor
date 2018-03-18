@@ -75,7 +75,7 @@ function UHandler:Undo()
     }
     local element = self._undo_stack:pop()
     for _, key in pairs(element[1]) do
-        jump_table[element[2]](key)
+        jump_table[element[2]](key, element[2])
     end
 
 end
