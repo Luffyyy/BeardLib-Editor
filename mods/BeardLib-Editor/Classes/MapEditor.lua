@@ -383,7 +383,6 @@ function Editor:set_unit_positions(pos)
         if not self._using_move_widget and (old_pos ~= pos) then
             self:StorePreviousPosRot()
             self._old_units = self:selected_units()
-            self:OnUnitPosChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
@@ -402,7 +401,6 @@ function Editor:set_unit_rotations(rot)
         if not self._using_rotate_widget and (old_rot ~= rot) then
             self:StorePreviousPosRot()
             self._old_units = self:selected_units()
-            self:OnUnitPosChanged()
         end
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do

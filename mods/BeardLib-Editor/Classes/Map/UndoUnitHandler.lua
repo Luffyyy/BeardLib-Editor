@@ -13,27 +13,9 @@ function UHandler:init(parent, menu)
 end
 
 function UHandler:SaveUnitValues(units, action_type)
-
-    if self._undo_stack:size() > self._undo_history_size then
-        local dif = self._undo_stack:size() - self._undo_history_size
-
-        local last_element = self._undo_stack:stack_table()[1]
-        for _, key in pairs(last_element[1]) do
-            table.remove(self._unit_data[key].pos, #self._unit_data[key].pos)
-            if last_element[2] == "rot" then
-                table.remove(self._unit_data[key].rot, #self._unit_data[key].rot) -- slow and gay
-            end
-            if last_element[2] == "delete" then
-                table.remove(self._unit_data[key].rot, #self._unit_data[key].rot) -- maybe keep track of the last unit id maually
-                table.remove(self._unit_data[key].unit_data, #self._unit_data[key].unit_data)
-            end
-        end
-
-		table.remove(self._undo_stack:stack_table(), 1, dif)
-
-        self._undo_stack._last = self._undo_stack._last - dif
-        self._parent:Log("Stack history too big, removing elements")
-    end
+    local function pos(u) table.insert(self._unit_data[u:key()].pos, 1, u:unit_data()._prev_pos) end
+    local function rot(u) pos(u) table.insert(self._unit_data[u:key()].rot, 1, u:unit_data()._prev_rot) end
+    local function delete(u) self._parent:Log(tostring(u:key())) self:build_unit_data(u) end
 
     local unit_keys = {}
     for _, unit in pairs(units) do
@@ -42,20 +24,34 @@ function UHandler:SaveUnitValues(units, action_type)
             if not self._unit_data[unit:key()] then
                 self._unit_data[unit:key()] = {
                     unit = unit,
-                    unit_data = {},
+                    copy_data = {},
                     pos = {},
                     rot = {}
                 }
-            end -- spawn does nothing, always save pos, only save rot if needed. Made this instead of a table, not very readable
-            if action_type ~= "spawn" then table.insert(self._unit_data[unit:key()].pos, 1, unit:unit_data()._prev_pos) end
-            if action_type == "rot" then table.insert(self._unit_data[unit:key()].rot, 1, unit:unit_data()._prev_rot) end
-            if action_type == "delete" then self:build_unit_data(unit) end
+            end
 
+            if action_type == "pos" then pos(unit)
+            elseif action_type == "rot" then rot(unit)
+            elseif action_type == "delete" then delete(unit) end
         end
     end
 
     local element = {unit_keys, action_type}
     self._undo_stack:push(element)
+
+    if self._undo_stack:size() > self._undo_history_size then
+        local dif = self._undo_stack:size() - self._undo_history_size
+
+        local last_element = self._undo_stack:stack_table()[1]
+        for _, key in pairs(last_element[1]) do
+            self:clear_unneeded_data(key, last_element[2])
+        end
+
+		table.remove(self._undo_stack:stack_table(), 1, dif)
+
+        self._undo_stack._last = self._undo_stack._last - dif
+        self._parent:Log("Stack history too big, removing elements")
+    end
 end
 
 function UHandler:Undo()
@@ -91,30 +87,34 @@ function UHandler:build_unit_data(unit)
         ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
     }
 
-    table.insert(self._unit_data[unit:key()].unit_data, 1, copy)
+    table.insert(self._unit_data[unit:key()].copy_data, 1, copy)
+    table.insert(self._unit_data[unit:key()].pos, 1, unit:position())
     table.insert(self._unit_data[unit:key()].rot, 1, unit:rotation())
 end
 
 function UHandler:restore_unit_pos_rot(key, action)
     local unit = self._unit_data[key].unit
     if alive(unit) then
-        local pos = table.remove(self._unit_data[key].pos, 1)
-        local rot = action == "rot" and table.remove(self._unit_data[key].rot, 1) or nil
+        local pos = self._unit_data[key]["pos"][1]
+        local rot = action == "rot" and self._unit_data[key]["rot"][1] or nil
         BLE.Utils:SetPosition(unit, pos, rot)
         self:GetPart("static"):set_units()
+
+        self:clear_unneeded_data(key, action, 1)
     end
 end
 
 function UHandler:restore_unit(key)
     local unit = self._unit_data[key].unit
     if not alive(unit) then
-        local unit_data = self._unit_data[key].unit_data[1].unit_data
+        local unit_data = self._unit_data[key].copy_data[1].unit_data
         if not unit_data then self._parent:Log("Element restoration is unhandled, skipping") return end
-        local pos = table.remove(self._unit_data[key].pos, 1)   -- workaround for the unit itself being deleted
-        local rot = table.remove(self._unit_data[key].rot, 1)   -- need to change some stuff in SpawnUnit 
+        local pos = self._unit_data[key]["pos"][1]   -- workaround for the unit itself being deleted
+        local rot = self._unit_data[key]["rot"][1]   -- need to change some stuff in SpawnUnit 
         local new_unit = self._parent:SpawnUnit(unit_data.name, nil, false, unit_data.unit_id)
         BLE.Utils:SetPosition(new_unit, pos, rot)
-        table.remove(self._unit_data[key].unit_data, 1)
+
+        self:clear_unneeded_data(key, "delete", 1)
     end
 end
 
@@ -124,4 +124,14 @@ function UHandler:delete_unit(key)
         self._parent:DeleteUnit(unit)
         self:GetPart("static"):reset_selected_units()
     end
+end
+
+function UHandler:clear_unneeded_data(key, action, index)
+    local function pos() table.remove(self._unit_data[key].pos, index or #self._unit_data[key].pos) end
+    local function rot() pos() table.remove(self._unit_data[key].rot, index or #self._unit_data[key].rot) end
+    local function delete() pos() rot() table.remove(self._unit_data[key].copy_data, index or #self._unit_data[key].copy_data) end
+
+    if action == "pos" then pos()
+    elseif action == "rot" then rot()
+    elseif action == "delete" then delete() end
 end
