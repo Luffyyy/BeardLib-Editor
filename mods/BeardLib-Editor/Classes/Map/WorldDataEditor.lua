@@ -533,7 +533,8 @@ function WData:mouse_pressed(button, x, y)
             return true
         elseif self._currently_spawning then
             self._do_switch = true
-            self._parent:SpawnUnit(self._currently_spawning)
+            local unit = self._parent:SpawnUnit(self._currently_spawning)
+            self:GetPart("undo_handler"):SaveUnitValues({unit}, "spawn")
             return true
         end
     elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element) then

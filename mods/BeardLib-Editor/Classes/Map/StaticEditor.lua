@@ -735,7 +735,7 @@ function Static:addremove_unit_portal(menu, item)
 end      
 
 function Static:delete_selected(menu, item)
-    self._parent._undo_handler:SaveUnitValues(self._selected_units, "delete")
+    self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
             if unit:fake() then
@@ -746,7 +746,7 @@ function Static:delete_selected(menu, item)
         end
     end
     self:reset_selected_units()
-    self:set_unit()      
+    self:set_unit()
 end
 
 function Static:delete_selected_dialog(menu, item)
@@ -921,13 +921,17 @@ function Static:SpawnCopyData(copy_data, prefab)
         end
     end
     local function all_ok_spawn()
+        local units = {}
+        local unit
         for _, v in pairs(copy_data) do
             if v.type == "element" then
                 self:GetPart("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
             elseif v.unit_data then
-                self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
+                unit = self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
             end
         end
+        table.insert(units, unit)
+        self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
         self:StorePreviousPosRot()
     end
     if missing then

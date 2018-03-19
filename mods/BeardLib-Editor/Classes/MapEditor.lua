@@ -31,7 +31,6 @@ function Editor:init()
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
-    self._undo_handler = UndoUnitHandler:new()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
     self:check_has_fix()
@@ -70,6 +69,7 @@ function Editor:post_init(menu)
     m.console = EditorConsole:new(self, menu)
     m.env = EnvEditor:new(self, menu)
     m.instances = InstancesEditor:new(self, menu)
+    m.undo_handler = UndoUnitHandler:new(self, menu)
     for name, manager in pairs(m) do
         manager.manager_name = name
     end
@@ -155,7 +155,7 @@ function Editor:StorePreviousPosRot()
 end
 
 function Editor:Undo()
-    self._undo_handler:Undo()
+    m.undo_handler:Undo()
     m.static:recalc_all_locals()
 end
 
@@ -163,11 +163,11 @@ function Editor:OnWidgetReleased()
     local unit = self:selected_unit()
     if alive(self:widget_unit()) then
         if unit:unit_data()._prev_pos ~= self:widget_unit():position() then
-            self._undo_handler:SaveUnitValues(self._old_units, "pos")
+            m.undo_handler:SaveUnitValues(self._old_units, "pos")
         end
 
         if unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
-            self._undo_handler:SaveUnitValues(self._old_units, "rot")
+            m.undo_handler:SaveUnitValues(self._old_units, "rot")
         end
     end
 end
@@ -266,7 +266,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
-        return
+        return unit
     end
     local data = {}
     local t 
@@ -324,7 +324,6 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         end
     end
     local unit = managers.worlddefinition:create_unit(data, t)
-    self:OnUnitSpawned()
     if alive(unit) then
         self:select_unit(unit, add)
         if unit:name() == m.static._nav_surface then
