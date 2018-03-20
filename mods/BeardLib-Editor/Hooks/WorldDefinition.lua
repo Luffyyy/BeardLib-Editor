@@ -228,20 +228,15 @@ end
 --currently I'm not sure if to check using world or world defintion for assets manager.
 function WorldDef:check_names()
 	local names = {}
-	for _, name in pairs(self._all_names) do
-		for _, unit in pairs(World:find_units_quick("all")) do
-			local ud = unit:unit_data()
-			if ud and ud.name == name then
-				names[name] = true
-			end
+	for _, unit in pairs(World:find_units_quick("all")) do
+		local ud = unit:unit_data()
+		if ud and ud.name then
+			names[ud.name] = names[ud.name] or 0
+			names[ud.name] = names[ud.name] + 1
 		end
 	end
 	
-	for _, name in pairs(self._all_names) do
-		if not names[name] then
-			self._all_names[name] = nil
-		end
-	end
+	self._all_names = names
 end
 
 function WorldDef:delete_unit(unit, no_unlink)

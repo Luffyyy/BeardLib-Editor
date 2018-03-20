@@ -2,17 +2,17 @@ MapProjectManager = MapProjectManager or class()
 local U = BeardLib.Utils
 local Project = MapProjectManager
 function Project:init()
-    self._templates_directory = U.Path:Combine(BeardLibEditor.ModPath, "Templates")
+    self._templates_directory = U.Path:Combine(BLE.ModPath, "Templates")
     local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
     if data then
         self._main_xml_template = ScriptSerializer:from_custom_xml(data)
     else
-        BeardLibEditor:log("[ERROR] Failed reading main.xml template!")
+        BLE:log("[ERROR] Failed reading main.xml template!")
     end
     data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._level_module_template = ScriptSerializer:from_custom_xml(data)
 
-    local menu = BeardLibEditor.Menu
+    local menu = BLE.Menu
     self._diffs = {
         "Normal",
         "Hard",
@@ -162,85 +162,94 @@ function Project:get_clean_data(t, no_clone)
     return data
 end
 
+function Project:load_temp_package(p)
+    if not PackageManager:loaded(p) and PackageManager:package_exists(p) then
+        PackageManager:load(p)
+        table.insert(self._packages_to_unload, p)
+    end
+end
+
 function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, done_clbk)
     self:new_level_dialog(tostring(level_in_chain.level_id), function(name)
-        local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
-        local levels_path = U.Path:Combine(mod_path, "levels")
         local level = clone(tweak_data.levels[level_in_chain.level_id])
+
         table.insert(data, level)
-        level._meta = "level"
-        level.assets = {}
-        level.id = name
-        level_in_chain.level_id = level.id
-        level.name_id = nil
-        level.briefing_id = nil 
-        level.add = {directory = "assets"}
-        level.script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
-        local level_path = U.Path:Combine(levels_path, level.id)
-        local level_dir = "levels/"..level.world_name .. "/"
         local packages = type(level.package) == "string" and {level.package} or level.package or {}
+        local level_dir = "levels/"..level.world_name .. "/"
+
+        table.merge(level, {
+            _meta = "level",
+            assets = {},
+            id = name,
+            add = {directory = "assets"},
+            include = {directory = Path:Combine("levels", name)},
+            packages = packages,
+            script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
+        })
+
         if narr_pkg then
             table.insert(packages, narr_pkg)
         end
-        table.insert(packages, level_dir.."world")
-        for _, p in pairs(packages) do
-            if not PackageManager:loaded(p) then
-                if PackageManager:package_exists(p.."_init") then
-                    PackageManager:load(p.."_init") 
-                table.insert(self._packages_to_unload, p.."_init")
-                end
-                if PackageManager:package_exists(p) then
-                    PackageManager:load(p)
-                    table.insert(self._packages_to_unload, p)
-                end
-            end
-        end
-        level.include = {directory = U.Path:Combine("levels", level.id)}
-        local world_data = PackageManager:script_data(Idstring("world"), Idstring(level_dir.."world"))
-        local continents_data = PackageManager:script_data(Idstring("continents"), Idstring(level_dir.."continents"))
-        table.insert(level.include, {_meta = "file", file = "world.world", type = "binary", data = world_data})
-        table.insert(level.include, {_meta = "file", file = "continents.continents", type = "binary", data = continents_data})
-        table.insert(level.include, {_meta = "file", file = "mission.mission", type = "binary", data = PackageManager:script_data(Idstring("mission"), Idstring(level_dir.."mission"))})
-        table.insert(level.include, {_meta = "file", file = "nav_manager_data.nav_data", type = "binary", data = PackageManager:script_data(Idstring("nav_data"), Idstring(level_dir.."nav_manager_data"))})
-        if DB:has(Idstring("cover_data"), Idstring(level_dir.."cover_data")) then
-            table.insert(level.include, {_meta = "file", file = "cover_data.cover_data", type = "binary", data = PackageManager:script_data(Idstring("cover_data"), Idstring(level_dir.."cover_data"))})
-        end        
-        if DB:has(Idstring("world_sounds"), Idstring(level_dir.."world_sounds")) then
-            table.insert(level.include, {_meta = "file", file = "world_sounds.world_sounds", type = "binary", data = PackageManager:script_data(Idstring("world_sounds"), Idstring(level_dir.."world_sounds"))})
-        end
-        if DB:has(Idstring("world_cameras"), Idstring(level_dir.."world_cameras")) then
-            table.insert(level.include, {_meta = "file", file = "world_cameras.world_cameras", type = "binary", data = PackageManager:script_data(Idstring("world_cameras"), Idstring(level_dir.."world_cameras"))})
-        end
-        local continents = {}
-        local missions = {}
-        for c in pairs(continents_data) do
-            local p = level_dir..c.."/"..c          
-            if PackageManager:package_exists(p) then
+        
+        local function extra_package(p)
+            if not table.contains(packages, p) then
                 table.insert(packages, p)
-            end                        
-            local p_init = p.."_init"
-            if PackageManager:package_exists(p_init) then
-                PackageManager:load(p_init)
-                continents[c] = PackageManager:script_data(Idstring("continent"), Idstring(p))
-                missions[c] = PackageManager:script_data(Idstring("mission"), Idstring(p))
-                PackageManager:unload(p_init)
             end
         end
-        world_data.brush = nil
+
+        local custom_level_dir = Path:Combine(BeardLib.config.maps_dir, data.name, "levels", name)
+        local function extra_file(name, typ, path, data_func)
+            path = path or level_dir
+            typ = typ or name
+            local data
+            local typeid = typ:id()
+            local nameid = name:id()
+            local inpath = Path:Combine(path, name)
+            if PackageManager:has(typeid, inpath:id()) then
+                data = PackageManager:script_data(typeid, inpath:id())
+                if data_func then
+                    data_func(data)
+                end
+                local infolder = path:gsub(level_dir, "")                
+                local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name.."."..typ
+                FileIO:WriteScriptDataTo(Path:Combine(custom_level_dir, file), data, "binary")
+                table.insert(level.include, {_meta = "file", file = file, type = "binary"})
+            else
+                BeardLibEditor:log("[add_existing_level_to_project][extra_file] File is unloaded %s", inpath)
+            end
+            if PackageManager:package_exists(inpath) then
+                extra_package(inpath)
+            end
+            return data
+        end
+
+        extra_package(level_dir.."world")
+        for _, p in pairs(packages) do
+            self:load_temp_package(p.."_init")
+            self:load_temp_package(p)
+        end
+
+        local world_data = extra_file("world", nil, nil, function(data) data.brush = nil end)
+        local continents_data = extra_file("continents")
+        extra_file("mission")
+        extra_file("nav_manager_data", "nav_data")
+        extra_file("cover_data")
+        extra_file("world_sounds")
+        extra_file("world_cameras")
+
+        for c in pairs(continents_data) do
+            local c_path = Path:Combine(level_dir, c)
+            self:load_temp_package(Path:Combine(c_path, c).."_init")
+            extra_file(c, "continent", c_path)
+            extra_file(c, "mission", c_path)
+        end
+
         level.world_name = nil      
-        level.package = nil      
-        level.packages = packages
-        for name, c in pairs(continents) do
-            local c_path = U.Path:Combine(name, name)
-            table.insert(level.include, {_meta = "file", file = c_path..".continent", type = "binary", data = c})
-            table.insert(level.include, {_meta = "file", file = c_path..".mission", type = "binary", data = missions[name]})
-        end
-        for k, include in pairs(level.include) do
-            if type(include) == "table" then
-                FileIO:WriteScriptDataTo(U.Path:Combine(level_path, include.file), include.data, include.type)
-                include.data = nil
-            end
-        end
+        level.name_id = nil
+        level.briefing_id = nil 
+        level.package = nil 
+        level_in_chain.level_id = name
+
         if done_clbk then
             done_clbk()
         end
@@ -253,7 +262,7 @@ function Project:existing_narr_new_project_clbk_finish(data, narr)
     FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
-    BeardLibEditor.LoadLevel:load_levels()
+    BLE.LoadLevel:load_levels()
     for _, p in pairs(self._packages_to_unload) do
         if PackageManager:loaded(p) then
             DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
@@ -305,17 +314,17 @@ function Project:select_narr_as_project()
             table.insert(levels, {name = id.." / " .. managers.localization:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")), narr = narr})
         end
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = levels,
         callback = function(selection)
-            BeardLibEditor.ListDialog:hide()   
+            BLE.ListDialog:hide()   
             self:new_project_dialog("", callback(self, self, "existing_narr_new_project_clbk", selection))
         end
     })  
 end
 
 function Project:select_project_dialog()
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = self:get_projects_list(),
         callback = callback(self, self, "select_project")
     }) 
@@ -342,9 +351,9 @@ function Project:reload_mod(old_name, name, save_prev)
     if BeardLib.managers.MapFramework._loaded_mods[name] then
         self:_select_project(BeardLib.managers.MapFramework._loaded_mods[name], save_prev)
     else
-        BeardLibEditor:log("[Warning] Something went wrong while trying reload the project")
+        BLE:log("[Warning] Something went wrong while trying reload the project")
     end
-    BeardLibEditor.LoadLevel:load_levels()
+    BLE.LoadLevel:load_levels()
 end
 
 function Project:_select_project(mod, save_prev)
@@ -355,7 +364,7 @@ function Project:_select_project(mod, save_prev)
         end
     end
     self._current_mod = mod
-    BeardLibEditor.ListDialog:hide()
+    BLE.ListDialog:hide()
     self:edit_main_xml(self:get_clean_mod_config(mod), function()        
         local t = self._current_data
         local id = t.orig_id or t.name
@@ -392,7 +401,7 @@ function Project:_select_project(mod, save_prev)
 end
 
 function Project:new_project_dialog(name, clbk, no_callback)
-    BeardLibEditor.InputDialog:Show({
+    BLE.InputDialog:Show({
         title = "Enter a name for the project",
         yes = "Create project",
         text = name or "",
@@ -403,7 +412,7 @@ function Project:new_project_dialog(name, clbk, no_callback)
 end
 
 function Project:new_level_dialog(name, clbk, no_callback)
-    BeardLibEditor.InputDialog:Show({
+    BLE.InputDialog:Show({
         title = "Enter a name for the level", 
         yes = "Create level",
         text = name or "",
@@ -414,13 +423,13 @@ function Project:new_level_dialog(name, clbk, no_callback)
 end
 
 function Project:delete_level_dialog(level)
-    BeardLibEditor.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", callback(self, self, "delete_level_dialog_clbk", level))
+    BLE.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", callback(self, self, "delete_level_dialog_clbk", level))
 end
 
 function Project:delete_level_dialog_clbk(level)
     local t = self._current_data
     if not t then
-        BeardLibEditor:log("[ERROR] Project needed to delete levels!")
+        BLE:log("[ERROR] Project needed to delete levels!")
         return
     end
     local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
@@ -460,7 +469,7 @@ end
 function Project:create_new_level(name)
     local t = self._current_data
     if not t then
-        BeardLibEditor:log("[ERROR] Project needed to create levels!")
+        BLE:log("[ERROR] Project needed to create levels!")
         return
     end
     local narr = U:GetNodeByMeta(t, "narrative")
@@ -492,13 +501,13 @@ end
 
 function Project:check_level_name(name)
     if tweak_data.levels[name] then
-        BeardLibEditor.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
+        BLE.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
         return false
     elseif name == "" then
-        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        BLE.Utils:Notify("Error", string.format("Id cannot be empty!", name))
         return false
     elseif string.begins(name, " ") then
-        BeardLibEditor.Utils:Notify("Error", "Invalid ID!")
+        BLE.Utils:Notify("Error", "Invalid ID!")
         return false
     end
     return true
@@ -506,13 +515,13 @@ end
 
 function Project:check_narrative_name(name)
     if tweak_data.narrative.jobs[name] then
-        BeardLibEditor.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
+        BLE.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
         return false
     elseif name:lower() == "backups" or name:lower() == "prefabs" or string.begins(name, " ") then
-        BeardLibEditor.Utils:Notify("Error", string.format("Invalid Id"))
+        BLE.Utils:Notify("Error", string.format("Invalid Id"))
         return false
     elseif name == "" then
-        BeardLibEditor.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        BLE.Utils:Notify("Error", string.format("Id cannot be empty!", name))
         return false
     end
     return true
@@ -527,10 +536,10 @@ function Project:new_project_clbk(data, name)
     end
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
-    BeardLibEditor.LoadLevel:load_levels()
+    BLE.LoadLevel:load_levels()
     local mod = BeardLib.managers.MapFramework._loaded_mods[name]
     self:_select_project(mod, true)
-    BeardLibEditor.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
+    BLE.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
 end
 
 function Project:add_exisiting_level_dialog()
@@ -540,12 +549,12 @@ function Project:add_exisiting_level_dialog()
             table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
         end
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = levels,
         callback = function(seleciton)
             local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
             table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
             self:_select_project(self._current_mod, true)
         end
     })
@@ -554,9 +563,9 @@ end
 function Project:set_crimenet_videos_dialog()
     local t = self._current_data
     local crimenet_videos = U:GetNodeByMeta(self._current_data, "narrative").crimenet_videos
-    BeardLibEditor.SelectDialog:Show({
+    BLE.SelectDialog:Show({
         selected_list = crimenet_videos,
-        list = BeardLibEditor.Utils:GetEntries({type = "movie", loaded = true, check = function(entry)
+        list = BLE.Utils:GetEntries({type = "movie", loaded = true, check = function(entry)
             return entry:match("movies/")
         end}),
         callback = function(list) crimenet_videos = list end
@@ -570,7 +579,7 @@ function Project:edit_main_xml(data, save_clbk)
     local narr = U:GetNodeByMeta(data, "narrative")
     local levels = U:GetNodeByMeta(data, "level", true)
     if not narr then
-        BeardLibEditor:log("[ERROR] Narrative data is missing from the main.xml!")
+        BLE:log("[ERROR] Narrative data is missing from the main.xml!")
         return
     end
     local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, border_bottom = true, border_left = false}
@@ -722,7 +731,7 @@ function Project:edit_main_xml(data, save_clbk)
 end
 
 function Project:delete_project(menu, item)
-    BeardLibEditor.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
+    BLE.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
         FileIO:Delete(Path:Combine("Maps", self._current_data.name))
         self:disable()
     end)
@@ -823,7 +832,7 @@ function Project:set_mission_assets_dialog()
     for _, asset in pairs(table.map_keys(tweak_data.assets)) do
         table.insert(assets, {name = asset, value = false})
     end
-	BeardLibEditor.SelectDialogValue:Show({
+	BLE.SelectDialogValue:Show({
 		selected_list = selected_assets,
 		list = assets,
 		values_name = "Exclude",
@@ -860,7 +869,7 @@ function Project:group_level(narr, level_in_chain)
             table.insert(chain, {name = v.level_id or "Day "..tostring(i).."[Grouped]", value = v})
         end
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = chain,
         callback = function(selection)
             table.delete(narr.chain, level_in_chain)
@@ -870,7 +879,7 @@ function Project:group_level(narr, level_in_chain)
                 narr.chain[key] = {chain_group}
             end
             table.insert(narr.chain[key], level_in_chain)
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
             self._refresh_func()
         end
     })

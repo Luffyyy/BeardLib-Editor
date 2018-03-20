@@ -263,6 +263,7 @@ function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
             self._parent:load_continents(managers.worlddefinition._continent_definitions)
             self:build_default_menu()
         end
+        worlddef:check_names()
     end
     if no_dialog == true then
         delete_all()

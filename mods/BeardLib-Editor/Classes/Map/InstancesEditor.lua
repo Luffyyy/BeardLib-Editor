@@ -37,32 +37,36 @@ function Instance:set_instance(reset)
 end
 
 function Instance:delete_instance(instance)
-    instance = instance or self:selected_unit():object()
-    local instances = managers.worlddefinition._continent_definitions[instance.continent].instances
-    for _, mission in pairs(managers.mission._missions) do
-        for _, script in pairs(mission) do
-            if script.instances then
-                table.delete(script.instances, instance.name)
-            end
-        end
-    end
-    managers.mission:delete_links(instance.name, BeardLibEditor.Utils.LinkTypes.Instance)
-    for i, ins in pairs(instances) do
-        if ins.name == instance.name then
-            for _, unit in pairs(World:find_units_quick("all")) do
-                if unit:unit_data() and unit:unit_data().instance == instance.name then
-                    managers.worlddefinition:delete_unit(unit, true)
-                    World:delete_unit(unit)
+    for _, unit in pairs(self:selected_units()) do
+        if alive(unit) and unit:fake() then
+            instance = instance or unit:object()
+            local instances = managers.worlddefinition._continent_definitions[instance.continent].instances
+            for _, mission in pairs(managers.mission._missions) do
+                for _, script in pairs(mission) do
+                    if script.instances then
+                        table.delete(script.instances, instance.name)
+                    end
                 end
             end
-            for k, ins in pairs(managers.world_instance._instance_data) do
-                if instance.name == ins.name then
-                    table.remove(managers.world_instance._instance_data, k)
+            managers.mission:delete_links(instance.name, BeardLibEditor.Utils.LinkTypes.Instance)
+            for i, ins in pairs(instances) do
+                if ins.name == instance.name then
+                    for _, unit in pairs(World:find_units_quick("all")) do
+                        if unit:unit_data() and unit:unit_data().instance == instance.name then
+                            managers.worlddefinition:delete_unit(unit, true)
+                            World:delete_unit(unit)
+                        end
+                    end
+                    for k, ins in pairs(managers.world_instance._instance_data) do
+                        if instance.name == ins.name then
+                            table.remove(managers.world_instance._instance_data, k)
+                            break
+                        end
+                    end
+                    table.remove(instances, i)
                     break
                 end
             end
-            table.remove(instances, i)
-            break
         end
     end
 end
@@ -79,7 +83,7 @@ end
 
 function Instance:update_positions()
     for _, unit in pairs(self:selected_units()) do
-        if unit:fake() then
+        if alive(unit) and unit:fake() then
             local instance = unit:object()
             local instance_name = instance.name
             for _, unit in pairs(World:find_units_quick("all")) do

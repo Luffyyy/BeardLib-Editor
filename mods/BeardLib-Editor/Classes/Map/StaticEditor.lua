@@ -208,9 +208,7 @@ function StaticEditor:update_positions()
         if #self._selected_units > 1 or not unit:mission_element() then
             self:SetAxisControls(unit:position(), unit:rotation())
             self:GetPart("instances"):update_positions()
-            if self:GetPart("world"):is_world_unit(unit:name()) then
-                self:GetPart("world"):update_positions()
-            end
+            self:GetPart("world"):update_positions()
             for i, control in pairs(self._axis_controls) do
                 self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
             end
@@ -294,6 +292,9 @@ function Static:set_unit_data()
             managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
         end
     end
+    --TODO: put in a different place
+    self:GetPart("instances"):update_positions()
+    self:GetPart("world"):update_positions()
 end
 
 function Static:StorePreviousPosRot()
