@@ -34,8 +34,8 @@ function EditorCustomSafehouseFilter:_build_panel()
 	self:Text("Will only execute if the current/highest unlocked tier of the characters room is <operator> the specified tier.")
 end
 
-function EditorCustomSafehouseFilter:set_element_data(menu, item)
-	EditorCustomSafehouseFilter.super.set_element_data(self, menu, item)
+function EditorCustomSafehouseFilter:set_element_data(item)
+	EditorCustomSafehouseFilter.super.set_element_data(self, item)
 	if item.name == "room_id" then
 		local current_selection = self._tier_box:Value()
 		local num_tiers = managers.custom_safehouse:get_room_max_tier(self._character_box:SelectedItem())
@@ -107,8 +107,8 @@ function EditorCustomSafehouseAwardTrophy:_build_panel()
 	self:Text("Awards a Safehouse Trophy")
 end
 
-function EditorCustomSafehouseAwardTrophy:set_element_data(menu, item)
-	EditorCustomSafehouseAwardTrophy.super.set_element_data(self, menu, item)
+function EditorCustomSafehouseAwardTrophy:set_element_data(item)
+	EditorCustomSafehouseAwardTrophy.super.set_element_data(self, item)
 	if item.name == "trophy" then
 		local id = self._trophy_box:Value()
 		local trophy = managers.custom_safehouse:get_trophy(id) or managers.custom_safehouse:get_daily(id)

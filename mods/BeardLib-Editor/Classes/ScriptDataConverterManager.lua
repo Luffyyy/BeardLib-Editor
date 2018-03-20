@@ -160,7 +160,7 @@ function SConverter:CreateRootItems()
     end
 end
 
-function SConverter:BackToRoot(menu, item)
+function SConverter:BackToRoot(item)
     self:CreateRootItems()
     self.current_script_path = ""
     if alive(self.path_text) then
@@ -168,25 +168,25 @@ function SConverter:BackToRoot(menu, item)
     end
 end
 
-function SConverter:FileClick(menu, item)
+function SConverter:FileClick(item)
     self.current_selected_file = item.name
     self.current_selected_file_path = item.base_path
 
     self:CreateScriptDataFileOption()
 end
 
-function SConverter:FolderClick(menu, item)
+function SConverter:FolderClick(item)
     self.current_script_path = item.base_path or ""
     self:RefreshFilesAndFolders()
 end
 
-function SConverter:OpenFolderInExplorer(menu, item)
+function SConverter:OpenFolderInExplorer(item)
     local open_path = string.gsub(self.current_script_path, "%./", "")
     open_path = string.gsub(self.current_script_path, "/", "\\")
     Application:shell_explore_to_folder(open_path)
 end
 
-function SConverter:BackToShortcuts(menu, item)
+function SConverter:BackToShortcuts(item)
     local panel = self._menu:Panel()
     self:ClearItems()
     self.assets = false
@@ -194,7 +194,7 @@ function SConverter:BackToShortcuts(menu, item)
     self:CreateRootItems()
 end
 
-function SConverter:ConvertClick(menu, item)
+function SConverter:ConvertClick(item)
     local convertfrom_item = self:GetItem("From")
     local convertto_item = self:GetItem("To")
     if convertfrom_item and convertto_item then

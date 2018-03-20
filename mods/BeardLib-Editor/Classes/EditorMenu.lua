@@ -87,7 +87,7 @@ function EditorMenu:set_enabled(enabled)
     end
 end
 
-function EditorMenu:select_page(page, menu, item)
+function EditorMenu:select_page(page, item)
     for name, m in pairs(self._menus) do
         self._tabs:GetItem(name):SetBorder({left = false})
         m:SetVisible(false)

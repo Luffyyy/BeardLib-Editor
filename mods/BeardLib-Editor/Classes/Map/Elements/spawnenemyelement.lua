@@ -77,7 +77,7 @@ end
 
 
 local unit_ids = Idstring("unit")
-function EditorSpawnEnemyDummy:set_element_data(menu, item, ...)
+function EditorSpawnEnemyDummy:set_element_data(item, ...)
 	if item.name == "enemy" then
 		local assets = self:GetPart("world")._assets_manager
 		local unit = item:Value()
@@ -87,12 +87,12 @@ function EditorSpawnEnemyDummy:set_element_data(menu, item, ...)
 		end
 		if not PackageManager:has(unit_ids, spawn_ids) and assets then
 			BeardLibEditor.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
-				assets:find_package(unit, true, ClassClbk(self, "set_element_data", menu, item))
+				assets:find_package(unit, true, ClassClbk(self, "set_element_data", item))
 			end}})
 			return
 		end
 	end
-	EditorSpawnEnemyDummy.super.set_element_data(self, menu, item, ...)
+	EditorSpawnEnemyDummy.super.set_element_data(self, item, ...)
 end
 
 

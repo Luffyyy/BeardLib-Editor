@@ -356,10 +356,10 @@ if MenuManager then
 end
 
 if not BLE.InitDone then
-    if BeardLib.Version and BeardLib.Version >= 2.87 then
+    if BeardLib.Version and BeardLib.Version >= 2.9 then
         BeardLibEditor:Init()
     else
-        log("[ERROR] BeardLibEditor requires at least version 2.87 of Beardlib installed!")
+        log("[ERROR] BeardLibEditor requires at least version 2.9 of Beardlib installed!")
         return
     end
 end

@@ -14,7 +14,7 @@ function EditorMusic:stop_test_element()
 	managers.music:stop()
 end
 
-function EditorMusic:set_category(menu, item)
+function EditorMusic:set_category(item)
 	self._music:SetItems(managers.music:music_events(item:Value()))
 	self._music:SetValue(1)
 	self._element.music_event = self._music:SelectedItem()

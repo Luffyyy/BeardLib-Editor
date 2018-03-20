@@ -27,8 +27,8 @@ function EditorAreaTrigger:create_element()
 	self._element.values.unit_ids = nil
 end
 
-function EditorAreaTrigger:set_shape_property(menu, item)
-	self:set_element_data(menu, item)
+function EditorAreaTrigger:set_shape_property(item)
+	self:set_element_data(item)
 	self._shape:set_property(item.name, item:Value())
 	self._cylinder_shape:set_property(item.name, item:Value())
 end
@@ -134,10 +134,10 @@ function EditorAreaTrigger:_build_panel(disable_params)
 	self:create_values_ctrlrs(disable_params)
  	
 	self._shape_type = self:ComboCtrl("shape_type", {"box", "cylinder"}, {help = "Select shape for area"})
-	self._width = self:NumberCtrl("width", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the width for the shape"})
-	self._depth = self:NumberCtrl("depth", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the depth for the shape"})
-	self._height = self:NumberCtrl("height", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the height for the shape"})
-	self._radius = self:NumberCtrl("radius", {floats = 0, callback = callback(self, self, "set_shape_property"), help ="Set the radius for the shape"})
+	self._width = self:NumberCtrl("width", {floats = 0, on_callback = callback(self, self, "set_shape_property"), help ="Set the width for the shape"})
+	self._depth = self:NumberCtrl("depth", {floats = 0, on_callback = callback(self, self, "set_shape_property"), help ="Set the depth for the shape"})
+	self._height = self:NumberCtrl("height", {floats = 0, on_callback = callback(self, self, "set_shape_property"), help ="Set the height for the shape"})
+	self._radius = self:NumberCtrl("radius", {floats = 0, on_callback = callback(self, self, "set_shape_property"), help ="Set the radius for the shape"})
 	self:set_shape_type()
 end
 

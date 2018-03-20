@@ -463,12 +463,13 @@ function EnvEditor:open_default_custom_environment()
     end
 end
 
-function EnvEditor:uninclude_environment_dialog(menu, item)
+function EnvEditor:uninclude_environment_dialog(item)
     BeardLibEditor.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
-        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, menu.name))
+        local pname = item.parent.name
+        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
         self:GetPart("opt"):save_main_xml()
-        local env = menu.name:gsub(".environment", "")
+        local env = pname:gsub(".environment", "")
         Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
         BeardLibEditor:LoadCustomAssets()
         self:load_included_environments()

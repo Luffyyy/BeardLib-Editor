@@ -321,5 +321,9 @@
         <value_node value="ElementVehicleTrigger"/>
         <value_node value="ElementWaypoint"/>
         <value_node value="ElementWhisperState"/>
+        <value_node value="ElementApplyJobValue"/>
+        <value_node value="ElementStopEffect"/>
+        <value_node value="ElementEndscreenVariant"/>
+        <value_node value="ElementLootBagTrigger"/>
     </MissionElements>
 </mod>

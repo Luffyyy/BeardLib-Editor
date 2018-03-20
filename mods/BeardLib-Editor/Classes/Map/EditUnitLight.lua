@@ -14,7 +14,7 @@ function EditUnitLight:build_menu(units)
 		table.insert(options, light.name)
 	end
 	local light_options = self:Group("Light")
-	self._debug = self:Toggle("Debug", function(menu, item)
+	self._debug = self:Toggle("Debug", function(item)
 		self._debugging = item:Value()
 	end, false, {group = light_options})
 	self._lights_combo = self:ComboBox("Lights", callback(self, self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox", group = light_options})

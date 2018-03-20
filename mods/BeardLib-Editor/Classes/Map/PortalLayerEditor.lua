@@ -135,7 +135,7 @@ function PortalLayer:update(t, dt)
     end
 end
 
-function PortalLayer:select_shape(menu, item)
+function PortalLayer:select_shape(item)
     if self._selected_portal then
         for i=1, #self._selected_portal._shapes do
             self._menu:GetItem("shape_" .. tostring(i)):SetBorder({left = false})
@@ -172,16 +172,16 @@ function PortalLayer:remove_unit_from_portal(unit)
     self:load_portal_units()
 end
 
-function PortalLayer:rename_portal(menu, item)
+function PortalLayer:rename_portal(item)
     BeardLibEditor.InputDialog:Show({title = "Rename portal to", text = item.override_panel.text, callback = function(name)
         if name == "" then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
-                self:rename_portal(menu, item)
+                self:rename_portal(item)
             end})
             return
         elseif string.begins(name, " ") then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:rename_portal(menu, item)
+                self:rename_portal(item)
             end})
             return
         elseif managers.portal:unit_groups()[name] then
@@ -196,7 +196,7 @@ function PortalLayer:rename_portal(menu, item)
     end})
 end
 
-function PortalLayer:remove_portal(menu, item)
+function PortalLayer:remove_portal(item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the portal", function()
         managers.portal:remove_unit_group(item.override_panel.text)
         self:load_portals()
@@ -204,7 +204,7 @@ function PortalLayer:remove_portal(menu, item)
     end)
 end
 
-function PortalLayer:remove_shape(menu, item)
+function PortalLayer:remove_shape(item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the portal shape", function()
         if self._selected_shape == self._selected_portal._shapes[tonumber(item.override_panel.id)] then
             self._selected_shape = nil
@@ -272,7 +272,7 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
     self:save()
 end
 
-function PortalLayer:clbk_select_portal(menu, item)
+function PortalLayer:clbk_select_portal(item)
     self:select_portal(item.text)
 end
 
@@ -320,7 +320,7 @@ function PortalLayer:load_portals()
     end   
 end
 
-function PortalLayer:auto_fill_portal(menu, item)
+function PortalLayer:auto_fill_portal(item)
     local portal = managers.portal:unit_groups()[item.override_panel.text]
     BeardLibEditor.Utils:YesNoQuestion("This will automatically fill the portal with units", function()
         for _, unit in pairs(managers.worlddefinition._all_units) do

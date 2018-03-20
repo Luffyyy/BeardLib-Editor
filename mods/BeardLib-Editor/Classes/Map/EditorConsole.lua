@@ -55,7 +55,7 @@ function EditorConsole:PrintMessage(type, message, ...)
     end
 end
 
-function EditorConsole:FilterConsole(menu, item)
+function EditorConsole:FilterConsole(item)
     for _, item in pairs(self._menu._my_items) do
         item:SetVisible(self[item.type]:Value())
     end

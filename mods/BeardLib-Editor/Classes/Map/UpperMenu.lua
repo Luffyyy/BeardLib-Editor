@@ -55,7 +55,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         is_page = not clbk,
         enabled = enabled,
         cannot_be_enabled = enabled == false,
-        callback = callback(self, self, "select_tab", clbk or false),
+        on_callback = callback(self, self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
         w = self._menu:W() / #self._tabs,
         h = self._menu:H(),
@@ -64,9 +64,9 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
     })    
 end
 
-function UpperMenu:select_tab(clbk, menu, item)
+function UpperMenu:select_tab(clbk, item)
     if clbk then
-        clbk(menu, item)
+        clbk(item)
     else
         self:Switch(BeardLibEditor.Utils:GetPart(item.name))
     end
@@ -89,10 +89,10 @@ function UpperMenu:set_tabs_enabled(enabled)
     end
 end
 
-function UpperMenu:toggle_widget(name, menu, item)
+function UpperMenu:toggle_widget(name, item)
     if ctrl() then return end
     item = item or self:GetItem(name.."_widget_toggle")
-    menu = menu or item.parent
+    local menu = item.parent
     if not item.enabled then return end
 
     self._parent["toggle_"..name.."_widget"](self._parent)

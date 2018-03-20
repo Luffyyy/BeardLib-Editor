@@ -119,7 +119,7 @@ function MissionScriptEditor:_create_panel()
 	end
 end
 
-function MissionScriptEditor:set_selected_on_executed_element_delay(menu, item)
+function MissionScriptEditor:set_selected_on_executed_element_delay(item)
 	local value = self._menu:GetItem("OnExecutedList"):Value()
 	if value then
 		self._element.values.on_executed[value].delay = item:Value()
@@ -324,7 +324,7 @@ function MissionScriptEditor:update_element(position_only, old_script)
 	end
 end
 
-function MissionScriptEditor:set_element_data(menu, item)
+function MissionScriptEditor:set_element_data(item)
 	if not item then
 		return
 	end

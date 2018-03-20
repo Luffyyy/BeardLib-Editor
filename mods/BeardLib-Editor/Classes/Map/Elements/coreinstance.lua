@@ -188,7 +188,7 @@ function EditorInstanceSetParams:_build_from_params()
     end
 end
 
-function EditorInstanceSetParams:_on_gui_toggle_use(menu, item)
+function EditorInstanceSetParams:_on_gui_toggle_use(item)
     local use = item:Value()
     item.value_ctrlr:SetEnabled(use)
     local orig_value = item.value_ctrlr:Value()
@@ -210,7 +210,7 @@ function EditorInstanceSetParams:_build_panel()
 	self:_build_from_params()
 end
 
-function EditorInstanceSetParams:set_element_data(menu, item, ...)
+function EditorInstanceSetParams:set_element_data(item, ...)
 	if item.name == "instance" then
 		if item:SelectedItem() == "none" then
 			item:SetSelectedItem()
@@ -219,5 +219,5 @@ function EditorInstanceSetParams:set_element_data(menu, item, ...)
 		self:_build_from_params()
 		return
 	end
-	EditorInstanceSetParams.super.set_element_data(self, menu, item, ...)
+	EditorInstanceSetParams.super.set_element_data(self, item, ...)
 end

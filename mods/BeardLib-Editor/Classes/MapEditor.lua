@@ -47,6 +47,8 @@ function Editor:init()
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BLE.Options:GetValue("Input/ToggleMapEditor"))
     local normal = not Global.editor_safe_mode
     self._menu = MenuUI:new({
+        layer = 100,
+        allow_full_input = true,
         background_color = Color.transparent,
         accent_color = BLE.Options:GetValue("AccentColor"),
         mouse_press = normal and callback(self, self, "mouse_pressed"),
@@ -416,7 +418,7 @@ end
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
 function Editor:destroy() self._vp:destroy() end
-function Editor:add_element(element, menu, item) m.mission:add_element(element) end
+function Editor:add_element(element, item) m.mission:add_element(element) end
 function Editor:Log(...) m.console:Log(...) end
 function Editor:Error(...) m.console:Error(...) end
 
@@ -714,7 +716,7 @@ function Editor:set_orthographic_screen()
 	self._camera_object:set_orthographic_screen( -(res.x/2)*self._mul, (res.x/2)*self._mul, -(res.y/2)*self._mul, (res.y/2)*self._mul )
 end
 
-function Editor:toggle_orthographic(menu, item)
+function Editor:toggle_orthographic(item)
     local camera = self._camera_object
     local use = item:Value()
 	if use then

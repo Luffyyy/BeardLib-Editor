@@ -148,7 +148,7 @@ function Utils:GetPackages(asset, type, size_needed, first, packages)
             local size = not custom and size_needed and self:GetPackageSize(name)
             if not size_needed or size or custom then
                 if not name:begins("all_") then
-                    table.insert(found_packages, {name = name, size = size, custom = custom})
+                    table.insert(found_packages, {name = name, package_size = package_size, custom = custom})
                     if first then
                         return found_packages
                     end

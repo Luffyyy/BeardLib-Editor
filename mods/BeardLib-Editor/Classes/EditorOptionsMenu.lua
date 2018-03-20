@@ -39,7 +39,7 @@ function Options:init()
 	self:Button("ResetOptions", callback(self, self, "reset_options"))
 end
 
-function Options:set_theme(menu, item)
+function Options:set_theme(item)
 	local theme = item.name
 	if theme == "Dark" then
 		self:set("AccentColor", Color('4272d9'))
@@ -66,7 +66,7 @@ function Options:reset_options(menu)
 	end
 end
 
-function Options:set_clbk(menu, item)
+function Options:set_clbk(item)
 	self:set(item.name, item:Value())
 	if item.name == "LevelsColumns" then
 		BeardLibEditor.LoadLevel:load_levels()
@@ -78,7 +78,7 @@ function Options:set(option, value)
 	BeardLibEditor.Options:Save()
 end
 
-function Options:open_set_color_dialog(menu, item)
+function Options:open_set_color_dialog(item)
 	option = item.name
     BeardLibEditor.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
     	self:set(option, color)

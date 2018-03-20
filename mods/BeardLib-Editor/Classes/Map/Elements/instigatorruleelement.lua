@@ -9,8 +9,8 @@ function EditorInstigatorRule:create_element(...)
 	self._element.values.invert = false
 end
 
-function EditorInstigatorRule:set_element_data(menu, item)
-	self.super.set_element_data(self, menu, item)
+function EditorInstigatorRule:set_element_data(item)
+	self.super.set_element_data(self, item)
 	if item.name == "instigator" then
 		self:_update_rules_panel()
 	end

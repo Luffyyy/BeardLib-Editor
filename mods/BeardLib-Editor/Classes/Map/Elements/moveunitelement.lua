@@ -28,8 +28,8 @@ function EditorMoveUnit:update_positions(...)
     self:SetAxisControls(self._element.values.end_pos or self._element.values.displacement, nil, "EndPosition")
 end
 
-function EditorMoveUnit:set_element_data(menu, item)   
-    self.super.set_element_data(self, menu, item)
+function EditorMoveUnit:set_element_data(item)   
+    self.super.set_element_data(self, item)
     if item.name == "is_displacement" then
         if item.value == true then
             self._last_end_position = mvector3.copy(self._element.values.end_pos) 

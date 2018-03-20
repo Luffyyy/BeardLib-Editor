@@ -96,14 +96,14 @@ function Instance:update_positions()
     end
 end
 
-function Instance:update(menu, item)
+function Instance:update(item)
 	local unit = self:selected_unit()
 	if unit and alive(unit) and unit:fake() then
 		Application:draw_sphere(unit:position(), 30, 0, 0, 0.7)
 	end
 end
 
-function Instance:set_data(menu, item)
+function Instance:set_data(item)
     local main = self:GetItem("Main")
     main:RemoveItem(self:GetItem("NameWarning"))
     local instance = self:selected_unit():object()
