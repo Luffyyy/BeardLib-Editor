@@ -12,7 +12,7 @@ function ContinentSettingsDialog:_Show(params)
     self:Toggle("EditorOnly", nil, managers.worlddefinition._continents[continent].editor_only, {index = 3})
 end
 
-function ContinentSettingsDialog:SetName(menu, item)
+function ContinentSettingsDialog:SetName(item)
     local name = item:Value()
     self._new_name = nil
     if name == "" then

@@ -290,7 +290,7 @@ function Project:existing_narr_new_project_clbk(selection, t, name)
         narr.package = nil --packages should only be in levels.
         self._packages_to_unload = {}
         PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
-        local clbk = SimpleClbk(self.existing_narr_new_project_clbk_finish, self, data, narr)
+        local clbk = ClassClbk(self, "existing_narr_new_project_clbk_finish", data, narr)
         for i, level_in_chain in pairs(narr.chain) do
             local last = i == #narr.chain
             if type(level_in_chain) == "table" then
@@ -633,18 +633,18 @@ function Project:edit_main_xml(data, save_clbk)
         if level_in_chain.level_id then
             small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
             if chain_group then
-                small_button("Ungroup", SimpleClbk(self.ungroup_level, self, narr, level_in_chain, chain_group), {156, 54, 48, 48})
+                small_button("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), {156, 54, 48, 48})
             else
-                small_button("Group", SimpleClbk(self.group_level, self, narr, level_in_chain), {104, 55, 48, 48})
+                small_button("Group", ClassClbk(self, "group_level", narr, level_in_chain), {104, 55, 48, 48})
             end        
         end
-        small_button("MoveDown", SimpleClbk(self.set_chain_index, self, narr_chain, level_in_chain, my_index + 1), {57, 55, 48, 48}, {enabled = my_index < #narr_chain})
-        small_button("MoveUp", SimpleClbk(self.set_chain_index, self, narr_chain, level_in_chain, my_index - 1), {4, 55, 48, 48}, {enabled = my_index > 1})
+        small_button("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), {57, 55, 48, 48}, {enabled = my_index < #narr_chain})
+        small_button("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), {4, 55, 48, 48}, {enabled = my_index > 1})
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
         local level = get_level(level_id)
-        local btn = self:Button(level_id, level and SimpleClbk(self.edit_main_xml_level, self, data, level, level_in_chain, chain_group, save_clbk), {
+        local btn = self:Button(level_id, level and ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk), {
             group = group or levels_group,
             text = level_id
         })
@@ -730,14 +730,14 @@ function Project:edit_main_xml(data, save_clbk)
     self._refresh_func = function() self:edit_main_xml(data, save_clbk) end
 end
 
-function Project:delete_project(menu, item)
+function Project:delete_project(item)
     BLE.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
         FileIO:Delete(Path:Combine("Maps", self._current_data.name))
         self:disable()
     end)
 end
 
-function Project:set_project_data(menu, item)
+function Project:set_project_data(item)
     local t = self._current_data  
     local narr = U:GetNodeByMeta(t, "narrative")
     local mod_assets = U:GetNodeByMeta(t, "AssetUpdates")
@@ -816,7 +816,7 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
             end
         })
     end
-    small_button("Back", SimpleClbk(self.edit_main_xml, self, data, save_clbk))
+    small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
     self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))
     self._refresh_func = function() self:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk) end
 end

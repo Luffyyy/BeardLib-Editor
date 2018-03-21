@@ -283,7 +283,7 @@ function EditorLaserTrigger:_check_remove_connection(i1, i2)
 	return false
 end
 
-function EditorLaserTrigger:set_edit_points(menu, item)
+function EditorLaserTrigger:set_edit_points(item)
 	self._editing = item:Value()
 	self._dummy_unit:set_visible(self._editing)
 	self:remake_dummies()
@@ -297,7 +297,7 @@ function EditorLaserTrigger:fill_connections_box()
 	end
 end
 
-function EditorLaserTrigger:set_connection_from_position(menu, item)
+function EditorLaserTrigger:set_connection_from_position(item)
 	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local from = self._element.values.points[connection.from]
@@ -306,7 +306,7 @@ function EditorLaserTrigger:set_connection_from_position(menu, item)
 	self:remake_dummies()
 end
 
-function EditorLaserTrigger:set_connection_to_position(menu, item)
+function EditorLaserTrigger:set_connection_to_position(item)
 	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local to = self._element.values.points[connection.to]
@@ -315,7 +315,7 @@ function EditorLaserTrigger:set_connection_to_position(menu, item)
 	self:remake_dummies()
 end
 
-function EditorLaserTrigger:update_selection(menu, item)
+function EditorLaserTrigger:update_selection(item)
 	local static = self:GetPart("static")
 	self._selected_connection_box:ClearItems()
 	if self._selected_connection then
@@ -338,7 +338,7 @@ function EditorLaserTrigger:update_selection(menu, item)
 	end
 end
 
-function EditorLaserTrigger:select_connection(menu, item)
+function EditorLaserTrigger:select_connection(item)
 	local selected_index = item.selected_index
 	if not selected_index then
 		self._selected_connection = nil

@@ -193,20 +193,20 @@ function AssetsManagerDialog:find_package(unit, dontask, clbk)
     function find_package()
         local items = {}
         for _, pkg in pairs(BeardLibEditor.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
-            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.size)
-            table.insert(items, {name = text, size = pkg.size, package = pkg.name})
+            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.package_size)
+            table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
         end
         table.sort(items, function(a,b)
             if a.custom then
                 return true
             end
-            if not a.size then
+            if not a.package_size then
                 return false
             end
-            if not b.size then
+            if not b.package_size then
                 return true
             end
-            return a.size < b.size
+            return a.package_size < b.package_size
         end)
         BeardLibEditor.ListDialog:Show({
             list = items,
@@ -368,14 +368,14 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
             table.insert(items, {
                 name = string.format("%s has %s/%s of the missing units(%.2fmb)", name, #package, missing_amount, size),
                 package = name,
-                size = size,
+                package_size = size,
                 amount = #package,
             })
         end
     end
     table.sort(items, function(a,b)
         if a.amount == b.amount then
-            return a.size < b.size
+            return a.package_size < b.package_size
         else
             return a.amount > b.amount
         end
@@ -533,7 +533,7 @@ function AssetsManagerDialog:get_packages_of_asset(asset, type, size_needed, fir
     return BeardLibEditor.Utils:GetPackages(asset, type, size_needed, first, self:get_level_packages())
 end
 
-function AssetsManagerDialog:set_unit_selected(menu, item)
+function AssetsManagerDialog:set_unit_selected(item)
     local packages = self:GetItem("Packages")
     if not packages then
         return
@@ -563,7 +563,7 @@ function AssetsManagerDialog:set_unit_selected(menu, item)
             if name:sub(1, 6) == "levels" then
                 name = BeardLibEditor.Utils:ShortPath(name, 3)
             end
-            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.2fmb)", name, pkg.size)
+            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.2fmb)", name, pkg.package_size)
             load_from = load_from.."\n"..pkg_s
         end
         local add
@@ -633,17 +633,17 @@ function AssetsManagerDialog:add_package_dialog()
     for name in pairs(BeardLibEditor.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
             local size = BeardLibEditor.Utils:GetPackageSize(name)
-            table.insert(packages, {package = name, name = size and string.format("%s(%.2fmb)", name, size) or name, size = size})
+            table.insert(packages, {package = name, name = size and string.format("%s(%.2fmb)", name, size) or name, package_size = size})
         end
     end
     table.sort(packages, function(a,b)
-        if not a.size then
+        if not a.package_size then
             return false
         end
-        if not b.size then
+        if not b.package_size then
             return true
         end
-        return a.size < b.size
+        return a.package_size < b.package_size
     end)
     BeardLibEditor.ListDialog:Show({
         list = packages,
@@ -658,7 +658,7 @@ function AssetsManagerDialog:add_package_dialog()
     self:reload()
 end
 
-function AssetsManagerDialog:remove_package(package, menu, item)
+function AssetsManagerDialog:remove_package(package, item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
         local project = BeardLibEditor.MapProject
         local packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
@@ -683,7 +683,7 @@ function AssetsManagerDialog:remove_package(package, menu, item)
             managers.worlddefinition:_unload_package(package.."_init")
             managers.worlddefinition:_unload_package(package)
         end
-        menu:RemoveItem(item.override_panel)
+        item:Destroy()
         project:map_editor_save_main_xml(self._tbl._data)
         project:_reload_mod(self._tbl._data.name)
         self:reload()

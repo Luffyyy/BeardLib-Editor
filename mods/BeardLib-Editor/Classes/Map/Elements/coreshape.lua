@@ -58,10 +58,10 @@ function EditorShape:_build_panel()
 	if not self._shape then
 		self:create_shapes()
 	end
-	self._width = self:NumberCtrl("width", {floats = 0, min = 0, callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Width[cm]:", help ="Set the width for the shape"})
-	self._depth = self:NumberCtrl("depth", {floats = 0, min = 0, callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Depth[cm]:", help ="Set the depth for the shape"})
-	self._height = self:NumberCtrl("height", {floats = 0, min = 0, callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Height[cm]:", help ="Set the height for the shape"})
-	self._radius = self:NumberCtrl("radius", {floats = 0, min = 0, callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Radius[cm]:", help ="Set the radius for the shape"})
+	self._width = self:NumberCtrl("width", {floats = 0, min = 0, on_callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Width[cm]:", help ="Set the width for the shape"})
+	self._depth = self:NumberCtrl("depth", {floats = 0, min = 0, on_callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Depth[cm]:", help ="Set the depth for the shape"})
+	self._height = self:NumberCtrl("height", {floats = 0, min = 0, on_callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Height[cm]:", help ="Set the height for the shape"})
+	self._radius = self:NumberCtrl("radius", {floats = 0, min = 0, on_callback = callback(self, EditorAreaTrigger, "set_shape_property"), text = "Radius[cm]:", help ="Set the radius for the shape"})
 
 	EditorAreaTrigger.set_shape_type(self)
 end

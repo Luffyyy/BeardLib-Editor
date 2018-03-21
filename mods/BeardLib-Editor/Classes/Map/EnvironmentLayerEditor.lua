@@ -309,7 +309,7 @@ end
 
 function EnvLayer:update_positions() self:set_unit_pos() end
 
-function EnvLayer:set_unit_pos(menu, item)
+function EnvLayer:set_unit_pos(item)
 	local unit = self:selected_unit()
 	local S = self:GetPart("static")
 	if unit then
@@ -321,7 +321,7 @@ function EnvLayer:set_unit_pos(menu, item)
 	self:save()
 end
 
-function EnvLayer:set_unit_name_id(menu, item)
+function EnvLayer:set_unit_name_id(item)
 	local unit = self:selected_unit()
 	if unit then
 		unit:unit_data().name_id = item:Value()
@@ -329,14 +329,14 @@ function EnvLayer:set_unit_name_id(menu, item)
 	self:save()
 end
 
-function EnvLayer:change_environment(menu, item)
+function EnvLayer:change_environment(item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
 	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:save()
 end
 
-function EnvLayer:change_color_grading(menu, item)
+function EnvLayer:change_color_grading(item)
 	local environment_values = self:data().environment_values
 	environment_values.color_grading = item:SelectedItem()
 	managers.environment_controller:set_default_color_grading(environment_values.color_grading)
@@ -428,12 +428,12 @@ function EnvLayer:generate_dome_occ()
 	managers.editor:init_create_dome_occlusion(shape, res)
 end
 
-function EnvLayer:set_dome_occ_resolution(menu, item)
+function EnvLayer:set_dome_occ_resolution(item)
 	self:data().environment_values.dome_occ_resolution = tonumber(item:SelectedItem())
 	self:save()
 end
 
-function EnvLayer:update_wind_direction(menu, item)
+function EnvLayer:update_wind_direction(item)
 	local dir = item:Value()
 	self._wind_rot = Rotation(dir, 0, self._wind_rot:roll())
 	self:set_wind()
@@ -447,29 +447,29 @@ function EnvLayer:set_wind()
 	self:save()
 end
 
-function EnvLayer:update_wind_variation(menu, item)
+function EnvLayer:update_wind_variation(item)
 	self._wind_dir_var = item:Value()
 	self:set_wind()
 end
 
-function EnvLayer:update_tilt_angle(menu, item)
+function EnvLayer:update_tilt_angle(item)
 	local dir = item:Value()
 	self._wind_rot = Rotation(self._wind_rot:yaw(), 0, dir)
 	self:set_wind()
 end
 
-function EnvLayer:update_tilt_variation(menu, item)
+function EnvLayer:update_tilt_variation(item)
 	self._wind_tilt_var = item:Value()
 	self:set_wind()
 end
 
-function EnvLayer:update_wind_speed(menu, item)
+function EnvLayer:update_wind_speed(item)
 	self._wind_speed = item:Value() / 10
 	self:update_wind_speed_labels()
 	self:set_wind()
 end
 
-function EnvLayer:update_wind_speed_variation(menu, item)
+function EnvLayer:update_wind_speed_variation(item)
 	self._wind_speed_variation = item:Value() / 10
 	self:update_wind_speed_labels()
 	self:set_wind()
@@ -479,7 +479,7 @@ function EnvLayer:update_wind_speed_labels()
 	self._wind_text:SetText("Beaufort Scale: " .. self:wind_beaufort(self._wind_speed) .. "(" .. self:wind_description(self._wind_speed)..")")
 end
 
-function EnvLayer:change_sky_rotation(menu, item)
+function EnvLayer:change_sky_rotation(item)
  	self:data().environment_values.sky_rot = item:Value()
 	self:save()
 	managers.viewport:first_active_viewport()._env_handler:editor_set_value(sky_rot_key, item:Value()) -- I guess this works

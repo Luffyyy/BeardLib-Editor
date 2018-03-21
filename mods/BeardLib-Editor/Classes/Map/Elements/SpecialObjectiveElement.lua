@@ -80,7 +80,7 @@ function EditorSpecialObjective:_draw_follow_up()
 	end
 end
 
-function EditorSpecialObjective:apply_preset(menu, item)
+function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()
 	BeardLibEditor.Utils:YesNoQuestion("This will apply the access flag preset " .. (selection or ""), function()
 		if selection == "clear all" then

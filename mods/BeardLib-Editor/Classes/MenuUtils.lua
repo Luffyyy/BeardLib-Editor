@@ -89,7 +89,7 @@ function MenuUtils:init(this, menu)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -99,7 +99,7 @@ function MenuUtils:init(this, menu)
 			name = name,
 			value = value,
 			supports_additional = true,
-			callback = callback
+			on_callback = callback
 		}, opt))
 	end
 
@@ -114,7 +114,7 @@ function MenuUtils:init(this, menu)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        callback = callback,
+	        on_callback = callback,
 	        size_by_text = true,
 	        min_width = s,
 	        min_height = s,
@@ -137,7 +137,7 @@ function MenuUtils:init(this, menu)
 		local s = parent:TextHeight()
 	    return m:ImageButton(table.merge({
 	        name = name,
-	        callback = callback,
+	        on_callback = callback,
 	        position = ClassClbk(self, "CenterRight"),
 			size_by_text = true,
 	        w = s,
@@ -157,7 +157,7 @@ function MenuUtils:init(this, menu)
 	        value = value,
 	        items = items,
 	        bigger_context_menu = true,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -166,7 +166,7 @@ function MenuUtils:init(this, menu)
 	    return m:TextBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        callback = callback,
+	        on_callback = callback,
 	        value = value
 	    }, opt))
 	end
@@ -177,7 +177,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -187,7 +187,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -197,7 +197,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -249,12 +249,12 @@ function MenuUtils:init(this, menu)
 		end
 	end
 
-	function this:CopyAxis(menu, item)
+	function this:CopyAxis(item)
 		Application:set_clipboard(tostring(self["AxisControls"..item.override_panel.value_type](self, item.override_panel.axis_name)))
 	end
 	
-	function this:PasteAxis(menu, item)
-		menu = item.override_panel
+	function this:PasteAxis(item)
+		local menu = item.override_panel
 		local paste = Application:get_clipboard()
 		local result
 		pcall(function()
@@ -266,8 +266,8 @@ function MenuUtils:init(this, menu)
 		if type_name(result) == "Rotation" and menu.value_type == "Rotation" then
 			self:SetAxisControls(nil, result, menu.axis_name)
 		end
-		if menu.callback then
-			menu.callback(menu, item)
+		if menu.on_callback then
+			menu.on_callback(item)
 		end
 	end
 
@@ -276,7 +276,7 @@ function MenuUtils:init(this, menu)
 	    opt = opt or {}
 		opt.align_method = "grid"
 		opt.axis_name = name
-		opt.callback = clbk
+		opt.on_callback = clbk
 	    local translation
 	    local rotation
 	    local group = opt.group
@@ -337,12 +337,12 @@ function MenuUtils:init(this, menu)
 
 	function this:PathItem(name, callback, value, typ, loaded, check, not_close, opt)
 		opt = opt or {}
-		opt.callback = opt.callback or callback
+		opt.on_callback = opt.callback or callback
 	    local t = self:TextBox(name, nil, value, opt)
 	    opt.text = "Browse " .. tostring(typ).."s"
 		opt.offset = {t.offset[1] * 4, t.offset[2]}
-		opt.callback = nil
-		opt.callback = opt.btn_callback
+		opt.on_callback = nil
+		opt.on_callback = opt.btn_callback
 		local btn = self:Button("SelectPath"..name, function()
 			local list = BeardLibEditor.Utils:GetEntries({type = typ, loaded = loaded, filenames = false, check = check})
 			if opt.sort_func then

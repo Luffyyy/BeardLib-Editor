@@ -89,7 +89,7 @@ function LoadLevelMenu:load_levels()
                             offset = {12, 4},
                             text = txt,
                             visible = visible,
-                            callback = callback(self, self, "load_level"),
+                            on_callback = ClassClbk(self, "load_level"),
                             label = "levels",
                         })
                         has_items = has_items or visible
@@ -105,7 +105,7 @@ function LoadLevelMenu:load_levels()
     levels:AlignItems(true)
 end
 
-function LoadLevelMenu:load_level(menu, item)
+function LoadLevelMenu:load_level(item)
     local level_id = item.name
     local safe_mode = self:GetItem("Safemode"):Value()
     local check_load = self:GetItem("CheckLoadTime"):Value()
@@ -120,7 +120,7 @@ function LoadLevelMenu:load_level(menu, item)
         MenuCallbackHandler:play_single_player()
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"
-        Global.game_settings.difficulty = "norLogSpawnedUnitsmal"
+        Global.game_settings.difficulty = "normal"
         Global.game_settings.world_setting = nil
         MenuCallbackHandler:start_the_game()    
         BeardLibEditor.Menu:set_enabled(false)

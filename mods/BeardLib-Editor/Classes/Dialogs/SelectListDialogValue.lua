@@ -38,7 +38,7 @@ function SelectListDialogValue:MakeListItems(params)
     self.super.MakeListItems(self, params)
 end
 
-function SelectListDialogValue:ValueClbk(value, menu, item)
+function SelectListDialogValue:ValueClbk(value, item)
     local selected = item.SelectedItem and item:SelectedItem()
     value.value = selected and type(selected) == "table" and selected.value or selected or item:Value()
 end

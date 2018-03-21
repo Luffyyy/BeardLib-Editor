@@ -337,7 +337,7 @@ function WData:add_new_mission_script(cname)
     end})
 end
 
-function WData:remove_script(script, menu, item)
+function WData:remove_script(script, item)
     BeardLibEditor.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
         local mission = managers.mission
         self:_clear_all_elements_from_script(script, item.continent, true, true)
@@ -347,22 +347,22 @@ function WData:remove_script(script, menu, item)
     end)
 end
 
-function WData:rename_script(script, menu, item)
+function WData:rename_script(script, item)
     local mission = managers.mission
     BeardLibEditor.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
         if name == "" then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
-                self:rename_script(script, menu, item)
+                self:rename_script(script, item)
             end})
             return
         elseif string.begins(name, " ") then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:rename_script(script, menu, item)
+                self:rename_script(script, item)
             end})
             return
         elseif mission._scripts[name] then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
-                self:rename_script(script, menu, item)
+                self:rename_script(script, item)
             end})
             return
         end
@@ -375,7 +375,7 @@ function WData:rename_script(script, menu, item)
     end})
 end
 
-function WData:clear_all_elements_from_script(script, menu, item)
+function WData:clear_all_elements_from_script(script, item)
     self:_clear_all_elements_from_script(script, item.continent)
 end
 
@@ -412,7 +412,7 @@ function WData:_clear_all_elements_from_script(script, continent, no_refresh, no
     end
 end
 
-function WData:select_all_units_from_script(script, menu, item)
+function WData:select_all_units_from_script(script, item)
     local selected_units = {}
     for _, unit in pairs(self:GetPart("mission")._units) do
         if unit:mission_element() then
@@ -478,7 +478,7 @@ function WData:build_ai_layer_menu()
         "street",
         "zombie_apocalypse"
     }
-    self:ComboBox("GroupState", function(menu, item)
+    self:ComboBox("GroupState", function(item)
         self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
     self:Button("SpawnNavSurface", callback(self, self, "BeginSpawning", "core/units/nav_surface/nav_surface"))

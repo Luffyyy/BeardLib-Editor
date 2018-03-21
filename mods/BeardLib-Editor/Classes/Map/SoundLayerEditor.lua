@@ -219,27 +219,27 @@ function SndLayer:build_unit_menu()
 	end
 end
 
-function SndLayer:select_default_ambience(menu, item)
+function SndLayer:select_default_ambience(item)
 	managers.sound_environment:set_default_ambience(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:select_default_occasional(menu, item)
+function SndLayer:select_default_occasional(item)
 	managers.sound_environment:set_default_occasional(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:set_ambience_enabled(menu, item)
+function SndLayer:set_ambience_enabled(item)
 	managers.sound_environment:set_ambience_enabled(item:Value())
 	self:save()
 end
 
-function SndLayer:select_default_sound_environment(menu, item)
+function SndLayer:select_default_sound_environment()
 	managers.sound_environment:set_default_environment(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:select_emitter_path(menu, item)
+function SndLayer:select_emitter_path(item)
 	local path = item:SelectedItem()
 	local emitter = self:selected_unit():unit_data().emitter
 	emitter:set_emitter_path(path)
@@ -247,37 +247,37 @@ function SndLayer:select_emitter_path(menu, item)
 	self._emitter_events_combobox:SetSelectedItem(emitter:emitter_event())
 end
 
-function SndLayer:select_emitter_event(menu, item)
+function SndLayer:select_emitter_event(item)
 	self:selected_unit():unit_data().emitter:set_emitter_event(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:select_sound_environment(menu, item)
+function SndLayer:select_sound_environment(item)
 	self:selected_unit():unit_data().environment_area:set_environment(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:toggle_use_environment(menu, item)
+function SndLayer:toggle_use_environment(item)
 	self:selected_unit():unit_data().environment_area:set_use_environment(item:Value())
 	self:save()
 end
 
-function SndLayer:select_environment_ambience(menu, item)
+function SndLayer:select_environment_ambience(item)
 	self:selected_unit():unit_data().environment_area:set_environment_ambience(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:toggle_use_ambience(menu, item)
+function SndLayer:toggle_use_ambience(item)
 	self:selected_unit():unit_data().environment_area:set_use_ambience(item:Value())
 	self:save()
 end
 
-function SndLayer:select_environment_occasional(menu, item)
+function SndLayer:select_environment_occasional(item)
 	self:selected_unit():unit_data().environment_area:set_environment_occasional(item:SelectedItem())
 	self:save()
 end
 
-function SndLayer:toggle_use_occasional(menu, item)
+function SndLayer:toggle_use_occasional(item)
 	self:selected_unit():unit_data().environment_area:set_use_occasional(item:Value())
 	self:save()
 end

@@ -21,14 +21,14 @@ function EnvEditor:load_included_environments()
     local included = self:GetItem("IncludedEnvironments")
     local level = BeardLib.current_level
     if included and level then
-        included:ClearItems("temp")
+        included:ClearItems()
         for _, include in ipairs(level._config.include) do
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
                     local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included})
                     self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
-                        label = "temp", size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
+                        size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
                     })
                 end
             end
@@ -463,12 +463,13 @@ function EnvEditor:open_default_custom_environment()
     end
 end
 
-function EnvEditor:uninclude_environment_dialog(menu, item)
+function EnvEditor:uninclude_environment_dialog(item)
     BeardLibEditor.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
-        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, menu.name))
+        local pname = item.override_panel.name
+        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
         self:GetPart("opt"):save_main_xml()
-        local env = menu.name:gsub(".environment", "")
+        local env = pname:gsub(".environment", "")
         Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
         BeardLibEditor:LoadCustomAssets()
         self:load_included_environments()

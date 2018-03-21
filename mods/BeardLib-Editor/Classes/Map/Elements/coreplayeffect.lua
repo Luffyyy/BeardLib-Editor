@@ -10,7 +10,7 @@ function EditorPlayEffect:create_element()
 	self._element.values.max_amount = 0
 end
 
-function EditorPlayEffect:change_effect(menu, item)
+function EditorPlayEffect:change_effect(item)
 	self._element.values.effect = item:Value()
 end
 

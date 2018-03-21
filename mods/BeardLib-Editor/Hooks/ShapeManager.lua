@@ -31,7 +31,7 @@ end
 
 function Shape:create_panel() end
 
-function Shape:update_size(menu, item)
+function Shape:update_size(item)
 	self:set_property(item.name, item:Value())
 end
 

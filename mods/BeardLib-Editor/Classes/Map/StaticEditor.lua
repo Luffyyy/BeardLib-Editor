@@ -71,7 +71,7 @@ function Static:mouse_pressed(button, x, y)
 end
 
 function Static:update_grid_size() self:set_unit() end
-function Static:deselect_unit(menu, item) self:set_unit(true) end
+function Static:deselect_unit(item) self:set_unit(true) end
 function Static:mouse_released(button, x, y) 
     self._mouse_hold = false
     self._widget_hold = false
@@ -306,7 +306,7 @@ function Static:StorePreviousPosRot()
     end
 end
 
-function Static:set_group_name(menu, item)
+function Static:set_group_name(item)
     local exists
     for _, group in pairs(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups) do
         if group.name == item:Value() then
@@ -318,7 +318,7 @@ function Static:set_group_name(menu, item)
     end
 end
 
-function Static:remove_group(menu, item)
+function Static:remove_group(item)
 	if self._selected_group then
 	    table.delete(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups, self._selected_group)
 	    self._selected_group = nil
@@ -326,7 +326,7 @@ function Static:remove_group(menu, item)
 	end
 end
 
-function Static:add_group(menu, item)
+function Static:add_group(item)
     local unit = self:selected_unit()
     BeardLibEditor.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
         local continent = managers.worlddefinition:get_continent_of_static(unit)
@@ -349,13 +349,13 @@ function Static:add_group(menu, item)
 end
 
 
-function Static:add_selection_to_prefabs(menu, item, prefab_name)
+function Static:add_selection_to_prefabs(item, prefab_name)
     local remove_old_links
     local name_id = self._selected_units[1]:unit_data().name_id
     BeardLibEditor.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
     		BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
-    			self:add_selection_to_prefabs(menu, item, prefab_name)
+    			self:add_selection_to_prefabs(item, prefab_name)
     		end})
     		return
     	end
@@ -722,7 +722,7 @@ function Static:build_links(id, match, element)
     return links
 end
 
-function Static:addremove_unit_portal(menu, item)
+function Static:addremove_unit_portal(item)
     local portal = self:GetPart("world")._selected_portal
     if portal then
         for _, unit in pairs(self._selected_units) do
@@ -735,7 +735,7 @@ function Static:addremove_unit_portal(menu, item)
     end    
 end      
 
-function Static:delete_selected(menu, item)
+function Static:delete_selected(item)
     self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
@@ -750,7 +750,7 @@ function Static:delete_selected(menu, item)
     self:set_unit()
 end
 
-function Static:delete_selected_dialog(menu, item)
+function Static:delete_selected_dialog(item)
     if not self:selected_unit() then
         return
     end

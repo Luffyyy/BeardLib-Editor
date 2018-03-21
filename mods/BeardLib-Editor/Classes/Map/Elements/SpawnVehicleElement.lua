@@ -16,7 +16,7 @@ function EditorVehicleSpawner:warn_vehicle()
 				self:Text("[Warning] Vehicle is not loaded!", {label = "temp"})
 				local assets = self:GetPart("world")._assets_manager
 				if assets then
-					self:Button("Fix by loading the vehicle", SimpleClbk(assets.find_package, assets, unit, true), {label = "temp", group = self._class_group})
+					self:Button("Fix by loading the vehicle", ClassClbk(assets, "find_package", unit, true), {label = "temp", group = self._class_group})
 				end
 			end
 		end

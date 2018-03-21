@@ -46,7 +46,7 @@ function Options:build_default_menu()
     self:Slider("CameraSpeed", callback(self, self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1, group = camera})
     self:Slider("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1, group = camera})
     self:Slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
-    self:Toggle("Orthographic", ClassClbk(self, "toggle_orthographic"), false, {group = camera})
+    self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = camera})
 
     local map = self:DivGroup("Map", groups_opt)
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
@@ -104,9 +104,9 @@ function Options:enable()
     self:bind_opt("Undo", callback(self, self, "Undo"))
 end
 
-function Options:pause_game(menu, item) Application:set_pause(item.value) end
+function Options:pause_game(item) Application:set_pause(item.value) end
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
-function Options:set_current_continent(menu, item) self._parent._current_continent = item:SelectedItem() end
+function Options:set_current_continent(item) self._parent._current_continent = item:SelectedItem() end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 function Options:Undo() self._parent:Undo() end
@@ -137,7 +137,7 @@ function Options:loaded_continents(continents, current_continent)
     self:GetPart("mission"):set_elements_vis()
 end
 
-function Options:update_option_value(menu, item)
+function Options:update_option_value(item)
     local name, value = item:Name(), item:Value()
     BeardLibEditor.Options:SetValue("Map/"..name, value)
     --Clean this too
@@ -169,12 +169,12 @@ function Options:get_value(opt)
     return item and item:Value()
 end
 
-function Options:set_current_script(menu, item)
+function Options:set_current_script(item)
     self._parent._current_script = item:SelectedItem()
     self:GetPart("mission"):set_elements_vis()
 end
 
-function Options:draw_nav_segments(menu, item)
+function Options:draw_nav_segments(item)
     if managers.navigation then
         managers.navigation:set_debug_draw_state(self._draw_options)
     end
