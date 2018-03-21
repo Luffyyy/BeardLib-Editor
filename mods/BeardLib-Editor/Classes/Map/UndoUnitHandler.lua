@@ -97,7 +97,7 @@ function UHandler:restore_unit_pos_rot(key, action)
     if alive(unit) then
         local pos = self._unit_data[key]["pos"][1]
         local rot = action == "rot" and self._unit_data[key]["rot"][1] or nil
-        BLE.Utils:SetPosition(unit, pos, rot)
+        BLE.Utils:SetPosition(unit, pos, rot, unit:unit_data())
         self:GetPart("static"):set_units()
 
         self:clear_unneeded_data(key, action, 1)
@@ -107,13 +107,18 @@ end
 function UHandler:restore_unit(key)
     local unit = self._unit_data[key].unit
     if not alive(unit) then
-        local unit_data = self._unit_data[key].copy_data[1].unit_data
-        if not unit_data then self._parent:Log("Element restoration is unhandled, skipping") return end
-        local pos = self._unit_data[key]["pos"][1]   -- workaround for the unit itself being deleted
-        local rot = self._unit_data[key]["rot"][1]   -- need to change some stuff in SpawnUnit 
-        local new_unit = self._parent:SpawnUnit(unit_data.name, nil, false, unit_data.unit_id)
-        BLE.Utils:SetPosition(new_unit, pos, rot)
-
+        local copy_data = self._unit_data[key].copy_data[1]
+        if copy_data.type == "element" then
+            self:GetPart("mission"):add_element(copy_data.mission_element_data.class, true, copy_data.mission_element_data)
+            self._parent:Log(tostring(copy_data.mission_element_data.id))
+            self._parent:Log(tostring(copy_data.mission_element_data))
+            self:GetPart("static"):build_links(copy_data.mission_element_data.id, BLE.Utils.LinkTypes.Element, copy_data.mission_element_data)
+        else
+            local pos = self._unit_data[key]["pos"][1]   -- workaround for the unit itself being deleted
+            local rot = self._unit_data[key]["rot"][1]   -- need to change some stuff in SpawnUnit 
+            local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, false, copy_data.unit_id)
+            BLE.Utils:SetPosition(new_unit, pos, rot)
+        end
         self:clear_unneeded_data(key, "delete", 1)
     end
 end
