@@ -7,7 +7,7 @@ function Part:init(parent, menu, name, opt, mopt)
     self._menu = menu:Menu(table.merge({
         name = name,
         control_slice = 0.5,
-        items_size = 18,
+        size = 18,
         offset = {4, 2},
         auto_foreground = true,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
@@ -20,7 +20,7 @@ function Part:init(parent, menu, name, opt, mopt)
     MenuUtils:new(self)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1)
     if not opt.no_title then
-        self:Divider("Title", {items_size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
+        self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
     end
     self._holder = self:Menu("Holder", table.merge({private = {offset = {0, 1}}, auto_height = false, h = self._menu.h - (opt.no_title and 4 or 32), scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)

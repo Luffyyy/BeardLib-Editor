@@ -89,7 +89,8 @@ function Utils:ParseXml(typ, path)
     return SystemFS:exists(file) and SystemFS:parse_xml(file, "r")
 end
 
-function BeardLibEditor.Utils:FilterList(menu, search, max_items)
+function BeardLibEditor.Utils:FilterList(search, max_items)
+    local menu = search.parent
     local i = 0
     for _, item in pairs(menu:Items()) do
         local _end = i == max_items
@@ -145,8 +146,8 @@ function Utils:GetPackages(asset, type, size_needed, first, packages)
     for name, package in pairs(packages or BeardLibEditor.DBPackages) do
         if not name:begins("all_") and package[type] and package[type][asset] then
             local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
-            local size = not custom and size_needed and self:GetPackageSize(name)
-            if not size_needed or size or custom then
+            local package_size = not custom and size_needed and self:GetPackageSize(name)
+            if not size_needed or package_size or custom then
                 if not name:begins("all_") then
                     table.insert(found_packages, {name = name, package_size = package_size, custom = custom})
                     if first then

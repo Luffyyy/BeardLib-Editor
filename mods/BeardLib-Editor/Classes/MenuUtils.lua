@@ -114,7 +114,7 @@ function MenuUtils:init(this, menu)
 	    return m:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        callback = callback,
+	        on_callback = callback,
 	        size_by_text = true,
 	        min_width = s,
 	        min_height = s,
@@ -137,7 +137,7 @@ function MenuUtils:init(this, menu)
 		local s = parent:TextHeight()
 	    return m:ImageButton(table.merge({
 	        name = name,
-	        callback = callback,
+	        on_callback = callback,
 	        position = ClassClbk(self, "CenterRight"),
 			size_by_text = true,
 	        w = s,
@@ -157,7 +157,7 @@ function MenuUtils:init(this, menu)
 	        value = value,
 	        items = items,
 	        bigger_context_menu = true,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -166,7 +166,7 @@ function MenuUtils:init(this, menu)
 	    return m:TextBox(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
-	        callback = callback,
+	        on_callback = callback,
 	        value = value
 	    }, opt))
 	end
@@ -177,7 +177,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -187,7 +187,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
@@ -197,7 +197,7 @@ function MenuUtils:init(this, menu)
 	        name = name,
 	        text = string.pretty2(name),
 	        value = value,
-	        callback = callback,
+	        on_callback = callback,
 	    }, opt))
 	end
 
