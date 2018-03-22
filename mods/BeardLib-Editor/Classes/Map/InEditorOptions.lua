@@ -101,7 +101,6 @@ function Options:enable()
     self:bind_opt("DecreaseCameraSpeed", callback(self, self, "ChangeCameraSpeed", true))
     self:bind_opt("ToggleGUI", callback(self, self, "ToggleEditorGUI"))
     self:bind_opt("ToggleRuler", callback(self, self, "ToggleEditorRuler"))
-    self:bind_opt("Undo", callback(self, self, "Undo"))
 end
 
 function Options:pause_game(item) Application:set_pause(item.value) end
@@ -109,7 +108,6 @@ function Options:drop_player() game_state_machine:current_state():freeflight_dro
 function Options:set_current_continent(item) self._parent._current_continent = item:SelectedItem() end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
-function Options:Undo() self._parent:Undo() end
 
 function Options:ChangeCameraSpeed(decrease)
     local cam_speed = self:GetItem("CameraSpeed")

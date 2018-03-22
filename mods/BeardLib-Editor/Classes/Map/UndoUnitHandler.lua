@@ -1,142 +1,156 @@
 UndoUnitHandler = UndoUnitHandler or class(EditorPart)
-core:import("CoreStack")
-
 local UHandler = UndoUnitHandler
 
 function UHandler:init(parent, menu)
     self._parent = parent
     self._triggers = {}
-    self._unit_data = {}
-    self._undo_stack = CoreStack.Stack:new()
-    self._redo_data = {}
+    
+    self._history = {}
     self._undo_history_size = math.floor(BLE.Options:GetValue("UndoHistorySize"))
+
+    self._undo_funcs = {
+        pos = function(k) self:undo_unit_pos_rot(k) end,
+        rot = function(k) self:undo_unit_pos_rot(k) end,
+        delete = function(k) self:restore_unit(k) end,
+        spawn = function(k) self:delete_unit(k) end
+    }
+    
+    self._redo_funcs = {
+        pos = function(k) self:redo_unit_pos_rot(k) end,
+        rot = function(k) self:redo_unit_pos_rot(k) end,
+        delete = function(k) self:delete_unit(k) end,
+        spawn = function(k) self:restore_unit(k) end
+    }
+end
+
+function UHandler:enable() 
+    self:bind_opt("Redo", ClassClbk(self, "Redo"))
+    self:bind_opt("Undo", ClassClbk(self, "Undo"))
 end
 
 function UHandler:SaveUnitValues(units, action_type)
-    local function pos(u) table.insert(self._unit_data[u:key()].pos, 1, u:unit_data()._prev_pos) end
-    local function rot(u) pos(u) table.insert(self._unit_data[u:key()].rot, 1, u:unit_data()._prev_rot) end
-    local function delete(u) self._parent:Log(tostring(u:key())) self:build_unit_data(u) end
-
-    local unit_keys = {}
+    local event_tbl = {}
     for _, unit in pairs(units) do
         if alive(unit) and not unit:fake() then
-            table.insert(unit_keys, unit:key())
-            if not self._unit_data[unit:key()] then
-                self._unit_data[unit:key()] = {
+            if action_type == "pos" or action_type == "rot" then
+                table.insert(event_tbl, {
                     unit = unit,
-                    copy_data = {},
-                    pos = {},
-                    rot = {}
-                }
+                    pos = unit:position(), prev_pos = unit:unit_data()._prev_pos,
+                    rot = unit:rotation(), prev_rot = unit:unit_data()._prev_rot
+                })
+            elseif action_type == "delete" or action_type == "spawn" then
+                table.insert(event_tbl, {unit = unit, copy_data = self:build_unit_data(unit)})
             end
-
-            if action_type == "pos" then pos(unit)
-            elseif action_type == "rot" then rot(unit)
-            elseif action_type == "delete" then delete(unit) end
         end
     end
-
-    local element = {unit_keys, action_type}
-    self._undo_stack:push(element)
-
-    if self._undo_stack:size() > self._undo_history_size then
-        local dif = self._undo_stack:size() - self._undo_history_size
-
-        local last_element = self._undo_stack:stack_table()[1]
-        for _, key in pairs(last_element[1]) do
-            self:clear_unneeded_data(key, last_element[2])
+    if self._history_point then --Uh oh! YOU'VE CHANGED THE PAST
+        local new_history = {}
+        for i, event in pairs(self._history) do
+            if i<=self._history_point then
+                table.insert(new_history, event)
+            end
         end
-
-		table.remove(self._undo_stack:stack_table(), 1, dif)
-
-        self._undo_stack._last = self._undo_stack._last - dif
-        self._parent:Log("Stack history too big, removing elements")
+        self._history = new_history
+        self._history_point = nil --no more time traveling
     end
+    table.insert(self._history, {action_type = action_type, event_tbl = event_tbl})
+    if #self._history == self._undo_history_size then
+        table.remove(self._history, 1)
+    end
+end
+
+function UHandler:GetPoint()
+    return self._history_point or #self._history + 1
 end
 
 function UHandler:Undo()
-    if self._undo_stack:is_empty() then
-        self._parent:Log("Undo stack is empty!")
+    if #self._history == 0 then
+        self._parent:Log("History table empty!")
+        return
+    elseif self._history_point == 1 then
+        self._parent:Log("Nothing to undo!")
+        return        
+    end
+
+    self._history_point = self:GetPoint()-1
+    
+    local point = self._history[self._history_point]
+    local action_type = point.action_type
+    for _, event in pairs(point.event_tbl) do
+        self._undo_funcs[action_type](event)
+    end
+
+    self:GetPart("static"):recalc_all_locals()
+end
+
+function UHandler:Redo()
+    if #self._history == 0 then
+        self._parent:Log("History table empty!")
+        return
+    elseif not self._history_point then
+        self._parent:Log("Nothing to redo!")
         return
     end
 
-    local jump_table = {
-        pos = function(k, a) self:restore_unit_pos_rot(k, a) end,
-        rot = function(k, a) self:restore_unit_pos_rot(k, a) end,
-        delete = function(k, a) self:restore_unit(k) end,
-        spawn = function(k, a) self:delete_unit(k) end
-    }
-    local element = self._undo_stack:pop()
-    for _, key in pairs(element[1]) do
-        jump_table[element[2]](key, element[2])
+    local point = self:GetPoint()
+    if point == #self._history then
+        self._history_point = nil
+    else
+        self._history_point = point+1
     end
 
-end
+    local point = self._history[point]
+    local action_type = point.action_type
+    for _, event in pairs(point.event_tbl) do
+        self._redo_funcs[action_type](event)
+    end
 
-function UHandler:set_redo_values(key)
---empty
+    self:GetPart("static"):recalc_all_locals()
 end
 
 function UHandler:build_unit_data(unit)
     local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
-    local copy = {
+    return {
         type = typ,
         mission_element_data = typ == "element" and unit:mission_element().element and deep_clone(unit:mission_element().element) or nil,
         unit_data = typ == "unit" and unit:unit_data() and deep_clone(unit:unit_data()) or nil,
         wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
         ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
     }
-
-    table.insert(self._unit_data[unit:key()].copy_data, 1, copy)
-    table.insert(self._unit_data[unit:key()].pos, 1, unit:position())
-    table.insert(self._unit_data[unit:key()].rot, 1, unit:rotation())
 end
 
-function UHandler:restore_unit_pos_rot(key, action)
-    local unit = self._unit_data[key].unit
+function UHandler:redo_unit_pos_rot(event)
+    local unit = event.unit
     if alive(unit) then
-        local pos = self._unit_data[key]["pos"][1]
-        local rot = action == "rot" and self._unit_data[key]["rot"][1] or nil
-        BLE.Utils:SetPosition(unit, pos, rot, unit:unit_data())
+        BLE.Utils:SetPosition(unit, event.pos, event.rot, unit:unit_data())
         self:GetPart("static"):set_units()
-
-        self:clear_unneeded_data(key, action, 1)
     end
 end
 
-function UHandler:restore_unit(key)
-    local unit = self._unit_data[key].unit
-    if not alive(unit) then
-        local copy_data = self._unit_data[key].copy_data[1]
-        if copy_data.type == "element" then
-            self:GetPart("mission"):add_element(copy_data.mission_element_data.class, true, copy_data.mission_element_data)
-            self._parent:Log(tostring(copy_data.mission_element_data.id))
-            self._parent:Log(tostring(copy_data.mission_element_data))
-            self:GetPart("static"):build_links(copy_data.mission_element_data.id, BLE.Utils.LinkTypes.Element, copy_data.mission_element_data)
-        else
-            local pos = self._unit_data[key]["pos"][1]   -- workaround for the unit itself being deleted
-            local rot = self._unit_data[key]["rot"][1]   -- need to change some stuff in SpawnUnit 
-            local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, false, copy_data.unit_id)
-            BLE.Utils:SetPosition(new_unit, pos, rot)
-        end
-        self:clear_unneeded_data(key, "delete", 1)
+function UHandler:undo_unit_pos_rot(event)
+    local unit = event.unit
+    if alive(unit) then
+        BLE.Utils:SetPosition(unit, event.prev_pos, event.prev_rot, unit:unit_data())
+        self:GetPart("static"):set_units()
     end
 end
 
-function UHandler:delete_unit(key)
-    local unit = self._unit_data[key].unit
+function UHandler:restore_unit(event)
+    local copy_data = event.copy_data
+    if copy_data.type == "element" then
+        self:GetPart("mission"):add_element(copy_data.mission_element_data.class, true, copy_data.mission_element_data)
+        self:GetPart("static"):build_links(copy_data.mission_element_data.id, BLE.Utils.LinkTypes.Element, copy_data.mission_element_data)
+    else
+        local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, false, copy_data.unit_id)
+        event.unit = new_unit
+        BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation)
+    end
+end
+
+function UHandler:delete_unit(event)
+    local unit = event.unit
     if alive(unit) then
         self._parent:DeleteUnit(unit)
         self:GetPart("static"):reset_selected_units()
     end
-end
-
-function UHandler:clear_unneeded_data(key, action, index)
-    local function pos() table.remove(self._unit_data[key].pos, index or #self._unit_data[key].pos) end
-    local function rot() pos() table.remove(self._unit_data[key].rot, index or #self._unit_data[key].rot) end
-    local function delete() pos() rot() table.remove(self._unit_data[key].copy_data, index or #self._unit_data[key].copy_data) end
-
-    if action == "pos" then pos()
-    elseif action == "rot" then rot()
-    elseif action == "delete" then delete() end
 end

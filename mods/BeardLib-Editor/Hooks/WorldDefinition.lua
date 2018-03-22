@@ -182,8 +182,8 @@ end
 
 function WorldDef:remove_name_id(unit)
 	local unit_name = unit:unit_data().name
+	local name_id = unit:unit_data().name_id
 	if self._name_ids[unit_name] and self._name_ids[unit_name][name_id] then
-		local name_id = unit:unit_data().name_id
 		self._name_ids[unit_name][name_id] = self._name_ids[unit_name][name_id] - 1
 		if self._name_ids[unit_name][name_id] == 0 then
 			self._name_ids[unit_name][name_id] = nil
@@ -246,7 +246,7 @@ function WorldDef:delete_unit(unit, no_unlink)
 	local continent_name = ud.continent
 	self:remove_name_id(unit)
 	if unit_id > 0 then
-		self:RemoveUnitID(unit)
+		self:RemoveUnitID(unit, continent_name)
 		local statics
 		if unit:wire_data() then
 			statics = self._world_data.wires

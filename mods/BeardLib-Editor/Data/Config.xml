@@ -63,7 +63,7 @@
             <option type="string" default_value="assets/extract" name="ExtractDirectory"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
             <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
-			<option type="number" default_value="100" name="UndoHistorySize"/>
+			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
             <option_group name="Input">
                 <option type="string" default_value="f" name="SpawnUnit"/>
                 <option type="string" default_value="g" name="SpawnElement"/>
@@ -84,6 +84,7 @@
                 <option type="string" default_value="r" name="ToggleRotationWidget"/>
                 <option type="string" default_value="delete" name="DeleteSelection"/>
 				<option type="string" default_value="left ctrl+z" name="Undo"/>
+				<option type="string" default_value="left ctrl+y" name="Redo"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>

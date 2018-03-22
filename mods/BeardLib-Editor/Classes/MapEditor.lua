@@ -156,11 +156,6 @@ function Editor:StorePreviousPosRot()
     end
 end
 
-function Editor:Undo()
-    m.undo_handler:Undo()
-    m.static:recalc_all_locals()
-end
-
 function Editor:OnWidgetReleased()
     local unit = self:selected_unit()
     if alive(self:widget_unit()) then
@@ -568,6 +563,7 @@ function Editor:current_position()
 	local ray = nil
 	local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
     local unit = self:selected_unit()
+    local grid_size = self:grid_size()
 	if rays then
 		for _, unit_r in ipairs(rays) do
 			if unit_r.unit ~= unit and unit_r.unit:visible() then
@@ -580,9 +576,9 @@ function Editor:current_position()
 	if ray then
         local p = ray.position
         local n = ray.normal
-		local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
-        local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
-        local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
+		local x = math.round(p.x / grid_size + n.x) * grid_size
+        local y = math.round(p.y / grid_size + n.y) * grid_size
+        local z = math.round(p.z / grid_size + n.z) * grid_size
 		current_pos = Vector3(x, y, z)
 
 		if alive(unit) then
@@ -594,15 +590,15 @@ function Editor:current_position()
 			current_rot = rot * unit:rotation():inverse()
         end
 
-    elseif not ctrl() then
+    elseif not ctrl() or self._use_surface_move then
         p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
             if t < 1000 and t > -1000 then
-                local x = math.round(p.x / self:grid_size()) * self:grid_size()
-                local y = math.round(p.y / self:grid_size()) * self:grid_size()
-                local z = math.round(p.z / self:grid_size()) * self:grid_size()
+                local x = math.round(p.x / grid_size) * grid_size
+                local y = math.round(p.y / grid_size) * grid_size
+                local z = math.round(p.z / grid_size) * grid_size
                 current_pos = Vector3(x, y, z)
             end
         end
