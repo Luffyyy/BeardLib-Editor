@@ -107,6 +107,9 @@ function MissionScriptEditor:_create_panel()
 	self:BuildElementsManage("on_executed", on_exec, nil, nil, {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
+	if self.USES_POINT_ORIENTATION then
+		self:BuildElementsManage("orientation_elements")
+	end
 	if self.ON_EXECUTED_ALTERNATIVES then
 		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
 		table.insert(alts, "none")
