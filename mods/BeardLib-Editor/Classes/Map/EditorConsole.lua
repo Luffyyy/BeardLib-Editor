@@ -53,6 +53,10 @@ function EditorConsole:PrintMessage(type, message, ...)
     if self._menu.items_panel:h() > self._menu.panel:h() and not self._menu._grabbed_scroll_bar then
         self._menu.items_panel:set_bottom(self._menu.panel:h())
     end
+
+    if #self._menu._my_items > 100 then --hardcoded for now
+        self:RemoveItem(self._menu._my_items[1])
+    end
 end
 
 function EditorConsole:FilterConsole(item)

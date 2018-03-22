@@ -71,6 +71,7 @@ function Editor:post_init(menu)
     m.console = EditorConsole:new(self, menu)
     m.env = EnvEditor:new(self, menu)
     m.instances = InstancesEditor:new(self, menu)
+    m.undo_handler = UndoUnitHandler:new(self, menu)
     for name, manager in pairs(m) do
         manager.manager_name = name
     end
@@ -143,6 +144,36 @@ function Editor:reset_widget_values()
     self._rotate_widget:reset_values()
 end
 
+function Editor:OnWidgetGrabbed()
+    self:StorePreviousPosRot()
+    self._old_units = self:selected_units()
+end
+
+function Editor:StorePreviousPosRot()
+    for _, unit in pairs(self:selected_units()) do
+        unit:unit_data()._prev_pos = unit:position()
+        unit:unit_data()._prev_rot = unit:rotation()
+    end
+end
+
+function Editor:Undo()
+    m.undo_handler:Undo()
+    m.static:recalc_all_locals()
+end
+
+function Editor:OnWidgetReleased()
+    local unit = self:selected_unit()
+    if alive(self:widget_unit()) then
+        if unit:unit_data()._prev_pos ~= self:widget_unit():position() then
+            m.undo_handler:SaveUnitValues(self._old_units, "pos")
+        end
+
+        if unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
+            m.undo_handler:SaveUnitValues(self._old_units, "rot")
+        end
+    end
+end
+
 function Editor:move_widget_enabled(use)
     return self._move_widget._use
 end
@@ -170,6 +201,7 @@ function Editor:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
+    if self:is_using_widget() then self:OnWidgetReleased() end
     m.static:mouse_released(button, x, y)    
     self:reset_widget_values()
 end
@@ -237,7 +269,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
         if alive(unit) then self:select_unit(unit, add) end
-        return
+        return unit
     end
     local data = {}
     local t 
@@ -350,6 +382,11 @@ end
 function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
+        local old_pos = self:widget_unit():position()
+        if not self._using_move_widget and (old_pos ~= pos) then
+            self:StorePreviousPosRot()
+            self._old_units = self:selected_units()
+        end
         BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
@@ -363,6 +400,11 @@ end
 function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
+        local old_rot = self:widget_unit():rotation()
+        if not self._using_rotate_widget and (old_rot ~= rot) then
+            self:StorePreviousPosRot()
+            self._old_units = self:selected_units()
+        end
         BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
@@ -429,6 +471,7 @@ function Editor:selected_unit() return self:selected_units()[1] end
 function Editor:selected_units() return m.static._selected_units end
 function Editor:widget_unit() return m.static:widget_unit() or self:selected_unit() end
 function Editor:widget_rot() return self:widget_unit():rotation() end
+function Editor:is_using_widget() return self._using_move_widget or self._using_rotate_widget end
 function Editor:grid_size() return ctrl() and 1 or self._grid_size end
 function Editor:camera_rotation() return self._camera_object:rotation() end
 function Editor:camera_position() return self._camera_object:position() end
@@ -521,8 +564,38 @@ end
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
-    if not self._use_surface_move and not ctrl() then
-        local p2 = self:get_cursor_look_point(100)
+    local p2 = self:get_cursor_look_point(25000)
+	local ray = nil
+	local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
+    local unit = self:selected_unit()
+	if rays then
+		for _, unit_r in ipairs(rays) do
+			if unit_r.unit ~= unit and unit_r.unit:visible() then
+				ray = unit_r
+				break
+			end
+		end
+	end
+
+	if ray then
+        local p = ray.position
+        local n = ray.normal
+		local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
+        local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
+        local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
+		current_pos = Vector3(x, y, z)
+
+		if alive(unit) then
+			local u_rot = unit:rotation()
+			local z = n
+			local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
+			local y = z:cross(x)
+			local rot = Rotation(x, y, z)
+			current_rot = rot * unit:rotation():inverse()
+        end
+
+    elseif not ctrl() then
+        p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
             local t = (p1.z - 0) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
@@ -532,37 +605,6 @@ function Editor:current_position()
                 local z = math.round(p.z / self:grid_size()) * self:grid_size()
                 current_pos = Vector3(x, y, z)
             end
-        end
-    else
-        local p2 = self:get_cursor_look_point(25000)
-		local ray = nil
-		local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
-        local unit = self:selected_unit()
-		if rays then
-			for _, unit_r in ipairs(rays) do
-				if unit_r.unit ~= unit and unit_r.unit:visible() then
-					ray = unit_r
-					break
-				end
-			end
-		end
-
-		if ray then
-            local p = ray.position
-            local n = ray.normal
-			local x = math.round(p.x / self:grid_size() + n.x) * self:grid_size()
-            local y = math.round(p.y / self:grid_size() + n.y) * self:grid_size()
-            local z = math.round(p.z / self:grid_size() + n.z) * self:grid_size()
-			current_pos = Vector3(x, y, z)
-
-			if alive(unit) then
-				local u_rot = unit:rotation()
-				local z = n
-				local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
-				local y = z:cross(x)
-				local rot = Rotation(x, y, z)
-				current_rot = rot * unit:rotation():inverse()
-			end
         end
     end
 

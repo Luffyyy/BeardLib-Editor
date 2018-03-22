@@ -39,6 +39,7 @@ function Static:mouse_pressed(button, x, y)
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
+                    self._parent:OnWidgetGrabbed()
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
                     self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
                     self._parent._using_move_widget = true
@@ -47,6 +48,7 @@ function Static:mouse_pressed(button, x, y)
             if self._parent._rotate_widget:enabled() and not self._parent._using_move_widget then
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
                 if ray and ray.body then
+                    self._parent:OnWidgetGrabbed()
                     self._parent._rotate_widget:set_rotate_widget_axis(ray.body:name():s())
                     self._parent._rotate_widget:set_world_dir(ray.position)
                     self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
@@ -734,6 +736,7 @@ function Static:addremove_unit_portal(item)
 end      
 
 function Static:delete_selected(item)
+    self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
             if unit:fake() then
@@ -744,7 +747,7 @@ function Static:delete_selected(item)
         end
     end
     self:reset_selected_units()
-    self:set_unit()      
+    self:set_unit()
 end
 
 function Static:delete_selected_dialog(item)
@@ -919,13 +922,17 @@ function Static:SpawnCopyData(copy_data, prefab)
         end
     end
     local function all_ok_spawn()
+        local units = {}
+        local unit
         for _, v in pairs(copy_data) do
             if v.type == "element" then
                 self:GetPart("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
             elseif v.unit_data then
-                self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
+                unit = self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
             end
         end
+        table.insert(units, unit)
+        self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
         self:StorePreviousPosRot()
     end
     if missing then
