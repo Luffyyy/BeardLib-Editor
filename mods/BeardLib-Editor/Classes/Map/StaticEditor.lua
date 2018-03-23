@@ -306,24 +306,51 @@ function Static:StorePreviousPosRot()
     end
 end
 
-function Static:set_group_name(item)
+function Static:set_group_name(item, group, name)
     local exists
-    for _, group in pairs(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups) do
-        if group.name == item:Value() then
+    for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+        if editor_group.name == name then
             exists = true
+            break
         end
     end
     if not exists then
-        self._selected_group.name = item:Value()
+        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+            if editor_group.name == group.name then -- previous name
+                for _, unit_id in pairs(editor_group.units) do
+                    local groups = managers.worlddefinition:get_unit(unit_id):unit_data().groups
+                    for _, unit_group_name in pairs(groups) do
+                        if editor_group.name == unit_group_name then unit_group_name = name self._parent:Log("unit group name: ".. tostring(unit_group_name)) end
+                    end
+                end
+                editor_group.name = name
+            end
+        end
     end
 end
 
-function Static:remove_group(item)
-	if self._selected_group then
-	    table.delete(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups, self._selected_group)
-	    self._selected_group = nil
-	    self:build_group_options()
-	end
+function Static:remove_group(item, group)
+    group = group or self._selected_group
+    if group then 
+        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+            if editor_group.name then
+                for _, unit_id in pairs(editor_group.units) do
+                    local unit_groups = managers.worlddefinition:get_unit(unit_id)
+                    if unit_groups and unit_groups:unit_data().groups then
+                        self._parent:Log(tostring(unit_groups:unit_data()))
+                        for _, unit_group_name in pairs(unit_groups:unit_data().groups) do
+                            if unit_group_name == group.name then table.delete(unit_groups:unit_data().groups, unit_group_name) end
+                        end
+                    end
+                end
+            end
+        end
+        table.delete(managers.worlddefinition._continent_definitions[group.continent].editor_groups, group)
+	    if self._selected_group then 
+            self._selected_group = nil
+            self:build_group_options()
+        end     
+    end
 end
 
 function Static:add_group(item)
@@ -340,14 +367,26 @@ function Static:add_group(item)
             local group = {continent = unit:unit_data().continent, reference = unit:unit_data().unit_id, name = name, units = {}}
             for _, unit in pairs(self:selected_units()) do
                 table.insert(group.units, unit:unit_data().unit_id)
+                if not unit:unit_data().groups then unit:unit_data().groups = {} end
+                table.insert(unit:unit_data().groups, name)
             end
-            table.insert(continent.editor_groups, group)        
+            table.insert(continent.editor_groups, group)
             self._selected_group = group
             self:build_group_options()
         end
     end})
 end
 
+function Static:update_unit_group_data(unit)
+    local continent = managers.worlddefinition:get_continent_of_static(unit)
+    for _, name in pairs(unit:unit_data().groups) do
+        for _, editor_group in pairs(continent.editor_groups) do
+            if editor_group.name == name then
+                table.delete(editor_group.units, unit:unit_data().unit_id)
+            else self._parent:Log("continent group name: " .. tostring(editor_group.name) .. " unit group name: " .. (tostring(name)) )  end
+        end
+    end
+end
 
 function Static:add_selection_to_prefabs(item, prefab_name)
     local remove_old_links
@@ -742,6 +781,7 @@ function Static:delete_selected(item)
             if unit:fake() then
                 self:GetPart("instances"):delete_instance()
             else
+                if unit:unit_data().groups then self:update_unit_group_data(unit) end
                 self._parent:DeleteUnit(unit)
             end
         end
