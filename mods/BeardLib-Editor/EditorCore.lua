@@ -12,6 +12,7 @@ function BLE:Init()
     self.AssetsDirectory = self.ModPath .. "Assets/"
     self.HooksDirectory = self.ModPath .. "Hooks/"
     self.ClassDirectory = self.ModPath .. "Classes/"
+    self.DataDirectory = self.ModPath .. "Data/"
     self.MapClassesDir = self.ClassDirectory .. "Map/"
     self.PrefabsDirectory = Path:Combine(BeardLib.config.maps_dir, "prefabs")
     self.ElementsDir = self.MapClassesDir .. "Elements/"
@@ -24,6 +25,11 @@ function BLE:Init()
     self.Prefabs = {}
     self:LoadHashlist()
     self.InitDone = true
+    self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
+end
+
+function BLE:RunningFix()
+    return self.HasFix
 end
 
 function BLE:InitManagers()
@@ -143,10 +149,10 @@ function BLE:LoadHashlist()
         self.DefaultAssets = Global.DefaultAssets
         self:log("DBPaths already loaded")
     else
-        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "Paths.bin"), "binary")
-        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), "binary")
-        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), "binary")
-        self.DefaultAssets = FileIO:ReadScriptDataFrom(Path:Combine(self.ModPath, "Data", "DefaultAssets.bin"), "binary")
+        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
+        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "PackagesPaths.bin"), "binary")
+        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
+        self.DefaultAssets = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
