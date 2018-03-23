@@ -214,7 +214,8 @@ function WData:build_continents()
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
                 item:SetEnabled(item.enabled) end, 
-                continent, {texture_rect = {155, 95, 64, 64}})
+                continent, {texture_rect = {155, 95, 64, 64}}
+            )
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
                 opt.continent = name
@@ -255,7 +256,7 @@ function WData:toggle_unit_visibility(units)
     if type(units) == "table" then
         for _, unit_id in pairs(units) do
             local unit = managers.worlddefinition:get_unit(unit_id)
-            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end -- assuming vis because im lazy
+            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end -- bad
         end
     else
         for _, unit in pairs(self:get_all_units_from_continent(units)) do
@@ -264,6 +265,7 @@ function WData:toggle_unit_visibility(units)
     end
     return visible
 end
+
 function WData:select_all_units_from_continent(continent)
     local selected_units = {}
     for _, unit in pairs(self:get_all_units_from_continent(continent)) do
@@ -532,14 +534,36 @@ function WData:build_groups_layer_menu()
         for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
             if editor_group.units then
                 local group = self:Group(editor_group.name, {group = groups, text = editor_group.name})
-                toolbar_item("Remove", callback(self, self, "remove_grouped_units_dialog", editor_group), group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
-                toolbar_item("Rename", callback(self, self, "set_group_name_dialog", editor_group), group, {texture_rect = {66, 1, 48, 48}})
-                toolbar_item("SelectUnits", ClassClbk(self:GetPart("static"), "build_group_options"), group, {texture_rect = {122, 1, 48, 48}})
+                toolbar_item("Remove", function() 
+                        BLE.Utils:YesNoQuestion("This will delete the group", function()
+                            self:GetPart("static"):remove_group(nil, group)
+                            self:build_menu("groups", nil)
+                        end)
+                    end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
+                )
+                toolbar_item("Rename", function() 
+                        BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
+                            self:GetPart("static"):set_group_name(nil, group, name)
+                            self:build_menu("groups", nil)
+                        end})
+                    end, group, {texture_rect = {66, 1, 48, 48}}
+                )
+                toolbar_item("SelectGroup", function() 
+                        self:GetPart("static"):reset_selected_units()
+                        self:GetPart("static")._selected_group = editor_group
+                        self:GetPart("static"):build_positions_items(false)
+                        for _, unit_id in pairs(editor_group.units) do
+                            local unit = managers.worlddefinition:get_unit(unit_id)
+                            self:GetPart("static"):set_selected_unit(unit, true)
+                        end
+                    end, group, {texture_rect = {122, 1, 48, 48}}
+                )
                 toolbar_item("SetVisible", function(item) 
                     local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
                     item.enabled_alpha = alpha
                     item:SetEnabled(item.enabled) end, 
-                    group, {texture_rect = {155, 95, 64, 64}})
+                    group, {texture_rect = {155, 95, 64, 64}}
+                )
                 for _, unit_id in pairs(editor_group.units) do
                     self:Button(unit_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(unit_id)), {group = group})
                 end

@@ -318,9 +318,11 @@ function Static:set_group_name(item, group, name)
         for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
             if editor_group.name == group.name then -- previous name
                 for _, unit_id in pairs(editor_group.units) do
-                    local groups = managers.worlddefinition:get_unit(unit_id):unit_data().groups
-                    for _, unit_group_name in pairs(groups) do
-                        if editor_group.name == unit_group_name then unit_group_name = name self._parent:Log("unit group name: ".. tostring(unit_group_name)) end
+                    local groups = managers.worlddefinition:get_unit(unit_id)      
+                    if groups:unit_data().groups then   -- at this point i have no idea what's happening, this is just bandaid
+                        for _, unit_group_name in pairs(groups:unit_data().groups) do
+                            if editor_group.name == unit_group_name then unit_group_name = name self._parent:Log("unit group name: ".. tostring(unit_group_name)) end
+                        end
                     end
                 end
                 editor_group.name = name
