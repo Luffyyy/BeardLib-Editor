@@ -309,14 +309,14 @@ end
 function Static:set_group_name(item, group, name)
     local exists
     for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
-        if editor_group.name == name then
+        if editor_group.name == name or editor_group.name == item:Value() then
             exists = true
             break
         end
     end
     if not exists then
         for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
-            if editor_group.name == group.name then -- previous name
+            if editor_group.name == group.name or editor_group.name == item:Value() then
                 editor_group.name = name
             end
         end

@@ -159,20 +159,6 @@ function WData:remove_brush_layer()
     end)
 end
 
-function WData:remove_grouped_units_dialog(group)
-    BLE.Utils:YesNoQuestion("This will delete the group", function()
-        self:GetPart("static"):remove_group(nil, group)
-        self:build_menu("groups", nil)
-    end)
-end
-
-function WData:set_group_name_dialog(group)
-    BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
-        self:GetPart("static"):set_group_name(nil, group, name)
-        self:build_menu("groups", nil)
-    end})
-end
-
 local function base_button_pos(item)
     local p = item:Panel():parent()
     item:Panel():set_world_righttop(p:world_righttop())
