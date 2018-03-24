@@ -166,7 +166,7 @@ end
 
 --Continents
 function WData:build_continents()
-    local opt = {items_size = 18, size_by_text = false, texture = "textures/editor_icons_df", position = "RightTop"}
+    local opt = {items_size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
     local prev
     local function toolbar_item(name, clbk, toolbar, o)
         o = table.merge(clone(opt), o)
