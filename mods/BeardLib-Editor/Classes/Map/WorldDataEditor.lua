@@ -1,4 +1,3 @@
---CLEAN THIS
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
 function WData:init(parent, menu) 
@@ -536,28 +535,19 @@ function WData:build_groups_layer_menu()
                 local group = self:Group(editor_group.name, {group = groups, text = editor_group.name})
                 toolbar_item("Remove", function() 
                         BLE.Utils:YesNoQuestion("This will delete the group", function()
-                            self:GetPart("static"):remove_group(nil, group)
+                            self:GetPart("static"):remove_group(nil, editor_group)
                             self:build_menu("groups", nil)
                         end)
                     end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
                 )
                 toolbar_item("Rename", function() 
                         BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
-                            self:GetPart("static"):set_group_name(nil, group, name)
+                            self:GetPart("static"):set_group_name(nil, editor_group, name)
                             self:build_menu("groups", nil)
                         end})
                     end, group, {texture_rect = {66, 1, 48, 48}}
                 )
-                toolbar_item("SelectGroup", function() 
-                        self:GetPart("static"):reset_selected_units()
-                        self:GetPart("static")._selected_group = editor_group
-                        self:GetPart("static"):build_positions_items(false)
-                        for _, unit_id in pairs(editor_group.units) do
-                            local unit = managers.worlddefinition:get_unit(unit_id)
-                            self:GetPart("static"):set_selected_unit(unit, true)
-                        end
-                    end, group, {texture_rect = {122, 1, 48, 48}}
-                )
+                toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
                 toolbar_item("SetVisible", function(item) 
                     local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
                     item.enabled_alpha = alpha
@@ -565,7 +555,10 @@ function WData:build_groups_layer_menu()
                     group, {texture_rect = {155, 95, 64, 64}}
                 )
                 for _, unit_id in pairs(editor_group.units) do
-                    self:Button(unit_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(unit_id)), {group = group})
+                    local unit = managers.worlddefinition:get_unit(unit_id)
+                    if alive(unit) then 
+                        self:Button(unit_id, callback(self._parent, self._parent, "select_unit", unit), {group = group})
+                    end
                 end
             end
         end
