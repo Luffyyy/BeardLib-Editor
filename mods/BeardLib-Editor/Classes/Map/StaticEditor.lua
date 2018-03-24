@@ -306,24 +306,32 @@ function Static:StorePreviousPosRot()
     end
 end
 
-function Static:set_group_name(item)
+function Static:set_group_name(item, group, name)
     local exists
-    for _, group in pairs(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups) do
-        if group.name == item:Value() then
+    for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+        if editor_group.name == name then
             exists = true
+            break
         end
     end
     if not exists then
-        self._selected_group.name = item:Value()
+        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+            if editor_group.name == group.name then -- previous name
+                editor_group.name = name
+            end
+        end
     end
 end
 
-function Static:remove_group(item)
-	if self._selected_group then
-	    table.delete(managers.worlddefinition._continent_definitions[self._selected_group.continent].editor_groups, self._selected_group)
-	    self._selected_group = nil
-	    self:build_group_options()
-	end
+function Static:remove_group(item, group)
+    group = group or self._selected_group
+    if group then 
+        table.delete(managers.worlddefinition._continent_definitions[group.continent].editor_groups, group)
+	    if self._selected_group then 
+            self._selected_group = nil
+            self:build_group_options()
+        end     
+    end
 end
 
 function Static:add_group(item)
@@ -341,13 +349,61 @@ function Static:add_group(item)
             for _, unit in pairs(self:selected_units()) do
                 table.insert(group.units, unit:unit_data().unit_id)
             end
-            table.insert(continent.editor_groups, group)        
+            table.insert(continent.editor_groups, group)
             self._selected_group = group
             self:build_group_options()
         end
     end})
 end
 
+function Static:build_group_links(unit)
+    local function create_link(text, id, group, clbk)
+        self:Button(id, clbk, {
+            text = text,
+            group = group,
+            font_size = 16,
+            label = "groups"
+        })
+    end
+    
+    local group = self:GetItem("InsideGroups") or self:Group("InsideGroups", {max_height = 200, h= 200})
+        
+    for _, editor_group in pairs(self:get_groups_from_unit(unit)) do
+        create_link(editor_group.name, unit:unit_data().unit_id, group, callback(self, self, "select_group", editor_group))
+    end
+
+end
+
+function Static:get_groups_from_unit(unit)   -- needs a better name
+    local continent = managers.worlddefinition:get_continent_of_static(unit)
+    local groups = {}
+    for _, editor_group in pairs(continent.editor_groups) do
+        if editor_group.name then   -- temp bandaid for nil groups  
+            for _, unit_id in pairs(editor_group.units) do
+                if unit_id == unit:unit_data().unit_id then
+                    table.insert(groups, editor_group)
+                end
+            end
+        end
+    end
+    return groups
+end
+
+function Static:select_group(editor_group) 
+    self:reset_selected_units()
+    self._selected_group = editor_group
+    self:build_positions_items(false)
+    for _, unit_id in pairs(editor_group.units) do
+        local unit = managers.worlddefinition:get_unit(unit_id)
+        self:set_selected_unit(unit, true)
+    end
+end
+
+function Static:delete_unit_group_data(unit)
+    for _, editor_group in pairs(self:get_groups_from_unit(unit)) do
+        table.delete(editor_group.units, unit:unit_data().unit_id)
+    end
+end
 
 function Static:add_selection_to_prefabs(item, prefab_name)
     local remove_old_links
@@ -623,6 +679,7 @@ function Static:set_menu_unit(unit)
     self:GetItem("Continent"):SetEnabled(not_w_unit)
     self:GetItem("UnitPath"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
+    self:build_group_links(unit)
 end
 
 local function element_link_text(element, link, warn)
@@ -742,6 +799,7 @@ function Static:delete_selected(item)
             if unit:fake() then
                 self:GetPart("instances"):delete_instance()
             else
+                self:delete_unit_group_data(unit)
                 self._parent:DeleteUnit(unit)
             end
         end

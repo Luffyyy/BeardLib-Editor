@@ -1,4 +1,3 @@
---CLEAN THIS
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
 function WData:init(parent, menu) 
@@ -121,7 +120,8 @@ function WData:build_default_menu()
         ["environment"] = self.layers.env, 
         ["sound"] = self.layers.sound, 
         ["wires"] = true, 
-        ["portal"] = self.layers.portal, 
+        ["portal"] = self.layers.portal,
+        ["groups"] = true 
     }
     local managers_group = self:DivGroup("Managers")
     self:Button("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
@@ -157,6 +157,20 @@ function WData:remove_brush_layer()
         self:save()
         self:GetPart("opt"):save()
     end)
+end
+
+function WData:remove_grouped_units_dialog(group)
+    BLE.Utils:YesNoQuestion("This will delete the group", function()
+        self:GetPart("static"):remove_group(nil, group)
+        self:build_menu("groups", nil)
+    end)
+end
+
+function WData:set_group_name_dialog(group)
+    BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
+        self:GetPart("static"):set_group_name(nil, group, name)
+        self:build_menu("groups", nil)
+    end})
 end
 
 local function base_button_pos(item)
@@ -195,6 +209,12 @@ function WData:build_continents()
             toolbar_item("Settings", ClassClbk(self, "open_continent_settings", name), continent, {texture_rect = {385, 385, 115, 115}})
             toolbar_item("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), continent, {texture_rect = {122, 1, 48, 48}})
             toolbar_item("AddScript", ClassClbk(self, "add_new_mission_script", name), continent, {text = "+", help = "Add mission script"})
+            toolbar_item("SetVisible", function(item) 
+                local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
+                item.enabled_alpha = alpha
+                item:SetEnabled(item.enabled) end, 
+                continent, {texture_rect = {155, 95, 64, 64}}
+            )
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
                 opt.continent = name
@@ -230,32 +250,50 @@ function WData:remove_continent(continent)
     end)
 end
 
+function WData:toggle_unit_visibility(units)
+    local visible
+    if type(units) == "table" then
+        for _, unit_id in pairs(units) do
+            local unit = managers.worlddefinition:get_unit(unit_id)
+            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end -- bad
+        end
+    else
+        for _, unit in pairs(self:get_all_units_from_continent(units)) do
+            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end
+        end
+    end
+    return visible
+end
+
 function WData:select_all_units_from_continent(continent)
     local selected_units = {}
-    for k, static in pairs(managers.worlddefinition._continent_definitions[continent].statics) do
-        if static.unit_data and static.unit_data.unit_id then
-            local unit = managers.worlddefinition:get_unit_on_load(static.unit_data.unit_id)
-            if alive(unit) then
-                table.insert(selected_units, unit)
-            end
-        end
-    end        
+    for _, unit in pairs(self:get_all_units_from_continent(continent)) do
+        table.insert(selected_units, unit)
+    end
     self:GetPart("mission"):remove_script()
     self:GetPart("static")._selected_units = selected_units
     self:GetPart("static"):set_selected_unit()
 end
 
+function WData:get_all_units_from_continent(continent)
+    local units = {}
+    for _, static in pairs(managers.worlddefinition._continent_definitions[continent].statics) do
+        if static.unit_data and static.unit_data.unit_id then
+            local unit = managers.worlddefinition:get_unit_on_load(static.unit_data.unit_id)
+            if alive(unit) then
+                table.insert(units, unit)
+            end
+        end
+    end
+    return units
+end
+
 function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
     function delete_all()
         local worlddef = managers.worlddefinition
-        for k, static in pairs(worlddef._continent_definitions[continent].statics) do
-            if static.unit_data and static.unit_data.unit_id then
-                local unit = worlddef:get_unit_on_load(static.unit_data.unit_id)
-                if alive(unit) then
-                    worlddef:delete_unit(unit)
-                    World:delete_unit(unit)
-                end
-            end
+        for _, static in pairs(self:get_all_units_from_continent(continent)) do
+            worlddef:delete_unit(unit)
+            World:delete_unit(unit)
         end
         worlddef._continent_definitions[continent].editor_groups = {}
         worlddef._continent_definitions[continent].statics = {}
@@ -467,6 +505,63 @@ function WData:build_wires_layer_menu()
         self:Button(wire, function()
             self:BeginSpawning(wire)
         end, {group = loaded_wires})
+    end
+end
+
+function WData:build_groups_layer_menu()
+    local opt = {items_size = 18, size_by_text = true, texture = "textures/editor_icons_df", position = "RightTop"}
+    local prev
+    local function toolbar_item(name, clbk, toolbar, o)
+        o = table.merge(clone(opt), o)
+        if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
+            prev = nil
+        end
+        if prev then
+            o.position = callback(self, self, "button_pos", prev)
+        end
+        local item
+        if o.text then
+            item = self:SmallButton(name, clbk, toolbar, o)
+        else
+            item = self:SmallImageButton(name, clbk, nil, nil, toolbar, o)
+        end
+        prev = item
+    end
+
+    local groups = self:Group("Groups")
+    for _, continent in pairs(self._parent._continents) do
+        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
+            if editor_group.units then
+                local group = self:Group(editor_group.name, {group = groups, text = editor_group.name})
+                toolbar_item("Remove", function() 
+                        BLE.Utils:YesNoQuestion("This will delete the group", function()
+                            self:GetPart("static"):remove_group(nil, editor_group)
+                            self:build_menu("groups", nil)
+                        end)
+                    end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
+                )
+                toolbar_item("Rename", function() 
+                        BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
+                            self:GetPart("static"):set_group_name(nil, editor_group, name)
+                            self:build_menu("groups", nil)
+                        end})
+                    end, group, {texture_rect = {66, 1, 48, 48}}
+                )
+                toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
+                toolbar_item("SetVisible", function(item) 
+                    local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
+                    item.enabled_alpha = alpha
+                    item:SetEnabled(item.enabled) end, 
+                    group, {texture_rect = {155, 95, 64, 64}}
+                )
+                for _, unit_id in pairs(editor_group.units) do
+                    local unit = managers.worlddefinition:get_unit(unit_id)
+                    if alive(unit) then 
+                        self:Button(unit_id, callback(self._parent, self._parent, "select_unit", unit), {group = group})
+                    end
+                end
+            end
+        end
     end
 end
 
