@@ -308,15 +308,18 @@ end
 
 function Static:set_group_name(item, group, name)
     local exists
-    for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
+    local continent = group and group.continent or self._selected_group.continent
+    name = name or item:Value()
+    for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
         if editor_group.name == name then
             exists = true
             break
         end
     end
     if not exists then
-        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[group.continent].editor_groups) do
-            if editor_group.name == group.name then -- previous name
+        if item then self._selected_group.name = item:Value() return end
+        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
+            if editor_group.name == group.name then
                 editor_group.name = name
             end
         end
@@ -400,6 +403,7 @@ function Static:select_group(editor_group)
 end
 
 function Static:delete_unit_group_data(unit)
+    if unit:mission_element() or not unit:unit_data() then return end
     for _, editor_group in pairs(self:get_groups_from_unit(unit)) do
         table.delete(editor_group.units, unit:unit_data().unit_id)
     end
