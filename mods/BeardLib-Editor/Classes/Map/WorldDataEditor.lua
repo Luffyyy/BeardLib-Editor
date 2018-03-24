@@ -514,41 +514,47 @@ function WData:build_groups_layer_menu()
         prev = item
     end
 
-    local groups = self:Group("Groups")
+    local groups = self:Menu("Groups", {offset = 2, auto_align = false})
+    local continents = managers.worlddefinition._continent_definitions
     for _, continent in pairs(self._parent._continents) do
-        for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
-            if editor_group.units then
-                local group = self:Group(editor_group.name, {group = groups, text = editor_group.name})
-                toolbar_item("Remove", function() 
-                        BLE.Utils:YesNoQuestion("This will delete the group", function()
-                            self:GetPart("static"):remove_group(nil, editor_group)
-                            self:build_menu("groups", nil)
-                        end)
-                    end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
-                )
-                toolbar_item("Rename", function() 
-                        BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
-                            self:GetPart("static"):set_group_name(nil, editor_group, name)
-                            self:build_menu("groups", nil)
-                        end})
-                    end, group, {texture_rect = {66, 1, 48, 48}}
-                )
-                toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
-                toolbar_item("SetVisible", function(item) 
-                    local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
-                    item.enabled_alpha = alpha
-                    item:SetEnabled(item.enabled) end, 
-                    group, {texture_rect = {155, 95, 64, 64}}
-                )
-                for _, unit_id in pairs(editor_group.units) do
-                    local unit = managers.worlddefinition:get_unit(unit_id)
-                    if alive(unit) then 
-                        self:Button(unit_id, callback(self._parent, self._parent, "select_unit", unit), {group = group})
+        if continents[continent].editor_groups then
+            for _, editor_group in pairs(continents[continent].editor_groups) do
+                if editor_group.units then
+                    local group = self:Group(editor_group.name, {group = groups, text = editor_group.name, auto_align = false, closed = true})
+                    toolbar_item("Remove", function() 
+                            BLE.Utils:YesNoQuestion("This will delete the group", function()
+                                self:GetPart("static"):remove_group(nil, editor_group)
+                                self:build_menu("groups", nil)
+                            end)
+                        end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
+                    )
+                    toolbar_item("Rename", function() 
+                            BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
+                                self:GetPart("static"):set_group_name(nil, editor_group, name)
+                                self:build_menu("groups", nil)
+                            end})
+                        end, group, {texture_rect = {66, 1, 48, 48}}
+                    )
+                    toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
+                    toolbar_item("SetVisible", function(item) 
+                        local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
+                        item.enabled_alpha = alpha
+                        item:SetEnabled(item.enabled) end, 
+                        group, {texture_rect = {155, 95, 64, 64}}
+                    )
+                    for _, unit_id in pairs(editor_group.units) do
+                        local unit = managers.worlddefinition:get_unit(unit_id)
+                        if alive(unit) then 
+                            self:Button(unit_id, callback(self._parent, self._parent, "select_unit", unit), {group = group})
+                        end
                     end
                 end
             end
+        else
+            continents[continent].editor_groups = {}
         end
     end
+    groups:AlignItems(true)
 end
 
 function WData:build_ai_layer_menu()    

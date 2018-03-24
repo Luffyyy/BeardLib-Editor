@@ -43,13 +43,6 @@ function SelectListDialogValue:ValueClbk(value, item)
     value.value = selected and type(selected) == "table" and selected.value or selected or item:Value()
 end
 
-function SelectListDialogValue:ToggleClbk(...)
-    SelectListDialogValue.super.ToggleClbk(self, ...)
-    if self._allow_multi_insert and not self._single_select then
-        self:MakeListItems()
-    end
-end
-
 function SelectListDialogValue:ToggleItem(name, selected, value)
     local opt = {group = self._list_items_menu, offset = 4, text_offset_y = 0}
     local item

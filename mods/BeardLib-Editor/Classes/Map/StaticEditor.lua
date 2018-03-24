@@ -369,12 +369,14 @@ function Static:build_group_links(unit)
         })
     end
     
-    local group = self:GetItem("InsideGroups") or self:Group("InsideGroups", {max_height = 200, h= 200})
+    local group = self:GetItem("InsideGroups") or self:Group("InsideGroups", {max_height = 200, h = 200})
         
     for _, editor_group in pairs(self:get_groups_from_unit(unit)) do
         create_link(editor_group.name, unit:unit_data().unit_id, group, callback(self, self, "select_group", editor_group))
     end
-
+    if #group:Items() == 0 then
+        group:Destroy()
+    end
 end
 
 function Static:get_groups_from_unit(unit)   -- needs a better name
