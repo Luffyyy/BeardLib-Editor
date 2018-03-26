@@ -145,7 +145,7 @@ function Static:build_group_options()
             if selected_unit:unit_data().continent ~= unit:unit_data().continent then
                 all_same_continent = false
                 break
-            end
+            end 
         end
     end
     local group = self:GetItem("Group")
@@ -229,6 +229,44 @@ function StaticEditor:update_positions()
     if self._built_multi then
         self:SetTitle("Selection - " .. tostring(#self._selected_units))
     end
+end
+
+function Static:open_addremove_group_dialog(remove)
+    local groups = {}
+    local continents = managers.worlddefinition._continent_definitions
+    for _, continent in pairs(self._parent._continents) do
+        if remove then
+            for _, group in pairs(self:get_groups_from_unit(self._selected_units[1])) do
+                if group.name then table.insert(groups, {name = group.name, group = group}) end
+            end
+        elseif continents[continent].editor_groups then
+            for _, editor_group in pairs(continents[continent].editor_groups) do
+                if editor_group.name then table.insert(groups, {name = editor_group.name, group = editor_group}) end
+            end
+        end
+    end
+    local units = self._selected_units
+    BLE.ListDialog:Show({
+        list = groups,
+        force = true,
+        callback = function(item)
+            self:select_group(item.group)
+            for _, unit in pairs(units) do 
+                if alive(unit) then
+                    if remove and table.contains(self._selected_group.units, unit:unit_data().unit_id) then
+                        table.delete(self._selected_group.units, unit:unit_data().unit_id)
+                    else
+                        table.insert(self._selected_group.units, unit:unit_data().unit_id)
+                        self:set_selected_unit(unit, true)
+                    end
+                    if #self._selected_group.units <= 1 then
+                        self:remove_group()
+                    end
+                end
+            end
+            BeardLibEditor.ListDialog:hide()
+        end
+    }) 
 end
 
 function Static:set_unit_data()
@@ -348,7 +386,7 @@ function Static:add_group(item)
             end
         end
         if not exists then
-            local group = {continent = unit:unit_data().continent, reference = unit:unit_data().unit_id, name = name, units = {}}
+            local group = {continent = unit:unit_data().continent, reference = unit:unit_data().unit_id, name = name, units = {}, visible = true}
             for _, unit in pairs(self:selected_units()) do
                 table.insert(group.units, unit:unit_data().unit_id)
             end
@@ -370,10 +408,18 @@ function Static:build_group_links(unit)
     end
     
     local group = self:GetItem("InsideGroups") or self:Group("InsideGroups", {max_height = 200, h = 200})
-        
-    for _, editor_group in pairs(self:get_groups_from_unit(unit)) do
+    
+    local editor_groups = self:get_groups_from_unit(unit)
+    for _, editor_group in pairs(editor_groups) do
         create_link(editor_group.name, unit:unit_data().unit_id, group, callback(self, self, "select_group", editor_group))
     end
+
+    local group_buttons = self:GetItem("Group")
+    group_buttons:SetVisible(true)
+    self:Button("RemoveFromGroup", callback(self, self, "open_addremove_group_dialog", true), {group = group_buttons, visible = #editor_groups >= 1})
+    self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group_buttons, text = "Add Unit(s) To Group", 
+        visible = true})
+
     if #group:Items() == 0 then
         group:Destroy()
     end
@@ -401,6 +447,16 @@ function Static:select_group(editor_group)
     for _, unit_id in pairs(editor_group.units) do
         local unit = managers.worlddefinition:get_unit(unit_id)
         self:set_selected_unit(unit, true)
+    end
+end
+
+function Static:toggle_group_visibility(editor_group)
+    if editor_group.visible == nil then editor_group.visible = true end
+    
+    editor_group.visible = not editor_group.visible
+    for _, unit_id in pairs(editor_group.units) do
+        local unit = managers.worlddefinition:get_unit(unit_id)
+        if alive(unit) then unit:set_visible(editor_group.visible) end
     end
 end
 

@@ -238,15 +238,8 @@ end
 
 function WData:toggle_unit_visibility(units)
     local visible
-    if type(units) == "table" then
-        for _, unit_id in pairs(units) do
-            local unit = managers.worlddefinition:get_unit(unit_id)
-            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end -- bad
-        end
-    else
-        for _, unit in pairs(self:get_all_units_from_continent(units)) do
-            if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end
-        end
+    for _, unit in pairs(self:get_all_units_from_continent(units)) do
+        if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end
     end
     return visible
 end
@@ -537,11 +530,12 @@ function WData:build_groups_layer_menu()
                     )
                     toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
                     toolbar_item("SetVisible", function(item) 
-                        local alpha = self:toggle_unit_visibility(editor_group.units) and 1 or 0.5
-                        item.enabled_alpha = alpha
+                        self:GetPart("static"):toggle_group_visibility(editor_group) 
+                        item.enabled_alpha = editor_group.visible and 1 or 0.5
                         item:SetEnabled(item.enabled) end, 
-                        group, {texture_rect = {155, 95, 64, 64}}
+                        group, {texture_rect = {155, 95, 64, 64}, enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1}
                     )
+
                     for _, unit_id in pairs(editor_group.units) do
                         local unit = managers.worlddefinition:get_unit(unit_id)
                         if alive(unit) then 
