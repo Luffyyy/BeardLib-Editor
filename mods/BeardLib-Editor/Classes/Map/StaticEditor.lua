@@ -159,8 +159,8 @@ function Static:build_group_options()
             self:TextBox("GroupName", callback(self, self, "set_group_name"), self._selected_group.name, {group = group})
             self:Button("UngroupUnits", callback(self, self, "remove_group"), {group = group})
         else
-            self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group_buttons, text = "Add Unit(s) To Group", 
-                visible = true}) -- why is it misaligned???
+            self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group", 
+                visible = true}) 
             self:Button("GroupUnits", callback(self, self, "add_group"), {group = group})
         end
     end
@@ -437,7 +437,7 @@ end
 
 function Static:get_groups_from_unit(unit)
     local continent = managers.worlddefinition:get_continent_of_static(unit)
-    if not continent.editor_group then return {} end
+    if not continent or not continent.editor_groups then return {} end
     local groups = {}
     for _, editor_group in pairs(continent.editor_groups) do
         if editor_group.name then   -- temp bandaid for nil groups  
