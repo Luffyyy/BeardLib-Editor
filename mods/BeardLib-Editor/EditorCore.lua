@@ -108,7 +108,7 @@ function BLE:LoadCustomAssets()
                 local add_path = Path:Combine(level.include.directory, "add.xml")
                 project:map_editor_save_xml(add_path, add)
                 level.add = {file = add_path}
-                project:map_editor_save_main_xml(data)
+                project:map_editor_save_main_xml(data, true)
             end
             local add = project:map_editor_read_xml(level.add.file)
             if add then
