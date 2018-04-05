@@ -714,7 +714,7 @@ function Editor:draw_grid(t, dt)
 		rot = self:selected_unit():rotation()
     end
 
-    if self._using_move_widget and self._move_widget:enabled() then
+    if self._using_move_widget and self._move_widget:enabled() and self:widget_unit() then
         for i = -12, 12, 1 do
             local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
             local to_x = self:widget_unit():position() + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()

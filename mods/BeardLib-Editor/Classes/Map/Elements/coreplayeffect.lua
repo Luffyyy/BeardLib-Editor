@@ -26,7 +26,7 @@ end
 EditorStopEffect = EditorStopEffect or class(MissionScriptEditor)
 function EditorStopEffect:create_element()
 	self.super.create_element(self)
-	self._element.class = "ElementPlayEffect"
+	self._element.class = "ElementStopEffect"
 	self._element.module = "CoreElementPlayEffect"
 	self._element.values.operation = "fade_kill"
 	self._element.values.elements = {}
@@ -34,6 +34,6 @@ end
 
 function EditorStopEffect:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementPlayEffect"})
+	self:BuildElementsManage("elements", nil, {"ElementStopEffect"})
 	self:ComboCtrl("operation", {"kill", "fade_kill"}, {help = "Select a kind of operation to perform on the added effects"})
 end
