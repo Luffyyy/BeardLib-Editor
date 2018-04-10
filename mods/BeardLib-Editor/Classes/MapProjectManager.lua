@@ -51,9 +51,11 @@ function Project:maps_path()
     return BeardLib.current_level._config.include.directory
 end
 
-function Project:map_editor_save_main_xml(data)
+function Project:map_editor_save_main_xml(data, no_reload)
     self:map_editor_save_xml("main.xml", self:get_clean_data(data))
-    self:_reload_mod(data.name)
+    if not no_reload then
+        self:_reload_mod(data.name)
+    end
 end
 
 function Project:map_editor_save_xml(file, data)
@@ -583,13 +585,13 @@ end
 
 function Project:set_crimenet_videos_dialog()
     local t = self._current_data
-    local crimenet_videos = U:GetNodeByMeta(self._current_data, "narrative").crimenet_videos
+    local narr = U:GetNodeByMeta(self._current_data, "narrative")
     BLE.SelectDialog:Show({
-        selected_list = crimenet_videos,
-        list = BLE.Utils:GetEntries({type = "movie", loaded = true, check = function(entry)
+        selected_list = narr.crimenet_videos,
+        list = BLE.Utils:GetEntries({type = "movie", check = function(entry)
             return entry:match("movies/")
         end}),
-        callback = function(list) crimenet_videos = list end
+        callback = function(list) narr.crimenet_videos = list end
     })
 end
 

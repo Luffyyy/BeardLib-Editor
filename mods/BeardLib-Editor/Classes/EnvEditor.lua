@@ -47,8 +47,8 @@ function EnvEditor:build_default_menu()
     local env_path = managers.viewport:first_active_viewport():get_environment_path() or "core/environments/default"
     if BeardLib.current_level then
         local included = self:DivGroup("IncludedEnvironments")
-        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {max_width = false, text = "Include current"})
         self:load_included_environments()    
+        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {position = "TopRight", max_width = false, text = "Include current"})
     end
     
     local quick = self:DivGroup("Quick actions")
