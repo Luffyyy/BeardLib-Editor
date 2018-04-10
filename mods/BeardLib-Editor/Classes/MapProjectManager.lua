@@ -223,6 +223,21 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             return data
         end
 
+        local function extra_cube_lights()
+            local path = level_dir
+            local inpath = Path:Combine(path, "cube_lights")
+            local typ = "texture"
+            local bytes, file_path
+            for k, v  in pairs(Global.DBPaths[typ]) do
+                if v and k:sub(1, #inpath) == inpath then 
+                    bytes = DB:open(typ, k):read()
+                    file_path = Path:Combine(BeardLib.config.maps_dir, data.name, "assets/levels/mods", name, string.sub(k, #path))
+                    
+                    FileIO:WriteTo(file_path .. "." .. typ, bytes)
+                end
+            end
+        end
+
         extra_package(level_dir.."world")
         for _, p in pairs(packages) do
             self:load_temp_package(p.."_init")
@@ -236,6 +251,8 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
         extra_file("cover_data")
         extra_file("world_sounds")
         extra_file("world_cameras")
+
+        extra_cube_lights()
 
         for c in pairs(continents_data) do
             local c_path = Path:Combine(level_dir, c)
