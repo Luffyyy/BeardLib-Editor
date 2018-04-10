@@ -103,13 +103,13 @@ function BLE:LoadCustomAssets()
         if level then
             self:log("Loading Custom Assets to Hashlist")
             level.add = level.add or {}
-            if not level.add.file then
-                local add = table.merge({directory = "assets"}, deep_clone(level.add))
-                local add_path = Path:Combine(level.include.directory, "add.xml")
+            local add_path = Path:Combine(level.include.directory, "add.xml")
+            if not FileIO:Exists(Path:Combine(mod.ModPath, add_path)) then
+                local add = table.merge({directory = "assets"}, deep_clone(level.add)) --TODO just copy the xml template
                 project:map_editor_save_xml(add_path, add)
-                level.add = {file = add_path}
-                project:map_editor_save_main_xml(data)
             end
+            level.add = {file = add_path}
+            project:map_editor_save_main_xml(data, true)
             local add = project:map_editor_read_xml(level.add.file)
             if add then
                 local directory = add.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, add.directory)

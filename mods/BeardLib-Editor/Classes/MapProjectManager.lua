@@ -3,13 +3,15 @@ local U = BeardLib.Utils
 local Project = MapProjectManager
 function Project:init()
     self._templates_directory = U.Path:Combine(BLE.ModPath, "Templates")
-    local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
-    if data then
-        self._main_xml_template = ScriptSerializer:from_custom_xml(data)
+    local add_xml = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Level/add.xml"))
+    local main_xml = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
+    if add_xml and main_xml then
+        self._main_xml_template = ScriptSerializer:from_custom_xml(main_xml)
+        self._add_xml_template = ScriptSerializer:from_custom_xml(add_xml)
     else
-        BLE:log("[ERROR] Failed reading main.xml template!")
+        BLE:log("[ERROR] Failed reading main/add.xml templates!")
     end
-    data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
+    local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._level_module_template = ScriptSerializer:from_custom_xml(data)
 
     local menu = BLE.Menu
@@ -190,7 +192,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
         if narr_pkg then
             table.insert(packages, narr_pkg)
         end
-        
+
         local function extra_package(p)
             if not table.contains(packages, p) then
                 table.insert(packages, p)
@@ -228,14 +230,16 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             local inpath = Path:Combine(path, "cube_lights")
             local typ = "texture"
             local bytes, file_path
+            local add = {_meta = "add", directory = "assets"}
             for k, v  in pairs(Global.DBPaths[typ]) do
                 if v and k:sub(1, #inpath) == inpath then 
                     bytes = DB:open(typ, k):read()
-                    file_path = Path:Combine(BeardLib.config.maps_dir, data.name, "assets/levels/mods", name, string.sub(k, #path))
-                    
-                    FileIO:WriteTo(file_path .. "." .. typ, bytes)
+                    file_path = Path:Combine("levels/mods", name, string.sub(k, #path))
+                    FileIO:WriteTo(Path:Combine(BeardLib.config.maps_dir, data.name, "assets", file_path) .. "." .. typ , bytes)
+                    table.insert(add, {_meta = "texture", load = true, path = file_path})
                 end
             end
+            FileIO:WriteScriptDataTo(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
         end
 
         extra_package(level_dir.."world")
