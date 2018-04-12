@@ -19,10 +19,11 @@ function Part:init(parent, menu, name, opt, mopt)
     self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
     MenuUtils:new(self)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1)
+    local title_h = 4
     if not opt.no_title then
-        self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)})
+        title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
-    self._holder = self:Menu("Holder", table.merge({private = {offset = {0, 1}}, auto_height = false, h = self._menu.h - (opt.no_title and 4 or 32), scroll_width = 6}, opt))
+    self._holder = self:Menu("Holder", table.merge({private = {offset = {0, 1}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
