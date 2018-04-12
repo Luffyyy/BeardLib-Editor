@@ -34,6 +34,7 @@
         <class file="Map/PortalLayerEditor.lua"/>
         <class file="Map/SoundLayerEditor.lua"/>
         <class file="Map/UndoUnitHandler.lua"/>
+		<class file="Map/CubemapCreator.lua"/>
         <class file="ScriptDataConverterManager.lua"/>
         <class file="MapEditor.lua"/>
         <class file="EnvEditor.lua"/>

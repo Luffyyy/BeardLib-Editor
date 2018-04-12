@@ -26,6 +26,7 @@ function EnvLayer:init(parent)
 	self._environment_area_unit = "core/units/environment_area/environment_area"
 	self._effect_unit = "core/units/effect/effect"
 	self._dome_occ_shape_unit = "core/units/dome_occ_shape/dome_occ_shape"
+	self._cubemap_unit = "core/units/cubemap_gizmo/cubemap_gizmo"
 end
 
 function EnvLayer:loaded_continents()
@@ -566,4 +567,33 @@ function EnvLayer:reset_environment_values()
 	managers.viewport:update_global_environment_value(CoreEnvironmentFeeder.SkyRotationFeeder.DATA_PATH_KEY)
 	environment_values.color_grading = managers.environment_controller:game_default_color_grading()
 	environment_values.dome_occ_resolution = 256
+end
+
+function EnvLayer:create_cube_map(type)
+	local cubes = {}
+
+	if type == "all" then
+		for _, unit in pairs(self._created_units) do
+			if unit:name() == Idstring(self._cubemap_unit) then
+				table.insert(cubes, {
+					output_name = "outputcube",
+					position = unit:position(),
+					name = unit:unit_data().name_id
+				})
+			end
+		end
+	elseif type == "selected" and self._selected_unit:name() == Idstring(self._cubemap_unit) then
+		table.insert(cubes, {
+			output_name = "outputcube",
+			position = self._selected_unit:position(),
+			name = self._selected_unit:unit_data().name_id
+		})
+	end
+
+	local params = {
+		cubes = cubes,
+		source_path = BeardLib.Utils.Path:Combine(BLE.ModPath, "Tools", "temp/")
+	}
+
+	self:GetPart("cubemap_creator"):create_cube_map(params)
 end

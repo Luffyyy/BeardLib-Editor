@@ -72,6 +72,7 @@ function Editor:post_init(menu)
     m.env = EnvEditor:new(self, menu)
     m.instances = InstancesEditor:new(self, menu)
     m.undo_handler = UndoUnitHandler:new(self, menu)
+    m.cubemap_creator = CubemapCreator:new(self, menu, self._camera_object)
     for name, manager in pairs(m) do
         manager.manager_name = name
     end
@@ -451,6 +452,16 @@ function Editor:set_camera_fov(fov)
     end
 end
 
+function Editor:_set_fixed_resolution(size) -- TODO: move to utils 
+    Application:set_mode(size.x, size.y, false, -1, false, true)
+	managers.viewport:set_aspect_ratio2(1)
+
+	if managers.viewport then
+		managers.viewport:resolution_changed()
+	end
+
+end
+
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
@@ -544,7 +555,11 @@ function Editor:update(t, dt)
     if self:enabled() then
         for _, manager in pairs(m) do
             if manager.update then
-                manager:update(t, dt)
+                if not m.cubemap_creator:creating_cube_map() then
+                    manager:update(t, dt)
+                else 
+                    m.cubemap_creator:update(t, dt)
+                end
             end
         end
         self._current_pos = self:current_position() or self._current_pos
@@ -612,6 +627,7 @@ end
 
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
+    if m.cubemap_creator:creating_cube_map() then return end
     local shft = shift()
     local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
     if not move or not shft then
