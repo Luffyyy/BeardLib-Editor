@@ -30,8 +30,9 @@ function CubemapCreator:create_cube_map(params)
 		})
 	end
 
+	self._saved_resolution = RenderSettings.resolution	-- fixed aspect ratio
 	self._saved_camera = {
-		aspect_ratio = self._camera:aspect_ratio(),
+		aspect_ratio = self._saved_resolution.x / self._saved_resolution.y,
 		pos = self._camera:position(),
 		rot = self._camera:rotation(),
 		fov = self._parent:camera_fov(),
@@ -65,8 +66,6 @@ function CubemapCreator:create_cube_map(params)
 
 		end
 	end
-
-	self._saved_resolution = RenderSettings.resolution
 
 	if managers.viewport and managers.viewport._sun_flare_effect then
 		managers.viewport._sun_flare_effect._sf_panel:hide()
@@ -129,7 +128,6 @@ function CubemapCreator:cube_map_done()
 		managers.editor:update_post_effects()
 		self:viewport():vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self:viewport():vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
-		self:_recompile(self._cubemap_params.output_path)
 
 		for _, cube in ipairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
@@ -166,6 +164,8 @@ function CubemapCreator:cube_map_done()
 	self._parent:_set_fixed_resolution(self._saved_resolution)
 	self._parent._vp:set_width_mul_enabled(true)
 	self._parent._vp:pop_ref_fov()
+
+	self._parent._menu:Toggle()
 end
 
 function CubemapCreator:start_cube_map(params)
@@ -242,7 +242,6 @@ function CubemapCreator:_create_cube_map()
 		return true
 	end]]
 
-	local x1, y1, x2, y2 = self:_get_screen_size()
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))
         self._wait_frames = 50
@@ -262,16 +261,16 @@ function CubemapCreator:_create_cube_map()
         self._camera:set_rotation(Rotation(Vector3(0, 0, -1), Vector3(0, -1, 0)))
         self._wait_frames = 50
 	elseif self._cube_counter == 7 then
-		--self:_generate_cubemap(self._params.light and "cubemap_light" or "cubemap_reflection")
+		self:_generate_cubemap(self._params.light and "cubemap_light" or "reflect")
 		self:_cubemap_done()
 
 		return true
 	end
 
 	local path = self._params.source_path
-    self._parent:Log("Path: " ..tostring(path) .. " Names: " ..tostring(self._names[self._cube_counter]))
-    self._parent:Log("Screen size: " .. x1 .. " " .. y1 .. " " .. x2 .. " " .. y2)
-	Application:screenshot(path .. self._names[self._cube_counter], x1, y1, x2, y2)
+	local res = RenderSettings.resolution
+	self._parent:Log("Path: " ..tostring(path) .. " Names: " ..tostring(self._names[self._cube_counter]))
+	Application:screenshot(path .. self._names[self._cube_counter], 0, 0, res.x, res.y)
 
 	return false
 end
@@ -287,39 +286,32 @@ function CubemapCreator:_cubemap_done()
 	if self._cube_map_done_func then
 		self._cube_map_done_func()
     end
-    self._parent._menu:Toggle()
 end
 
-function CubemapCreator:_get_screen_size()
-	local res = Application:screen_resolution()
-	local diff = res.x - res.y
-	local x1 = diff / 2
-	local y1 = 0
-	local x2 = res.x - diff / 2
-	local y2 = res.y
-
-	return x1, y1, x2, y2
-end
-
-function CubemapCreator:_generate_cubemap(file)
-	local execute = managers.database:root_path() .. "aux_assets/engine/tools/" .. file .. ".bat "
+function CubemapCreator:_generate_cubemap(file)	-- exe_path has to be quoted around with ""
+	local exe_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
+	exe_path = exe_path .. " reflect -i "
+	local execute = exe_path
 
 	for i, _ in pairs(self._names) do
-		local path = self._params.source_path or managers.database:root_path()
-		execute = execute .. path .. self._name_ordered[i] .. " "
+		execute = execute   .. self._name_ordered[i] .. " "
 	end
 
-	local output_path = (self._params.output_path or managers.database:root_path()) .. self._output_name .. " "
-	execute = execute .. output_path .. " "
-
+	execute = execute .. "-o " .. self._output_name .. ".dds"
+	log(execute)
 	os.execute(execute)
-	self:_add_meta_data((self._params.output_path or managers.database:root_path()) .. self._output_name .. ".dds", "diffuse_colormap_gradient_alpha_manual_mips")
+	self:_move_output(self._output_name)
 end
 
-function CubemapCreator:_add_meta_data(file, meta)
-	local execute = managers.database:root_path() .. "aux_assets/engine/tools/diesel_dds_tagger.exe "
-	execute = execute .. file .. " " .. meta
+function CubemapCreator:_move_output()
+	local project = BLE.MapProject
+	for i=1,6 do
+		FileIO:Delete(self._params.source_path .. self._names[i])
+	end
+	local output = self._output_name .. ".texture"
+	local cube_lights_path = Path:Combine("levels/mods/", Global.game_settings.level_id, "cube_lights/") 
 
-	os.execute(execute)
+	FileIO:MoveTo(self._params.source_path .. output, 
+		Path:Combine(BeardLib.config.maps_dir, tostring(project:current_mod().Name), "assets", cube_lights_path, output))
+
 end
-
