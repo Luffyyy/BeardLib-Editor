@@ -2,12 +2,13 @@ if not Global.editor_mode then
 	return
 end
 
+local BLE = BeardLibEditor
+local Utils = BLE.Utils
+
 core:module("CoreWorldDefinition")
 local WorldDef = class(WorldDefinition)
 WorldDefinition = WorldDef
 
-local BLE = _G.BeardLibEditor
-local Utils = BLE.Utils
 function WorldDef:init(params)
 	BLE:SetLoadingText("Initializing World Definition")
 	managers.worlddefinition = self
@@ -82,6 +83,10 @@ function WorldDef:is_world_unit(unit)
 end
 
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
+	if unit_id <= 0 then -- fuck off.
+		return
+	end
+
 	local statics
 	local new_statics
 	local move
@@ -101,25 +106,52 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 			new_statics = new_statics.statics
 		end
 	end
+
+	local function set_unit(static, statics, key)
+		static.unit_data = ud
+		static.wire_data = wd
+		static.ai_editor_data = ad
+		BeardLib.Utils:RemoveAllNumberIndexes(static, true)
+		if move then
+			--statics[key] = nil
+			table.remove(statics, key)
+			table.insert(new_statics, static)
+		end
+		return
+	end
+
 	if statics then
-		for i, static in pairs(statics) do
+		for k, static in pairs(statics) do
 			if type(static) == "table" then
 				if static.unit_data.unit_id == unit_id then
-					--No more for loop the editor is safe enough now to simply set the data
-					static.unit_data = ud
-					static.wire_data = wd
-					static.ai_editor_data = ad
-					BeardLib.Utils:RemoveAllNumberIndexes(static, true)
-					if move_continent then
-						statics[i] = nil
-						table.remove(statics, i)
-						table.insert(new_statics, static)
-					end
-					break
+					set_unit(static, statics,k )
 				end
 			end
 		end
 	end
+	
+	--Failed to find it, now let's go through the slow way.
+	managers.editor:Log("Could not find the unit %s, attempting to search for it..", tostring(unit_id))
+	local static, statics, key = self:find_unit_slow(unit_id)
+	if static then
+		managers.editor:Log("Found unit %s", tostring(unit_id))
+		set_unit(static, statics, key)
+	else
+		managers.editor:Error("Unit %s was not found in the continents.", tostring(unit_id))
+	end
+end
+
+function WorldDef:find_unit_slow(unit_id)
+	for _, c in pairs(self._continent_definitions) do
+		if c.statics then
+			for k, static in pairs(c.statics) do
+				if type(static) == "table" and static.unit_data and static.unit_data.unit_id == unit_id then
+					return static, c.statics, k
+				end
+			end
+		end
+	end
+	return nil
 end
 
 function WorldDef:get_continent_of_static(unit)
@@ -242,37 +274,53 @@ end
 function WorldDef:delete_unit(unit, no_unlink)
 	local ud = unit:unit_data()
 	local unit_id = ud.unit_id
+	self:remove_name_id(unit)
+
+	if unit_id <= 0 then
+		managers.editor:Error("Attempted to delete a unit with invalid unit id")
+		return
+	end
+
 	local name_id = ud.name_id
 	local continent_name = ud.continent
-	self:remove_name_id(unit)
-	if unit_id > 0 then
-		self:RemoveUnitID(unit, continent_name)
-		local statics
-		if unit:wire_data() then
-			statics = self._world_data.wires
-		elseif unit:ai_editor_data() then
-			statics = self._world_data.ai
-		elseif not ud.instance then
-			statics = self._continent_definitions[continent_name]
-			statics = statics and statics.statics
-		end
-		if not no_unlink then
-			managers.mission:delete_links(unit_id, Utils.LinkTypes.Unit)
-			for _, portal in pairs(_G.clone(managers.portal:unit_groups())) do
-				portal._ids[unit_id] = nil
-			end
-		end
-		if statics then
-			for k, static in pairs(statics) do
-				if static.unit_data and (static.unit_data.unit_id == unit_id) then
-					table.remove(statics, k)
-					--managers.editor:Log("Removing.. " .. name_id .. "[" .. unit_id .. "]")
-					return
-				end
-			end
-		end
-		Utils:GetLayer("portal"):refresh()
+
+	self:RemoveUnitID(unit, continent_name)
+	local statics
+	if unit:wire_data() then
+		statics = self._world_data.wires
+	elseif unit:ai_editor_data() then
+		statics = self._world_data.ai
+	elseif not ud.instance then
+		statics = self._continent_definitions[continent_name]
+		statics = statics and statics.statics
 	end
+	if not no_unlink then
+		managers.mission:delete_links(unit_id, Utils.LinkTypes.Unit)
+		for _, portal in pairs(_G.clone(managers.portal:unit_groups())) do
+			portal._ids[unit_id] = nil
+		end
+	end
+
+	if statics then
+		for k, static in pairs(statics) do
+			if static.unit_data and (static.unit_data.unit_id == unit_id) then
+				table.remove(statics, k)
+				return
+			end
+		end
+	else
+		managers.editor:Error("Attempted to delete a unit that doesn't belong to any continent!")
+	end
+
+	managers.editor:Log("Could not find the unit %s, attempting to search for it..", tostring(unit_id))
+
+	local static, statics, key = self:find_unit_slow(unit_id)
+	if static then
+		managers.editor:Log("Found unit %s, deleting...", tostring(unit_id))
+		table.remove(statics, key)
+	end
+
+	Utils:GetLayer("portal"):refresh()
 end
 
 function WorldDef:add_unit(unit)

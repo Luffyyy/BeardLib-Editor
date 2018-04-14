@@ -28,7 +28,11 @@ function EnvEditor:load_included_environments()
                 if FileIO:Exists(file) then
                     local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included})
                     self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
-                        size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = "TopRight", highlight_color = Color.red
+                        texture = "textures/editor_icons_df",
+                        position = "CenterRight",
+                        w = env.size,
+                        h = env.size,
+                        highlight_color = Color.red
                     })
                 end
             end

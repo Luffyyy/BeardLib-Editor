@@ -28,7 +28,7 @@ function EditorConsole:init(parent, menu)
     self:Button("Clear", callback(self, self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
     self.info = self:Toggle("Info", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
     self.mission = self:Toggle("Mission", callback(self, self, "FilterConsole"), false, table.merge(opt, {border_color = Color.green}))
-    self.errors = self:Toggle("Errors", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
+    self.error = self:Toggle("Errors", callback(self, self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
     MenuUtils:new(self)
     self:Clear()
     self:ToggleConsole()
@@ -47,7 +47,7 @@ function EditorConsole:ToggleConsole()
 end
 
 function EditorConsole:PrintMessage(type, message, ...)
-    message = type == "info" and string.format(message, ...) or message
+    message = string.format(message, ...)
     local date = Application:date("%X")  
     self:Divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
     if self._menu.items_panel:h() > self._menu.panel:h() and not self._menu._grabbed_scroll_bar then
