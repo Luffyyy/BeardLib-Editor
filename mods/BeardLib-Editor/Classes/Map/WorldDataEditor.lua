@@ -198,9 +198,9 @@ function WData:build_continents()
             toolbar_item("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
-                item:SetEnabled(item.enabled) end, 
-                continent, {texture_rect = {155, 95, 64, 64}}
-            )
+                item:SetEnabled(item.enabled) 
+            end, continent, {texture_rect = {155, 95, 64, 64}})
+            
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
                 opt.continent = name

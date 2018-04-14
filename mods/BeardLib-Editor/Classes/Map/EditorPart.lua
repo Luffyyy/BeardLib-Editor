@@ -8,7 +8,6 @@ function Part:init(parent, menu, name, opt, mopt)
         name = name,
         control_slice = 0.5,
         size = 18,
-        offset = {4, 2},
         auto_foreground = true,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         scrollbar = false,
@@ -23,7 +22,7 @@ function Part:init(parent, menu, name, opt, mopt)
     if not opt.no_title then
         title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
-    self._holder = self:Menu("Holder", table.merge({private = {offset = {0, 1}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
+    self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
 end
