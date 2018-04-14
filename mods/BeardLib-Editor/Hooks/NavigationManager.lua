@@ -108,89 +108,15 @@ function NavigationManager:build_complete_clbk(draw_options)
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end
-    local SE = BeardLibEditor.Utils:GetPart("static")
-    for _, unit in pairs(SE._disabled_units) do
-        if alive(unit) then
-            unit:set_enabled(true)
-            for _, extension in pairs(unit:extensions()) do
-                unit:set_extension_update_enabled(Idstring(extension), true)
-            end
-        end
-    end
-    SE._disabled_units = {} 
+	BLE.Utils:GetPart("opt"):reenable_disabled_units()
 end
 
-function NavigationManager:search_coarse(params)
+local search = NavigationManager.search_coarse
+function NavigationManager:search_coarse( ... )
     if self._builder._building then
         return
     end
-    local pos_to, start_i_seg, end_i_seg, access_pos, access_neg
-    if params.from_seg then
-        start_i_seg = params.from_seg
-    elseif params.from_tracker then
-        start_i_seg = params.from_tracker:nav_segment()
-    end
-    if params.to_seg then
-        end_i_seg = params.to_seg
-    elseif params.to_tracker then
-        end_i_seg = params.to_tracker:nav_segment()
-    end
-    pos_to = params.to_pos or self._nav_segments[end_i_seg].pos
-    if start_i_seg == end_i_seg then
-        if params.results_clbk then
-            params.results_clbk({
-                {start_i_seg},
-                {
-                    end_i_seg,
-                    mvec3_cpy(pos_to)
-                }
-            })
-            return
-        else
-            return {
-                {start_i_seg},
-                {
-                    end_i_seg,
-                    mvec3_cpy(pos_to)
-                }
-            }
-        end
-    end
-    if type_name(params.access_pos) == "table" then
-        access_pos = self._quad_field:convert_access_filter_to_number(params.access_pos)
-    elseif type_name(params.access_pos) == "string" then
-        access_pos = self._quad_field:convert_nav_link_flag_to_bitmask(params.access_pos)
-    else
-        access_pos = params.access_pos
-    end
-    if params.access_neg then
-        access_neg = self._quad_field:convert_nav_link_flag_to_bitmask(params.access_neg)
-    else
-        access_neg = 0
-    end
-    local new_search_data = {
-        id = params.id,
-        to_pos = mvec3_cpy(pos_to),
-        start_i_seg = start_i_seg,
-        end_i_seg = end_i_seg,
-        seg_searched = {},
-        discovered_seg = {
-            [start_i_seg] = true
-        },
-        seg_to_search = {
-            {i_seg = start_i_seg}
-        },
-        results_callback = params.results_clbk,
-        verify_clbk = params.verify_clbk,
-        access_pos = access_pos,
-        access_neg = access_neg
-    }
-    if params.results_clbk then
-        table.insert(self._coarse_searches, new_search_data)
-    else
-        local result = self:_execute_coarce_search(new_search_data)
-        return result
-    end
+    return search(self, ...)
 end
 
 function NavigationManager:_safe_remove_unit(unit) end

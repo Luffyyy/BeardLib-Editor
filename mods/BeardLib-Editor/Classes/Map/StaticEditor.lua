@@ -4,7 +4,6 @@ local Utils = BeardLibEditor.Utils
 function Static:init(parent, menu)
     Static.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
-    self._disabled_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
     self._ignored_collisions = {}

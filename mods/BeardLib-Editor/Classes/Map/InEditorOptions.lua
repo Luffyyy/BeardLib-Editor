@@ -3,6 +3,7 @@ local Options = InEditorOptions
 function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")    
     self._wanted_elements = {}
+    self._disabled_units = {}
 end
 
 --TODO: cleanup
@@ -62,7 +63,7 @@ function Options:build_default_menu()
     local navigation_debug = self:DivGroup("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
     local group = self:Menu("Draw", {align_method = "grid", group = navigation_debug})
     self._draw_options = {}
-    local w = group.w / 3
+    local w = group.w / 2
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
         self._draw_options[opt] = self:Toggle(opt, callback(self, self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
     end
@@ -428,16 +429,38 @@ function Options:save_cover_data(include)
     end
 end
 
+local navsurface_ids = Idstring("core/units/nav_surface/nav_surface")
 function Options:build_nav_segments() -- Add later the options to the menu
     BeardLibEditor.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
         local settings = {}
-        local units = {}
-        for _, unit in ipairs(World:find_units_quick("all")) do
-            if unit:name() == Idstring("core/units/nav_surface/nav_surface") then
-                table.insert(units, unit)
+        local nav_surfaces = {}
+
+        local persons = managers.slot:get_mask("persons")
+
+        --first disable the units so the raycast will know.
+        for _, unit in pairs(World:find_units_quick("all")) do
+            local is_person = unit:in_slot(persons)
+            local ud = unit:unit_data()
+            if is_person or (ud and ud.disable_on_ai_graph) then
+                unit:set_enabled(false)
+                table.insert(self._disabled_units, unit)
+
+                if is_person then
+                    --Why are they active even though the main unit is disabled? Good question.
+                    if unit:brain() then
+                       unit:brain()._current_logic.update = nil
+                    end
+                    
+                    for _, extension in pairs(unit:extensions()) do
+                        unit:set_extension_update_enabled(extension:id(), false)
+                    end
+                end
+            elseif unit:name() == navsurface_ids then
+                table.insert(nav_surfaces, unit)
             end
         end
-        for _, unit in ipairs(units) do
+
+        for _, unit in pairs(nav_surfaces) do
             local ray = World:raycast(unit:position() + Vector3(0, 0, 50), unit:position() - Vector3(0, 0, 150), nil, managers.slot:get_mask("all"))
             if ray and ray.position then
                 table.insert(settings, {
@@ -448,27 +471,13 @@ function Options:build_nav_segments() -- Add later the options to the menu
                 })
             end
         end
+
         if #settings > 0 then
-            local SE = self:GetPart("static")
-            for _, unit in pairs(World:find_units_quick("all")) do
-                if unit:in_slot(managers.slot:get_mask("persons"))   then
-                    unit:set_enabled(false)
-                    if unit:brain() then
-                       unit:brain()._current_logic.update = nil
-                    end
-                    if SE._disabled_units then
-                        table.insert(SE._disabled_units, unit)
-                    end
-                    for _, extension in pairs(unit:extensions()) do
-                        unit:set_extension_update_enabled(Idstring(extension), false)
-                    end
-                end
-            end
             managers.navigation:clear()
             managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
-            if #units > 0 then
-                BeardLibEditor.Utils:Notify("Error!", "at least one nav surface has to touch a surface for navigation to be built")
+            if #nav_surfaces > 0 then
+                BeardLibEditor.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
             else
                 BeardLibEditor.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
                 local W = self:GetPart("world")
@@ -477,8 +486,23 @@ function Options:build_nav_segments() -- Add later the options to the menu
                     W:build_menu("ai")
                 end
             end
-        end       
+            self:reenable_disabled_units()
+        end
     end)
+end
+
+function Options:reenable_disabled_units()
+    for _, unit in pairs(self._disabled_units) do
+        if alive(unit) then
+            unit:set_enabled(true)
+            if unit:in_slot(persons) then
+                for _, extension in pairs(unit:extensions()) do
+                    unit:set_extension_update_enabled(extension:id(), true)
+                end
+            end
+        end
+    end
+    self._disabled_units = {}
 end
 
 function Options:build_visibility_graph()
