@@ -1,5 +1,6 @@
 from os import path, rename, remove
 from sys import argv, exit
+from PIL import Image, ImageFilter
 import subprocess, getopt, argparse
 
 dir_path = (path.abspath(path.dirname(__file__)))
@@ -7,6 +8,7 @@ texass_path = (path.abspath(path.dirname(__file__)) + "\\texassemble.exe ")
 texconv_path = (path.abspath(path.dirname(__file__)) + "\\texconv.exe ")
 
 args = argv[1:]
+temp = "\\temp\\"
 
 def get_args(args_v):
     parser = argparse.ArgumentParser(description='Assembles cube faces into a cubemap with a .texture format')
@@ -17,25 +19,27 @@ def get_args(args_v):
     args = parser.parse_args(args_v)
     print(args.i)
     print(args.o)
-    if args.type != "light" or args.type != "reflect":
-        print("test")
 
     return args.type, args.i, args.o
 
 def move_and_rename_cubemap(cubemap_name):
     cubemap_path = path.abspath("") + "\\"
+    print(cubemap_path + o)
     cubemap_name_new = o[:-4] + ".texture"
-    if not path.isfile(dir_path + "\\temp\\" + cubemap_name_new):
-        rename(cubemap_path + o, dir_path + "\\temp\\" + cubemap_name_new)
-    if path.isfile(dir_path + "\\temp\\" + cubemap_name):
-        remove(dir_path + "\\temp\\" + cubemap_name)
+    if not path.isfile(dir_path + temp + cubemap_name_new):
+        print(dir_path + temp + cubemap_name_new)
+        rename(cubemap_path + o, dir_path + temp + cubemap_name_new)
+    if path.isfile(dir_path + temp + cubemap_name):
+        print(dir_path + temp + cubemap_name)
+        remove(dir_path + temp + cubemap_name)
+    exit()
 
 def fix_paths(input_args, output_arg):
     input_paths = []
     if output_arg: 
-        output_paths = ["-o", dir_path + "\\temp\\" + output_arg]
+        output_paths = ["-o", dir_path + temp + output_arg]
     for file in input_args:
-        input_paths.append(dir_path + "\\temp\\" + file)
+        input_paths.append(dir_path + temp + file)
     return input_paths, output_paths
 
 def start_process(proc_path, input):
@@ -51,7 +55,10 @@ def start_process(proc_path, input):
     return True
 
 def convert_cubemaps(output_path):
-    args = ["-m", "10", "-f", "BC2_UNORM", "-y"]
+    if argtyp == "reflect":
+        args = ["-m", "10", "-f", "BC2_UNORM", "-y"]
+    else:
+        args = ["-m", "8", "-f", "BC3_UNORM", "-y"]
     output_path.remove("-o")
     args.extend(output_path)
     if start_process(texconv_path, args):
@@ -65,13 +72,19 @@ def generate_cubemaps(files, output_path):
     if start_process(texass_path, s):
         convert_cubemaps(output_path)
 
+def blur_cubes(files):
+    for cube in files:
+        img = Image.open(cube)
+        img.filter(ImageFilter.GaussianBlur(radius=10))
+        img.save(cube)
+
 if __name__ == "__main__":
-    global i, o
+    global i, o, argtyp
     argtype, input, output = get_args(args[:])
     i = input
     o = output
-    if argtype == "reflect":
-        cube_paths, cubemap_path = fix_paths(input, output)
-        generate_cubemaps(cube_paths, cubemap_path)
-    elif argtype == "light":
-        print("not implemented")
+    argtyp = argtype
+    
+    cube_paths, cubemap_path = fix_paths(input, output)
+    blur_cubes(cube_paths)
+    generate_cubemaps(cube_paths, cubemap_path)

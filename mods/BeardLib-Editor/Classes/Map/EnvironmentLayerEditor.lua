@@ -229,6 +229,20 @@ function EnvLayer:build_menu()
 			end)
 		end
 	end, {group = environment_group})
+	--[[self:Button("BuildProjectionLights", function()
+		local lights = self:selected_unit() and self:selected_unit():get_object(Idstring("lo_omni")) or nil
+		if not lights then 
+			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build projection lights for all lights in the level?",
+			function()
+				self:GetPart("cubemap_creator"):create_projection_light("all")
+			end)
+		else 
+			BLE.Utils:YesNoQuestion("Would you like to build projection lights for all selected lights in the level?",
+			function()
+				self:GetPart("cubemap_creator"):create_projection_light("selected") 
+			end)
+		end
+	end, {group = environment_group})]]
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
     local utils = self:GetPart("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
@@ -585,12 +599,12 @@ function EnvLayer:reset_environment_values()
 end
 
 
-function EnvLayer:create_cube_map(type_of)
+function EnvLayer:create_cube_map(selection, type)
 	local cubes = {}
 
-	if type_of == "all" then
+	if selection == "all" then
 		for _, unit in pairs(World:find_units_quick("all")) do
-			if alive(unit) and type(unit:unit_data()) == "table" and unit:get_object(Idstring("lo_omni")) then	-- TODO: not working
+			if alive(unit) and unit.unit_data and unit:get_object(Idstring("lo_omni")) then
 				table.insert(cubes, {
 					output_name = unit:unit_data().unit_id,
 					position = unit:position(),
@@ -598,7 +612,7 @@ function EnvLayer:create_cube_map(type_of)
 				})
 			end
 		end
-	elseif type_of == "selected" then
+	elseif selection == "selected" then
 		for _, unit in pairs(self:selected_units()) do
 			if unit:get_object(Idstring("lo_omni")) then
 				table.insert(cubes, {

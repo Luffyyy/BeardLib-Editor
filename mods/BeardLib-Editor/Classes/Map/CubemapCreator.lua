@@ -6,6 +6,14 @@ function CubemapCreator:init(parent, menu, cam)
 	self._camera = cam
     self._cube_counter = 1
 	self._creating_cube_map = false
+	
+	self:_init_paths()
+end
+
+function CubemapCreator:_init_paths()
+	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
+	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
+	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
 end
 
 function CubemapCreator:update(t, dt)
@@ -14,6 +22,92 @@ function CubemapCreator:update(t, dt)
         
 		return
 	end
+end
+
+function CubemapCreator:create_projection_light(type)
+	local lights = {}
+	local units = {}
+
+	if type == "all" then
+		for _, unit in pairs(World:find_units_quick("all")) do
+			if alive(unit) and unit.unit_data and unit:get_object(Idstring("lo_omni")) then
+				table.insert(units, {
+					unit = unit,
+					light_name = "lo_omni"
+				})
+			end
+		end
+	elseif type == "selected" then
+		local s_units = self:selected_units()
+
+		for _, unit in pairs(s_units) do
+			if unit:get_object(Idstring("lo_omni")) then
+				table.insert(units, {
+					unit = unit,
+					light_name = "lo_omni"
+				})
+			end
+		end
+	end
+
+	for _, unit in pairs(units) do
+		log("Unit name: " .. tostring(unit.unit:get_object(Idstring(unit.light_name))))
+	end
+	self._saved_all_lights = {}
+
+	
+	for _, unit in pairs(World:find_units_quick("all")) do	-- TODO replace with something better
+		if alive(unit) and unit.unit_data and #unit:get_objects_by_type(Idstring("light")) > 0 then
+			for _, light in pairs(lights) do
+				table.insert(self._saved_all_lights, {
+					light = light,
+					enabled = light:enable()
+				})
+			end
+		end
+	end
+
+	for _, data in pairs(units) do
+		local unit = data.unit
+		local light = unit:get_object(Idstring(data.light_name))
+		local enabled = light:enable()
+		local resolution = unit:unit_data().projection_lights and unit:unit_data().projection_lights[light:name():s()] and unit:unit_data().projection_lights[light:name():s()].x
+		resolution = resolution or EditUnitLight.DEFAULT_SHADOW_RESOLUTION
+
+		table.insert(lights, {
+			name = "",
+			position = light:position(),
+			unit = unit,
+			light = light,
+			enabled = enabled,
+			spot = string.find(light:properties(), "spot") and true or false,
+			resolution = resolution,
+			output_name = unit:unit_data().unit_id
+		})
+		light:set_enable(false)
+	end
+
+	if #lights == 0 then
+		return
+	end
+
+	for _, data in pairs(self._saved_all_lights) do
+		data.light:set_enable(false)
+	end
+
+	--managers.editor:disable_all_post_effects(true)
+	self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("projection_generation"))
+	self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project"))
+
+	local saved_environment = managers.viewport:default_environment()
+
+	--managers.viewport:set_default_environment("core/environments/default_depthlight", nil, nil)
+	self:create_cube_map({
+		simple_postfix = true,
+		cubes = lights,
+		saved_environment = saved_environment,
+		lights = true
+	})
 end
 
 function CubemapCreator:create_cube_map(params)
@@ -74,7 +168,6 @@ function CubemapCreator:create_cube_map(params)
 	self:next_cube()
 end
 
--- Lines: 143 to 163
 function CubemapCreator:next_cube()
 	if #self._cubes_que > 0 then
 		local cube = table.remove(self._cubes_que, 1)
@@ -90,8 +183,8 @@ function CubemapCreator:next_cube()
 			done_callback = callback(self, self, "cube_map_done"),
 			name = cube.name,
 			simple_postfix = self._cubemap_params.simple_postfix,
-			source_path = self._cubemap_params.source_path,
-			output_path = self._cubemap_params.output_path,
+			source_path = self._temp_path,
+			output_path = self._cubelights_path,
 			output_name = cube.output_name,
 			unit = cube.unit,
 			light = cube.light,
@@ -106,7 +199,6 @@ function CubemapCreator:next_cube()
 	return false
 end
 
--- Lines: 167 to 224
 function CubemapCreator:cube_map_done()
 	if self:next_cube() then
 		return
@@ -116,25 +208,21 @@ function CubemapCreator:cube_map_done()
 		managers.viewport:set_default_environment(self._cubemap_params.saved_environment, nil, nil)
 	end
 
-	--if self._saved_all_lights then
-		--[[for _, data in pairs(self._saved_all_lights) do
+	if self._saved_all_lights then
+		for _, data in pairs(self._saved_all_lights) do
 			data.light:set_enable(data.enabled)
-		end]]
+		end
 
-		--self._saved_all_lights = nil
---	end
+		self._saved_all_lights = nil
+	end
 
 	if self._cubemap_params.lights then
-		managers.editor:update_post_effects()
-		self:viewport():vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
-		self:viewport():vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
+		--managers.editor:update_post_effects()
+		self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
+		self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
 
-		for _, cube in ipairs(self._cubemap_params.cubes) do
+		for _, cube in pairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
-
-			local texture_path = managers.database:entry_path(self._cubemap_params.output_path .. cube.output_name)
-
-			cube.light:set_projection_texture(Idstring(texture_path), not cube.spot, false)
 		end
 	end
 
@@ -175,7 +263,7 @@ function CubemapCreator:start_cube_map(params)
 	self._output_name = params.output_name
 	self._output_name = self._output_name or "cubemap"
 
-	--[[if params.light then
+	if params.light then
 		self._light = World:create_light("omni")
 
 		self._light:set_position(params.light:position())
@@ -189,7 +277,7 @@ function CubemapCreator:start_cube_map(params)
 
 			self._params.unit:set_rotation(rot)
 		end
-	end]]
+	end
 
 	self._camera:set_fov(self._params.spot and self._params.light:spot_angle_end() or 90)
 
@@ -216,12 +304,10 @@ function CubemapCreator:start_cube_map(params)
 	table.insert(self._name_ordered, self._names[1])
 end
 
--- Lines: 249 to 250
 function CubemapCreator:creating_cube_map()
 	return self._creating_cube_map
 end
 
--- Lines: 253 to 297
 function CubemapCreator:_create_cube_map()
 	if self._wait_frames > 0 then
 		self._wait_frames = self._wait_frames - 1
@@ -261,7 +347,7 @@ function CubemapCreator:_create_cube_map()
         self._camera:set_rotation(Rotation(Vector3(0, 0, -1), Vector3(0, -1, 0)))
         self._wait_frames = 50
 	elseif self._cube_counter == 7 then
-		self:_generate_cubemap(self._params.light and "cubemap_light" or "reflect")
+		self:_generate_cubemap(self._params.light and "light" or "reflect")
 		self:_cubemap_done()
 
 		return true
@@ -269,13 +355,21 @@ function CubemapCreator:_create_cube_map()
 
 	local path = self._params.source_path
 	local res = RenderSettings.resolution
-	self._parent:Log("Path: " ..tostring(path) .. " Names: " ..tostring(self._names[self._cube_counter]))
 	Application:screenshot(path .. self._names[self._cube_counter], 0, 0, res.x, res.y)
 
 	return false
 end
 
--- Lines: 300 to 309
+function CubemapCreator:_create_spot_projection()
+	local res = RenderSettings.resolution
+
+	self._camera:set_rotation(Rotation(-self._params.light:rotation():z(), Vector3(0, 0, 1)))
+
+	local path = self._params.source_path
+
+	Application:screenshot(path .. self._name_ordered[1], 0, 0, res.x, res.y)
+end
+
 function CubemapCreator:_cubemap_done()
 	if alive(self._light) then
 		World:delete_light(self._light)
@@ -288,30 +382,66 @@ function CubemapCreator:_cubemap_done()
     end
 end
 
-function CubemapCreator:_generate_cubemap(file)	-- exe_path has to be quoted around with ""
-	local exe_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
-	exe_path = exe_path .. " reflect -i "
-	local execute = exe_path
+function CubemapCreator:_generate_cubemap(file)
+	local exe_path = self._gen_path .. " " .. file .. " -i "
 
 	for i, _ in pairs(self._names) do
-		execute = execute   .. self._name_ordered[i] .. " "
+		exe_path = exe_path   .. self._name_ordered[i] .. " "
 	end
 
-	execute = execute .. "-o " .. self._output_name .. ".dds"
-	log(execute)
-	os.execute(execute)
+	exe_path = exe_path .. "-o " .. self._output_name .. ".dds"
+
+	os.execute(exe_path)
 	self:_move_output(self._output_name)
+
+	self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, output)))
+	
+	if #self._cubes_que < 1 then
+		self:notify_success()
+	end
 end
 
-function CubemapCreator:_move_output()
-	local project = BLE.MapProject
-	for i=1,6 do
+function CubemapCreator:_generate_spot_projection() -- Not implemented yet
+	local exe_path = self._gen_path .. " light -i "
+	exe_path = exe_path .. self._params.source_path .. self._name_ordered[1] .. " "
+	exe_path = exe_path .. "-o " .. self._output_name .. ".dds "
+	os.execute(exe_path)
+	self:_move_output(self._params.output_path)
+end
+
+function CubemapCreator:_move_output(output_path)
+	
+	local output = self._output_name .. ".texture"
+	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
+	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output )
+	for i=1, 6 do
 		FileIO:Delete(self._params.source_path .. self._names[i])
 	end
-	local output = self._output_name .. ".texture"
-	local cube_lights_path = Path:Combine("levels/mods/", Global.game_settings.level_id, "cube_lights/") 
+	
+	
+	-- Moving from temp to assets
+	if FileIO:Exists(final_path) then
+		FileIO:Delete(final_path)
+	else
+		FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
+		FileIO:MoveTo(self._params.source_path .. output, final_path)
+	end
 
-	FileIO:MoveTo(self._params.source_path .. output, 
-		Path:Combine(BeardLib.config.maps_dir, tostring(project:current_mod().Name), "assets", cube_lights_path, output))
+	-- Updating Add.xml
+	local file_path = Path:Combine(self._params.output_path, self._output_name)
+	local xml_path = Path:Combine(map_path, "levels", Global.game_settings.level_id, "add.xml")
+	local add = FileIO:ReadScriptDataFrom(xml_path, "custom_xml")
+	for _, tbl in pairs(add) do
+		if tbl.path == file_path then 
+			log(file_path)
+			return
+		end
+	end
+	table.insert(add, {_meta = "texture", load = true, path = file_path})
+	FileIO:WriteScriptDataTo(xml_path, add, "custom_xml")
+	
+end
 
+function CubemapCreator:notify_success()
+	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!. ")
 end
