@@ -26,6 +26,7 @@ function EnvLayer:init(parent)
 	self._environment_area_unit = "core/units/environment_area/environment_area"
 	self._effect_unit = "core/units/effect/effect"
 	self._dome_occ_shape_unit = "core/units/dome_occ_shape/dome_occ_shape"
+	self._cubemap_unit = "core/units/cubemap_gizmo/cubemap_gizmo"
 end
 
 function EnvLayer:loaded_continents()
@@ -212,7 +213,36 @@ function EnvLayer:build_menu()
         "color_xgen",
         "color_xxxgen",
         "color_matrix"
-    }
+	}
+
+	self:Button("BuildCubemaps", function()
+		local cubes = self:selected_unit() and "selected" or "all"
+		if not self:selected_unit() then 
+			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build cubemaps for all lights in the level?",
+			function()
+				self:create_cube_map("all")
+			end)
+		else 
+			BLE.Utils:YesNoQuestion("Would you like to build cubemaps for all selected lights in the level?",
+			function()
+				self:create_cube_map("selected")
+			end)
+		end
+	end, {group = environment_group})
+	--[[self:Button("BuildProjectionLights", function()
+		local lights = self:selected_unit() and self:selected_unit():get_object(Idstring("lo_omni")) or nil
+		if not lights then 
+			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build projection lights for all lights in the level?",
+			function()
+				self:GetPart("cubemap_creator"):create_projection_light("all")
+			end)
+		else 
+			BLE.Utils:YesNoQuestion("Would you like to build projection lights for all selected lights in the level?",
+			function()
+				self:GetPart("cubemap_creator"):create_projection_light("selected") 
+			end)
+		end
+	end, {group = environment_group})]]
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
     local utils = self:GetPart("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
@@ -566,4 +596,43 @@ function EnvLayer:reset_environment_values()
 	managers.viewport:update_global_environment_value(CoreEnvironmentFeeder.SkyRotationFeeder.DATA_PATH_KEY)
 	environment_values.color_grading = managers.environment_controller:game_default_color_grading()
 	environment_values.dome_occ_resolution = 256
+end
+
+
+function EnvLayer:create_cube_map(selection, type)
+	local cubes = {}
+
+	if selection == "all" then
+		for _, unit in pairs(World:find_units_quick("all")) do
+			if alive(unit) and unit.unit_data and unit:get_object(Idstring("lo_omni")) then
+				table.insert(cubes, {
+					output_name = unit:unit_data().unit_id,
+					position = unit:position(),
+					name = unit:unit_data().name_id
+				})
+			end
+		end
+	elseif selection == "selected" then
+		for _, unit in pairs(self:selected_units()) do
+			if unit:get_object(Idstring("lo_omni")) then
+				table.insert(cubes, {
+					output_name = unit:unit_data().unit_id,
+					position = unit:position(),
+					name = unit:unit_data().name_id
+				})
+			end
+		end
+	end
+
+	if next(cubes) == nil then
+		BLE.Utils:Notify("Info", "No omnidirectional lights with projection textures set were found.\nYou need to have at least one omnidir light to build cubemaps")
+		return
+	end
+
+	local params = {
+		cubes = cubes,
+		source_path = BLE.ModPath .. "\\Tools" .. "\\temp\\"
+	}
+
+	self:GetPart("cubemap_creator"):create_cube_map(params)
 end
