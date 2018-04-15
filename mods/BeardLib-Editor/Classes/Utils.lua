@@ -106,12 +106,18 @@ function BeardLibEditor.Utils:FilterList(search, max_items)
     menu:AlignItems()
 end
 
+local mb = 1048576
 function Utils:GetPackageSize(package)
-    local file = io.open("assets/" .. (package:match("/") and package:key() or package) .. ".bundle", "rb")
-    if file then
-        return tonumber(file:seek("end")) / (1024)^2
-    else
-        return false
+    local bundle = "assets/" .. (package:find("/") and package:key() or package) .. ".bundle"
+    if FileIO:Exists(bundle) then
+        local file = io.open(bundle, "rb")
+        if file then
+            local size = tonumber(file:seek("end")) / mb
+            file:close()
+            return size
+        else
+            return false
+        end
     end
 end
 

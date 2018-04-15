@@ -371,7 +371,7 @@ end
 
 local unit_rules = {
 	keys = {"unit_id", "camera_u_id", "att_unit_id"},
-	tbl_keys = {"unit_ids", "graph_ids", "nav_segs", "digital_gui_unit_ids", "elements"},
+	tbl_keys = {"unit_ids", "graph_ids", "nav_segs", "digital_gui_unit_ids"},
 	tbl_value_keys = {
 		{"obstacle_list", "unit_id"}, {"trigger_list", "notify_unit_id"}, {"sequence_list", "unit_id"}
 	}

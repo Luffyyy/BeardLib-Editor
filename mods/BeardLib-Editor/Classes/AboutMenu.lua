@@ -1,7 +1,7 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
 	local EMenu = BeardLibEditor.Menu
-	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false, items_size = 18}))
+	MenuUtils:new(self, EMenu:make_page("About", nil, {scrollbar = false, items_size = 16}))
 	self:GetMenu():Image({
 		name = "Logo",
 		icon_w = 256,
@@ -11,18 +11,19 @@ function AboutMenu:init()
 	})
     local info = self:Menu("Info", {w = 512, border_color = BeardLibEditor.Options:GetValue("AccentColor"), position = "Centerx"})
     local function link_button(name, url) return self:Button(name, callback(nil, os, "execute", 'start "" "'..url..'"'), {text_align = "center", group = info, text = name}) end
-    local function center_text(text, opt) return self:Divider(text, table.merge({color = false, group = info, text_align = "center", text = text}, opt or {})) end
+    local function center_text(text, opt) return self:Divider(text, table.merge({color = false, group = info, text_align = "center", text = text}, opt)) end
     local div = {color = false, border_bottom = true, group = info, border_width = 512, border_center_as_title = true}
     self:Divider("About", div)
     center_text("Created by Luffy and Simon W")
     center_text("Version " .. BeardLibEditor.Version)
     self:Divider("Credits", div)
-    center_text("Walrus - for helping developing the editor from the start and giving information on pd2 mapping")
-    center_text("Rex - for helping on testing the dev branch and giving a lot of feedback")
-    center_text("Matthelzor - for helping on testing the dev branch")
-    center_text("Quackertree - for helping on testing the dev branch")
-    center_text("TheRealDannyyy - for helping on testing the dev branch")
-    center_text("Nepgearsy - for pushing quick bug fixes in github")
+    center_text("Ontrigger - Helping developing the editor further")
+    center_text("Walrus - Helping developing the editor from the start and giving information on pd2 mapping")
+    center_text("Rex - Helping testing the dev branch and giving feedback")
+    center_text("Matthelzor - Helping testing the dev branch")
+    center_text("Quackertree - Helping testing the dev branch and giving feedback")
+    center_text("TheRealDannyyy - helping testing the dev branch")
+    center_text("Nepgearsy - giving feedback and pushing quick bug fixes in github")
     center_text("Shovel - for being a shovel -->")
     center_text("And anyone else who helped!")
     self:Divider("Links", div)

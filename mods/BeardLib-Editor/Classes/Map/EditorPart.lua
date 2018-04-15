@@ -8,7 +8,6 @@ function Part:init(parent, menu, name, opt, mopt)
         name = name,
         control_slice = 0.5,
         size = 18,
-        offset = {4, 2},
         auto_foreground = true,
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         scrollbar = false,
@@ -23,9 +22,28 @@ function Part:init(parent, menu, name, opt, mopt)
     if not opt.no_title then
         title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
-    self._holder = self:Menu("Holder", table.merge({private = {offset = {0, 1}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
+    self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
+    self:make_collapse_all_button()
+end
+
+function Part:make_collapse_all_button()
+    local title = self._menu:GetItem("Title")
+    if title then
+        self:SmallImageButton("CollapseAll", ClassClbk(self, "collapse_all", false), "textures/editor_icons_df", {161, 158, 50, 50}, title, {group = self._menu})
+    end
+end
+
+function Part:collapse_all(menu)
+    for _, item in pairs((menu or self._holder):Items()) do
+        if item.type_name == "Group" and not item.divider_type then --Do not collapse DivGroups so they won't get stuck.
+            item:CloseGroup()
+        end
+        if item.menu_type then
+            self:collapse_all(item)
+        end
+    end
 end
 
 function Part:bind(opt, clbk, in_dialogs)

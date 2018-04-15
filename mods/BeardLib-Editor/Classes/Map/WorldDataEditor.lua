@@ -186,7 +186,7 @@ function WData:build_continents()
     end
 
     if managers.worlddefinition then
-        local continents = self:DivGroup("Continents")
+        local continents = self:Group("Continents")
         toolbar_item("NewContinent", ClassClbk(self, "new_continent"), continents, {text = "+", help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:Group(name, {group = continents, text = name})
@@ -198,9 +198,9 @@ function WData:build_continents()
             toolbar_item("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
-                item:SetEnabled(item.enabled) end, 
-                continent, {texture_rect = {155, 95, 64, 64}}
-            )
+                item:SetEnabled(item.enabled) 
+            end, continent, {texture_rect = {155, 95, 64, 64}})
+            
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
                 opt.continent = name
@@ -455,9 +455,8 @@ end
 function WData:back_button()
     self:destroy_back_button()
     self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {
-        text_offset = 4,
-        max_width = false,
-        highlight_color = Color.black:with_alpha(0.25), font_size = 18
+        text = "<",
+        font_size = 20,
     })
 end
 
