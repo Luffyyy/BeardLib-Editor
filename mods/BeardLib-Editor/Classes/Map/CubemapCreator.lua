@@ -77,7 +77,7 @@ function CubemapCreator:create_projection_light(type)
 			unit = unit,
 			light = light,
 			enabled = enabled,
-			spot = true, --string.find(light:properties(), "spot") and true or false,
+			spot = string.find(light:properties(), "spot") and true or false,
 			resolution = resolution,
 			output_name = unit:unit_data().unit_id
 		})
@@ -92,7 +92,6 @@ function CubemapCreator:create_projection_light(type)
 		data.light:set_enable(false)
 	end
 
-	managers.editor:disable_all_post_effects(true)
 	self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("projection_generation"))
 	self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project"))
 
@@ -213,7 +212,6 @@ function CubemapCreator:cube_map_done()
 	end
 
 	--[[if self._cubemap_params.lights then
-		--managers.editor:update_post_effects()
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
 
