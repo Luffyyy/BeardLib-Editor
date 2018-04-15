@@ -157,7 +157,6 @@ function CubemapCreator:create_cube_map(params)
 				table.insert(self._saved_hidden_units, unit)
 				unit:set_visible(false)
 			end
-
 		end
 	end
 
@@ -392,9 +391,8 @@ function CubemapCreator:_generate_cubemap(file)
 	exe_path = exe_path .. "-o " .. self._output_name .. ".dds"
 
 	os.execute(exe_path)
-	self:_move_output(self._output_name)
-
 	self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, output)))
+	self:_move_output(self._output_name)
 	
 	if #self._cubes_que < 1 then
 		self:notify_success()
