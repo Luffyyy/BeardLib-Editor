@@ -1,7 +1,14 @@
 from os import path, rename, remove
 from sys import argv, exit
-from PIL import Image, ImageFilter
 import subprocess, getopt, argparse
+
+import_status = True
+try:
+    from PIL import Image, ImageFilter
+except ImportError:
+    print("Pillow module not found! Cubemaps won't be blurred.\n")
+else:
+    import_status = False
 
 dir_path = (path.abspath(path.dirname(__file__)))
 texass_path = (path.abspath(path.dirname(__file__)) + "\\texassemble.exe ")
@@ -27,10 +34,8 @@ def move_and_rename_cubemap(cubemap_name):
     print(cubemap_path + o)
     cubemap_name_new = o[:-4] + ".texture"
     if not path.isfile(dir_path + temp + cubemap_name_new):
-        print(dir_path + temp + cubemap_name_new)
         rename(cubemap_path + o, dir_path + temp + cubemap_name_new)
     if path.isfile(dir_path + temp + cubemap_name):
-        print(dir_path + temp + cubemap_name)
         remove(dir_path + temp + cubemap_name)
     exit()
 
@@ -73,10 +78,11 @@ def generate_cubemaps(files, output_path):
         convert_cubemaps(output_path)
 
 def blur_cubes(files):
-    for cube in files:
-        img = Image.open(cube)
-        img.filter(ImageFilter.GaussianBlur(radius=10))
-        img.save(cube)
+    if import_status:
+        for cube in files:
+            img = Image.open(cube)
+            img.filter(ImageFilter.GaussianBlur(radius=15))
+            img.save(cube)
 
 if __name__ == "__main__":
     global i, o, argtyp
