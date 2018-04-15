@@ -50,9 +50,6 @@ function CubemapCreator:create_projection_light(type)
 		end
 	end
 
-	for _, unit in pairs(units) do
-		log("Unit name: " .. tostring(unit.unit:get_object(Idstring(unit.light_name))))
-	end
 	self._saved_all_lights = {}
 
 	
@@ -80,7 +77,7 @@ function CubemapCreator:create_projection_light(type)
 			unit = unit,
 			light = light,
 			enabled = enabled,
-			spot = string.find(light:properties(), "spot") and true or false,
+			spot = true, --string.find(light:properties(), "spot") and true or false,
 			resolution = resolution,
 			output_name = unit:unit_data().unit_id
 		})
@@ -95,13 +92,13 @@ function CubemapCreator:create_projection_light(type)
 		data.light:set_enable(false)
 	end
 
-	--managers.editor:disable_all_post_effects(true)
+	managers.editor:disable_all_post_effects(true)
 	self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("projection_generation"))
 	self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project"))
 
 	local saved_environment = managers.viewport:default_environment()
 
-	--managers.viewport:set_default_environment("core/environments/default_depthlight", nil, nil)
+	managers.viewport:set_default_environment("core/environments/default", nil, nil)
 	self:create_cube_map({
 		simple_postfix = true,
 		cubes = lights,
@@ -215,7 +212,7 @@ function CubemapCreator:cube_map_done()
 		self._saved_all_lights = nil
 	end
 
-	if self._cubemap_params.lights then
+	--[[if self._cubemap_params.lights then
 		--managers.editor:update_post_effects()
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
@@ -223,7 +220,7 @@ function CubemapCreator:cube_map_done()
 		for _, cube in pairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
 		end
-	end
+	end]]
 
 	for _, unit in pairs(self._saved_hidden_units) do
 		unit:set_visible(true)
@@ -315,7 +312,7 @@ function CubemapCreator:_create_cube_map()
 
 	self._cube_counter = self._cube_counter + 1
 
-	--[[if self._params.spot then
+	if self._params.spot then
 		if self._cube_counter == 1 then
 			self:_create_spot_projection()
 		elseif self._cube_counter == 2 then
@@ -325,7 +322,7 @@ function CubemapCreator:_create_cube_map()
 		end
 
 		return true
-	end]]
+	end
 
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))
@@ -389,13 +386,15 @@ function CubemapCreator:_generate_cubemap(file)
 	end
 
 	exe_path = exe_path .. "-o " .. self._output_name .. ".dds"
-
-	os.execute(exe_path)
-	self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, output)))
-	self:_move_output(self._output_name)
-	
-	if #self._cubes_que < 1 then
-		self:notify_success()
+	if os.execute(exe_path) == 0 then 
+		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, self._output_name .. ".texture")))
+		self:_move_output(self._output_name)
+		
+		if #self._cubes_que < 1 then
+			self:notify_success()
+		end
+	else
+		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
 	end
 end
 
@@ -408,14 +407,12 @@ function CubemapCreator:_generate_spot_projection() -- Not implemented yet
 end
 
 function CubemapCreator:_move_output(output_path)
-	
 	local output = self._output_name .. ".texture"
 	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
 	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output )
 	for i=1, 6 do
 		FileIO:Delete(self._params.source_path .. self._names[i])
 	end
-	
 	
 	-- Moving from temp to assets
 	if FileIO:Exists(final_path) then
@@ -426,7 +423,7 @@ function CubemapCreator:_move_output(output_path)
 	end
 
 	-- Updating Add.xml
-	local file_path = Path:Combine(self._params.output_path, self._output_name)
+	local file_path = Path:Combine(self._params.output_path, tostring(self._output_name))
 	local xml_path = Path:Combine(map_path, "levels", Global.game_settings.level_id, "add.xml")
 	local add = FileIO:ReadScriptDataFrom(xml_path, "custom_xml")
 	for _, tbl in pairs(add) do
@@ -435,7 +432,7 @@ function CubemapCreator:_move_output(output_path)
 			return
 		end
 	end
-	table.insert(add, {_meta = "texture", load = true, path = file_path})
+	table.insert(add, {_meta = "texture", path = file_path})
 	FileIO:WriteScriptDataTo(xml_path, add, "custom_xml")
 	
 end

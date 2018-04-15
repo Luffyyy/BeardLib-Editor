@@ -238,7 +238,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
                     bytes = DB:open(typ, k):read()
                     file_path = Path:Combine("levels/mods", name, string.sub(k, #path))
                     FileIO:WriteTo(Path:Combine(BeardLib.config.maps_dir, data.name, "assets", file_path) .. "." .. typ , bytes)
-                    table.insert(add, {_meta = "texture", load = true, path = file_path})
+                    table.insert(add, {_meta = "texture", path = file_path})
                 end
             end
             FileIO:WriteScriptDataTo(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")

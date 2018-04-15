@@ -1,31 +1,36 @@
 from os import path, rename, remove
-from sys import argv, exit
+import sys
 import subprocess, getopt, argparse
 
-import_status = True
+import_status = False
 try:
     from PIL import Image, ImageFilter
 except ImportError:
     print("Pillow module not found! Cubemaps won't be blurred.\n")
 else:
-    import_status = False
+    import_status = True
 
 dir_path = (path.abspath(path.dirname(__file__)))
 texass_path = (path.abspath(path.dirname(__file__)) + "\\texassemble.exe ")
 texconv_path = (path.abspath(path.dirname(__file__)) + "\\texconv.exe ")
 
-args = argv[1:]
+args = sys.argv[1:]
 temp = "\\temp\\"
 
 def get_args(args_v):
     parser = argparse.ArgumentParser(description='Assembles cube faces into a cubemap with a .texture format')
-    parser.add_argument("type", help = "first arg has to be either reflect or lights")
+    parser.add_argument("type", 
+                        help = "first arg has to be either reflect or lights",
+                        choices = ["reflect", "light"])
     parser.add_argument("-i", help = "imput 6 filenames for each cube face", nargs = "*")
     parser.add_argument("-o", help = "output filename")
     
     args = parser.parse_args(args_v)
-    print(args.i)
-    print(args.o)
+
+    print(args.type)
+    if not args.type:
+        print("[ERROR] Incorrect argument specified")
+        sys.exit(1)
 
     return args.type, args.i, args.o
 
@@ -33,11 +38,12 @@ def move_and_rename_cubemap(cubemap_name):
     cubemap_path = path.abspath("") + "\\"
     print(cubemap_path + o)
     cubemap_name_new = o[:-4] + ".texture"
+    
     if not path.isfile(dir_path + temp + cubemap_name_new):
         rename(cubemap_path + o, dir_path + temp + cubemap_name_new)
     if path.isfile(dir_path + temp + cubemap_name):
         remove(dir_path + temp + cubemap_name)
-    exit()
+    sys.exit(0)
 
 def fix_paths(input_args, output_arg):
     input_paths = []
@@ -52,36 +58,34 @@ def start_process(proc_path, input):
     proc = subprocess.Popen(input, stdout=subprocess.PIPE)
 
     output, _ = proc.communicate()
-    output = "".join(map(chr, output))  #needs to be coverted to a string
-
+    output = output.decode("utf-8", "ignore")
     print(output)
-    #if str.find(output, "ERROR") != -1 and str.find(output, "Failed") != -1:
-        #return True
-    return True
+    if str.find(output, "ERROR") != -1 or str.find(output, "Failed") != -1:
+        print(proc_path + " finished with an error!")
+        sys.exit(1)
 
-def convert_cubemaps(output_path):
-    if argtyp == "reflect":
+def convert_cubemaps(output_path, argtype):
+    if argtype == "reflect":
         args = ["-m", "10", "-f", "BC2_UNORM", "-y"]
     else:
         args = ["-m", "8", "-f", "BC3_UNORM", "-y"]
-    output_path.remove("-o")
+    output_path.remove("-o")    # for some reason it always fails to write if I specify output
     args.extend(output_path)
-    if start_process(texconv_path, args):
-        move_and_rename_cubemap(o)
+    start_process(texconv_path, args)
 
 def generate_cubemaps(files, output_path):
     s = ["cube"]
     for filename in files:
         s.append(filename)
     s.extend(output_path)
-    if start_process(texass_path, s):
-        convert_cubemaps(output_path)
+    s.extend("-y")
+    start_process(texass_path, s)
 
 def blur_cubes(files):
     if import_status:
         for cube in files:
             img = Image.open(cube)
-            img.filter(ImageFilter.GaussianBlur(radius=15))
+            img.filter(ImageFilter.GaussianBlur(radius=150))
             img.save(cube)
 
 if __name__ == "__main__":
@@ -94,3 +98,5 @@ if __name__ == "__main__":
     cube_paths, cubemap_path = fix_paths(input, output)
     blur_cubes(cube_paths)
     generate_cubemaps(cube_paths, cubemap_path)
+    convert_cubemaps(cubemap_path, argtype)
+    move_and_rename_cubemap(output)
