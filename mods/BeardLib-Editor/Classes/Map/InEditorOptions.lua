@@ -17,7 +17,7 @@ function Options:build_default_menu()
         end
     end
 
-    local main = self:DivGroup("Main", groups_opt)
+    local main = self:Group("Main", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
     local grid_size = self:Value("GridSize")
@@ -40,7 +40,7 @@ function Options:build_default_menu()
     })
     self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = main})
 
-    local camera = self:DivGroup("Camera", groups_opt)
+    local camera = self:Group("Camera", groups_opt)
     local cam_speed = self:Value("CameraSpeed")
     local fov = self:Value("CameraFOV")
     local far_clip = self:Value("CameraFarClip")
@@ -49,7 +49,7 @@ function Options:build_default_menu()
     self:Slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
     self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = camera})
 
-    local map = self:DivGroup("Map", groups_opt)
+    local map = self:Group("Map", groups_opt)
     self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
     self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
     self:Toggle("SoundUnits", callback(self, self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
@@ -60,14 +60,14 @@ function Options:build_default_menu()
     self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
     self:Toggle("DrawPortals", nil, false, {group = map})
 
-    local navigation_debug = self:DivGroup("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
+    local navigation_debug = self:Group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
     local group = self:Menu("Draw", {align_method = "grid", group = navigation_debug})
     self._draw_options = {}
     local w = group.w / 2
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
         self._draw_options[opt] = self:Toggle(opt, callback(self, self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
     end
-    local raycast = self:DivGroup("Raycast/Selecting", groups_opt)
+    local raycast = self:Group("Raycast/Selecting", groups_opt)
     self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
     self:Toggle("UseSurfaceMove", callback(self, self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
@@ -81,11 +81,11 @@ function Options:build_default_menu()
     })
     self:NumberBox("RaycastDistance", nil, 200000, {group = raycast})
 
-    local mission = self:DivGroup("Mission", groups_opt)
+    local mission = self:Group("Mission", groups_opt)
     self:Toggle("RandomizedElementsColor", callback(self, self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
     self:Button("ElementsColor", callback(self, self, "open_set_color_dialog", "Map/ElementsColor"), {group = mission})
 
-    local other = self:DivGroup("Other", groups_opt)
+    local other = self:Group("Other", groups_opt)
     self:Button("TeleportPlayer", callback(self, self, "drop_player"), {group = other})
     self:Button("LogPosition", callback(self, self, "position_debug"), {group = other})
     self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})

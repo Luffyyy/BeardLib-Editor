@@ -65,7 +65,6 @@ function MenuUtils:init(this, menu)
 	        text = string.pretty2(name),
 	        color = color,
 	        auto_height = true,
-	        offset = {8, 4},
 	        background_visible = false
 	    }, opt))
 	end
@@ -104,8 +103,17 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:CenterRight(item)
+		if not item.override_panel then
+			return
+		end
 		item:SetPosition("CenterRight")
-		item:Panel():move(-2)
+		local prev = item.override_panel._prev_aligned
+		if alive(prev) and not (prev:Index() < item:Index()) then
+			item:Panel():set_righttop(prev:Panel():left() - item:OffsetX(), item:Panel():top())
+		else
+			item:Panel():move(-item:OffsetX())
+			item.override_panel._prev_aligned = item
+		end
 	end
 
 	function this:SmallButton(name, callback, parent, o)    
@@ -119,7 +127,11 @@ function MenuUtils:init(this, menu)
 	        min_width = s,
 	        min_height = s,
 	        max_width = s,
-	        max_height = s,
+			max_height = s,
+			offset = 2,
+			foreground = parent.foreground,
+			highlight_color = parent.foreground:with_alpha(0.25),
+			auto_foreground = false,
 			foreground_highlight = false,
 	        position = ClassClbk(self, "CenterRight"),
 	        text_align = "center",
@@ -128,7 +140,7 @@ function MenuUtils:init(this, menu)
 	    }, opt))
 	end	
 
-	function this:SmallImageButton(name, callback, texture, rect, parent, o)    
+	function this:SmallImageButton(name, callback, texture, rect, parent, o)
 	    local m, opt = self:WorkMenuUtils(o, parent)
 		if not parent then
 			log(debug.traceback())
@@ -137,11 +149,14 @@ function MenuUtils:init(this, menu)
 		local s = parent:TextHeight()
 	    return m:ImageButton(table.merge({
 	        name = name,
-	        on_callback = callback,
+			on_callback = callback,
+			foreground = parent.foreground,
+			highlight_color = parent.foreground:with_alpha(0.25),
+			auto_foreground = false,
 	        position = ClassClbk(self, "CenterRight"),
-			size_by_text = true,
 	        w = s,
-	        h = s,
+			h = s,
+			offset = 2,
 			img_offset = 4,
 	        texture = texture,
 	        texture_rect = rect,
