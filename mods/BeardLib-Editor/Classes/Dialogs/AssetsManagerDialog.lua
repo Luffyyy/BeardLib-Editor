@@ -56,10 +56,10 @@ function AssetsManagerDialog:_Show()
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end}
-    local search = self:TextBox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList"), "", search_opt)
+    local search = self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList"), "", search_opt)
     search_opt.position = base_pos
     search_opt.override_panel = units
-    self:TextBox("Search2", ClassClbk(BeardLibEditor.Utils, "FilterList"), "", search_opt)
+    self:TextBox("Search2", ClassClbk(BLE.Utils, "FilterList"), "", search_opt)
 
     self:Divider("AssetsManagerStatus", {
         text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
@@ -74,7 +74,7 @@ function AssetsManagerDialog:_Show()
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
     self:Button("FindPackage", ClassClbk(self, "find_package", false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BeardLibEditor.ExtractDirectory)})
+    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
 
     self:Button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, group = actions, enabled = false})
     self:Button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, group = actions, enabled = false})
@@ -85,13 +85,12 @@ end
 
 function AssetsManagerDialog:load_units_from_assets()
     self._assets_units = {}
-    local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+    local project = BLE.MapProject
+    local mod, data = mod and project:get_mod_and_config()
     if data then
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:map_editor_read_xml(add_path, true)
+        local add = project:read_xml(add_path)
         if add then
             for _, node in pairs(add) do
                 if type(node) == "table" and node._meta == "unit_load" then
@@ -110,7 +109,7 @@ function AssetsManagerDialog:load_units()
     units:ClearItems("units")
     self._missing_units = {}
     local add
-    local project = BeardLibEditor.MapProject
+    local project = BLE.MapProject
     local mod = project:current_mod()
     if self._tbl._data then
         add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
@@ -160,16 +159,16 @@ function AssetsManagerDialog:load_packages()
         return
     end
     packages:ClearItems("packages")
-    local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    self._tbl._data = mod and project:get_clean_data(mod._clean_config)
-    self._current_level = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+    local project = BLE.MapProject
+    local mod, data = project:get_mod_and_config()
+    self._tbl._data = data
+    self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     if self._tbl._data then
         local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
         if level.packages then
             for i, package in pairs(level.packages) do
                 local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
-                local size = not custom and BeardLibEditor.Utils:GetPackageSize(package)
+                local size = not custom and BLE.Utils:GetPackageSize(package)
                 if size or custom then
                     local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
                     local pkg = self:Divider(package, {closed = true, text = text, group = packages, label = "packages"})
@@ -181,7 +180,7 @@ function AssetsManagerDialog:load_packages()
 end
 
 function AssetsManagerDialog:load_from_extract_dialog()
-    BeardLibEditor.Utils:YesNoQuestion(
+    BLE.Utils:YesNoQuestion(
         self.ImportHelp,
         function()
             self:load_from_extract({[self._tbl._selected.name] = true})
@@ -192,7 +191,7 @@ end
 function AssetsManagerDialog:find_package(unit, dontask, clbk)
     function find_package()
         local items = {}
-        for _, pkg in pairs(BeardLibEditor.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
+        for _, pkg in pairs(BLE.Utils:GetPackagesOfUnit(unit or self._tbl._selected.name, true)) do
             local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.package_size)
             table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
         end
@@ -208,7 +207,7 @@ function AssetsManagerDialog:find_package(unit, dontask, clbk)
             end
             return a.package_size < b.package_size
         end)
-        BeardLibEditor.ListDialog:Show({
+        BLE.ListDialog:Show({
             list = items,
             force = true,
             sort = false,
@@ -217,12 +216,12 @@ function AssetsManagerDialog:find_package(unit, dontask, clbk)
                 if type(clbk) == "function" then
                     clbk()
                 end
-                BeardLibEditor.ListDialog:hide()
+                BLE.ListDialog:hide()
             end
         })        
     end
     if not dontask then
-        BeardLibEditor.Utils:YesNoQuestion("This will search for packages that contain this unit, it's recommended to choose the smallest one so your level will load faster", function()
+        BLE.Utils:YesNoQuestion("This will search for packages that contain this unit, it's recommended to choose the smallest one so your level will load faster", function()
             find_package()
         end)
     else
@@ -231,14 +230,12 @@ function AssetsManagerDialog:find_package(unit, dontask, clbk)
 end
 
 function AssetsManagerDialog:clean_add_xml()
-    local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)--SO SHIT
-
+    local project = BLE.MapProject
+    local mod, data = project:get_mod_and_config()
     local level = project:current_level(data)
     level.add = level.add or {}
     local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-    local add = project:map_editor_read_xml(add_path, true) or {_meta = "add", directory = "assets"}
+    local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
     local new_add = {}
 
     for k, v in pairs(add) do
@@ -263,7 +260,7 @@ function AssetsManagerDialog:clean_add_xml()
             end
         end
     end
-    project:map_editor_save_xml(add_path, new_add)
+    project:save_xml(add_path, new_add)
 end
 
 function AssetsManagerDialog:load_from_extract(missing_units)
@@ -271,22 +268,21 @@ function AssetsManagerDialog:load_from_extract(missing_units)
     local config = {}
     local failed_all = false
     for unit, _ in pairs(missing_units) do
-        local cfg = BeardLibEditor.Utils.Export:GetUnitDependencies(unit)
+        local cfg = BLE.Utils.Export:GetUnitDependencies(unit)
         if cfg then
             table.insert(config, table.merge({_meta = "unit_load", name = unit}, cfg))
         else
             failed_all = true
         end
     end
-    local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+    local project = BLE.MapProject
+    local mod, data = project:get_mod_and_config()
     local to_copy = {}
     if data then
         local level = project:current_level(data)
         level.add = level.add or {}
         local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:map_editor_read_xml(add_path, true)
+        local add = project:read_xml(add_path)
         add = add or {_meta = "add", directory = "assets"}
         for k,v in pairs(config) do
             local exists 
@@ -302,7 +298,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
             end
         end
         local function save()
-            project:map_editor_save_xml(add_path, add)
+            project:save_xml(add_path, add)
             local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
             local copy_data = {}
             for _, unit_load in pairs(to_copy) do
@@ -311,12 +307,12 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                         if type(asset) == "table" and asset.path then
                             local path = asset.path .. "." .. asset._meta
                             local to_path = Path:Combine(assets_dir, path)
-                            table.insert(copy_data, {Path:Combine(BeardLibEditor.ExtractDirectory, path), to_path})
+                            table.insert(copy_data, {Path:Combine(BLE.ExtractDirectory, path), to_path})
                             local dir = BeardLib.Utils.Path:GetDirectory(to_path)
                             if not FileIO:Exists(dir) then
                                 FileIO:MakeDir(dir)
                             end
-                            BeardLibEditor.Utils.allowed_units[asset.path] = true
+                            BLE.Utils.allowed_units[asset.path] = true
                         end        
                     end
                 end
@@ -326,19 +322,19 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                     if success then
                         CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
                         if failed_all then
-                            BeardLibEditor.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
+                            BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
                         else
-                            BeardLibEditor.Utils:Notify("Info", "Copied assets successfully")
+                            BLE.Utils:Notify("Info", "Copied assets successfully")
                         end
                         self:reload()
                     end
                 end)
             else
-                BeardLibEditor.Utils:Notify("Info", "No assets to copy")
+                BLE.Utils:Notify("Info", "No assets to copy")
             end
         end
         if not dontask then
-            BeardLibEditor.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your map assets proceed?", save, function()
+            BLE.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your map assets proceed?", save, function()
                 CustomPackageManager:UnloadPackageConfig(config)
             end)
         else
@@ -350,7 +346,7 @@ end
 function AssetsManagerDialog:find_packages(missing_units, clbk)
     missing_units = missing_units or self._missing_units
     local packages = {}
-    for name, package in pairs(BeardLibEditor.DBPackages) do
+    for name, package in pairs(BLE.DBPackages) do
         if package.unit then            
             for unit in pairs(package.unit) do
                 if missing_units[unit] == true then
@@ -363,7 +359,7 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     local items = {}
     local missing_amount = table.size(missing_units)
     for name, package in pairs(packages) do
-        local size = BeardLibEditor.Utils:GetPackageSize(name)
+        local size = BLE.Utils:GetPackageSize(name)
         if size then
             table.insert(items, {
                 name = string.format("%s has %s/%s of the missing units(%.2fmb)", name, #package, missing_amount, size),
@@ -384,12 +380,12 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
     local curr_amount
     for _, item in pairs(items) do
         if item.amount ~= curr_amount then
-            item.background_color = BeardLibEditor._dialogs_opt.accent_color
+            item.background_color = BLE._dialogs_opt.accent_color
             item.highlight_color = item.background_color
         end
         curr_amount = item.amount
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = items,
         force = true,
         sort = false,
@@ -398,13 +394,13 @@ function AssetsManagerDialog:find_packages(missing_units, clbk)
             if type(clbk) == "function" then
                 clbk()
             end
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
         end
     })
 end
 
 function AssetsManagerDialog:remove_unused_units_from_map()
-    BeardLibEditor.Utils:YesNoQuestion("This will remove any unused units from your map and remove them from your map completely", function()
+    BLE.Utils:YesNoQuestion("This will remove any unused units from your map and remove them from your map completely", function()
         for unit in pairs(self._assets_units) do
             if not managers.worlddefinition._all_names[unit] then
                 self:remove_unit_from_map(true, unit)
@@ -446,7 +442,7 @@ function AssetsManagerDialog:remove_unit_from_map(remove_asset, name)
         end
     end
     if ask then
-        BeardLibEditor.Utils:YesNoQuestion(
+        BLE.Utils:YesNoQuestion(
             "This will remove all of the spawned units of that unit, this will not remove units that are inside an instance(save is required)",
             remove
         )
@@ -458,14 +454,13 @@ end
 function AssetsManagerDialog:unload_asset(name, no_dialog)
     name = name or self._tbl._selected.name
     local function unload()
-        local project = BeardLibEditor.MapProject
-        local mod = project:current_mod()
-        local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+        local project = BLE.MapProject
+        local mod, data = project:get_mod_and_config()
         if data then
             local level = project:current_level(data)
             level.add = level.add or {}
             local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-            local add = project:map_editor_read_xml(add_path, true)
+            local add = project:read_xml(add_path)
             if add then
                 for k, node in pairs(add) do
                     if type(node) == "table" and node._meta == "unit_load" and node.name == name then
@@ -488,12 +483,12 @@ function AssetsManagerDialog:unload_asset(name, no_dialog)
                             end
                         end
                         table.remove(add, k)
-                        BeardLibEditor.Utils.allowed_units[name] = nil
+                        BLE.Utils.allowed_units[name] = nil
                         break
                     end
                 end
             end
-            project:map_editor_save_xml(add_path, add)
+            project:save_xml(add_path, add)
             FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, add.directory))
             if no_dialog ~= false then
                 self:reload()
@@ -503,34 +498,34 @@ function AssetsManagerDialog:unload_asset(name, no_dialog)
     if no_dialog == true then
         unload()
     else
-        BeardLibEditor.Utils:YesNoQuestion("This will unload the unit from your map", unload)
+        BLE.Utils:YesNoQuestion("This will unload the unit from your map", unload)
     end
 end
 
 function AssetsManagerDialog:check_data()
     if not self._current_level or not self._tbl._data then
-        local project = BeardLibEditor.MapProject
-        local mod = project:current_mod()
-        self._tbl._data = mod and project:get_clean_data(mod._clean_config)
-        self._current_level = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+        local project = BLE.MapProject
+        local mod, data = project:get_mod_and_config()
+        self._tbl._data = data
+        self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
     end
 end
 
 function AssetsManagerDialog:get_level_packages()
     self:check_data()
     local packages = {}
-    for _, package in ipairs(table.merge(clone(BeardLibEditor.ConstPackages), clone(self._current_level.packages))) do
-        packages[package] = BeardLibEditor.DBPackages[package]
+    for _, package in ipairs(table.merge(clone(BLE.ConstPackages), clone(self._current_level.packages))) do
+        packages[package] = BLE.DBPackages[package]
     end
     return packages
 end
 
 function AssetsManagerDialog:is_asset_loaded(asset, type)
-    return BeardLibEditor.Utils:IsLoaded(asset, type, self:get_level_packages())
+    return BLE.Utils:IsLoaded(asset, type, self:get_level_packages())
 end
 
 function AssetsManagerDialog:get_packages_of_asset(asset, type, size_needed, first)
-    return BeardLibEditor.Utils:GetPackages(asset, type, size_needed, first, self:get_level_packages())
+    return BLE.Utils:GetPackages(asset, type, size_needed, first, self:get_level_packages())
 end
 
 function AssetsManagerDialog:set_unit_selected(item)
@@ -554,20 +549,20 @@ function AssetsManagerDialog:set_unit_selected(item)
     local unit
     if self._tbl._selected then
         unit = self._tbl._selected.name
-        local project = BeardLibEditor.MapProject
+        local project = BLE.MapProject
         local load_from
         for _, pkg in pairs(self:get_packages_of_asset(unit, "unit", true)) do
             loaded_from_package = true
             load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
-                name = BeardLibEditor.Utils:ShortPath(name, 3)
+                name = BLE.Utils:ShortPath(name, 3)
             end
             local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.2fmb)", name, pkg.package_size)
             load_from = load_from.."\n"..pkg_s
         end
         local add
-        local project = BeardLibEditor.MapProject
+        local project = BLE.MapProject
         local mod = project:current_mod()
         if self._tbl._data then
             add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
@@ -579,7 +574,7 @@ function AssetsManagerDialog:set_unit_selected(item)
                 unused = true
             end
         end
-        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..BeardLibEditor.Utils:ShortPath(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
+        self._unit_info:GetItem("UnitInfo"):SetText("| Unit:\n"..BLE.Utils:ShortPath(unit, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the unit using one of the methods below"))
     else
         self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
     end
@@ -593,7 +588,7 @@ end
 
 function AssetsManagerDialog:add_package(package)
     self:check_data()
-    local project = BeardLibEditor.MapProject
+    local project = BLE.MapProject
     local level_packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     table.insert(level_packages, package)
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
@@ -603,11 +598,11 @@ function AssetsManagerDialog:add_package(package)
     if PackageManager:package_exists(package) and not PackageManager:loaded(package) then
         PackageManager:load(package)
     else
-        BeardLibEditor:log("[Warning] Something went wrong in AssetsManagerDialog:add_package_dialog")
+        BLE:log("[Warning] Something went wrong in AssetsManagerDialog:add_package_dialog")
     end
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
-    project:map_editor_save_main_xml(self._tbl._data)
-    project:_reload_mod(self._tbl._data.name)
+    project:save_main_xml(self._tbl._data)
+    project:reload_mod(self._tbl._data.name)
     self:reload()
 end
 
@@ -617,22 +612,22 @@ function AssetsManagerDialog:all_ok_dialog()
         local opt = {title = "Hooray!", message = "All units are now loaded!", force = true}
         if Global.editor_safe_mode then
             opt.message = opt.message .. " Load to normal mode?"
-            BeardLibEditor.Utils:QuickDialog(opt, {{"Yes", function()
+            BLE.Utils:QuickDialog(opt, {{"Yes", function()
                 Global.editor_safe_mode = nil
                 managers.game_play_central:restart_the_game()
             end}})
         else
-            BeardLibEditor.Dialog:Show(opt)
+            BLE.Dialog:Show(opt)
         end        
     end
 end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
-    local level_packages = BeardLibEditor.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
-    for name in pairs(BeardLibEditor.DBPackages) do
+    local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
+    for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
-            local size = BeardLibEditor.Utils:GetPackageSize(name)
+            local size = BLE.Utils:GetPackageSize(name)
             table.insert(packages, {package = name, name = size and string.format("%s(%.2fmb)", name, size) or name, package_size = size})
         end
     end
@@ -645,13 +640,13 @@ function AssetsManagerDialog:add_package_dialog()
         end
         return a.package_size < b.package_size
     end)
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = packages,
         force = true,
         callback = function(item)
             self:add_package(item.package)
             if not ctrl() then
-                BeardLibEditor.ListDialog:hide()
+                BLE.ListDialog:hide()
             end
         end
     })
@@ -659,8 +654,8 @@ function AssetsManagerDialog:add_package_dialog()
 end
 
 function AssetsManagerDialog:remove_package(package, item)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
-        local project = BeardLibEditor.MapProject
+    BLE.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
+        local project = BLE.MapProject
         local packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
         for i, pkg in ipairs(packages) do
             if pkg == package then
@@ -668,7 +663,7 @@ function AssetsManagerDialog:remove_package(package, item)
                 break
             end
         end
-        local p_units = BeardLibEditor.DBPackages[package].units
+        local p_units = BLE.DBPackages[package].units
         local can_remove = p_units ~= nil
         if can_remove then
             for k, unit in pairs(World:find_units_quick("all")) do
@@ -684,8 +679,7 @@ function AssetsManagerDialog:remove_package(package, item)
             managers.worlddefinition:_unload_package(package)
         end
         item:Destroy()
-        project:map_editor_save_main_xml(self._tbl._data)
-        project:_reload_mod(self._tbl._data.name)
+        project:save_main_xml(self._tbl._data)
         self:reload()
     end)
 end

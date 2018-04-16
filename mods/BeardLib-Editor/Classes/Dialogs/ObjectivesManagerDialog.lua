@@ -23,8 +23,7 @@ function ObjectivesManagerDialog:_Show()
     self._params = nil
     self._objectives = nil
     local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(mod._clean_config)
+    local mod, data = project:get_mod_and_config()
     if data then
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local sdm = level.script_data_mods
@@ -33,7 +32,7 @@ function ObjectivesManagerDialog:_Show()
                 if mod._meta == "mod" and mod.target_ext == "objective" then
                     self._replacement_type = mod.replacement_type
                     self._objectvies_path = Path:Combine(project:current_path(), sdm.directory, mod.replacement)
-                    self._objectives = FileIO:ReadScriptDataFrom(self._objectvies_path, self._replacement_type)
+                    self._objectives = FileIO:ReadScriptData(self._objectvies_path, self._replacement_type)
                     break
                 end
             end
@@ -98,7 +97,7 @@ function ObjectivesManagerDialog:remove_objective(objective)
 end
 
 function ObjectivesManagerDialog:save_and_reload()
-    FileIO:WriteScriptDataTo(self._objectvies_path, self._objectives, self._replacement_type)
+    FileIO:WriteScriptData(self._objectvies_path, self._objectives, self._replacement_type)
     for _, objective in ipairs(self._objectives) do
         if objective._meta == "objective" then
             managers.objectives:_parse_objective(objective)

@@ -311,7 +311,7 @@ function CubemapCreator:_create_cube_map()
 
 	self._cube_counter = self._cube_counter + 1
 
-	if self._params.spot then
+	--[[if self._params.spot then
 		if self._cube_counter == 1 then
 			self:_create_spot_projection()
 		elseif self._cube_counter == 2 then
@@ -321,7 +321,7 @@ function CubemapCreator:_create_cube_map()
 		end
 
 		return true
-	end
+	end]]
 
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))

@@ -491,7 +491,7 @@ function Static:add_selection_to_prefabs(item, prefab_name)
     		return
     	end
         BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(remove_old_links and remove_old_links:Value() or true)
-        FileIO:WriteScriptDataTo(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+        FileIO:WriteScriptData(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
         remove_old_links = self:Toggle("RemoveOldLinks", nil, true, {text = "Remove Old Links Of Copied Elements", group = input_menu})
     end})
@@ -1014,11 +1014,10 @@ end
 function Static:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
     local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
     local missing_units = {}
     local missing
     local assets = self:GetPart("world")._assets_manager
-    local data = mod and project:get_clean_data(mod._clean_config)
+    local mod, data = project:get_mod_and_config()
     local unit_ids = Idstring("unit")
     local add
     if data then

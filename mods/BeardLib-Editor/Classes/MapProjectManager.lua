@@ -1,41 +1,42 @@
 MapProjectManager = MapProjectManager or class()
 local U = BeardLib.Utils
+local XML = U.XML
 local Project = MapProjectManager
-function Project:init()
-    self._templates_directory = U.Path:Combine(BLE.ModPath, "Templates")
-    local add_xml = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Level/add.xml"))
-    local main_xml = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "Project/main.xml"))
-    if add_xml and main_xml then
-        self._main_xml_template = ScriptSerializer:from_custom_xml(main_xml)
-        self._add_xml_template = ScriptSerializer:from_custom_xml(add_xml)
-    else
-        BLE:log("[ERROR] Failed reading main/add.xml templates!")
-    end
-    local data = FileIO:ReadFrom(U.Path:Combine(self._templates_directory, "LevelModule.xml"))
-    self._level_module_template = ScriptSerializer:from_custom_xml(data)
+local CXML = "custom_xml"
 
-    local menu = BLE.Menu
-    self._diffs = {
-        "Normal",
-        "Hard",
-        "Very Hard",
-        "Overkill",
-        "Mayhem",
-        "Death Wish",
-        "One Down"
-    }       
-    self._menu = menu:make_page("Projects")
+function Project:init()
+    self._diffs = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish", "One Down"}       
+    self._templates_directory = Path:Combine(BLE.ModPath, "Templates")
+    self._add_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
+    self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
+    self._level_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
+
+    self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})
     MenuUtils:new(self)
-    local btns = self:DivGroup("QuickActions", {w = 300})
-    self:Button("NewProject", callback(self, self, "new_project_dialog", ""), {group = btns})
-    self:Button("CloneExistingHeist", callback(self, self, "select_narr_as_project"), {group = btns})
-    self:Button("EditExistingProject", callback(self, self, "select_project_dialog"), {group = btns})
-    self._curr_editing = self:DivGroup("CurrEditing", {auto_height = false, h = 600})
+
+    local btns = self:Menu("QuickActions", {align_method = "centered_grid", inherit_values = {
+        offset = 4,
+        scrollbar = false,
+        text_align = "center"
+    }})
+    local opt = {group = btns, w = btns:ItemsWidth() / 3, border_bottom = true}
+    self:Button("NewProject", ClassClbk(self, "new_project_dialog", ""), opt)
+    self:Button("CloneExistingHeist", ClassClbk(self, "select_narr_as_project"), opt)
+    self:Button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
+    self._curr_editing = self:DivGroup("CurrEditing", {
+        private = {size = 24},
+        border_left = false,
+        auto_height = false, h = self._menu:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2
+    })
     self:set_edit_title()
 end
 
+function Project:ReadConfig(file)
+    return FileIO:ReadScriptData(file, CXML, true)
+end
+
 function Project:current_level(data)
-    for _, level in pairs(BeardLib.Utils:GetNodeByMeta(data, "level", true) or {}) do
+    for _, level in pairs(XML:GetNodes(data, "level")) do
         if level.id == Global.game_settings.level_id then
             return level
         end
@@ -51,23 +52,19 @@ function Project:maps_path()
     return BeardLib.current_level._config.include.directory
 end
 
-function Project:map_editor_save_main_xml(data, no_reload)
-    self:map_editor_save_xml("main.xml", self:get_clean_data(data))
+function Project:save_main_xml(data, no_reload)
+    self:save_xml("main.xml", data)
     if not no_reload then
-        self:_reload_mod(data.name)
+        self:reload_mod(data.name)
     end
 end
 
-function Project:map_editor_save_xml(file, data)
-    FileIO:WriteScriptDataTo(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml")
+function Project:save_xml(file, data)
+    FileIO:WriteScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml", true)
 end
 
-function Project:map_editor_read_xml(file, clean)
-    local data = FileIO:ReadScriptDataFrom(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), "custom_xml")
-    if clean and data then
-        data = BeardLib.Utils:CleanCustomXmlTable(data)
-    end
-    return data
+function Project:read_xml(file)
+    return FileIO:ReadScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), "custom_xml", true)
 end
 
 function Project:current_path()
@@ -77,7 +74,7 @@ end
 
 function Project:current_level_path()
     local path = self:current_path()
-    return path and U.Path:Combine(path, self:maps_path())
+    return path and Path:Combine(path, self:maps_path())
 end
 
 function Project:set_edit_title(title)
@@ -94,7 +91,7 @@ end
 
 function Project:get_project_by_narrative_id(narr)
     for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
-        local narrative = U:GetNodeByMeta(data, "narrative")
+        local narrative = XML:GetNode(data, "narrative")
         if narrative and narrative.id == narr.id then
             return mod
         end
@@ -119,12 +116,7 @@ function Project:get_packages_of_level(level)
 end
 
 function Project:get_level_by_id(t, id)
-    local levels = U:GetNodeByMeta(t, "level", true)
-    if not levels then
-        log(tostring(t))
-        log(debug.traceback())
-    end
-    for _, level in pairs(levels) do
+    for _, level in pairs(XML:GetNodes(t, "level")) do
         if level.id == id then
             return level
         end
@@ -133,7 +125,19 @@ end
 
 local ignore_modules = {["GlobalValue"] = true}
 
-function Project:get_clean_mod_config(mod)
+function Project:get_mod_and_config()
+    local mod = self:current_mod()
+    if mod then
+        return mod, self:get_clean_config(mod)
+    end
+    return nil, nil
+end
+
+function Project:get_clean_config(mod, do_clone)
+    mod = mod or self:current_mod()
+    if not mod then
+        return
+    end
     local config = deep_clone(mod._clean_config)
     if mod._modules then
         for i, module in pairs(mod._modules) do
@@ -142,28 +146,8 @@ function Project:get_clean_mod_config(mod)
             end
         end
     end
-    return config
-end
-
-function Project:get_clean_data(t, no_clone)
-    local data = U:CleanCustomXmlTable(not no_clone and deep_clone(t) or t, true)
-    for _, v in pairs({"AddFiles", "Hooks"}) do
-        BeardLib.Utils:CleanCustomXmlTable(U:GetNodeByMeta(data, v))
-    end
-    for _, narrative in pairs(U:GetNodeByMeta(data, "narrative", true)) do
-        U:RemoveAllNumberIndexes(narrative, true)
-    end
-    --TODO: remove key tables, use metas only.
-    for _, level in pairs(table.list_add(U:GetNodeByMeta(data, "instance", true), U:GetNodeByMeta(data, "level", true))) do
-        U:RemoveAllNumberIndexes(level, true)
-        for _, v in pairs({"include", "assets", "script_data_mods", "add", "hooks", "packages"}) do
-            if level and level[v] then
-                level[v] = BeardLib.Utils:CleanCustomXmlTable(level[v])
-            end
-        end
-    end
-
-    return data
+    local data = XML:Clean(config)
+    return do_clone and deep_clone(data) or data
 end
 
 function Project:load_temp_package(p)
@@ -216,7 +200,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
                 end
                 local infolder = path:gsub(level_dir, "")                
                 local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name.."."..typ
-                FileIO:WriteScriptDataTo(Path:Combine(custom_level_dir, file), data, "binary")
+                FileIO:WriteScriptData(Path:Combine(custom_level_dir, file), data, "binary")
                 table.insert(level.include, {_meta = "file", file = file, type = "binary"})
             else
                 BeardLibEditor:log("[add_existing_level_to_project][extra_file] File is unloaded %s", inpath)
@@ -241,7 +225,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
                     table.insert(add, {_meta = "texture", path = file_path})
                 end
             end
-            FileIO:WriteScriptDataTo(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
+            FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
         end
 
         extra_package(level_dir.."world")
@@ -280,9 +264,9 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
 end
 
 function Project:existing_narr_new_project_clbk_finish(data, narr)
-    local mod_path = U.Path:Combine(BeardLib.config.maps_dir, data.name)
-    PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
-    FileIO:WriteScriptDataTo(U.Path:Combine(mod_path, "main.xml"), data, "custom_xml")
+    local mod_path = Path:Combine(BeardLib.config.maps_dir, data.name)
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
+    FileIO:WriteScriptData(Path:Combine(mod_path, "main.xml"), data, "custom_xml")
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
     BLE.LoadLevel:load_levels()
@@ -298,8 +282,8 @@ end
 
 function Project:existing_narr_new_project_clbk(selection, t, name)
     if t then
-        local data = deep_clone(self:get_clean_data(self._main_xml_template))
-        local narr = U:GetNodeByMeta(data, "narrative")
+        local data = deep_clone(self._main_xml_template)
+        local narr = XML:GetNode(data, "narrative")
         table.merge(narr, deep_clone(selection.narr))
         data.name = t.name
         narr.id = t.name
@@ -341,7 +325,7 @@ function Project:select_narr_as_project()
         list = levels,
         callback = function(selection)
             BLE.ListDialog:hide()   
-            self:new_project_dialog("", callback(self, self, "existing_narr_new_project_clbk", selection))
+            self:new_project_dialog("", ClassClbk(self, "existing_narr_new_project_clbk", selection))
         end
     })  
 end
@@ -349,7 +333,7 @@ end
 function Project:select_project_dialog()
     BLE.ListDialog:Show({
         list = self:get_projects_list(),
-        callback = callback(self, self, "select_project")
+        callback = ClassClbk(self, "select_project")
     }) 
 end
 
@@ -357,26 +341,26 @@ function Project:select_project(selection)
     self:_select_project(selection.mod)
 end
 
-function Project:_reload_mod(name)
+function Project:reload_mod(name)
     BeardLib.managers.MapFramework._loaded_mods[name] = nil
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
+    BLE.LoadLevel:load_levels()
 end
 
-function Project:reload_mod(old_name, name, save_prev)
+function Project:do_reload_mod(old_name, name, save_prev)
     local mod = self._current_mod
     if mod._modules then
         for _, module in pairs(mod._modules) do
             module.Registered = false
         end
     end
-    self:_reload_mod(old_name)
+    self:reload_mod(old_name)
     if BeardLib.managers.MapFramework._loaded_mods[name] then
         self:_select_project(BeardLib.managers.MapFramework._loaded_mods[name], save_prev)
     else
         BLE:log("[Warning] Something went wrong while trying reload the project")
     end
-    BLE.LoadLevel:load_levels()
 end
 
 function Project:_select_project(mod, save_prev)
@@ -388,11 +372,11 @@ function Project:_select_project(mod, save_prev)
     end
     self._current_mod = mod
     BLE.ListDialog:hide()
-    self:edit_main_xml(self:get_clean_mod_config(mod), function()        
+    self:edit_main_xml(self:get_clean_config(mod, true), function()        
         local t = self._current_data
         local id = t.orig_id or t.name
-        local map_path = U.Path:Combine(BeardLib.config.maps_dir, id)
-        local levels = U:GetNodeByMeta(t, "level", true)
+        local map_path = Path:Combine(BeardLib.config.maps_dir, id)
+        local levels = XML:GetNodes(t, "level")
         local something_changed
         for _, level in pairs(levels) do
             if level.orig_id then
@@ -409,16 +393,16 @@ function Project:_select_project(mod, save_prev)
             end
         end
         t.orig_id = nil
-        FileIO:WriteTo(U.Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, "custom_xml"))
+        FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, "custom_xml", true))
         mod._clean_config = t
         if t.name ~= id then
             tweak_data.narrative.jobs[id] = nil
             table.delete(tweak_data.narrative._jobs_index, id)
-            FileIO:MoveTo(map_path, U.Path:Combine(BeardLib.config.maps_dir, t.name))
+            FileIO:MoveTo(map_path, Path:Combine(BeardLib.config.maps_dir, t.name))
             something_changed = true
         end
         if something_changed then
-            self:reload_mod(id, t.name)
+            self:do_reload_mod(id, t.name)
         end
     end)
 end
@@ -429,8 +413,8 @@ function Project:new_project_dialog(name, clbk, no_callback)
         yes = "Create project",
         text = name or "",
         no_callback = no_callback,
-        check_value = callback(self, self, "check_narrative_name"),
-        callback = callback(self, self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or callback(self, self, "new_project_clbk"))
+        check_value = ClassClbk(self, "check_narrative_name"),
+        callback = ClassClbk(self, "new_project_dialog_clbk", type(clbk) == "function" and clbk or ClassClbk(self, "new_project_clbk"))
     })
 end
 
@@ -440,13 +424,13 @@ function Project:new_level_dialog(name, clbk, no_callback)
         yes = "Create level",
         text = name or "",
         no_callback = no_callback,
-        check_value = callback(self, self, "check_level_name"),
-        callback = type(clbk) == "function" and clbk or callback(self, self, "create_new_level")
+        check_value = ClassClbk(self, "check_level_name"),
+        callback = type(clbk) == "function" and clbk or ClassClbk(self, "create_new_level")
     })
 end
 
 function Project:delete_level_dialog(level)
-    BLE.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", callback(self, self, "delete_level_dialog_clbk", level))
+    BLE.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", ClassClbk(self, "delete_level_dialog_clbk", level))
 end
 
 function Project:delete_level_dialog_clbk(level)
@@ -455,7 +439,7 @@ function Project:delete_level_dialog_clbk(level)
         BLE:log("[ERROR] Project needed to delete levels!")
         return
     end
-    local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
+    local chain = XML:GetNode(self._current_data, "narrative").chain
     local level_id = type(level) == "table" and level.id or level
     for k, v in pairs(chain) do
         if success then
@@ -476,7 +460,7 @@ function Project:delete_level_dialog_clbk(level)
         end
     end
     if type(level) == "table" then
-        FileIO:Delete(U.Path:Combine(BeardLib.config.maps_dir, t.name, level.include.directory))
+        FileIO:Delete(Path:Combine(BeardLib.config.maps_dir, t.name, level.include.directory))
         if tweak_data.levels[level_id].custom then
             tweak_data.levels[level_id] = nil
         end
@@ -486,7 +470,7 @@ function Project:delete_level_dialog_clbk(level)
     if save then
         save:RunCallback()
     end   
-    self:reload_mod(t.name, t.name, true)
+    self:do_reload_mod(t.name, t.name, true)
 end
 
 function Project:create_new_level(name)
@@ -495,30 +479,30 @@ function Project:create_new_level(name)
         BLE:log("[ERROR] Project needed to create levels!")
         return
     end
-    local narr = U:GetNodeByMeta(t, "narrative")
-    local level = U:RemoveAllNumberIndexes(self._level_module_template, true)
+    local narr = XML:GetNode(t, "narrative")
+    local level = deep_clone(self._level_module_template)
     table.insert(t, level)
     level.id = name
-    local proj_path = U.Path:Combine(BeardLib.config.maps_dir, t.name)
-    local level_path = U.Path:Combine("levels", level.id)
+    local proj_path = Path:Combine(BeardLib.config.maps_dir, t.name)
+    local level_path = Path:Combine("levels", level.id)
     table.insert(narr.chain, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
     level.include.directory = level_path
-    FileIO:WriteTo(U.Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(t, "custom_xml"))
-    FileIO:MakeDir(U.Path:Combine(proj_path, level_path))
-    FileIO:CopyToAsync(U.Path:Combine(self._templates_directory, "Level"), U.Path:Combine(proj_path, level_path))
-    self:reload_mod(t.name, t.name, true)
+    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, CXML, true)
+    FileIO:MakeDir(Path:Combine(proj_path, level_path))
+    FileIO:CopyToAsync(Path:Combine(self._templates_directory, "Level"), Path:Combine(proj_path, level_path))
+    self:do_reload_mod(t.name, t.name, true)
 end
 
 function Project:create_new_narrative(name)
-    local data = self:get_clean_data(self._main_xml_template)
-    local narr = U:GetNodeByMeta(data, "narrative")
+    local data = deep_clone(self._main_xml_template)
+    local narr = XML:GetNode(data, "narrative")
     data.name = name
     narr.id = name
-    local proj_path = U.Path:Combine(BeardLib.config.maps_dir, name)
-    FileIO:CopyTo(U.Path:Combine(self._templates_directory, "Project"), proj_path)
-    FileIO:MakeDir(U.Path:Combine(proj_path, "assets"))
-    FileIO:MakeDir(U.Path:Combine(proj_path, "levels"))
-    FileIO:WriteTo(U.Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, "custom_xml"))  
+    local proj_path = Path:Combine(BeardLib.config.maps_dir, name)
+    FileIO:CopyTo(Path:Combine(self._templates_directory, "Project"), proj_path)
+    FileIO:MakeDir(Path:Combine(proj_path, "assets"))
+    FileIO:MakeDir(Path:Combine(proj_path, "levels"))
+    FileIO:WriteTo(Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, "custom_xml", true))  
     return data 
 end
 
@@ -562,7 +546,7 @@ function Project:new_project_clbk(data, name)
     BLE.LoadLevel:load_levels()
     local mod = BeardLib.managers.MapFramework._loaded_mods[name]
     self:_select_project(mod, true)
-    BLE.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", callback(self, self, "new_level_dialog", "")}})
+    BLE.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", ClassClbk(self, "new_level_dialog", "")}})
 end
 
 function Project:add_exisiting_level_dialog()
@@ -575,7 +559,7 @@ function Project:add_exisiting_level_dialog()
     BLE.ListDialog:Show({
         list = levels,
         callback = function(seleciton)
-            local chain = U:GetNodeByMeta(self._current_data, "narrative").chain
+            local chain = XML:GetNode(self._current_data, "narrative").chain
             table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
             BLE.ListDialog:hide()
             self:_select_project(self._current_mod, true)
@@ -585,7 +569,7 @@ end
 
 function Project:set_crimenet_videos_dialog()
     local t = self._current_data
-    local narr = U:GetNodeByMeta(self._current_data, "narrative")
+    local narr = XML:GetNode(self._current_data, "narrative")
     BLE.SelectDialog:Show({
         selected_list = narr.crimenet_videos,
         list = BLE.Utils:GetEntries({type = "movie", check = function(entry)
@@ -598,15 +582,14 @@ end
 function Project:edit_main_xml(data, save_clbk)
     self:reset_menu()
     self:set_edit_title(tostring(data.name))
-    data = self:get_clean_data(data)
-    local narr = U:GetNodeByMeta(data, "narrative")
-    local levels = U:GetNodeByMeta(data, "level", true)
+    local narr = XML:GetNode(data, "narrative")
+    local levels = XML:GetNodes(data, "level")
     if not narr then
         BLE:log("[ERROR] Narrative data is missing from the main.xml!")
         return
     end
-    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, border_bottom = true, border_left = false}
-    local up = callback(self, self, "set_project_data")
+    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, private = {size = 22}}
+    local up = ClassClbk(self, "set_project_data")
     local narrative = self:DivGroup("Narrative", divgroup_opt)
     self:TextBox("ProjectName", up, data.name, {group = narrative})
     local contacts = table.map_keys(tweak_data.narrative.contacts)
@@ -617,9 +600,9 @@ function Project:edit_main_xml(data, save_clbk)
 
     self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
     self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
-    self:Button("SetCrimenetVideos", callback(self, self, "set_crimenet_videos_dialog"), {group = narrative})
+    self:Button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"), {group = narrative})
     local updating = self:DivGroup("Updating", divgroup_opt)
-    local mod_assets = U:GetNodeByMeta(data, "AssetUpdates")
+    local mod_assets = XML:GetNodes(data, "AssetUpdates")
     if not mod_assets then
         mod_assets = {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop", use_local_dir = true}
         table.insert(data, mod_assets)
@@ -629,11 +612,13 @@ function Project:edit_main_xml(data, save_clbk)
     end
     self:TextBox("DownloadId", up, mod_assets.id, {group = updating, filter = "number", floats = 0})
     self:TextBox("Version", up, mod_assets.version, {group = updating, filter = "number"})
-    self:Toggle("Downloadable", up, mod_assets.is_standalone ~= false, {group = updating})
+    self:Toggle("Downloadable", up, mod_assets.is_standalone ~= false, {group = updating, 
+        help = "Can the level be downloaded by clients connecting? this can only work if the level has no extra dependencies"
+    })
 
     local chain = self:DivGroup("Chain", divgroup_opt)
-    self:Button("AddExistingLevel", callback(self, self, "add_exisiting_level_dialog"), {group = chain})
-    self:Button("AddNewLevel", callback(self, self, "new_level_dialog", ""), {group = chain})
+    self:Button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"), {group = chain})
+    self:Button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""), {group = chain})
     local levels_group = self:DivGroup("Levels", {group = chain, last_y_offset = 6})
     local function get_level(level_id)
         for _, v in pairs(levels) do
@@ -642,6 +627,7 @@ function Project:edit_main_xml(data, save_clbk)
             end
         end
     end
+    local level_ids = {}
     local function build_level_ctrls(level_in_chain, chain_group, btn, level)
         local narr_chain = chain_group or narr.chain
         local my_index = table.get_key(narr_chain, level_in_chain)
@@ -654,7 +640,7 @@ function Project:edit_main_xml(data, save_clbk)
             }, opt or {}))
         end
         if level_in_chain.level_id then
-            small_button(tostring(i), callback(self, self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
+            small_button(tostring(i), ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
             if chain_group then
                 small_button("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), {156, 54, 48, 48})
             else
@@ -712,6 +698,9 @@ function Project:edit_main_xml(data, save_clbk)
 
     local diff_settings_opt = {group = diff_settings_holder, w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, items_size = 18}
     local diff_settings_texts = self:DivGroup("Setting", diff_settings_opt)
+    
+    diff_settings_opt.border_left = false 
+
     local div_texts_opt = {group = diff_settings_texts, size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
     self:Divider("Contract Cost", div_texts_opt)
     self:Divider("Payout", div_texts_opt)
@@ -747,23 +736,38 @@ function Project:edit_main_xml(data, save_clbk)
     end
 
     small_button("Save", save_clbk)
-    --small_button("Delete", callback(self, self, "delete_project"))
-    small_button("Close", callback(self, self, "disable"))
+    small_button("Delete", ClassClbk(self, "delete_project", self._current_mod))
+    small_button("Close", ClassClbk(self, "disable"))
     self._current_data = data
-    self._refresh_func = function() self:edit_main_xml(data, save_clbk) end
+    self._refresh_func = ClassClbk(self, "edit_main_xml", data, save_clbk)
 end
 
-function Project:delete_project(item)
-    BLE.Utils:YesNoQuestion("This will delete the project [note: this will delete all files of the project and this cannot be undone!]", function()
-        FileIO:Delete(Path:Combine("Maps", self._current_data.name))
-        self:disable()
+function Project:delete_project(mod, item)
+    BLE.Utils:YesNoQuestion("This will delete the project and its files completely. This cannot be undone!", function()
+        BLE.Utils:YesNoQuestion("Are you 100% sure?", function()
+            FileIO:Delete(Path:Combine("Maps", self._current_data.name))
+            local narr = tweak_data.narrative.jobs[mod.Name]
+            if narr and narr.custom then
+                tweak_data.narrative.jobs[mod.Name] = nil
+                table.delete(tweak_data.narrative._jobs_index, mod.Name)
+            end
+            for _, level in pairs(XML:GetNodes(self._current_data, "level")) do
+                local tweak = tweak_data.levels[level.id]
+                if tweak and tweak.custom then
+                    tweak_data.levels[level.id] = nil
+                    table.delete(tweak_data.levels._level_index, level.id)
+                end
+            end
+            self:reload_mod(mod.Name)
+            self:disable()
+        end)
     end)
 end
 
 function Project:set_project_data(item)
     local t = self._current_data  
-    local narr = U:GetNodeByMeta(t, "narrative")
-    local mod_assets = U:GetNodeByMeta(t, "AssetUpdates")
+    local narr = XML:GetNode(t, "narrative")
+    local mod_assets = XML:GetNode(t, "AssetUpdates")
     local old_name = t.orig_id or t.name
     t.name = self:GetItem("ProjectName"):Value()
     local title = tostring(t.name)
@@ -804,7 +808,7 @@ end
 
 function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
     self._curr_editing:ClearItems()
-    local up = callback(self, self, "set_project_level_data", level_in_chain)
+    local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
     self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
     self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
     level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
@@ -820,7 +824,7 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     local aitype = table.map_keys(LevelsTweakData.LevelType)
     self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
     self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
-    self:Button("ManageMissionAssets", callback(self, self, "set_mission_assets_dialog"), {group = self._curr_editing})
+    self:Button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level), {group = self._curr_editing})
     local near = self:GetItem("Close")
     local function small_button(name, clbk, texture_rect)
         near = self:SmallButton(name, clbk, self._curr_editing, {
@@ -841,12 +845,12 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     end
     small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
     self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))
-    self._refresh_func = function() self:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk) end
+    self._refresh_func = ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk)
 end
 
-function Project:set_mission_assets_dialog()
+function Project:set_mission_assets_dialog(level)
     local selected_assets = {}
-    for _, asset in pairs(U:GetNodeByMeta(self._current_data, "level").assets) do
+    for _, asset in pairs(level.assets) do
         if type(asset) == "table" and asset._meta == "asset" then
             table.insert(selected_assets, {name = asset.name, value = asset.exclude == true})
         end
@@ -865,7 +869,7 @@ function Project:set_mission_assets_dialog()
             for _, asset in pairs(list) do
                 table.insert(new_assets, {_meta = "asset", name = asset.name, exclude = asset.value == true and true or nil})
             end
-            U:GetNodeByMeta(self._current_data, "level").assets = new_assets
+            level.assets = new_assets
         end
 	})
 end
@@ -908,9 +912,7 @@ function Project:group_level(narr, level_in_chain)
     })
 end
 
-function Project:set_project_level_data(level_in_chain)
-    local t = self._current_data
-    local level = U:GetNodeByMeta(t, "level")   
+function Project:set_project_level_data(level_in_chain, level)
     local old_name = level.orig_id or level.id
     level.id = self:GetItem("LevelId"):Value()
     local title = tostring(t.name) .. ":" .. tostring(level.id)

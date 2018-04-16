@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<unit name="environment_area" type="envrionment" slot="10">
+<unit name="environment_area" type="environment" slot="10">
   <object file="core/units/environment_area/environment_area" />
   <movers />
   <dependencies />
