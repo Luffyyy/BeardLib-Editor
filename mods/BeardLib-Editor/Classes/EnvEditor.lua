@@ -462,20 +462,20 @@ function EnvEditor:open_default_custom_environment()
         if FileIO:Exists(file_path) then
             self:open_environment(file_path)
         else
-            BeardLibEditor.Utils:Notify("ERROR!", "This is not a valid environment file!! "..file_path)
+            BLE.Utils:Notify("ERROR!", "This is not a valid environment file!! "..file_path)
         end
     end
 end
 
 function EnvEditor:uninclude_environment_dialog(item)
-    BeardLibEditor.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
+    BLE.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
         local pname = item.override_panel.name
         FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
         self:GetPart("opt"):save_main_xml()
         local env = pname:gsub(".environment", "")
         Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
-        BeardLibEditor:LoadCustomAssets()
+        BLE:LoadCustomAssets()
         self:load_included_environments()
     end)
 end
@@ -483,18 +483,18 @@ end
 function EnvEditor:include_current_dialog(name)
     local level = BeardLib.current_level
     local env_dir = Path:Combine(level._mod.ModPath, level._config.include.directory, "environments")
-    BeardLibEditor.InputDialog:Show({
+    BLE.InputDialog:Show({
         title = "Environment name:",
         text = type(name) == "string" and name or self._last_custom and Path:GetFileNameWithoutExtension(self._last_custom) or "",
         check_value = function(name)
             if FileIO:Exists(Path:Combine(env_dir, name..".environment")) then
-                BeardLibEditor.Utils:Notify("Error", string.format("Envrionment with the name %s already exists! Please use a unique name", name))
+                BLE.Utils:Notify("Error", string.format("Envrionment with the name %s already exists! Please use a unique name", name))
                 return false
             elseif name == "" then
-                BeardLibEditor.Utils:Notify("Error", string.format("Name cannot be empty!", name))
+                BLE.Utils:Notify("Error", string.format("Name cannot be empty!", name))
                 return false
             elseif string.begins(name, " ") then
-                BeardLibEditor.Utils:Notify("Error", "Invalid ID!")
+                BLE.Utils:Notify("Error", "Invalid ID!")
                 return false
             end
             return true
@@ -502,8 +502,8 @@ function EnvEditor:include_current_dialog(name)
         callback = function(name)
             self:write_to_disk(Path:Combine(env_dir, name..".environment"))
             self:GetPart("opt"):save_main_xml({{_meta = "file", file = Path:Combine("environments", name..".environment"), type = "custom_xml"}})
-            BeardLibEditor.MapProject:_reload_mod(level._mod.Name)
-            BeardLibEditor:LoadCustomAssets()
+            BLE.MapProject:reload_mod(level._mod.Name)
+            BLE:LoadCustomAssets()
             self:load_included_environments()
         end
     })
@@ -530,26 +530,26 @@ function EnvEditor:open_environment(file)
     end
     if underlay then
         if PackageManager:has(Idstring("scene"), underlay:id()) then
-            BeardLibEditor.FBD:hide()
+            BLE.FBD:hide()
             local env_mangaer = managers.viewport._env_manager
             env_mangaer._env_data_map[file] = {}
             env_mangaer:_load_env_data(nil, env_mangaer._env_data_map[file], data.data)
             self._env_path = file
             self._last_custom = file
             self:load_env(data)
-            BeardLibEditor.Utils:Notify("Success!", "Environment is loaded "..file)
+            BLE.Utils:Notify("Success!", "Environment is loaded "..file)
         else
-            BeardLibEditor.FBD:hide()
-            BeardLibEditor.Utils:Notify("ERROR!", "Could not loaded environment because underlay scene is unloaded "..file)
+            BLE.FBD:hide()
+            BLE.Utils:Notify("ERROR!", "Could not loaded environment because underlay scene is unloaded "..file)
         end
     else
-        BeardLibEditor.FBD:hide()
-        BeardLibEditor.Utils:Notify("ERROR!", "This is not a valid environment file!! "..file)
+        BLE.FBD:hide()
+        BLE.Utils:Notify("ERROR!", "This is not a valid environment file!! "..file)
     end
 end
 
 function EnvEditor:open_environment_dialog()
-    BeardLibEditor.FBD:Show({where = string.gsub(Application:base_path(), "\\", "/"), extensions = {"environment", "xml"}, file_click = callback(self, self, "open_environment")})
+    BLE.FBD:Show({where = string.gsub(Application:base_path(), "\\", "/"), extensions = {"environment", "xml"}, file_click = callback(self, self, "open_environment")})
 end
 
 function EnvEditor:write_to_disk(filepath)
@@ -569,14 +569,14 @@ function EnvEditor:write_to_disk(filepath)
         file:print("\t</data>\n")
         file:print("</environment>\n")
         file:close()
-        BeardLibEditor.Utils:Notify("Success!", "Saved environment "..filepath)
+        BLE.Utils:Notify("Success!", "Saved environment "..filepath)
     end
 end
 
 function EnvEditor:write_to_disk_dialog()
-    BeardLibEditor.InputDialog:Show({title = "Environment file save path:", text = self._last_custom or "new_environment.environment", callback = function(filepath)
+    BLE.InputDialog:Show({title = "Environment file save path:", text = self._last_custom or "new_environment.environment", callback = function(filepath)
         if filepath == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Environment file path cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Environment file path cannot be empty!", callback = function()
                 self:write_to_disk_dialog()
             end})
             return
