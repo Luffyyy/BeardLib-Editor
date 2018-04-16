@@ -14,6 +14,7 @@ function CubemapCreator:_init_paths()
 	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
+	FileIO:MakeDir(self._temp_path)
 end
 
 function CubemapCreator:update(t, dt)
@@ -310,7 +311,7 @@ function CubemapCreator:_create_cube_map()
 
 	self._cube_counter = self._cube_counter + 1
 
-	if self._params.spot then
+	--[[if self._params.spot then
 		if self._cube_counter == 1 then
 			self:_create_spot_projection()
 		elseif self._cube_counter == 2 then
@@ -320,7 +321,7 @@ function CubemapCreator:_create_cube_map()
 		end
 
 		return true
-	end
+	end]]
 
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))
@@ -415,10 +416,9 @@ function CubemapCreator:_move_output(output_path)
 	-- Moving from temp to assets
 	if FileIO:Exists(final_path) then
 		FileIO:Delete(final_path)
-	else
-		FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
-		FileIO:MoveTo(self._params.source_path .. output, final_path)
 	end
+	FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
+	FileIO:MoveTo(self._params.source_path .. output, final_path)
 
 	-- Updating Add.xml
 	local file_path = Path:Combine(self._params.output_path, tostring(self._output_name))
@@ -436,5 +436,5 @@ function CubemapCreator:_move_output(output_path)
 end
 
 function CubemapCreator:notify_success()
-	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!. ")
+	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!")
 end

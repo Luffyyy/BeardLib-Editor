@@ -1,6 +1,6 @@
 from os import path, rename, remove
-import sys
-import subprocess, getopt, argparse
+import sys, logging
+import subprocess, argparse
 
 import_status = False
 try:
@@ -27,20 +27,19 @@ def get_args(args_v):
     
     args = parser.parse_args(args_v)
 
-    print(args.type)
     if not args.type:
-        print("[ERROR] Incorrect argument specified")
+        logging.warning("[ERROR] Incorrect argument specified")
         sys.exit(1)
 
     return args.type, args.i, args.o
 
 def move_and_rename_cubemap(cubemap_name):
     cubemap_path = path.abspath("") + "\\"
-    print(cubemap_path + o)
-    cubemap_name_new = o[:-4] + ".texture"
+    print(cubemap_path + cubemap_name)
+    cubemap_name_new = cubemap_name[:-4] + ".texture"
     
     if not path.isfile(dir_path + temp + cubemap_name_new):
-        rename(cubemap_path + o, dir_path + temp + cubemap_name_new)
+        rename(cubemap_path + cubemap_name, dir_path + temp + cubemap_name_new)
     if path.isfile(dir_path + temp + cubemap_name):
         remove(dir_path + temp + cubemap_name)
     sys.exit(0)
@@ -59,9 +58,12 @@ def start_process(proc_path, input):
 
     output, _ = proc.communicate()
     output = output.decode("utf-8", "ignore")
+    
     print(output)
+    logging.info(output)
+
     if str.find(output, "ERROR") != -1 or str.find(output, "Failed") != -1:
-        print(proc_path + " finished with an error!")
+        logging.error(proc_path + " finished with an error!")
         sys.exit(1)
 
 def convert_cubemaps(output_path, argtype):
@@ -78,22 +80,20 @@ def generate_cubemaps(files, output_path):
     for filename in files:
         s.append(filename)
     s.extend(output_path)
-    s.extend("-y")
+    s.append("-y")
     start_process(texass_path, s)
 
 def blur_cubes(files):
     if import_status:
         for cube in files:
+            print(cube)
             img = Image.open(cube)
-            img.filter(ImageFilter.GaussianBlur(radius=150))
-            img.save(cube)
+            processed = img.filter(ImageFilter.GaussianBlur(radius=3))
+            processed.save(cube)
 
 if __name__ == "__main__":
-    global i, o, argtyp
     argtype, input, output = get_args(args[:])
-    i = input
-    o = output
-    argtyp = argtype
+    logging.basicConfig(filename=dir_path + "\\cubemapgen.log" ,level=logging.INFO)
     
     cube_paths, cubemap_path = fix_paths(input, output)
     blur_cubes(cube_paths)
