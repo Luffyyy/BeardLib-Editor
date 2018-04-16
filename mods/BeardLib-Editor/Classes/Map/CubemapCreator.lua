@@ -200,6 +200,11 @@ function CubemapCreator:cube_map_done()
 		return
 	end
 
+	if self._error_when_done then
+		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
+		self._error_when_done = false
+	end
+	
 	if self._cubemap_params.saved_environment then
 		managers.viewport:set_default_environment(self._cubemap_params.saved_environment, nil, nil)
 	end
@@ -257,6 +262,7 @@ function CubemapCreator:start_cube_map(params)
 	self._simple_postfix = params.simple_postfix
 	self._output_name = params.output_name
 	self._output_name = self._output_name or "cubemap"
+	self._error_when_done = false
 
 	if params.light then
 		self._light = World:create_light("omni")
@@ -393,7 +399,7 @@ function CubemapCreator:_generate_cubemap(file)
 			self:notify_success()
 		end
 	else
-		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
+		self._error_when_done = true
 	end
 end
 
