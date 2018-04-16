@@ -53,7 +53,7 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
 
-    local convert_data = not self.assets and FileIO:ReadScriptDataFrom(file, self.script_file_from_types[from_i].name)
+    local convert_data = not self.assets and FileIO:ReadScriptData(file, self.script_file_from_types[from_i].name)
     if not convert_data and not self.assets then
         BeardLibEditor:log("[Error] File not accessible")
         return
@@ -68,7 +68,7 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
 end
 
 function SConverter:SaveConvertedData(params, value)
-    FileIO:WriteScriptDataTo(value, params.convert_data, params.to_data.name)
+    FileIO:WriteScriptData(value, params.convert_data, params.to_data.name)
     self:RefreshFilesAndFolders()
 end
 

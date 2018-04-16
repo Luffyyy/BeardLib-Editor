@@ -60,7 +60,7 @@ function BLE:InitManagers()
     local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
     if prefabs then
         for _, prefab in pairs(prefabs) do
-            self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptDataFrom(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+            self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptData(Path:Combine(self.PrefabsDirectory, prefab), "binary")
         end
     end
     --Packages that are always loaded
@@ -91,8 +91,7 @@ end
 
 function BLE:LoadCustomAssets()
     local project = self.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(mod._clean_config)
+    local mod, data = project:get_mod_and_config()
     if data then
         if data.AddFiles then
             local config = data.AddFiles
@@ -106,11 +105,11 @@ function BLE:LoadCustomAssets()
             local add_path = Path:Combine(level.include.directory, "add.xml")
             if not FileIO:Exists(Path:Combine(mod.ModPath, add_path)) then
                 local add = table.merge({directory = "assets"}, deep_clone(level.add)) --TODO just copy the xml template
-                project:map_editor_save_xml(add_path, add)
+                project:save_xml(add_path, add)
             end
             level.add = {file = add_path}
-            project:map_editor_save_main_xml(data, true)
-            local add = project:map_editor_read_xml(level.add.file)
+            project:save_main_xml(data, true)
+            local add = project:read_xml(level.add.file)
             if add then
                 local directory = add.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, add.directory)
                 self:LoadCustomAssetsToHashList(add, directory)
@@ -149,10 +148,10 @@ function BLE:LoadHashlist()
         self.DefaultAssets = Global.DefaultAssets
         self:log("DBPaths already loaded")
     else
-        self.DBPaths = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
-        self.DBPackages = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "PackagesPaths.bin"), "binary")
-        self.WorldSounds = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
-        self.DefaultAssets = FileIO:ReadScriptDataFrom(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
+        self.DBPaths = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
+        self.DBPackages = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "PackagesPaths.bin"), "binary")
+        self.WorldSounds = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
+        self.DefaultAssets = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
@@ -222,8 +221,8 @@ function BLE:GeneratePackageData()
         self:log("[GeneratePackageData] packages.txt is missing...")
     end
     
-    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
-    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
+    FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
+    FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
     Global.DBPaths = nil
     self:LoadHashlist()
 end
@@ -234,7 +233,7 @@ function BLE:GenerateSoundData()
     local function get_sounds(path)
         for _, file in pairs(FileIO:GetFiles(path)) do
             if string.ends(file, ".world_sounds") then
-                local data = FileIO:ReadScriptDataFrom(Path:Combine(path, file), "binary")
+                local data = FileIO:ReadScriptData(Path:Combine(path, file), "binary")
                 if not table.contains(sounds, data.default_ambience) then
                     table.insert(sounds, data.default_ambience)
                 end
@@ -266,7 +265,7 @@ function BLE:GenerateSoundData()
         end
     end
     get_sounds(self.ExtractDirectory)
-    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
+    FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
     self.WorldSounds = sounds
     Global.WorldSounds = sounds
 end
@@ -283,7 +282,7 @@ function BLE:GenerateDefaultAssetsData()
             end
         end
     end
-    FileIO:WriteScriptDataTo(Path:Combine(self.ModPath, "Data", "DefaultAssets.bin"), self.DefaultAssets, "binary")
+    FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "DefaultAssets.bin"), self.DefaultAssets, "binary")
     Global.DefaultAssets = self.DefaultAssets
 end
 

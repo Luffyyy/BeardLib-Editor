@@ -122,9 +122,9 @@ function Options:KeySPressed()
 end
 
 function Options:open_set_color_dialog(option)
-    BeardLibEditor.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
-        BeardLibEditor.Options:SetValue(option, color)
-        BeardLibEditor.Options:Save()
+    BLE.ColorDialog:Show({color = BLE.Options:GetValue(option), callback = function(color)
+        BLE.Options:SetValue(option, color)
+        BLE.Options:Save()
     end})
 end
 
@@ -138,7 +138,7 @@ end
 
 function Options:update_option_value(item)
     local name, value = item:Name(), item:Value()
-    BeardLibEditor.Options:SetValue("Map/"..name, value)
+    BLE.Options:SetValue("Map/"..name, value)
     --Clean this too
     if name == "EditorUnits" then
         for _, unit in pairs(World:find_units_quick("all")) do
@@ -181,8 +181,8 @@ end
 
 
 function Options:position_debug()
-    BeardLibEditor:log("Camera Position: %s", tostring(self._parent._camera_pos))
-	BeardLibEditor:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
+    BLE:log("Camera Position: %s", tostring(self._parent._camera_pos))
+	BLE:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
 end
 
 function Options:update(t, dt)
@@ -217,11 +217,11 @@ function Options:update(t, dt)
 end
 
 function Options:map_path()
-    return BeardLibEditor.MapProject:current_path() or self._menu:GetItem("MapSavePath"):Value():gsub("\\" , "/") 
+    return BLE.MapProject:current_path() or self._menu:GetItem("MapSavePath"):Value():gsub("\\" , "/") 
 end
 
 function Options:map_world_path()    
-    local map_path = BeardLibEditor.MapProject:current_level_path() or self:map_path()
+    local map_path = BLE.MapProject:current_level_path() or self:map_path()
     if not FileIO:Exists(map_path) then
         FileIO:MakeDir(map_path)
     end
@@ -351,9 +351,8 @@ function Options:toggle_autosaving()
 end
 
 function Options:save_main_xml(include)
-    local project = BeardLibEditor.MapProject
-    local mod = project:current_mod()
-    local data = mod and project:get_clean_data(project:get_clean_mod_config(mod), true)
+    local project = BLE.MapProject
+    local mod, data = project:get_mod_and_config()
     if data then
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local temp = include and table.list_add(include, clone(level.include)) or level.include
@@ -372,7 +371,7 @@ function Options:save_main_xml(include)
                 end
             end
         end
-        project:map_editor_save_main_xml(data)
+        project:save_main_xml(data)
     end
 end
 
@@ -396,7 +395,7 @@ function Options:save_nav_data(include)
         --This sucks
         self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
-        BeardLibEditor.Utils:Notify("Save data is not ready yet")
+        BLE.Utils:Notify("Save data is not ready yet")
         return
     end
     if not had_include then
@@ -431,7 +430,7 @@ end
 
 local navsurface_ids = Idstring("core/units/nav_surface/nav_surface")
 function Options:build_nav_segments() -- Add later the options to the menu
-    BeardLibEditor.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
+    BLE.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
         local settings = {}
         local nav_surfaces = {}
 
@@ -477,9 +476,9 @@ function Options:build_nav_segments() -- Add later the options to the menu
             managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
         else
             if #nav_surfaces > 0 then
-                BeardLibEditor.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
+                BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
             else
-                BeardLibEditor.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
+                BLE.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
                 local W = self:GetPart("world")
                 W:Switch()
                 if W._current_layer ~= "ai" then
