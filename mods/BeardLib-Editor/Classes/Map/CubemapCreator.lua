@@ -436,5 +436,5 @@ function CubemapCreator:_move_output(output_path)
 end
 
 function CubemapCreator:notify_success()
-	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!. ")
+	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!")
 end
