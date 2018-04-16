@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<unit name="effect" type="envrionment" slot="10">
+<unit name="effect" type="environment" slot="10">
   <object file="core/units/effect/effect" />
   <movers />
   <dependencies />
