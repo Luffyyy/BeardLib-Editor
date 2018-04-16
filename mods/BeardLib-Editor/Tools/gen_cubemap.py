@@ -87,9 +87,11 @@ def generate_cubemaps(files, output_path):
 def blur_cubes(files):
     if import_status:
         for cube in files:
+            print(cube)
             img = Image.open(cube)
-            img.filter(ImageFilter.GaussianBlur(radius=150))
-            img.save(cube)
+            processed = img.filter(ImageFilter.GaussianBlur(radius=3))
+            processed.show()
+            processed.save(cube)
 
 if __name__ == "__main__":
     argtype, input, output = get_args(args[:])
