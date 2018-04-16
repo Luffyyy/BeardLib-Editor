@@ -14,6 +14,7 @@ function CubemapCreator:_init_paths()
 	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
+	FileIO:MakeDir(self._temp_path)
 end
 
 function CubemapCreator:update(t, dt)
@@ -415,10 +416,9 @@ function CubemapCreator:_move_output(output_path)
 	-- Moving from temp to assets
 	if FileIO:Exists(final_path) then
 		FileIO:Delete(final_path)
-	else
-		FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
-		FileIO:MoveTo(self._params.source_path .. output, final_path)
 	end
+	FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
+	FileIO:MoveTo(self._params.source_path .. output, final_path)
 
 	-- Updating Add.xml
 	local file_path = Path:Combine(self._params.output_path, tostring(self._output_name))
