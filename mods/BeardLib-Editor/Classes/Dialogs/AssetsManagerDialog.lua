@@ -3,8 +3,8 @@ AssetsManagerDialog.type_name = "AssetsManagerDialog"
 AssetsManagerDialog._no_reshaping_menu = true
 AssetsManagerDialog.ImportHelp = [[
 This will search for dependencies that the unit requires in order to load.
-Units that have a network counterpart will have to be loaded manually(this will hopefully change in the future).
 Any missing dependency from your extract directory will fail the load. So be sure your extract is not outdated.
+After pressing export please wait until you see another dialog that will confirm that the export was complete.
 ]]
 
 function AssetsManagerDialog:init(params, menu)
@@ -34,6 +34,8 @@ function AssetsManagerDialog:init(params, menu)
     end)
     self._menus = {self._unit_info}
     MenuUtils:new(self)
+    self._unready_units = {}
+    self._export_dialog = ExportDialog:new(BLE._dialogs_opt)
 end
 
 function AssetsManagerDialog:_Show()
@@ -68,13 +70,13 @@ function AssetsManagerDialog:_Show()
         color = false,
     })
     self:Button("FixBySearchingPackages", ClassClbk(self, "find_packages", false), {group = self._unit_info})
-    self:Button("FixByLoadingFromExtract", ClassClbk(self, "load_from_extract", false), {group = self._unit_info})
+    self:Button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"), {group = self._unit_info})
     self:Button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false), {group = self._unit_info})
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
     self:Button("FindPackage", ClassClbk(self, "find_package", false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog"), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
+    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
 
     self:Button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, group = actions, enabled = false})
     self:Button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, group = actions, enabled = false})
@@ -86,7 +88,7 @@ end
 function AssetsManagerDialog:load_units_from_assets()
     self._assets_units = {}
     local project = BLE.MapProject
-    local mod, data = mod and project:get_mod_and_config()
+    local mod, data = project:get_mod_and_config()
     if data then
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
@@ -140,7 +142,7 @@ function AssetsManagerDialog:load_units()
         new_unit(unit, times)
     end
     for unit, _ in pairs(self._assets_units) do
-        if not managers.worlddefinition._all_names[unit] then
+        if not managers.worlddefinition._all_names[unit] and not self._unready_units[unit] then
             new_unit(unit, 0)
         end
     end
@@ -179,13 +181,17 @@ function AssetsManagerDialog:load_packages()
     end
 end
 
-function AssetsManagerDialog:load_from_extract_dialog()
-    BLE.Utils:YesNoQuestion(
-        self.ImportHelp,
-        function()
-            self:load_from_extract({[self._tbl._selected.name] = true})
-        end
-    )
+function AssetsManagerDialog:load_all_from_extract_dialog()
+   self:load_from_extract_dialog(self._missing_units)
+end
+
+function AssetsManagerDialog:load_from_extract_dialog(units)
+    self._export_dialog:Show({
+        force = true,
+        message = self.ImportHelp,
+        assets_manager = self,
+        units = units or {[self._tbl._selected.name] = true}
+    })
 end
 
 function AssetsManagerDialog:find_package(unit, dontask, clbk)
@@ -263,18 +269,21 @@ function AssetsManagerDialog:clean_add_xml()
     project:save_xml(add_path, new_add)
 end
 
-function AssetsManagerDialog:load_from_extract(missing_units)
+function AssetsManagerDialog:load_from_extract(missing_units, exclude, dontask)
     missing_units = missing_units or self._missing_units
     local config = {}
     local failed_all = false
     for unit, _ in pairs(missing_units) do
-        local cfg = BLE.Utils.Export:GetUnitDependencies(unit)
+        local cfg = BLE.Utils.Export:GetUnitDependencies(unit, true, exclude)
+        local unit_load
         if cfg then
-            table.insert(config, table.merge({_meta = "unit_load", name = unit}, cfg))
+            unit_load = table.merge({_meta = "unit_load", name = unit}, cfg)
+            table.insert(config, unit_load)
         else
             failed_all = true
         end
     end
+    
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     local to_copy = {}
@@ -285,7 +294,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
         local add = project:read_xml(add_path)
         add = add or {_meta = "add", directory = "assets"}
         for k,v in pairs(config) do
-            local exists 
+            local exists
             for _, tbl in pairs(add) do
                 if type(tbl) == "table" and tbl._meta == v._meta and tbl.name == v.name then
                     exists = true
@@ -300,6 +309,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
         local function save()
             local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
             local copy_data = {}
+            local new_units = {}
             for _, unit_load in pairs(to_copy) do
                 if type(unit_load) == "table" then
                     for _, asset in pairs(unit_load) do
@@ -308,11 +318,12 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                             local to_path = Path:Combine(assets_dir, path)
                             table.insert(copy_data, {asset.extract_real_path, to_path})
                             asset.extract_real_path = nil
-                            local dir = BeardLib.Utils.Path:GetDirectory(to_path)
+                            local dir = Path:GetDirectory(to_path)
                             if not FileIO:Exists(dir) then
                                 FileIO:MakeDir(dir)
                             end
-                            BLE.Utils.allowed_units[asset.path] = true
+                            table.insert(new_units, asset.path)
+                            self._unready_units[asset.path] = true
                         end        
                     end
                 end
@@ -326,6 +337,10 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                             BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
                         else
                             BLE.Utils:Notify("Info", "Copied assets successfully")
+                        end
+                        for _, unit in pairs(new_units) do
+                            BLE.Utils.allowed_units[unit] = true
+                            self._unready_units[unit] = nil
                         end
                         self:reload()
                     end
@@ -479,12 +494,16 @@ function AssetsManagerDialog:unload_asset(name, no_dialog)
                                     end
                                 end
                                 if not used then
-                                    FileIO:Delete(Path:Combine(mod.ModPath, add.directory, asset.path.."."..asset._meta))
+                                    local file = Path:Combine(mod.ModPath, add.directory, asset.path.."."..asset._meta)
+                                    if FileIO:Exists(file) then
+                                        FileIO:Delete(file)
+                                    end
                                 end
                             end
                         end
-                        table.remove(add, k)
+                        table.remove_key(add, k)
                         BLE.Utils.allowed_units[name] = nil
+
                         break
                     end
                 end

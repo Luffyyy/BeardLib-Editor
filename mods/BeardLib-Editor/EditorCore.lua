@@ -85,7 +85,9 @@ function BLE:InitManagers()
     for i, difficulty in ipairs(tweak_data.difficulties) do
         table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
     end
-    
+    for path, _ in pairs(self.Utils.allowed_units) do
+        Global.DBPaths.unit[path] = true
+    end
     self:LoadCustomAssets()
 end
 

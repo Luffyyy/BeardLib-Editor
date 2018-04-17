@@ -9,6 +9,7 @@
         <class file="MissionElementUnit.lua"/>
         <class file="MapProjectManager.lua"/>
         <class file="Dialogs/AssetsManagerDialog.lua"/>
+        <class file="Dialogs/ExportDialog.lua"/>
         <class file="Dialogs/ObjectivesManagerDialog.lua"/>
         <class file="Dialogs/SelectListDialogValue.lua"/>
         <class file="Dialogs/ContinentSettingsDialog.lua"/>

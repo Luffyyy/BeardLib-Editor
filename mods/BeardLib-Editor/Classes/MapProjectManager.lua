@@ -60,7 +60,7 @@ function Project:save_main_xml(data, no_reload)
 end
 
 function Project:save_xml(file, data)
-    FileIO:WriteScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml", true)
+    FileIO:WriteScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml")
 end
 
 function Project:read_xml(file)
@@ -487,7 +487,7 @@ function Project:create_new_level(name)
     local level_path = Path:Combine("levels", level.id)
     table.insert(narr.chain, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
     level.include.directory = level_path
-    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, CXML, true)
+    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, CXML)
     FileIO:MakeDir(Path:Combine(proj_path, level_path))
     FileIO:CopyToAsync(Path:Combine(self._templates_directory, "Level"), Path:Combine(proj_path, level_path))
     self:do_reload_mod(t.name, t.name, true)
