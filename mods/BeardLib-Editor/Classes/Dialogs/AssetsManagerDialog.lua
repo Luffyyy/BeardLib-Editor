@@ -298,7 +298,6 @@ function AssetsManagerDialog:load_from_extract(missing_units)
             end
         end
         local function save()
-            project:save_xml(add_path, add)
             local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
             local copy_data = {}
             for _, unit_load in pairs(to_copy) do
@@ -308,6 +307,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                             local path = asset.path .. "." .. asset._meta
                             local to_path = Path:Combine(assets_dir, path)
                             table.insert(copy_data, {asset.extract_real_path, to_path})
+                            asset.extract_real_path = nil
                             local dir = BeardLib.Utils.Path:GetDirectory(to_path)
                             if not FileIO:Exists(dir) then
                                 FileIO:MakeDir(dir)
@@ -317,6 +317,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                     end
                 end
             end
+            project:save_xml(add_path, add)
             if #copy_data > 0 then
                 FileIO:CopyFilesToAsync(copy_data, function(success)
                     if success then
