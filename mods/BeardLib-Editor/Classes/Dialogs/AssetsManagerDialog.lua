@@ -307,7 +307,7 @@ function AssetsManagerDialog:load_from_extract(missing_units)
                         if type(asset) == "table" and asset.path then
                             local path = asset.path .. "." .. asset._meta
                             local to_path = Path:Combine(assets_dir, path)
-                            table.insert(copy_data, {Path:Combine(BLE.ExtractDirectory, path), to_path})
+                            table.insert(copy_data, {asset.extract_real_path, to_path})
                             local dir = BeardLib.Utils.Path:GetDirectory(to_path)
                             if not FileIO:Exists(dir) then
                                 FileIO:MakeDir(dir)

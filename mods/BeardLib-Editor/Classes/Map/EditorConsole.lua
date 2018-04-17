@@ -50,12 +50,15 @@ function EditorConsole:PrintMessage(type, message, ...)
     message = string.format(message, ...)
     local date = Application:date("%X")  
     self:Divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
-    if self._menu.items_panel:h() > self._menu.panel:h() and not self._menu._grabbed_scroll_bar then
-        self._menu.items_panel:set_bottom(self._menu.panel:h())
-    end
-
+    
     if #self._menu._my_items > 100 then --hardcoded for now
         self:RemoveItem(self._menu._my_items[1])
+    end
+
+    if self._menu.items_panel:h() > self._menu.panel:h() and not self._menu._grabbed_scroll_bar then
+        self._menu.items_panel:set_bottom(self._menu.items_panel:parent():h())
+        self._menu:CheckItems()
+        self._menu._scroll:_check_scroll_indicator_states()
     end
 end
 

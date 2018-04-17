@@ -1,5 +1,5 @@
-BeardLibEditor.Utils.Export = BeardLibEditor.Utils.Export or {}
-local EditorUtils = BeardLibEditor.Utils
+BLE.Utils.Export = BLE.Utils.Export or {}
+local EditorUtils = BLE.Utils
 local Utils = EditorUtils.Export
 Utils.Ignore = {
     ["model"] = true,
@@ -16,12 +16,23 @@ function Utils:GetUnitDependencies(unit, read_all)
     local temp = deep_clone(config)
     config = {}
     for _, file in pairs(temp) do
-        local file_path = Path:Combine(BeardLibEditor.ExtractDirectory, file.path.."."..file._meta)
+        local file_path = Path:Combine(BLE.ExtractDirectory, file.path.."."..file._meta)
         if not read_all and (not Global.DefaultAssets[file._meta] or not Global.DefaultAssets[file._meta][file.path]) then
             if FileIO:Exists(file_path) then
+                file.extract_real_path = file_path
                 table.insert(config, file)
             else
-                BeardLibEditor:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                BLE:log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead", tostring(unit), file_path)
+                local key_file_path = Path:Combine(BLE.ExtractDirectory, file.path:key().."."..file._meta)
+
+                if FileIO:Exists(key_file_path) then
+                    BLE:log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
+                    file.extract_real_path = key_file_path
+                    table.insert(config, file)
+                else
+                    BLE:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                end
+
                 return false
             end
         end
@@ -30,7 +41,7 @@ function Utils:GetUnitDependencies(unit, read_all)
 end
 
 function Utils:ReadUnit(unit, config, read_all)
-    local path = Path:Combine(BeardLibEditor.ExtractDirectory, unit)
+    local path = Path:Combine(BLE.ExtractDirectory, unit)
     if FileIO:Exists(path ..".unit") then
         table.insert(config, {_meta = "unit", path = unit, force = true, unload = true})
         if read_all then
@@ -54,7 +65,7 @@ function Utils:ReadUnit(unit, config, read_all)
                             if Utils.Reading[ext] then
                                 Utils.Reading[ext](self, path, config, read_all)
                             elseif not Utils.Ignore[ext] then
-                                BeardLibEditor:log("[Warning] Unknown file dependency %s.%s for unit %s, continuing...", tostring(path), tostring(ext), tostring(unit))
+                                BLE:log("[Warning] Unknown file dependency %s.%s for unit %s, continuing...", tostring(path), tostring(ext), tostring(unit))
                                 table.insert(config, {_meta = ext, path = path, force = true, unload = true})
                             end
                         end
@@ -65,7 +76,7 @@ function Utils:ReadUnit(unit, config, read_all)
             end
         end
     else
-        BeardLibEditor:log("[WARNING] Unit %s is missing from extract. Unit will not spawn!", tostring(unit))
+        BLE:log("[WARNING] Unit %s is missing from extract. Unit will not spawn!", tostring(unit))
         return false
     end
     return config
