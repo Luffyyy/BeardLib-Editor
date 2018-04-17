@@ -1,3 +1,4 @@
+--Clean this script by separating parts of it to different classes
 StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BeardLibEditor.Utils
