@@ -325,7 +325,7 @@ function MenuUtils:init(this, menu)
 	        	self[name..control] = self:NumberBox(control, clbk, 0, opt)
 	        end
 		end
-	   	if pos and rot then
+	   	if pos or rot then
 	   		self:SetAxisControls(pos, rot, name)
 	   	end
 	end
