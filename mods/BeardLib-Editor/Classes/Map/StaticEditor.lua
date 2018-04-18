@@ -186,7 +186,16 @@ end
 
 function Static:build_extension_items()
     self._editors = {}
-    for k, v in pairs({light = EditUnitLight, ladder = EditLadder, editable_gui = EditUnitEditableGui, zipline = EditZipLine, wire = EditWire, mesh_variation = EditMeshVariation, ai_data = EditAIData}) do
+    for k, v in pairs({
+        light = EditUnitLight, 
+        ladder = EditLadder, 
+        editable_gui = EditUnitEditableGui, 
+        zipline = EditZipLine, 
+        wire = EditWire, 
+        mesh_variation = EditMeshVariation, 
+        ai_data = EditAIData,
+        cubemap = EditUnitCubemap,
+    }) do
         self._editors[k] = v:new():is_editable(self)
     end
 end
@@ -313,6 +322,7 @@ function Static:set_unit_data()
             ud.editable_gui = Utils:EditableGuiData(unit)
             ud.ladder = Utils:LadderData(unit)
             ud.zipline = Utils:ZiplineData(unit)
+            ud.cubemap = Utils:CubemapData(unit)
             if old_continent ~= new_continent then
                 managers.worlddefinition:ResetUnitID(unit, old_continent)
                 self:GetItem("Id"):SetValue(ud.unit_id)

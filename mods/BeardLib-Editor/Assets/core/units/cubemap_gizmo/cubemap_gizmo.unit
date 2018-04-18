@@ -5,7 +5,7 @@
   <dependencies />
   <extensions>
     <extension name="unit_data" class="ScriptUnitData" >
-		<var name="only_exists_in_editor" value="true" />
+		<var name="only_visible_in_editor" value="true" />
 	</extension>
   </extensions>
   <sounds>

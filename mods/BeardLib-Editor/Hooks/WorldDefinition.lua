@@ -395,7 +395,8 @@ function WorldDef:_setup_editor_unit_data(unit, data)
     data.triggers = data.triggers or BLE.Utils:TriggersData(unit)
     data.editable_gui = data.editable_gui or BLE.Utils:EditableGuiData(unit)
     data.ladder = data.ladder or BLE.Utils:LadderData(unit)
-    data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
+	data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
+	data.cubemap = data.cubemap or BLE.Utils:CubemapData(unit)
 
     BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 	ud.continent = data.continent
@@ -408,7 +409,8 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 	ud.triggers = data.triggers
     ud.editable_gui = data.editable_gui	
     ud.ladder = data.ladder
-    ud.zipline = data.zipline
+	ud.zipline = data.zipline
+	ud.cubemap = data.cubemap
     ud.hide_on_projection_light = data.hide_on_projection_light
     ud.disable_on_ai_graph = data.disable_on_ai_graph
     ud.disable_shadows = data.disable_shadows
@@ -486,6 +488,7 @@ function WorldDef:assign_unit_data(unit, data)
 	self:_setup_ladder(unit, data)
 	self:_setup_zipline(unit, data)
 	self:_project_assign_unit_data(unit, data)
+	self:_setup_cubemaps(unit, data)
 end
 
 function WorldDef:_setup_unit_id(unit, data)
@@ -681,4 +684,25 @@ function WorldDef:_insert_instances()
 			end
 		end
 	end
+end
+
+function WorldDef:_setup_cubemaps(unit, data)
+	if not data.cubemap then
+		return
+	end
+
+	unit:unit_data().cubemap_resolution = data.cubemap.cubemap_resolution
+
+	local texture_name = (self._cube_lights_path or self:world_dir()) .. "cubemaps/" .. unit:unit_data().unit_id
+	if not DB:has(Idstring("texture"), Idstring(texture_name)) then
+		log("Cubemap texture doesn't exist, probably needs to be generated: " .. tostring(texture_name))	
+		return
+	end
+	-- This is needed to get the cubemap texture to show up
+	local light = World:create_light("omni")
+
+	light:set_projection_texture(Idstring(texture_name), true, true)
+	light:set_enable(false)
+
+	unit:unit_data().cubemap_fake_light = light
 end

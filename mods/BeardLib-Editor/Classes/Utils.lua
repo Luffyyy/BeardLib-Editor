@@ -407,6 +407,18 @@ function Utils:ZiplineData(unit)
     return t
 end
 
+function Utils:CubemapData(unit)
+    local t
+    local cubemap_gizmo = "core/units/cubemap_gizmo/cubemap_gizmo"
+    if unit:name() == cubemap_gizmo:id() then
+        t = {
+            cubemap_resolution = unit:unit_data().cubemap_resolution,
+            cubemap_fake_light = unit:unit_data().cubemap_fake_light
+        }
+    end
+    return t
+end
+
 function Utils:InSlot(unit, slot)
     local ud = PackageManager:unit_data(Idstring(unit):id())
     if ud then

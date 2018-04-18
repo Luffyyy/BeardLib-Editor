@@ -29,6 +29,7 @@
         <class file="Map/EditLadder.lua"/>
         <class file="Map/EditZipLine.lua"/>
         <class file="Map/EditUnitLight.lua"/>
+		<class file="Map/EditUnitCubemap.lua"/>
         <class file="Map/MissionScriptEditor.lua"/>
         <class file="Map/EnvironmentLayerEditor.lua"/>
         <class file="Map/PortalLayerEditor.lua"/>

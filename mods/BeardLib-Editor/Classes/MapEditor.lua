@@ -305,6 +305,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
                 editable_gui = ud and ud.editable_gui,
                 ladder = ud and ud.ladder, 
                 zipline = ud and ud.zipline,
+                cubemap = ud and ud.cubemap,
             }
         }
         if t == Idstring("wire") then

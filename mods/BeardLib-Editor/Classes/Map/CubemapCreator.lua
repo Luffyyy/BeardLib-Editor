@@ -13,6 +13,7 @@ end
 function CubemapCreator:_init_paths()
 	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
+	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
 	FileIO:MakeDir(self._temp_path)
 end
@@ -180,7 +181,7 @@ function CubemapCreator:next_cube()
 			name = cube.name,
 			simple_postfix = self._cubemap_params.simple_postfix,
 			source_path = self._temp_path,
-			output_path = self._cubelights_path,
+			output_path = self._cubemaps_path,
 			output_name = cube.output_name,
 			unit = cube.unit,
 			light = cube.light,
@@ -200,6 +201,11 @@ function CubemapCreator:cube_map_done()
 		return
 	end
 
+	if self._error_when_done then
+		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
+		self._error_when_done = false
+	end
+	
 	if self._cubemap_params.saved_environment then
 		managers.viewport:set_default_environment(self._cubemap_params.saved_environment, nil, nil)
 	end
@@ -257,6 +263,7 @@ function CubemapCreator:start_cube_map(params)
 	self._simple_postfix = params.simple_postfix
 	self._output_name = params.output_name
 	self._output_name = self._output_name or "cubemap"
+	self._error_when_done = false
 
 	if params.light then
 		self._light = World:create_light("omni")
@@ -393,7 +400,7 @@ function CubemapCreator:_generate_cubemap(file)
 			self:notify_success()
 		end
 	else
-		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
+		self._error_when_done = true
 	end
 end
 
@@ -423,7 +430,7 @@ function CubemapCreator:_move_output(output_path)
 	-- Updating Add.xml
 	local file_path = Path:Combine(self._params.output_path, tostring(self._output_name))
 	local xml_path = Path:Combine(map_path, "levels", Global.game_settings.level_id, "add.xml")
-	local add = FileIO:ReadScriptDataFrom(xml_path, "custom_xml")
+	local add = FileIO:ReadScriptData(xml_path, "custom_xml")
 	for _, tbl in pairs(add) do
 		if tbl.path == file_path then 
 			log(file_path)
@@ -431,7 +438,7 @@ function CubemapCreator:_move_output(output_path)
 		end
 	end
 	table.insert(add, {_meta = "texture", path = file_path})
-	FileIO:WriteScriptDataTo(xml_path, add, "custom_xml")
+	FileIO:WriteScriptData(xml_path, add, "custom_xml")
 	
 end
 
