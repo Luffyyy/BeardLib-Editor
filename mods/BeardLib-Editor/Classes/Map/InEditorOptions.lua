@@ -27,7 +27,7 @@ function Options:build_default_menu()
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     if not BeardLib.current_level then
-        self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
+        self:TextBox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
     self:NumberBox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})
     self:Toggle("AutoSave", ClassClbk(self, "update_option_value"), self:Value("AutoSave"), {group = main, help = "Saves your map automatically, unrecommended for large maps."})
@@ -287,14 +287,14 @@ function Options:save()
         
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
-            local dir = BeardLib.Utils.Path:Combine(map_path, name)
+            local dir = Path:Combine(map_path, name)
             local continent_file = name .. ".continent"
             local mission_file = name .. ".mission"
             table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
             table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
             self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
             self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
-            missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
+            missions[name] = {file = Path:Combine(name, name)}
         end
 
         self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(BeardLib.Utils:RemoveMetas(worlddef._continents), cusxml))
@@ -314,7 +314,7 @@ function Options:save()
         self:save_nav_data(include)
         for _, folder in pairs(FileIO:GetFolders(map_path)) do
             if folder ~= "environments" and not worlddef._continent_definitions[folder] then
-                FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
+                FileIO:Delete(Path:Combine(map_path, folder))
             end
         end
         if bg then
@@ -325,9 +325,9 @@ function Options:save()
         self:toggle_autosaving()
     end
     if FileIO:Exists(path) and self:Value("BackupMaps") then
-        local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
+        local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
-        local backup_dir = BeardLib.Utils.Path:Combine(backups_dir, table.remove(string.split(path, "/")))
+        local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
         end
@@ -359,7 +359,7 @@ function Options:save_main_xml(include)
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do
             include_data.type = include_data.type or "binary"           
-            if type(include_data) == "table" and include_data.file and FileIO:Exists(BeardLib.Utils.Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+            if type(include_data) == "table" and include_data.file and FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
                 local exists
                 for _, inc_data in ipairs(level.include) do
                     if type(inc_data) == "table" and inc_data.file == include_data.file then
@@ -380,7 +380,7 @@ function Options:SaveData(path, file_name, data)
         FileIO:MakeDir(path)
     end
     self._parent:Log("Saving script data '%s' in %s", file_name, path)
-    FileIO:WriteTo(BeardLib.Utils.Path:Combine(path, file_name), data)
+    FileIO:WriteTo(Path:Combine(path, file_name), data)
 end
 
 function Options:save_nav_data(include)    

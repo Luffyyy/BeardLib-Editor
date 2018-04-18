@@ -97,7 +97,7 @@ function BLE:LoadCustomAssets()
     if data then
         if data.AddFiles then
             local config = data.AddFiles
-            local directory = config.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, config.directory)
+            local directory = config.full_directory or Path:Combine(mod.ModPath, config.directory)
             self:LoadCustomAssetsToHashList(config, directory)
         end
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
@@ -113,7 +113,7 @@ function BLE:LoadCustomAssets()
             project:save_main_xml(data, true)
             local add = project:read_xml(level.add.file)
             if add then
-                local directory = add.full_directory or BeardLib.Utils.Path:Combine(mod.ModPath, add.directory)
+                local directory = add.full_directory or Path:Combine(mod.ModPath, add.directory)
                 self:LoadCustomAssetsToHashList(add, directory)
             end
             for i, include_data in ipairs(level.include) do
@@ -177,8 +177,8 @@ function BLE:ReadCustomPackageConfig(id, config, directory)
             if typ == "unit_load" or typ == "add" then
                 self:ReadCustomPackageConfig(id, child, directory)
             elseif typ and path then
-                path = BeardLib.Utils.Path:Normalize(path)
-                local file_path = BeardLib.Utils.Path:Combine(directory, path) ..".".. typ
+                path = Path:Normalize(path)
+                local file_path = Path:Combine(directory, path) ..".".. typ
                 if SystemFS:exists(file_path) then
                     self.DBPackages[id][typ] = self.DBPackages[id][typ] or {}
                     self.DBPaths[typ] = self.DBPaths[typ] or {}
@@ -296,12 +296,12 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
             if typ == "unit_load" then
                 self:LoadCustomAssetsToHashList(v, directory)
             else
-                path = BeardLib.Utils.Path:Normalize(path)
+                path = Path:Normalize(path)
 
                 self.DBPaths[typ] = self.DBPaths[typ] or {}
                 self.DBPaths[typ][path] = true
 
-                local file_path = BeardLib.Utils.Path:Combine(directory, path) ..".".. typ
+                local file_path = Path:Combine(directory, path) ..".".. typ
 
                 if FileIO:Exists(file_path) then
                     self.Utils.allowed_units[path] = true
