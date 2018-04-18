@@ -10,6 +10,7 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
+    self._current_script = "default"
     self._current_continent = "world"
     self._grid_size = 1
     self._current_pos = Vector3()
@@ -429,9 +430,7 @@ function Editor:load_continents(continents)
     if not self._current_script then
         for script, _ in pairs(managers.mission._scripts) do
             self._current_script = self._current_script or script
-            if self._current_script then
-                break
-            end
+            break
         end
     end
     for continent, _ in pairs(continents) do
