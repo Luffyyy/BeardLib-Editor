@@ -129,6 +129,7 @@ Utils.allowed_units = {
     ["core/units/sound_environment/sound_environment"] = true,
     ["core/units/sound_emitter/sound_emitter"] = true,
     ["core/units/sound_area_emitter/sound_area_emitter"] = true,
+    ["core/units/cubemap_gizmo/cubemap_gizmo"] = true,
 }
 
 function Utils:IsLoaded(asset, type, packages)
