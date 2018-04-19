@@ -381,6 +381,23 @@ function MenuUtils:init(this, menu)
 	    return t
 	end
 
+	function this:ColorBox(name, callback, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
+	    local item = m:ColorTextBox(table.merge({
+	        name = name,
+	        text = string.pretty2(name),
+	        on_callback = callback,
+	        value = value or Color.white
+		}, opt))
+		if opt.ret_vec then
+			function item:Value()
+				local v = BeardLib.Items.ColorTextBox.Value(self)
+				return Vector3(v.r, v.g, v.b)
+			end
+		end
+		return item
+	end
+
 	function this:ColorEnvItem(name, opt)
 		local col = DummyItem:new(name, Vector3(1,1,1))
 		local btn = self:Button("SetColor"..name, function()
