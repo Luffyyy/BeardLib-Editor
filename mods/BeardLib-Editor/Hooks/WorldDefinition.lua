@@ -408,6 +408,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		data.editable_gui = data.editable_gui or BLE.Utils:EditableGuiData(unit)
 		data.ladder = data.ladder or BLE.Utils:LadderData(unit)
 		data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
+		data.cubemap = data.cubemap or BLE.Utils:CubemapData(unit)
 	
 		BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 		ud.projection_lights = data.projection_lights
@@ -422,6 +423,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		ud.disable_collision = data.disable_collision
 		ud.hide_on_projection_light = data.hide_on_projection_light
 		ud.override_texture = data.override_texture
+		ud.cubemap = data.cubemap
 		
 		local wd = unit:wire_data()
 		if wd then
@@ -501,6 +503,7 @@ function WorldDef:assign_unit_data(unit, data)
 	self:_setup_ladder(unit, data)
 	self:_setup_zipline(unit, data)
 	self:_project_assign_unit_data(unit, data)
+	self:_setup_cubemaps(unit, data)
 end
 
 function WorldDef:_setup_unit_id(unit, data)

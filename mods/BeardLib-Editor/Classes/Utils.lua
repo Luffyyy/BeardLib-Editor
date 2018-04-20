@@ -138,6 +138,7 @@ Utils.allowed_units = {
     ["core/units/sound_environment/sound_environment"] = true,
     ["core/units/sound_emitter/sound_emitter"] = true,
     ["core/units/sound_area_emitter/sound_area_emitter"] = true,
+    ["core/units/cubemap_gizmo/cubemap_gizmo"] = true,
 }
 
 function Utils:IsLoaded(asset, type, packages)
@@ -411,6 +412,18 @@ function Utils:ZiplineData(unit)
             slack = unit:zipline():slack(),
             usage_type = unit:zipline():usage_type(),
             ai_ignores_bag = unit:zipline():ai_ignores_bag()
+        }
+    end
+    return t
+end
+
+function Utils:CubemapData(unit)
+    local t
+    local cubemap_gizmo = "core/units/cubemap_gizmo/cubemap_gizmo"
+    if unit:name() == cubemap_gizmo:id() then
+        t = {
+            cubemap_resolution = unit:unit_data().cubemap_resolution,
+            cubemap_fake_light = unit:unit_data().cubemap_fake_light
         }
     end
     return t
