@@ -701,27 +701,6 @@ function WorldDef:_insert_instances()
 	end
 end
 
-function WorldDef:_setup_cubemaps(unit, data)
-	if not data.cubemap then
-		return
-	end
-
-	unit:unit_data().cubemap_resolution = data.cubemap.cubemap_resolution
-
-	local texture_name = (self._cube_lights_path or self:world_dir()) .. "cubemaps/" .. unit:unit_data().unit_id
-	if not DB:has(Idstring("texture"), Idstring(texture_name)) then
-		log("Cubemap texture doesn't exist, probably needs to be generated: " .. tostring(texture_name))	
-		return
-	end
-	-- This is needed to get the cubemap texture to show up
-	local light = World:create_light("omni")
-
-	light:set_projection_texture(Idstring(texture_name), true, true)
-	light:set_enable(false)
-
-	unit:unit_data().cubemap_fake_light = light
-end
-
 if Unit then
 	--Hacky but should work..
 	local unit_datas = {}
