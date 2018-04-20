@@ -83,7 +83,7 @@ function WorldDef:is_world_unit(unit)
 end
 
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
-	if unit_id <= 0 then -- fuck off.
+	if not unit_id or unit_id <= 0 then -- fuck off.
 		return
 	end
 
@@ -274,13 +274,18 @@ end
 function WorldDef:delete_unit(unit, no_unlink)
 	local ud = unit:unit_data()
 	local unit_id = ud.unit_id
-	self:remove_name_id(unit)
+	
+	if not unit_id then
+		return
+	end
 
 	if unit_id <= 0 then
 		managers.editor:Error("Attempted to delete a unit with invalid unit id")
 		return
 	end
-
+	
+	self:remove_name_id(unit)
+	
 	local name_id = ud.name_id
 	local continent_name = ud.continent
 
@@ -390,40 +395,46 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 	ud.name_id = data.name_id
 	ud.name = data.name
 
-	data.projection_light = data.projection_light or BLE.Utils:HasAnyProjectionLight(unit)
-    data.lights = data.lights or BLE.Utils:LightData(unit)
-    data.triggers = data.triggers or BLE.Utils:TriggersData(unit)
-    data.editable_gui = data.editable_gui or BLE.Utils:EditableGuiData(unit)
-    data.ladder = data.ladder or BLE.Utils:LadderData(unit)
-	data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
 	data.cubemap = data.cubemap or BLE.Utils:CubemapData(unit)
-
-    BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 	ud.continent = data.continent
 	ud.position = unit:position()
 	ud.rotation = unit:rotation()
 	ud.local_pos = data.local_pos or Vector3()
 	ud.local_rot = data.local_rot or Rotation()
-	ud.projection_lights = data.projection_lights
-	ud.lights = data.lights
-	ud.triggers = data.triggers
-    ud.editable_gui = data.editable_gui	
-    ud.ladder = data.ladder
-	ud.zipline = data.zipline
 	ud.cubemap = data.cubemap
-    ud.hide_on_projection_light = data.hide_on_projection_light
-    ud.disable_on_ai_graph = data.disable_on_ai_graph
-    ud.disable_shadows = data.disable_shadows
-    ud.disable_collision = data.disable_collision
-    ud.hide_on_projection_light = data.hide_on_projection_light
-    ud.override_texture = data.override_texture
 
-	local wd = unit:wire_data()
-    if wd then
-    	local target = unit:get_object(Idstring("a_target"))
-    	wd.target_pos = target:position()
-    	wd.target_rot = target:rotation()
-    end
+	if not data.brush_unit then
+		data.projection_light = data.projection_light or BLE.Utils:HasAnyProjectionLight(unit)
+		data.lights = data.lights or BLE.Utils:LightData(unit)
+		data.triggers = data.triggers or BLE.Utils:TriggersData(unit)
+		data.editable_gui = data.editable_gui or BLE.Utils:EditableGuiData(unit)
+		data.ladder = data.ladder or BLE.Utils:LadderData(unit)
+		data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
+	
+		BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
+		ud.projection_lights = data.projection_lights
+		ud.lights = data.lights
+		ud.triggers = data.triggers
+		ud.editable_gui = data.editable_gui	
+		ud.ladder = data.ladder
+		ud.zipline = data.zipline
+		ud.hide_on_projection_light = data.hide_on_projection_light
+		ud.disable_on_ai_graph = data.disable_on_ai_graph
+		ud.disable_shadows = data.disable_shadows
+		ud.disable_collision = data.disable_collision
+		ud.hide_on_projection_light = data.hide_on_projection_light
+		ud.override_texture = data.override_texture
+		
+		local wd = unit:wire_data()
+		if wd then
+			local target = unit:get_object(Idstring("a_target"))
+			wd.target_pos = target:position()
+			wd.target_rot = target:rotation()
+		end
+	else
+		ud.brush_unit = true
+	end
+
 	self:set_up_name_id(unit)
 end
 
@@ -449,7 +460,11 @@ function WorldDef:make_unit(data, offset)
 		if MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 		else
-			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)			
+			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+		end
+		if MassUnitManager:can_spawn_unit(Idstring(name)) then
+			unit:force_add_unit_data()
+			data.brush_unit = true
 		end
 	end
 	local not_allowed = {
@@ -705,4 +720,24 @@ function WorldDef:_setup_cubemaps(unit, data)
 	light:set_enable(false)
 
 	unit:unit_data().cubemap_fake_light = light
+end
+
+if Unit then
+	--Hacky but should work..
+	local unit_datas = {}
+	local orig = Unit.unit_data
+	function Unit:unit_data(...)
+		local data = orig(self, ...)
+		if not data and unit_datas[self:key()] then
+			return unit_datas[self:key()]
+		end
+		return data
+	end
+	
+	function Unit:force_add_unit_data(...)
+		if self:unit_data() then
+			return
+		end
+		unit_data[self:key()] = unit_data[self:key()] or {}
+	end
 end

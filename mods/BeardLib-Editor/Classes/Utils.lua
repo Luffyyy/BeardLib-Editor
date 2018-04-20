@@ -85,8 +85,17 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
 end
 
 function Utils:ParseXml(typ, path)
-    local file = BeardLibEditor.ExtractDirectory .. "/" ..  path .. "." .. typ
-    return SystemFS:exists(file) and SystemFS:parse_xml(file, "r")
+    local file = Path:Combine(BeardLibEditor.ExtractDirectory, path.."."..typ)
+    if FileIO:Exists(file) then
+        return SystemFS:parse_xml(file, "r")
+    else
+        local key_file = Path:Combine(BeardLibEditor.ExtractDirectory, path:key().."."..typ)
+        if FileIO:Exists(key_file) then
+            return SystemFS:parse_xml(key_file, "r")
+        else
+            return nil
+        end
+    end
 end
 
 function BeardLibEditor.Utils:FilterList(search, max_items)

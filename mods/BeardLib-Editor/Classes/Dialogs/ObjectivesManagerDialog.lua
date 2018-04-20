@@ -28,8 +28,8 @@ function ObjectivesManagerDialog:_Show()
         local level = project:get_level_by_id(data, Global.game_settings.level_id)
         local sdm = level.script_data_mods
         if sdm then
-            for _, mod in ipairs(sdm) do
-                if mod._meta == "mod" and mod.target_ext == "objective" then
+            for _, mod in pairs(sdm) do
+                if type(mod) == "table" and mod._meta == "mod" and mod.target_ext == "objective" then
                     self._replacement_type = mod.replacement_type
                     self._objectvies_path = Path:Combine(project:current_path(), sdm.directory, mod.replacement)
                     self._objectives = FileIO:ReadScriptData(self._objectvies_path, self._replacement_type)

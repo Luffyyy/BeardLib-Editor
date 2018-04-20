@@ -591,7 +591,9 @@ end
 
 -- From old utils menu.
 
-function WData:LoadUnitFromExtract(unit) self._assets_manager:load_from_extract({[unit] = true}) end
+function WData:LoadUnitFromExtract(unit)
+    self._assets_manager:load_from_extract_dialog({[unit] = true}) 
+end
 
 function WData:remove_dummy_unit()
     local unit = self._dummy_spawn_unit

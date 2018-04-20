@@ -10,6 +10,7 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
+    self._current_script = "default"
     self._current_continent = "world"
     self._grid_size = 1
     self._current_pos = Vector3()
@@ -280,7 +281,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         data.unit_data.name_id = nil
         data.unit_data.unit_id = unit_id or managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
     else
-        t = BeardLibEditor.Utils:GetUnitType(unit_path)
+        t = BLE.Utils:GetUnitType(unit_path)
         local ud = old_unit and old_unit.unit_data
         local wd = old_unit and old_unit.wire_data 
         local ad = old_unit and old_unit.ai_editor_data
@@ -331,7 +332,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
             table.insert(m.static._nav_surfaces, unit)
         end
     else
-        BeardLibEditor:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
+        BLE:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
     end    
     return unit
 end
@@ -372,7 +373,7 @@ function Editor:set_enabled(enabled)
         end
     end
     if Global.check_load_time then
-    	BeardLibEditor.Utils:Notify("Info", string.format("It took %.2f seconds to load your level into the editor", Global.check_load_time))
+    	BLE.Utils:Notify("Info", string.format("It took %.2f seconds to load your level into the editor", Global.check_load_time))
         Global.check_load_time = nil
     end
 end
@@ -385,11 +386,11 @@ function Editor:set_unit_positions(pos)
             self:StorePreviousPosRot()
             self._old_units = self:selected_units()
         end
-        BeardLibEditor.Utils:SetPosition(reference, pos, reference:rotation())
+        BLE.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
                 local ud = unit:unit_data()
-                BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
+                BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
             end
         end
     end
@@ -403,11 +404,11 @@ function Editor:set_unit_rotations(rot)
             self:StorePreviousPosRot()
             self._old_units = self:selected_units()
         end
-        BeardLibEditor.Utils:SetPosition(reference, reference:position(), rot)
+        BLE.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
                 local ud = unit:unit_data()
-                BeardLibEditor.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud) 
+                BLE.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud) 
             end
         end
     end
@@ -417,9 +418,9 @@ function Editor:set_unit_position(unit, pos, rot)
     local ud = unit:unit_data()
     rot = rot or ud.rotation
     if pos then
-        BeardLibEditor.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(rot), rot, ud) 
+        BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(rot), rot, ud) 
     else
-        BeardLibEditor.Utils:SetPosition(unit, ud.position, rot, ud) 
+        BLE.Utils:SetPosition(unit, ud.position, rot, ud) 
     end
 end
 
@@ -430,9 +431,7 @@ function Editor:load_continents(continents)
     if not self._current_script then
         for script, _ in pairs(managers.mission._scripts) do
             self._current_script = self._current_script or script
-            if self._current_script then
-                break
-            end
+            break
         end
     end
     for continent, _ in pairs(continents) do
@@ -514,7 +513,7 @@ function Editor:select_unit_by_raycast(slot, clbk)
     local ret_rays = {}
     if #rays > 0 then
         for _, r in pairs(rays) do
-            if #rays == 1 or clbk(r.unit) then
+            if clbk(r.unit) then
                 if not ignore or not first then
                     table.insert(ret_rays, r)
                     if not select_all then
@@ -686,7 +685,7 @@ function Editor:update_widgets(t, dt)
                     self:set_unit_positions(self._last_pos)
                     self._last_pos = nil
                 end
-                BeardLibEditor.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
+                BLE.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
                 self._move_widget:update(t, dt)
             end
             if self._rotate_widget:enabled() then
@@ -694,7 +693,7 @@ function Editor:update_widgets(t, dt)
                     self:set_unit_rotations(self._last_rot)
                     self._last_rot = nil
                 end               
-                BeardLibEditor.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
+                BLE.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
                 self._rotate_widget:update(t, dt)
             end
         end

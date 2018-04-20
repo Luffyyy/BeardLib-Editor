@@ -339,12 +339,13 @@ function MissionScriptEditor:set_element_data(item)
 		if item.name == "base_delay_rand" then
 			data[item.name] = data[item.name] > 0 and data[item.name] or nil
 		end
-		self:update_element(false, old_script)	
+		self:update_element(false, old_script)
 	end
 	if item.name == "script" and item:SelectedItem() ~= old_script then
 		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all executors will be removed!", function()
 			set_element_data()
 			self:GetPart("mission"):set_elements_vis()
+			self:GetItem("id"):SetValue(self._element.id)
 		end)
 	else
 		set_element_data()

@@ -100,30 +100,36 @@ function Mission:set_element(element, old_script)
 	end
 	local new_continent = self._scripts[element.script]._continent
 	local old_continent = old_script and self._scripts[old_script]._continent
-	if old_script and element.script ~= old_script then
+	local new_script = element.script
+	local old_id = element.id
+	--TODO: Move multiple elements to different continents without removing links
+	if old_script and new_script ~= old_script then
+		local id = old_id
 		if new_continent ~= old_continent then
 			self:delete_links(element.id, Utils.LinkTypes.Element)
 			self:delete_element_id(old_continent, element.id)
-			local new_id = self:get_new_id(new_continent)
-			self:store_element_id(new_continent, new_id)
-			element.id = new_id
+			id = self:get_new_id(new_continent)
+			self:store_element_id(new_continent, id)
+			element.id = id
 		end
 
-		self._scripts[element.script]._elements[element.id] = self._scripts[old_script]._elements[element.id]
-		self._scripts[old_script]._elements[element.id] = nil
-		for k, s_element in pairs(self._missions[new_continent][element.script].elements) do
-			if s_element.id == element.id then
-				self._missions[new_continent][element.script].elements[k] = nil
+		self._scripts[new_script]._elements[id] = self._scripts[old_script]._elements[old_id]
+		self._scripts[old_script]._elements[old_id] = nil
+		for k, e in pairs(self._missions[new_continent][new_script].elements) do
+			if e.id == id then
+				self._missions[new_continent][new_script].elements[k] = nil
 			end
 		end
 	end
-	for k, s_element in pairs(self._missions[new_continent][element.script].elements) do
-		if s_element.id == element.id then
-			self._missions[new_continent][element.script].elements[k] = element
+	for k, script_e in pairs(self._missions[new_continent][new_script].elements) do
+		if script_e.id == element.id then
+			self._missions[new_continent][new_script].elements[k] = element
 		end
 	end
-	local script_element = self._scripts[element.script]._elements[element.id]
+
+	local script_element = self._scripts[new_script]._elements[element.id]
 	script_element._values = _G.deep_clone(element.values)
+
 	if script_element._finalize_values then
 		script_element:_finalize_values(script_element._values)
 	end
@@ -149,9 +155,9 @@ function Mission:add_element(element)
 		element.module = m
 	end
 	if element.script then
-		for _, v in pairs(self._missions) do 
-			if mission[element.script] then
-				script = mission[element.script]
+		for _, miss in pairs(self._missions) do 
+			if miss[element.script] then
+				script = miss[element.script]
 				script_name = element.script
 				break	
 			end
@@ -247,8 +253,8 @@ function Mission:delete_links(id, match, elements)
 	local links = self:get_links_paths_new(id, match, elements)
 	for i=1, #links do --pls no crash on large maps :((
 		local link = links[i]
-		if tonumber(link.upper_key) then
-			tblremove(link.upper_tbl, link.upper_key)
+		if tonumber(link.upper_k) then
+			tblremove(link.upper_tbl, link.upper_k)
 		elseif link.tbl[link.key] == id then
 			if tonumber(link.key) then
 				tblremove(link.tbl, link.key)

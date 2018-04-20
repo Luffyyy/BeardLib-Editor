@@ -325,7 +325,7 @@ function MenuUtils:init(this, menu)
 	        	self[name..control] = self:NumberBox(control, clbk, 0, opt)
 	        end
 		end
-	   	if pos and rot then
+	   	if pos or rot then
 	   		self:SetAxisControls(pos, rot, name)
 	   	end
 	end
@@ -379,6 +379,23 @@ function MenuUtils:init(this, menu)
 	    	btn:SetEnabled(enabled)
 	    end
 	    return t
+	end
+
+	function this:ColorBox(name, callback, value, o)
+	    local m, opt = self:WorkMenuUtils(o)
+	    local item = m:ColorTextBox(table.merge({
+	        name = name,
+	        text = string.pretty2(name),
+	        on_callback = callback,
+	        value = value or Color.white
+		}, opt))
+		if opt.ret_vec then
+			function item:Value()
+				local v = BeardLib.Items.ColorTextBox.Value(self)
+				return Vector3(v.r, v.g, v.b)
+			end
+		end
+		return item
 	end
 
 	function this:ColorEnvItem(name, opt)

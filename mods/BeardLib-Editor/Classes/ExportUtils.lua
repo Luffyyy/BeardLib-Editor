@@ -1,27 +1,41 @@
-BeardLibEditor.Utils.Export = BeardLibEditor.Utils.Export or {}
-local EditorUtils = BeardLibEditor.Utils
+BLE.Utils.Export = BLE.Utils.Export or {}
+local EditorUtils = BLE.Utils
 local Utils = EditorUtils.Export
-Utils.Ignore = {
-    ["model"] = true,
-    ["texture"] = true,
-    ["cooked_physics"] = true
-}
---TODO: stop in middle of reading if some file doesn't exist.
---My current theory is that anything binary loads by itself except scriptdatas.
-function Utils:GetUnitDependencies(unit, read_all)
-    local config = self:ReadUnit(unit, {}, read_all)
+
+function Utils:Add(config, ext, path, exclude, force_load)
+    if exclude and exclude[ext] then
+        return
+    end
+    table.insert(config, {_meta = ext, path = path, force = true, unload = true, load = force_load})
+end
+
+function Utils:GetUnitDependencies(unit, ignore_default, exclude)
+    local config = self:ReadUnit(unit, {}, exclude)
     if not config then
         return false
     end
     local temp = deep_clone(config)
     config = {}
     for _, file in pairs(temp) do
-        local file_path = Path:Combine(BeardLibEditor.ExtractDirectory, file.path.."."..file._meta)
-        if not read_all and (not Global.DefaultAssets[file._meta] or not Global.DefaultAssets[file._meta][file.path]) then
+        local file_path = Path:Combine(BLE.ExtractDirectory, file.path.."."..file._meta)
+        local ext = file._meta
+        
+        if not ignore_default or (not Global.DefaultAssets[ext] or not Global.DefaultAssets[ext][file.path]) then
             if FileIO:Exists(file_path) then
+                file.extract_real_path = file_path
                 table.insert(config, file)
             else
-                BeardLibEditor:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                BLE:log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead", tostring(unit), file_path)
+                local key_file_path = Path:Combine(BLE.ExtractDirectory, file.path:key().."."..ext)
+
+                if FileIO:Exists(key_file_path) then
+                    BLE:log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
+                    file.extract_real_path = key_file_path
+                    table.insert(config, file)
+                else
+                    BLE:log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
+                end
+
                 return false
             end
         end
@@ -29,113 +43,145 @@ function Utils:GetUnitDependencies(unit, read_all)
     return config
 end
 
-function Utils:ReadUnit(unit, config, read_all)
-    local path = Path:Combine(BeardLibEditor.ExtractDirectory, unit)
-    if FileIO:Exists(path ..".unit") then
-        table.insert(config, {_meta = "unit", path = unit, force = true, unload = true})
-        if read_all then
-            table.insert(config, {_meta = "cooked_physics", path = unit, force = true, unload = true})
-            table.insert(config, {_meta = "model", path = unit, force = true, unload = true})
-        end
-        log("Importing unit from extract to map assets" .. tostring(unit))
-        local node = EditorUtils:ParseXml("unit", unit)
-        for child in node:children() do 
+function Utils:ReadUnit(unit, config, exclude)
+    self:Add(config, "unit", unit)
+
+    self:Add(config, "cooked_physics", unit, exclude)
+    self:Add(config, "model", unit, exclude)
+
+    BLE:log("Importing unit from extract to map assets" .. tostring(unit))
+    local node = EditorUtils:ParseXml("unit", unit)
+    if node then
+        for child in node:children() do
             local name = child:name()
             if name == "object" then
-                self:ReadObject(child:parameter("file"), config, read_all)
+                if not self:ReadObject(child:parameter("file"), config, exclude) then
+                    return false
+                end
             elseif name == "dependencies" then
                 for dep_child in child:children() do
                     if dep_child:has_parameter("unit") then
-                        if not self:ReadUnit(dep_child:parameter("unit"), config, read_all) then
+                        if not self:ReadUnit(dep_child:parameter("unit"), config, exclude) then
                             return false
                         end
                     else
                         for ext, path in pairs(dep_child:parameters()) do
-                            if Utils.Reading[ext] then
-                                Utils.Reading[ext](self, path, config, read_all)
-                            elseif not Utils.Ignore[ext] then
-                                BeardLibEditor:log("[Warning] Unknown file dependency %s.%s for unit %s, continuing...", tostring(path), tostring(ext), tostring(unit))
-                                table.insert(config, {_meta = ext, path = path, force = true, unload = true})
+                            if not exclude or not exclude[ext] then
+                                if Utils.Reading[ext] then
+                                    if not Utils.Reading[ext](self, path, config, exclude) then
+                                        return false
+                                    end
+                                else
+                                    BLE:log("[Warning] Unknown file dependency %s.%s for unit %s, continuing...", tostring(path), tostring(ext), tostring(unit))
+                                    self:Add(config, ext, path)
+                                end
                             end
                         end
                     end
                 end
             elseif name == "anim_state_machine" then
-                self:ReadAnimationStateMachine(child:parameter("name"), config, read_all)
+                if not self:ReadAnimationStateMachine(child:parameter("name"), config, exclude) then
+                    return false
+                end
+            elseif name == "network" and not exclude.network_unit then
+                local remote_unit = child:parameter("remote_unit")
+                if remote_unit and remote_unit ~= "" then --unsure what to do with remote units that are an empty string.
+                    if not self:ReadUnit(remote_unit, config, exclude) then
+                        return false
+                    end
+                end
             end
         end
     else
-        BeardLibEditor:log("[WARNING] Unit %s is missing from extract. Unit will not spawn!", tostring(unit))
+        BLE:log("[WARNING] Unit %s is missing from extract. Unit will not spawn!", tostring(unit))
         return false
     end
     return config
 end
 
-function Utils:ReadObject(object, config, read_all)
-    table.insert(config, {_meta = "object", path = object, force = true, unload = true})
-    local obj_node = EditorUtils:ParseXml("object", object)
-    if obj_node then
-        for obj_child in obj_node:children() do
+function Utils:ReadObject(path, config, exclude)
+    self:Add(config, "object", path, exclude)
+    local node = EditorUtils:ParseXml("object", path)
+    if node then
+        for obj_child in node:children() do
             local name = obj_child:name()
             if name == "diesel" and obj_child:has_parameter("materials") then
-                self:ReadMaterialConfig(obj_child:parameter("materials"), config, read_all)
+                if not self:ReadMaterialConfig(obj_child:parameter("materials"), config, exclude) then
+                    return false
+                end
             elseif name == "sequence_manager" then
-                self:ReadSequenceManager(obj_child:parameter("file"), config, read_all)
+                if not self:ReadSequenceManager(obj_child:parameter("file"), config, exclude) then
+                    return false
+                end
             elseif name == "effects" then
                 for effect in obj_child:children() do
-                    self:ReadEffect(effect:parameter("effect"), config, read_all)
+                    if not self:ReadEffect(effect:parameter("effect"), config, exclude) then
+                        return false
+                    end
                 end
             elseif name == "animation_def" then
-                self:ReadAnimationDefintion(obj_child:parameter("name"), config, read_all)             
+                if not self:ReadAnimationDefintion(obj_child:parameter("name"), config, exclude) then
+                    return false
+                end
             end
         end
     end
+    return node ~= nil
 end
 
-function Utils:ReadAnimationStateMachine(anim_state_machine, config, read_all)
-    table.insert(config, {_meta = "animation_state_machine", path = anim_state_machine, force = true, unload = true})   
-    local anim_state_node = EditorUtils:ParseXml("animation_state_machine", anim_state_machine)
-    for anim_child in anim_state_node:children() do    
-        if anim_child:name() == "states" then
-            self:ReadAnimationStates(anim_child:parameter("file") , config, read_all)
-        end
-    end
-end
-
-function Utils:ReadAnimationStates(anim_states, config, read_all)
-    table.insert(config, {_meta = "animation_states", path = anim_states, force = true, unload = true}) 
-end
-
-function Utils:ReadAnimationDefintion(anim_def, config, read_all)
-    table.insert(config, {_meta = "animation_def", path = anim_def, force = true, unload = true})   
-    local anim_node = EditorUtils:ParseXml("animation_def", anim_def)
-    for anim_child in anim_node:children() do    
-        if anim_child:name() == "animation_set" then
-            for anim_set in anim_child:children() do
-                self:ReadAnimationSubset(anim_set:parameter("file"), config, read_all)
+function Utils:ReadAnimationStateMachine(path, config, exclude)
+    self:Add(config, "animation_state_machine", path, exclude)
+    local node = EditorUtils:ParseXml("animation_state_machine", path)
+    if node then
+        for anim_child in node:children() do    
+            if anim_child:name() == "states" then
+                self:ReadAnimationStates(anim_child:parameter("file"), config, exclude)
             end
         end
     end
+    return node ~= nil
 end
 
-function Utils:ReadAnimationSubset(anim_subset, config, read_all)
-    table.insert(config, {_meta = "animation_subset", path = anim_subset, force = true, unload = true})   
-    local anim_set_node = EditorUtils:ParseXml("animation_subset", anim_subset)
-    if anim_set_node then
-        for anim_set_child in anim_set_node:children() do
-            table.insert(config, {_meta = "animation", path = anim_set_child:parameter("file"), force = true, unload = true}) 
+function Utils:ReadAnimationStates(path, config, exclude)
+    self:Add(config, "animation_states", path, exclude)
+    return true
+end
+
+function Utils:ReadAnimationDefintion(path, config, exclude)
+    self:Add(config, "animation_def", path, exclude)
+    local node = EditorUtils:ParseXml("animation_def", path)
+    if node then
+        for anim_child in node:children() do
+            if anim_child:name() == "animation_set" then
+                for anim_set in anim_child:children() do
+                    self:ReadAnimationSubset(anim_set:parameter("file"), config, exclude)
+                end
+            end
         end
     end
+    return node ~= nil
 end
 
-function Utils:ReadSequenceManager(sequence, config, read_all)
-    table.insert(config, {_meta = "sequence_manager", path = sequence, force = true, unload = true})
+function Utils:ReadAnimationSubset(path, config, exclude)
+    self:Add(config, "animation_subset", path, exclude)
+    local node = EditorUtils:ParseXml("animation_subset", path)
+    if node and not exclude.animation then
+        for anim_set_child in node:children() do
+            self:Add(config, "animation", anim_set_child:parameter("file"))
+        end
+    end
+    return node ~= nil
 end
 
-function Utils:ReadMaterialConfig(material, config, read_all)
-    table.insert(config, {_meta = "material_config", path = material, force = true, unload = true})
-    if read_all then        
-        local mat_node = EditorUtils:ParseXml("material_config", material)
+function Utils:ReadSequenceManager(path, config, exclude)
+    self:Add(config, "sequence_manager", path, exclude)
+    return true
+end
+
+function Utils:ReadMaterialConfig(path, config, exclude)
+    self:Add(config, "material_config", path, exclude)
+    if not exclude.texture then        
+        local mat_node = EditorUtils:ParseXml("material_config", path)
         for mat_child in mat_node:children() do
             if mat_child:name() == "material" then
                 for mat_child_x2 in mat_child:children() do
@@ -146,33 +192,43 @@ function Utils:ReadMaterialConfig(material, config, read_all)
             end
         end
     end
+    return true
 end
 
-function Utils:ReadEffect(effect, config, read_all)
-    table.insert(config, {_meta = "effect", path = effect, force = true, unload = true})
-    local eff_node = EditorUtils:ParseXml("effect", effect)
-    for eff_child in eff_node:children() do
-        local name = eff_child:name()
-        if name == "atom" then
-            for eff_child_x2 in eff_child:children() do
-                local name = eff_child_x2:name()
-                if name == "visualizerstack" then
-                    for eff_child_x3 in eff_child_x2:children() do
-                        if read_all and eff_child_x3:has_parameter("texture") then
-                            table.insert(config, {_meta = "texture", path = eff_child_x3:parameter("texture"), force = true, unload = true})   
+function Utils:ReadEffect(path, config, exclude)
+    self:Add(config, "effect", path, exclude, true)
+    local node = EditorUtils:ParseXml("effect", path)
+    if node then
+        for eff_child in node:children() do
+            local name = eff_child:name()
+            if name == "atom" then
+                for eff_child_x2 in eff_child:children() do
+                    local name = eff_child_x2:name()
+                    if name == "visualizerstack" then
+                        for eff_child_x3 in eff_child_x2:children() do
+                            if not exclude.texture and eff_child_x3:has_parameter("texture") then
+                                self:Add(config, "texture", eff_child_x3:parameter("texture"))
+                            end
+                            if eff_child_x3:has_parameter("material_config") then
+                                if not self:ReadMaterialConfig(eff_child_x3:parameter("material_config"), config, exclude) then
+                                    return false
+                                end
+                            end
                         end
-                        if eff_child_x3:has_parameter("material_config") then
-                            self:ReadMaterialConfig(eff_child_x3:parameter("material_config"), config, read_all)
+                    elseif name == "effect_spawn" then
+                        if not self:ReadEffect(eff_child_x2:parameter("effect"), config, exclude) then
+                            return false
                         end
                     end
-                elseif name == "effect_spawn" then
-                    self:ReadEffect(eff_child_x2:parameter("effect"), config, read_all)
                 end
-            end
-        elseif name == "use" then
-            self:ReadEffect(eff_child:parameter("name"), config, read_all)
-        end 
+            elseif name == "use" then
+                if not self:ReadEffect(eff_child:parameter("name"), config, exclude) then
+                    return false
+                end
+            end 
+        end
     end
+    return node ~= nil
 end
 
 Utils.Reading = {

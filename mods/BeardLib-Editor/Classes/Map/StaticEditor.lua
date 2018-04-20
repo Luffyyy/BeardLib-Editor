@@ -1,3 +1,4 @@
+--Clean this script by separating parts of it to different classes
 StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BeardLibEditor.Utils
@@ -176,7 +177,7 @@ function Static:build_unit_editor_menu()
         return Utils:GetUnitType(unit) ~= "being"
     end, false, {group = other})
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
-    self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
+	self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
     self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
     self:Toggle("DisableCollision", callback(self, self, "set_unit_data"), false, {group = other})
@@ -501,7 +502,7 @@ function Static:add_selection_to_prefabs(item, prefab_name)
     		return
     	end
         BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(remove_old_links and remove_old_links:Value() or true)
-        FileIO:WriteScriptData(BeardLib.Utils.Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+        FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
         remove_old_links = self:Toggle("RemoveOldLinks", nil, true, {text = "Remove Old Links Of Copied Elements", group = input_menu})
     end})
@@ -748,11 +749,23 @@ function Static:set_menu_unit(unit)
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
     self:GetItem("Enabled"):SetValue(unit:enabled())
     self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
-    self:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
-    self:GetItem("DisableShadows"):SetValue(unit:unit_data().disable_shadows, false, true)
-    self:GetItem("DisableCollision"):SetValue(unit:unit_data().disable_collision, false, true)
-    self:GetItem("HideOnProjectionLight"):SetValue(unit:unit_data().hide_on_projection_light, false, true)
-    self:GetItem("DisableOnAIGraph"):SetValue(unit:unit_data().disable_on_ai_graph, false, true)
+	self:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
+	local not_brush = not unit:unit_data().brush_unit
+	local disable_shadows = self:GetItem("DisableShadows")
+	local disable_collision = self:GetItem("DisableCollision")
+	local hide_on_projection_light = self:GetItem("HideOnProjectionLight")
+	local disable_on_ai_graph = self:GetItem("DisableOnAIGraph")
+
+	disable_shadows:SetVisible(not_brush)
+	disable_collision:SetVisible(not_brush)
+	hide_on_projection_light:SetVisible(not_brush)
+	disable_on_ai_graph:SetVisible(not_brush)
+
+    disable_shadows:SetValue(unit:unit_data().disable_shadows, false, true)
+    disable_collision:SetValue(unit:unit_data().disable_collision, false, true)
+    hide_on_projection_light:SetValue(unit:unit_data().hide_on_projection_light, false, true)
+	disable_on_ai_graph:SetValue(unit:unit_data().disable_on_ai_graph, false, true)
+	
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then
             editor:set_menu_unit(unit)

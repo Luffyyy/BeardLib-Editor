@@ -7,7 +7,7 @@ function ShadowBlock:get(key) return self._parameters[key] end
 
 EnvEditor = EnvEditor or class(EditorPart)
 function EnvEditor:init(parent, menu)
-    self.super.init(self, parent, menu, "Environment", {items_size = 16, control_slice = 0.6, offset = 1})
+    self.super.init(self, parent, menu, "Environment", {items_size = 16, control_slice = 0.6, offset = 1, use_alpha = false})
     self._posteffect = {}
     self._underlayeffect = {}
     self._sky = {}
@@ -54,36 +54,36 @@ function EnvEditor:build_default_menu()
         self:load_included_environments()    
         self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {position = "TopRight", max_width = false, text = "Include current"})
     end
-    
+		
     local quick = self:DivGroup("Quick actions")
     self:Button("Browse", callback(self, self, "open_environment_dialog"), {group = quick})
     self:Button("LoadGameDefault", callback(self, self, "database_load_env", "core/environments/default"), {group = quick})
     self:Button("LoadCurrentDefault", callback(self, self, "database_load_env", env_path), {group = quick})
     self:Button("Save", callback(self, self, "write_to_disk_dialog"), {group = quick})
-
     --SUN
     local sun = self:Group("Sun")
-    self:add_sky_param(self:ColorEnvItem("sun_ray_color", {text = "Color", group = sun}))
+    self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", group = sun}))
     self:add_sky_param(self:Slider("sun_ray_color_scale", nil, 1, {text = "Intensity", step = 0.1, min = 0, max = 10, group = sun}))
 
     --FOG
-    local fog = self:Group("Fog")
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_start_color", {text = "Start color", group = fog}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("fog_far_low_color", {text = "Far low color", group = fog}))
+	local fog = self:Group("Fog")
+	
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorBox("fog_start_color", nil, nil, {text = "Start color", ret_vec = true, group = fog}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorBox("fog_far_low_color", nil, nil, {text = "Far low color", ret_vec = true, group = fog}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_min_range", nil, 1, {text = "Min range", min = 0, max = 5000, floats = 1, group = fog}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_range", nil, 1, {text = "Max range", min = 0, max = 500000, floats = 1, group = fog}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("fog_max_density", nil, 1, {text = "Max density", min = 0, max = 1, group = fog}))
 
     --SKY DOME LIGHT
     local skydome = self:Group("Sky Dome Light")
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_top_color", {text = "Top color", group = skydome}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorBox("sky_top_color", nil, nil, {text = "Top color", ret_vec = true, group = skydome}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_top_color_scale", nil, 1, {text = "Top scale", step = 0.1, min = 0, max = 10, group = skydome}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("sky_bottom_color", {text = "Bottom color", group = skydome}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorBox("sky_bottom_color", nil, nil, {text = "Bottom color", ret_vec = true, group = skydome}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("sky_bottom_color_scale", nil, 1, {text = "Bottom scale", step = 0.1, min = 0, max = 10, group = skydome}))
 
     -- AMBIENT
     local ambient = self:Group("Ambient")
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorEnvItem("ambient_color", {text = "Color", group = ambient}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:ColorBox("ambient_color", nil, nil, {text = "Color", ret_vec = true, group = ambient}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_color_scale", nil, 1, {text = "Color scale", step = 0.1, min = 0, max = 10, group = ambient}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_scale", nil, 1, {text = "Scale", step = 0.1, min = 0, max = 10, group = ambient}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", self:Slider("ambient_falloff_scale", nil, 1, {text = "Falloff scale", step = 0.1, min = 0, max = 10, group = ambient}))
@@ -97,10 +97,10 @@ function EnvEditor:build_default_menu()
     self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", self:Slider("lense_intensity", nil, 1, {text = "Lense intensity", min = 0, max = 1, floats = 2, group = bloom}))
     
     -- SKY
-    local sky = self:Group("Sky")
-    self:add_underlay_param("sky", self:ColorEnvItem("color0", {text = "Color top", group = sky}))
+	local sky = self:Group("Sky")
+    self:add_underlay_param("sky", self:ColorBox("color0", nil, nil, {text = "Color top", ret_vec = true, group = sky}))
     self:add_underlay_param("sky", self:Slider("color0_scale", nil, 1, {text = "Color top scale", step = 0.1, min = 0, max = 10, group = sky}))
-    self:add_underlay_param("sky", self:ColorEnvItem("color2", {text = "Color low", group = sky}))
+    self:add_underlay_param("sky", self:ColorBox("color2", nil, nil, {text = "Color low", ret_vec = true, group = sky}))
     self:add_underlay_param("sky", self:Slider("color2_scale", nil, 1, {text = "Color low scale", step = 0.1, min = 0, max = 10, group = sky}))
 
     -- TEXTURES
@@ -131,7 +131,7 @@ function EnvEditor:build_default_menu()
 
     self:database_load_env(env_path)
 
-    managers.viewport:first_active_viewport():set_environment_editor_callback(callback(self, self, "feed"))
+    managers.viewport:first_active_viewport():set_environment_editor_callback(ClassClbk(self, "feed"))
     self._built = true
 end
 
@@ -393,7 +393,9 @@ function EnvEditor:set_data_path(data_path, handler, value)
     end
 end
 
+local scene_ids = Idstring("scene")
 function EnvEditor:feed(handler, viewport, scene)
+
     for postprocessor_name, post_processor in pairs(self._posteffect.post_processors) do
         if postprocessor_name == "shadow_processor" then
             local shadow_param_map = {}
@@ -410,14 +412,18 @@ function EnvEditor:feed(handler, viewport, scene)
                 end
             end
         end
-    end
+	end
+	
     for kmat, vmat in pairs(self._underlayeffect.materials) do
         for kpar, vpar in pairs(vmat.params) do
             self:set_data_path("underlay_effect/" .. kmat .. "/" .. kpar, handler, vpar:Value())
         end
-    end
-    for kpar, vpar in pairs(self._sky.params) do
-        self:set_data_path("others/" .. kpar, handler, vpar:Value())
+	end
+
+	for kpar, vpar in pairs(self._sky.params) do
+		if kpar ~= "underlay" or PackageManager:has(scene_ids, Idstring(vpar:Value())) then
+			self:set_data_path("others/" .. kpar, handler, vpar:Value())
+		end
     end
 end
 

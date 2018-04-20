@@ -18,46 +18,46 @@ function Options:build_default_menu()
     end
 
     local main = self:Group("Main", groups_opt)
-    self._current_continent = self:ComboBox("CurrentContinent", callback(self, self, "set_current_continent"), nil, nil, {group = main})
-    self._current_script = self:ComboBox("CurrentScript", callback(self, self, "set_current_continent"), nil, nil, {group = main})
+    self._current_continent = self:ComboBox("CurrentContinent", ClassClbk(self, "set_current_continent"), nil, nil, {group = main})
+    self._current_script = self:ComboBox("CurrentScript", ClassClbk(self, "set_current_script"), nil, nil, {group = main})
     local grid_size = self:Value("GridSize")
     local snap_rotation = self:Value("SnapRotation")
-    self:Slider("GridSize", callback(self, self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
-    self:Slider("SnapRotation", callback(self, self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})    
+    self:Slider("GridSize", ClassClbk(self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move", group = main})
+    self:Slider("SnapRotation", ClassClbk(self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate", group = main})    
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     if not BeardLib.current_level then
-        self:TextBox("MapSavePath", nil, BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
+        self:TextBox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""), {group = main})
     end
-    self:NumberBox("AutoSaveMinutes", callback(self, self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})
-    self:Toggle("AutoSave", callback(self, self, "update_option_value"), self:Value("AutoSave"), {group = main, help = "Saves your map automatically, unrecommended for large maps."})
-    self:Toggle("SaveMapFilesInBinary", callback(self, self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
-    self:Toggle("BackupMaps", callback(self, self, "update_option_value"), self:Value("BackupMaps"), {group = main})
-    self:Toggle("RemoveOldLinks", callback(self, self, "update_option_value"), self:Value("RemoveOldLinks"), {
+    self:NumberBox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving", group = main})
+    self:Toggle("AutoSave", ClassClbk(self, "update_option_value"), self:Value("AutoSave"), {group = main, help = "Saves your map automatically, unrecommended for large maps."})
+    self:Toggle("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {group = main, help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    self:Toggle("BackupMaps", ClassClbk(self, "update_option_value"), self:Value("BackupMaps"), {group = main})
+    self:Toggle("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Value("RemoveOldLinks"), {
         group = main,
         text = "Remove Old Links Of Copied Elements",
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
-    self:Toggle("KeepMouseActiveWhileFlying", callback(self, self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = main})
+    self:Toggle("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"), {group = main})
 
     local camera = self:Group("Camera", groups_opt)
     local cam_speed = self:Value("CameraSpeed")
     local fov = self:Value("CameraFOV")
     local far_clip = self:Value("CameraFarClip")
-    self:Slider("CameraSpeed", callback(self, self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1, group = camera})
+    self:Slider("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1, group = camera})
     self:Slider("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1, group = camera})
     self:Slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100, group = camera})
     self:Toggle("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {group = camera})
 
     local map = self:Group("Map", groups_opt)
-    self:Toggle("EditorUnits", callback(self, self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
-    self:Toggle("EnvironmentUnits", callback(self, self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
-    self:Toggle("SoundUnits", callback(self, self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
-    self:Toggle("HighlightUnits", callback(self, self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
+    self:Toggle("EditorUnits", ClassClbk(self, "update_option_value"), self:Value("EditorUnits"), {group = map, help = "Draw editor units"})
+    self:Toggle("EnvironmentUnits", ClassClbk(self, "update_option_value"), self:Value("EnvironmentUnits"), {group = map, help = "Draw environment units"})
+    self:Toggle("SoundUnits", ClassClbk(self, "update_option_value"), self:Value("SoundUnits"), {group = map, help = "Draw sound units"})
+    self:Toggle("HighlightUnits", ClassClbk(self, "update_option_value"), self:Value("HighlightUnits"), {group = map})
     self:Toggle("HighlightOccluders", nil, false, {group = map})
-    self:Toggle("ShowElements", callback(self, self, "update_option_value"), self:Value("ShowElements"), {group = map})
-    self:Toggle("DrawOnlyElementsOfCurrentScript", callback(self, self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"), {group = map})
-    self:Toggle("DrawBodies", callback(self, self, "update_option_value"), self:Value("DrawBodies"), {group = map})
+    self:Toggle("ShowElements", ClassClbk(self, "update_option_value"), self:Value("ShowElements"), {group = map})
+    self:Toggle("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"), {group = map})
+    self:Toggle("DrawBodies", ClassClbk(self, "update_option_value"), self:Value("DrawBodies"), {group = map})
     self:Toggle("DrawPortals", nil, false, {group = map})
 
     local navigation_debug = self:Group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
@@ -65,43 +65,43 @@ function Options:build_default_menu()
     self._draw_options = {}
     local w = group.w / 2
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
-        self._draw_options[opt] = self:Toggle(opt, callback(self, self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
+        self._draw_options[opt] = self:Toggle(opt, ClassClbk(self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0, group = group})
     end
     local raycast = self:Group("Raycast/Selecting", groups_opt)
-    self:Toggle("SelectAndGoToMenu", callback(self, self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
-    self:Toggle("UseSurfaceMove", callback(self, self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
+    self:Toggle("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
+    self:Toggle("UseSurfaceMove", ClassClbk(self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", nil, false, {group = raycast})
     self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
     self:Toggle("SelectAllRaycast", nil, false, {group = raycast})
-    self:Toggle("EndlessSelection", callback(self, self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)", group = raycast})
-    self:NumberBox("EndlessSelectionReset", callback(self, self, "update_option_value"), self:Value("EndlessSelectionReset"), {
+    self:Toggle("EndlessSelection", ClassClbk(self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)", group = raycast})
+    self:NumberBox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Value("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection", group = raycast,
         control_slice = 0.25,
     })
     self:NumberBox("RaycastDistance", nil, 200000, {group = raycast})
 
     local mission = self:Group("Mission", groups_opt)
-    self:Toggle("RandomizedElementsColor", callback(self, self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
-    self:Button("ElementsColor", callback(self, self, "open_set_color_dialog", "Map/ElementsColor"), {group = mission})
+    self:Toggle("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
+    self:Button("ElementsColor", ClassClbk(self, "open_set_color_dialog", "Map/ElementsColor"), {group = mission})
 
     local other = self:Group("Other", groups_opt)
-    self:Button("TeleportPlayer", callback(self, self, "drop_player"), {group = other})
-    self:Button("LogPosition", callback(self, self, "position_debug"), {group = other})
-    self:Button("BuildNavigationData", callback(self, self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
-    self:Button("SaveNavigationData", callback(self, self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
-    self:Button("SaveCoverData", callback(self, self, "save_cover_data", false), {group = other})
-    self:Toggle("PauseGame", callback(self, self, "pause_game"), false, {group = other})
+    self:Button("TeleportPlayer", ClassClbk(self, "drop_player"), {group = other})
+    self:Button("LogPosition", ClassClbk(self, "position_debug"), {group = other})
+    self:Button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
+    self:Button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
+    self:Button("SaveCoverData", ClassClbk(self, "save_cover_data", false), {group = other})
+    self:Toggle("PauseGame", ClassClbk(self, "pause_game"), false, {group = other})
 
     self:toggle_autosaving()
 end
 
 function Options:enable() 
-    self:bind_opt("SaveMap", callback(self, self, "KeySPressed"))
-    self:bind_opt("IncreaseCameraSpeed", callback(self, self, "ChangeCameraSpeed"))
-    self:bind_opt("DecreaseCameraSpeed", callback(self, self, "ChangeCameraSpeed", true))
-    self:bind_opt("ToggleGUI", callback(self, self, "ToggleEditorGUI"))
-    self:bind_opt("ToggleRuler", callback(self, self, "ToggleEditorRuler"))
+    self:bind_opt("SaveMap", ClassClbk(self, "KeySPressed"))
+    self:bind_opt("IncreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed"))
+    self:bind_opt("DecreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed", true))
+    self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"))
+    self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
 end
 
 function Options:pause_game(item) Application:set_pause(item.value) end
@@ -151,7 +151,7 @@ function Options:update_option_value(item)
     elseif name == "SnapRotation" then
         self._parent:update_snap_rotation(value)
     elseif name == "DrawOnlyElementsOfCurrentScript" or name == "ShowElements" then
-        self:GetPart("mission"):set_elements_vis(value)
+        self:GetPart("mission"):set_elements_vis()
     elseif name == "AutoSave" or name == "AutoSaveMinutes" then
         self:toggle_autosaving()
     elseif name == "CameraFOV" then
@@ -287,14 +287,14 @@ function Options:save()
         
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
-            local dir = BeardLib.Utils.Path:Combine(map_path, name)
+            local dir = Path:Combine(map_path, name)
             local continent_file = name .. ".continent"
             local mission_file = name .. ".mission"
             table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
             table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
             self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
             self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
-            missions[name] = {file = BeardLib.Utils.Path:Combine(name, name)}
+            missions[name] = {file = Path:Combine(name, name)}
         end
 
         self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(BeardLib.Utils:RemoveMetas(worlddef._continents), cusxml))
@@ -314,7 +314,7 @@ function Options:save()
         self:save_nav_data(include)
         for _, folder in pairs(FileIO:GetFolders(map_path)) do
             if folder ~= "environments" and not worlddef._continent_definitions[folder] then
-                FileIO:Delete(BeardLib.Utils.Path:Combine(map_path, folder))
+                FileIO:Delete(Path:Combine(map_path, folder))
             end
         end
         if bg then
@@ -325,9 +325,9 @@ function Options:save()
         self:toggle_autosaving()
     end
     if FileIO:Exists(path) and self:Value("BackupMaps") then
-        local backups_dir = BeardLib.Utils.Path:Combine(BeardLib.config.maps_dir, "backups")
+        local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
-        local backup_dir = BeardLib.Utils.Path:Combine(backups_dir, table.remove(string.split(path, "/")))
+        local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
         end
@@ -359,7 +359,7 @@ function Options:save_main_xml(include)
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do
             include_data.type = include_data.type or "binary"           
-            if type(include_data) == "table" and include_data.file and FileIO:Exists(BeardLib.Utils.Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+            if type(include_data) == "table" and include_data.file and FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
                 local exists
                 for _, inc_data in ipairs(level.include) do
                     if type(inc_data) == "table" and inc_data.file == include_data.file then
@@ -380,7 +380,7 @@ function Options:SaveData(path, file_name, data)
         FileIO:MakeDir(path)
     end
     self._parent:Log("Saving script data '%s' in %s", file_name, path)
-    FileIO:WriteTo(BeardLib.Utils.Path:Combine(path, file_name), data)
+    FileIO:WriteTo(Path:Combine(path, file_name), data)
 end
 
 function Options:save_nav_data(include)    
@@ -473,7 +473,7 @@ function Options:build_nav_segments() -- Add later the options to the menu
 
         if #settings > 0 then
             managers.navigation:clear()
-            managers.navigation:build_nav_segments(settings, callback(self, self, "build_visibility_graph"))
+            managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
         else
             if #nav_surfaces > 0 then
                 BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
