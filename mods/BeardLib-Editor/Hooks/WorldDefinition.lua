@@ -83,7 +83,7 @@ function WorldDef:is_world_unit(unit)
 end
 
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
-	if unit_id <= 0 then -- fuck off.
+	if not unit_id or unit_id <= 0 then -- fuck off.
 		return
 	end
 
@@ -274,13 +274,18 @@ end
 function WorldDef:delete_unit(unit, no_unlink)
 	local ud = unit:unit_data()
 	local unit_id = ud.unit_id
-	self:remove_name_id(unit)
+	
+	if not unit_id then
+		return
+	end
 
 	if unit_id <= 0 then
 		managers.editor:Error("Attempted to delete a unit with invalid unit id")
 		return
 	end
-
+	
+	self:remove_name_id(unit)
+	
 	local name_id = ud.name_id
 	local continent_name = ud.continent
 
