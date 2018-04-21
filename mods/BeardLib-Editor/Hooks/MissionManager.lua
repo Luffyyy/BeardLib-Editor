@@ -50,6 +50,31 @@ function Mission:parse(params, stage_name, offset, file_type)
 	return true
 end
 
+Hooks:PostHook(Mission, "post_init", "EditorSetDebugGUI", function(self)
+	local fdo = self._fading_debug_output:script()
+	Hooks:PostHook(fdo, "add_row", "EditorAddRow", function(text, color)
+		if not alive(fdo.main_panel) then
+			return
+		end
+		for _, c in pairs(fdo.main_panel:children()) do
+			for _, text in pairs(c:children()) do
+				text:configure({
+					font = _G.tweak_data.menu.pd2_large_font,
+					font_size = fdo.FONT_SIZE
+				})
+				local _,_,w,h = text:text_rect()
+				c:set_size(w,h)
+			end
+		end
+	end)
+end)
+
+Hooks:PostHook(MissionManager, "_show_debug_subtitle", "ChangeDebugSubtitleFont", function(self)
+	if alive(self._debug_subtitle_text) then
+		self._debug_subtitle_text:configure({font = _G.tweak_data.menu.pd2_large_font, font_size = self._fading_debug_output:script().FONT_SIZE})
+	end
+end)
+
 function Mission:store_element_id(continent, id)
 	self._ids = self._ids or {}
 	self._ids[continent] = self._ids[continent] or {}
@@ -500,6 +525,20 @@ function Mission:get_mission_element(id)
 		end
 	end
 	return nil
+end
+
+function Mission:add_fading_debug_output(debug, color, as_subtitle)
+	if not self._fading_debug_enabled then
+		return
+	end
+	if as_subtitle then
+		self:_show_debug_subtitle(debug, color)
+	else
+		local stuff = { " -", " \\", " |", " /" }
+		self._fade_index = (self._fade_index or 0) + 1
+		self._fade_index = #stuff < self._fade_index and self._fade_index and 1 or self._fade_index
+		self._fading_debug_output:script().log(stuff[self._fade_index] .. " " .. debug, color, nil)
+	end
 end
 
 --Instance elements--

@@ -345,7 +345,9 @@ function AssetsManagerDialog:load_from_extract(missing_units, exclude, dontask)
                         self:reload()
                     end
                 end)
-            else
+			elseif failed_all then
+                BLE.Utils:Notify("Info", "Failed to export all units")
+			else
                 BLE.Utils:Notify("Info", "No assets to copy")
             end
         end

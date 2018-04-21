@@ -84,14 +84,21 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
     end
 end
 
-function Utils:ParseXml(typ, path)
-    local file = Path:Combine(BeardLibEditor.ExtractDirectory, path.."."..typ)
+function Utils:ParseXml(typ, path, scriptdata)
+	local file = Path:Combine(BeardLibEditor.ExtractDirectory, path.."."..typ)
+	local load = function(path)
+		if scriptdata then
+			return FileIO:ReadScriptData(path, "binary")
+		else
+			return SystemFS:parse_xml(file, "r")
+		end
+	end
     if FileIO:Exists(file) then
-        return SystemFS:parse_xml(file, "r")
+        return load(file)
     else
         local key_file = Path:Combine(BeardLibEditor.ExtractDirectory, path:key().."."..typ)
         if FileIO:Exists(key_file) then
-            return SystemFS:parse_xml(key_file, "r")
+            return load(file)
         else
             return nil
         end

@@ -6,6 +6,9 @@ end
 BeardLibEditor = BeardLibEditor or ModCore:new(ModPath .. "Data/Config.xml", false, true)
 BLE = BeardLibEditor
 
+local UNIT_LOAD = "unit_load"
+local ADD = "add"
+
 function BLE:Init()
     self:init_modules()
     self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
@@ -174,7 +177,7 @@ function BLE:ReadCustomPackageConfig(id, config, directory)
             local typ = child._meta
             local path = child.path
 
-            if typ == "unit_load" or typ == "add" then
+            if typ == UNIT_LOAD or typ == ADD then
                 self:ReadCustomPackageConfig(id, child, directory)
             elseif typ and path then
                 path = Path:Normalize(path)
@@ -293,7 +296,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
         if type(v) == "table" then
             local path = v.path
             local typ = v._meta
-            if typ == "unit_load" then
+            if typ == UNIT_LOAD or typ == ADD then
                 self:LoadCustomAssetsToHashList(v, directory)
             else
                 path = Path:Normalize(path)

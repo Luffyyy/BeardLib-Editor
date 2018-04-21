@@ -898,5 +898,5 @@ function WData:OpenLoadUnitDialog(params)
             BeardLibEditor.ListDialog:hide()
             self._assets_manager:find_package(unit, true)
 	    end
-	}) 
+	})
 end

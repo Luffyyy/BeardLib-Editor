@@ -117,14 +117,14 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 			table.remove(statics, key)
 			table.insert(new_statics, static)
 		end
-		return
 	end
 
 	if statics then
 		for k, static in pairs(statics) do
 			if type(static) == "table" then
 				if static.unit_data.unit_id == unit_id then
-					set_unit(static, statics,k )
+					set_unit(static, statics, k)
+					return
 				end
 			end
 		end

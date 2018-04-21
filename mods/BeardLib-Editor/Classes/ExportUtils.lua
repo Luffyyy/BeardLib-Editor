@@ -3,7 +3,7 @@ local EditorUtils = BLE.Utils
 local Utils = EditorUtils.Export
 
 function Utils:Add(config, ext, path, exclude, force_load)
-    if exclude and exclude[ext] then
+	if exclude and exclude[ext] then
         return
     end
     table.insert(config, {_meta = ext, path = path, force = true, unload = true, load = force_load})
@@ -18,11 +18,10 @@ function Utils:GetUnitDependencies(unit, ignore_default, exclude)
     config = {}
     for _, file in pairs(temp) do
         local file_path = Path:Combine(BLE.ExtractDirectory, file.path.."."..file._meta)
-        local ext = file._meta
-        
-        if not ignore_default or (not Global.DefaultAssets[ext] or not Global.DefaultAssets[ext][file.path]) then
-            if FileIO:Exists(file_path) then
-                file.extract_real_path = file_path
+		local ext = file._meta
+		if not ignore_default or not (Global.DefaultAssets[ext] and Global.DefaultAssets[ext][file.path] and managers.dyn_resource:has_resource(ext:id(), file.path:id(), managers.dyn_resource.DYN_RESOURCES_PACKAGE)) then
+			if FileIO:Exists(file_path) then
+				file.extract_real_path = file_path
                 table.insert(config, file)
             else
                 BLE:log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead", tostring(unit), file_path)
@@ -37,8 +36,8 @@ function Utils:GetUnitDependencies(unit, ignore_default, exclude)
                 end
 
                 return false
-            end
-        end
+			end
+		end
     end
     return config
 end
@@ -49,7 +48,7 @@ function Utils:ReadUnit(unit, config, exclude)
     self:Add(config, "cooked_physics", unit, exclude)
     self:Add(config, "model", unit, exclude)
 
-    BLE:log("Importing unit from extract to map assets" .. tostring(unit))
+    BLE:log("Importing unit from extract to map assets " .. tostring(unit))
     local node = EditorUtils:ParseXml("unit", unit)
     if node then
         for child in node:children() do
@@ -114,7 +113,8 @@ function Utils:ReadObject(path, config, exclude)
                     return false
                 end
             elseif name == "effects" then
-                for effect in obj_child:children() do
+				for effect in obj_child:children() do
+					log("effect", tostring(effect:parameter("effect")))
                     if not self:ReadEffect(effect:parameter("effect"), config, exclude) then
                         return false
                     end
@@ -175,7 +175,15 @@ end
 
 function Utils:ReadSequenceManager(path, config, exclude)
     self:Add(config, "sequence_manager", path, exclude)
-    return true
+	local tbl = EditorUtils:ParseXml("sequence_manager", path, true) -- scriptdata.
+	if tbl and tbl.unit then
+		for _, sequence in ipairs(tbl.unit) do
+			if type(sequence) == "table" and sequence._meta == "sequence" and sequence.spawn_unit then
+				self:ReadUnit(sequence.spawn_unit.name:gsub("'", ""), config, exclude)
+			end
+		end
+	end
+	return tbl ~= nil
 end
 
 function Utils:ReadMaterialConfig(path, config, exclude)
@@ -231,14 +239,28 @@ function Utils:ReadEffect(path, config, exclude)
     return node ~= nil
 end
 
+function Utils:ReadScene(path, config, exclude)
+    self:Add(config, "scene", path, exclude, true)
+    local node = EditorUtils:ParseXml("scene", path)
+    if node and not exclude.scene then
+		for child in node:children() do
+			if child:name() == "load_scene" and child:has_parameter("materials") then
+				self:ReadMaterialConfig(child:parameter("materials"), config, exclude)
+			end
+        end
+    end
+    return node ~= nil
+end
+
 Utils.Reading = {
     unit = Utils.ReadUnit,
+	scene = Utils.ReadScene,
     object = Utils.ReadObject,
     effect = Utils.ReadEffect,
     material_config = Utils.ReadMaterialConfig,
     sequence_manager = Utils.ReadSequenceManager,
     animation_def = Utils.ReadAnimationDefintion,
     animation_subset = Utils.ReadAnimationSubset,
-    animation_states = Utils.ReadAnimationStates,
+	animation_states = Utils.ReadAnimationStates,
     animation_state_machine = Utils.ReadAnimationStateMachine
 }

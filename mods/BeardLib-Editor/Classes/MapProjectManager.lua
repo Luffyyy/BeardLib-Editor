@@ -796,13 +796,14 @@ function Project:set_project_data(item)
     narr.debrief_event = events:match(",") and string.split(events, ",") or {events}
     narr.briefing_event = self:GetItem("BriefingEvent"):Value()
     narr.contact = self:GetItem("Contact"):SelectedItem()
-
-    mod_assets.id = self:GetItem("DownloadId"):Value()
-    mod_assets.version = self:GetItem("Version"):Value()
-    mod_assets.is_standalone = self:GetItem("Downloadable"):Value()
-    if mod_assets.is_standalone == true then
-        mod_assets.is_standalone = nil
-    end
+	if mod_assets then
+		mod_assets.id = self:GetItem("DownloadId"):Value()
+		mod_assets.version = self:GetItem("Version"):Value()
+		mod_assets.is_standalone = self:GetItem("Downloadable"):Value()
+		if mod_assets.is_standalone == true then
+			mod_assets.is_standalone = nil
+		end
+	end
     self:set_edit_title(title)
 end
 

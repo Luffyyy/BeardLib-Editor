@@ -76,12 +76,16 @@ function SConverter:GetFilesAndFolders(current_path)
     return FileIO:GetFiles(current_path), FileIO:GetFolders(current_path)
 end
 
+function SConverter:MainItems()
+    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
+	self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
+	self:Button("BrowseTo", ClassClbk(self, "OpenBrowseDialog"))
+end
+
 function SConverter:RefreshFilesAndFolders()
     self:ClearItems()
-    local panel = self._menu:Panel()
-    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
-    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
-
+    self:MainItems()
+	
     if not self.assets then
         self:Button("OpenFolderInExplorer", callback(self, self, "OpenFolderInExplorer"))
     end
@@ -124,8 +128,8 @@ end
 
 function SConverter:CreateScriptDataFileOption()
     self:ClearItems()
-    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
-    self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
+	self:MainItems()
+	
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 0 then
         table.remove(up_level, #up_level)
@@ -168,6 +172,16 @@ function SConverter:BackToRoot(item)
     end
 end
 
+function SConverter:OpenBrowseDialog()
+	BeardLibEditor.InputDialog:Show({title = "Browse to..", text = "", callback = function(path)
+		path = path:gsub("\\", "/")
+		if FileIO:Exists(path) then
+			self.current_script_path = path
+			self:RefreshFilesAndFolders()
+		end
+	end})
+end
+
 function SConverter:FileClick(item)
     self.current_selected_file = item.name
     self.current_selected_file_path = item.base_path
@@ -187,7 +201,6 @@ function SConverter:OpenFolderInExplorer(item)
 end
 
 function SConverter:BackToShortcuts(item)
-    local panel = self._menu:Panel()
     self:ClearItems()
     self.assets = false
     self.current_script_path = ""
