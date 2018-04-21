@@ -218,12 +218,12 @@ function EnvLayer:build_menu()
 	self:Button("BuildCubemaps", function()
 		local cubes = self:selected_unit() and "selected" or "all"
 		if not self:selected_unit() then 
-			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build cubemaps for all lights in the level?",
+			BLE.Utils:YesNoQuestion("No cubemap gizmos were selected. Would you like to build cubemaps for all gizmos in the level?",
 			function()
 				self:create_cube_map("all")
 			end)
 		else 
-			BLE.Utils:YesNoQuestion("Would you like to build cubemaps for all selected lights in the level?",
+			BLE.Utils:YesNoQuestion("Would you like to build cubemaps for all selected gizmos in the level?",
 			function()
 				self:create_cube_map("selected")
 			end)
@@ -604,28 +604,30 @@ function EnvLayer:create_cube_map(selection, type)
 
 	if selection == "all" then
 		for _, unit in pairs(World:find_units_quick("all")) do
-			if alive(unit) and unit.unit_data and unit:get_object(Idstring("lo_omni")) then
+			if alive(unit) and unit:name() == self._cubemap_unit:id() then
 				table.insert(cubes, {
 					output_name = unit:unit_data().unit_id,
 					position = unit:position(),
-					name = unit:unit_data().name_id
+					name = unit:unit_data().name_id,
+					resolution = unit:unit_data().cubemap_resolution
 				})
 			end
 		end
 	elseif selection == "selected" then
 		for _, unit in pairs(self:selected_units()) do
-			if unit:get_object(Idstring("lo_omni")) then
+			if unit:name() == self._cubemap_unit:id() then
 				table.insert(cubes, {
 					output_name = unit:unit_data().unit_id,
 					position = unit:position(),
-					name = unit:unit_data().name_id
+					name = unit:unit_data().name_id,
+					resolution = unit:unit_data().cubemap_resolution
 				})
 			end
 		end
 	end
 
 	if next(cubes) == nil then
-		BLE.Utils:Notify("Info", "No omnidirectional lights with projection textures set were found.\nYou need to have at least one omnidir light to build cubemaps")
+		BLE.Utils:Notify("Info", "No cubemap gizmos were found.\nYou need to have at least cubemap gizmo to build cubemaps")
 		return
 	end
 
