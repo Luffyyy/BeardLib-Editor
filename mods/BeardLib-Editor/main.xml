@@ -1,46 +1,61 @@
-<mod name="BeardLib-Editor" global_key="BeardLibEditor" ignore_errors="true" image="textures/editor_logo" color="Color(0.8,0.8,0.8)" auto_image_color="true">
+<mod 
+		name="BeardLib-Editor"
+		global_key="BeardLibEditor"
+		ignore_errors="true"
+		image="textures/editor_logo"
+		color="Color(0.8,0.8,0.8)"
+		auto_image_color="true"
+		min_lib_ver="3.0"
+		core_class="Core.lua"
+	>
     <Classes directory="Classes">
-        <class file="Utils.lua"/>
-        <class file="ExportUtils.lua"/>
-        <class file="MenuUtils.lua"/>
-        <class file="EditorMenu.lua"/>
-        <class file="EditorOptionsMenu.lua"/>
-        <class file="AboutMenu.lua"/>
-        <class file="MissionElementUnit.lua"/>
-        <class file="MapProjectManager.lua"/>
-        <class file="Dialogs/AssetsManagerDialog.lua"/>
-        <class file="Dialogs/ExportDialog.lua"/>
-        <class file="Dialogs/ObjectivesManagerDialog.lua"/>
-        <class file="Dialogs/SelectListDialogValue.lua"/>
-        <class file="Dialogs/ContinentSettingsDialog.lua"/>
-        <class file="Map/EditorPart.lua"/>
-        <class file="Map/EditUnit.lua"/>
-        <class file="Map/MissionEditor.lua"/>
-        <class file="Map/StaticEditor.lua"/>        
-        <class file="Map/EditWire.lua"/>
-        <class file="Map/EditAIData.lua"/>
-        <class file="Map/EditMeshVariation.lua"/>
-        <class file="Map/InEditorOptions.lua"/>
-        <class file="Map/UpperMenu.lua"/>
-        <class file="Map/StatusMenu.lua"/>
-        <class file="Map/EditorConsole.lua"/>
-        <class file="Map/InstancesEditor.lua"/>
-        <class file="Map/WorldDataEditor.lua"/>
-        <class file="Map/EditUnitEditableGui.lua"/>
-        <class file="Map/EditLadder.lua"/>
-        <class file="Map/EditZipLine.lua"/>
-        <class file="Map/EditUnitLight.lua"/>
-		<class file="Map/EditUnitCubemap.lua"/>
-        <class file="Map/MissionScriptEditor.lua"/>
-        <class file="Map/EnvironmentLayerEditor.lua"/>
-        <class file="Map/PortalLayerEditor.lua"/>
-        <class file="Map/SoundLayerEditor.lua"/>
-        <class file="Map/UndoUnitHandler.lua"/>
-		<class file="Map/CubemapCreator.lua"/>
-        <class file="ScriptDataConverterManager.lua"/>
-        <class file="MapEditor.lua"/>
-        <class file="EnvEditor.lua"/>
-        <class file="LoadLevelMenu.lua"/>
+		<class file="Utils.lua"/>
+		<class file="ExportUtils.lua"/>
+		<class file="MenuUtils.lua"/>
+		<class file="EditorMenu.lua"/>
+		<class file="EditorPart.lua"/>		
+		<class file="EditorOptionsMenu.lua"/>
+		<class file="AboutMenu.lua"/>
+		<class file="MissionElementUnit.lua"/>
+		<class file="MapProjectManager.lua"/>
+		<class file="ScriptDataConverterManager.lua"/>
+		<class file="MapEditor.lua"/>
+		<class file="EnvEditor.lua"/>
+		<class file="LoadLevelMenu.lua"/>
+
+		<classes directory="Dialogs">
+			<class file="AssetsManagerDialog.lua"/>
+			<class file="ExportDialog.lua"/>
+			<class file="ObjectivesManagerDialog.lua"/>
+			<class file="SelectListDialogValue.lua"/>
+			<class file="ContinentSettingsDialog.lua"/>
+		</classes>
+
+		<classes directory="Map">
+			<class file="EditUnit.lua"/>
+			<class file="MissionEditor.lua"/>
+			<class file="StaticEditor.lua"/>        
+			<class file="EditWire.lua"/>
+			<class file="EditAIData.lua"/>
+			<class file="EditMeshVariation.lua"/>
+			<class file="InEditorOptions.lua"/>
+			<class file="UpperMenu.lua"/>
+			<class file="StatusMenu.lua"/>
+			<class file="EditorConsole.lua"/>
+			<class file="InstancesEditor.lua"/>
+			<class file="WorldDataEditor.lua"/>
+			<class file="EditUnitEditableGui.lua"/>
+			<class file="EditLadder.lua"/>
+			<class file="EditZipLine.lua"/>
+			<class file="EditUnitLight.lua"/>
+			<class file="EditUnitCubemap.lua"/>
+			<class file="MissionScriptEditor.lua"/>
+			<class file="EnvironmentLayerEditor.lua"/>
+			<class file="PortalLayerEditor.lua"/>
+			<class file="SoundLayerEditor.lua"/>
+			<class file="UndoUnitHandler.lua"/>
+			<class file="CubemapCreator.lua"/>
+		</classes>
     </Classes>
     <AssetUpdates id="16837" version="2.6.2" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
     <Hooks directory="Hooks">
@@ -49,6 +64,7 @@
         <hook source_file="core/lib/managers/coresoundenvironmentmanager" file="SoundEnvironmentManager.lua"/>
         <hook source_file="core/lib/managers/coreshapemanager" file="ShapeManager.lua"/>
         <hook source_file="core/lib/managers/coreportalmanager" file="PortalManager.lua"/>
+        <hook source_file="lib/managers/menumanager" file="MenuManager.lua"/>
         <hook source_file="core/lib/utils/dev/editor/coreworlddefinition" file="WorldDefinition.lua"/>
         <hook source_file="lib/utils/game_state_machine/gamestatemachine" file="GameStateMachine.lua"/>
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>

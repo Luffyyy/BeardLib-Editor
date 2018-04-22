@@ -19,7 +19,7 @@ function Options:init()
 	self:Button("Dark", ClassClbk(self, "set_theme"), {group = themes, text = "Dark[Default]"})
 	self:Button("Light", ClassClbk(self, "set_theme"), {group = themes})
 	local input = self:DivGroup("Input")
-	function keybind(setting, supports_mouse, text)
+	local function keybind(setting, supports_mouse, text)
 		return self:KeyBind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), group = input, supports_mouse = supports_mouse})
 	end
 	self:Button("ResetInputOptions", ClassClbk(self, "reset_options", input), {group = input})

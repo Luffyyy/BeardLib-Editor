@@ -6,15 +6,6 @@
 	"image" : "Assets/textures/editor_logo.texture",
 	"contact" : "https://twitter.com/LuffyDaFloffi",
 	"hooks" : [
-        {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"},
-		{"hook_id" : "core/lib/managers/viewport/environment/coreenvironmentmanager", "script_path" : "EditorCore.lua"},
-        {"hook_id" : "lib/managers/menumanager", "script_path" : "EditorCore.lua"},
-        {"hook_id" : "lib/setups/setup", "script_path" : "EditorCore.lua"}
-	],
-    "libraries" : [
-        {
-            "display_name" : "BeardLib",
-            "identifier" : "beardlib"
-        }
-    ]
+        {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"}
+	]
 }
