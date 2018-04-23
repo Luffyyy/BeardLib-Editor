@@ -218,14 +218,14 @@ function CubemapCreator:cube_map_done()
 		self._saved_all_lights = nil
 	end
 
-	--[[if self._cubemap_params.lights then
+	if self._cubemap_params.lights then
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
 
 		for _, cube in pairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
 		end
-	end]]
+	end
 
 	for _, unit in pairs(self._saved_hidden_units) do
 		unit:set_visible(true)
@@ -318,7 +318,7 @@ function CubemapCreator:_create_cube_map()
 
 	self._cube_counter = self._cube_counter + 1
 
-	--[[if self._params.spot then
+	if self._params.spot then
 		if self._cube_counter == 1 then
 			self:_create_spot_projection()
 		elseif self._cube_counter == 2 then
@@ -328,7 +328,7 @@ function CubemapCreator:_create_cube_map()
 		end
 
 		return true
-	end]]
+	end
 
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))

@@ -229,7 +229,7 @@ function EnvLayer:build_menu()
 			end)
 		end
 	end, {group = environment_group})
-	--[[self:Button("BuildProjectionLights", function()
+	self:Button("BuildProjectionLights", function()
 		local lights = self:selected_unit() and self:selected_unit():get_object(Idstring("lo_omni")) or nil
 		if not lights then 
 			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build projection lights for all lights in the level?",
@@ -242,7 +242,7 @@ function EnvLayer:build_menu()
 				self:GetPart("cubemap_creator"):create_projection_light("selected") 
 			end)
 		end
-	end, {group = environment_group})]]
+	end, {group = environment_group})
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
     local utils = self:GetPart("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
