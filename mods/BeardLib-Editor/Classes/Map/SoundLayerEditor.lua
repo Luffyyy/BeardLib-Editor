@@ -330,7 +330,9 @@ function SndLayer:is_my_unit(unit)
 	return false
 end
 
-function SndLayer:delete_unit(unit)
+function SndLayer:unit_spawned() end
+
+function SndLayer:unit_deleted(unit)
 	local ud = unit:unit_data()
 	table.delete(self._created_units, unit)
 	if ud then

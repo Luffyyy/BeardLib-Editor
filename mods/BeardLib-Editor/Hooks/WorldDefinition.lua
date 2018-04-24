@@ -457,12 +457,8 @@ function WorldDef:make_unit(data, offset)
 		if Global.editor_log_on_spawn then
 			log("Attempt spawn - " .. tostring(name))
 		end
-		if MassUnitManager:can_spawn_unit(Idstring(name)) then
-			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
-		else
-			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
-		end
-		if MassUnitManager:can_spawn_unit(Idstring(name)) then
+		unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+		if unit and MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit:force_add_unit_data()
 			data.brush_unit = true
 		end

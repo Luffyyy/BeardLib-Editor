@@ -28,6 +28,22 @@ function WData:loaded_continents()
     end
 end
 
+function WData:unit_spawned(unit)
+    for _, manager in pairs(self.layers) do
+        if manager.unit_spawned then
+            manager:unit_spawned(unit)
+        end
+	end
+end
+
+function WData:unit_deleted(unit)
+    for _, manager in pairs(self.layers) do
+        if manager.unit_deleted then
+            manager:unit_deleted(unit)
+        end
+    end
+end
+
 function WData:do_spawn_unit(unit, data)
     for _, manager in pairs(self.layers) do
         if manager.is_my_unit and manager:is_my_unit(unit:id())  then
@@ -394,14 +410,6 @@ end
 
 function WData:clear_all_elements_from_script(script, item)
     self:_clear_all_elements_from_script(script, item.continent)
-end
-
-function WData:delete_unit(unit)
-    for  _, manager in pairs(self.layers) do
-        if manager.delete_unit then
-            manager:delete_unit(unit)
-        end
-    end
 end
 
 function WData:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)
