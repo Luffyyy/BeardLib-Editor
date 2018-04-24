@@ -15,6 +15,7 @@ function CubemapCreator:_init_paths()
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
+	self._omni_projection_name = "units/lights/light_omni_shadow_projection_01/light_omni_shadow_projection_01"
 	FileIO:MakeDir(self._temp_path)
 end
 
@@ -32,7 +33,7 @@ function CubemapCreator:create_projection_light(type)
 
 	if type == "all" then
 		for _, unit in pairs(World:find_units_quick("all")) do
-			if alive(unit) and unit.unit_data and unit:get_object(Idstring("lo_omni")) then
+			if alive(unit) and unit.unit_data and self:is_omni_projection(unit) then
 				table.insert(units, {
 					unit = unit,
 					light_name = "lo_omni"
@@ -43,7 +44,7 @@ function CubemapCreator:create_projection_light(type)
 		local s_units = self:selected_units()
 
 		for _, unit in pairs(s_units) do
-			if unit:get_object(Idstring("lo_omni")) then
+			if self:is_omni_projection(unit) then
 				table.insert(units, {
 					unit = unit,
 					light_name = "lo_omni"
@@ -202,7 +203,7 @@ function CubemapCreator:cube_map_done()
 	end
 
 	if self._error_when_done then
-		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the BLT log for more info.")
+		BLE.Utils:Notify("Error", "Something went wrong during the creation of cubemaps! Check the log in the Tools folder for more info.")
 		self._error_when_done = false
 	end
 	
@@ -273,15 +274,15 @@ function CubemapCreator:start_cube_map(params)
 		self._light:set_far_range(params.light:far_range())
 		self._light:set_color(Vector3(1, 1, 1))
 
-		if self._params.spot then
+		--[[if self._params.spot then
 			local rot = Rotation(self._params.unit:rotation():z(), Vector3(0, 0, 1))
 			rot = Rotation(-rot:z(), rot:y())
 
 			self._params.unit:set_rotation(rot)
-		end
+		end]]
 	end
 
-	self._camera:set_fov(self._params.spot and self._params.light:spot_angle_end() or 90)
+	self._camera:set_fov(90) -- self._params.spot and self._params.light:spot_angle_end() or
 
 	self._cube_counter = 0
 	self._wait_frames = 10
@@ -310,6 +311,11 @@ function CubemapCreator:creating_cube_map()
 	return self._creating_cube_map
 end
 
+function CubemapCreator:is_omni_projection(unit)
+	--log("name: "..tostring(unit:name()).." "..tostring(self._omni_projection_name:id()))
+	return unit:name() == self._omni_projection_name:id()
+end
+
 function CubemapCreator:_create_cube_map()
 	if self._wait_frames > 0 then
 		self._wait_frames = self._wait_frames - 1
@@ -318,7 +324,7 @@ function CubemapCreator:_create_cube_map()
 
 	self._cube_counter = self._cube_counter + 1
 
-	if self._params.spot then
+	--[[if self._params.spot then
 		if self._cube_counter == 1 then
 			self:_create_spot_projection()
 		elseif self._cube_counter == 2 then
@@ -328,7 +334,7 @@ function CubemapCreator:_create_cube_map()
 		end
 
 		return true
-	end
+	end]]
 
 	if self._cube_counter == 1 then
         self._camera:set_rotation(Rotation(Vector3(0, 0, 1), Vector3(0, -1, 0)))
@@ -443,5 +449,5 @@ function CubemapCreator:_move_output(output_path)
 end
 
 function CubemapCreator:notify_success()
-	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the lights these cubemaps were built on!")
+	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
 end
