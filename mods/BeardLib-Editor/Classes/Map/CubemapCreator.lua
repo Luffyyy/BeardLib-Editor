@@ -11,7 +11,7 @@ function CubemapCreator:init(parent, menu, cam)
 end
 
 function CubemapCreator:_init_paths()
-	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
+	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.exe" .. "\""
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
@@ -80,7 +80,7 @@ function CubemapCreator:create_projection_light(type)
 			unit = unit,
 			light = light,
 			enabled = enabled,
-			spot = string.find(light:properties(), "spot") and true or false,
+			spot = false,
 			resolution = resolution,
 			output_name = unit:unit_data().unit_id
 		})
