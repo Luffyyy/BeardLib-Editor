@@ -20,6 +20,7 @@ function EnvLayer:init(parent)
 		{speed = 28.5, beaufort = 11,description = "Violent storm"},
 		{speed = 32.7, beaufort = 12, description = "Hurricane"}
 	}
+	self._cubemap_units = {}
 	self._created_units = {}
 	self._wind_speed = 6
 	self._wind_speed_variation = 1
@@ -41,6 +42,42 @@ function EnvLayer:loaded_continents()
 	self:_load_effects(data.effects)
 	self:_load_environment_areas()
 	self:_load_dome_occ_shapes(data.dome_occ_shapes)
+	self:find_cubemaps()
+end
+
+function EnvLayer:unit_spawned(unit)
+	if unit:name() == self._cubemap_unit:id() and not table.contains(self._cubemap_units, unit) then
+		table.insert(self._cubemap_units, unit)
+	end
+end
+
+function EnvLayer:unit_deleted(unit)
+	local ud = unit:unit_data()
+	if ud then
+		if ud.occ_shape then
+			ud.occ_shape:set_unit()
+			ud.occ_shape:destroy()
+		end
+		if ud.environment_area then
+			ud.environment_area:set_unit()
+			managers.environment_area:remove_area(ud.environment_area)
+		end
+		if ud.current_effect then
+			World:effect_manager():kill(ud.current_effect)
+		end
+	end
+	if unit:name() == self._cubemap_unit:id() then
+		table.delete(self._cubemap_units, unit)
+	end
+end
+
+function EnvLayer:find_cubemaps()
+	self._cubemap_units = {}
+	for _, unit in pairs(managers.worlddefinition._all_units) do
+        if unit:name() == self._cubemap_unit:id() then
+            table.insert(self._cubemap_units, unit)
+        end
+    end
 end
 
 function EnvLayer:data() return self._parent:data().environment end
@@ -156,7 +193,12 @@ function EnvLayer:update(t, dt)
 	end
 	if self:Value("EnvironmentUnits") then
 		local selected_units = self:selected_units()
-		for k, unit in ipairs(self._created_units) do
+		for _, unit in pairs(self._cubemap_units) do
+			if alive(unit) then
+				Application:draw_sphere(unit:position(), 30, 1, 1, 1)
+			end
+		end
+		for _, unit in pairs(self._created_units) do
 			if alive(unit) then
 				if unit:unit_data().current_effect then
 					World:effect_manager():move(unit:unit_data().current_effect, unit:position())
@@ -262,23 +304,6 @@ function EnvLayer:build_menu()
     self._wind_text = self:Divider("Beaufort/WindDesc")
     self:update_wind_speed_labels()
     self:Slider("SpeedVariation", callback(self, self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
-end
-
-function EnvLayer:delete_unit(unit)
-	local ud = unit:unit_data()
-	if ud then
-		if ud.occ_shape then
-			ud.occ_shape:set_unit()
-			ud.occ_shape:destroy()
-		end
-		if ud.environment_area then
-			ud.environment_area:set_unit()
-			managers.environment_area:remove_area(ud.environment_area)
-		end
-		if ud.current_effect then
-			World:effect_manager():kill(ud.current_effect)
-		end
-	end
 end
 
 function EnvLayer:build_unit_menu()

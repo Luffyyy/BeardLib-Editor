@@ -32,7 +32,7 @@ function EditorDialogue:stop_test_element()
 end
 function EditorDialogue:_build_panel()
 	self:_create_panel()
-	self:ComboCtrl("dialogue", table.list_add({"none"}, managers.dialog:conversation_names()), {help = "Select a dialogue from the combobox"})
+	self:ComboCtrl("dialogue", table.list_add({"none"}, managers.dialog:conversation_names()), {help = "Select a dialogue from the combobox", free_typing = true})
 	self:BooleanCtrl("force_quit_current", {help = "Force quits current dialog to allow this to be played immediately"})
 	self:BooleanCtrl("execute_on_executed_when_done", {help = "Execute on executed when done"})
 	self:BooleanCtrl("use_position")

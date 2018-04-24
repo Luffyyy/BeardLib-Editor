@@ -667,7 +667,8 @@ end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, table.get_key(items, self:ItemData(opt)[value_name]), opt)
+	local value = self:ItemData(opt)[value_name]
+	return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)

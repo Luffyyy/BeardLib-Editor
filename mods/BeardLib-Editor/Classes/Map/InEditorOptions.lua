@@ -203,7 +203,7 @@ function Options:update(t, dt)
     if self:get_value("HighlightOccluders") then
         for _, unit in pairs(managers.worlddefinition._all_units) do
             local ud = alive(unit) and unit:unit_data()
-            if ud and (ud.only_visible_in_editor or ud.only_exists_in_editor) and ud.name:match("occluder_") then
+            if ud and (ud.only_visible_in_editor or ud.only_exists_in_editor) and ud.name:find("occluder_") then
                 Application:draw(unit, 1, 0.25, 1)
             end
         end

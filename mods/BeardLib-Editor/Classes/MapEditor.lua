@@ -244,8 +244,8 @@ function Editor:DeleteUnit(unit)
             end
         end
         local ud = unit:unit_data()
-        if ud then
-            m.world:delete_unit(unit)
+		if ud then
+			self:unit_deleted(unit)
             managers.worlddefinition:delete_unit(unit)
         end
         World:delete_unit(unit)
@@ -327,10 +327,8 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
     end
     local unit = managers.worlddefinition:create_unit(data, t)
     if alive(unit) then
-        self:select_unit(unit, add)
-        if unit:name() == m.static._nav_surface then
-            table.insert(m.static._nav_surfaces, unit)
-        end
+		self:select_unit(unit, add)
+		self:unit_spawned(unit)
     else
         BLE:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
     end    
@@ -443,6 +441,22 @@ function Editor:load_continents(continents)
             manager:loaded_continents(self._continents, self._current_continent)
         end
     end
+end
+
+function Editor:unit_spawned(unit)
+	for _, manager in pairs(m) do
+		if manager.unit_spawned then
+			manager:unit_spawned(unit)
+		end
+	end
+end
+
+function Editor:unit_deleted(unit)
+	for _, manager in pairs(m) do
+		if manager.unit_deleted then
+			manager:unit_deleted(unit)
+		end
+	end
 end
 
 function Editor:set_camera_fov(fov)
