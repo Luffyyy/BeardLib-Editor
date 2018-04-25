@@ -83,7 +83,7 @@ function Options:build_default_menu()
 
     local mission = self:Group("Mission", groups_opt)
     self:Toggle("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Value("RandomizedElementsColor"), {group = mission})
-    self:Button("ElementsColor", ClassClbk(self, "open_set_color_dialog", "Map/ElementsColor"), {group = mission})
+    self:ColorBox("ElementsColor", ClassClbk(self, "update_option_value"), self:Value("ElementsColor"), {group = mission})
 
     local other = self:Group("Other", groups_opt)
     self:Button("TeleportPlayer", ClassClbk(self, "drop_player"), {group = other})
@@ -119,13 +119,6 @@ function Options:KeySPressed()
     if ctrl() then
         self:save()
     end
-end
-
-function Options:open_set_color_dialog(option)
-    BLE.ColorDialog:Show({color = BLE.Options:GetValue(option), callback = function(color)
-        BLE.Options:SetValue(option, color)
-        BLE.Options:Save()
-    end})
 end
 
 function Options:loaded_continents(continents, current_continent)

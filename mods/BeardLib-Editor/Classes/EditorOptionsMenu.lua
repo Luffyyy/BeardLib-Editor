@@ -1,8 +1,8 @@
 EditorOptionsMenu = EditorOptionsMenu or class()
 local Options = EditorOptionsMenu
 function Options:init()
-	local O = BeardLibEditor.Options
-	local EMenu = BeardLibEditor.Menu
+	local O = BLE.Options
+	local EMenu = BLE.Menu
 	MenuUtils:new(self, EMenu:make_page("Options"))
 	local main = self:DivGroup("Main")
 	self:TextBox("ExtractDirectory", ClassClbk(self, "set_clbk"), O:GetValue("ExtractDirectory"), {
@@ -12,8 +12,8 @@ function Options:init()
 
 	local visual = self:DivGroup("Visual")
 	self:Button("ResetVisualOptions", ClassClbk(self, "reset_options", visual), {group = visual})
-	self:Button("AccentColor", ClassClbk(self, "open_set_color_dialog"), {group = visual})
-	self:Button("BackgroundColor", ClassClbk(self, "open_set_color_dialog"), {group = visual})
+	self:ColorBox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"), {group = visual})
+	self:ColorBox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"), {group = visual})
 
 	local themes = self:DivGroup("Themes", {group = visual, last_y_offset = 0})
 	self:Button("Dark", ClassClbk(self, "set_theme"), {group = themes, text = "Dark[Default]"})
@@ -39,16 +39,20 @@ function Options:init()
 	self:Button("ResetOptions", ClassClbk(self, "reset_options"))
 end
 
+function Options:set_item_value(name, value)
+	self:GetItem(name):SetValue(value, true)
+end
+
 function Options:set_theme(item)
 	local theme = item.name
 	if theme == "Dark" then
-		self:set("AccentColor", Color('4272d9'))
-		self:set("BackgroundColor", Color(0.6, 0.2, 0.2, 0.2))
+		self:set_item_value("AccentColor", Color('4272d9'))
+		self:set_item_value("BackgroundColor", Color(0.6, 0.2, 0.2, 0.2))
 	else
-		self:set("AccentColor", Color(0.40, 0.38, 1))
-		self:set("BackgroundColor", Color(0.64, 0.70, 0.70, 0.70))
+		self:set_item_value("AccentColor", Color(0.40, 0.38, 1))
+		self:set_item_value("BackgroundColor", Color(0.64, 0.70, 0.70, 0.70))
 	end
-    BeardLibEditor.Utils:Notify("Theme has been set, please restart")
+    BLE.Utils:Notify("Theme has been set, please restart")
 end
 
 function Options:reset_options(menu)
@@ -56,7 +60,7 @@ function Options:reset_options(menu)
 		if item.menu_type then
 			self:reset_options(item)
 		else
-			local opt = BeardLibEditor.Options:GetOption(item.name)
+			local opt = BLE.Options:GetOption(item.name)
 			if opt then
 				local value = opt.default_value
 				self:set(item.name, value)
@@ -69,18 +73,11 @@ end
 function Options:set_clbk(item)
 	self:set(item.name, item:Value())
 	if item.name == "LevelsColumns" then
-		BeardLibEditor.LoadLevel:load_levels()
+		BLE.LoadLevel:load_levels()
 	end
 end
 
 function Options:set(option, value)
-	BeardLibEditor.Options:SetValue(option, value)
-	BeardLibEditor.Options:Save()
-end
-
-function Options:open_set_color_dialog(item)
-	option = item.name
-    BeardLibEditor.ColorDialog:Show({color = BeardLibEditor.Options:GetValue(option), callback = function(color)
-    	self:set(option, color)
-    end})
+	BLE.Options:SetValue(option, value)
+	BLE.Options:Save()
 end

@@ -2,7 +2,7 @@ EditUnitLight = EditUnitLight or class(EditUnit)
 EditUnitLight.DEFAULT_SHADOW_RESOLUTION = 128
 EditUnitLight.DEFAULT_SPOT_PROJECTION_TEXTURE = "units/lights/spot_light_projection_textures/default_df"
 function EditUnitLight:editable(unit)	
-	self._lights = BeardLibEditor.Utils:GetLights(unit) or {}
+	self._lights = BLE.Utils:GetLights(unit) or {}
 	return #self._lights > 0
 end
 
@@ -18,14 +18,14 @@ function EditUnitLight:build_menu(units)
 		self._debugging = item:Value()
 	end, false, {group = light_options})
 	self._lights_combo = self:ComboBox("Lights", callback(self, self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox", group = light_options})
-	self:Button("ChooseColor", callback(self, self, "show_color_dialog"), {group = light_options})
+	self._color = self:ColorBox("Color", callback(self, self, "set_unit_data_parent"), nil, {group = light_options})
 	self._enabled = self:Toggle("Enabled", callback(self, self, "set_unit_data_parent"), true, {group = light_options})
 	self._near_range = self:NumberBox("NearRange[cm]", callback(self, self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the near range of the light in cm", group = light_options})
 	self._far_range = self:NumberBox("FarRange[cm]", callback(self, self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the range of the light in cm", group = light_options})
 	self._upper_clipping = self:NumberBox("UpperClipping[cm]", callback(self, self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the upper clipping in cm", group = light_options})
 	self._lower_clipping = self:NumberBox("LowerClipping[cm]", callback(self, self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the lower clipping in cm", group = light_options})
 
-	self._intensity = self:ComboBox("Intensity", callback(self, self, "set_unit_data_parent"), BeardLibEditor.Utils.IntensityOptions, 1, {help = "Select an intensity from the combobox", group = light_options})
+	self._intensity = self:ComboBox("Intensity", callback(self, self, "set_unit_data_parent"), BLE.Utils.IntensityOptions, 1, {help = "Select an intensity from the combobox", group = light_options})
 	self._falloff = self:Slider("Falloff", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the light falloff exponent", floats = 1, min = 1, max = 10, group = light_options})
 	self._start_angle = self:Slider("StartAngle", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
 	self._end_angle = self:Slider("EndAngle", callback(self, self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
@@ -66,10 +66,10 @@ function EditUnitLight:update_light()
 	local clipping_values = light:clipping_values()
 	self._lower_clipping:SetValue(clipping_values.y)
 	self._upper_clipping:SetValue(clipping_values.x)
-	local intensity = BeardLibEditor.Utils:GetIntensityPreset(light:multiplier())
+	local intensity = BLE.Utils:GetIntensityPreset(light:multiplier())
 	light:set_multiplier(LightIntensityDB:lookup(intensity))
 	light:set_specular_multiplier(LightIntensityDB:lookup_specular_multiplier(intensity))
-	for k, i in pairs(BeardLibEditor.Utils.IntensityOptions) do
+	for k, i in pairs(BLE.Utils.IntensityOptions) do
 		if Idstring(i) == intensity then
 			self._intensity:SetValue(k)
 		end
@@ -77,16 +77,16 @@ function EditUnitLight:update_light()
 	self._falloff:SetValue(light:falloff_exponent())
 	self._start_angle:SetValue(light:spot_angle_start())
 	self._end_angle:SetValue(light:spot_angle_end())
-
-	local is_spot = not (string.match(light:properties(), "omni") and true or false)
+	self._color:SetValue(light:color())
+	local is_spot = not (string.find(light:properties(), "omni") and true or false)
 
 	self._start_angle:SetEnabled(is_spot)
 	self._end_angle:SetEnabled(is_spot)
-	self._shadow_resolution:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "shadow_projection"))
+	self._shadow_resolution:SetEnabled(BLE.Utils:IsProjectionLight(unit, light, "shadow_projection"))
 	local resolution = unit:unit_data().projection_lights
 	resolution = resolution and resolution[name] and resolution[name].x or EditUnitLight.DEFAULT_SHADOW_RESOLUTION
 	self._shadow_resolution:SetSelectedItem(resolution)
-	--self._spot_texture:SetEnabled(BeardLibEditor.Utils:IsProjectionLight(unit, light, "projection") and is_spot)
+	--self._spot_texture:SetEnabled(BLE.Utils:IsProjectionLight(unit, light, "projection") and is_spot)
 	self._spot_texture:SetEnabled(is_spot)
 	local projection_texture = unit:unit_data().projection_textures
 	projection_texture = projection_texture and projection_texture[name] or EditUnitLight.DEFAULT_SPOT_PROJECTION_TEXTURE
@@ -107,6 +107,7 @@ function EditUnitLight:set_unit_data()
 	light:set_clipping_values(clipping_values:with_y(self._lower_clipping:Value()))
 	light:set_spot_angle_start(self._start_angle:Value())
 	light:set_spot_angle_end(self._end_angle:Value())	
+	light:set_color(self._color:VectorValue())
 	if self._shadow_resolution:Enabled() then
 		local res = self._shadow_resolution:SelectedItem()	
 		unit:unit_data().projection_lights = unit:unit_data().projection_lights or {}
@@ -121,14 +122,6 @@ function EditUnitLight:set_unit_data()
 	self:update_light()
 end
 
-
-function EditUnitLight:show_color_dialog()
-	local vc = self:selected_light():color()
-    BeardLibEditor.ColorDialog:Show({color = Color(vc.x, vc.y, vc.z), callback = function(color)
-		self:selected_light():set_color(Vector3(color.red, color.green, color.blue))
-		self:set_unit_data_parent()
-    end})
-end
 
 function EditUnitLight:set_menu_unit(units) self:update_light() end
 function EditUnitLight:selected_light() return self:_reference_light(self:selected_unit()) end

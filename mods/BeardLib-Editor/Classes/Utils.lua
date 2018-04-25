@@ -85,7 +85,7 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
 end
 
 function Utils:ParseXml(typ, path, scriptdata)
-	local file = Path:Combine(BeardLibEditor.ExtractDirectory, path.."."..typ)
+	local file = Path:Combine(BLE.ExtractDirectory, path.."."..typ)
 	local load = function(path)
 		if scriptdata then
 			return FileIO:ReadScriptData(path, "binary")
