@@ -12,7 +12,7 @@ Help would be really appreciated in the wiki!
 
 ## Before you stop reading!
 This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://modworkshop.net/mydownloads.php?action=view_down&did=14924), without them the editor will not run, make sure you have both of them with their latest version.
-Additionally, you should extract the game files using Bundle Modder this will let the editor to fully work without anything missing, if the extract path is different, you can set the correct directory through the options of the editor.
+Additionally, you should extract the game files using [Bundle Modder](https://modworkshop.net/mydownloads.php?action=view_down&did=197) this will let the editor to fully work without anything missing, if the extract path is different, you can set the correct directory through the options of the editor.
 
 ## FAQ
 
