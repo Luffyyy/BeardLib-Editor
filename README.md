@@ -11,9 +11,7 @@ Don't know how to? Read the guide here: https://modworkshop.net/wiki.php?action=
 Help would be really appreciated in the wiki!
 
 ## Before you stop reading!
-This mod has two dependencies, [BLT](https://paydaymods.com/download/)/[SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://modworkshop.net/mydownloads.php?action=view_down&did=14924), without them the editor will not run, make sure you have both of them with their latest version.
-
-Sadly, the game has one issue which doesn't allow selecting some things in the game, this is fixed with either SuperBLT or a PDMOD that you can get here: https://www.dropbox.com/s/hwjimqxjg7ehrmm/BeardLibEditor%20Physics%20Fix.pdmod?dl=0
+This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://modworkshop.net/mydownloads.php?action=view_down&did=14924), without them the editor will not run, make sure you have both of them with their latest version.
 
 ## FAQ
 
@@ -23,5 +21,3 @@ Sadly, the game has one issue which doesn't allow selecting some things in the g
     A: Go to the beginner guide if you missed: https://modworkshop.net/wiki.php?action=view&id=15.
     Q: There isn't a guide for 'X'
     A: Since I'm more active on actually developing the editor, I cannot focus on making guides, any help would be appreciated.
-    Q: How do I install the PDMOD?
-    A: Watch this https://youtu.be/Ot2muqwDfOg
