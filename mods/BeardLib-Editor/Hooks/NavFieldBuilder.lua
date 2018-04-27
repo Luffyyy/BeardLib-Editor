@@ -1,6 +1,7 @@
 if not Global.editor_mode then
 	return
 end
+
 function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
 	local status = BLE.Utils:GetPart("status")
 	if not self._created_button then
@@ -21,22 +22,6 @@ end
 function NavFieldBuilder:update(t, dt)
 	if self._building then
 		self._building.task_clbk(self)
-	end
-end
-
-function NavFieldBuilder:update(t, dt)
-	if self._building then
-		if self._progress_dialog_cancel then
-			self._progress_dialog_cancel = nil
-
-			self:clear()
-			self:_destroy_progress_bar()
-
-			self._building = nil
-			self._created_dialog = nil
-		else
-			self._building.task_clbk(self)
-		end
 	end
 end
 

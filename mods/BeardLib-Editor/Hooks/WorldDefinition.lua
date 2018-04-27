@@ -10,41 +10,20 @@ core:module("CoreWorldDefinition")
 local WorldDef = class(WorldDefinition)
 WorldDefinition = WorldDef
 
-function WorldDef:init(params)
+--blacklist hopefully won't cause issues
+local Init = WorldDef.init
+function WorldDef:init(params, ...)
 	BLE:SetLoadingText("Initializing World Definition")
-	managers.worlddefinition = self
-	self._world_dir = params.world_dir
-	self._cube_lights_path = params.cube_lights_path
-	PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
-	self:_load_world_package()
-	self._definition = self:_serialize_to_script(params.file_type, params.file_path)
 	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
-	self._continent_definitions = {}
 	self._needed_to_spawn = {}
-	self._continents = {}
-	self._portal_slot_mask = World:make_slot_mask(1)
-	self._massunit_replace_names = {}
-	self._replace_names = {}
-	self._replace_units_path = "assets/lib/utils/dev/editor/xml/replace_units"
-	self:_parse_replace_unit()
-	self._ignore_spawn_list = {}
-	self._excluded_continents = {}
-	self:_parse_world_setting(params.world_setting)
-	self:parse_continents()
-	managers.sequence:preload()
-	PackageManager:set_resource_loaded_clbk(Idstring("unit"), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
 	self._world_unit_ids = {}
 	self._unit_ids = {}
-	self._all_units = {}
 	self._start_id = 100000
-	self._trigger_units = {}
 	self._name_ids = {}
-	self._use_unit_callbacks = {}
-	self._mission_element_units = {}
-	self._termination_counter = 0
-	self._delayed_units = {}
 	self._all_names = {}
 	self._statics = {}
+
+	Init(self, params, ...)
 	self:create("ai")
 end
 
@@ -241,10 +220,6 @@ function WorldDef:get_unit_number(name)
 		end
 	end
 	return i
-end
-
-function WorldDef:_continent_editor_only(data)
-	return false
 end
 
 function WorldDef:init_done()
@@ -581,42 +556,17 @@ function WorldDef:GetNewUnitID(continent, t, is_world)
     end
 end
 
-function WorldDef:_create_sounds(data)
-	local path = self:world_dir() .. data.file
-	if not DB:has("world_sounds", path) then
-		Application:error("The specified sound file '" .. path .. ".world_sounds' was not found for this level! ", path, "No sound will be loaded!")
-		return
-	end
-	local values = self:_serialize_to_script("world_sounds", path)
-	managers.sound_environment:set_default_environment(values.default_environment)
-	managers.sound_environment:set_default_ambience(values.default_ambience)
-	managers.sound_environment:set_ambience_enabled(values.ambience_enabled)
-	managers.sound_environment:set_default_occasional(values.default_occasional)
-	self._sound_data = values
-	for _, sound_environment in ipairs(values.sound_environments) do
-		managers.sound_environment:add_area(sound_environment)
-	end
-	for _, sound_emitter in ipairs(values.sound_emitters) do
-		managers.sound_environment:add_emitter(sound_emitter)
-	end
-	for _, sound_area_emitter in ipairs(values.sound_area_emitters) do
-		managers.sound_environment:add_area_emitter(sound_area_emitter)
-	end
-end
+Hooks:PostHook(WorldDef, "_create_sounds", "EditorCreateSounds", function(self, data)
+	local ext, path = "world_sounds", self:world_dir() .. data.file
+	self._sound_data = DB:has(ext, path) and self:_serialize_to_script(ext, path) or {}
+end)
 
-function WorldDef:_create_world_cameras(data)
-	local path = self:world_dir() .. data.file
-	if not DB:has("world_cameras", path) then
-		self._world_cameras_data = {}
-		Application:error("No world_camera file found! (" .. path .. ")")
-		return
-	end
-	local values = self:_serialize_to_script("world_cameras", path)
-	self._world_cameras_data = values
-	managers.worldcamera:load(values)
-end
-function WorldDef:_add_to_portal(unit, data)
-end
+Hooks:PostHook(WorldDef, "_create_world_cameras", "EditorCreateWorldCamera", function(self, data)
+	local ext, path = "world_cameras", self:world_dir() .. data.file
+	self._sound_data = DB:has(ext, path) and self:_serialize_to_script(ext, path) or {}
+end)
+
+function WorldDef:_continent_editor_only(data) return false end
 
 function WorldDef:parse_continents(node, t)
 	local path = self:world_dir() .. self._definition.world_data.continents_file
@@ -671,12 +621,6 @@ function WorldDef:prepare_for_spawn_instance(instance)
 			for _, static in ipairs(prepared_unit_data.statics) do
 				table.insert(self._needed_to_spawn, static)
 			end
-		end
-		if prepared_unit_data.dynamics then
-			--[[for _, dynamic in ipairs(prepared_unit_data.dynamics) do
-				data.dynamics = data.dynamics or {}
-				table.insert(data.dynamics, dynamic)
-			end]]
 		end
 	else
 		managers.world_instance:prepare_serialized_instance_data(instance)
