@@ -563,7 +563,7 @@ end)
 
 Hooks:PostHook(WorldDef, "_create_world_cameras", "EditorCreateWorldCamera", function(self, data)
 	local ext, path = "world_cameras", self:world_dir() .. data.file
-	self._sound_data = DB:has(ext, path) and self:_serialize_to_script(ext, path) or {}
+	self._world_cameras_data = DB:has(ext, path) and self:_serialize_to_script(ext, path) or {}
 end)
 
 function WorldDef:_continent_editor_only(data) return false end
