@@ -71,9 +71,8 @@ function CubemapCreator:create_projection_light(type)
 		local unit = data.unit
 		local light = unit:get_object(Idstring(data.light_name))
 		local enabled = light:enable()
-		local resolution = unit:unit_data().projection_lights and unit:unit_data().projection_lights[light:name():s()] and unit:unit_data().projection_lights[light:name():s()].x
+		local resolution = unit:unit_data().projection_lights and unit:unit_data().projection_lights[data.light_name] and unit:unit_data().projection_lights[data.light_name].x
 		resolution = resolution or EditUnitLight.DEFAULT_SHADOW_RESOLUTION
-
 		table.insert(lights, {
 			name = "",
 			position = light:position(),
@@ -403,7 +402,7 @@ function CubemapCreator:_generate_cubemap(file)
 		self:_move_output(self._output_name)
 		
 		if #self._cubes_que < 1 then
-			self:notify_success()
+			self:notify_success(file)
 		end
 	else
 		self._error_when_done = true
@@ -448,6 +447,7 @@ function CubemapCreator:_move_output(output_path)
 	
 end
 
-function CubemapCreator:notify_success()
-	BLE.Utils:Notify("Info", "Cubemap(s) successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
+function CubemapCreator:notify_success(type)
+	type = type == "light" and "Cubelight(s)" or "Cubemap(s)"
+	BLE.Utils:Notify("Info", type .. " successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
 end
