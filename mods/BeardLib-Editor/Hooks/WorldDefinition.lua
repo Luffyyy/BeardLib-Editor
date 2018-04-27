@@ -3,6 +3,7 @@ if not Global.editor_mode then
 end
 
 local BLE = BeardLibEditor
+local BeardLib = BeardLib
 local Utils = BLE.Utils
 
 core:module("CoreWorldDefinition")
