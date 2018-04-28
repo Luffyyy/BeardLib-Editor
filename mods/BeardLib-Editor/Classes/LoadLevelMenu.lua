@@ -1,27 +1,64 @@
 LoadLevelMenu = LoadLevelMenu or class()
+
+local difficulty_ids = {"normal", "hard", "overkill", "overkill_145", "easy_wish", "overkill_290", "sm_wish"}
+local difficulty_loc = {
+	"menu_difficulty_normal",
+	"menu_difficulty_hard",
+	"menu_difficulty_very_hard",
+	"menu_difficulty_overkill",
+	"menu_difficulty_easy_wish",
+	"menu_difficulty_apocalypse",
+	"menu_difficulty_sm_wish"
+}
+
 function LoadLevelMenu:init()
 	local menu = BeardLibEditor.Menu
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
 	MenuUtils:new(self)
 	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, auto_height = true})
 	local opt = {size_by_text = true, group = tabs, offset = 0}
-	local w = self:Toggle("Vanilla", callback(self, self, "load_levels"), false, opt).w
-	w = w + self:Toggle("Custom", callback(self, self, "load_levels"), true, opt).w
-	local search = self:TextBox("Search", callback(self, self, "load_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
-    local load_options = self:Menu("LoadOptions", {align_method = "grid", h = search:Panel():h(), auto_height = false})
-    local half_w = load_options:ItemsWidth() / 3
-    self:Toggle("Safemode", nil, false, {group = load_options, w = half_w, offset = 0})
-    self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = half_w, offset = 0})
-    self:Toggle("LogSpawnedUnits", nil, false, {group = load_options, w = half_w, offset = 0})
-	self:Menu("Levels", {align_method = "grid", auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
+	local w = self:Toggle("Vanilla", ClassClbk(self, "load_levels"), false, opt).w
+	w = w + self:Toggle("Custom", ClassClbk(self, "load_levels"), true, opt).w
+	local search = self:TextBox("Search", ClassClbk(self, "search_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
+    local load_options = self:Menu("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
+    local half_w = load_options:ItemsWidth() / 2
+    local third_w = load_options:ItemsWidth() / 3
+	self:ComboBox("Difficulty", nil, difficulty_loc, 1, {group = load_options, items_localized = true, items_pretty = true, w = half_w, offset = 0})
+	self:Toggle("OneDown", nil, false, {group = load_options, w = half_w, offset = 0})
+    self:Toggle("Safemode", nil, false, {group = load_options, w = third_w})
+    self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = third_w})
+	self:Toggle("LogSpawnedUnits", nil, false, {group = load_options, w = third_w})
+	self._levels = self:Menu("Levels", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
 	self:load_levels()
 end
 
---TODO: Optimize
+function LoadLevelMenu:search_levels(item)
+	item = item or self:GetItem("Search")
+	local search = item:Value()
+	for _, menu in pairs(self._levels:Items()) do
+		if menu.type_name == "Menu" then
+			for _, item in pairs(menu:Items()) do
+				if item.type_name == "Group" then
+					menu:SetVisible(false)
+					if item.text:find(search) then
+						menu:SetVisible(true)
+					else
+						for _, _item in pairs(item:Items()) do
+							if _item.text:find(search) then
+								menu:SetVisible(true)
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	self._levels:AlignItems(true)
+end
 
 local texture_ids = Idstring("texture")
 function LoadLevelMenu:load_levels()
-	local searching = self:GetItem("Search"):Value()
 	local vanilla = self:GetItem("Vanilla"):Value()
 	local custom = self:GetItem("Custom"):Value()
     local columns = BeardLibEditor.Options:GetValue("LevelsColumns")
@@ -31,9 +68,9 @@ function LoadLevelMenu:load_levels()
     local loc = managers.localization
     local img_size = 100
     local img_w, img_h = img_size * 1.7777, img_size
-    for id, narr in pairs(tweak_data.narrative.jobs) do
+    for narr_id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.hidden and narr.contract_visuals and ((narr.custom and custom) or (not narr.custom and vanilla)) then
-            local txt = loc:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")) .." / " .. id
+            local txt = loc:text(narr.name_id or "heist_"..narr_id:gsub("_prof", ""):gsub("_night", "")) .." / " .. narr_id
 
             local data = narr.contract_visuals.preview_image or {}
             local texture, rect = nil
@@ -48,9 +85,20 @@ function LoadLevelMenu:load_levels()
             if not texture or not DB:has(texture_ids, texture:id()) then
                 texture, rect = nil, nil
             end
-            
+			
+			local holder = levels:Menu({
+				name = narr_id.."_holder",
+				auto_height = true,
+				offset = 4,
+				visible = false,
+				auto_foreground = false,
+				align_method = "grid",
+				auto_align = false,
+                min_h = 250,
+			})
+			
             local img_size = 100
-            local img = levels:Create(texture and "Image" or "Divider", {
+            local img = holder:Create(texture and "Image" or "Divider", {
                 text = "No preview image",
                 texture = texture,
                 texture_rect = rect,
@@ -62,14 +110,13 @@ function LoadLevelMenu:load_levels()
                 h = img_h
             })
 
-            local narrative = levels:DivGroup({
+            local narrative = holder:DivGroup({
                 foreground = levels.accent_color,
-                auto_foreground = false,
                 auto_align = false,
-                border_bottom = true,
+				border_bottom = true,
                 border_position_below_title = true,
                 text = txt,
-                w = levels:ItemsWidth() - img:OuterWidth() - 8,
+                w = holder:ItemsWidth() - img:OuterWidth() - holder:OffsetX(),
                 min_h = 250,
             })
 
@@ -79,20 +126,18 @@ function LoadLevelMenu:load_levels()
                 if id then
                     local level_t = tweak_data.levels[id]
                     if level_t and level_t.world_name then
-                        local txt = loc:text(level_t.name_id) .." / " .. id
-                        local visible = not searching or searching == "" or txt:match(searching) ~= nil
                         narrative:Button({
-                            name = id,
+                            text = loc:text(level_t.name_id) .." / " .. id,
+							name = id,
+							narr_id = narr_id,
                             auto_foreground = true,
                             background_color = false,
                             vanilla = not level_t.custom,
                             offset = {12, 4},
-                            text = txt,
-                            visible = visible,
                             on_callback = ClassClbk(self, "load_level"),
                             label = "levels",
                         })
-                        has_items = has_items or visible
+                        has_items = true
                     end
                 end
             end
@@ -102,14 +147,17 @@ function LoadLevelMenu:load_levels()
             end
         end
     end
-    levels:AlignItems(true)
+	self:search_levels()
 end
 
 function LoadLevelMenu:load_level(item)
-    local level_id = item.name
+	local level_id = item.name
+	local narr_id = item.narr_id
     local safe_mode = self:GetItem("Safemode"):Value()
     local check_load = self:GetItem("CheckLoadTime"):Value()
     local log_on_spawn = self:GetItem("LogSpawnedUnits"):Value()
+    local one_down = self:GetItem("OneDown"):Value()
+    local difficulty = self:GetItem("Difficulty"):Value()
 
     local function load()
         Global.editor_mode = true
@@ -117,15 +165,19 @@ function LoadLevelMenu:load_level(item)
         Global.check_load_time = check_load == true
         Global.editor_log_on_spawn = log_on_spawn == true
         BeardLib.current_level = nil
-        MenuCallbackHandler:play_single_player()
+		MenuCallbackHandler:play_single_player()
+		--if narr_id then
+		--	managers.job:activate_job(narr_id)
+		--end
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"
-        Global.game_settings.difficulty = "normal"
+		Global.game_settings.difficulty = difficulty_ids[difficulty] or "normal"
+		Global.game_settings.one_down = one_down
         Global.game_settings.world_setting = nil
         MenuCallbackHandler:start_the_game()    
         BeardLibEditor.Menu:set_enabled(false)
     end
-
+	
     local load_tbl = {{"Yes", load}}
     if item.vanilla then
         BeardLibEditor.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)

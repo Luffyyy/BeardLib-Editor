@@ -14,7 +14,6 @@ WorldDefinition = WorldDef
 local Init = WorldDef.init
 function WorldDef:init(params, ...)
 	BLE:SetLoadingText("Initializing World Definition")
-	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self._needed_to_spawn = {}
 	self._world_unit_ids = {}
 	self._unit_ids = {}
@@ -24,6 +23,7 @@ function WorldDef:init(params, ...)
 	self._statics = {}
 
 	Init(self, params, ...)
+	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self:create("ai")
 end
 
@@ -388,6 +388,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 	
 		BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 		ud.projection_lights = data.projection_lights
+		ud.projection_textures = data.projection_textures
 		ud.lights = data.lights
 		ud.triggers = data.triggers
 		ud.editable_gui = data.editable_gui	
