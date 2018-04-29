@@ -62,7 +62,7 @@ function EnvEditor:build_default_menu()
     self:Button("Save", callback(self, self, "write_to_disk_dialog"), {group = quick})
     --SUN
     local sun = self:Group("Sun")
-    self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", group = sun}))
+    self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", ret_vec = true, group = sun}))
     self:add_sky_param(self:Slider("sun_ray_color_scale", nil, 1, {text = "Intensity", step = 0.1, min = 0, max = 10, group = sun}))
 
     --FOG
