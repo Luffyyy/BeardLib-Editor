@@ -1,17 +1,17 @@
-if not Global.editor_mode then
-	return
-end
-
 local BLE = BeardLibEditor
 local BeardLib = BeardLib
 local Utils = BLE.Utils
 
 core:module("CoreWorldDefinition")
+
+if not Global.editor_mode or WorldDefinition.is_editor then
+	return
+end
+
 local WorldDef = class(WorldDefinition)
 WorldDefinition = WorldDef
-
+WorldDef.is_editor = true
 --blacklist hopefully won't cause issues
-local Init = WorldDef.init
 function WorldDef:init(params, ...)
 	BLE:SetLoadingText("Initializing World Definition")
 	self._needed_to_spawn = {}
@@ -22,14 +22,13 @@ function WorldDef:init(params, ...)
 	self._all_names = {}
 	self._statics = {}
 
-	Init(self, params, ...)
+	WorldDef.super.init(self, params, ...)
 	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self:create("ai")
 end
 
-local Create = WorldDef.create
 function WorldDef:create(layer, offset)
-	local return_data = Create(self, layer, offset)
+	local return_data = WorldDef.super.create(self, layer, offset)
 	if layer == "statics" or layer == "all" then
 		self:spawn_quick(return_data, offset)
 	end

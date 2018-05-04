@@ -620,9 +620,15 @@ end
 function MScript:delete_element(element)
 	local id = element.id
 	managers.mission:delete_element_id(self._continent, id)
-	self._elements[id]:set_enabled(false)
-	self._elements[id] = nil
-	self._element_groups[element.class] = nil
+	if self._elements[id] then
+		self._elements[id]:set_enabled(false)
+		self._elements[id] = nil
+	else
+		Utils:GetPart("console"):Error("Something went wrong when deleting the element %s", tostring(id))
+	end
+	if self._element_groups[element.class] then
+		table.delete(self._element_groups[element.class], element)
+	end
 end
 
 function MScript:debug_output(debug, color)

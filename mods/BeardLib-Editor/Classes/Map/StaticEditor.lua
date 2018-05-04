@@ -357,13 +357,15 @@ function Static:set_unit_data()
     else            
         for _, unit in pairs(self._selected_units) do
 			local ud = unit:unit_data()
-			local new_continent = self:GetItem("Continent"):SelectedItem()
-			local old_continent = ud.continent
-			if new_continent ~= "*" and old_continent ~= new_continent then
-				ud.continent = new_continent
-                managers.worlddefinition:ResetUnitID(unit, old_continent)
+			if not unit:mission_element() then
+				local new_continent = self:GetItem("Continent"):SelectedItem()
+				local old_continent = ud.continent
+				if new_continent ~= "*" and old_continent ~= new_continent then
+					ud.continent = new_continent
+					managers.worlddefinition:ResetUnitID(unit, old_continent)
+				end
+				managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 			end
-            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
         end
     end
     --TODO: put in a different place
@@ -966,7 +968,7 @@ function Static:update(t, dt)
     end
 end
 
-function Static:GetCopyData(remove_old_links)
+function Static:GetCopyData(remove_old_links, keep_location)
     local copy_data = {}
     local element_type = Utils.LinkTypes.Elment    
     local unit_type = Utils.LinkTypes.Unit    
@@ -991,16 +993,20 @@ function Static:GetCopyData(remove_old_links)
     local element_id = 0
     for _, v in pairs(copy_data) do
         local typ = v.type
-        if typ == "element" then
-            v.mission_element_data.script = nil
+		if typ == "element" then
+			if not keep_location then
+				v.mission_element_data.script = nil
+			end
             for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = element_id
             end
             v.mission_element_data.id = element_id
             element_id = element_id + 1
         elseif typ == "unit" and v.unit_data.unit_id then
-            local is_world = v.wire_data or v.ai_editor_data
-            v.unit_data.continent = nil
+			local is_world = v.wire_data or v.ai_editor_data
+			if not keep_location then
+				v.unit_data.continent = nil
+			end
             for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = is_world and world_unit_id or unit_id
             end
@@ -1030,7 +1036,7 @@ end
 
 function Static:CopySelection()
     if #self._selected_units > 0 and not self._parent._menu._highlighted then
-        self._copy_data = self:GetCopyData() --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
+        self._copy_data = self:GetCopyData(nil, true) --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
         if #self._copy_data == 0 then
         	self._copy_data = nil
         end
