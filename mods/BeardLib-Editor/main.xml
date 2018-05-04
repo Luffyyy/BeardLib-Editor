@@ -183,6 +183,7 @@
     <MissionElements>
         <!--Custom Elements-->
         <value_node value="ElementMoveUnit"/>
+        <value_node value="ElementRotateUnit"/>
         <value_node value="ElementTeleportPlayer"/>
         <value_node value="ElementEnvironment"/>
         <value_node value="ElementPushInstigator"/>
