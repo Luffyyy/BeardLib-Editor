@@ -121,13 +121,14 @@ function WData:build_default_menu()
     self:Button("Instance", callback(self, self, "OpenSelectInstanceDialog", {}), {group = select, size_by_text = true})
 
     if BeardLib.current_level then
-        local load = self:DivGroup("Load", {align_method = "grid"})
-        self:Button("Unit", callback(self, self, "OpenLoadUnitDialog"), {group = load, size_by_text = true})
-        if FileIO:Exists(BeardLibEditor.ExtractDirectory) then
-            self:Button("UnitsExtract", callback(self, self, "OpenLoadUnitDialog", {on_click = callback(self, self, "LoadUnitFromExtract"), not_loaded = true}), {
-                group = load, size_by_text = true, text = "Unit(From Extract)", help = AssetsManagerDialog.ImportHelp
-            })
-        end
+        local load = self:DivGroup("Load", {align_method = "grid", inherit_values = {size_by_text = true}})
+		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "grid", inherit_values = {size_by_text = true}}) or nil
+		for _, ext in pairs(BLE.UsableAssets) do
+			self:Button(ext, callback(self, self, "OpenLoadDialog", {ext = ext}), {group = load, size_by_text = true})
+			if load_extract then
+				self:Button(ext, callback(self, self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {group = load_extract})
+			end
+		end
     end
 
     self.layers = self.layers or {env = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
@@ -135,11 +136,12 @@ function WData:build_default_menu()
         ["AI"] = true, 
         ["environment"] = self.layers.env, 
         ["sound"] = self.layers.sound, 
-        ["wires"] = true, 
+        ["wires"] = true,
         ["portal"] = self.layers.portal,
-        ["groups"] = true 
+		["groups"] = true,
+		["fixes"] = true
     }
-    local managers_group = self:DivGroup("Managers")
+    local managers_group = self:DivGroup("Managers", {text = "Managers and Tools"})
     self:Button("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
     self:Button("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
 
@@ -151,20 +153,14 @@ function WData:build_default_menu()
         })
     end
  
-    self:reset()
-
-    local fixes = self:DivGroup("Fixes", {help = "Quick fixes for common issues"})
-    if self._assets_manager then
-        self:Button("Clean add.xml", ClassClbk(self._assets_manager, "clean_add_xml"), {group = fixes, help = "This removes unused files from the add.xml and cleans duplicates"})
-    end
-    self:Button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
-        group = fixes,
-        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
-    })
-
+	self:reset()
     self:build_continents()
 end
 
+
+function WData:LoadFromExtract(ext, asset)
+    self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}) 
+end
 
 function WData:remove_brush_layer()
     BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
@@ -479,6 +475,17 @@ function WData:build_menu(name, layer)
     end
 end
 
+function WData:build_fixes_layer_menu()
+	local fixes = self:Divider("Fixes", {text = "Quick fixes for common issues"})
+    if self._assets_manager then
+        self:Button("Clean add.xml", ClassClbk(self._assets_manager, "clean_add_xml"), {help = "This removes unused files from the add.xml and cleans duplicates"})
+    end
+    self:Button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
+        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
+    })
+end
+
+
 function WData:build_wires_layer_menu()
     local existing_wires = self:Group("Existing")
     managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
@@ -595,12 +602,6 @@ function WData:set_selected_unit()
             editor:set_selected_unit()
         end
     end
-end
-
--- From old utils menu.
-
-function WData:LoadUnitFromExtract(unit)
-    self._assets_manager:load_from_extract_dialog({[unit] = true}) 
 end
 
 function WData:remove_dummy_unit()
@@ -891,20 +892,20 @@ function WData:OpenSpawnUnitDialog(params)
 	}) 
 end
 
-function WData:OpenLoadUnitDialog(params)
+function WData:OpenLoadDialog(params)
     local units = {}
-    local unit_ids = Idstring("unit")
-    for unit in pairs(BeardLibEditor.DBPaths.unit) do
+	local ext = params.ext
+    for unit in pairs(BeardLibEditor.DBPaths[ext]) do
         if not unit:match("wpn_") and not unit:match("msk_") then
             table.insert(units, unit)
         end
     end
 	BeardLibEditor.ListDialog:Show({
 	    list = units,
-        force = true,
-	    callback = params.on_click or function(unit)
-            BeardLibEditor.ListDialog:hide()
-            self._assets_manager:find_package(unit, true)
+		force = true,
+		not_loaded = true,
+	    callback = params.on_click or function(asset)
+            self._assets_manager:find_package(asset, ext, true)
 	    end
 	})
 end

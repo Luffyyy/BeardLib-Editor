@@ -540,7 +540,7 @@ function Utils:GetUnitType(unit)
     if not unit then
         log(debug.traceback())
         return Idstring("none")
-    end
+	end
     local ud = PackageManager:unit_data(Idstring(unit):id())
     return ud and ud:type() 
 end

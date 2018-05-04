@@ -5,7 +5,7 @@ function ExportDialog:_Show(params)
     if not self.super._Show(self, p) then
         return
     end
-    self._units = params.units
+    self._assets = params.assets
     self._assets_manager = params.assets_manager
     MenuUtils:new(self, self._menu:Menu({name = "holder", index = 3, auto_height = true}))
 
@@ -23,7 +23,7 @@ end
 
 function ExportDialog:hide(success)
     if success then
-        self._assets_manager:load_from_extract(self._units, {
+        self._assets_manager:load_from_extract(self._assets, {
             animation = not self:GetItem("Animations"):Value(),
             bnk = not self:GetItem("SoundBanks"):Value(),
             texture = not self:GetItem("Textures"):Value(),

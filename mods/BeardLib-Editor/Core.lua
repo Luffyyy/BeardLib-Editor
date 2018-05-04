@@ -17,7 +17,8 @@ function BLE:Init()
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
 	self.Version = self.AssetUpdates.version or 2
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
-	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
+	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"		
+	self.UsableAssets = {"unit", "effect", "environment", "scene"}
 end
 
 function BLE:RunningFix()
@@ -71,7 +72,8 @@ function BLE:InitManagers()
         "packages/wip/game_base",
         "core/packages/base",
         "core/packages/editor"
-    }
+	}
+
     local prefix = "packages/dlcs/"
     local sufix = "/game_base"
     for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
@@ -185,21 +187,30 @@ function BLE:GeneratePackageData()
     local file = io.open(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
     local paths = {}
-    local current_pkg
+	local current_pkg
+	local current_pkg_ids
     self:log("[GeneratePackageData] Writing package data...")
     if file then
-        for line in file:lines() do 
+        for line in file:lines() do
             if string.sub(line, 1, 1) == "@" then
-                current_pkg = string.sub(line, 2)
-            elseif current_pkg then
-                packages_paths[current_pkg] = packages_paths[current_pkg] or {}
-                local pkg = packages_paths[current_pkg]
-                local path, typ = unpack(string.split(line, "%."))
-                pkg[typ] = pkg[typ] or {}
+				current_pkg = string.sub(line, 2)
+				current_pkg_ids = line:sub(2, 9) == "Idstring"
+			elseif current_pkg then
+				local pkg
+				if not current_pkg_ids then
+					packages_paths[current_pkg] = packages_paths[current_pkg] or {}
+					pkg = packages_paths[current_pkg]
+				end
+				local path, typ = unpack(string.split(line, "%."))
+				if pkg then
+					pkg[typ] = pkg[typ] or {}
+				end
                 paths[typ] = paths[typ] or {}
                 if DB:has(typ, path) then
-                    paths[typ][path] = true
-                    pkg[typ][path] = true
+					paths[typ][path] = true
+					if pkg then
+						pkg[typ][path] = true
+					end
                 end
             end
         end
@@ -284,13 +295,11 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
             else
                 path = Path:Normalize(path)
 
-                self.DBPaths[typ] = self.DBPaths[typ] or {}
-                self.DBPaths[typ][path] = true
-
                 local file_path = Path:Combine(directory, path) ..".".. typ
-
-                if FileIO:Exists(file_path) then
-                    self.Utils.allowed_units[path] = true
+				if FileIO:Exists(file_path) then
+					self.DBPaths[typ] = self.DBPaths[typ] or {}
+					self.DBPaths[typ][path] = true
+					self.Utils.allowed_units[path] = true
                 end
             end
         end

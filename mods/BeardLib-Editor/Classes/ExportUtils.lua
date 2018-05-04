@@ -14,11 +14,17 @@ function Utils:Log(...)
 	BLE:log(...)
 end
 
-function Utils:GetUnitDependencies(unit, ignore_default, exclude)
-    local config = self:ReadUnit(unit, {}, exclude)
-    if not config then
+function Utils:GetDependencies(ext, path, ignore_default, exclude)
+	if not Utils.Reading[ext] then
+		self:Log("Extension %s does not have a read function!", ext)
+		return
+	end
+
+	local config = {}
+    if not Utils.Reading[ext](self, path, config, exclude) then
         return false
-    end
+	end
+	
     local temp = deep_clone(config)
     config = {}
     for _, file in pairs(temp) do
@@ -54,26 +60,27 @@ function Utils:ReadUnit(unit, config, exclude)
     self:Add(config, "model", unit, exclude)
 
     self:Log("Importing unit from extract to map assets " .. tostring(unit))
-    local node = EditorUtils:ParseXml("unit", unit)
+	local node = EditorUtils:ParseXml("unit", unit)
+	local rom = self.return_on_missing
     if node then
         for child in node:children() do
             local name = child:name()
             if name == "object" then
-				if not self:ReadObject(child:parameter("file"), config, exclude) then
-                    if self.return_on_missing then return false end
+				if not self:ReadObject(child:parameter("file"), config, exclude) and rom then
+                    return false
                 end
             elseif name == "dependencies" then
                 for dep_child in child:children() do
                     if dep_child:has_parameter("unit") then
-                        if not self:ReadUnit(dep_child:parameter("unit"), config, exclude) then
-                            if self.return_on_missing then return false end
+                        if not self:ReadUnit(dep_child:parameter("unit"), config, exclude) and rom then
+                            return false
                         end
                     else
                         for ext, path in pairs(dep_child:parameters()) do
                             if not exclude or not exclude[ext] then
                                 if Utils.Reading[ext] then
-                                    if not Utils.Reading[ext](self, path, config, exclude) then
-                                        if self.return_on_missing then return false end
+                                    if not Utils.Reading[ext](self, path, config, exclude) and rom then
+                                        return false
                                     end
                                 else
                                     self:Log("[Warning] Unknown file dependency %s.%s for unit %s, continuing...", tostring(path), tostring(ext), tostring(unit))
@@ -84,65 +91,64 @@ function Utils:ReadUnit(unit, config, exclude)
                     end
                 end
             elseif name == "anim_state_machine" then
-                if not self:ReadAnimationStateMachine(child:parameter("name"), config, exclude) then
-                    if self.return_on_missing then return false end
+                if not self:ReadAnimationStateMachine(child:parameter("name"), config, exclude) and rom then
+                    return false
                 end
             elseif name == "network" and not exclude.network_unit then
                 local remote_unit = child:parameter("remote_unit")
 				if remote_unit and remote_unit ~= "" and remote_unit ~= unit then --unsure what to do with remote units that are an empty string.
-                    if not self:ReadUnit(remote_unit, config, exclude) then
-                        if self.return_on_missing then return false end
+                    if not self:ReadUnit(remote_unit, config, exclude) and rom then
+                        return false
                     end
                 end
             end
-        end
-    else
-        self:Log("[WARNING] Unit %s is missing from extract. Unit will not spawn!", tostring(unit))
-        if self.return_on_missing then return false end
-    end
-    return config
+        end       
+	end
+	return node ~= nil
 end
 
 function Utils:ReadObject(path, config, exclude)
     self:Add(config, "object", path, exclude)
-    local node = EditorUtils:ParseXml("object", path)
+	local node = EditorUtils:ParseXml("object", path)
+	local rom = self.return_on_missing
     if node then
         for obj_child in node:children() do
             local name = obj_child:name()
             if name == "diesel" and obj_child:has_parameter("materials") then
-                if not self:ReadMaterialConfig(obj_child:parameter("materials"), config, exclude) then
-                    if self.return_on_missing then return false end
+                if not self:ReadMaterialConfig(obj_child:parameter("materials"), config, exclude) and rom then
+					return false
                 end
             elseif name == "sequence_manager" then
-                if not self:ReadSequenceManager(obj_child:parameter("file"), config, exclude) then
-                    if self.return_on_missing then return false end
+                if not self:ReadSequenceManager(obj_child:parameter("file"), config, exclude) and rom then
+					return false
                 end
             elseif name == "effects" then
 				for effect in obj_child:children() do
-                    if not self:ReadEffect(effect:parameter("effect"), config, exclude) then
-                        if self.return_on_missing then return false end
-                    end
+                    if not self:ReadEffect(effect:parameter("effect"), config, exclude) and rom then
+						return false
+					end
                 end
             elseif name == "animation_def" then
-                if not self:ReadAnimationDefintion(obj_child:parameter("name"), config, exclude) then
-                    if self.return_on_missing then return false end
+                if not self:ReadAnimationDefintion(obj_child:parameter("name"), config, exclude) and rom then
+                    return false
                 end
-            end
-        end
+			end
+		end
     end
     return node ~= nil
 end
 
 function Utils:ReadAnimationStateMachine(path, config, exclude)
     self:Add(config, "animation_state_machine", path, exclude)
-    local node = EditorUtils:ParseXml("animation_state_machine", path)
+	local node = EditorUtils:ParseXml("animation_state_machine", path)
     if node then
         for anim_child in node:children() do    
             if anim_child:name() == "states" then
                 self:ReadAnimationStates(anim_child:parameter("file"), config, exclude)
             end
-        end
-    end
+		end
+	end
+	
     return node ~= nil
 end
 
@@ -192,26 +198,25 @@ end
 
 function Utils:ReadMaterialConfig(path, config, exclude)
     self:Add(config, "material_config", path, exclude)
-    if not exclude.texture then        
-		local mat_node = EditorUtils:ParseXml("material_config", path)
-		if mat_node then
-			for mat_child in mat_node:children() do
-				if mat_child:name() == "material" then
-					for mat_child_x2 in mat_child:children() do
-						if mat_child_x2:has_parameter("file") then
-							table.insert(config, {_meta = "texture", path = mat_child_x2:parameter("file"), force = true, unload = true})   
-						end
+	local node = EditorUtils:ParseXml("material_config", path)
+	if not exclude.texture then
+		for mat_child in node:children() do
+			if mat_child:name() == "material" then
+				for mat_child_x2 in mat_child:children() do
+					if mat_child_x2:has_parameter("file") then
+						table.insert(config, {_meta = "texture", path = mat_child_x2:parameter("file"), force = true, unload = true})   
 					end
 				end
 			end
 		end
-    end
-    return true
+	end
+	return node ~= nil
 end
 
 function Utils:ReadEffect(path, config, exclude)
     self:Add(config, "effect", path, exclude, true)
-    local node = EditorUtils:ParseXml("effect", path)
+	local node = EditorUtils:ParseXml("effect", path)
+	local rom = self.return_on_missing
     if node then
         for eff_child in node:children() do
             local name = eff_child:name()
@@ -224,20 +229,20 @@ function Utils:ReadEffect(path, config, exclude)
                                 self:Add(config, "texture", eff_child_x3:parameter("texture"))
                             end
                             if eff_child_x3:has_parameter("material_config") then
-                                if not self:ReadMaterialConfig(eff_child_x3:parameter("material_config"), config, exclude) then
-                                    if self.return_on_missing then return false end
+                                if not self:ReadMaterialConfig(eff_child_x3:parameter("material_config"), config, exclude) and rom then
+                                    return false
                                 end
                             end
                         end
                     elseif name == "effect_spawn" then
-                        if not self:ReadEffect(eff_child_x2:parameter("effect"), config, exclude) then
-                            if self.return_on_missing then return false end
+                        if not self:ReadEffect(eff_child_x2:parameter("effect"), config, exclude) and rom then
+                            return false
                         end
                     end
                 end
             elseif name == "use" then
-                if not self:ReadEffect(eff_child:parameter("name"), config, exclude) then
-                    if self.return_on_missing then return false end
+                if not self:ReadEffect(eff_child:parameter("name"), config, exclude) and rom then
+                    return false
                 end
             end 
         end
@@ -258,9 +263,19 @@ function Utils:ReadScene(path, config, exclude)
     return node ~= nil
 end
 
+function Utils:ReadEnvironment(path, config, exclude)
+	self:Add(config, "environment", path, exclude)
+	local tbl = EditorUtils:ParseXml("environment", path, true)
+	if tbl and tbl.data and tbl.data.others and tbl.data.others.underlay then
+		self:ReadScene(tbl.data.others.underlay)
+	end
+	return tbl ~= nil
+end
+
 Utils.Reading = {
     unit = Utils.ReadUnit,
 	scene = Utils.ReadScene,
+	environment = Utils.ReadEnvironment,
     object = Utils.ReadObject,
     effect = Utils.ReadEffect,
     material_config = Utils.ReadMaterialConfig,
