@@ -1,7 +1,18 @@
-getmetatable(Idstring()).s = function(s)
-    local t = s:t()
+local ids = getmetatable(Idstring())
+function ids:s()
+    local t = self:t()
     return managers.editor._idstrings[t] or t
 end
+
+function ids:reversed_key()
+	local key = self:key()
+	local s = ""
+	for i=8, 1, -1 do
+		s = s..key:sub(i*2-1, i*2)
+	end
+	return s
+end
+
 getmetatable(Idstring()).construct = function(self, id)
     local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="@ID%s@">', id))
     return xml and xml.id or nil
@@ -52,7 +63,7 @@ end
 
 --Sets the position of a unit/object correctly
 function Utils:SetPosition(unit, position, rotation, ud, offset)
-    ud = ud or unit:unit_data()
+	ud = ud or unit:unit_data()
     unit:set_position(position)
     if rotation then
         unit:set_rotation(rotation)
@@ -90,22 +101,23 @@ function Utils:ParseXml(typ, path, scriptdata)
 		if scriptdata then
 			return FileIO:ReadScriptData(path, "binary")
 		else
-			return SystemFS:parse_xml(file, "r")
+			return SystemFS:parse_xml(path, "r")
 		end
 	end
     if FileIO:Exists(file) then
         return load(file)
-    else
-        local key_file = Path:Combine(BeardLibEditor.ExtractDirectory, path:key().."."..typ)
-        if FileIO:Exists(key_file) then
-            return load(file)
-        else
-            return nil
+	else
+		--This is confusing..
+        local key_file = Path:Combine(BeardLibEditor.ExtractDirectory, path:id():reversed_key().."."..typ)
+		if FileIO:Exists(key_file) then
+			return load(key_file)
+		else
+			return nil
         end
     end
 end
 
-function BeardLibEditor.Utils:FilterList(search, max_items)
+function Utils:FilterList(search, max_items)
     local menu = search.parent
     local i = 0
     for _, item in pairs(menu:Items()) do
@@ -506,7 +518,7 @@ function Utils:GetUnits(params)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_type or unit_type ~= Idstring(not_type))
-        local unit_loaded = params.not_loaded or self.allowed_units[unit] 
+		local unit_loaded = params.not_loaded or self.allowed_units[unit]
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true

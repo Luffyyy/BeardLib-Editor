@@ -39,7 +39,7 @@ function Static:mouse_pressed(button, x, y)
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
-                    self._parent:OnWidgetGrabbed()
+                    self:StorePreviousPosRot()
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
                     self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
                     self._parent._using_move_widget = true
@@ -48,7 +48,7 @@ function Static:mouse_pressed(button, x, y)
             if self._parent._rotate_widget:enabled() and not self._parent._using_move_widget then
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._rotate_widget:widget())
                 if ray and ray.body then
-                    self._parent:OnWidgetGrabbed()
+                    self:StorePreviousPosRot()
                     self._parent._rotate_widget:set_rotate_widget_axis(ray.body:name():s())
                     self._parent._rotate_widget:set_world_dir(ray.position)
                     self._parent._rotate_widget:set_rotate_widget_start_screen_position(self._parent:world_to_screen(ray.position):with_z(0))
@@ -96,7 +96,8 @@ function Static:set_units()
         element.values.position = me._unit:position()
         element.values.rotation = me._unit:rotation()
         managers.mission:set_element(element)
-    end
+	end
+	self:update_positions()
     self._set_units = {}
     self._set_elements = {}
 end
@@ -222,7 +223,7 @@ function Static:build_positions_items(cannot_be_saved)
             end
         end      
     end, {group = transform})
-    self:AxisControls(callback(self, self, "set_unit_data"), {group = transform, step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
+    self:AxisControls(ClassClbk(self, "set_unit_data"), {group = transform, on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
 
 function StaticEditor:update_positions()
@@ -248,7 +249,7 @@ function StaticEditor:update_positions()
         if editor.update_positions then
             editor:update_positions(unit)
         end
-    end
+	end
     if self._built_multi then
         self:SetTitle("Selection - " .. tostring(#self._selected_units))
     end
@@ -355,7 +356,13 @@ function Static:set_unit_data()
         end
     else            
         for _, unit in pairs(self._selected_units) do
-            local ud = unit:unit_data()
+			local ud = unit:unit_data()
+			local new_continent = self:GetItem("Continent"):SelectedItem()
+			local old_continent = ud.continent
+			if new_continent ~= "*" and old_continent ~= new_continent then
+				ud.continent = new_continent
+                managers.worlddefinition:ResetUnitID(unit, old_continent)
+			end
             managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
         end
     end
@@ -365,12 +372,10 @@ function Static:set_unit_data()
 end
 
 function Static:StorePreviousPosRot()
-    if #self._selected_units > 1 then
-        for _, unit in pairs(self._selected_units) do
-            unit:unit_data()._prev_pos = unit:position()
-            unit:unit_data()._prev_rot = unit:rotation()
-        end
-    end
+	for _, unit in pairs(self._selected_units) do
+		unit:unit_data()._prev_pos = unit:position()
+		unit:unit_data()._prev_rot = unit:rotation()
+	end
 end
 
 function Static:set_group_name(item, group, name)
@@ -733,7 +738,10 @@ function Static:set_multi_selected()
     end
     self._built_multi = true
     self._editors = {}
-    self:ClearItems()
+	self:ClearItems()
+	--TODO: Support more values.
+	local other = self:Group("Main")
+	self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), table.list_add({"*"}, self._parent._continents), 1, {group = other})
     self:build_positions_items()
     self:update_positions()
 end

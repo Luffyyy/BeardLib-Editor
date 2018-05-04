@@ -218,8 +218,8 @@ function MenuUtils:init(this, menu)
 
 	function this:SetAxisControls(pos, rot, name)
 		name = name or ""
-	    for i, control in pairs(self._axis_controls) do
-	        if alive(self[name..control]) and ((i < 4 and pos) or (i > 3 and rot)) then
+		for i, control in pairs(self._axis_controls) do
+			if alive(self[name..control]) and ((i < 4 and pos) or (i > 3 and rot)) then
 				self[name..control]:SetValue(i < 4 and pos[control] or rot[control](rot))
 	        end
 	    end
@@ -316,11 +316,15 @@ function MenuUtils:init(this, menu)
 		end
 	   	opt.text = nil
 	   	opt.color = false
-	    opt.w = translation.w / 3
+	    opt.w = (translation or rotation).w / 3
 	    opt.offset = 0
 	    opt.control_slice = 0.6
-	    for i, control in pairs(self._axis_controls) do
-	    	opt.group = i < 4 and translation or rotation
+		for i, control in pairs(self._axis_controls) do
+			if i < 4 then
+				opt.group = translation
+			else
+				opt.group = rotation
+			end
 	    	if alive(opt.group) then
 	        	self[name..control] = self:NumberBox(control, clbk, 0, opt)
 	        end

@@ -147,27 +147,16 @@ function Editor:reset_widget_values()
     self._rotate_widget:reset_values()
 end
 
-function Editor:OnWidgetGrabbed()
-    self:StorePreviousPosRot()
-    self._old_units = self:selected_units()
-end
-
 function Editor:StorePreviousPosRot()
-    for _, unit in pairs(self:selected_units()) do
-        unit:unit_data()._prev_pos = unit:position()
-        unit:unit_data()._prev_rot = unit:rotation()
-    end
+	m.static:StorePreviousPosRot()
 end
 
 function Editor:OnWidgetReleased()
-    local unit = self:selected_unit()
-    if alive(self:widget_unit()) then
-        if unit:unit_data()._prev_pos ~= self:widget_unit():position() then
-            m.undo_handler:SaveUnitValues(self._old_units, "pos")
-        end
-
-        if unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
-            m.undo_handler:SaveUnitValues(self._old_units, "rot")
+	local units = self:selected_units()
+	local unit = units[1]
+	if alive(unit) and alive(self:widget_unit()) then
+        if unit:unit_data()._prev_pos ~= self:widget_unit():position() or unit:unit_data()._prev_rot ~= self:widget_unit():rotation() then
+            m.undo_handler:SaveUnitValues(units, "pos")
         end
     end
 end
@@ -199,7 +188,7 @@ function Editor:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
-    if self:is_using_widget() then self:OnWidgetReleased() end
+    self:OnWidgetReleased()
     m.static:mouse_released(button, x, y)    
     self:reset_widget_values()
 end
@@ -380,10 +369,6 @@ function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
         local old_pos = self:widget_unit():position()
-        if not self._using_move_widget and (old_pos ~= pos) then
-            self:StorePreviousPosRot()
-            self._old_units = self:selected_units()
-        end
         BLE.Utils:SetPosition(reference, pos, reference:rotation())
         for _, unit in pairs(m.static._selected_units) do
             if unit ~= reference then
@@ -398,10 +383,6 @@ function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
         local old_rot = self:widget_unit():rotation()
-        if not self._using_rotate_widget and (old_rot ~= rot) then
-            self:StorePreviousPosRot()
-            self._old_units = self:selected_units()
-        end
         BLE.Utils:SetPosition(reference, reference:position(), rot)
         for i, unit in pairs(m.static._selected_units) do
             if unit ~= reference then

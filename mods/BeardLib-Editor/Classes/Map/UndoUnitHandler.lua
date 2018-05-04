@@ -32,7 +32,7 @@ function UHandler:SaveUnitValues(units, action_type)
     local event_tbl = {}
     for _, unit in pairs(units) do
         if alive(unit) and not unit:fake() then
-            if action_type == "pos" or action_type == "rot" then
+            if action_type == "pos" then
                 table.insert(event_tbl, {
                     unit = unit,
                     pos = unit:position(), prev_pos = unit:unit_data()._prev_pos,
@@ -123,15 +123,19 @@ function UHandler:redo_unit_pos_rot(event)
     local unit = event.unit
     if alive(unit) then
         BLE.Utils:SetPosition(unit, event.pos, event.rot, unit:unit_data())
-        self:GetPart("static"):set_units()
+		local static = self:GetPart("static")
+		static:set_units()
+		static:update_positions()
     end
 end
 
 function UHandler:undo_unit_pos_rot(event)
     local unit = event.unit
     if alive(unit) then
-        BLE.Utils:SetPosition(unit, event.prev_pos, event.prev_rot, unit:unit_data())
-        self:GetPart("static"):set_units()
+		BLE.Utils:SetPosition(unit, event.prev_pos or unit:position(), event.prev_rot, unit:unit_data())
+		local static = self:GetPart("static")
+		static:set_units()
+		static:update_positions()
     end
 end
 
@@ -143,7 +147,7 @@ function UHandler:restore_unit(event)
     else
         local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, false, copy_data.unit_id)
         event.unit = new_unit
-        BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation)
+		BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation)
     end
 end
 
