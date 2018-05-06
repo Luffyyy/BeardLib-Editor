@@ -101,6 +101,9 @@ function AssetsManagerDialog:load_assets()
 			for _, node in pairs(add) do
 				if type(node) == "table" then
 					local type = node.type or node._meta
+					if node._meta == "unit_load" then
+						type = UNIT
+					end
 					local name = node.path or node.name
 					if type and name then
 						self._assets[type] = self._assets[type] or {}
@@ -139,7 +142,7 @@ function AssetsManagerDialog:show_assets()
             end
 			if not loaded then
 				self._missing_assets[type] = self._missing_assets[type] or {}
-                self._missing_assets[type][unit] = true
+                self._missing_assets[type][asset] = true
                 panic = true
             end
         end
