@@ -63,7 +63,7 @@ end
 
 --Sets the position of a unit/object correctly
 function Utils:SetPosition(unit, position, rotation, ud, offset)
-	ud = ud or unit:unit_data()
+	ud = ud or unit.unit_data and unit:unit_data()
     unit:set_position(position)
     if rotation then
         unit:set_rotation(rotation)
@@ -81,11 +81,13 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
             optimization[unit_key] = opt
         end
         
-        self:UpdateCollisionsAndVisuals(unit_key, opt)
-        ud.position = position
-        if rotation then
-            ud.rotation = rotation
-        end
+		self:UpdateCollisionsAndVisuals(unit_key, opt)
+		if ud then
+			ud.position = position
+			if rotation then
+				ud.rotation = rotation
+			end
+		end
         local me = unit:mission_element()
         if me then
             Static._set_elements[me.element.id] = me

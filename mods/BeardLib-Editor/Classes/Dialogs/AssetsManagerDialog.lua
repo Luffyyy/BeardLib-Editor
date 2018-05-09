@@ -212,6 +212,9 @@ function AssetsManagerDialog:load_all_from_extract_dialog()
 end
 
 function AssetsManagerDialog:load_from_extract_dialog(assets)
+	if not assets and not self._tbl._selected then
+		return
+	end
     self._export_dialog:Show({
         force = true,
         message = self.ImportHelp,

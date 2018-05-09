@@ -369,13 +369,15 @@ function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
         local old_pos = self:widget_unit():position()
-        BLE.Utils:SetPosition(reference, pos, reference:rotation())
-        for _, unit in pairs(m.static._selected_units) do
+		BLE.Utils:SetPosition(reference, pos, reference:rotation())
+		local selected_units = self:selected_units()
+		for i=2, #selected_units do
+			local unit = selected_units[i]
             if unit ~= reference then
                 local ud = unit:unit_data()
                 BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
             end
-        end
+		end
     end
 end
 
@@ -383,13 +385,15 @@ function Editor:set_unit_rotations(rot)
     local reference = self:widget_unit()
     if alive(reference) then
         local old_rot = self:widget_unit():rotation()
-        BLE.Utils:SetPosition(reference, reference:position(), rot)
-        for i, unit in pairs(m.static._selected_units) do
+		BLE.Utils:SetPosition(reference, reference:position(), rot)
+		local selected_units = self:selected_units()
+		for i=2, #selected_units do
+			local unit = selected_units[i]
             if unit ~= reference then
                 local ud = unit:unit_data()
                 BLE.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud) 
             end
-        end
+		end
     end
 end
 

@@ -306,14 +306,11 @@ function Static:set_unit_data()
         if not self:GetItem("Continent") then
             return
         end 
-        local unit = self._selected_units[1]
-        if unit:unit_data() and unit:unit_data().unit_id then
-            local prev_id = unit:unit_data().unit_id
-            local ud = unit:unit_data()
+		local unit = self._selected_units[1]
+		local ud = unit:unit_data()
+        if ud and ud.unit_id then
+            local prev_id = ud.unit_id
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
-            local old_continent = unit:unit_data().continent
-            ud.continent = self:GetItem("Continent"):SelectedItem()
-            local new_continent = unit:unit_data().continent
             local path_changed = unit:unit_data().name ~= self:GetItem("UnitPath"):Value()
             local u_path = self:GetItem("UnitPath"):Value()
             ud.name = (u_path and u_path ~= "" and u_path) or ud.name
@@ -322,24 +319,30 @@ function Static:set_unit_data()
             ud.disable_collision = self:GetItem("DisableCollision"):Value()
             ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
             ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
-            unit:set_enabled(self:GetItem("Enabled"):Value())
+			unit:set_enabled(self:GetItem("Enabled"):Value())
+			
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data and editor:editable(unit) then
                     editor:set_unit_data()
                 end
-            end
+			end
+			
             BeardLib.Utils:RemoveAllNumberIndexes(ud, true) --Custom xml issues happen in here also 😂🔫 
             ud.lights = Utils:LightData(unit)
             ud.triggers = Utils:TriggersData(unit)
             ud.editable_gui = Utils:EditableGuiData(unit)
             ud.ladder = Utils:LadderData(unit)
             ud.zipline = Utils:ZiplineData(unit)
-            ud.cubemap = Utils:CubemapData(unit)
-            if old_continent ~= new_continent then
-                managers.worlddefinition:ResetUnitID(unit, old_continent)
+			ud.cubemap = Utils:CubemapData(unit)
+			
+			local old_continent = ud.continent
+            local new_continent = self:GetItem("Continent"):SelectedItem()
+
+			if old_continent ~= new_continent then
+				self:set_unit_continent(unit, old_continent, new_continent)
                 self:GetItem("Id"):SetValue(ud.unit_id)
-            end
-            unit:set_editor_id(ud.unit_id)
+			end
+			
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             for index = 0, unit:num_bodies() - 1 do
                 local body = unit:body(index)
@@ -349,7 +352,7 @@ function Static:set_unit_data()
                 end
             end       
             unit:set_shadows_disabled(unit:unit_data().disable_shadows)     
-            if PackageManager:has(Idstring("unit"), Idstring(ud.name)) and path_changed then
+            if PackageManager:has(Idstring("unit"), ud.name:id()) and path_changed then
                 self._parent:SpawnUnit(ud.name, unit)                
                 self._parent:DeleteUnit(unit)
             end
@@ -358,19 +361,31 @@ function Static:set_unit_data()
         for _, unit in pairs(self._selected_units) do
 			local ud = unit:unit_data()
 			if not unit:mission_element() then
-				local new_continent = self:GetItem("Continent"):SelectedItem()
-				local old_continent = ud.continent
-				if new_continent ~= "*" and old_continent ~= new_continent then
-					ud.continent = new_continent
-					managers.worlddefinition:ResetUnitID(unit, old_continent)
-				end
-				managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
+				self:set_unit_continent(unit, old_continent, self:GetItem("Continent"):SelectedItem(), true)
 			end
         end
     end
     --TODO: put in a different place
     self:GetPart("instances"):update_positions()
     self:GetPart("world"):update_positions()
+end
+
+function Static:set_unit_continent(unit, old_continent, new_continent, set)
+	local ud = unit:unit_data()
+	local old_id = ud.unit_id
+	if new_continent ~= "*" and old_continent ~= new_continent then
+		ud.continent = new_continent
+
+		managers.worlddefinition:ResetUnitID(unit, old_continent)
+		
+		--Change all links to match the new ID.
+		for _, link in pairs(managers.mission:get_links_paths_new(old_id, Utils.LinkTypes.Unit)) do
+			link.tbl[link.key] = ud.unit_id
+		end
+	end
+	if set then
+		managers.worlddefinition:set_unit(ud.unit_id, unit, old_continent, new_continent)
+	end
 end
 
 function Static:StorePreviousPosRot()
@@ -1082,7 +1097,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             end
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
-            local new_final_id = managers.worlddefinition:GetNewUnitID(continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
+            local new_final_id = managers.worlddefinition:GetNewUnitID(v.unit_data.continent or continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
             for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end

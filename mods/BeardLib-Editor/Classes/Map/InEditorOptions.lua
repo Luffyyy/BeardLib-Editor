@@ -351,7 +351,6 @@ function Options:save_main_xml(include)
         local temp = include and table.list_add(include, clone(level.include)) or level.include
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do
-            include_data.type = include_data.type or "binary"           
             if type(include_data) == "table" and include_data.file and FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
                 local exists
                 for _, inc_data in ipairs(level.include) do

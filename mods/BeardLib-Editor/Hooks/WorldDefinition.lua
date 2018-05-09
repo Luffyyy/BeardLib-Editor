@@ -247,6 +247,10 @@ function WorldDef:check_names()
 end
 
 function WorldDef:delete_unit(unit, no_unlink)
+	if not unit then
+		return
+	end
+	
 	local ud = unit:unit_data()
 	local unit_id = ud.unit_id
 	
