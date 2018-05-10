@@ -62,7 +62,7 @@ function WorldDef:is_world_unit(unit)
 end
 
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
-	if not unit_id or unit_id <= 0 then -- fuck off.
+	if not unit_id or unit_id <= 0 then
 		return
 	end
 

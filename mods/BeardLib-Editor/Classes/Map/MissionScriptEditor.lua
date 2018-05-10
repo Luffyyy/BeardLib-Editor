@@ -104,7 +104,7 @@ function MissionScriptEditor:_create_panel()
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
     self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
 	local on_exec = {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}
-	self:BuildElementsManage("on_executed", on_exec, nil, nil, {
+	self:BuildElementsManage("on_executed", on_exec, nil, ClassClbk(self, "get_on_executed_units"), {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
 	if self.USES_POINT_ORIENTATION then

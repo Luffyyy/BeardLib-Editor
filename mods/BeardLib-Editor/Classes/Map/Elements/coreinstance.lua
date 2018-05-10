@@ -57,6 +57,7 @@ function EditorInstanceInputEvent:update(t, dt, instance_name)
 			table.remove(self._element.values.event_list, i)
 		end
 	end
+	EditorInstanceInputEvent.super.update(self, t, dt)
 end
 
 function EditorInstanceInputEvent:_get_events(instance_name)
@@ -100,6 +101,7 @@ function EditorInstancePoint:update(t, dt)
 			self._element.values.instance = nil
 		end
 	end
+	EditorInstancePoint.super.update(self, t, dt)
 end
 
 function EditorInstancePoint:external_change_instance(instance)
@@ -131,6 +133,7 @@ function EditorInstanceSetParams:update(t, dt)
 			self._element.values.instance = nil
 		end
 	end
+	EditorInstanceSetParams.super.update(self, t, dt)
 end
 
 function EditorInstanceSetParams:_check_change_instance(new_instance)

@@ -9,6 +9,7 @@ end
 
 function EditorPhysicsPush:update()
 	Application:draw_sphere(self._element.values.position, self._element.values.physicspush_range, 0, 1, 0)
+	EditorPhysicsPush.super.update(self, t, dt)
 end
 
 function EditorPhysicsPush:_build_panel()

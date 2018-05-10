@@ -72,6 +72,7 @@ function EditorLaserTrigger:update(...)
 			Application:draw_line(s_p.pos, e_p.pos, r, g, b)
 		end
 	end
+	EditorLaserTrigger.super.update(self, t, dt)
 end
 
 function EditorLaserTrigger:raycast()

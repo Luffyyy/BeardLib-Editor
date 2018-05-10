@@ -22,6 +22,7 @@ function EditorLookAtTrigger:update(t, dt)
 			pen:half_sphere(self._element.values.position, self._element.values.distance, -self._element.values.rotation:y())
 		end
 	end
+	EditorLookAtTrigger.super.update(self, t, dt)
 end
 function EditorLookAtTrigger:_build_panel()
 	self:_create_panel()

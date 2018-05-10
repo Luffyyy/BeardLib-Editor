@@ -57,7 +57,8 @@ end
 function EditorSpecialObjective:update(t, dt)
 	if self._element.values.search_position then
     	Application:draw_sphere(self._element.values.search_position, 10, 1, 0, 0)
-    end
+	end
+	EditorSpecialObjective.super.update(self, t, dt)
 end
 
 function EditorSpecialObjective:_draw_follow_up()

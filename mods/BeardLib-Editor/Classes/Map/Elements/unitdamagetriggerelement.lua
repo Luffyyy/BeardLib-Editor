@@ -23,6 +23,7 @@ function EditorUnitDamage:update()
 			return
 		end
 	end
+	EditorUnitDamage.super.update(self, t, dt)
 end
 
 function EditorUnitDamage:_build_panel()

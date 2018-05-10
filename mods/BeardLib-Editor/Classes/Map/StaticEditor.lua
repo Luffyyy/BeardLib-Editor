@@ -382,6 +382,8 @@ function Static:set_unit_continent(unit, old_continent, new_continent, set)
 		for _, link in pairs(managers.mission:get_links_paths_new(old_id, Utils.LinkTypes.Unit)) do
 			link.tbl[link.key] = ud.unit_id
 		end
+	else
+		new_continent = nil
 	end
 	if set then
 		managers.worlddefinition:set_unit(ud.unit_id, unit, old_continent, new_continent)

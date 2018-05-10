@@ -19,6 +19,7 @@ function EditorMoveUnit:update(t, dt)
 		Application:draw_sphere(end_pos, 10, 1, 0, 0)
 		Application:draw_line(start_pos, end_pos, 0, 1, 0)
 	end
+	EditorMoveUnit.super.update(self, t, dt)
 end
 
 function EditorMoveUnit:update_positions(...)
@@ -97,6 +98,7 @@ function EditorRotateUnit:update(t, dt)
 		Application:draw_line(start_pos, end_rot, 0, 1, 0)
 	end
 	]]
+	EditorRotateUnit.super.update(self, t, dt)
 end
 
 function EditorRotateUnit:update_positions(...)

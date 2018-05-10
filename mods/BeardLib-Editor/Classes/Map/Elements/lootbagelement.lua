@@ -31,6 +31,7 @@ function EditorLootBag:update(d, dt)
 		Application:draw_sphere(ray.position, 25, 1, 0, 0)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.spawn_dir * 50, 0.75, 0.75, 0.75, 0.1)
 	end
+	EditorLootBag.super.update(self, t, dt)
 end
 
 function EditorLootBag:_build_panel()

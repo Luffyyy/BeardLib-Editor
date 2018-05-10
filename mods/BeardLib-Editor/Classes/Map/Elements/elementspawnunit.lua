@@ -30,6 +30,7 @@ function EditorSpawnUnit:update(t, dt)
 		Application:draw_sphere(ray.position, 25, 1, 0, 0)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.unit_spawn_dir * 400, 0.75, 0.75, 0.75)
 	end
+	EditorSpawnUnit.super.update(self, t, dt)
 end
 
 function EditorSpawnUnit:_build_panel()

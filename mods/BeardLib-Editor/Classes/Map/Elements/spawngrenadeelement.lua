@@ -29,6 +29,7 @@ function EditorSpawnGrenade:update(d, dt)
 		Application:draw_sphere(ray.position, 25, 1, 0, 0)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.spawn_dir * 35, 0.75, 0.75, 0.75, 0.075)
 	end
+	EditorSpawnGrenade.super.update(self, t, dt)
 end
 
 function EditorSpawnGrenade:_build_panel()

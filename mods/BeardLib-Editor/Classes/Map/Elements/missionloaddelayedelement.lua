@@ -24,6 +24,7 @@ function EditorLoadDelayed:update()
 			return
 		end
 	end
+	EditorLoadDelayed.super.update(self, t, dt)
 end
 
 function EditorLoadDelayed:_build_panel()

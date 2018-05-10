@@ -85,6 +85,7 @@ function EditorAreaTrigger:update(t, dt)
 	    self._shape:set_rotation(self._element.values.rotation)
 	    self._cylinder_shape:set_rotation(self._element.values.rotation)
 	end
+	EditorAreaTrigger.super.update(self, t, dt)
 end
 
 function EditorAreaTrigger:set_shape_type()

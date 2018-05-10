@@ -37,4 +37,5 @@ function EditorChangeVanSkin:update()
 			return
 		end
 	end
+	EditorChangeVanSkin.super.update(self, t, dt)
 end

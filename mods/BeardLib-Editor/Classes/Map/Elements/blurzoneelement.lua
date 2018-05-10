@@ -17,6 +17,7 @@ function EditorBlurZone:update(t, dt)
 	pen:half_sphere(self._element.values.position, self._element.values.radius, math.Z)
 	brush:half_sphere(self._element.values.position + math.Z * self._element.values.height, self._element.values.radius, -math.Z, 2)
 	pen:half_sphere(self._element.values.position + math.Z * self._element.values.height, self._element.values.radius, -math.Z)
+	EditorBlurZone.super.update(self, t, dt)
 end
 
 function EditorBlurZone:_build_panel()

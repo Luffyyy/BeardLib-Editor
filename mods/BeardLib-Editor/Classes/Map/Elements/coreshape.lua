@@ -22,6 +22,7 @@ function EditorShape:update(t, dt, selected_unit, all_units)
 	self._cylinder_shape:set_position(self._element.values.position)	
 	self._shape:set_rotation(self._element.values.rotation)
 	self._cylinder_shape:set_rotation(self._element.values.rotation)
+	EditorShape.super.update(self, t, dt)
 end
 
 function EditorShape:get_shape()
