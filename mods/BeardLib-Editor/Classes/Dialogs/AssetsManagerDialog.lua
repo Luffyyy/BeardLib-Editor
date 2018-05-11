@@ -14,7 +14,8 @@ local UNIT = "unit"
 function AssetsManagerDialog:init(params, menu)
     if self.type_name == AssetsManagerDialog.type_name then
         params = params and clone(params) or {}
-    end
+	end
+	params.scrollbar = false
     menu = menu or BeardLib.managers.dialog:Menu()
     self._unit_info = menu:Menu(table.merge({
         name = "unitinfo",
@@ -219,7 +220,7 @@ function AssetsManagerDialog:load_from_extract_dialog(assets)
         force = true,
         message = self.ImportHelp,
         assets_manager = self,
-        assets = assets or {[self._tbl._selected.type] = {[self._tbl._selected.name] = true}}
+        assets = assets or {[self._tbl._selected.asset_type] = {[self._tbl._selected.name] = true}}
     })
 end
 
@@ -474,7 +475,7 @@ end
 function AssetsManagerDialog:remove_unit_from_map(remove_asset, name, type)
     local ask = not name
 	name = name or self._tbl._selected.name
-	type = type or self._tbl._selected.type
+	type = type or self._tbl._selected.asset_type
 
     local remove = function()
         for k, unit in pairs(managers.worlddefinition._all_units) do

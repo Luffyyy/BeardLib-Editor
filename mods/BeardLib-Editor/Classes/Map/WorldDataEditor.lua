@@ -2,9 +2,9 @@ WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
 function WData:init(parent, menu) 
     if BeardLib.current_level then
-        self._continent_settings = ContinentSettingsDialog:new(BeardLibEditor._dialogs_opt)
-        self._assets_manager = AssetsManagerDialog:new(BeardLibEditor._dialogs_opt)
-        self._objectives_manager = ObjectivesManagerDialog:new(BeardLibEditor._dialogs_opt)
+        self._continent_settings = ContinentSettingsDialog:new(BLE._dialogs_opt)
+        self._assets_manager = AssetsManagerDialog:new(BLE._dialogs_opt)
+        self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
     end
     self._opened = {}
     WData.super.init(self, parent, menu, "World")
@@ -106,10 +106,10 @@ function WData:build_default_menu()
     end
 
     local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    local spawn_unit = BeardLibEditor.Options:GetValue("Input/SpawnUnit")
-    local spawn_element = BeardLibEditor.Options:GetValue("Input/SpawnElement")
-    local select_unit = BeardLibEditor.Options:GetValue("Input/SelectUnit")
-    local select_element = BeardLibEditor.Options:GetValue("Input/SelectElement")
+    local spawn_unit = BLE.Options:GetValue("Input/SpawnUnit")
+    local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
+    local select_unit = BLE.Options:GetValue("Input/SelectUnit")
+    local select_element = BLE.Options:GetValue("Input/SelectElement")
     self:Button("Unit", callback(self, self, "OpenSpawnUnitDialog"), {group = spawn, text = "Unit("..spawn_unit..")", size_by_text = true})
     self:Button("Element", callback(self, self, "OpenSpawnElementDialog"), {group = spawn, text = "Element("..spawn_element..")", size_by_text = true})
     self:Button("Instance", callback(self, self, "OpenSpawnInstanceDialog"), {group = spawn, size_by_text = true})
@@ -157,13 +157,12 @@ function WData:build_default_menu()
     self:build_continents()
 end
 
-
 function WData:LoadFromExtract(ext, asset)
     self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}) 
 end
 
 function WData:remove_brush_layer()
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
+    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
         self:data().brush = nil
         MassUnitManager:delete_all_units()
         self:save()
@@ -230,7 +229,7 @@ function WData:open_continent_settings(continent)
 end
 
 function WData:remove_brush_layer()
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
+    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
         self:data().brush = nil
         MassUnitManager:delete_all_units()
         self:save()
@@ -238,7 +237,7 @@ function WData:remove_brush_layer()
 end
 
 function WData:remove_continent(continent)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the continent!", function()
+    BLE.Utils:YesNoQuestion("This will remove the continent!", function()
         self:clear_all_units_from_continent(continent, true, true)
         managers.mission._missions[continent] = nil
         managers.worlddefinition._continents[continent] = nil
@@ -297,25 +296,25 @@ function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
     if no_dialog == true then
         delete_all()
     else
-        BeardLibEditor.Utils:YesNoQuestion("This will delete all units in the continent!", delete_all)
+        BLE.Utils:YesNoQuestion("This will delete all units in the continent!", delete_all)
     end
 end
 
 function WData:new_continent()
     local worlddef = managers.worlddefinition
-    BeardLibEditor.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
+    BLE.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
         if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
                 self:new_continent()
             end})
             return
         elseif name == "environments" or string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:new_continent()
             end})
             return
         elseif worlddef._continent_definitions[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
                 self:new_continent()
             end})
             return
@@ -334,19 +333,19 @@ end
 
 function WData:add_new_mission_script(cname)
     local mission = managers.mission
-    BeardLibEditor.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
+    BLE.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
         if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
                 self:add_new_mission_script(cname)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:add_new_mission_script(cname)
             end})
             return
         elseif mission._scripts[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
                 self:add_new_mission_script(cname)
             end})
             return
@@ -367,7 +366,7 @@ function WData:add_new_mission_script(cname)
 end
 
 function WData:remove_script(script, item)
-    BeardLibEditor.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
+    BLE.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
         local mission = managers.mission
         self:_clear_all_elements_from_script(script, item.continent, true, true)
         mission._missions[item.continent][script] = nil
@@ -378,19 +377,19 @@ end
 
 function WData:rename_script(script, item)
     local mission = managers.mission
-    BeardLibEditor.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
+    BLE.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
         if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
                 self:rename_script(script, item)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_script(script, item)
             end})
             return
         elseif mission._scripts[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
                 self:rename_script(script, item)
             end})
             return
@@ -429,7 +428,7 @@ function WData:_clear_all_elements_from_script(script, continent, no_refresh, no
     if no_dialog == true then
         delete_all()
     else
-        BeardLibEditor.Utils:YesNoQuestion("This will delete all elements in the mission script!", delete_all)
+        BLE.Utils:YesNoQuestion("This will delete all elements in the mission script!", delete_all)
     end
 end
 
@@ -494,7 +493,7 @@ function WData:build_wires_layer_menu()
         self:Button(ud.name_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
     end
     local loaded_wires = self:Group("Spawn")
-    for _, wire in pairs(BeardLibEditor.Utils:GetUnits({type = "wire", packages = self._assets_manager:get_level_packages()})) do
+    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager:get_level_packages()})) do
         self:Button(wire, function()
             self:BeginSpawning(wire)
         end, {group = loaded_wires})
@@ -662,27 +661,27 @@ end
 
 function WData:OpenSpawnPrefabDialog()
     local prefabs = {}
-    for name, prefab in pairs(BeardLibEditor.Prefabs) do
+    for name, prefab in pairs(BLE.Prefabs) do
         table.insert(prefabs, {name = name, prefab = prefab})
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = prefabs,
         force = true,
         callback = function(item)
             self:GetPart("static"):SpawnPrefab(item.prefab)
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
         end
     }) 
 end
 
 function WData:OpenSpawnInstanceDialog()
     local instances = table.map_keys(BeardLib.managers.MapFramework._loaded_instances)
-    for _, path in pairs(BeardLibEditor.Utils:GetEntries({type = "world"})) do
+    for _, path in pairs(BLE.Utils:GetEntries({type = "world"})) do
         if path:match("levels/instances") then
             table.insert(instances, path)
         end
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = instances,
         force = true,
         callback = function(item)
@@ -724,7 +723,7 @@ function WData:OpenSpawnInstanceDialog()
                     script:_preload_instance_class_elements(prepare_mission_data)
                 end
             end
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
         end
     })
 end
@@ -736,12 +735,12 @@ function WData:OpenSpawnElementDialog()
 
     local held_ctrl
     local elements = {}
-    for _, element in pairs(BeardLibEditor._config.MissionElements) do
+    for _, element in pairs(BLE._config.MissionElements) do
         local name = element:gsub("Element", "")
         table.insert(elements, {name = name, element = element})
     end
     table.sort(elements, function(a,b) return b.name > a.name end)
-	BeardLibEditor.ListDialog:Show({
+	BLE.ListDialog:Show({
 	    list = elements,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),
@@ -771,7 +770,7 @@ function WData:OpenSelectUnitDialog(params)
             end
         end
     end
-    BeardLibEditor.ListDialog:Show({
+    BLE.ListDialog:Show({
         list = units,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),
@@ -784,12 +783,12 @@ end
 
 function WData:OpenSelectInstanceDialog(params)
 	params = params or {}
-	BeardLibEditor.ListDialog:Show({
+	BLE.ListDialog:Show({
 	    list = managers.world_instance:instance_names(),
         force = true,
 	    callback = params.on_click or function(name)
 	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))	        
-	    	BeardLibEditor.ListDialog:hide()
+	    	BLE.ListDialog:hide()
 	    end
 	})
 end
@@ -815,7 +814,7 @@ function WData:OpenSelectElementDialog(params)
             end
         end
     end
-	BeardLibEditor.ListDialog:Show({
+	BLE.ListDialog:Show({
 	    list = elements,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),        
@@ -846,7 +845,7 @@ function WData:BeginSpawning(unit)
 end
 
 function WData:CloseDialog()
-    BeardLibEditor.ListDialog:hide()
+    BLE.ListDialog:hide()
     self._opened = {}
 end
 
@@ -867,8 +866,15 @@ function WData:OpenSpawnUnitDialog(params)
 
 	params = params or {}
     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
-	BeardLibEditor.ListDialog:Show({
-	    list = BeardLibEditor.Utils:GetUnits({not_loaded = params.not_loaded, packages = pkgs, slot = params.slot, type = params.type, not_type = "being"}),
+	BLE.ListDialog:Show({
+	    list = BLE.Utils:GetUnits({
+			not_loaded = params.not_loaded,
+			packages = pkgs,
+			slot = params.slot,
+			type = params.type,
+			not_types = {Idstring("being"), Idstring("brush"), Idstring("wpn"), Idstring("item")},
+			not_in_slot = "brushes"
+		}),
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),
         callback = function(unit)
@@ -880,10 +886,10 @@ function WData:OpenSpawnUnitDialog(params)
                     if PackageManager:has(Idstring("unit"), unit:id()) then
                         self:BeginSpawning(unit)
                     else
-                        BeardLibEditor.Utils:Notify("Error", "Cannot spawn the unit")
+                        BLE.Utils:Notify("Error", "Cannot spawn the unit")
                     end
                 else
-                    BeardLibEditor.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
+                    BLE.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
                         self._assets_manager:find_package(unit, true)
                     end}})
                 end
@@ -895,12 +901,12 @@ end
 function WData:OpenLoadDialog(params)
     local units = {}
 	local ext = params.ext
-    for unit in pairs(BeardLibEditor.DBPaths[ext]) do
+    for unit in pairs(BLE.DBPaths[ext]) do
         if not unit:match("wpn_") and not unit:match("msk_") then
             table.insert(units, unit)
         end
     end
-	BeardLibEditor.ListDialog:Show({
+	BLE.ListDialog:Show({
 	    list = units,
 		force = true,
 		not_loaded = true,

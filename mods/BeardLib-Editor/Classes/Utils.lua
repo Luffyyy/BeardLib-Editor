@@ -500,6 +500,7 @@ function Utils:GetUnits(params)
     local unit_ids = Idstring("unit")
     local check = params.check
     local slot = params.slot
+    local not_in_slot = params.not_in_slot
     local not_loaded = params.not_loaded
     local packages = params.packages
     local pack_unloaded = params.pack_unloaded
@@ -513,23 +514,24 @@ function Utils:GetUnits(params)
             end
         end
     end
-    local type = params.type
-    local not_type = params.not_type
+	local type = params.type
+    local not_types = params.not_types
     for unit in pairs(BeardLibEditor.DBPaths.unit) do
-        local slot_fine = not slot or self:InSlot(unit, slot)
+		local slot_fine = not slot or self:InSlot(unit, slot)
+		slot_fine = slot_fine and not not_in_slot or not self:InSlot(unit, not_in_slot)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
-        local type_fine = (not type or unit_type == Idstring(type)) and (not not_type or unit_type ~= Idstring(not_type))
+        local type_fine = (not type or unit_type == Idstring(type)) and (not not_types or not table.contains(not_types, unit_type))
 		local unit_loaded = params.not_loaded or self.allowed_units[unit]
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true
             else
                 unit_loaded = PackageManager:has(unit_ids, unit:id())
-            end
-        end
-        if unit_fine and slot_fine and unit_loaded and type_fine then
-            table.insert(units, unit)
+			end
+		end
+        if unit_type and unit_fine and slot_fine and unit_loaded and type_fine then
+			table.insert(units, unit)
         end
         if pack_unloaded and not unit_loaded then
             table.insert(unloaded_units, unit)

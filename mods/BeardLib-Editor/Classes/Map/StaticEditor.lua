@@ -847,7 +847,7 @@ function Static:build_links(id, match, element)
     end
     
     local links = managers.mission:get_links_paths_new(id, match)
-    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200, h= 200})
+    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200})
     local same_links = {}
     links_group:ClearItems()
 
