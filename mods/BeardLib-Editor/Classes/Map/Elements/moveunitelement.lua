@@ -82,7 +82,7 @@ function EditorRotateUnit:create_element()
     self._element.class = "ElementRotateUnit"
     self._element.values.unit_ids = {}
     self._element.values.speed = 500
-    self._element.values.end_rot = self._element.values.position
+    self._element.values.end_rot = self._element.values.rotation
     self._element.values.remember_unit_rot = false
 end
 
@@ -102,7 +102,7 @@ function EditorRotateUnit:update(t, dt)
 end
 
 function EditorRotateUnit:update_positions(...)
-	EditorRotateUnit.super.update_positions(self, ...)
+	EditorMoveUnit.super.update_positions(self, ...)
 	if self._element.values.use_unit_rot then
 		self._element.values.end_rot = self._element.values.rotation
 	end

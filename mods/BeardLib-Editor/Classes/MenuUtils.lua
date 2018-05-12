@@ -219,8 +219,15 @@ function MenuUtils:init(this, menu)
 	function this:SetAxisControls(pos, rot, name)
 		name = name or ""
 		for i, control in pairs(self._axis_controls) do
-			if alive(self[name..control]) and ((i < 4 and pos) or (i > 3 and rot)) then
-				self[name..control]:SetValue(i < 4 and pos[control] or rot[control](rot))
+			local is_pos = (i < 4 and pos)
+			local is_rot = (i > 3 and rot)
+			local item = self[name..control]
+			if alive(item) and (is_pos or is_rot) then
+				if is_pos then
+					item:SetValue(pos[control])
+				else
+					item:SetValue(rot[control](rot))
+				end
 	        end
 	    end
 	end
