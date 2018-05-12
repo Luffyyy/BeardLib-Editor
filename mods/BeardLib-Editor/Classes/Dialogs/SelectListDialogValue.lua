@@ -66,7 +66,10 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
     end
 
     opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false, free_typing = self._params.combo_free_typing, text_offset_y = 0}
-    local v = selected and value.value or nil
+	local v
+	if selected then
+		v = value.value
+	end
     if self._tbl.values_name then
 	    if tonumber(v) then
 	        self:NumberBox("", callback(self, self, "ValueClbk", value), v, opt)

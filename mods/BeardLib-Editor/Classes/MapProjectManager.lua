@@ -850,15 +850,18 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
 end
 
 function Project:set_mission_assets_dialog(level)
-    local selected_assets = {}
+	local selected_assets = {}
+	level.assets = level.assets or {_meta = "assets"}
     for _, asset in pairs(level.assets) do
         if type(asset) == "table" and asset._meta == "asset" then
             table.insert(selected_assets, {name = asset.name, value = asset.exclude == true})
         end
     end
     local assets = {}
-    for _, asset in pairs(table.map_keys(tweak_data.assets)) do
-        table.insert(assets, {name = asset, value = false})
+	for _, asset in pairs(table.map_keys(tweak_data.assets)) do
+		if asset.stages ~= "all" then
+			table.insert(assets, {name = asset, value = false})
+		end
     end
 	BLE.SelectDialogValue:Show({
 		selected_list = selected_assets,
