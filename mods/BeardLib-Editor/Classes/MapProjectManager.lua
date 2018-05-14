@@ -808,7 +808,7 @@ function Project:set_project_data(item)
 end
 
 function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
-    self._curr_editing:ClearItems()
+	self._curr_editing:ClearItems()
     local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
     self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
     self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
@@ -916,7 +916,8 @@ function Project:group_level(narr, level_in_chain)
     })
 end
 
-function Project:set_project_level_data(level_in_chain, level)
+function Project:set_project_level_data(level, level_in_chain)
+	local t = self._current_data
     local old_name = level.orig_id or level.id
     level.id = self:GetItem("LevelId"):Value()
     local title = tostring(t.name) .. ":" .. tostring(level.id)
