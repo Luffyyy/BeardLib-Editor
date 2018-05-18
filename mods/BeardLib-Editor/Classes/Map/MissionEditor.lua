@@ -55,7 +55,6 @@ function MissionEditor:get_editor_class(c)
     local clss = rawget(_G, c:gsub("Element", "Editor"))
     if not clss then
         EditorActionMessage = EditorActionMessage or class(MissionScriptEditor)
-        BeardLibEditor:log("[Warning] Element class %s has no editor class(Report this)", c)
     end
     return clss
 end

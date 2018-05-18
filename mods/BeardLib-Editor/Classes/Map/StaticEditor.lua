@@ -1089,18 +1089,19 @@ function Static:SpawnCopyData(copy_data, prefab)
         add = project:get_level_by_id(data, Global.game_settings.level_id).add
     end
     self:reset_selected_units()
-    local continent = self._parent._current_continent
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
-        if v.type == "element" then
-            local new_final_id = managers.mission:get_new_id(continent)
+		if v.type == "element" then
+			local c = managers.mission._scripts[v.mission_element_data.script] or nil
+			c = c and c._continent or self._parent._current_continent
+            local new_final_id = managers.mission:get_new_id(c)
             for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
-            local new_final_id = managers.worlddefinition:GetNewUnitID(v.unit_data.continent or continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
+            local new_final_id = managers.worlddefinition:GetNewUnitID(v.unit_data.continent or self._parent._current_continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
             for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
