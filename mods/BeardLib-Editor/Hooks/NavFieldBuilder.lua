@@ -19,12 +19,6 @@ function NavFieldBuilder:_update_progress_bar(percent_complete, title)
 	BLE.Utils:GetPart("status"):SetStatus(title)
 end
 
-function NavFieldBuilder:update(t, dt)
-	if self._building then
-		self._building.task_clbk(self)
-	end
-end
-
 function NavFieldBuilder:_destroy_progress_bar()
 	local status = BLE.Utils:GetPart("status")
 	status:SetStatus()

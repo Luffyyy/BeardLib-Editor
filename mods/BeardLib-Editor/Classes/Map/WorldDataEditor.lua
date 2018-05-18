@@ -13,10 +13,10 @@ function WData:button_pos(near, item) item:Panel():set_righttop(near:Panel():lef
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:enable()
-    self:bind_opt("SpawnUnit", callback(self, self, "OpenSpawnUnitDialog"), true)
-    self:bind_opt("SpawnElement", callback(self, self, "OpenSpawnElementDialog"), true)
-    self:bind_opt("SelectUnit", callback(self, self, "OpenSelectUnitDialog"), true)
-    self:bind_opt("SelectElement", callback(self, self, "OpenSelectElementDialog"), true)
+    self:bind_opt("SpawnUnit", callback(self, self, "OpenSpawnUnitDialog"))
+    self:bind_opt("SpawnElement", callback(self, self, "OpenSpawnElementDialog"))
+    self:bind_opt("SelectUnit", callback(self, self, "OpenSelectUnitDialog"))
+    self:bind_opt("SelectElement", callback(self, self, "OpenSelectElementDialog"))
 end
 
 function WData:loaded_continents()

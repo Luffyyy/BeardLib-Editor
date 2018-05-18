@@ -9,7 +9,7 @@ function Part:init(parent, menu, name, opt, mopt)
         control_slice = 0.5,
         size = 18,
         auto_foreground = true,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
         w = 300,
@@ -20,7 +20,7 @@ function Part:init(parent, menu, name, opt, mopt)
     self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1)
     local title_h = 4
     if not opt.no_title then
-        title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BeardLibEditor.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
+        title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
     self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
@@ -49,7 +49,7 @@ end
 function Part:bind(opt, clbk, in_dialogs)
     local key
     if opt:match("Input") then
-        key = BeardLibEditor.Options:GetValue(opt)
+        key = BLE.Options:GetValue(opt)
     else
         key = opt
     end
@@ -63,7 +63,7 @@ end
 function Part:update()
     local allowed = not BeardLib.managers.dialog:DialogOpened()
     local not_focused = not (self._parent._menu:Focused() or BeardLib.managers.dialog:Menu():Typing())
-    for _, trigger in pairs(self._triggers) do
+	for _, trigger in pairs(self._triggers) do
         if not_focused and (allowed or trigger.in_dialogs) and BeardLib.Utils.Input:Triggered(trigger) then
             trigger.clbk()
         end
@@ -92,9 +92,9 @@ function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
 function Part:Enabled() return self._menu:Visible() end
-function Part:Value(v) return BeardLibEditor.Options:GetValue("Map/" .. v) end
-function Part:GetPart(n) return BeardLibEditor.Utils:GetPart(n) end 
-function Part:GetLayer(n) return BeardLibEditor.Utils:GetLayer(n) end 
+function Part:Value(v) return BLE.Options:GetValue("Map/" .. v) end
+function Part:GetPart(n) return BLE.Utils:GetPart(n) end 
+function Part:GetLayer(n) return BLE.Utils:GetLayer(n) end 
 function Part:build_default_menu() self:ClearItems() end
 function Part:SetTitle(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
 function Part:disable() self._triggers = {} end

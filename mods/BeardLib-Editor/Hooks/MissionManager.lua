@@ -35,12 +35,7 @@ function Mission:parse(params, stage_name, offset, file_type)
 	local file_dir = string.reverse(string.sub(reverse, i))
 	local continent_files = self:_serialize_to_script(file_type, file_path)
 	continent_files._meta = nil
-	self._start_id = 100000
-	self._start_ids = {}
-	local i = 1
 	for name, data in pairs(continent_files) do
-		self._start_ids[name] = self._start_id * i
-		i = i + 1
 		if not managers.worlddefinition:continent_excluded(name) then
 			self:_load_mission_file(name, file_dir, data)
 		end
@@ -90,7 +85,7 @@ function Mission:get_new_id(continent)
 		self._ids = self._ids or {}
 		self._ids[continent] = self._ids[continent] or {}
 		local tbl = self._ids[continent]
-		local i = self._start_ids[continent]
+		local i = managers.worlddefinition._continents[continent].base_id
 		while tbl[i] do
 			i = i + 1
 		end
@@ -119,44 +114,61 @@ function Mission:_load_mission_file(name, file_dir, data)
 	end
 end
 
-function Mission:set_element(element, old_script)
+function Mission:set_element(element, old_script_name)
 	if not element then
 		return
 	end
-	local new_continent = self._scripts[element.script]._continent
-	local old_continent = old_script and self._scripts[old_script]._continent
-	local new_script = element.script
+	
+	local script_name = element.script
+	local script = self._scripts[script_name] or nil
+	local old_script = self._scripts[old_script_name] or nil
 	local old_id = element.id
-	--TODO: Move multiple elements to different continents without removing links
-	if old_script and new_script ~= old_script then
-		local id = old_id
-		if new_continent ~= old_continent then
-			self:delete_links(element.id, Utils.LinkTypes.Element)
-			self:delete_element_id(old_continent, element.id)
-			id = self:get_new_id(new_continent)
-			self:store_element_id(new_continent, id)
-			element.id = id
-		end
+	local id = old_id
 
-		self._scripts[new_script]._elements[id] = self._scripts[old_script]._elements[old_id]
-		self._scripts[old_script]._elements[old_id] = nil
-		for k, e in pairs(self._missions[new_continent][new_script].elements) do
-			if e.id == id then
-				self._missions[new_continent][new_script].elements[k] = nil
+	if script and old_script then
+		local mission_script = self._missions[script._continent][script_name]
+		
+		--TODO: Move multiple elements to different scripts without removing links		
+		if old_script and script_name ~= old_script_name then
+			
+			local old_continent_name = old_script._continent
+			local continent_name = script._continent
+			local old_mission_script = self._missions[old_continent_name][old_script_name]
+
+			if old_mission_script then
+				self:delete_links(old_id, Utils.LinkTypes.Element)
+				self:delete_element_id(old_continent_name, old_id)
+
+				id = self:get_new_id(continent_name)
+				self:store_element_id(continent_name, id)
+				element.id = id
+
+				script._elements[id] = old_script._elements[old_id]
+				old_script._elements[old_id] = nil
+				
+				for k, e in pairs(old_mission_script.elements) do
+					if e.id == id then
+						table.remove(old_mission_script.elements, k)
+						table.insert(mission_script, e)
+						break
+					end
+				end
 			end
 		end
-	end
-	for k, script_e in pairs(self._missions[new_continent][new_script].elements) do
-		if script_e.id == element.id then
-			self._missions[new_continent][new_script].elements[k] = element
+
+		for k, e in pairs(mission_script.elements) do
+			if e.id == id then
+				mission_script.elements[k] = element
+				break
+			end
 		end
-	end
-
-	local script_element = self._scripts[new_script]._elements[element.id]
-	script_element._values = _G.deep_clone(element.values)
-
-	if script_element._finalize_values then
-		script_element:_finalize_values(script_element._values)
+	
+		local script_element = script._elements[id]
+		script_element._values = _G.deep_clone(element.values)
+	
+		if script_element._finalize_values then
+			script_element:_finalize_values(script_element._values)
+		end
 	end
 end
 
@@ -225,7 +237,7 @@ function Mission:delete_element(id)
 		for s_name, script in pairs(mission) do
 			for i, element in pairs(script.elements) do
 				if element.id == id then
-					_G.BeardLibEditor:log("Deleting element %s in mission %s in script %s", tostring(element.editor_name), tostring(m_name), tostring(s_name))
+					Utils:GetPart("console"):Log("Deleting element %s in mission %s in script %s", tostring(element.editor_name), tostring(m_name), tostring(s_name))
 					self._scripts[s_name]:delete_element(element)
 					script.elements[i] = nil
 					return

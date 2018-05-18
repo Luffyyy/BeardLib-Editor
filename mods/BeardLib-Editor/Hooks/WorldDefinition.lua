@@ -225,8 +225,15 @@ function WorldDef:init_done()
 	managers.editor:load_continents(self._continent_definitions)
 	local i = 1 
 	for continent, data in pairs(self._continent_definitions) do
-		self._continents[continent].base_id = self._continents[continent].base_id or self._start_id * i
-		i = i + 1
+		if self._continents[continent].base_id then
+			i = math.max(self._start_id / self._continents[continent].base_id)
+		end
+	end
+	for continent, data in pairs(self._continent_definitions) do
+		if not self._continents[continent].base_id then
+			self._continents[continent].base_id = self._start_id * i
+			i = i + 1			
+		end
 	end
 	BLE:SetLoadingText("Done Initializing World Definition")
 	self._init_done = true
@@ -237,16 +244,17 @@ function WorldDef:check_names()
 	local names = {}
 	for _, unit in pairs(World:find_units_quick("all")) do
 		local ud = unit:unit_data()
-		if ud and ud.name then
-			names[ud.name] = names[ud.name] or 0
-			names[ud.name] = names[ud.name] + 1
+		local name = ud and ud.name
+		if name then
+			names[name] = names[name] or 0
+			names[name] = names[name] + 1
 		end
 	end
 	
 	self._all_names = names
 end
 
-function WorldDef:delete_unit(unit, no_unlink)
+function WorldDef:delete_unit(unit, keep_links)
 	if not unit then
 		return
 	end
@@ -263,12 +271,9 @@ function WorldDef:delete_unit(unit, no_unlink)
 		return
 	end
 	
-	self:remove_name_id(unit)
 	
 	local name_id = ud.name_id
 	local continent_name = ud.continent
-
-	self:RemoveUnitID(unit, continent_name)
 	local statics
 	if unit:wire_data() then
 		statics = self._world_data.wires
@@ -278,7 +283,9 @@ function WorldDef:delete_unit(unit, no_unlink)
 		statics = self._continent_definitions[continent_name]
 		statics = statics and statics.statics
 	end
-	if not no_unlink then
+	if not keep_links then
+		self:remove_name_id(unit)
+		self:RemoveUnitID(unit, continent_name)
 		managers.mission:delete_links(unit_id, Utils.LinkTypes.Unit)
 		for _, portal in pairs(_G.clone(managers.portal:unit_groups())) do
 			portal._ids[unit_id] = nil

@@ -183,9 +183,10 @@ function Static:build_unit_editor_menu()
     local other = self:Group("Main")    
     self:build_positions_items()
     self:TextBox("Name", callback(self, self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
-    self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other, enabled = false})
-    self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", true, function(unit)
-        return Utils:GetUnitType(unit) ~= "being"
+	self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other, enabled = false})
+	self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", true, function(unit)
+		local t = Utils:GetUnitType(unit)
+		return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
     end, false, {group = other})
     self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
 	self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
@@ -353,8 +354,8 @@ function Static:set_unit_data()
             end       
             unit:set_shadows_disabled(unit:unit_data().disable_shadows)     
             if PackageManager:has(Idstring("unit"), ud.name:id()) and path_changed then
-                self._parent:SpawnUnit(ud.name, unit)                
-                self._parent:DeleteUnit(unit)
+                self._parent:SpawnUnit(ud.name, unit, false, ud.unit_id)
+                self._parent:DeleteUnit(unit, true)
             end
         end
     else            

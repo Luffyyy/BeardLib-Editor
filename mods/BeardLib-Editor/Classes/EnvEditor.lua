@@ -26,7 +26,7 @@ function EnvEditor:load_included_environments()
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
-                    local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included})
+                    local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included, text = include.file})
                     self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
                         texture = "textures/editor_icons_df",
                         position = "CenterRight",
@@ -521,8 +521,8 @@ function EnvEditor:open_environment(file)
     end
     local read = FileIO:ReadFrom(file, "rb")
     local data
-    if read then
-        data = read:match("<environment") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, "binary")
+	if read then
+        data = read:find("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, "binary")
     end
     local valid = data and data.data and data.data.others and type(data.data.others) == "table"
     local underlay

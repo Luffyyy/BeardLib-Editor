@@ -224,7 +224,7 @@ function Editor:select_element(element, add, switch)
     end
 end
 
-function Editor:DeleteUnit(unit)
+function Editor:DeleteUnit(unit, keep_links)
     if alive(unit) then
         if unit:mission_element() then 
             managers.mission:delete_element(unit:mission_element().element.id) 
@@ -235,7 +235,7 @@ function Editor:DeleteUnit(unit)
         local ud = unit:unit_data()
 		if ud then
 			self:unit_deleted(unit)
-            managers.worlddefinition:delete_unit(unit)
+            managers.worlddefinition:delete_unit(unit, keep_links)
         end
         World:delete_unit(unit)
     end
@@ -268,7 +268,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         }
         t = old_unit:wire_data() and "wire" or old_unit:ai_editor_data() and "ai" or ""
         data.unit_data.name_id = nil
-        data.unit_data.unit_id = unit_id or managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
+		data.unit_data.unit_id = unit_id or managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
     else
         t = BLE.Utils:GetUnitType(unit_path)
         local ud = old_unit and old_unit.unit_data

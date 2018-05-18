@@ -57,7 +57,7 @@
 			<class file="CubemapCreator.lua"/>
 		</classes>
     </Classes>
-    <AssetUpdates id="16837" version="2.7" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
+    <AssetUpdates id="16837" version="2.7.1" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
@@ -353,5 +353,6 @@
         <value_node value="ElementStopEffect"/>
         <value_node value="ElementEndscreenVariant"/>
         <value_node value="ElementLootBagTrigger"/>
+		<value_node value="ElementCounterReset"/>
     </MissionElements>
 </mod>

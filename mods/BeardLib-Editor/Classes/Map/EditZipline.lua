@@ -5,7 +5,7 @@ end
 
 function EditZipLine:build_menu(units)
 	local zipline_options = self:Group("Zipline")
-	self:AxisControls(ClassClbk(self, "set_unit_data"), {
+	self:AxisControls(ClassClbk(self, "set_unit_data_parent"), {
 		text = "End position",
 		group = zipline_options,
 		no_rot = true,

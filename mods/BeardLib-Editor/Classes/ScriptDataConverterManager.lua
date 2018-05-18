@@ -52,8 +52,14 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
     local to_data = self.script_file_to_types[to_i]
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")
-
-    local convert_data = not self.assets and FileIO:ReadScriptData(file, self.script_file_from_types[from_i].name)
+	local convert_data
+	if not self.assets then
+		local read = FileIO:ReadFrom(file, "rb")
+		local data
+		if read then
+			convert_data = read:find("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, self.script_file_from_types[from_i].name)
+		end
+	end
     if not convert_data and not self.assets then
         BeardLibEditor:log("[Error] File not accessible")
         return

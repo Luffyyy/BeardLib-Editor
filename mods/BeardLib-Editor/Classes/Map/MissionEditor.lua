@@ -78,10 +78,10 @@ function MissionEditor:set_element(element)
             self._current_script = script
             if not self._parent:selected_unit() then
                 self._current_script = nil
-            end
+			end
+		else
+			self:alert_missing_element_editor(element.class)	
         end
-    else
-        self:alert_missing_element_editor(element.class)
     end
 end
 

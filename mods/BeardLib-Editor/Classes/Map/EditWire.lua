@@ -34,7 +34,7 @@ function EditWire:set_target_axis()
 	local object = self:target_object()
 	object:set_position(self:AxisControlsPosition("TargetAxis"))
 	object:set_rotation(self:AxisControlsRotation("TargetAxis"))
-	self:set_unit_data()
+	self:set_unit_data_parent()
 end
 
 function EditWire:set_unit_data()
