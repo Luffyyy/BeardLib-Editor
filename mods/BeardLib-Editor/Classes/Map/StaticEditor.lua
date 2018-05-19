@@ -130,7 +130,7 @@ function Static:build_default_menu()
 end
 
 function Static:build_quick_buttons(cannot_be_saved)
-    self:SetTitle("Selection")
+	self:SetTitle("Selection")
     local quick_buttons = self:Group("QuickButtons")
     self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
     self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
@@ -143,25 +143,29 @@ function Static:build_quick_buttons(cannot_be_saved)
 end
 
 function Static:build_group_options()
-    local selected_unit = self:selected_unit()
+	local group = self:GetItem("Group")
+	local selected_unit = self:selected_unit()
+	if not group or not selected_unit then
+		return
+	end
     local selected_units = self:selected_units()
-    local all_same_continent
-    local inside_group = false
-
+    local all_same_continent = false
+	local inside_group = false
+	local sud = selected_unit:unit_data()
     if #selected_units > 1 then
         all_same_continent = true
-        for _, unit in pairs(selected_units) do
-        	if not selected_unit:unit_data().unit_id or not selected_unit:unit_data().continent then
+		for _, unit in pairs(selected_units) do
+			local ud = unit:unit_data()
+        	if not sud.unit_id or not sud.continent then
         		all_same_continent = false
         		return
         	end
-            if selected_unit:unit_data().continent ~= unit:unit_data().continent then
+            if sud.continent ~= ud.continent then
                 all_same_continent = false
                 break
-            end 
+            end
         end
     end
-    local group = self:GetItem("Group")
     group:ClearItems()
     group:SetVisible(all_same_continent)
     if all_same_continent then
@@ -362,7 +366,7 @@ function Static:set_unit_data()
         for _, unit in pairs(self._selected_units) do
 			local ud = unit:unit_data()
 			if not unit:mission_element() then
-				self:set_unit_continent(unit, old_continent, self:GetItem("Continent"):SelectedItem(), true)
+				self:set_unit_continent(unit, ud.continent, self:GetItem("Continent"):SelectedItem(), true)
 			end
         end
     end
@@ -378,7 +382,8 @@ function Static:set_unit_continent(unit, old_continent, new_continent, set)
 		ud.continent = new_continent
 
 		managers.worlddefinition:ResetUnitID(unit, old_continent)
-		
+		self:set_unit_group(old_id, ud.unit_id, old_continent, new_continent)
+
 		--Change all links to match the new ID.
 		for _, link in pairs(managers.mission:get_links_paths_new(old_id, Utils.LinkTypes.Unit)) do
 			link.tbl[link.key] = ud.unit_id
@@ -387,7 +392,32 @@ function Static:set_unit_continent(unit, old_continent, new_continent, set)
 		new_continent = nil
 	end
 	if set then
-		managers.worlddefinition:set_unit(ud.unit_id, unit, old_continent, new_continent)
+		managers.worlddefinition:set_unit(old_id, unit, old_continent, new_continent)
+	end
+end
+
+function Static:set_unit_group(old_id, new_id, old_continent, new_continent)
+	for _, continent in pairs(managers.worlddefinition._continent_definitions) do
+		continent.editor_groups = continent.editor_groups or {}
+		for _, group in pairs(continent.editor_groups) do
+			if type(group) == "table" and group.units then
+				if group.reference == old_id then
+					group.reference = new_id
+	
+					local continents = managers.worlddefinition._continent_definitions
+					table.delete(continents[old_continent].editor_groups, group)
+					continents[new_continent].editor_groups = continents[new_continent].editor_groups or {}
+					table.insert(continents[new_continent].editor_groups, group)
+				end
+				for i, unit_id in pairs(group.units) do
+					if unit_id == old_id then
+						group.units[i] = new_id
+						return	
+					end
+				end
+				return
+			end
+		end
 	end
 end
 
@@ -620,7 +650,7 @@ function Static:reset_selected_units()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then unit:mission_element():unselect() end
     end
-    self._selected_units = {}
+	self._selected_units = {}
     self._selected_group = nil
 end
 
@@ -659,28 +689,33 @@ function Static:set_selected_unit(unit, add)
                 if not add then
                     add = true
                     self:reset_selected_units()
-                end
-                if continent then
+				end
+				local found
+				for _, continent in pairs(managers.worlddefinition._continent_definitions) do
                     continent.editor_groups = continent.editor_groups or {}
-                    for _, group in pairs(continent.editor_groups) do
-                        if group.units then
-                            if table.contains(group.units, unit:unit_data().unit_id) then
+					for _, group in pairs(continent.editor_groups) do
+						if group.units then
+							if table.contains(group.units, unit:unit_data().unit_id) then
                                 for _, unit_id in pairs(group.units) do
                                     local u = managers.worlddefinition:get_unit(unit_id)
                                     if alive(u) and not table.contains(units, u) then
                                         table.insert(units, u)
                                     end
-                                end
+								end
                                 if self._selected_group then
                                     self._selected_group = nil
                                 else
                                     self._selected_group = group
                                 end
-                                break
+								found = true
+								break
                             end
-                        end
+						end
+						if found then
+							break
+						end
                     end
-                end
+				end
             end
         end
     end
@@ -752,18 +787,32 @@ function Static:select_unit(mouse2)
 end
 
 function Static:set_multi_selected()
-    if self._built_multi then
-        self:update_positions()
-        return
-    end
     self._built_multi = true
     self._editors = {}
 	self:ClearItems()
 	--TODO: Support more values.
 	local other = self:Group("Main")
-	self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), table.list_add({"*"}, self._parent._continents), 1, {group = other})
+	local same_continent
+	local continent = self:selected_unit():unit_data().continent
+	local has_continents
+	local continents_are_different
+	for _, unit in pairs(self:selected_units()) do
+		local ud = unit:unit_data()
+		if ud.continent then
+			has_continents = true
+			if ud.continent ~= continent then
+				continents_are_different = true
+			end
+		end
+	end
+	if has_continents then
+		local list = continents_are_different and table.list_add({"*"}, self._parent._continents) or self._parent._continents
+		local value = continents_are_different and 1 or table.get_key(list, continent)
+		self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), list, value, {group = other})
+	end
     self:build_positions_items()
-    self:update_positions()
+	self:update_positions()
+	self:build_group_options()
 end
 
 function Static:set_unit(reset)
