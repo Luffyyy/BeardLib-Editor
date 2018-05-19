@@ -114,6 +114,7 @@ function LoadLevelMenu:load_levels()
                 foreground = levels.accent_color,
                 auto_align = false,
 				border_bottom = true,
+				auto_foreground = true,
                 border_position_below_title = true,
                 text = txt,
                 w = holder:ItemsWidth() - img:OuterWidth() - holder:OffsetX(),
@@ -121,25 +122,36 @@ function LoadLevelMenu:load_levels()
             })
 
             local has_items
-            for _, level in pairs(narr.chain) do
-                local id = level.level_id
-                if id then
-                    local level_t = tweak_data.levels[id]
-                    if level_t and level_t.world_name then
-                        narrative:Button({
-                            text = loc:text(level_t.name_id) .." / " .. id,
-							name = id,
-							narr_id = narr_id,
-                            auto_foreground = true,
-                            background_color = false,
-                            vanilla = not level_t.custom,
-                            offset = {12, 4},
-                            on_callback = ClassClbk(self, "load_level"),
-                            label = "levels",
-                        })
-                        has_items = true
-                    end
-                end
+			local function level_button(id, day)
+				local level_t = tweak_data.levels[id]
+				if level_t and level_t.world_name then
+					self:Button(id, ClassClbk(self, "load_level"), {
+						text = loc:text(level_t.name_id) .." / " .. id,
+						name = id,
+						narr_id = narr_id,
+						vanilla = not level_t.custom,
+						offset = {12, 4},
+						group = day or narrative,
+						label = "levels",
+					})
+					has_items = true
+				end
+			end
+			for i, level in pairs(narr.chain) do
+				if type(level) == "table" then
+					local id = level.level_id
+					if id then
+						level_button(id)
+					elseif #level > 0 then
+						local day = self:DivGroup("Day #"..tostring(i), {group = narrative})
+						for _, grouped_level in pairs(level) do
+							id = grouped_level.level_id
+							if id then
+								level_button(id, day)
+							end
+						end
+					end
+				end
             end
             if not has_items then
                 narrative:Destroy()

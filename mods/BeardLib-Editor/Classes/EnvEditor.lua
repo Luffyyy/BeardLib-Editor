@@ -522,7 +522,7 @@ function EnvEditor:open_environment(file)
     local read = FileIO:ReadFrom(file, "rb")
     local data
 	if read then
-        data = read:find("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, "binary")
+        data = read:begins("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, "binary")
     end
     local valid = data and data.data and data.data.others and type(data.data.others) == "table"
     local underlay

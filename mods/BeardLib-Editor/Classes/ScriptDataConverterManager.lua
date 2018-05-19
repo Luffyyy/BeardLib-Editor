@@ -57,7 +57,7 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
 		local read = FileIO:ReadFrom(file, "rb")
 		local data
 		if read then
-			convert_data = read:find("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, self.script_file_from_types[from_i].name)
+			convert_data = read:begins("<%w") and FileIO:ConvertScriptData(read, "custom_xml") or FileIO:ConvertScriptData(read, self.script_file_from_types[from_i].name)
 		end
 	end
     if not convert_data and not self.assets then
