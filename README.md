@@ -10,6 +10,12 @@ Yep! You can create new levels from scratch using BeardLib-Editor.
 Don't know how to? Read the guide here: https://modworkshop.net/wiki.php?action=view&id=15
 Help would be really appreciated in the wiki!
 
+## Report a bug
+https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
+
+## Request a feature
+http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor?format=svg)](http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor
+
 ## Before you stop reading!
 This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://modworkshop.net/mydownloads.php?action=view_down&did=14924), without them the editor will not run, make sure you have both of them with their latest version.
 
