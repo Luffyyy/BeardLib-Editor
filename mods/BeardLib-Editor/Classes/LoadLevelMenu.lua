@@ -68,19 +68,20 @@ function LoadLevelMenu:load_levels()
     local loc = managers.localization
     local img_size = 100
     local img_w, img_h = img_size * 1.7777, img_size
-    for narr_id, narr in pairs(tweak_data.narrative.jobs) do
-        if not narr.hidden and narr.contract_visuals and ((narr.custom and custom) or (not narr.custom and vanilla)) then
+	for narr_id, narr in pairs(tweak_data.narrative.jobs) do
+        if not narr.hidden and ((narr.custom and custom) or (not narr.custom and vanilla)) then
             local txt = loc:text(narr.name_id or "heist_"..narr_id:gsub("_prof", ""):gsub("_night", "")) .." / " .. narr_id
-
-            local data = narr.contract_visuals.preview_image or {}
             local texture, rect = nil
-    
-            if data.id then
-                texture = "guis/dlcs/" .. (data.folder or "bro") .. "/textures/pd2/crimenet/" .. data.id
-                rect = data.rect
-            elseif data.icon then
-                texture, rect = tweak_data.hud_icons:get_icon_data(data.icon)
-            end
+			
+			if narr.contract_visuals and narr.contract_visuals.preview_image then
+				local data = narr.contract_visuals.preview_image
+				if data.id then
+					texture = "guis/dlcs/" .. (data.folder or "bro") .. "/textures/pd2/crimenet/" .. data.id
+					rect = data.rect
+				elseif data.icon then
+					texture, rect = tweak_data.hud_icons:get_icon_data(data.icon)
+				end
+			end
 
             if not texture or not DB:has(texture_ids, texture:id()) then
                 texture, rect = nil, nil

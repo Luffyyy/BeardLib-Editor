@@ -228,7 +228,7 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
     function find_package()
 		local items = {}
 
-        for _, pkg in pairs(BLE.Utils:GetPackages(path or self._tbl._selected.name, typ or self._tbl._selected.type, true)) do
+        for _, pkg in pairs(BLE.Utils:GetPackages(path or self._tbl._selected.name, typ or self._tbl._selected.asset_type, true)) do
             local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.package_size)
             table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
 		end
