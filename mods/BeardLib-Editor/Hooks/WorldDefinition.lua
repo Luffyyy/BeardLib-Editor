@@ -79,13 +79,15 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	elseif not ud.instance then
 		statics = self._continent_definitions[old_continent]
 		new_statics = self._continent_definitions[new_continent]
-		move = (old_continent ~= new_continent)		
 		if statics then
 			statics = statics.statics
+		end
+		if new_statics then
 			new_statics = new_statics.statics
+			move = (old_continent ~= new_continent)
 		end
 	end
-
+	
 	local function set_unit(static, statics, key)
 		static.unit_data = ud
 		static.wire_data = wd
