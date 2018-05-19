@@ -14,7 +14,7 @@ Help would be really appreciated in the wiki!
 https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
 
 ## Request a feature
-http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor?format=svg)](http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor
+[![Feature Requests](http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor?format=svg)](http://feathub.com/simon-wh/PAYDAY-2-BeardLib-Editor)
 
 ## Before you stop reading!
 This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://modworkshop.net/mydownloads.php?action=view_down&did=14924), without them the editor will not run, make sure you have both of them with their latest version.
