@@ -138,7 +138,7 @@ function Static:build_quick_buttons(cannot_be_saved)
         self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
         self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = false})
         local group = self:Group("Group", {visible = false}) --lmao
-        self:build_group_options()
+		self:build_group_options()
     end
 end
 
@@ -149,33 +149,27 @@ function Static:build_group_options()
 		return
 	end
     local selected_units = self:selected_units()
-    local all_same_continent = false
+    local can_group = #selected_units > 1
 	local inside_group = false
 	local sud = selected_unit:unit_data()
-    if #selected_units > 1 then
-        all_same_continent = true
+	if can_group then
 		for _, unit in pairs(selected_units) do
 			local ud = unit:unit_data()
-        	if not sud.unit_id or not sud.continent then
-        		all_same_continent = false
-        		return
-        	end
-            if sud.continent ~= ud.continent then
-                all_same_continent = false
-                break
-            end
-        end
-    end
-    group:ClearItems()
-    group:SetVisible(all_same_continent)
-    if all_same_continent then
+			if not ud.unit_id or not ud.continent or managers.worlddefinition:is_world_unit(unit) then
+				can_group = false
+				break
+			end
+		end
+	end
+	group:ClearItems()
+    group:SetVisible(can_group)
+    if can_group then
         if self._selected_group then
             self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
             self:TextBox("GroupName", callback(self, self, "set_group_name"), self._selected_group.name, {group = group})
             self:Button("UngroupUnits", callback(self, self, "remove_group"), {group = group})
         else
-            self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group", 
-                visible = true}) 
+            self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"}) 
             self:Button("GroupUnits", callback(self, self, "add_group"), {group = group})
         end
     end
@@ -499,14 +493,11 @@ function Static:build_group_links(unit)
     end
 
     local group_buttons = self:GetItem("Group")
-    group_buttons:SetVisible(true)
-    local remove_button = self:Button("RemoveFromGroup", callback(self, self, "open_addremove_group_dialog", true), {group = group_buttons, visible = #editor_groups >= 1})
-    self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group_buttons, text = "Add Unit(s) To Group", 
-        visible = true})
-
     if #group:Items() == 0 then
         group:Destroy()
-        remove_button:Destroy()
+	else
+		group_buttons:SetVisible(true)
+		self:Button("RemoveFromGroup", callback(self, self, "open_addremove_group_dialog", true), {group = group_buttons})
     end
 end
 
@@ -566,10 +557,10 @@ function Static:add_selection_to_prefabs(item, prefab_name)
     		end})
     		return
     	end
-        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(remove_old_links and remove_old_links:Value() or true)
+        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
         FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
-        remove_old_links = self:Toggle("RemoveOldLinks", nil, true, {text = "Remove Old Links Of Copied Elements", group = input_menu})
+        remove_old_links = self:Toggle("RemoveOldLinks", nil, self:Value("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements", group = input_menu})
     end})
 end
 
@@ -673,7 +664,7 @@ function Static:set_selected_unit(unit, add)
             units[1] = unit
         end
         if add and self._selected_group and ctrl() then
-            if not unit:fake() and ud.continent == self._selected_group.continent then
+            if not unit:fake() and not not ud.continent and not managers.worlddefinition:is_world_unit(unit) then
                 if table.contains(self._selected_group.units, ud.unit_id) then
                     table.delete(self._selected_group.units, ud.unit_id)
                 else
@@ -1085,25 +1076,26 @@ function Static:GetCopyData(remove_old_links, keep_location)
             end
         end
     end
-    --Remove old links
-    if remove_old_links or self:Value("RemoveOldLinks") then
+	--Remove old links
+	if remove_old_links then
         for _, v in pairs(copy_data) do
-            if v.type == "element" then
+			if v.type == "element" then
+				local e = {v}
                 for id, _ in pairs(managers.mission._ids) do
-                    managers.mission:delete_links(id, element_type, {element})
+                    managers.mission:delete_links(id, element_type, e)
                 end
                 for id, _ in pairs(managers.worlddefinition._all_units) do
-                    managers.mission:delete_links(id, unit_type, {element})
+                    managers.mission:delete_links(id, unit_type, e)
                 end
             end
         end
-    end
+	end
     return copy_data
 end
 
 function Static:CopySelection()
     if #self._selected_units > 0 and not self._parent._menu._highlighted then
-        self._copy_data = self:GetCopyData(nil, true) --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
+        self._copy_data = self:GetCopyData(self:Value("RemoveOldLinks"), true) --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
         if #self._copy_data == 0 then
         	self._copy_data = nil
         end

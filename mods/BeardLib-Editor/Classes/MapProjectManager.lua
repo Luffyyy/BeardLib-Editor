@@ -441,7 +441,7 @@ function Project:delete_level_dialog_clbk(level)
     end
     local chain = XML:GetNode(self._current_data, "narrative").chain
     local level_id = type(level) == "table" and level.id or level
-    for k, v in pairs(chain) do
+    for k, v in ipairs(chain) do
         if success then
             break
         end
@@ -463,12 +463,12 @@ function Project:delete_level_dialog_clbk(level)
         FileIO:Delete(Path:Combine(BeardLib.config.maps_dir, t.name, level.include.directory))
         if tweak_data.levels[level_id].custom then
             tweak_data.levels[level_id] = nil
-        end
-        table.delete(t, level)
+		end
+		table.delete_value(t, level)
     end
     local save = self:GetItem("Save")
     if save then
-        save:RunCallback()
+		save:RunCallback()
     end   
     self:do_reload_mod(t.name, t.name, true)
 end
@@ -635,12 +635,13 @@ function Project:edit_main_xml(data, save_clbk)
         local near
         local function small_button(name, clbk, texture_rect, opt)
             near = self:SmallImageButton(name, clbk, "textures/editor_icons_df", texture_rect, btn, table.merge({
-                size_by_text = true,
+				size_by_text = true,
+				help = false,
                 position = near and function(item) item:Panel():set_righttop(near:Panel():left(), 0) end
             }, opt or {}))
         end
         if level_in_chain.level_id then
-            small_button(tostring(i), ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
+            small_button(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
             if chain_group then
                 small_button("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), {156, 54, 48, 48})
             else
@@ -659,7 +660,7 @@ function Project:edit_main_xml(data, save_clbk)
         })
         return btn, level
     end
-    for i, v in pairs(narr.chain) do
+    for i, v in ipairs(narr.chain) do
         if type(v) == "table" then
             if v.level_id then
                 local btn, actual_level = build_level_button(v, false)
@@ -724,9 +725,9 @@ function Project:edit_main_xml(data, save_clbk)
             max_width = false,
             max_height = false,
             border_bottom = true,
-            position = function(item) 
-                if near then
-                    item:Panel():set_righttop(near:Panel():left() - 4, 0)
+            position = function(item, last) 
+                if alive(last) then
+                    item:Panel():set_righttop(last:Panel():left() - 4, 0)
                 else
                     item:SetPositionByString("RightTop")
                     item:Panel():move(-16)
@@ -879,13 +880,13 @@ function Project:set_mission_assets_dialog(level)
 end
 
 function Project:set_chain_index(narr_chain, chain_tbl, index)
-    table.delete(narr_chain, chain_tbl)
+    table.delete_value(narr_chain, chain_tbl)
     table.insert(narr_chain, tonumber(index), chain_tbl)
     self._refresh_func()
 end
 
 function Project:ungroup_level(narr, level_in_chain, chain_group)
-    table.delete(chain_group, level_in_chain)
+    table.delete_value(chain_group, level_in_chain)
     if #chain_group == 1 then
         narr.chain[table.get_key(narr.chain, chain_group)] = chain_group[1]
     end
@@ -903,7 +904,7 @@ function Project:group_level(narr, level_in_chain)
     BLE.ListDialog:Show({
         list = chain,
         callback = function(selection)
-            table.delete(narr.chain, level_in_chain)
+            table.delete_value(narr.chain, level_in_chain)
             local key = table.get_key(narr.chain, selection.value)
             local chain_group = selection.value
             if chain_group.level_id then
