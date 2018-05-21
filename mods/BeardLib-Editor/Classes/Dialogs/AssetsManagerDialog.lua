@@ -201,8 +201,8 @@ function AssetsManagerDialog:show_packages()
                 local size = not custom and BLE.Utils:GetPackageSize(package)
                 if size or custom then
                     local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
-                    local pkg = self:Divider(package, {closed = true, text = text, group = packages, label = "packages"})
-                    self:SmallImageButton("RemovePackage", callback(self, self, "remove_package", package), "textures/editor_icons_df", {184, 2, 48, 48}, pkg)
+                    local pkg = self:Divider(package, {text = text, group = packages, label = "packages"})
+                    self:SmallImageButton("RemovePackage", ClassClbk(self, "remove_package", package), "textures/editor_icons_df", {184, 2, 48, 48}, pkg)
                 end
             end
         end
