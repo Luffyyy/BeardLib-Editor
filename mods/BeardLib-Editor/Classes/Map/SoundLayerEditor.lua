@@ -234,7 +234,7 @@ function SndLayer:set_ambience_enabled(item)
 	self:save()
 end
 
-function SndLayer:select_default_sound_environment()
+function SndLayer:select_default_sound_environment(item)
 	managers.sound_environment:set_default_environment(item:SelectedItem())
 	self:save()
 end

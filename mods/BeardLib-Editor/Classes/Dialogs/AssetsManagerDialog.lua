@@ -50,15 +50,16 @@ function AssetsManagerDialog:_Show()
     self._params = nil
     self._assets = {unit = {}}
     self._missing_assets = {unit = {}}
-    local btn = self:Button("Close", callback(self, self, "hide", true), {position = "Bottom", count_height = true})
+    local btn = self:Button("Close", ClassClbk(self, "hide", true), {position = "Bottom", count_height = true})
     local group_h = (self._menu:Height() / 2) - 24
     local packages = self:DivGroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
     local units = self:DivGroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
     local function base_pos(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(item.override_panel.items_panel:world_right() - 8)
-    end
-    local add = self:Button("Add", callback(self, self, "add_package_dialog"), {override_panel = packages, text = "+", size_by_text = true, position = base_pos})
+	end
+
+	local add = self:SmallButton("Add", ClassClbk(self, "add_package_dialog"), packages, {text = "+", position = base_pos})
     local search_opt = {override_panel = packages, w = 300, lines = 1, text = "Search", control_slice = 0.8, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
@@ -716,19 +717,9 @@ function AssetsManagerDialog:add_package_dialog()
     local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
     for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
-            local size = BLE.Utils:GetPackageSize(name)
-            table.insert(packages, {package = name, name = size and string.format("%s(%.2fmb)", name, size) or name, package_size = size})
+            table.insert(packages, {package = name, name = name})
         end
     end
-    table.sort(packages, function(a,b)
-        if not a.package_size then
-            return false
-        end
-        if not b.package_size then
-            return true
-        end
-        return a.package_size < b.package_size
-    end)
     BLE.ListDialog:Show({
         list = packages,
         force = true,

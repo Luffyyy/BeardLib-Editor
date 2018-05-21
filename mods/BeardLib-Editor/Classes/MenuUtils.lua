@@ -106,9 +106,9 @@ function MenuUtils:init(this, menu)
 		if not item.override_panel then
 			return
 		end
-		item:SetPosition("CenterRight")
+		item:SetPositionByString("CenterRight")
 		local prev = item.override_panel._prev_aligned
-		if alive(prev) and not (prev:Index() < item:Index()) then
+		if alive(prev) and prev ~= item and not (prev:Index() < item:Index()) then
 			item:Panel():set_righttop(prev:Panel():left() - item:OffsetX(), item:Panel():top())
 		else
 			item:Panel():move(-item:OffsetX())
