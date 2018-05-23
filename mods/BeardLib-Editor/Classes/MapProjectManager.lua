@@ -64,7 +64,7 @@ function Project:save_xml(file, data)
 end
 
 function Project:read_xml(file)
-    return FileIO:ReadScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), "custom_xml", true)
+    return FileIO:ReadScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), CXML, true)
 end
 
 function Project:current_path()
@@ -225,7 +225,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
                     table.insert(add, {_meta = "texture", path = file_path})
                 end
             end
-            FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
+            FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, CXML)
         end
 
         extra_package(level_dir.."world")
@@ -266,7 +266,7 @@ end
 function Project:existing_narr_new_project_clbk_finish(data, narr)
     local mod_path = Path:Combine(BeardLib.config.maps_dir, data.name)
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
-    FileIO:WriteScriptData(Path:Combine(mod_path, "main.xml"), data, "custom_xml")
+    FileIO:WriteScriptData(Path:Combine(mod_path, "main.xml"), data, CXML)
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
     BLE.LoadLevel:load_levels()
@@ -393,7 +393,7 @@ function Project:_select_project(mod, save_prev)
             end
         end
         t.orig_id = nil
-        FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, "custom_xml", true))
+        FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, CXML, true))
         mod._clean_config = t
         if t.name ~= id then
             tweak_data.narrative.jobs[id] = nil
@@ -487,7 +487,7 @@ function Project:create_new_level(name)
     local level_path = Path:Combine("levels", level.id)
     table.insert(narr.chain, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
     level.include.directory = level_path
-    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, "custom_xml")
+    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, CXML)
     FileIO:MakeDir(Path:Combine(proj_path, level_path))
     FileIO:CopyToAsync(Path:Combine(self._templates_directory, "Level"), Path:Combine(proj_path, level_path))
     self:do_reload_mod(t.name, t.name, true)
@@ -502,7 +502,7 @@ function Project:create_new_narrative(name)
     FileIO:CopyTo(Path:Combine(self._templates_directory, "Project"), proj_path)
     FileIO:MakeDir(Path:Combine(proj_path, "assets"))
     FileIO:MakeDir(Path:Combine(proj_path, "levels"))
-    FileIO:WriteTo(Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, "custom_xml", true))  
+    FileIO:WriteTo(Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))  
     return data 
 end
 
