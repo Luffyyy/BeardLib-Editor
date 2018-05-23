@@ -67,13 +67,13 @@ function MissionEditor:alert_missing_element_editor(c)
 end
 
 function MissionEditor:set_element(element)
-    self:GetPart("static")._built_multi = false
+	self:GetPart("static")._built_multi = false
     if element then
         local clss = self:get_editor_class(element.class)
-        if clss then
+		if clss then
             local script = clss:new(element)
-            script._element.class = element.class
-            script:work()
+			script._element.class = element.class
+			script:work()
             self._current_script = script
             if not self._parent:selected_unit() then
                 self._current_script = nil
@@ -96,14 +96,17 @@ function MissionEditor:mouse_released(...)
     end
 end
 
-function MissionEditor:add_element(name, add_to_selection, old_element)
+function MissionEditor:add_element(name, add_to_selection, old_element, no_select)
     local clss = self:get_editor_class(name) 
     if clss then
         local unit = clss:init(nil, old_element)
         if unit then
-            self:set_elements_vis()
-            self:GetPart("static"):set_selected_unit(unit, add_to_selection)
-        end
+			self:set_elements_vis()
+			if not no_select then
+				self:GetPart("static"):set_selected_unit(unit, add_to_selection)
+			end
+		end
+		return unit
     else
         self:alert_missing_element_editor(name)
     end

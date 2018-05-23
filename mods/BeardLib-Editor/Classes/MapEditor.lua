@@ -250,7 +250,7 @@ function Editor:GetSpawnPosition(data)
     return position or (m.world:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
 end
 
-function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
+function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
     if m.world:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
@@ -315,8 +315,10 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id)
         end
     end
     local unit = managers.worlddefinition:create_unit(data, t)
-    if alive(unit) then
-		self:select_unit(unit, add)
+	if alive(unit) then
+		if not no_select then
+			self:select_unit(unit, add)
+		end
 		self:unit_spawned(unit)
     else
         BLE:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))

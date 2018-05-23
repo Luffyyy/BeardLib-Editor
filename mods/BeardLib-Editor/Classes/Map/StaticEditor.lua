@@ -1092,6 +1092,7 @@ function Static:GetCopyData(remove_old_links, keep_location)
             end
         end
 	end
+
     return copy_data
 end
 
@@ -1131,7 +1132,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     if data then
         add = project:get_level_by_id(data, Global.game_settings.level_id).add
     end
-    self:reset_selected_units()
+	self:reset_selected_units()
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
@@ -1145,7 +1146,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
             local new_final_id = managers.worlddefinition:GetNewUnitID(v.unit_data.continent or self._parent._current_continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
-            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
+			for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id
@@ -1161,18 +1162,20 @@ function Static:SpawnCopyData(copy_data, prefab)
                 end
             end
         end
-    end
+	end
     local function all_ok_spawn()
         local units = {}
-        local unit
         for _, v in pairs(copy_data) do
             if v.type == "element" then
-                self:GetPart("mission"):add_element(v.mission_element_data.class, true, v.mission_element_data)
+				table.insert(units, self:GetPart("mission"):add_element(v.mission_element_data.class, nil, v.mission_element_data, true))
             elseif v.unit_data then
-                unit = self._parent:SpawnUnit(v.unit_data.name, v, true, v.unit_data.unit_id)
+                table.insert(units, self._parent:SpawnUnit(v.unit_data.name, v, nil, v.unit_data.unit_id, true))
             end
-        end
-        table.insert(units, unit)
+		end
+		--When all units are spawned properly you can select.
+		for _, unit in pairs(units) do
+			self:set_selected_unit(unit, true)
+		end
         self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
         self:StorePreviousPosRot()
     end
