@@ -1028,7 +1028,7 @@ end
 
 function Static:GetCopyData(remove_old_links, keep_location)
     local copy_data = {}
-    local element_type = Utils.LinkTypes.Elment    
+    local element_type = Utils.LinkTypes.Element    
     local unit_type = Utils.LinkTypes.Unit    
     for _, unit in pairs(self._selected_units) do
         local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
@@ -1055,7 +1055,7 @@ function Static:GetCopyData(remove_old_links, keep_location)
 			if not keep_location then
 				v.mission_element_data.script = nil
 			end
-            for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, Utils.LinkTypes.Element, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.mission_element_data.id, element_type, copy_data)) do
                 link.tbl[link.key] = element_id
             end
             v.mission_element_data.id = element_id
@@ -1065,7 +1065,7 @@ function Static:GetCopyData(remove_old_links, keep_location)
 			if not keep_location then
 				v.unit_data.continent = nil
 			end
-            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, unit_type, copy_data)) do
                 link.tbl[link.key] = is_world and world_unit_id or unit_id
             end
             v.unit_data.unit_id = is_world and world_unit_id or unit_id
@@ -1081,8 +1081,10 @@ function Static:GetCopyData(remove_old_links, keep_location)
         for _, v in pairs(copy_data) do
 			if v.type == "element" then
 				local e = {v}
-                for id, _ in pairs(managers.mission._ids) do
-                    managers.mission:delete_links(id, element_type, e)
+				for _, continent in pairs(managers.mission._ids) do
+					for id, _ in pairs(continent) do
+						managers.mission:delete_links(id, element_type, e)
+					end
                 end
                 for id, _ in pairs(managers.worlddefinition._all_units) do
                     managers.mission:delete_links(id, unit_type, e)
