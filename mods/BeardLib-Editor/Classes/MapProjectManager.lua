@@ -60,7 +60,7 @@ function Project:save_main_xml(data, no_reload)
 end
 
 function Project:save_xml(file, data)
-    FileIO:WriteScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, "custom_xml")
+    FileIO:WriteScriptData(self:current_mod():GetRealFilePath(Path:Combine(self:current_path(), file)), data, CXML)
 end
 
 function Project:read_xml(file)
