@@ -181,7 +181,7 @@ function CubemapCreator:next_cube()
 			name = cube.name,
 			simple_postfix = self._cubemap_params.simple_postfix,
 			source_path = self._temp_path,
-			output_path = self._cubemaps_path,
+			output_path = self._cubelights_path,
 			output_name = cube.output_name,
 			unit = cube.unit,
 			light = cube.light,
