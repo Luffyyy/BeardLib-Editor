@@ -480,15 +480,15 @@ function Project:create_new_level(name)
         return
     end
     local narr = XML:GetNode(t, "narrative")
-    local level = deep_clone(self._level_module_template)
-    table.insert(t, level)
+	local level = deep_clone(self._level_module_template)
+	XML:InsertNode(t, level)
     level.id = name
     local proj_path = Path:Combine(BeardLib.config.maps_dir, t.name)
     local level_path = Path:Combine("levels", level.id)
     table.insert(narr.chain, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
     level.include.directory = level_path
-    FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, CXML)
-    FileIO:MakeDir(Path:Combine(proj_path, level_path))
+	FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, "custom_xml")
+	FileIO:MakeDir(Path:Combine(proj_path, level_path))
     FileIO:CopyToAsync(Path:Combine(self._templates_directory, "Level"), Path:Combine(proj_path, level_path))
     self:do_reload_mod(t.name, t.name, true)
 end
