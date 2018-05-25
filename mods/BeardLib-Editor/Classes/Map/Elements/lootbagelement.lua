@@ -12,6 +12,7 @@ end
 function EditorLootBag:update(d, dt)
 	local kb = Input:keyboard()
 	local speed = 60 * dt
+	self._element.values.spawn_dir = self._element.values.spawn_dir or Vector3()
 	if kb:down(Idstring("left")) then
 		self._element.values.spawn_dir = self._element.values.spawn_dir:rotate_with(Rotation(speed, 0, 0))
 	end
