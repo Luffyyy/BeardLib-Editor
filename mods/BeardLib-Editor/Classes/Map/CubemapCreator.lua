@@ -150,7 +150,8 @@ function CubemapCreator:create_cube_map(params)
         end
     end
 	for _, unit in pairs(World:find_units_quick("all")) do
-		if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
+		local ud = unit:unit_data()
+		if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor or ud.hide_on_projection_light) then
 			if unit:visible() then 
 				table.insert(self._saved_hidden_units, unit)
 				unit:set_visible(false)

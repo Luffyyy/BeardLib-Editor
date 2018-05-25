@@ -9,7 +9,7 @@ function WData:init(parent, menu)
     self._opened = {}
     WData.super.init(self, parent, menu, "World")
 end
-function WData:button_pos(near, item) item:Panel():set_righttop(near:Panel():left(), 0) end
+
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:enable()
@@ -170,23 +170,24 @@ function WData:remove_brush_layer()
     end)
 end
 
-local function base_button_pos(item)
-    local p = item:Panel():parent()
-    item:Panel():set_world_righttop(p:world_righttop())
+function WData:button_pos(near, item)
+	if alive(near) then
+		item:Panel():set_righttop(near:Panel():left(), 0)
+	else
+		item:SetPositionByString("RightTop")
+	end
 end
 
 --Continents
 function WData:build_continents()
-    local opt = {items_size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
+    local opt = {size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
     local prev
     local function toolbar_item(name, clbk, toolbar, o)
         o = table.merge(clone(opt), o)
         if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
             prev = nil
         end
-        if prev then
-            o.position = callback(self, self, "button_pos", prev)
-        end
+     	o.position = ClassClbk(self, "button_pos", prev or false)
         local item
         if o.text then
             item = self:SmallButton(name, clbk, toolbar, o)
