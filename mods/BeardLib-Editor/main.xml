@@ -57,7 +57,6 @@
 			<class file="CubemapCreator.lua"/>
 		</classes>
     </Classes>
-    <AssetUpdates id="16837" version="2.7.2" provider="modworkshop" use_local_dir="true" use_local_path="true"/>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
         <hook source_file="core/lib/managers/coreworldinstancemanager" file="InstanceManager.lua"/>
