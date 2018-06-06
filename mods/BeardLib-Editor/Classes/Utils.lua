@@ -23,8 +23,8 @@ function string.underscore_name(str)
     return str:gsub("([^A-Z%W])([A-Z])", "%1%_%2"):gsub("([A-Z]+)([A-Z][^A-Z$])", "%1%_%2"):lower()
 end
 
-BeardLibEditor.Utils = BeardLibEditor.Utils or {}
-local Utils = BeardLibEditor.Utils
+BLE.Utils = BLE.Utils or {}
+local Utils = BLE.Utils
 
 
 local MDL = Idstring("model")
@@ -110,7 +110,7 @@ function Utils:ParseXml(typ, path, scriptdata)
         return load(file)
 	else
 		--This is confusing..
-        local key_file = Path:Combine(BeardLibEditor.ExtractDirectory, path:id():reversed_key().."."..typ)
+        local key_file = Path:Combine(BLE.ExtractDirectory, path:id():reversed_key().."."..typ)
 		if FileIO:Exists(key_file) then
 			return load(key_file)
 		else
@@ -166,7 +166,7 @@ function Utils:IsLoaded(asset, type, packages)
     if self.allowed_units[asset] then
         return true
     end
-    for name, package in pairs(packages or BeardLibEditor.DBPackages) do
+    for name, package in pairs(packages or BLE.DBPackages) do
         if not name:match("all_") and package[type] and package[type][asset] then
             return true
         end
@@ -180,7 +180,7 @@ end
 
 function Utils:GetPackages(asset, type, size_needed, first, packages)
     local found_packages = {}
-    for name, package in pairs(packages or BeardLibEditor.DBPackages) do
+    for name, package in pairs(packages or BLE.DBPackages) do
         if not name:begins("all_") and package[type] and package[type][asset] then
             local custom = CustomPackageManager.custom_packages[name:key()] ~= nil
             local package_size = not custom and size_needed and self:GetPackageSize(name)
@@ -475,7 +475,7 @@ function Utils:GetEntries(params)
         IsLoaded = function(entry) return PackageManager:has(ids_type, entry:id()) end
     end
 
-    for entry in pairs(BeardLibEditor.DBPaths[params.type]) do
+    for entry in pairs(BLE.DBPaths[params.type]) do
         if (not params.loaded or IsLoaded(entry)) and (not params.check or params.check(entry)) then
             table.insert(entries, filenames and Path:GetFileName(entry) or entry)
         end
@@ -516,7 +516,7 @@ function Utils:GetUnits(params)
     end
 	local type = params.type
     local not_types = params.not_types
-    for unit in pairs(BeardLibEditor.DBPaths.unit) do
+    for unit in pairs(BLE.DBPaths.unit) do
 		local slot_fine = not slot or self:InSlot(unit, slot)
 		slot_fine = slot_fine and not not_in_slot or not self:InSlot(unit, not_in_slot)
         local unit_fine = (not check or check(unit))
@@ -550,7 +550,7 @@ function Utils:GetUnitType(unit)
 end
 
 function Utils:Unhash(ids, type)
-    for path in pairs(BeardLibEditor.DBPaths[type or "other"]) do
+    for path in pairs(BLE.DBPaths[type or "other"]) do
         if Idstring(path) == ids then
             return path
         end
@@ -559,7 +559,7 @@ function Utils:Unhash(ids, type)
 end
 
 function Utils:Notify(title, msg, clbk)
-    BeardLibEditor.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
+    BLE.Dialog:Show({title = title, message = msg, callback = clbk, force = true})
 end
 
 function Utils:YesNoQuestion(msg, clbk, no_clbk)
@@ -567,7 +567,7 @@ function Utils:YesNoQuestion(msg, clbk, no_clbk)
 end
 
 function Utils:QuickDialog(opt, items)
-    QuickDialog(table.merge({dialog = BeardLibEditor.Dialog, no = "No"}, opt), items)
+    QuickDialog(table.merge({dialog = BLE.Dialog, no = "No"}, opt), items)
 end
 
 FakeObject = FakeObject or class()
