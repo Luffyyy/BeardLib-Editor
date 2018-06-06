@@ -15,7 +15,6 @@ function AboutMenu:init()
     local div = {color = false, border_bottom = true, group = info, border_width = 512, border_center_as_title = true}
     self:Divider("About", div)
     center_text("Created by Luffy and Simon W")
-    center_text("Version " .. BeardLibEditor.Version)
     self:Divider("Credits", div)
     center_text("Ontrigger - Helping developing the editor further")
     center_text("Walrus - Helping developing the editor from the start and giving information on pd2 mapping")

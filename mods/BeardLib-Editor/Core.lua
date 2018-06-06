@@ -15,7 +15,6 @@ function BLE:Init()
 	self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
-	self.Version = self.AssetUpdates and self.AssetUpdates.version or 2
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
 	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"		
 	self.UsableAssets = {"unit", "effect", "environment", "scene"}
