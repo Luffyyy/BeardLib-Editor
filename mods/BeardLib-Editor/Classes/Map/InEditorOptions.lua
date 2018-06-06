@@ -248,7 +248,7 @@ function Options:save()
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()
-    local function save()
+	local function save()
         local map_path = self:map_world_path()
     
         local world_data = deep_clone(worlddef._world_data)
@@ -310,23 +310,23 @@ function Options:save()
                 FileIO:Delete(Path:Combine(map_path, folder))
             end
         end
-        if bg then
-            play_anim(bg, {stop = false, wait = 0.5, set = {alpha = 0}})
+		if bg then
+			play_value(bg, "alpha", 0, {wait = 0.5, stop = false})
         end
         self:save_main_xml(include)
         self._saving = false
         self:toggle_autosaving()
     end
+	if bg then
+		bg:set_alpha(0)
+		play_value(bg, "alpha", 1)
+	end
     if FileIO:Exists(path) and self:Value("BackupMaps") then
         local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
         local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
         if FileIO:Exists(backup_dir) then
             FileIO:Delete(backup_dir)
-        end
-        if bg then
-            bg:set_alpha(0)
-            play_anim(bg, {set = {alpha = 1}})
         end
         FileIO:CopyToAsync(path, backup_dir, save)
     else

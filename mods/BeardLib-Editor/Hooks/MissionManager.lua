@@ -125,7 +125,7 @@ function Mission:set_element(element, old_script_name)
 	local old_id = element.id
 	local id = old_id
 
-	if script and old_script then
+	if script then
 		local mission_script = self._missions[script._continent][script_name]
 		
 		--TODO: Move multiple elements to different scripts without removing links		
@@ -349,10 +349,10 @@ local instance_rules = {
 
 local LinkTypes = Utils.LinkTypes
 local default_upper_k = "values"
-function Mission:get_links_paths_new(id, match, elements)   
+function Mission:get_links_paths_new(id, match, elements)
     if type(id) ~= "string" and (not tonumber(id) or tonumber(id) < 0) then
         return {}
-    end
+	end
 	local id_paths = {}
 	local function GetLinks(values, element)
 		local function get_locations_of_links(rules)
@@ -386,7 +386,7 @@ function Mission:get_links_paths_new(id, match, elements)
 
 		if match == LinkTypes.Unit then
 			get_locations_of_links(unit_rules)
-		elseif match == LinkTypes.Instance then -- too short to be last :c
+		elseif match == LinkTypes.Instance then
 			get_locations_of_links(instance_rules)
 		elseif match == LinkTypes.Element then
 			get_locations_of_links(element_rules)
@@ -394,7 +394,7 @@ function Mission:get_links_paths_new(id, match, elements)
     end
     if elements then
         for _, element in pairs(elements) do
-            if element.mission_element_data and element.mission_element_data.values then
+			if element.mission_element_data and element.mission_element_data.values then
                 GetLinks(element.mission_element_data.values, element)
             end
         end
