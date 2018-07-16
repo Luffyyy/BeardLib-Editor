@@ -5,6 +5,11 @@ BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow 
 ## Editor? For what?
 Currently the level and environment editor are present. There are plans for effect, unit, object and material config editors and many more.
 
+## Multiplayer
+The mod disables matchmaking with normal users, you cannot play with players that don't have the editor.
+This is done to prevent playing with different physics settings which can mess up the game of the host/clients.
+You can either disable the editor or rename supermod.xml (the physics settings fix) to be able to play with others (which will disable the physics settings fix)
+
 ## Level Editor?
 Yep! You can create new levels from scratch using BeardLib-Editor.
 Don't know how to? Read the guide here: https://modworkshop.net/wiki.php?action=view&id=15
