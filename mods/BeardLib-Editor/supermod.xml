@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
 <mod>
-	<!-- If you crash other players you can try renaming this file temporarily -->
 	<tweak definition="Data/ApplyPhysics.xml" />
 </mod>

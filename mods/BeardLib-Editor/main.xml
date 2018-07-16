@@ -72,7 +72,6 @@
         <hook source_file="lib/managers/mission/elementspawnenemydummy" file="Fixes.lua"/>
         <hook source_file="lib/setups/setup" file="Setup.lua"/>
         <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
-        <hook source_file="core/lib/units/coreunitdamage" file="UnitDamage.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>
         <hook source_file="lib/managers/navigationmanager" file="NavigationManager.lua"/>
         <hook source_file="lib/managers/navfieldbuilder" file="NavFieldBuilder.lua"/>
