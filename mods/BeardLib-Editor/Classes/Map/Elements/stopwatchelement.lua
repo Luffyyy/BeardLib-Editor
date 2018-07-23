@@ -84,7 +84,6 @@ function EditorStopwatchOperator:_build_panel()
 	})
 	self._default_help_text = "This element can modify stopwatch elements. Select Stopwatch to modify by inserting it."
 	self._help_text = self:Text(self._default_help_text)
-	self:set_element_data({})
 end
 
 EditorStopwatchTrigger = EditorStopwatchTrigger or class(MissionScriptEditor)
