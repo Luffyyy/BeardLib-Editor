@@ -2,6 +2,12 @@
 
 BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!
 
+## Help Needed
+Due to life choices I've made over the past few weeks, I'm most likely will not be working as much on the editor. It doesn't mean I'm completely throwing myself from the dev team. But, essentially, I am looking for developers that will work together on the editor. Either fixing bugs or following the project I've put a little ago to ease the development.
+https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/projects/1 I'll be pushing a small class that would make MenuUI a bit more snake casey, initally having functions like get_value, set_value etc. But essentially imagine it as trying to avoid porting functions of the original editor and bringing things closer, just needing to replace a few functions of the original class so you don't need to rewrite the whole class which is a pain.
+
+If you're interested, talk with me in discord Luffy#1946 and I'll give you permissions to push commits.
+
 ## Editor? For what?
 Currently the level and environment editor are present. There are plans for effect, unit, object and material config editors and many more.
 
