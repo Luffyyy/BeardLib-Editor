@@ -11,6 +11,7 @@
     <Classes directory="Classes">
 		<class file="Utils.lua"/>
 		<class file="ExportUtils.lua"/>
+		<class file="MenuUIExt.lua"/>
 		<class file="MenuUtils.lua"/>
 		<class file="EditorMenu.lua"/>
 		<class file="EditorPart.lua"/>		
