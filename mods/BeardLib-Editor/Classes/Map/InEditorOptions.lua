@@ -393,8 +393,6 @@ function Options:save_nav_data(include)
     if not had_include then
         self:save_main_xml(include)
     end
-
-    managers.game_play_central:restart_the_game()
 end
 
 function Options:save_cover_data(include)

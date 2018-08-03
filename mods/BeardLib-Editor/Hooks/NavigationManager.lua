@@ -109,6 +109,7 @@ function NavigationManager:build_complete_clbk(draw_options)
 		self._build_complete_clbk()
 	end
 	BLE.Utils:GetPart("opt"):reenable_disabled_units()
+	managers.game_play_central:restart_the_game()
 end
 
 local search = NavigationManager.search_coarse
