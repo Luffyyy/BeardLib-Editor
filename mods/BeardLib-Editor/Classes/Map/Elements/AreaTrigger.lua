@@ -112,7 +112,8 @@ function EditorAreaTrigger:create_values_ctrlrs(disable)
 	if not disable or not disable.instigator then
 		local instigator, _ = self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type for the area"})
 		self._instigator_ctrlr = instigator
-		self._instigator_ctrlr:SetEnabled(not self._element.values.unit_ids)
+		local unit_ids = self._element.values.unit_ids
+		self._instigator_ctrlr:SetEnabled(not unit_ids or not next(unit_ids))
 	end
 	if not disable or not disable.amount then
 		self:ComboCtrl("amount", {"1", "2", "3", "4", "all"}, {help = "Select how many are required to trigger area"})
