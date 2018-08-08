@@ -103,7 +103,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	if statics then
 		for k, static in pairs(statics) do
 			if type(static) == "table" then
-				if static.unit_data.unit_id == unit_id then
+				if static.unit_data.unit_id == unit_id or static.unit_data.unit_id == ud.unit_id  then
 					set_unit(static, statics, k)
 					return
 				end
