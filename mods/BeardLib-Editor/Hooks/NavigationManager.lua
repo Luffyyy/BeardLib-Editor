@@ -103,13 +103,11 @@ function NavigationManager:build_complete_clbk(draw_options)
 		self._load_data = self:get_save_data()
         local c = BeardLibEditor.Utils:GetPart("opt")
         BeardLibEditor:log("Navigation data Progress: Done!")
-        BeardLibEditor.Utils:QuickDialog({message = "Done building navigation data! Do you wish to save and reload?"}, {{"Yes", callback(c, c, "save_nav_data")}})
     end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end
 	BLE.Utils:GetPart("opt"):reenable_disabled_units()
-	managers.game_play_central:restart_the_game()
 end
 
 local search = NavigationManager.search_coarse

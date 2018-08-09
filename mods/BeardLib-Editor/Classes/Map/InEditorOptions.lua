@@ -392,6 +392,7 @@ function Options:save_nav_data(include)
     end
     if not had_include then
         self:save_main_xml(include)
+	    managers.game_play_central:restart_the_game()
     end
 end
 
@@ -422,7 +423,7 @@ end
 
 local navsurface_ids = Idstring("core/units/nav_surface/nav_surface")
 function Options:build_nav_segments() -- Add later the options to the menu
-    BLE.Utils:YesNoQuestion("This will disable the player and AI and build the nav data proceed?", function()
+    BLE.Utils:YesNoQuestion("This will disable the player and AI, build the nav data and reload the game. Proceed?", function()
         local settings = {}
         local nav_surfaces = {}
 
@@ -513,4 +514,6 @@ function Options:build_visibility_graph()
     managers.navigation:build_visibility_graph(function()
         managers.groupai:set_state("none")
     end, all_visible, exclude, include, ray_lenght)
+
+    self:save_nav_data()
 end
