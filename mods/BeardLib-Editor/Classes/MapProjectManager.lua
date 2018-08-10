@@ -592,7 +592,7 @@ function Project:edit_main_xml(data, save_clbk)
     local up = ClassClbk(self, "set_project_data")
     local narrative = self:DivGroup("Narrative", divgroup_opt)
     self:TextBox("ProjectName", up, data.name, {group = narrative})
-    local contacts = table.map_keys(tweak_data.narrative.contacts)
+    local contacts = table.map_values(LevelsTweakData.LevelType)
     self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact or "custom"), {group = narrative})
     self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
     narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
