@@ -12,7 +12,7 @@ end
 function EditorNavObstacle:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("operation", {"add", "remove"}, {help = "Choose if you want to add or remove an obstacle"})
-	self:BuildUnitsManage("obstacle_list", {values_name = "Object", value_key = "obj_name", key = "unit_id", orig = {unit_id = 0, obj_name = "", guis_id = 1}, combo_items_func = function(name, value)
+	self:BuildUnitsManage("obstacle_list", {values_name = "Object", value_key = "obj_name", key = "unit_id", orig = {unit_id = 0, obj_name = Idstring(""), guis_id = 1}, combo_items_func = function(name, value)
 		-- get all obj idstrings and map them to unindented values
 		-- why the fuck is this function called collect it should be called map AAAA
 		local objects = table.collect(self:_get_objects_by_unit(value.unit), self._unindent_obj_name)
@@ -55,6 +55,5 @@ function EditorNavObstacle._unindent_obj_name(obj_name)
 		obj_name = string.sub(obj_name, 2)
 	end
 
-	-- get rid of @ID(obj_name)@
-	return obj_name:match("@ID(.*)@")
+	return Idstring(obj_name)
 end
