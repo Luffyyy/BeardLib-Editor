@@ -179,9 +179,9 @@ function LoadLevelMenu:load_level(item)
         Global.editor_log_on_spawn = log_on_spawn == true
         BeardLib.current_level = nil
 		MenuCallbackHandler:play_single_player()
-		--if narr_id then
-		--	managers.job:activate_job(narr_id)
-		--end
+		if narr_id then
+			managers.job:activate_job(narr_id)
+		end
         Global.game_settings.level_id = level_id
         Global.game_settings.mission = "none"
 		Global.game_settings.difficulty = difficulty_ids[difficulty] or "normal"
