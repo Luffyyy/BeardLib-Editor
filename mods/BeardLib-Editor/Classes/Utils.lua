@@ -26,6 +26,18 @@ end
 BLE.Utils = BLE.Utils or {}
 local Utils = BLE.Utils
 
+Utils.EditorIcons = {
+    ["trash"] = {7, 2, 48, 48},
+    ["pen"] = {66, 1, 48, 48},
+    ["cross"] = {184, 2, 48, 48},
+    ["cross_box"] = {122, 1, 48, 48},
+    ["arrow_up"] = {4, 55, 48, 48},
+    ["arrow_down"] = {57, 55, 48, 48},
+    ["plus"] = {104, 55, 48, 48},
+    ["minus"] = {156, 54, 48, 48},
+    ["eye"] = {155, 95, 64, 64},
+    ["settings_gear"] = {385, 385, 115, 115},
+}
 
 local MDL = Idstring("model")
 local static

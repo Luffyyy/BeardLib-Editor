@@ -1,5 +1,6 @@
 MapProjectManager = MapProjectManager or class()
 local U = BeardLib.Utils
+local EU = BLE.Utils
 local XML = U.XML
 local Project = MapProjectManager
 local CXML = "custom_xml"
@@ -430,7 +431,7 @@ function Project:new_level_dialog(name, clbk, no_callback)
 end
 
 function Project:delete_level_dialog(level)
-    BLE.Utils:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", ClassClbk(self, "delete_level_dialog_clbk", level))
+    EU:YesNoQuestion("This will delete the level from your project! [Note: custom levels that are inside your project will be deleted entirely]", ClassClbk(self, "delete_level_dialog_clbk", level))
 end
 
 function Project:delete_level_dialog_clbk(level)
@@ -508,13 +509,13 @@ end
 
 function Project:check_level_name(name)
     if tweak_data.levels[name] then
-        BLE.Utils:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
+        EU:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
         return false
     elseif name == "" then
-        BLE.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        EU:Notify("Error", string.format("Id cannot be empty!", name))
         return false
     elseif string.begins(name, " ") then
-        BLE.Utils:Notify("Error", "Invalid ID!")
+        EU:Notify("Error", "Invalid ID!")
         return false
     end
     return true
@@ -522,13 +523,13 @@ end
 
 function Project:check_narrative_name(name)
     if tweak_data.narrative.jobs[name] then
-        BLE.Utils:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
+        EU:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
         return false
     elseif name:lower() == "backups" or name:lower() == "prefabs" or string.begins(name, " ") then
-        BLE.Utils:Notify("Error", string.format("Invalid Id"))
+        EU:Notify("Error", string.format("Invalid Id"))
         return false
     elseif name == "" then
-        BLE.Utils:Notify("Error", string.format("Id cannot be empty!", name))
+        EU:Notify("Error", string.format("Id cannot be empty!", name))
         return false
     end
     return true
@@ -546,7 +547,7 @@ function Project:new_project_clbk(data, name)
     BLE.LoadLevel:load_levels()
     local mod = BeardLib.managers.MapFramework._loaded_mods[name]
     self:_select_project(mod, true)
-    BLE.Utils:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", ClassClbk(self, "new_level_dialog", "")}})
+    EU:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", ClassClbk(self, "new_level_dialog", "")}})
 end
 
 function Project:add_exisiting_level_dialog()
@@ -572,7 +573,7 @@ function Project:set_crimenet_videos_dialog()
     local narr = XML:GetNode(self._current_data, "narrative")
     BLE.SelectDialog:Show({
         selected_list = narr.crimenet_videos,
-        list = BLE.Utils:GetEntries({type = "movie", check = function(entry)
+        list = EU:GetEntries({type = "movie", check = function(entry)
             return entry:match("movies/")
         end}),
         callback = function(list) narr.crimenet_videos = list end
@@ -592,7 +593,7 @@ function Project:edit_main_xml(data, save_clbk)
     local up = ClassClbk(self, "set_project_data")
     local narrative = self:DivGroup("Narrative", divgroup_opt)
     self:TextBox("ProjectName", up, data.name, {group = narrative})
-    local contacts = table.map_values(LevelsTweakData.LevelType)
+    local contacts = table.map_keys(tweak_data.narrative.contacts)
     self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact or "custom"), {group = narrative})
     self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
     narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
@@ -632,24 +633,54 @@ function Project:edit_main_xml(data, save_clbk)
         local narr_chain = chain_group or narr.chain
         local my_index = table.get_key(narr_chain, level_in_chain)
 
-        local near
-        local function small_button(name, clbk, texture_rect, opt)
-            near = self:SmallImageButton(name, clbk, "textures/editor_icons_df", texture_rect, btn, table.merge({
-				size_by_text = true,
-				help = false,
-                position = near and function(item) item:Panel():set_righttop(near:Panel():left(), 0) end
-            }, opt or {}))
-        end
-        if level_in_chain.level_id then
-            small_button(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), {184, 2, 48, 48}, {highlight_color = Color.red})
-            if chain_group then
-                small_button("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), {156, 54, 48, 48})
+        local opt = {size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
+        local prev
+        local function toolbar_item(name, clbk, toolbar, o)
+            o = table.merge(clone(opt), o)
+            if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
+                prev = nil
+            end
+            o.position = ClassClbk(self, "button_pos", prev or false)
+
+            local item
+            if o.text then
+                item = self:SmallButton(name, clbk, toolbar, o)
             else
-                small_button("Group", ClassClbk(self, "group_level", narr, level_in_chain), {104, 55, 48, 48})
+                item = self:SmallImageButton(name, clbk, nil, nil, toolbar, o)
+            end
+            prev = item
+        end
+
+        if level_in_chain.level_id then
+            toolbar_item(level_in_chain.level_id, 
+                ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id),
+                btn,
+                {highlight_color = Color.red, texture_rect = EU.EditorIcons["cross"]}
+            )
+            if chain_group then
+                toolbar_item("Ungroup", 
+                    ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), 
+                    btn,
+                    {highlight_color = Color.red, texture_rect = EU.EditorIcons["minus"]}
+                )
+            else
+                toolbar_item("Group", 
+                    ClassClbk(self, "group_level", narr, level_in_chain), 
+                    btn,
+                    {highlight_color = Color.red, texture_rect = EU.EditorIcons["plus"]}
+                )
             end        
         end
-        small_button("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), {57, 55, 48, 48}, {enabled = my_index < #narr_chain})
-        small_button("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), {4, 55, 48, 48}, {enabled = my_index > 1})
+        toolbar_item("MoveDown", 
+            ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1),
+            btn,
+            {highlight_color = Color.red, texture_rect = EU.EditorIcons["arrow_down"], enabled = my_index < #narr_chain}
+        )
+        toolbar_item("MoveUp",
+            ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), 
+            btn,
+            {highlight_color = Color.red, texture_rect = EU.EditorIcons["arrow_up"], enabled = my_index > 1}
+        )
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
@@ -744,8 +775,8 @@ function Project:edit_main_xml(data, save_clbk)
 end
 
 function Project:delete_project(mod, item)
-    BLE.Utils:YesNoQuestion("This will delete the project and its files completely. This cannot be undone!", function()
-        BLE.Utils:YesNoQuestion("Are you 100% sure?", function()
+    EU:YesNoQuestion("This will delete the project and its files completely. This cannot be undone!", function()
+        EU:YesNoQuestion("Are you 100% sure?", function()
             FileIO:Delete(Path:Combine("Maps", self._current_data.name))
             local narr = tweak_data.narrative.jobs[mod.Name]
             if narr and narr.custom then
@@ -880,8 +911,11 @@ function Project:set_mission_assets_dialog(level)
 end
 
 function Project:set_chain_index(narr_chain, chain_tbl, index)
-    table.delete_value(narr_chain, chain_tbl)
+    local key = table.get_key(narr_chain, chain_tbl)
+
+    table.remove(narr_chain, tonumber(key))
     table.insert(narr_chain, tonumber(index), chain_tbl)
+
     self._refresh_func()
 end
 
@@ -962,4 +996,12 @@ function Project:disable()
     self._current_mod = nil
     self._refresh_func = nil
     self:reset_menu()
+end
+
+function Project:button_pos(near, item)
+	if alive(near) then
+		item:Panel():set_righttop(near:Panel():left(), 0)
+	else
+		item:SetPositionByString("RightTop")
+	end
 end
