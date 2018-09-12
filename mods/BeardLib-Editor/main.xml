@@ -77,6 +77,7 @@
         <hook source_file="lib/managers/navigationmanager" file="NavigationManager.lua"/>
         <hook source_file="lib/managers/navfieldbuilder" file="NavFieldBuilder.lua"/>
         <hook source_file="core/lib/managers/viewport/environment/coreenvironmentmanager" file="EnvironmentManager.lua"/>
+    	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     </Hooks>
     <Options build_menu="false" auto_load="true">
         <options>                
