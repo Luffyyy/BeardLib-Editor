@@ -313,6 +313,7 @@
         <value_node value="ElementPlayerNumberCheck"/>
         <value_node value="ElementPlayerSpawner"/>
         <value_node value="ElementPlayerState"/>
+        <value_node value="ElementPlayerStateTrigger"/>
         <value_node value="ElementPlaySound"/>
         <value_node value="ElementPlayerStyle"/>
         <value_node value="ElementPointOfNoReturn"/>
