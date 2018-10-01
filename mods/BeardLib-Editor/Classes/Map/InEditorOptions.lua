@@ -72,7 +72,7 @@ function Options:build_default_menu()
     self:Toggle("UseSurfaceMove", ClassClbk(self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Value("SelectEditorGroups"), {group = raycast})
-    self:Toggle("SelectInstances", nil, self:Value("SelectInstances"), {group = raycast})
+    self:Toggle("SelectInstances", ClassClbk(self, "update_option_value"), self:Value("SelectInstances"), {group = raycast})
     self:Toggle("SelectAllRaycast", nil, false, {group = raycast})
     self:Toggle("EndlessSelection", ClassClbk(self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)", group = raycast})
     self:NumberBox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Value("EndlessSelectionReset"), {
