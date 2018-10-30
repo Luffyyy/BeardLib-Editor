@@ -10,6 +10,9 @@ Working on the editor is essentially taking the real editor code (Found in the d
 
 If you're interested, talk with me in discord Luffy#1946 and I'll give you permissions to push commits.
 
+## Plugin source
+https://github.com/Luffyyy/BeardLib-Editor-SBLT-Plugin
+
 ## Editor? For what?
 Currently the level and environment editor are present. There are plans for effect, unit, object and material config editors and many more.
 
