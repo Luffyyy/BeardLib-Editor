@@ -508,10 +508,14 @@ function Project:create_new_narrative(name)
 end
 
 function Project:check_level_name(name)
-    if tweak_data.levels[name] then
-        EU:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", name))
-        return false
-    elseif name == "" then
+    --Windows is not case sensitive.
+    for k in pairs(tweak_data.levels) do
+        if string.lower(k) == name:lower() then
+            EU:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", k))
+            return false
+        end
+    end
+    if name == "" then
         EU:Notify("Error", string.format("Id cannot be empty!", name))
         return false
     elseif string.begins(name, " ") then
@@ -522,10 +526,13 @@ function Project:check_level_name(name)
 end
 
 function Project:check_narrative_name(name)
-    if tweak_data.narrative.jobs[name] then
-        EU:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", name))
-        return false
-    elseif name:lower() == "backups" or name:lower() == "prefabs" or string.begins(name, " ") then
+    for k in pairs(tweak_data.narrative.jobs) do
+        if string.lower(k) == name:lower() then
+            EU:Notify("Error", string.format("A narrative with the id %s already exists! Please use a unique id", k))
+            return false
+        end
+    end
+    if name:lower() == "backups" or name:lower() == "prefabs" or string.begins(name, " ") then
         EU:Notify("Error", string.format("Invalid Id"))
         return false
     elseif name == "" then

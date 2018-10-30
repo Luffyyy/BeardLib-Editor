@@ -24,36 +24,68 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
     if not Utils.Reading[ext](self, path, config, exclude) then
         return false
 	end
-	
+    
+    local dyn = managers.dyn_resource
     local temp = deep_clone(config)
     config = {}
+
+    local function add_to_config(file, file_path)
+        file.extract_real_path = file_path
+        table.insert(config, file)
+    end
+
     for _, file in pairs(temp) do
         local file_path = Path:Combine(BLE.ExtractDirectory, file.path.."."..file._meta)
-		local ext = file._meta
-		if not ignore_default or not (Global.DefaultAssets[ext] and Global.DefaultAssets[ext][file.path] and managers.dyn_resource:has_resource(ext:id(), file.path:id(), managers.dyn_resource.DYN_RESOURCES_PACKAGE)) then
-			if FileIO:Exists(file_path) then
-				file.extract_real_path = file_path
-                table.insert(config, file)
-            else
-                self:Log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead", tostring(unit), file_path)
-                local key_file_path = Path:Combine(BLE.ExtractDirectory, file.path:id():reversed_key().."."..ext)
-
-                if FileIO:Exists(key_file_path) then
-                    self:Log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
-                    file.extract_real_path = key_file_path
-                    table.insert(config, file)
-                else
-                    self:Log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded.", tostring(unit), file_path)
-					return false
+        local ext = file._meta
+        local file_id, ext_id = file.path:id(), ext:id()
+        if DB:has(ext_id, file_id) then --Does the file exist at all?
+            if not ignore_default or not (Global.DefaultAssets[ext] and Global.DefaultAssets[ext][file.path] and dyn:has_resource(ext_id, file_id, dyn.DYN_RESOURCES_PACKAGE)) then
+                local is_bnk = ext == "bnk"
+                local success
+                if is_bnk then
+                    local possible_bnk_dir = Path:Combine(BLE.ExtractDirectory, file.path..".english.bnk")
+                    if FileIO:Exists(possible_bnk_dir) then
+                        add_to_config(file, possible_bnk_dir)
+                        success = true
+                    end
                 end
+                if not success then
 
-			end
-		end
+                    if FileIO:Exists(file_path) then
+                        add_to_config(file, file_path)
+                    else
+                        local key = BLEP.swap_endianness(file_id:key())
+                        self:Log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead %s", tostring(unit), file_path, tostring(key))
+                        if is_bnk then
+                            local possible_bnk_dir = Path:Combine(BLE.ExtractDirectory, key..".english.bnk")
+                            if FileIO:Exists(possible_bnk_dir) then
+                                add_to_config(file, possible_bnk_dir)
+                                success = true
+                            end    
+                        end
+                        if not success then
+
+                            local key_file_path = Path:Combine(BLE.ExtractDirectory, key.."."..ext)
+                            if FileIO:Exists(key_file_path) then
+                                self:Log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
+                                add_to_config(file, key_file_path)
+                            else
+                                self:Log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded. %s", tostring(unit), file_path, key_file_path)
+                                return false
+                            end
+
+                        end
+                    end
+
+                end
+            end
+        end
     end
     return config
 end
 
 function Utils:ReadUnit(unit, config, exclude)
+
     self:Add(config, "unit", unit)
 
     self:Add(config, "cooked_physics", unit, exclude)

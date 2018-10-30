@@ -34,7 +34,7 @@ end
 
 function LoadLevelMenu:search_levels(item)
 	item = item or self:GetItem("Search")
-	local search = item:Value()
+	local search = item:Value():escape_special()
 	for _, menu in pairs(self._levels:Items()) do
 		if menu.type_name == "Menu" then
 			for _, item in pairs(menu:Items()) do
@@ -67,7 +67,7 @@ function LoadLevelMenu:load_levels()
     levels:ClearItems()
     local loc = managers.localization
     local img_size = 100
-    local img_w, img_h = img_size * 1.7777, img_size
+	local img_w, img_h = img_size * 1.7777, img_size
 	for narr_id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.hidden and ((narr.custom and custom) or (not narr.custom and vanilla)) then
             local txt = loc:text(narr.name_id or "heist_"..narr_id:gsub("_prof", ""):gsub("_night", "")) .." / " .. narr_id

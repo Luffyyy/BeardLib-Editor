@@ -255,7 +255,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
-        if alive(unit) then self:select_unit(unit, add) end
+        if alive(unit) and not no_select then self:select_unit(unit, add) end
         return unit
     end
     local data = {}

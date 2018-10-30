@@ -64,7 +64,7 @@ function AssetsManagerDialog:_Show()
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end}
-    local search = self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList"), "", search_opt)
+    local search = self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
     search_opt.position = base_pos
     search_opt.override_panel = units
     self:TextBox("Search2", ClassClbk(BLE.Utils, "FilterList"), "", search_opt)
@@ -184,15 +184,16 @@ function AssetsManagerDialog:show_assets()
 end
 
 function AssetsManagerDialog:show_packages()
-    local packages = self:GetItem("Packages")
-    if not packages then
-        return
-    end
-    packages:ClearItems("packages")
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     self._tbl._data = data
     self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+
+    local packages = self:GetItem("Packages", true)
+    if not packages then
+        return
+    end
+    packages:ClearItems("packages")
     if self._tbl._data then
         local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
         if level.packages then
@@ -370,7 +371,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
             if #copy_data > 0 then
                 FileIO:CopyFilesToAsync(copy_data, function(success)
                     if success then
-                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy)
+                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, nil, true)
                         if failed_all then
                             BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
                         else

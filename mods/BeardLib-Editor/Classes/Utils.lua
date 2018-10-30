@@ -4,15 +4,6 @@ function ids:s()
     return managers.editor._idstrings[t] or t
 end
 
-function ids:reversed_key()
-	local key = self:key()
-	local s = ""
-	for i=8, 1, -1 do
-		s = s..key:sub(i*2-1, i*2)
-	end
-	return s
-end
-
 getmetatable(Idstring()).construct = function(self, id)
     local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="@ID%s@">', id))
     return xml and xml.id or nil
@@ -121,8 +112,8 @@ function Utils:ParseXml(typ, path, scriptdata)
     if FileIO:Exists(file) then
         return load(file)
 	else
-		--This is confusing..
-        local key_file = Path:Combine(BLE.ExtractDirectory, path:id():reversed_key().."."..typ)
+        --This is confusing..
+        local key_file = Path:Combine(BLE.ExtractDirectory, BLEP.swap_endianness(path:key()).."."..typ)
 		if FileIO:Exists(key_file) then
 			return load(key_file)
 		else
@@ -131,16 +122,19 @@ function Utils:ParseXml(typ, path, scriptdata)
     end
 end
 
-function Utils:FilterList(search, max_items)
+function Utils:FilterList(a,b)
+    local search = b or a
+    local label = b and a or nil
     local menu = search.parent
     local i = 0
     for _, item in pairs(menu:Items()) do
         local _end = i == max_items
-        if type_name(item) == "Button" then
+        if type_name(item) == "Button" and (not label or item.label == label) then
             if _end then
                 item:SetVisible(false, true)
             else
-                item:SetVisible(search:Value() == "" or item:Text():match(search:Value()) ~= nil, true)
+                local search_val = search:Value():escape_special()
+                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, true)
                 i = i + 1
             end
         end

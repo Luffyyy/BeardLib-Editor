@@ -205,7 +205,11 @@ function EnvLayer:update(t, dt)
 					World:effect_manager():rotate(unit:unit_data().current_effect, unit:rotation())
 				end
 				if unit:name() == Idstring(self._effect_unit) then
-					Application:draw(unit, 0, 0, 1)
+					local r,g,b = 0, 0, 1
+					if table.contains(selected_units, unit) then
+						r, g, b = 0, 1, 1
+					end
+					Application:draw(unit, r, g, b)
 				end
 				if unit:name() == Idstring(self._environment_area_unit) then
 					local r, g, b = 0, 0.5, 0.5
