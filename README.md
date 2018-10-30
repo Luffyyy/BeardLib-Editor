@@ -16,7 +16,7 @@ Currently the level and environment editor are present. There are plans for effe
 ## Multiplayer
 The mod disables matchmaking with normal users, you cannot play with players that don't have the editor.
 This is done to prevent playing with different physics settings which can mess up the game of the host/clients.
-You can either disable the editor or rename supermod.xml (the physics settings fix) to be able to play with others (which will disable the physics settings fix)
+You can either disable the editor or rename supermod.xml (the physics settings fix) to be able to play with others, hopefully in the future there will be a better way to address this.
 
 ## Level Editor?
 Yep! You can create new levels from scratch using BeardLib-Editor.
