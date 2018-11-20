@@ -16,3 +16,18 @@ function EditorOverlayEffect:_build_panel()
 	self:NumberCtrl("fade_out")
 	self:NumberCtrl("sustain")
 end
+
+function EditorOverlayEffect:test_element()
+    if self._element.values.effect ~= 'none' then
+        local effect = clone(managers.overlay_effect:presets()[self._element.values.effect])
+        effect.sustain = self._element.values.sustain or effect.sustain
+        effect.fade_in = self._element.values.fade_in or effect.fade_in
+        effect.fade_out = self._element.values.fade_out or effect.fade_out
+
+        managers.overlay_effect:play_effect(effect)
+    end
+end
+
+function EditorOverlayEffect:stop_test_element()
+    managers.overlay_effect:stop_effect()
+end

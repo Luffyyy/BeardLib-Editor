@@ -19,6 +19,7 @@ EditorSpecialObjective._enemies = {}
 EditorSpecialObjective._nav_link_filter = {}
 function EditorSpecialObjective:create_element()
 	self.super.create_element(self)
+	
 	self._element.class = "ElementSpecialObjective"
 	self._element.values.ai_group = "none"
 	self._element.values.align_rotation = true
@@ -55,10 +56,68 @@ function EditorSpecialObjective:draw_links()
 end
 
 function EditorSpecialObjective:update(t, dt)
-	if self._element.values.search_position then
-    	Application:draw_sphere(self._element.values.search_position, 10, 1, 0, 0)
-	end
+	self:update_selected(t, dt)
 	EditorSpecialObjective.super.update(self, t, dt)
+end
+
+function EditorSpecialObjective:update_selected(t, dt)
+	-- TODO
+	--[[if self._element.values.patrol_path ~= 'none' then
+        managers.editor:layer('Ai'):draw_patrol_path_externaly(self._element.values.patrol_path)
+    end]]
+
+    local brush = Draw:brush()
+
+    brush:set_color(Color(0.15, 1, 1, 1))
+
+    local pen = Draw:pen(Color(0.15, 0.5, 0.5, 0.5))
+
+    brush:sphere(self._element.values.search_position, self._element.values.search_distance, 4)
+    pen:sphere(self._element.values.search_position, self._element.values.search_distance)
+    brush:sphere(self._element.values.search_position, 10, 4)
+	Application:draw_line(self._element.values.search_position, self._unit:position(), 0, 1, 0)
+	
+	local selected_unit = self:selected_unit()
+    if self._element.values.spawn_instigator_ids then
+        for _, id in ipairs(self._element.values.spawn_instigator_ids) do
+            local unit = self:GetPart('mission'):get_element_unit(id)
+            local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
+
+            if draw then
+                self:_draw_link(
+                    {
+                        g = 0,
+                        b = 0.75,
+                        r = 0,
+                        from_unit = unit,
+                        to_unit = self._unit
+                    }
+                )
+            end
+        end
+    end
+
+    self:_highlight_if_outside_the_nav_field(t)
+end
+
+function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
+    if managers.navigation:is_data_ready() then
+        local my_pos = self._unit:position()
+        local nav_tracker = managers.navigation._quad_field:create_nav_tracker(my_pos, true)
+
+        if nav_tracker:lost() then
+            local t1 = t % 0.5
+            local t2 = t % 1
+            local alpha = nil
+            alpha = t2 > 0.5 and t1 or 0.5 - t1
+            alpha = math.lerp(0.1, 0.5, alpha)
+            local nav_color = Color(alpha, 1, 0, 0)
+
+            Draw:brush(nav_color):cylinder(my_pos, my_pos + math.UP * 80, 20, 4)
+        end
+
+        managers.navigation:destroy_nav_tracker(nav_tracker)
+    end
 end
 
 function EditorSpecialObjective:_draw_follow_up()
@@ -80,6 +139,104 @@ function EditorSpecialObjective:_draw_follow_up()
 		end
 	end
 end
+
+function EditorSpecialObjective:test_element()
+    if not managers.navigation:is_data_ready() then
+        BLE.Utils:Notify(
+            Global.frame_panel,
+            "Can't test spawn unit without ready navigation data (AI-graph)"
+        )
+
+        return
+    end
+
+    local spawn_unit_name = nil
+
+    if self._element.values.test_unit == 'default' then
+        local SO_access_strings = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
+
+        for _, access_category in ipairs(SO_access_strings) do
+            if access_category == 'civ_male' then
+                spawn_unit_name = Idstring('units/payday2/characters/civ_male_casual_1/civ_male_casual_1')
+
+                break
+            elseif access_category == 'civ_female' then
+                spawn_unit_name = Idstring('units/payday2/characters/civ_female_casual_1/civ_female_casual_1')
+
+                break
+            elseif access_category == 'spooc' then
+                spawn_unit_name = Idstring('units/payday2/characters/ene_spook_1/ene_spook_1')
+
+                break
+            elseif access_category == 'shield' then
+                spawn_unit_name = Idstring('units/payday2/characters/ene_shield_2/ene_shield_2')
+
+                break
+            elseif access_category == 'tank' then
+                spawn_unit_name = Idstring('units/payday2/characters/ene_bulldozer_1/ene_bulldozer_1')
+
+                break
+            elseif access_category == 'taser' then
+                spawn_unit_name = Idstring('units/payday2/characters/ene_tazer_1/ene_tazer_1')
+
+                break
+            else
+                spawn_unit_name = Idstring('units/payday2/characters/ene_swat_1/ene_swat_1')
+
+                break
+            end
+        end
+    else
+        spawn_unit_name = self._element.values.test_unit
+    end
+
+    spawn_unit_name = spawn_unit_name or Idstring('units/payday2/characters/ene_swat_1/ene_swat_1')
+    local enemy = safe_spawn_unit(spawn_unit_name, self._unit:position(), self._unit:rotation())
+
+    if not enemy then
+        return
+    end
+
+    table.insert(self._enemies, enemy)
+    managers.groupai:state():set_char_team(enemy, tweak_data.levels:get_default_team_ID('non_combatant'))
+    enemy:movement():set_root_blend(false)
+
+    local t = {
+        id = self._unit:unit_data().unit_id,
+        editor_name = self._unit:unit_data().name_id,
+        values = deep_clone(self._element.values)
+    }
+    t.values.use_instigator = true
+    t.values.is_navigation_link = false
+    t.values.followup_elements = nil
+    t.values.trigger_on = 'none'
+    t.values.spawn_instigator_ids = nil
+    self._script = MissionScript:new({elements = {}})
+    self._so_class = ElementSpecialObjective:new(self._script, t)
+    self._so_class._values.align_position = nil
+    self._so_class._values.align_rotation = nil
+
+    self._so_class:on_executed(enemy)
+
+    self._start_test_t = Application:time()
+end
+
+function EditorSpecialObjective:stop_test_element()
+    for _, enemy in ipairs(self._enemies) do
+        if alive(enemy) then
+            enemy:set_slot(0)
+        end
+    end
+
+    if self._start_test_t then
+        log('Stop test time', Application:time() - self._start_test_t or 0)
+
+        self._start_test_t = nil
+    end
+
+    self._enemies = {}
+end
+
 
 function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()

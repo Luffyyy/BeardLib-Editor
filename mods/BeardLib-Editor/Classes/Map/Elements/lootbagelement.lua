@@ -1,5 +1,6 @@
 EditorLootBag = EditorLootBag or class(MissionScriptEditor)
 EditorLootBag.USES_POINT_ORIENTATION = true
+EditorLootBag._test_units = {}
 function EditorLootBag:create_element()
     self.super.create_element(self)	
     self._element.class = "ElementLootBag"
@@ -7,6 +8,36 @@ function EditorLootBag:create_element()
 	self._element.values.push_multiplier = 0
 	self._element.values.carry_id = "none"
 	self._element.values.from_respawn = false
+end
+
+function EditorLootBag:test_element()
+    local unit_name = 'units/payday2/pickups/gen_pku_lootbag/gen_pku_lootbag'
+    local throw_distance_multiplier = 1
+
+    if self._element.values.carry_id ~= 'none' then
+        unit_name = tweak_data.carry[self._element.values.carry_id].unit or unit_name
+        local carry_type = tweak_data.carry[self._element.values.carry_id].type
+        throw_distance_multiplier =
+            tweak_data.carry.types[carry_type].throw_distance_multiplier or throw_distance_multiplier
+    end
+
+    local unit = safe_spawn_unit(unit_name, self._unit:position(), self._unit:rotation())
+
+    table.insert(self._test_units, unit)
+
+    local push_value = self._element.values.push_multiplier and self._element.values.spawn_dir * self._element.values.push_multiplier or 0
+
+    unit:push(100, 600 * push_value * throw_distance_multiplier)
+end
+
+function EditorLootBag:stop_test_element()
+    for _, unit in ipairs(self._test_units) do
+        if alive(unit) then
+            World:delete_unit(unit)
+        end
+    end
+
+    self._test_units = {}
 end
 
 function EditorLootBag:update(d, dt)
@@ -34,6 +65,8 @@ function EditorLootBag:update(d, dt)
 	end
 	EditorLootBag.super.update(self, t, dt)
 end
+
+
 
 function EditorLootBag:_build_panel()
 	self:_create_panel()

@@ -8,7 +8,6 @@ EditorSpawnEnemyDummy.INSTANCE_VAR_NAMES = {
 	}
 }
 EditorSpawnEnemyDummy._enemies = {}
-
 function EditorSpawnEnemyDummy:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnEnemyDummy"
@@ -24,6 +23,7 @@ function EditorSpawnEnemyDummy:create_element()
 end
 
 function EditorSpawnEnemyDummy:test_element() 
+	
 	if not managers.navigation:is_data_ready() then
 		return
 	end

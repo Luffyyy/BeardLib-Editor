@@ -88,7 +88,17 @@ function MissionScriptEditor:_create_panel()
 	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
     self:Button("CreatePrefab", callback(SE, SE, "add_selection_to_prefabs"), {group = quick_buttons})
 	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
- 	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
+	if self.test_element then
+		self:Button("TestElement", ClassClbk(self, "test_element"), {
+				text = "Start Testing Element",
+				group = quick_buttons})
+
+		self:Button("StopTestElement", ClassClbk(self, "stop_test_element"), {
+				text = "Stop Testing Element",
+				group = quick_buttons})
+	end
+ 
+	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
  	self:StringCtrl("id", {group = self._main_group, data = self._element, enabled = false})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element, group = self._main_group})
  	self._element.values.position = self._element.values.position or Vector3()
