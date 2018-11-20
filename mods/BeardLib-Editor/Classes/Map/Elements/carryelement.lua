@@ -14,7 +14,8 @@ function EditorCarry:_build_panel()
 		"secure",
 		"secure_silent",
 		"add_to_respawn",
-		"filter_only"
+		"filter_only",
+		"poof"
 	})
 	self:ComboCtrl("type_filter", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
 end

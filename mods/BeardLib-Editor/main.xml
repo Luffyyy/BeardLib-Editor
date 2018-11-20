@@ -360,6 +360,7 @@
         <value_node value="ElementStopEffect"/>
         <value_node value="ElementEndscreenVariant"/>
         <value_node value="ElementLootBagTrigger"/>
-		<value_node value="ElementCounterReset"/>
+	<value_node value="ElementCounterReset"/>
+	<value_node value="ElementTerminateAssault"/>
     </MissionElements>
 </mod>
