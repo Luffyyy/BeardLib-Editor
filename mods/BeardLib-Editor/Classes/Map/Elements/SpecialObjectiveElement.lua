@@ -84,7 +84,7 @@ function EditorSpecialObjective:update_selected(t, dt)
             local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
 
             if draw then
-                self:_draw_link(
+                self:draw_link(
                     {
                         g = 0,
                         b = 0.75,

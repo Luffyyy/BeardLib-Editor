@@ -48,7 +48,7 @@ end
 
 function EditorSpawnEnemyDummy:stop_test_element()
 	for _, enemy in ipairs(self._enemies) do
-		enemy:set_slot(0)
+		if alive(enemy) then enemy:set_slot(0) end
 	end
 	self._enemies = {}
 end
