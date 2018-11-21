@@ -20,7 +20,7 @@ end
 
 function EditorUnitSequence:verify_trigger_units()
     for i = #self._element.values.trigger_list, 1, -1 do
-        local unit = managers.worlddefinition:get_unit(self._element.values.trigger_list[i].notify_unit)
+        local unit = managers.worlddefinition:get_unit(self._element.values.trigger_list[i].notify_unit_id)
 
         if not alive(unit) then
             table.remove(self._element.values.trigger_list, i)
