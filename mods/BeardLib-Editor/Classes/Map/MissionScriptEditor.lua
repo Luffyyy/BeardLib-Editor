@@ -198,6 +198,10 @@ function MissionScriptEditor:update(t, dt)
 			end
 		end
 	end
+
+	if self.update_selected then
+		self:update_selected(t, dt)
+	end
 end
 
 function MissionScriptEditor:draw_links()

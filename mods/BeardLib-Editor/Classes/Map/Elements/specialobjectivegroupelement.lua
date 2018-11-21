@@ -9,6 +9,28 @@ function EditorSpecialObjectiveGroup:create_element()
 	self._element.values.mode = "randomizer"
 end
 
+function EditorSpecialObjectiveGroup:update_selected(t, dt)
+    if self._element.values.spawn_instigator_ids then
+        local selected_unit = self:selected_unit()
+        for _, id in ipairs(self._element.values.spawn_instigator_ids) do
+            local unit = self:GetPart('mission'):get_element_unit(id)
+            local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
+
+            if draw then
+                self:_draw_link(
+                    {
+                        g = 0,
+                        b = 0.75,
+                        r = 0,
+                        from_unit = unit,
+                        to_unit = self._unit
+                    }
+                )
+            end
+        end
+    end
+end
+
 function EditorSpecialObjectiveGroup:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("mode", {"randomizer","forced_spawn","recurring_cloaker_spawn","recurring_spawn_1"}, {

@@ -21,6 +21,34 @@ function EditorFeedback:create_element()
 	self._element.values.above_camera_effect_distance = 0.5 
 end
 
+function EditorFeedback:update_selected(t, dt)
+    if self._element.values.orientation_elements then
+        for _, id in ipairs(self._element.values.orientation_elements) do
+            local unit = self:GetPart('mission'):get_element_unit(id)
+
+            self:_draw_ranges(unit:position())
+        end
+    else
+        self:_draw_ranges(self._unit:position())
+    end
+end
+
+function EditorFeedback:_draw_ranges(pos)
+    local brush = Draw:brush()
+
+    brush:set_color(Color(0.15, 1, 1, 1))
+
+    local pen = Draw:pen(Color(0.15, 0.5, 0.5, 0.5))
+
+    brush:sphere(pos, self._element.values.range, 4)
+    pen:sphere(pos, self._element.values.range)
+    brush:set_color(Color(0.15, 0, 1, 0))
+    pen:set(Color(0.15, 0, 1, 0))
+    brush:sphere(pos, self._element.values.range * self._element.values.above_camera_effect_distance, 4)
+    pen:sphere(pos, self._element.values.range * self._element.values.above_camera_effect_distance)
+end
+
+
 function EditorFeedback:_build_panel()
 	self:_create_panel()
 	self:NumberCtrl("range", {min = -1, help = "The range the effect should be felt. 0 means that it will be felt everywhere"})
