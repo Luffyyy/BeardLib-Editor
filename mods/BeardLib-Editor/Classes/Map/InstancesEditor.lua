@@ -3,6 +3,7 @@ local Instance = InstancesEditor
 
 function Instance:init(parent, menu)
     self:init_basic(parent, name)
+    self._stashed_instance_units = {}
     self._units = {}
     self._triggers = {}
     self._static = self:GetPart("static")
@@ -60,6 +61,7 @@ function Instance:delete_instance(instance)
                     for k, ins in pairs(managers.world_instance._instance_data) do
                         if instance.name == ins.name then
                             table.remove(managers.world_instance._instance_data, k)
+                            self._stashed_instance_units[instance.name] = nil
                             break
                         end
                     end
@@ -97,10 +99,89 @@ function Instance:update_positions()
 end
 
 function Instance:update(item)
-	local unit = self:selected_unit()
-	if unit and alive(unit) and unit:fake() then
-		Application:draw_sphere(unit:position(), 30, 0, 0, 0.7)
+    if self:Value("HighlightInstances") then
+        for _, instance_data in pairs(managers.world_instance:instances_data_by_continent(managers.editor._current_continent)) do
+            local instance_units = self:get_instance_units_by_name(instance_data.name)
+
+            Application:draw_sphere(instance_data.position, 50, 0.5, 0.5, 0.5)
+        end
+    end
+    
+    for _, unit in pairs(self:selected_units()) do
+        if alive(unit) and unit:fake() then
+            self:_draw_instance(unit:object().name)
+        end
+    end
+end
+
+function Instance:_draw_instance(instance_name, r, g, b)
+	r = r or 1
+	g = g or 1
+	b = b or 1
+	local unit_brush = Draw:brush(Color(0.15, r, g, b))
+    local instance_units = self:get_instance_units_by_name(instance_name)
+            
+    for _, unit in pairs(instance_units) do
+        if alive(unit) then
+            local ud = unit:unit_data()
+            if ud and ud.instance and ud.instance == instance_name then
+                Application:draw(unit, r, g, b)
+                unit_brush:unit(unit)
+            end
+        end
+    end
+            
+    local name_brush = Draw:brush(Color(r, g, b))
+
+    name_brush:set_font(Idstring("fonts/font_medium"), 8)
+    name_brush:set_render_template(Idstring("OverlayVertexColorTextured"))
+
+    for _, element in pairs(managers.world_instance:prepare_mission_data_by_name(instance_name).default.elements) do
+        unit_brush:set_color(Color(1, r, g, b))
+
+        if element.values.position then
+            unit_brush:sphere(element.values.position, 2, 2)
+
+            if managers.viewport:get_current_camera() then
+                local cam_up = managers.viewport:get_current_camera():rotation():z()
+                local cam_right = managers.viewport:get_current_camera():rotation():x()
+
+                name_brush:center_text(element.values.position + Vector3(0, 0, 25), utf8.from_latin1(element.editor_name), cam_right, -cam_up)
+            end
+
+            if element.values.rotation then
+                local rotation = CoreClass.type_name(element.values.rotation) == "Rotation" and element.values.rotation or Rotation(element.values.rotation, 0, 0)
+
+                unit_brush:set_color(Color(0.15, 1, 0, 0))
+                unit_brush:cylinder(element.values.position, element.values.position + rotation:x() * 20, 1)
+                unit_brush:set_color(Color(0.15, 0, 1, 0))
+                unit_brush:cylinder(element.values.position, element.values.position + rotation:y() * 20, 1)
+                unit_brush:set_color(Color(0.15, 0, 0, 1))
+                unit_brush:cylinder(element.values.position, element.values.position + rotation:z() * 20, 1)
+            end
+        end
+    end 
+end
+
+function Instance:get_instance_units_by_name(name)
+    if self._stashed_instance_units[name] then
+		return self._stashed_instance_units[name]
 	end
+    
+    local units = World:find_units_quick('all', managers.slot:get_mask('statics', 'dynamics'))
+    local t = {}
+    for k, unit in pairs(units) do
+        if alive(unit) then
+            local ud = unit:unit_data()
+            if ud and ud.instance and ud.instance == name then
+                table.insert(t, unit)
+            end
+        end
+    end
+
+    self._stashed_instance_units[name] = t
+
+    return t
 end
 
 function Instance:set_data(item)

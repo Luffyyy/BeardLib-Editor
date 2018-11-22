@@ -130,6 +130,7 @@
                 <option type="boolean" default_value="true" name="SoundUnits"/>
                 <option type="boolean" default_value="true" name="EnvironmentUnits"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
+                <option type="boolean" default_value="false" name="HighlightInstances"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
                 <option type="boolean" default_value="false" name="ShowElements"/>
                 <option type="boolean" default_value="false" name="KeepMouseActiveWhileFlying"/>
