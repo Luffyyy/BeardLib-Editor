@@ -15,7 +15,6 @@ function CubemapCreator:_init_paths()
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
-	self._omni_projection_name = "units/lights/light_omni_shadow_projection_01/light_omni_shadow_projection_01"
 	FileIO:MakeDir(self._temp_path)
 end
 
@@ -33,7 +32,7 @@ function CubemapCreator:create_projection_light(type)
 
 	if type == "all" then
 		for _, unit in pairs(World:find_units_quick("all")) do
-			if alive(unit) and unit.unit_data and self:is_omni_projection(unit) then
+			if alive(unit) and unit.unit_data and BLE.Utils:HasAnyProjectionLight(unit) then
 				table.insert(units, {
 					unit = unit,
 					light_name = "lo_omni"
@@ -42,9 +41,8 @@ function CubemapCreator:create_projection_light(type)
 		end
 	elseif type == "selected" then
 		local s_units = self:selected_units()
-
 		for _, unit in pairs(s_units) do
-			if self:is_omni_projection(unit) then
+			if BLE.Utils:HasAnyProjectionLight(unit) then
 				table.insert(units, {
 					unit = unit,
 					light_name = "lo_omni"
@@ -56,15 +54,11 @@ function CubemapCreator:create_projection_light(type)
 	self._saved_all_lights = {}
 
 	
-	for _, unit in pairs(World:find_units_quick("all")) do	-- TODO replace with something better
-		if alive(unit) and unit.unit_data and #unit:get_objects_by_type(Idstring("light")) > 0 then
-			for _, light in pairs(lights) do
-				table.insert(self._saved_all_lights, {
-					light = light,
-					enabled = light:enable()
-				})
-			end
-		end
+	for _, light in ipairs(CoreEditorUtils.all_lights()) do
+		table.insert(self._saved_all_lights, {
+			light = light,
+			enabled = light:enable()
+		})
 	end
 
 	for _, data in pairs(units) do
@@ -222,7 +216,7 @@ function CubemapCreator:cube_map_done()
 	if self._cubemap_params.lights then
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
-
+		
 		for _, cube in pairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
 		end
@@ -309,11 +303,6 @@ end
 
 function CubemapCreator:creating_cube_map()
 	return self._creating_cube_map
-end
-
-function CubemapCreator:is_omni_projection(unit)
-	--log("name: "..tostring(unit:name()).." "..tostring(self._omni_projection_name:id()))
-	return unit:name() == self._omni_projection_name:id()
 end
 
 function CubemapCreator:_create_cube_map()
