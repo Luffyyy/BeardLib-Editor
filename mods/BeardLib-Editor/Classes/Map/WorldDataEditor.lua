@@ -283,8 +283,8 @@ function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
     function delete_all()
         local worlddef = managers.worlddefinition
         for _, static in pairs(self:get_all_units_from_continent(continent)) do
-            worlddef:delete_unit(unit)
-            World:delete_unit(unit)
+            worlddef:delete_unit(static)
+            World:delete_unit(static)
         end
         worlddef._continent_definitions[continent].editor_groups = {}
         worlddef._continent_definitions[continent].statics = {}
