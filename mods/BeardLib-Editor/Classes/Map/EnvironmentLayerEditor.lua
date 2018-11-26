@@ -191,6 +191,7 @@ function EnvLayer:update(t, dt)
 			end
 		end
 	end
+
 	if self:Value("EnvironmentUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
@@ -219,7 +220,7 @@ function EnvLayer:update(t, dt)
 					Application:draw(unit, r, g, b)
 					unit:unit_data().environment_area:draw(t, dt, r, g, b)
 				end		
-				if self._draw_occ_shape and self._draw_occ_shape:Value() and unit:name() == Idstring(self._dome_occ_shape_unit) then
+				if unit:name() == Idstring(self._dome_occ_shape_unit) then
 					local r, g, b = 0.5, 0, 0.5
 					if table.contains(selected_units, unit) then
 						r, g, b = 1, 0, 1
@@ -290,15 +291,19 @@ function EnvLayer:build_menu()
 		end
 	end, {group = environment_group})
     self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
-    local utils = self:GetPart("world")
+	
+	local utils = self:GetPart("world")
     self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
     self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
-    local dome_occ = self:Group("DomeOcclusion", {visible = false}) 
-    self._draw_occ_shape = self:Toggle("Draw", nul, false, {group = dome_occ})
-    self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ, enabled = false})
+	
+	local dome_occ = self:Group("DomeOcclusion", {visible = true}) 
+    --self._draw_occ_shape = self:Toggle("Draw", nil, false, {group = dome_occ})
+    self:Button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit), {group = dome_occ})	
+	self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ})
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
     self:ComboBox("Resolution", callback(self, self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256), {group = dome_occ})
-    local wind = self:Group("Wind")
+	
+	local wind = self:Group("Wind")
     self._draw_wind = self:Toggle("Draw", nil, false, {group = wind})
     self:Slider("WindDirection", callback(self, self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0, group = wind})
     self:Slider("WindVariation", callback(self, self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0, group = wind})
@@ -476,15 +481,18 @@ function EnvLayer:generate_dome_occ()
 	for _, unit in ipairs(self._created_units) do
 		if unit:name() == Idstring(self._dome_occ_shape_unit) then
 			shape = unit:unit_data().occ_shape
-		else
+
+			break
 		end
 	end
+
 	if not shape then
 		managers.editor:Error("No dome occ unit in level!")
 		return
 	end
 	local res = self:data().environment_values.dome_occ_resolution or 256
-	managers.editor:init_create_dome_occlusion(shape, res)
+	
+	self:GetPart("cubemap_creator"):create_dome_occlusion(shape, res)
 end
 
 function EnvLayer:set_dome_occ_resolution(item)

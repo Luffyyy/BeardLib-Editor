@@ -11,7 +11,7 @@ function CubemapCreator:init(parent, menu, cam)
 end
 
 function CubemapCreator:_init_paths()
-	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.exe" .. "\""
+	self._gen_path = "\"" .. Application:base_path() .. BLE.ModPath:gsub("/", "\\") .. "Tools".. "\\gen_cubemap.py" .. "\""
 	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
@@ -23,7 +23,10 @@ function CubemapCreator:update(t, dt)
         self:_create_cube_map()
         
 		return
+	elseif self._dome_occlusion_params then
+		self:_tick_generate_dome_occlusion(t, dt)
 	end
+
 end
 
 function CubemapCreator:create_projection_light(type)
@@ -168,6 +171,24 @@ function CubemapCreator:create_cube_map(params)
 	self:next_cube()
 end
 
+function CubemapCreator:create_dome_occlusion(shape, res)
+	--managers.editor:disable_all_post_effects(true)
+	self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("render_dome_occ"))
+
+	self._aa_setting = managers.environment_controller:get_aa_setting()
+
+	managers.environment_controller:set_aa_setting("AA_off")
+
+	local saved_environment = managers.viewport:default_environment()
+	local params = {
+		res = res,
+		shape = shape,
+		saved_environment = saved_environment
+	}
+
+	self:_create_dome_occlusion(params)
+end
+
 function CubemapCreator:next_cube()
 	if #self._cubes_que > 0 then
 		local cube = table.remove(self._cubes_que, 1)
@@ -214,7 +235,7 @@ function CubemapCreator:cube_map_done()
 	end
 
 	if self._saved_all_lights then
-		for _, data in pairs(self._saved_all_lights) do
+		for k, data in pairs(self._saved_all_lights) do
 			data.light:set_enable(data.enabled)
 		end
 
@@ -310,7 +331,7 @@ function CubemapCreator:start_cube_map(params)
 end
 
 function CubemapCreator:creating_cube_map()
-	return self._creating_cube_map
+	return self._creating_cube_map or self._dome_occlusion_params
 end
 
 function CubemapCreator:_create_cube_map()
@@ -358,9 +379,11 @@ function CubemapCreator:_create_cube_map()
 		return true
 	end
 
+	local x1, y1, x2, y2 = self:_get_screen_size()
+
 	local path = self._params.source_path
 	local res = RenderSettings.resolution
-	Application:screenshot(path .. self._names[self._cube_counter], 0, 0, res.x, res.y)
+	Application:screenshot(path .. self._names[self._cube_counter], x1, y1, x2, y2)
 
 	return false
 end
@@ -373,6 +396,177 @@ function CubemapCreator:_create_spot_projection()
 	local path = self._params.source_path
 
 	Application:screenshot(path .. self._name_ordered[1], 0, 0, res.x, res.y)
+end
+
+function CubemapCreator:_create_dome_occlusion(params)
+	self._dome_occlusion_params = params
+	self._saved_resolution = RenderSettings.resolution
+
+	assert(self._parent._vp:push_ref_fov(500))
+	self._parent._vp:set_width_mul_enabled(false)
+	self._parent:_set_fixed_resolution(Vector3(self._dome_occlusion_params.res, self._dome_occlusion_params.res, 0))
+
+	self._saved_camera = {
+		aspect_ratio = self._camera:aspect_ratio(),
+		pos = self._camera:position(),
+		rot = self._camera:rotation(),
+		fov = self._parent:camera_fov(),
+		near_range = self._camera:near_range(),
+		far_range = self._camera:far_range()
+	}
+
+	self._camera:set_aspect_ratio(1)
+	self._camera:set_width_multiplier(1)
+
+	self._parent._menu:Toggle()
+
+	self._saved_hidden_object = {}
+	self._saved_hidden_units = {}
+	self._saved_hidden_elements = {}
+	
+	local elements = self:GetPart("mission"):units()
+	for _, unit in pairs(elements) do
+        local element_unit = unit:mission_element()
+        if element_unit and unit:enabled() then
+			table.insert(self._saved_hidden_elements, element_unit)
+			element_unit:set_enabled(false)
+        end
+    end
+	for _, unit in pairs(World:find_units_quick("all")) do
+		local ud = unit:unit_data()
+		if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor or ud.hide_on_projection_light) then
+			if unit:visible() then 
+				table.insert(self._saved_hidden_units, unit)
+				unit:set_visible(false)
+			end
+		end
+	end
+
+	if managers.viewport and managers.viewport._sun_flare_effect then
+		managers.viewport._sun_flare_effect._sf_panel:hide()
+	end
+
+	local shape = self._dome_occlusion_params.shape
+	local corner = shape:position()
+	local w = shape:depth()
+	local d = shape:width()
+	local h = shape:height()
+	local x = corner.x + w / 2
+	local y = corner.y - d / 2
+	local fov = 4
+	local far_range = math.max(w, d) / 2 / math.tan(fov / 2)
+	local z = corner.z + far_range
+
+	self._camera:set_far_range(far_range + 10000)
+	self._parent:set_camera(Vector3(x, y, z), Rotation(0, -90, 0))
+	self._parent:set_camera_fov(fov)
+
+	local deferred_processor = self._parent._vp:vp():get_post_processor_effect("World", Idstring("depth_projection"))
+
+	if not deferred_processor then
+		self:dome_occlusion_done()
+
+		return
+	end
+
+	local post_dome_occ = deferred_processor:modifier(Idstring("post_dome_occ"))
+	self._dome_occ_corner = corner
+	self._dome_occ_size = Vector3(w, d, h)
+	local dome_occ_feed = post_dome_occ:material()
+
+	if dome_occ_feed then
+		dome_occ_feed:set_variable(Idstring("dome_occ_pos"), self._dome_occ_corner)
+		dome_occ_feed:set_variable(Idstring("dome_occ_size"), self._dome_occ_size)
+	end
+
+	self._params = {}
+	self._dome_occlusion_params.file_name = "dome_occlusion"
+	self._params.output_path = self._cubelights_path
+	self._params.source_path = self._temp_path
+	self._output_name = "dome_occlusion"
+	self._dome_occlusion_params.output_path = self._temp_path
+	self._dome_occlusion_params.step = 0
+
+	self:generate_dome_occlusion(self._temp_path)
+end
+
+function CubemapCreator:_tick_generate_dome_occlusion(t, dt)
+    if self._dome_occlusion_params then
+        self._dome_occlusion_params.step = self._dome_occlusion_params.step + 1
+
+        if self._dome_occlusion_params.step == 2 then
+            self:_convert_dome_occlusion()
+        elseif self._dome_occlusion_params.step == 3 then
+            self:dome_occlusion_done()
+        end
+    end
+end
+
+
+function CubemapCreator:generate_dome_occlusion(path)
+	local x1, y1, x2, y2 = self:_get_screen_size()
+
+	Application:screenshot(path .. self._dome_occlusion_params.file_name .. ".tga", x1, y1, x2, y2)
+end
+
+function CubemapCreator:_convert_dome_occlusion()
+	local path = Path:Combine(Application:base_path(), self._temp_path, self._dome_occlusion_params.file_name) 
+	local exe_path = "\"" .. self._gen_path .. " " .. "dome_occ" .. " -i " .. "\"" .. path .. ".tga" .. "\""
+	exe_path = exe_path .. " -o " .. self._dome_occlusion_params.file_name .. ".tga" .. "\""
+	
+	log("execute", tostring(exe_path))
+
+
+	if os.execute(exe_path) == 0 then 
+		--self._parent:Log("Dome occlusion path is: " .. tostring(Path:Combine("assets", self._params.output_path, self._output_name .. ".texture")))
+		self:_move_output(self._dome_occlusion_params.file_name .. ".dds")
+	else
+		self._error_when_done = true
+	end
+end
+
+function CubemapCreator:dome_occlusion_done()
+	if not self._dome_occlusion_params then
+		Application:error("CoreEditor:dome_occlusion_done. Generate has not been started")
+
+		return
+	end
+
+	if self._dome_occlusion_params.saved_environment then
+		managers.viewport:set_default_environment(self._dome_occlusion_params.saved_environment, nil, nil)
+	end
+
+	--managers.editor:update_post_effects()
+	self._parent._vp:vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
+	self._parent._vp:vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
+	--managers.environment_controller:set_dome_occ_params(self._dome_occ_corner, self._dome_occ_size, managers.database:entry_path(self._dome_occlusion_params.output_path_file))
+
+	for _, obj in ipairs(self._saved_hidden_object) do
+		obj:set_visibility(true)
+	end
+
+	for _, unit in ipairs(self._saved_hidden_units) do
+		unit:set_visible(true)
+	end
+
+	if self._saved_camera then
+        self._camera:set_position(self._saved_camera.pos)
+        self._camera:set_rotation(self._saved_camera.rot)
+		self._parent:set_camera_fov(self._saved_camera.fov)
+		self._camera:set_aspect_ratio(self._saved_camera.aspect_ratio)
+		self._camera:set_near_range(self._saved_camera.near_range)
+		self._camera:set_far_range(self._saved_camera.far_range)
+
+		self._saved_camera = nil
+	end
+
+	self._parent:_set_fixed_resolution(self._saved_resolution)
+	self._parent._vp:set_width_mul_enabled(true)
+	self._parent._vp:pop_ref_fov()
+
+	self._parent._menu:Toggle()
+
+	self._dome_occlusion_params = nil
 end
 
 function CubemapCreator:_cubemap_done()
@@ -388,13 +582,15 @@ function CubemapCreator:_cubemap_done()
 end
 
 function CubemapCreator:_generate_cubemap(file)
-	local exe_path = self._gen_path .. " " .. file .. " -i "
+	local exe_path = "\"" .. self._gen_path .. " " .. file .. " -i "
 
 	for i, _ in pairs(self._names) do
-		exe_path = exe_path   .. self._name_ordered[i] .. " "
+		-- absolute paths have to have "" around them because of spaces in the base_path
+		exe_path = exe_path .. "\"" .. Path:Combine(Application:base_path(), self._temp_path, self._name_ordered[i]) .. "\" "
 	end
 
-	exe_path = exe_path .. "-o " .. self._output_name .. ".dds"
+	exe_path = exe_path .. "-o " .. self._output_name .. ".dds" .. "\""
+	-- log(tostring(exe_path))
 	if os.execute(exe_path) == 0 then 
 		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, self._output_name .. ".texture")))
 		self:_move_output(self._output_name)
@@ -419,10 +615,11 @@ function CubemapCreator:_move_output(output_path)
 	local output = self._output_name .. ".texture"
 	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
 	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output )
-	for i=1, 6 do
-		FileIO:Delete(self._params.source_path .. self._names[i])
+	if self._names then
+		for i=1, 6 do
+			FileIO:Delete(self._params.source_path .. self._names[i])
+		end
 	end
-	
 	-- Moving from temp to assets
 	if FileIO:Exists(final_path) then
 		FileIO:Delete(final_path)
@@ -448,4 +645,16 @@ end
 function CubemapCreator:notify_success(type)
 	type = type == "light" and "Cubelight(s)" or "Cubemap(s)"
 	BLE.Utils:Notify("Info", type .. " successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
+end
+
+
+function CubemapCreator:_get_screen_size()
+	local res = Application:screen_resolution()
+	local diff = res.x - res.y
+	local x1 = diff / 2
+	local y1 = 0
+	local x2 = res.x - diff / 2
+	local y2 = res.y
+
+	return x1, y1, x2, y2
 end
