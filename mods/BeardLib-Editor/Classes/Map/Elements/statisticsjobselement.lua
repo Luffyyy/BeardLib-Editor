@@ -20,7 +20,7 @@ function EditorStatisticsJobs:_build_panel()
 		end
 	end
 	table.sort(job_list)
-	self:ComboCtrl("job", job_list, "Select the required job")
+	self:ComboCtrl("job", job_list, {help = "Select the required job"})
 	local states = {
 		"started",
 		"started_dropin",
