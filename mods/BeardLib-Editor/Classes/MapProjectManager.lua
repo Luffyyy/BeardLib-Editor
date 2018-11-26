@@ -851,10 +851,10 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
     self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
     self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
-    level.intro_event = type(level.intro_event) == "table" and level.intro_event or {level.intro_event}
+    level.intro_event = type(level.intro_event) == "table" and level.intro_event[1] or level.intro_event
     level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
 
-    self:TextBox("IntroEvent", up, table.concat(level.intro_event, ","), {group = self._curr_editing})
+    self:TextBox("IntroEvent", up, level.intro_event, {group = self._curr_editing})
     self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = self._curr_editing})
     if level.ghost_bonus == 0 then
         level.ghost_bonus = nil
@@ -980,9 +980,8 @@ function Project:set_project_level_data(level, level_in_chain)
     end
     level.max_bags = self:GetItem("MaxBags"):Value()
     level.team_ai_off = self:GetItem("TeamAiOff"):Value()
-    local intro = self:GetItem("IntroEvent"):Value()
+    level.intro_event = self:GetItem("IntroEvent"):Value()
     local outro = self:GetItem("OutroEvent"):Value()
-    level.intro_event = intro:match(",") and string.split(intro, ",") or {intro}
     level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
     self:set_edit_title(title)
 end
