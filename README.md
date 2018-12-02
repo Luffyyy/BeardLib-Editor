@@ -3,10 +3,11 @@
 BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!
 
 ## Help Needed
-Due to life choices I've made over the past few weeks, I'm most likely will not be working as much on the editor. It doesn't mean I'm completely throwing myself from the dev team. But, essentially, I am looking for developers that will work together on the editor. Either fixing bugs or following the project I've put a little ago to ease the development.
-https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/projects/1 I'll be pushing a small class that would make MenuUI a bit more snake casey, initally having functions like get_value, set_value etc. But essentially imagine it as trying to avoid porting functions of the original editor and bringing things closer, just needing to replace a few functions of the original class so you don't need to rewrite the whole class which is a pain.
+We're looking for developers that will work together on the editor. Either fixing bugs or following the project I've put a little ago to ease the development.
 
-Working on the editor is essentially taking the real editor code (Found in the decompiled lua scripts here https://bitbucket.org/TdlQ/payday-2-luajit-no-line-numbers just search "editor" using some text editor like VSCode/Atom) and making it run in the public version of the game. Instead of EWS (Framwork for creating window GUI) we use a menu UI code from BeardLib called MenuUI (Documentation: https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI) You might want to look at the editor's code and how it works.
+https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/projects/1 
+
+Working on the editor is essentially taking the real editor code (Found in the decompiled lua scripts here https://github.com/ontrigger/pd2-luajit-decompile just search "editor" using some text editor like VSCode/Atom) and making it run in the public version of the game. Instead of EWS (Framwork for creating window GUI) we use a menu UI code from BeardLib called MenuUI (Documentation: https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI) You might want to look at the editor's code and how it works.
 
 If you're interested, talk with me in discord Luffy#1946 and I'll give you permissions to push commits.
 
