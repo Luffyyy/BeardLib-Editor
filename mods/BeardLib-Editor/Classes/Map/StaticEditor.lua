@@ -136,7 +136,7 @@ function Static:build_quick_buttons(cannot_be_saved)
     self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
     if not cannot_be_saved then
         self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
-        self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = false})
+        self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = true})
         local group = self:Group("Group", {visible = false}) --lmao
 		self:build_group_options()
     end
@@ -956,13 +956,17 @@ function Static:build_links(id, match, element)
 end
 
 function Static:addremove_unit_portal(item)
-    local portal = self:GetPart("world")._selected_portal
-    if portal then
+    -- TODO port layer('my_layer')
+    local portal = self:GetPart("world").layers.portal
+    local count = 0
+    if portal and portal._selected_portal then
         for _, unit in pairs(self._selected_units) do
             if unit:unit_data().unit_id then
-                portal:add_unit_id(unit)
+                portal:remove_unit_from_portal(unit)
+                count = count + 1
             end
         end
+        Utils:Notify("Success", string.format("Added/Removed %d units to selected portal", count))
     else
         Utils:Notify("Error", "No portal selected")  
     end    
