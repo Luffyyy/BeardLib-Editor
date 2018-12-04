@@ -32,6 +32,8 @@ function Editor:init()
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+    
+    self:_init_post_effects()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
     self:check_has_fix()
@@ -115,6 +117,43 @@ function Editor:check_has_fix()
     self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit) ~= nil
     unit:set_enabled(false)
     unit:set_slot(0)
+end
+
+function Editor:_init_post_effects()
+	self._post_effects = {
+		POSTFX_bloom = {
+			enable = false,
+			on = function()
+				self._vp:vp():set_post_processor_effect("World", Idstring("hdr_post_processor"), Idstring("default"))
+				self._vp:vp():set_post_processor_effect("World", Idstring("bloom_combine_post_processor"), Idstring("bloom_combine"))
+				self._vp:force_apply_feeders()
+			end,
+			off = function()
+				self._vp:vp():set_post_processor_effect("World", Idstring("hdr_post_processor"), Idstring("empty"))
+				self._vp:vp():set_post_processor_effect("World", Idstring("bloom_combine_post_processor"), Idstring("bloom_combine_empty"))
+			end
+		},
+		POSTFX_ssao = {
+			enable = false,
+			on = function ()
+				managers.environment_controller:set_ao_setting("ssao_low", self._vp:vp())
+			end,
+			off = function ()
+				managers.environment_controller:set_ao_setting("off", self._vp:vp())
+			end
+		},
+		POSTFX_aa = {
+			enable = false,
+			on = function ()
+				managers.environment_controller:set_aa_setting("smaa_x1", self._vp:vp())
+			end,
+			off = function ()
+				managers.environment_controller:set_aa_setting("off", self._vp:vp())
+			end
+		}
+	}
+
+	self:disable_all_post_effects()
 end
 
 function Editor:update_grid_size(value)
@@ -805,3 +844,32 @@ function Editor:_set_fixed_resolution(size)
 	end
 
 end
+
+function Editor:disable_all_post_effects(no_keep_state)
+    for id, pe in pairs(self._post_effects) do
+        pe.off()
+
+        if not no_keep_state then
+            pe.enable = false
+        end
+    end
+end
+
+function Editor:enable_all_post_effects()
+    for id, pe in pairs(self._post_effects) do
+        pe.on()
+
+        pe.enable = true
+    end
+end
+
+function Editor:update_post_effects()
+    for id, pe in pairs(self._post_effects) do
+        if pe.enable then
+            pe.on()
+        else
+            pe.off()
+        end
+    end
+end
+
