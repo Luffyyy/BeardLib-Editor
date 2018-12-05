@@ -78,6 +78,7 @@ function AssetsManagerDialog:_Show()
     self:Button("FixBySearchingPackages", ClassClbk(self, "find_packages", false), {group = self._unit_info})
     self:Button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"), {group = self._unit_info})
     self:Button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false), {group = self._unit_info})
+    self:Button("PackageReport", ClassClbk(self, "package_report"), {group = self._unit_info})
     self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
     self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
     local actions = self:DivGroup("Actions", {group = self._unit_info})
@@ -471,6 +472,61 @@ function AssetsManagerDialog:remove_unused_units_from_map()
         self:reload()
         self:set_unit_selected()
     end)
+end
+
+function AssetsManagerDialog:package_report()
+    local packages = {}
+    for name, package in pairs(BLE.DBPackages) do
+        if not name:begins("all_") and not name:ends("_init") then
+            if package.unit and not name:find("instances") and not name:find("only") then
+                table.insert(packages, {package = name, name = name})
+            end
+        end
+    end
+    BLE.ListDialog:Show({
+        list = packages,
+        force = true,
+        callback = function(item)
+            BLE.Utils:YesNoQuestion("This will spawn all selected package units in your level. This may hang the game!", function()
+                self:add_package(item.package)
+                self:_make_package_report(item.package)
+                BLE.ListDialog:hide()
+            end)
+        end
+    })
+    self:reload()
+end
+
+function AssetsManagerDialog:_make_package_report(package)
+    local pos = Vector3()
+	local rot = Rotation()
+	local i = 0
+	local prow = 40
+	local y_pos = 0
+	local c_rad = 0
+	local row_units = {}
+	local max_rad = 0
+	local removed = {}
+    for unit_name in pairs(BLE.DBPackages[package].unit) do
+        local unit = managers.editor:SpawnUnit(unit_name)	
+    	local bsr = unit:bounding_sphere_radius() * 2
+
+		i = i + 1
+
+		managers.editor:set_unit_position(unit, unit:position() + Vector3(bsr / 2, y_pos, 0), Rotation())
+
+		pos = pos + Vector3(bsr, 0, 0)
+
+        
+		if math.mod(i, prow) == 0 then
+			c_rad = bsr * 2
+
+			max_rad = 0
+			y_pos = y_pos + c_rad
+			pos = Vector3()
+			row_units = {}
+		end
+    end
 end
 
 --TODO: is save forced if asset is removed from add.xml?
