@@ -109,14 +109,18 @@ def generate_cubemaps(files, output_path):
         s.append(filename)
     s.extend(output_path)
     s.append("-y")
+    #s.extend(["-w", str(cube_res), "-h", str(cube_res)])
     start_process(texass_path, s)
 
 
 def blur_cubes(files):
     if import_status:
+        cube_res = None
         for cube in files:
             img = Image.open(cube)
-            processed = img.filter(ImageFilter.GaussianBlur(radius=3))
+            w, h = img.size
+            #img.thumbnail((w - 4, h - 4), Image.ANTIALIAS)
+            processed = img.filter(ImageFilter.GaussianBlur(radius=1))
             processed.save(cube)
 
 

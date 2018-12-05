@@ -199,7 +199,7 @@ function CubemapCreator:next_cube()
 
 		local resolution = cube.resolution or 512
 
-		self._parent:_set_fixed_resolution(Vector3(resolution + 4, resolution + 4, 0))
+		self._parent:_set_fixed_resolution(Vector3(resolution, resolution, 0))
 
 		local params = {
 			done_callback = callback(self, self, "cube_map_done"),
