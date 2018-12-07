@@ -508,24 +508,26 @@ function AssetsManagerDialog:_make_package_report(package)
 	local max_rad = 0
 	local removed = {}
     for unit_name in pairs(BLE.DBPackages[package].unit) do
-        local unit = managers.editor:SpawnUnit(unit_name)	
-    	local bsr = unit:bounding_sphere_radius() * 2
+        local unit = managers.editor:SpawnUnit(unit_name)
+        if alive(unit) then
+            local bsr = unit:bounding_sphere_radius() * 2
 
-		i = i + 1
+            i = i + 1
 
-		managers.editor:set_unit_position(unit, unit:position() + Vector3(bsr / 2, y_pos, 0), Rotation())
+            managers.editor:set_unit_position(unit, unit:position() + Vector3(bsr / 2, y_pos, 0), Rotation())
 
-		pos = pos + Vector3(bsr, 0, 0)
+            pos = pos + Vector3(bsr, 0, 0)
 
-        
-		if math.mod(i, prow) == 0 then
-			c_rad = bsr * 2
+            
+            if math.mod(i, prow) == 0 then
+                c_rad = bsr * 2
 
-			max_rad = 0
-			y_pos = y_pos + c_rad
-			pos = Vector3()
-			row_units = {}
-		end
+                max_rad = 0
+                y_pos = y_pos + c_rad
+                pos = Vector3()
+                row_units = {}
+            end
+        end
     end
 end
 
