@@ -70,7 +70,7 @@ function Options:build_default_menu()
     end
     local raycast = self:Group("Raycast/Selecting", groups_opt)
     self:Toggle("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting", group = raycast})
-    self:Toggle("UseSurfaceMove", ClassClbk(self, "update_option_value"), self:Value("UseSurfaceMove"), {group = raycast})
+    self:Toggle("SurfaceMove", ClassClbk(self, "update_option_value"), self:Value("SurfaceMove"), {group = raycast})
     self:Toggle("IgnoreFirstRaycast", nil, false, {group = raycast})
     self:Toggle("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Value("SelectEditorGroups"), {group = raycast})
     self:Toggle("SelectInstances", ClassClbk(self, "update_option_value"), self:Value("SelectInstances"), {group = raycast})
@@ -152,7 +152,7 @@ function Options:update_option_value(item)
         self._parent:set_camera_fov(value)
     elseif name == "CameraFarClip" then
         self._parent:set_camera_far_range(value)
-    elseif name == "UseSurfaceMove" then
+    elseif name == "SurfaceMove" then
         self._parent:set_use_surface_move(value)
     end
 end

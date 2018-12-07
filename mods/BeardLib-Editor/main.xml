@@ -135,6 +135,7 @@
                 <option type="boolean" default_value="false" name="ShowElements"/>
                 <option type="boolean" default_value="false" name="KeepMouseActiveWhileFlying"/>
                 <option type="boolean" default_value="false" name="SelectEditorGroups"/>
+                <option type="boolean" default_value="false" name="SurfaceMove"/>
             </option_group>
         </options>
     </Options>    
