@@ -1,3 +1,10 @@
+local function assert_value(getter, value, message)
+    local v = getter(value)
+    assert(v ~= nil, string.format("%s with name %s doesn't exist!", message, value))
+
+    return v
+end
+
 EditorPart = EditorPart or class()
 local Part = EditorPart
 function Part:init(parent, menu, name, opt, mopt)
@@ -91,10 +98,17 @@ end
 function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_dialogs) end
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
-function Part:Enabled() return self._menu:Visible() end
-function Part:Value(v) return BLE.Options:GetValue("Map/" .. v) end
-function Part:GetPart(n) return BLE.Utils:GetPart(n) end 
-function Part:GetLayer(n) return BLE.Utils:GetLayer(n) end 
+function Part:enabled() return self._menu:Visible() end
+function Part:value(v) return assert_value(ClassClbk(BLE.Options, "GetValue"), 'Map/' .. v, "Value") end
+function Part:part(n) return assert_value(ClassClbk(BLE.Utils, "GetPart"), n, "Part") end
+function Part:layer(l) return assert_value(ClassClbk(BLE.Utils, "GetLayer"), l, "Layer") end
 function Part:build_default_menu() self:ClearItems() end
-function Part:SetTitle(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
+function Part:set_title(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
 function Part:disable() self._triggers = {} end
+
+-- Aliases
+Part.Enabled = Part.enabled
+Part.Value = Part.value
+Part.GetPart = Part.part
+Part.GetLayer = Part.layer
+Part.SetTitle = Part.set_title
