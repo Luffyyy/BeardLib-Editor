@@ -469,6 +469,11 @@ function WorldDef:make_unit(data, offset)
 end
 
 function WorldDef:assign_unit_data(unit, data)
+	if not unit:unit_data() then
+		BLE.log("Unit with name " .. tostring(unit:name()) .. " doesn't have Unit Data!")
+		return 
+	end
+
 	unit:unit_data().instance = data.instance
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)

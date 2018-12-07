@@ -956,8 +956,7 @@ function Static:build_links(id, match, element)
 end
 
 function Static:addremove_unit_portal(item)
-    -- TODO port layer('my_layer')
-    local portal = self:GetPart("world").layers.portal
+    local portal = self:layer("portal")
     local count = 0
     if portal and portal:selected_portal() then
         for _, unit in pairs(self._selected_units) do
