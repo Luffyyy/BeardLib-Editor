@@ -22,6 +22,10 @@ function PortalLayer:reset()
     self:select_shape()
 end
 
+function PortalLayer:selected_portal()
+    return self._selected_portal
+end
+
 function PortalLayer:set_selected_unit()
     local unit = self:selected_unit()
     if not alive(unit) or unit:name() ~= self._portal_shape_unit:id() then
@@ -167,9 +171,11 @@ function PortalLayer:load_portal_units()
     end
 end
 
-function PortalLayer:remove_unit_from_portal(unit)
+function PortalLayer:remove_unit_from_portal(unit, no_refresh)
     self._selected_portal:add_unit_id(unit)
-    self:load_portal_units()
+    if not no_refresh then    
+        self:load_portal_units()
+    end
 end
 
 function PortalLayer:rename_portal(item)

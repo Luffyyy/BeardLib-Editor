@@ -959,10 +959,10 @@ function Static:addremove_unit_portal(item)
     -- TODO port layer('my_layer')
     local portal = self:GetPart("world").layers.portal
     local count = 0
-    if portal and portal._selected_portal then
+    if portal and portal:selected_portal() then
         for _, unit in pairs(self._selected_units) do
             if unit:unit_data().unit_id then
-                portal:remove_unit_from_portal(unit)
+                portal:remove_unit_from_portal(unit, true)
                 count = count + 1
             end
         end
