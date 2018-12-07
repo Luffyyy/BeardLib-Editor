@@ -470,7 +470,7 @@ end
 
 function WorldDef:assign_unit_data(unit, data)
 	if not unit:unit_data() then
-		BLE.log("Unit with name " .. tostring(unit:name()) .. " doesn't have Unit Data!")
+		BLE:log("Unit with name " .. tostring(unit:name()) .. " doesn't have Unit Data!")
 		return 
 	end
 
