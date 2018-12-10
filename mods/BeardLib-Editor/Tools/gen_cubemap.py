@@ -91,7 +91,7 @@ def start_process(proc_path, input):
 
 def convert_cubemaps(output_path, argtype):
     if argtype == "reflect":
-        args = ["-m", "10", "-f", "BC2_UNORM", "-y"]
+        args = ["-m", "10", "-f", "BC1_UNORM", "-y"]
     elif argtype == "light":
         args = ["-m", "8", "-f", "BC3_UNORM", "-y"]
     elif argtype == "dome_occ":
@@ -103,7 +103,10 @@ def convert_cubemaps(output_path, argtype):
     start_process(texconv_path, args)
 
 
-def generate_cubemaps(files, output_path):
+def generate_cubemaps(files, output_path, argtype):
+    if argtype == "dome_occ":
+        return
+
     s = ["cube"]
     for filename in files:
         s.append(filename)
@@ -113,15 +116,18 @@ def generate_cubemaps(files, output_path):
     start_process(texass_path, s)
 
 
-def blur_cubes(files):
-    if import_status:
-        cube_res = None
-        for cube in files:
-            img = Image.open(cube)
-            w, h = img.size
-            #img.thumbnail((w - 4, h - 4), Image.ANTIALIAS)
-            processed = img.filter(ImageFilter.GaussianBlur(radius=1))
-            processed.save(cube)
+def blur_cubes(files, argtype):
+    if not import_status or argtype == "dome_occ":
+        return
+
+    for cube in files:
+        img = Image.open(cube)
+        w, h = img.size
+        processed = img.filter(ImageFilter.GaussianBlur(radius=1))
+        # the cubemap alpha has to be completely opaque
+        if argtype == "reflect":
+            processed.putalpha(0)
+        processed.save(cube)
 
 
 if __name__ == "__main__":
@@ -133,9 +139,8 @@ if __name__ == "__main__":
     print('CUBEMAP PATH', cubemap_path)
     print('IN PATH', in_files)
 
-    if argtype != "dome_occ":
-        blur_cubes(in_files)
-        generate_cubemaps(in_files, cubemap_path)
+    blur_cubes(in_files, argtype)
+    generate_cubemaps(in_files, cubemap_path, argtype)
 
     convert_cubemaps(cubemap_path, argtype)
     if argtype == "dome_occ":
