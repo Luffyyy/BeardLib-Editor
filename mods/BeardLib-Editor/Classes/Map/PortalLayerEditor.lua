@@ -1,4 +1,4 @@
-PortalLayerEditor = PortalLayerEditor or class(EditorPart)
+PortalLayerEditor = PortalLayerEditor or class(LayerEditor)
 local PortalLayer = PortalLayerEditor
 function PortalLayer:init(parent)
 	self:init_basic(parent, "PortalLayerEditor")
@@ -9,6 +9,7 @@ function PortalLayer:init(parent)
 end
 
 function PortalLayer:loaded_continents()
+    PortalLayer.super.loaded_continents(self)
     for _, portal in pairs(clone(managers.portal:unit_groups())) do
         for _, shape in pairs(portal._shapes) do
             self:do_spawn_unit(self._portal_shape_unit, {position = shape:position(), rotation = shape:rotation(), shape = shape, portal = portal})

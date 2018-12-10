@@ -449,6 +449,7 @@ function Editor:set_unit_position(unit, pos, rot)
 end
 
 function Editor:load_continents(continents)
+    m.static:deselect_unit()
     self._continents = {}
     self._current_script = managers.mission._scripts[self._current_script] and self._current_script
     self._current_continent = continents[self._current_continent] and self._current_continent

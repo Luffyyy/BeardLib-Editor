@@ -26,6 +26,7 @@ function WData:loaded_continents()
             manager:loaded_continents()
         end
     end
+    self._loaded = true
 end
 
 function WData:unit_spawned(unit)
@@ -589,9 +590,11 @@ function WData:reset()
 end
 
 function WData:reset_selected_units()
-    for _, editor in pairs(self.layers) do
-        if editor.reset_selected_units then
-            editor:reset_selected_units()
+    if self._loaded then
+        for _, editor in pairs(self.layers) do
+            if editor.reset_selected_units then
+                editor:reset_selected_units()
+            end
         end
     end
 end
