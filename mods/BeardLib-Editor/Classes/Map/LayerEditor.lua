@@ -5,4 +5,5 @@ function LayerEditor:loaded_continents()
         unit:set_slot(0)
         World:delete_unit(unit)
     end
+    self._created_units = {}
 end
