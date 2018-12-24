@@ -544,6 +544,10 @@ function Editor:cursor_pos()
     return Vector3(x / self._screen_borders.width * 2 - 1, y / self._screen_borders.height * 2 - 1, 0)
 end
 
+function Editor:screen_pos(pos)
+	return Vector3(self._screen_borders.width * (pos.x + 1) / 2, self._screen_borders.height * (pos.y + 1) / 2, 0)
+end
+
 function Editor:select_unit_by_raycast(slot, clbk)
     local first = true
     local ignore = m.opt:get_value("IgnoreFirstRaycast")
@@ -754,7 +758,6 @@ function Editor:draw_marker(t, dt)
     self._spawn_position = pos
 end
 
--- TODO make the grid draw like the widgets
 function Editor:draw_grid(t, dt)
 
 	local rot = Rotation(0, 0, 0)

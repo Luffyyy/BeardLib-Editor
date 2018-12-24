@@ -1,7 +1,7 @@
 --Clean this script by separating parts of it to different classes
 StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
-local Utils = BeardLibEditor.Utils
+local Utils = BLE.Utils
 function Static:init(parent, menu)
     Static.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
@@ -64,6 +64,8 @@ function Static:mouse_pressed(button, x, y)
         if self:Value("EndlessSelection") then
             self._reset_raycast = nil
             self._ignore_raycast = {}
+        else
+            self:set_drag_select()
         end
         self:select_unit(true)
         self._mouse_hold = true
@@ -75,7 +77,18 @@ function Static:deselect_unit(item) self:set_unit(true) end
 function Static:mouse_released(button, x, y) 
     self._mouse_hold = false
     self._widget_hold = false
-    
+    self._drag_select = false
+
+    self:remove_polyline()
+
+    if self._drag_units then
+        for key, unit in pairs(self._drag_units) do
+            self:set_selected_unit(unit, true)
+        end
+
+	end
+
+	self._drag_units = nil
     for key, ignored in pairs(self._ignored_collisions) do
         Utils:UpdateCollisionsAndVisuals(key, ignored, true)
     end
@@ -566,7 +579,11 @@ end
 
 function Static:mouse_moved(x, y)
     if self._mouse_hold then
-        self:select_unit(true)
+        if not self._drag_select then
+            self:select_unit(true)
+        else
+            self:_update_drag_select()
+        end
     end
 end
 
@@ -778,6 +795,10 @@ function Static:select_unit(mouse2)
 end
 
 function Static:set_multi_selected()
+    if self._drag_units then 
+        return
+    end
+
     self._built_multi = true
     self._editors = {}
 	self:ClearItems()
@@ -969,7 +990,7 @@ function Static:addremove_unit_portal(item)
     else
         Utils:Notify("Error", "No portal selected")  
     end    
-end      
+end
 
 function Static:delete_selected(item)
     self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
@@ -1026,6 +1047,33 @@ function Static:update(t, dt)
                 end
             end
         end
+    end
+    
+    self:_update_drag_select_draw()
+end
+
+function Static:_update_drag_select_draw()
+    local r = 1
+	local g = 1
+	local b = 1
+	local brush = Draw:brush()
+
+	if alt() then
+		b = 0
+		g = 0
+		r = 1
+	end
+
+	if ctrl() then
+		b = 0
+		g = 1
+		r = 0
+    end
+
+    brush:set_color(Color(0.15, 0.5 * r, 0.5 * g, 0.5 * b))
+    for _, unit in ipairs(self._drag_units or {}) do
+        brush:draw(unit)
+        Application:draw(unit, r * 0.75, g * 0.75, b * 0.75)
     end
 end
 
@@ -1228,5 +1276,75 @@ function Static:set_unit_enabled(enabled)
         if alive(unit) then
             unit:set_enabled(enabled)
         end
+	end
+end
+
+function Static:set_drag_select()
+	if self._parent._using_rotate_widget or self._parent._using_move_widget or not alt() then
+		return
+    end
+    
+    if not ctrl() then
+        self:reset_selected_units()
+    end
+
+	self._drag_select = true
+	self._polyline = self._parent._menu._panel:polyline({
+		color = Color(0.5, 1, 1, 1)
+	})
+
+	self._polyline:set_closed(true)
+
+	self._drag_start_pos = managers.editor:cursor_pos()
+end
+
+function Static:_update_drag_select()
+	if not self._drag_select then
+		return
+	end
+
+    local end_pos = managers.editor:cursor_pos()
+
+	if self._polyline then
+        local p1 = managers.editor:screen_pos(self._drag_start_pos)
+		local p3 = managers.editor:screen_pos(end_pos)
+		local p2 = Vector3(p3.x, p1.y, 0)
+		local p4 = Vector3(p1.x, p3.y, 0)
+
+		self._polyline:set_points({
+			p1,
+			p2,
+			p3,
+			p4
+		})
+	end
+
+	local len = (end_pos - self._drag_start_pos):length()
+
+	if len > 0.05 then
+		local top_left = self._drag_start_pos
+		local bottom_right = end_pos
+
+		if bottom_right.y < top_left.y and top_left.x < bottom_right.x or top_left.y < bottom_right.y and bottom_right.x < top_left.x then
+			top_left = Vector3(self._drag_start_pos.x, end_pos.y, 0)
+			bottom_right = Vector3(end_pos.x, self._drag_start_pos.y, 0)
+        end
+        
+		local units = World:find_units("camera_frustum", managers.editor:camera(), top_left, bottom_right, 500000, self._parent._editor_all)
+		self._drag_units = {}
+
+		for _, unit in ipairs(units) do
+            if self:check_unit_ok(unit) then
+                table.insert(self._drag_units, unit)
+            end
+		end
+	end
+end
+
+function Static:remove_polyline()
+	if self._polyline then
+		managers.editor._menu._panel:remove(self._polyline)
+
+		self._polyline = nil
 	end
 end
