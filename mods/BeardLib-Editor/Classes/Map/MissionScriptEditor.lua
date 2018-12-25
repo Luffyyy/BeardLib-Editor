@@ -544,8 +544,18 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
     	if alive(unit) then
 	 		local ud = unit:unit_data()
 			 if ud and not ud.instance then
+				
+				local groups = self:part("static"):get_groups_from_unit(unit)
+				local groups_str
+				if next(groups) then
+					groups_str = "Groups: "
+					for i, grp in ipairs(groups) do
+						groups_str = groups_str .. grp.name .. (i < #groups and "|" or "")
+					end
+				end
+
 				local data = {
-					name = tostring(unit:unit_data().name_id) .. " [" .. (unit:unit_data().unit_id or "") .."]",
+					name = string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or ""),
 					unit = unit,
 				}
 				if params.table_data then
@@ -691,3 +701,4 @@ function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
    	    return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
 	end, true, opt)
 end
+
