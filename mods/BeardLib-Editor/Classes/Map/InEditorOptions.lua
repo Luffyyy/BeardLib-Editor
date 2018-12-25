@@ -89,6 +89,10 @@ function Options:build_default_menu()
     local other = self:Group("Other", groups_opt)
     self:Button("TeleportPlayer", ClassClbk(self, "drop_player"), {group = other})
     self:Button("LogPosition", ClassClbk(self, "position_debug"), {group = other})
+    if BeardLib.current_level then
+        self:Button("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"), {group = other})
+    end
+    self:Button("OpenWorldInExplorer", ClassClbk(self, "open_in_explorer", true), {group = other})
     self:Button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._has_fix, group = other})
     self:Button("SaveCoverData", ClassClbk(self, "save_cover_data", false), {group = other})
@@ -517,4 +521,8 @@ function Options:build_visibility_graph()
     end, all_visible, exclude, include, ray_lenght)
 
     self:save_nav_data()
+end
+
+function Options:open_in_explorer(world_path)
+    Application:shell_explore_to_folder(string.gsub(world_path == true and self:map_world_path() or self:map_path(), "/", "\\"))
 end

@@ -51,6 +51,7 @@
 			<class file="EditUnitLight.lua"/>
 			<class file="EditUnitCubemap.lua"/>
 			<class file="MissionScriptEditor.lua"/>
+			<class file="LayerEditor.lua"/>
 			<class file="EnvironmentLayerEditor.lua"/>
 			<class file="PortalLayerEditor.lua"/>
 			<class file="SoundLayerEditor.lua"/>

@@ -11,6 +11,7 @@ function SndLayer:init(parent)
 end
 
 function SndLayer:loaded_continents()
+	EnvironmentLayerEditor.super.loaded_continents(self)
 	for _, area in ipairs(clone(managers.sound_environment:areas())) do
 		local unit = self:do_spawn_unit(self._environment_unit, {name_id = area:name(), position = area:position(), rotation = area:rotation()})
 		unit:unit_data().environment_area = area

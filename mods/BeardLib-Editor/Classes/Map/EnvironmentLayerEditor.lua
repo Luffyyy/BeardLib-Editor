@@ -1,4 +1,4 @@
-EnvironmentLayerEditor = EnvironmentLayerEditor or class(EditorPart)
+EnvironmentLayerEditor = EnvironmentLayerEditor or class(LayerEditor)
 local sky_rot_key = Idstring("sky_orientation/rotation"):key()
 local EnvLayer = EnvironmentLayerEditor
 function EnvLayer:init(parent)
@@ -31,6 +31,8 @@ function EnvLayer:init(parent)
 end
 
 function EnvLayer:loaded_continents()
+	EnvLayer.super.loaded_continents(self)
+
 	local data = self:data()
 	data.environment_values.environment = managers.worlddefinition:convert_mod_path(data.environment_values.environment)
     for _, area in pairs(deep_clone(data.environment_areas)) do
