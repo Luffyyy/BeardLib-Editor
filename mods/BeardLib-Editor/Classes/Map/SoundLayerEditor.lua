@@ -77,9 +77,9 @@ function SndLayer:save()
 end
 
 function SndLayer:reset_selected_units()
-	for k, unit in ipairs(clone(self._created_units)) do
+	for _, unit in ipairs(clone(self._created_units)) do
 		if not alive(unit) then
-			table.remove(self._created_units, k)
+			table.delete(self._created_units, unit)
 		end
 	end
 	self:save()

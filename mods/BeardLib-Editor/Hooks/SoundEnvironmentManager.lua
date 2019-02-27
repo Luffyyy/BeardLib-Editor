@@ -241,4 +241,17 @@ function SoundEnvironmentEmitter:unit()
 	return self._unit
 end
 
+function SoundEnvironmentAreaEmitter:name()
+	return SoundEnvironmentArea.name(self)
+end
+
+function SoundEnvironmentEmitter:name()
+	return SoundEnvironmentArea.name(self)
+end
+
+function SoundEnvironmentArea:name()
+	self._unit = alive(self._unit) and self._unit or nil
+	return self._unit and self._unit:unit_data().name_id or self._name
+end
+
 SoundEnvironmentEmitter.get_params = CoreShapeManager.Shape.get_params
