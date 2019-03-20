@@ -54,8 +54,8 @@ function AssetsManagerDialog:_Show()
     local group_h = (self._menu:Height() / 2) - 24
     local packages = self:DivGroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
     local units = self:DivGroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
-    local utoolbar = units:ToolbarMenu()
-    local ptoolbar = packages:ToolbarMenu()
+    local utoolbar = units:GetToolbar()
+    local ptoolbar = packages:GetToolbar()
     ptoolbar:SButton("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
     local search_opt = {group = ptoolbar, w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
     self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)

@@ -793,7 +793,7 @@ function Project:set_project_data(item)
 end
 
 function Project:small_button(name, clbk)
-    self._curr_editing:ToolbarMenu():SButton(name, clbk, {
+    self._curr_editing:GetToolbar():SButton(name, clbk, {
         min_width = 100,
         text_offset = {8, 2},
         border_bottom = true,

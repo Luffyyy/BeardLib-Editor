@@ -49,6 +49,7 @@ end
 
 function Item:SqButton(name, callback, o)    
 	local s = (o and o.size) or self.items_size
+	o = o or {}
 	o.min_width = s
 	o.min_height = s
 	o.max_height = s

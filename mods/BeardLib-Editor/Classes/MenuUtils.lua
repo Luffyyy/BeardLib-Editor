@@ -11,6 +11,7 @@ function DummyItem:SetValue(v)
 end
 
 --Dumb class, but helpful.
+--To be removed/moved to MenuUIExt
 
 MenuUtils = MenuUtils or class()
 function MenuUtils:init(this, menu)
@@ -66,7 +67,7 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:CloseButton()
-		self:Button("Close", callback(menu.menu, menu.menu, "disable"))
+		self:Button("Close", ClassClbk(menu.menu, "disable"))
 	end
 
 	function this:Button(name, callback, o)
@@ -86,65 +87,6 @@ function MenuUtils:init(this, menu)
 			supports_additional = true,
 			on_callback = callback
 		}, opt))
-	end
-
-	function this:CenterRight(item)
-		if not item.override_panel then
-			return
-		end
-		item:SetPositionByString("CenterRight")
-		local prev = item.override_panel._prev_aligned
-		if alive(prev) and prev ~= item and not (prev:Index() < item:Index()) then
-			item:Panel():set_righttop(prev:Panel():left() - item:OffsetX(), item:Panel():top())
-		else
-			item:Panel():move(-item:OffsetX())
-			item.override_panel._prev_aligned = item
-		end
-	end
-
-	function this:SmallButton(name, callback, parent, o)    
-		local m, opt = self:WorkMenuUtils(o, parent)
-		parent = parent or self._menu
-		local s = parent:H()
-	    return parent:Button(table.merge({
-	        name = name,
-	        text = string.pretty2(name),
-	        on_callback = callback,
-	        size_by_text = true,
-	        min_width = s,
-	        min_height = s,
-	        max_width = s,
-			max_height = s,
-			offset = 0,
-			foreground = parent.foreground,
-			highlight_color = parent.foreground:with_alpha(0.25),
-			auto_foreground = false,
-			foreground_highlight = false,
-	        text_align = "center",
-	        text_vertical = "center",
-	    }, opt))
-	end
-
-	function this:SmallImageButton(name, callback, texture, rect, parent, o)
-	    local m, opt = self:WorkMenuUtils(o, parent)
-		if not parent then
-			log(debug.traceback())
-		end
-		opt.help = string.pretty2(name)
-		local s = parent:H()
-	    return parent:ImageButton(table.merge({
-	        name = name,
-			on_callback = callback,
-			foreground = parent.foreground,
-			highlight_color = parent.foreground:with_alpha(0.25),
-			auto_foreground = false,
-	        w = s,
-			h = s,
-			offset = 0,
-			img_offset = 4,
-	        texture = texture,
-	        texture_rect = rect,
-	    }, opt))
 	end
 
 	function this:ComboBox(name, callback, items, value, o)
@@ -255,11 +197,11 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:CopyAxis(item)
-		Application:set_clipboard(tostring(self["AxisControls"..item.override_panel.value_type](self, item.override_panel.axis_name)))
+		Application:set_clipboard(tostring(self["AxisControls"..item.parent.value_type](self, item.parent.axis_name)))
 	end
 	
 	function this:PasteAxis(item)
-		local menu = item.override_panel
+		local menu = item.parent
 		local paste = Application:get_clipboard()
 		local result
 		pcall(function()
@@ -287,22 +229,20 @@ function MenuUtils:init(this, menu)
 	    local group = opt.group
 	    if not opt.no_pos then
 			opt.text = opt.translate_text
-			opt.value_type = "Position"
 			translation = self:DivGroup("Translate"..name, opt)
-			local copy = self:SmallButton("p", callback(self, self, "PasteAxis"), translation, {position = "RightTop"})
-			self:SmallButton("c", callback(self, self, "CopyAxis"), translation, {position = function(item) 
-				item:Panel():set_righttop(copy:Panel():x() - 4, copy:Panel():y()) 
-			end})
+			local TB = translation:GetToolbar()
+			TB.value_type = "Position"
+			TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+			TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
 	    end
 	    if not opt.no_rot then
 	    	opt.group = group
 			opt.text = opt.rotate_text
-			opt.value_type = "Rotation"
 			rotation = self:DivGroup("Rotate"..name, opt)
-			local copy = self:SmallButton("p", callback(self, self, "PasteAxis"), rotation, {position = "RightTop"})
-			self:SmallButton("c", callback(self, self, "CopyAxis"), rotation, {position = function(item) 
-				item:Panel():set_righttop(copy:Panel():x() - 4, copy:Panel():y()) 
-			end})
+			local TB = rotation:GetToolbar()
+			TB.value_type = "Rotation"
+			TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+			TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
 		end
 	   	opt.text = nil
 	   	opt.color = false

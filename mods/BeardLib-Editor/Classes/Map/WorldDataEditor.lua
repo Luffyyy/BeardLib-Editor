@@ -185,11 +185,11 @@ function WData:build_continents()
     local tx = "textures/editor_icons_df"
     if managers.worlddefinition then
         local continents = self:Group("Continents")
-        local toolbar = continents:ToolbarMenu()
+        local toolbar = continents:GetToolbar()
         toolbar:SqButton("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:Group(name, {group = continents, text = name})
-            local ctoolbar = continent:ToolbarMenu()
+            local ctoolbar = continent:GetToolbar()
             ctoolbar:ImgButton("Remove", ClassClbk(self, "remove_continent", name), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
             ctoolbar:ImgButton("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
             ctoolbar:ImgButton("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115})
@@ -503,7 +503,7 @@ function WData:build_groups_layer_menu()
             for _, editor_group in pairs(continents[continent].editor_groups) do
                 if editor_group.units then
                     local group = self:Group(editor_group.name, {group = groups, text = editor_group.name, auto_align = false, closed = true})
-                    local toolbar = group:ToolbarMenu()
+                    local toolbar = group:GetToolbar()
                     toolbar:ImgButton("Remove", function() 
                         BLE.Utils:YesNoQuestion("This will delete the group", function()
                             self:GetPart("static"):remove_group(nil, editor_group)
