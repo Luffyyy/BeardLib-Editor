@@ -18,7 +18,7 @@ function MissionEditor:set_elements_vis(vis)
     local enabled = NotNil(vis, self:Value("ShowElements") and not Global.editor_safe_mode)
     local draw_script = self:Value("DrawOnlyElementsOfCurrentScript")
     for _, unit in pairs(self:units()) do
-        local element_unit = unit:mission_element()
+        local element_unit = alive(unit) and unit:mission_element()
         if element_unit then
             element_unit:set_enabled(enabled and (not draw_script or element_unit.element.script == self._parent._current_script))
         end
