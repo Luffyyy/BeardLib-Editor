@@ -352,6 +352,16 @@ function WData:add_new_mission_script(cname)
             end})
             return
         end
+
+        if cname == "world" and name ~= "default" then
+            BLE.Dialog:Show({
+                title = "WARNING!", 
+                message = "Mission script name for the world continent must always be named 'default'"
+            })
+
+            name = "default"
+        end
+
         mission._missions[cname][name] = mission._missions[cname][name] or {
             activate_on_parsed = true,
             elements = {},
