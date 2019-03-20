@@ -54,20 +54,13 @@ function AssetsManagerDialog:_Show()
     local group_h = (self._menu:Height() / 2) - 24
     local packages = self:DivGroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
     local units = self:DivGroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
-    local function base_pos(item)
-        item:SetPositionByString("Top")
-        item:Panel():set_world_right(item.override_panel.items_panel:world_right() - 8)
-	end
-
-	local add = self:SmallButton("Add", ClassClbk(self, "add_package_dialog"), packages, {text = "+", position = base_pos})
-    local search_opt = {override_panel = packages, w = 300, lines = 1, text = "Search", control_slice = 0.8, highlight_color = false, position = function(item)
-        item:SetPositionByString("Top")
-        item:Panel():set_world_right(add:Panel():world_left() - 4)
-    end}
-    local search = self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
-    search_opt.position = base_pos
-    search_opt.override_panel = units
-    self:TextBox("Search2", ClassClbk(BLE.Utils, "FilterList"), "", search_opt)
+    local utoolbar = units:ToolbarMenu()
+    local ptoolbar = packages:ToolbarMenu()
+    ptoolbar:SButton("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
+    local search_opt = {group = ptoolbar, w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
+    self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
+    search_opt.group = utoolbar
+    self:TextBox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
 
     self:Divider("AssetsManagerStatus", {
         text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
@@ -204,7 +197,7 @@ function AssetsManagerDialog:show_packages()
                 if size or custom then
                     local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
                     local pkg = self:Divider(package, {text = text, group = packages, label = "packages"})
-                    self:SmallImageButton("RemovePackage", ClassClbk(self, "remove_package", package), "textures/editor_icons_df", {184, 2, 48, 48}, pkg)
+                    pkg:ImgButton("RemovePackage", ClassClbk(self, "remove_package", package), nil, {184, 2, 48, 48})
                 end
             end
         end

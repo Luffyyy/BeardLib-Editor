@@ -640,54 +640,18 @@ function Project:edit_main_xml(data, save_clbk)
         local narr_chain = chain_group or narr.chain
         local my_index = table.get_key(narr_chain, level_in_chain)
 
-        local opt = {size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
-        local prev
-        local function toolbar_item(name, clbk, toolbar, o)
-            o = table.merge(clone(opt), o)
-            if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
-                prev = nil
-            end
-            o.position = ClassClbk(self, "button_pos", prev or false)
-
-            local item
-            if o.text then
-                item = self:SmallButton(name, clbk, toolbar, o)
-            else
-                item = self:SmallImageButton(name, clbk, nil, nil, toolbar, o)
-            end
-            prev = item
-        end
+        local tx = "textures/editor_icons_df"
 
         if level_in_chain.level_id then
-            toolbar_item(level_in_chain.level_id, 
-                ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id),
-                btn,
-                {highlight_color = Color.red, texture_rect = EU.EditorIcons["cross"]}
-            )
+            btn:ImgButton(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
             if chain_group then
-                toolbar_item("Ungroup", 
-                    ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), 
-                    btn,
-                    {highlight_color = Color.red, texture_rect = EU.EditorIcons["minus"]}
-                )
+                btn:ImgButton("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {highlight_color = Color.red})
             else
-                toolbar_item("Group", 
-                    ClassClbk(self, "group_level", narr, level_in_chain), 
-                    btn,
-                    {highlight_color = Color.red, texture_rect = EU.EditorIcons["plus"]}
-                )
+                btn:ImgButton("Group", ClassClbk(self, "group_level", narr, level_in_chain), tx, EU.EditorIcons["plus"], {highlight_color = Color.red})
             end        
         end
-        toolbar_item("MoveDown", 
-            ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1),
-            btn,
-            {highlight_color = Color.red, texture_rect = EU.EditorIcons["arrow_down"], enabled = my_index < #narr_chain}
-        )
-        toolbar_item("MoveUp",
-            ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), 
-            btn,
-            {highlight_color = Color.red, texture_rect = EU.EditorIcons["arrow_up"], enabled = my_index > 1}
-        )
+        btn:ImgButton("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), tx, EU.EditorIcons["arrow_down"], {highlight_color = Color.red, enabled = my_index < #narr_chain})
+        btn:ImgButton("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), tx, EU.EditorIcons["arrow_up"], {highlight_color = Color.red, enabled = my_index > 1})
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
@@ -755,28 +719,19 @@ function Project:edit_main_xml(data, save_clbk)
         self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
         self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
     end 
-    local near
     local function small_button(name, clbk, texture_rect)
-        near = self:SmallButton(name, clbk, self._curr_editing, {
+        self._curr_editing:ToolbarMenu():SButton(name, clbk, {
             min_width = 100,
             text_offset = {8, 2},
             max_width = false,
             max_height = false,
             border_bottom = true,
-            position = function(item, last) 
-                if alive(last) then
-                    item:Panel():set_righttop(last:Panel():left() - 4, 0)
-                else
-                    item:SetPositionByString("RightTop")
-                    item:Panel():move(-16)
-                end
-            end
         })
     end
 
-    small_button("Save", save_clbk)
-    small_button("Delete", ClassClbk(self, "delete_project", self._current_mod))
-    small_button("Close", ClassClbk(self, "disable"))
+    self:small_button("Save", save_clbk)
+    self:small_button("Delete", ClassClbk(self, "delete_project", self._current_mod))
+    self:small_button("Close", ClassClbk(self, "disable"))
     self._current_data = data
     self._refresh_func = ClassClbk(self, "edit_main_xml", data, save_clbk)
 end
@@ -846,6 +801,14 @@ function Project:set_project_data(item)
     self:set_edit_title(title)
 end
 
+function Project:small_button(name, clbk)
+    self._curr_editing:ToolbarMenu():SButton(name, clbk, {
+        min_width = 100,
+        text_offset = {8, 2},
+        border_bottom = true,
+    })
+end
+
 function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
 	self._curr_editing:ClearItems()
     local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
@@ -865,25 +828,8 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
     self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
     self:Button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level), {group = self._curr_editing})
-    local near = self:GetItem("Close")
-    local function small_button(name, clbk, texture_rect)
-        near = self:SmallButton(name, clbk, self._curr_editing, {
-            min_width = 100,
-            text_offset = {8, 2},
-            max_width = false,
-            max_height = false,
-            border_bottom = true,
-            position = function(item) 
-                if near then
-                    item:Panel():set_righttop(near:Panel():left() - 4, 0)
-                else
-                    item:SetPositionByString("RightTop")
-                    item:Panel():move(-16)
-                end
-            end
-        })
-    end
-    small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
+
+    self:small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
     self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))
     self._refresh_func = ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk)
 end
@@ -987,13 +933,7 @@ function Project:set_project_level_data(level, level_in_chain)
 end
 
 function Project:reset_menu()
-    for _, item in pairs(self._curr_editing._adopted_items) do
-        item:Destroy()
-    end
     self._curr_editing:ClearItems()
-    for _, item in pairs(self._curr_editing._adopted_items) do
-        item:Destroy()
-    end
     self:set_edit_title()
 end
 

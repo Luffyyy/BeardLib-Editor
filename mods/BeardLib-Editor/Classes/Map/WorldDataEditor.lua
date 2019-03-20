@@ -7,7 +7,7 @@ function WData:init(parent, menu)
         self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
     end
     self._opened = {}
-    WData.super.init(self, parent, menu, "World")
+    WData.super.init(self, parent, menu, "World", {make_tabs = ClassClbk(self, "make_tabs")})
 end
 
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
@@ -83,16 +83,34 @@ function WData:update_positions()
     end
 end
 
+function WData:make_tabs(tabs)
+    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "fixes"}
+    self._tabs = self:Menu("Managers", {
+        align_method = "centered_grid",
+        offset = 0,
+        background_color = BLE.Options:GetValue("BackgroundColor"),
+        background_visible = true
+    })
+    self._current_layer = "main"
+    for i, name in pairs(managers) do
+        self._tabs:SButton(name, ClassClbk(self, "build_menu", name:lower()), {
+            enabled = not Global.editor_safe_mode,
+            text = string.capitalize(name),
+            border_bottom = i == 1
+        })
+    end
+end
+
 function WData:build_default_menu()
     self.super.build_default_menu(self)
-    self:destroy_back_button()
+    self.layers = self.layers or {environment = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
+
     local alert_opt = {divider_type = true, position = "RightTop", w = 24, h = 24}
     local function make_alert(text)
         local div = self:Divider(text, {border_color = Color.yellow, border_lock_height = false})
-        self:SmallImageButton("Alert", nil, "textures/editor_icons_df", {30, 190, 72, 72}, div, {
-            divider_type = true, position = "RightTop", w = 24, h = 24
-        })
+        div:ImgButton("Alert", nil, nil, {30, 190, 72, 72}, {divider_type = true, w = 24, h = 24})
     end
+
     if not BeardLib.current_level then
         local s = "Preview mode"
         s = s .. "\nSaving the map will not clone the map, it'll just save it."
@@ -106,54 +124,37 @@ function WData:build_default_menu()
         make_alert("Physics settings fix was not installed\nsome features are disabled.")
     end
 
-    local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
+
+    local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "centered_grid"})
     local spawn_unit = BLE.Options:GetValue("Input/SpawnUnit")
     local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
-    self:Button("Unit", callback(self, self, "OpenSpawnUnitDialog"), {group = spawn, text = "Unit("..spawn_unit..")", size_by_text = true})
-    self:Button("Element", callback(self, self, "OpenSpawnElementDialog"), {group = spawn, text = "Element("..spawn_element..")", size_by_text = true})
-    self:Button("Instance", callback(self, self, "OpenSpawnInstanceDialog"), {group = spawn, size_by_text = true})
-    self:Button("Prefab", callback(self, self, "OpenSpawnPrefabDialog"), {group = spawn, size_by_text = true})
+    spawn:SButton("Unit", callback(self, self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
+    spawn:SButton("Element", callback(self, self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
+    spawn:SButton("Instance", callback(self, self, "OpenSpawnInstanceDialog"))
+    spawn:SButton("Prefab", callback(self, self, "OpenSpawnPrefabDialog"))
 
-    local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    self:Button("Unit", callback(self, self, "OpenSelectUnitDialog", {}), {group = select, text = "Unit("..select_unit..")", size_by_text = true})
-    self:Button("Element", callback(self, self, "OpenSelectElementDialog"), {group = select, text = "Element("..select_element..")", size_by_text = true})
-    self:Button("Instance", callback(self, self, "OpenSelectInstanceDialog", {}), {group = select, size_by_text = true})
+    local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "centered_grid"})
+    select:SButton("Unit", callback(self, self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
+    select:SButton("Element", callback(self, self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
+    select:SButton("Instance", callback(self, self, "OpenSelectInstanceDialog", {}))
 
     if BeardLib.current_level then
-        local load = self:DivGroup("Load", {align_method = "grid", inherit_values = {size_by_text = true}})
-		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "grid", inherit_values = {size_by_text = true}}) or nil
+        local load = self:DivGroup("Load", {align_method = "centered_grid"})
+		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "centered_grid"}) or nil
 		for _, ext in pairs(BLE.UsableAssets) do
-			self:Button(ext, callback(self, self, "OpenLoadDialog", {ext = ext}), {group = load, size_by_text = true})
+			load:SButton(ext, callback(self, self, "OpenLoadDialog", {ext = ext}))
 			if load_extract then
-				self:Button(ext, callback(self, self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {group = load_extract})
+				load_extract:SButton(ext, callback(self, self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}))
 			end
 		end
     end
 
-    self.layers = self.layers or {env = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
-    local managers = {
-        ["AI"] = true, 
-        ["environment"] = self.layers.env, 
-        ["sound"] = self.layers.sound, 
-        ["wires"] = true,
-        ["portal"] = self.layers.portal,
-		["groups"] = true,
-		["fixes"] = true
-    }
-    local managers_group = self:DivGroup("Managers", {text = "Managers and Tools"})
-    self:Button("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
-    self:Button("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil, {group = managers_group, enabled = BeardLib.current_level ~= nil})
+    local other = self:DivGroup("Other", {align_method = "centered_grid", enabled = BeardLib.current_level ~= nil})
+    other:SButton("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
+    other:SButton("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
-    for name, layer in pairs(managers) do
-        self:Button(name, ClassClbk(self, "build_menu", name:lower(), layer), {
-            enabled = not Global.editor_safe_mode,
-            group = managers_group,
-            text = string.capitalize(name)
-        })
-    end
- 
 	self:reset()
     self:build_continents()
 end
@@ -181,46 +182,31 @@ end
 
 --Continents
 function WData:build_continents()
-    local opt = {size = 18, texture = "textures/editor_icons_df", position = "RightTop"}
-    local prev
-    local function toolbar_item(name, clbk, toolbar, o)
-        o = table.merge(clone(opt), o)
-        if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
-            prev = nil
-        end
-     	o.position = ClassClbk(self, "button_pos", prev or false)
-        local item
-        if o.text then
-            item = self:SmallButton(name, clbk, toolbar, o)
-        else
-            item = self:SmallImageButton(name, clbk, nil, nil, toolbar, o)
-        end
-        prev = item
-    end
-
+    local tx = "textures/editor_icons_df"
     if managers.worlddefinition then
         local continents = self:Group("Continents")
-        toolbar_item("NewContinent", ClassClbk(self, "new_continent"), continents, {text = "+", help = "Add continent"})
+        local toolbar = continents:ToolbarMenu()
+        toolbar:SqButton("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = self:Group(name, {group = continents, text = name})
-            toolbar_item("Remove", ClassClbk(self, "remove_continent", name), continent, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
-            toolbar_item("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), continent, {highlight_color = Color.red, texture_rect = {7, 2, 48, 48}})
-            toolbar_item("Settings", ClassClbk(self, "open_continent_settings", name), continent, {texture_rect = {385, 385, 115, 115}})
-            toolbar_item("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), continent, {texture_rect = {122, 1, 48, 48}})
-            toolbar_item("AddScript", ClassClbk(self, "add_new_mission_script", name), continent, {text = "+", help = "Add mission script"})
-            toolbar_item("SetVisible", function(item) 
+            local ctoolbar = continent:ToolbarMenu()
+            ctoolbar:ImgButton("Remove", ClassClbk(self, "remove_continent", name), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
+            ctoolbar:ImgButton("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
+            ctoolbar:ImgButton("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115})
+            ctoolbar:ImgButton("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {122, 1, 48, 48})
+            ctoolbar:SqButton("AddScript", ClassClbk(self, "add_new_mission_script", name), {text = "+", help = "Add mission script"})
+            ctoolbar:ImgButton("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
                 item:SetEnabled(item.enabled) 
-            end, continent, {texture_rect = {155, 95, 64, 64}})
-            
+            end, tx, {155, 95, 64, 64})
+
             for sname, data in pairs(managers.mission._missions[name]) do
-                local script = self:Divider(sname, {border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
-                opt.continent = name
-                toolbar_item("RemoveScript", ClassClbk(self, "remove_script", sname), script, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}})
-                toolbar_item("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), script, {highlight_color = Color.red, texture_rect = {7, 2, 48, 48}})
-                toolbar_item("Rename", ClassClbk(self, "rename_script", sname), script, {texture_rect = {66, 1, 48, 48}})
-                toolbar_item("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), script, {texture_rect = {122, 1, 48, 48}})
+                local script = self:Divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
+                script:ImgButton("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
+                script:ImgButton("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
+                script:ImgButton("Rename", ClassClbk(self, "rename_script", sname), tx, {66, 1, 48, 48})
+                script:ImgButton("Rename", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48})
             end
         end
     end
@@ -380,8 +366,8 @@ end
 function WData:remove_script(script, item)
     BLE.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
         local mission = managers.mission
-        self:_clear_all_elements_from_script(script, item.continent, true, true)
-        mission._missions[item.continent][script] = nil
+        self:_clear_all_elements_from_script(script, item.parent.continent, true, true)
+        mission._missions[item.parent.continent][script] = nil
         mission._scripts[script] = nil
         self:build_default_menu()  
     end)
@@ -409,14 +395,14 @@ function WData:rename_script(script, item)
         mission._scripts[script]._name = name
         mission._scripts[name] = mission._scripts[script]
         mission._scripts[script] = nil
-        mission._missions[item.continent][name] = deep_clone(mission._missions[item.continent][script])
-        mission._missions[item.continent][script] = nil
+        mission._missions[item.parent.continent][name] = deep_clone(mission._missions[item.parent.continent][script])
+        mission._missions[item.parent.continent][script] = nil
         self._parent:load_continents(managers.worlddefinition._continent_definitions)
     end})
 end
 
 function WData:clear_all_elements_from_script(script, item)
-    self:_clear_all_elements_from_script(script, item.continent)
+    self:_clear_all_elements_from_script(script, item.parent.continent)
 end
 
 function WData:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)
@@ -459,31 +445,26 @@ function WData:select_all_units_from_script(script, item)
     self:GetPart("static"):set_selected_unit()    
 end
 
---World Data
-function WData:destroy_back_button()
-    local btn = self._menu:GetItem("Back")
-    if btn then
-        btn:Destroy()
+function WData:build_menu(name, item)
+    if self._current_layer == name then
+        return
     end
-end
-
-function WData:back_button()
-    self:destroy_back_button()
-    self:SmallButton("Back", callback(self, self, "build_default_menu"), self._menu:GetItem("Title"), {
-        text = "<",
-        font_size = 20,
-    })
-end
-
-function WData:build_menu(name, layer)
     self.super.build_default_menu(self)
-    self:back_button()
     self._current_layer = name
+    local layer = self.layers[name]
+    for _, tab in pairs(self._tabs:Items()) do
+        tab:SetBorder({bottom = false})
+    end
+    item:SetBorder({bottom = true})
     if type(layer) == "table" then
         layer:build_menu()
     else
         self["build_"..name.."_layer_menu"](self)
     end
+end
+
+function WData:build_main_layer_menu()
+    self:build_default_menu()
 end
 
 function WData:build_fixes_layer_menu()
@@ -513,24 +494,7 @@ function WData:build_wires_layer_menu()
 end
 
 function WData:build_groups_layer_menu()
-    local opt = {items_size = 18, size_by_text = true, texture = "textures/editor_icons_df", position = "RightTop"}
-    local prev
-    local function toolbar_item(name, clbk, toolbar, o)
-        o = table.merge(clone(opt), o)
-        if prev and prev.override_panel ~= toolbar and prev.panel ~= toolbar then
-            prev = nil
-        end
-        if prev then
-            o.position = callback(self, self, "button_pos", prev)
-        end
-        local item
-        if o.text then
-            item = self:SmallButton(name, clbk, toolbar, o)
-        else
-            item = self:SmallImageButton(name, clbk, nil, nil, toolbar, o)
-        end
-        prev = item
-    end
+    local tx  = "textures/editor_icons_df"
 
     local groups = self:Menu("Groups", {offset = 2, auto_align = false})
     local continents = managers.worlddefinition._continent_definitions
@@ -539,32 +503,30 @@ function WData:build_groups_layer_menu()
             for _, editor_group in pairs(continents[continent].editor_groups) do
                 if editor_group.units then
                     local group = self:Group(editor_group.name, {group = groups, text = editor_group.name, auto_align = false, closed = true})
-                    toolbar_item("Remove", function() 
-                            BLE.Utils:YesNoQuestion("This will delete the group", function()
-                                self:GetPart("static"):remove_group(nil, editor_group)
-                                self:build_menu("groups", nil)
-                            end)
-                        end, group, {highlight_color = Color.red, texture_rect = {184, 2, 48, 48}}
-                    )
-                    toolbar_item("Rename", function() 
-                            BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
-                                self:GetPart("static"):set_group_name(nil, editor_group, name)
-                                self:build_menu("groups", nil)
-                            end})
-                        end, group, {texture_rect = {66, 1, 48, 48}}
-                    )
-                    toolbar_item("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), group, {texture_rect = {122, 1, 48, 48}})
-                    toolbar_item("SetVisible", function(item) 
+                    local toolbar = group:ToolbarMenu()
+                    toolbar:ImgButton("Remove", function() 
+                        BLE.Utils:YesNoQuestion("This will delete the group", function()
+                            self:GetPart("static"):remove_group(nil, editor_group)
+                            self:build_menu("groups", nil)
+                        end)
+                    end, tx, {184, 2, 48, 48}, {highlight_color = Color.red})
+                    toolbar:ImgButton("Rename", function() 
+                        BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
+                            self:GetPart("static"):set_group_name(nil, editor_group, name)
+                            self:build_menu("groups", nil)
+                        end})
+                    end, tx, {66, 1, 48, 48})
+                    toolbar:ImgButton("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), tx, {122, 1, 48, 48})
+                    toolbar:ImgButton("SetVisible", function(item) 
                         self:GetPart("static"):toggle_group_visibility(editor_group) 
                         item.enabled_alpha = editor_group.visible and 1 or 0.5
-                        item:SetEnabled(item.enabled) end, 
-                        group, {texture_rect = {155, 95, 64, 64}, enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1}
-                    )
+                        item:SetEnabled(item.enabled) 
+                    end, tx, {155, 95, 64, 64}, {enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1})
 
                     for _, unit_id in pairs(editor_group.units) do
                         local unit = managers.worlddefinition:get_unit(unit_id)
                         if alive(unit) then 
-                            self:Button(unit_id, callback(self._parent, self._parent, "select_unit", unit), {group = group})
+                            self:Button(tostring(unit_id), callback(self._parent, self._parent, "select_unit", unit), {group = group})
                         end
                     end
                 end
@@ -574,6 +536,9 @@ function WData:build_groups_layer_menu()
         end
     end
     groups:AlignItems(true)
+    if #groups:Items() == 0 then
+        self:Divider("No groups found in the map.")
+    end
 end
 
 function WData:build_ai_layer_menu()    

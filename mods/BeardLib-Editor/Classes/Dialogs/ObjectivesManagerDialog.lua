@@ -35,7 +35,7 @@ function ObjectivesManagerDialog:_Show()
                     self._objectives = FileIO:ReadScriptData(self._objectvies_path, self._replacement_type)
                     break
                 end
-            end
+			end
         end
     end
     if not self._objectives then
@@ -43,15 +43,10 @@ function ObjectivesManagerDialog:_Show()
         BeardLibEditor.Utils:Notify("Error", "Your map is not setuped correctly")
     end
     self._missing_units = {}
-    local btn = self:Button("Close", callback(self, self, "hide", true), {position = "Bottom", count_height = true})
-    local group_h = self._menu:Height() - 24
-    local objectives = self:DivGroup("Objectives", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
-    local add = self:SmallButton("Add", callback(self, self, "rename_or_add_objective", false), objectives, {
-        text = "+",
-        position = "TopRight"
-    })
+	local objectives = self:DivGroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})
+	local add = self._menu:SqButton("Add", ClassClbk(self, "rename_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
     
-    self:TextBox("Search", callback(BeardLibEditor.Utils, BeardLibEditor.Utils, "FilterList"), "", {override_panel = objectives, w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
+    self:TextBox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end})
@@ -117,15 +112,12 @@ function ObjectivesManagerDialog:load_objectvies()
         local p = item:Panel():parent()
         item:Panel():set_world_righttop(p:world_righttop())
     end
-    local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df", position = pos}
     if self._objectives then
         for _, objective in ipairs(self._objectives) do
             if objective._meta == "objective" then
-                opt.position = pos
                 local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
-                local btn = self:SmallImageButton("Remove", callback(self, self, "remove_objective", objective), nil, {184, 2, 48, 48}, obj, opt)
-                opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
-                self:SmallImageButton("Rename", callback(self, self, "rename_or_add_objective", objective), nil, {66, 1, 48, 48}, obj, opt)
+                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, {184, 2, 48, 48})
+                obj:ImgButton("Rename", ClassClbk(self, "rename_or_add_objective", objective), nil, {66, 1, 48, 48})
             end
         end
     end

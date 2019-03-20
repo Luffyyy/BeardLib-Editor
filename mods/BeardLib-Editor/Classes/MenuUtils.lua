@@ -21,22 +21,8 @@ function MenuUtils:init(this, menu)
 		return menu
 	end
 
-	function this:WorkMenuUtils(opt, override_panel)
-	    opt = opt or {}
-	    opt = clone(opt)
-		local m = opt.group or menu
-
-		override_panel = override_panel or opt.override_panel
-		if override_panel then
-			if override_panel.menu_type then
-				m = override_panel
-			elseif opt.group then
-				m = override_panel.parent
-			end
-		end
-
-	    opt.group = nil
-	    return m, opt
+	function this:WorkMenuUtils(opt)
+	    return (opt and opt.group) or menu, opt or {}
 	end
 
 	function this:Divider(name, o)
@@ -118,8 +104,9 @@ function MenuUtils:init(this, menu)
 
 	function this:SmallButton(name, callback, parent, o)    
 		local m, opt = self:WorkMenuUtils(o, parent)
-		local s = parent:TextHeight()
-	    return m:Button(table.merge({
+		parent = parent or self._menu
+		local s = parent:H()
+	    return parent:Button(table.merge({
 	        name = name,
 	        text = string.pretty2(name),
 	        on_callback = callback,
@@ -128,17 +115,15 @@ function MenuUtils:init(this, menu)
 	        min_height = s,
 	        max_width = s,
 			max_height = s,
-			offset = 2,
+			offset = 0,
 			foreground = parent.foreground,
 			highlight_color = parent.foreground:with_alpha(0.25),
 			auto_foreground = false,
 			foreground_highlight = false,
-	        position = ClassClbk(self, "CenterRight"),
 	        text_align = "center",
 	        text_vertical = "center",
-	        override_panel = parent,
 	    }, opt))
-	end	
+	end
 
 	function this:SmallImageButton(name, callback, texture, rect, parent, o)
 	    local m, opt = self:WorkMenuUtils(o, parent)
@@ -146,21 +131,19 @@ function MenuUtils:init(this, menu)
 			log(debug.traceback())
 		end
 		opt.help = string.pretty2(name)
-		local s = parent:TextHeight()
-	    return m:ImageButton(table.merge({
+		local s = parent:H()
+	    return parent:ImageButton(table.merge({
 	        name = name,
 			on_callback = callback,
 			foreground = parent.foreground,
 			highlight_color = parent.foreground:with_alpha(0.25),
 			auto_foreground = false,
-	        position = ClassClbk(self, "CenterRight"),
 	        w = s,
 			h = s,
-			offset = 2,
+			offset = 0,
 			img_offset = 4,
 	        texture = texture,
 	        texture_rect = rect,
-	        override_panel = parent,
 	    }, opt))
 	end
 

@@ -27,13 +27,7 @@ function EnvEditor:load_included_environments()
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
                     local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included, text = include.file})
-                    self:SmallImageButton("Uniclude", callback(self, self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, env, {
-                        texture = "textures/editor_icons_df",
-                        position = "CenterRight",
-                        w = env.size,
-                        h = env.size,
-                        highlight_color = Color.red
-                    })
+                    env:ImgButton("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
                 end
             end
         end
@@ -51,8 +45,8 @@ function EnvEditor:build_default_menu()
     local env_path = managers.viewport:first_active_viewport():get_environment_path() or "core/environments/default"
     if BeardLib.current_level then
         local included = self:DivGroup("IncludedEnvironments")
-        self:load_included_environments()    
-        self:SmallButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), included, {position = "TopRight", max_width = false, text = "Include current"})
+        self:load_included_environments()
+        included:ToolbarMenu():SButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), {text = "Include current", offset = 0})
     end
 		
     local quick = self:DivGroup("Quick actions")
@@ -476,7 +470,7 @@ end
 function EnvEditor:uninclude_environment_dialog(item)
     BLE.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
-        local pname = item.override_panel.name
+        local pname = item.parent.name
         FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
         self:GetPart("opt"):save_main_xml()
         local env = pname:gsub(".environment", "")

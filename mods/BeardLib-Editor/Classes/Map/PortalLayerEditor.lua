@@ -164,9 +164,7 @@ function PortalLayer:load_portal_units()
             local unit = managers.worlddefinition:get_unit(unit_id)
             if unit then
                 local btn = self:Button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id), group = units})
-                self:SmallImageButton("Remove", callback(self, self, "remove_unit_from_portal", unit), nil, {184, 2, 48, 48}, btn, {
-                    highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
-                })
+                btn:ImgButton("Remove", ClassClbk(self, "remove_unit_from_portal"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
             end
         end
     end
@@ -180,7 +178,7 @@ function PortalLayer:remove_unit_from_portal(unit, no_refresh)
 end
 
 function PortalLayer:rename_portal(item)
-    BeardLibEditor.InputDialog:Show({title = "Rename portal to", text = item.override_panel.text, callback = function(name)
+    BeardLibEditor.InputDialog:Show({title = "Rename portal to", text = item.parent.text, callback = function(name)
         if name == "" then
             BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
                 self:rename_portal(item)
@@ -197,7 +195,7 @@ function PortalLayer:rename_portal(item)
             end})
             return
         end
-        managers.portal:rename_unit_group(item.override_panel.text, name)
+        managers.portal:rename_unit_group(item.parent.text, name)
         self:load_portals()
         self:save() 
     end})
@@ -205,7 +203,7 @@ end
 
 function PortalLayer:remove_portal(item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the portal", function()
-        managers.portal:remove_unit_group(item.override_panel.text)
+        managers.portal:remove_unit_group(item.parent.text)
         self:load_portals()
         self:save()   
     end)
@@ -213,10 +211,10 @@ end
 
 function PortalLayer:remove_shape(item)
     BeardLibEditor.Utils:YesNoQuestion("This will remove the portal shape", function()
-        if self._selected_shape == self._selected_portal._shapes[tonumber(item.override_panel.id)] then
+        if self._selected_shape == self._selected_portal._shapes[tonumber(item.parent.id)] then
             self._selected_shape = nil
         end
-        self._selected_portal:remove_shape(self._selected_portal._shapes[tonumber(item.override_panel.id)])
+        self._selected_portal:remove_shape(self._selected_portal._shapes[tonumber(item.parent.id)])
         self:load_portal_shapes()
         self:save()        
     end)
@@ -291,10 +289,7 @@ function PortalLayer:load_portal_shapes()
         for i=1, #self._selected_portal._shapes do
             local btn = self:Button("shape_" .. tostring(i), callback(self, self, "select_shape"), {group = group})
             btn.id = i
-
-            self:SmallImageButton("Remove", callback(self, self, "remove_shape"), nil, {184, 2, 48, 48}, btn, {
-                highlight_color = Color.red, size_by_text = true, align = "center", texture = "textures/editor_icons_df"
-            })
+            btn:ImgButton("Remove", ClassClbk(self, "remove_shape"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
         end
     end
 end
@@ -312,23 +307,15 @@ function PortalLayer:load_portals()
         self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
         for name, portal in pairs(managers.portal:unit_groups()) do
             local prtl = self:Button("portal_"..portal._name, callback(self, self, "clbk_select_portal"), {group = portals, text = portal._name})
-            local opt = {items_size = 18, size_by_text = true, align = "center", texture = "textures/editor_icons_df"}
-            
-            opt.highlight_color = Color.red
-            local btn = self:SmallImageButton("Remove", callback(self, self, "remove_portal"), nil, {184, 2, 48, 48}, prtl, opt)
-
-            opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
-            opt.highlight_color = nil
-            local btn = self:SmallImageButton("Rename", callback(self, self, "rename_portal"), nil, {66, 1, 48, 48}, prtl, opt)
-
-            opt.position = callback(WorldDataEditor, WorldDataEditor, "button_pos", btn)
-            self:SmallImageButton("AutoFillUnits", callback(self, self, "auto_fill_portal"), nil, {122, 1, 48, 48}, prtl, opt)
+            prtl:ImgButton("Remove", ClassClbk(self, "remove_portal"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
+            prtl:ImgButton("Rename", ClassClbk(self, "rename_portal"), nil, {66, 1, 48, 48})
+            prtl:ImgButton("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, {122, 1, 48, 48})
         end
     end   
 end
 
 function PortalLayer:auto_fill_portal(item)
-    local portal = managers.portal:unit_groups()[item.override_panel.text]
+    local portal = managers.portal:unit_groups()[item.parent.text]
     BeardLibEditor.Utils:YesNoQuestion("This will automatically fill the portal with units", function()
         for _, unit in pairs(managers.worlddefinition._all_units) do
             if alive(unit) and unit:visible() and not unit:unit_data().only_visible_in_editor and not unit:unit_data().only_exists_in_editor and not portal:unit_in_group(unit) and portal:inside(unit:position()) then

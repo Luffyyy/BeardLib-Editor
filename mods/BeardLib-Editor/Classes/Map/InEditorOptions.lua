@@ -17,7 +17,7 @@ function Options:build_default_menu()
         end
     end
 
-    local main = self:Group("Main", groups_opt)
+    local main = self:Group("Editor", groups_opt)
     self._current_continent = self:ComboBox("CurrentContinent", ClassClbk(self, "set_current_continent"), nil, nil, {group = main})
     self._current_script = self:ComboBox("CurrentScript", ClassClbk(self, "set_current_script"), nil, nil, {group = main})
     local grid_size = self:Value("GridSize")

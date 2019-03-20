@@ -29,6 +29,12 @@ function Part:init(parent, menu, name, opt, mopt)
     if not opt.no_title then
         title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
+    if opt.make_tabs then
+        self._tabs = self:Menu("Tabs", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, scrollbar = false}, opt))
+        opt.make_tabs(self._tabs)
+        title_h = title_h + self._tabs:OuterHeight()
+    end
+    
     self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
@@ -38,7 +44,7 @@ end
 function Part:make_collapse_all_button()
     local title = self._menu:GetItem("Title")
     if title then
-        self:SmallImageButton("CollapseAll", ClassClbk(self, "collapse_all", false), "textures/editor_icons_df", {161, 158, 50, 50}, title, {group = self._menu})
+        title:ImgButton("CollapseAll", ClassClbk(self, "collapse_all", false), nil, {161, 158, 50, 50}, {offset = 0})
     end
 end
 

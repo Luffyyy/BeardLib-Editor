@@ -18,6 +18,7 @@ BLE.Utils = BLE.Utils or {}
 local Utils = BLE.Utils
 
 Utils.EditorIcons = {
+    ["texture"] = "textures/editor_icons_df",
     ["trash"] = {7, 2, 48, 48},
     ["pen"] = {66, 1, 48, 48},
     ["cross"] = {184, 2, 48, 48},
@@ -126,15 +127,21 @@ function Utils:FilterList(a,b)
     local search = b or a
     local label = b and a or nil
     local menu = search.parent
+    if type(label) == "table" then
+        menu = label
+        label = nil
+    else
+        menu = menu.name == "Toolbar" and menu.parent or menu
+    end
     local i = 0
     for _, item in pairs(menu:Items()) do
         local _end = i == max_items
         if type_name(item) == "Button" and (not label or item.label == label) then
             if _end then
-                item:SetVisible(false, true)
+                item:SetVisible(false, true, true)
             else
                 local search_val = search:Value():escape_special()
-                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, true)
+                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, true, true)
                 i = i + 1
             end
         end
