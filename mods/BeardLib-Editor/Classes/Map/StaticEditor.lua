@@ -81,11 +81,17 @@ function Static:mouse_released(button, x, y)
 
     self:remove_polyline()
 
-    if self._drag_units then
+    if self._drag_units and #self._drag_units > 0 then
         for key, unit in pairs(self._drag_units) do
-            self:set_selected_unit(unit, true)
-        end
+            if ctrl() then 
+                self:set_selected_unit(unit, true)
+            elseif alt() then
+                table.delete(self._selected_units, unit)
 
+            end
+        end
+        
+        if #self._selected_units < 1 then self:set_unit(true) end
 	end
 
 	self._drag_units = nil
@@ -1280,22 +1286,20 @@ function Static:set_unit_enabled(enabled)
 end
 
 function Static:set_drag_select()
-	if self._parent._using_rotate_widget or self._parent._using_move_widget or not alt() then
+	if self._parent._using_rotate_widget or self._parent._using_move_widget then
 		return
     end
-    
-    if not ctrl() then
-        self:reset_selected_units()
+
+    if alt() or ctrl() then
+        self._drag_select = true
+        self._polyline = self._parent._menu._panel:polyline({
+            color = Color(0.5, 1, 1, 1)
+        })
+
+        self._polyline:set_closed(true)
+
+        self._drag_start_pos = managers.editor:cursor_pos()
     end
-
-	self._drag_select = true
-	self._polyline = self._parent._menu._panel:polyline({
-		color = Color(0.5, 1, 1, 1)
-	})
-
-	self._polyline:set_closed(true)
-
-	self._drag_start_pos = managers.editor:cursor_pos()
 end
 
 function Static:_update_drag_select()
