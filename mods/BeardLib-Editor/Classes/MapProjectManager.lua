@@ -719,15 +719,6 @@ function Project:edit_main_xml(data, save_clbk)
         self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
         self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
     end 
-    local function small_button(name, clbk, texture_rect)
-        self._curr_editing:ToolbarMenu():SButton(name, clbk, {
-            min_width = 100,
-            text_offset = {8, 2},
-            max_width = false,
-            max_height = false,
-            border_bottom = true,
-        })
-    end
 
     self:small_button("Save", save_clbk)
     self:small_button("Delete", ClassClbk(self, "delete_project", self._current_mod))
