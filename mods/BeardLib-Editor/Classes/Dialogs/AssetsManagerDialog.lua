@@ -399,26 +399,33 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
     end  
 end
 
-function AssetsManagerDialog:find_packages(missing_units, clbk)
-    missing_units = missing_units or self._missing_assets
+function AssetsManagerDialog:find_packages(missing_assets, clbk)
+    missing_assets = missing_assets or self._missing_assets
     local packages = {}
     for name, package in pairs(BLE.DBPackages) do
-        if package.unit then            
-            for unit in pairs(package.unit) do
-                if missing_units[unit] == true then
-                    packages[name] = packages[name] or {}
-                    table.insert(packages[name], unit)
+        if package.unit then
+            for typ, assets in pairs(package) do
+                for asset, _ in pairs(assets) do
+                    if missing_assets[typ] and missing_assets[typ][asset] == true then
+                        packages[name] = packages[name] or {}
+                        table.insert(packages[name], asset)
+                    end
                 end
             end
         end
     end
     local items = {}
-    local missing_amount = table.size(missing_units)
+    local missing_amount = 0
+    for typ, assets in pairs(missing_assets) do
+        for asset, _ in pairs(assets) do
+            missing_amount = missing_amount + 1
+        end
+    end
     for name, package in pairs(packages) do
         local size = BLE.Utils:GetPackageSize(name)
         if size then
             table.insert(items, {
-                name = string.format("%s has %s/%s of the missing units(%.2fmb)", name, #package, missing_amount, size),
+                name = string.format("%s has %s/%s of the missing assets(%.2fmb)", name, #package, missing_amount, size),
                 package = name,
                 package_size = size,
                 amount = #package,
