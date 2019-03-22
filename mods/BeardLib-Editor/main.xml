@@ -187,6 +187,10 @@
         <object path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
         <model path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
         <cooked_physics path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
+		<unit path="core/units/patrol_point/patrol_point" force="true"/>
+        <object path="core/units/patrol_point/patrol_point" force="true"/>
+        <model path="core/units/patrol_point/patrol_point" force="true"/>
+        <cooked_physics path="core/units/patrol_point/patrol_point" force="true"/>
     </AddFiles>
     <MissionElements>
         <!--Custom Elements-->
