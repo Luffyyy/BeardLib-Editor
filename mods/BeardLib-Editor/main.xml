@@ -30,6 +30,7 @@
 			<class file="ObjectivesManagerDialog.lua"/>
 			<class file="SelectListDialogValue.lua"/>
 			<class file="ContinentSettingsDialog.lua"/>
+			<class file="ObjectiveSettingsDialog.lua"/>
 		</classes>
 
 		<classes directory="Map">

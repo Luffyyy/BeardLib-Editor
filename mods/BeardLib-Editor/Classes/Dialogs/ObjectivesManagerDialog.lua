@@ -13,6 +13,7 @@ function ObjectivesManagerDialog:init(params, menu)
         items_size = 20,
     }, params)
     ObjectivesManagerDialog.super.init(self, p, menu)
+    self._settings = ObjectiveSettingsDialog:new(BLE._dialogs_opt)
     MenuUtils:new(self)
 end
 
@@ -44,7 +45,7 @@ function ObjectivesManagerDialog:_Show()
     end
     self._missing_units = {}
 	local objectives = self:DivGroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})
-	local add = self._menu:SqButton("Add", ClassClbk(self, "rename_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
+	local add = self._menu:SqButton("Add", ClassClbk(self, "edit_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
     
     self:TextBox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
@@ -55,27 +56,14 @@ function ObjectivesManagerDialog:_Show()
     self:load_objectvies()
 end
 
-function ObjectivesManagerDialog:rename_or_add_objective(objective)
-    BeardLibEditor.InputDialog:Show({title = "Objective Id", force = true, text = objective and objective.id or "", callback = function(name)
-        for _, o in ipairs(self._objectives) do
-            if o ~= objective and o.id == name then
-                BeardLibEditor.Utils:Notify("Error!", "Objective with the Id "..tostring(name).. " already exists!")
-                return
-            end
-        end
-        if not objective then
-            objective = {_meta = "objective", prio = 1, xp_weight = 1}
-            table.insert(self._objectives, objective)
-        end
+function ObjectivesManagerDialog:edit_or_add_objective(objective)
+    self._settings:Show({objective = objective, objectives = self._objectives, force = true, callback = function()
         self:remove_previous_objectives()
-        objective.id = name
-        objective.text = name
-        objective.description = name .. "_desc"
         self:save_and_reload()
     end})
 end
 
-function ObjectivesManagerDialog:remove_previous_objectives(objective)
+function ObjectivesManagerDialog:remove_previous_objectives()
     for _, objective in ipairs(self._objectives) do
         if objective._meta == "objective" and objective.id then
             managers.objectives._objectives[objective.id] = nil
@@ -116,8 +104,8 @@ function ObjectivesManagerDialog:load_objectvies()
         for _, objective in ipairs(self._objectives) do
             if objective._meta == "objective" then
                 local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
-                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, {184, 2, 48, 48})
-                obj:ImgButton("Rename", ClassClbk(self, "rename_or_add_objective", objective), nil, {66, 1, 48, 48})
+                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, Utils.EditorIcons.cross)
+                obj:ImgButton("Settings", ClassClbk(self, "edit_or_add_objective", objective), nil, Utils.EditorIcons.settings_gear)
             end
         end
     end

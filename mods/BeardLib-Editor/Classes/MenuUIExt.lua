@@ -9,12 +9,14 @@ Item.set_enabled = Item.SetEnabled
 Item.set_visible = Item.SetVisible
 
 local Slider = C.Slider
+
 function Slider:set_range(min, max)
 	self.min = min
 	self.max = max
 end
 
-local ItemExt = {}
+local color
+ItemExt = {}
 
 function ItemExt:ImgButton(name, callback, texture, rect, o)
 	local s = self:H()
@@ -77,17 +79,29 @@ function ItemExt:numberbox(...)
 	return self:NumberBox(ItemExt:Pasta2(...))
 end
 
+function ItemExt:textbox(...)
+	return self:TextBox(ItemExt:Pasta2(...))
+end
+
 function ItemExt:slider(...)
 	return self:Slider(ItemExt:Pasta2(...))
+end
+
+function ItemExt:divider(name, o)
+	color = color or BLE.Options:GetValue("AccentColor")
+	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = color, offset = {8, 4}}, o))
 end
 
 function ItemExt:group(name, o)
 	return self:Group(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
-function ItemExt:div_group(name, o)
+
+function ItemExt:divgroup(name, o)
+	color = color or BLE.Options:GetValue("AccentColor")
 	return self:DivGroup(table.merge({
 		name = name,
+		color = color,
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
@@ -121,15 +135,23 @@ function ItemExt:colorbox(name, callback, value, o)
 	return item
 end
 
+function ItemExt:GetItem(name)
+	return self:GetItem(name)
+end
+
 function ItemExt:add_funcs(clss, menu)
 	menu = menu or clss._menu
 	for n, func in pairs(ItemExt) do
-		clss[n] = ClassClbk(menu, n)
+		clss[n] = function(self, ...)
+			return menu[n](menu, ...)
+		end
 	end
 end
 
-for _, item in pairs(C) do
-	for n, func in pairs(ItemExt) do
-		item[n] = func
+for n, item in pairs(C) do
+	if n ~= "ContextMenu" then
+		for n, func in pairs(ItemExt) do
+			item[n] = item[n] or func
+		end
 	end
 end
