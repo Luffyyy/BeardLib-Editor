@@ -61,6 +61,7 @@ function WorldDef:is_world_unit(unit)
 	return unit:wire_data() or unit:ai_editor_data()
 end
 
+local patrol_point_unit = "core/units/patrol_point/patrol_point"
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	if not unit_id or unit_id <= 0 then
 		return
@@ -74,7 +75,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	local ad = unit:ai_editor_data()
 	if wd then
 		statics = managers.worlddefinition._world_data.wires
-	elseif ad then
+	elseif ad or unit:name() == patrol_point_unit:id() then
 		statics = managers.worlddefinition._world_data.ai
 	elseif not ud.instance then
 		statics = self._continent_definitions[old_continent]
@@ -279,7 +280,7 @@ function WorldDef:delete_unit(unit, keep_links)
 	local statics
 	if unit:wire_data() then
 		statics = self._world_data.wires
-	elseif unit:ai_editor_data() then
+	elseif unit:ai_editor_data() or unit == patrol_point_unit:id() then
 		statics = self._world_data.ai
 	elseif not ud.instance then
 		statics = self._continent_definitions[continent_name]
@@ -322,7 +323,7 @@ function WorldDef:add_unit(unit)
 	if unit:wire_data() then
 		managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
 		statics = managers.worlddefinition._world_data.wires
-	elseif unit:ai_editor_data() then
+	elseif unit:ai_editor_data() or unit:name() == patrol_point_unit:id() then
 		managers.worlddefinition._world_data.ai = managers.worlddefinition._world_data.ai or {}
 		statics = managers.worlddefinition._world_data.ai
 	else

@@ -53,6 +53,7 @@ function AiEditor:loaded_continents()
     end
 
     managers.ai_data:load_units(self._created_units or {})
+
     --self:_update_patrol_paths_list()
     --self:_update_motion_paths_list()
     --self:_update_settings()
@@ -192,6 +193,7 @@ function AiEditor:update_positions()
 end
 
 function AiEditor:set_unit_pos(item)
+    log('setting unit pos')
     local unit = self:selected_unit()
     local S = self:GetPart("static")
     if unit then
@@ -202,6 +204,10 @@ function AiEditor:set_unit_pos(item)
     end
     S:set_unit_data()
     self:save()
+end
+
+function AiEditor:unit_spawned(unit)
+    self:_add_patrol_point(unit)
 end
 
 function AiEditor:unit_deleted(unit)
@@ -311,15 +317,10 @@ function AiEditor:_draw_patrol_path(name, path, t, dt)
     if #path.points > 0 then
         for i, point in ipairs(path.points) do
             local to_unit = nil
-            --print_table(path)
             to_unit = i == #path.points and path.points[1].unit or path.points[i + 1].unit
 
             self._patrol_path_brush:set_color(Color.white:with_alpha(selected_path and 1 or 0.25))
-            if not point.unit or not to_unit then
-                log("--------------------")
-                log("point.unit", tostring(point.unit))
-                print_table(point)
-            end
+
             Application:draw_link(
                 {
                     g = 1,
@@ -400,7 +401,7 @@ function AiEditor:_select_patrol_point(unit)
     managers.editor:select_unit(unit)
 end
 
-function AiEditor:do_spawn_unit(unit_path, ud)
+--[[function AiEditor:do_spawn_unit(unit_path, ud)
     local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
     table.merge(unit:unit_data(), ud)
     ud = unit:unit_data()
@@ -416,17 +417,15 @@ function AiEditor:do_spawn_unit(unit_path, ud)
     table.insert(self._created_units, unit)
 
     self:build_menu()
-end
+end]]
 
 function AiEditor:_add_patrol_point(unit)
-    local path_points = managers.ai_data:all_patrol_paths()[path_name]
-
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
         managers.ai_data:add_patrol_point(self._selected_path, unit)
     end
 
     -- don't care if it is alive i guess
-    --table.insert(self._created_units, unit)
+    table.insert(self._created_units, unit)
 
     self:build_menu()
 end

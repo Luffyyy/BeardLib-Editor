@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<unit name="patrol_point" type="ai" slot="19">
+  <object file="core/units/patrol_point/patrol_point" />
+  <movers />
+  <dependencies />
+  <extensions>
+    <extension name="unit_data" class="ScriptUnitData" />
+  </extensions>
+  <sounds>
+    <default_soundsource />
+  </sounds>
+</unit>
