@@ -16,7 +16,7 @@ end
 
 local ItemExt = {}
 
-function Item:ImgButton(name, callback, texture, rect, o)
+function ItemExt:ImgButton(name, callback, texture, rect, o)
 	local s = self:H()
 	return self:ImageButton(table.merge({
 		name = name,
@@ -32,7 +32,7 @@ function Item:ImgButton(name, callback, texture, rect, o)
 	}, o))
 end
 
-function Item:SButton(name, callback, o)    
+function ItemExt:SButton(name, callback, o)    
 	return self:Button(table.merge({
 		name = name,
 		text = string.pretty2(name),
@@ -47,7 +47,7 @@ function Item:SButton(name, callback, o)
 	}, o))
 end
 
-function Item:SqButton(name, callback, o)    
+function ItemExt:SqButton(name, callback, o)    
 	local s = (o and o.size) or self.items_size
 	o = o or {}
 	o.min_width = s
@@ -55,6 +55,77 @@ function Item:SqButton(name, callback, o)
 	o.max_height = s
 	o.max_width = s
 	return self:SButton(name, callback, o)
+end
+
+function ItemExt:Pasta1(name, callback, o)
+	return table.merge({name = name, on_callback = callback, text = string.pretty2(name)}, o)
+end
+
+function ItemExt:Pasta2(name, callback, value, o)
+	return table.merge({name = name, on_callback = callback, text = string.pretty2(name), value = value}, o)
+end
+
+function ItemExt:tickbox(...)
+	return self:Toggle(ItemExt:Pasta2(...))
+end
+
+function ItemExt:button(...)
+	return self:Button(ItemExt:Pasta1(...))
+end
+
+function ItemExt:numberbox(...)
+	return self:NumberBox(ItemExt:Pasta2(...))
+end
+
+function ItemExt:slider(...)
+	return self:Slider(ItemExt:Pasta2(...))
+end
+
+function ItemExt:group(name, o)
+	return self:Group(table.merge({name = name, text = string.pretty2(name)}, o))
+end
+
+function ItemExt:div_group(name, o)
+	return self:DivGroup(table.merge({
+		name = name,
+		text = string.pretty2(name),
+		auto_height = true,
+		background_visible = false
+	}))
+end
+
+function ItemExt:combobox(name, callback, items, value, o)
+	return self:ComboBox(table.merge({
+		name = name,
+		text = string.pretty2(name),
+		value = value,
+		items = items,
+		bigger_context_menu = true,
+		on_callback = callback,
+	}, o))
+end
+
+function ItemExt:colorbox(name, callback, value, o)
+	local item = self:ColorTextBox(table.merge({
+		name = name,
+		text = string.pretty2(name),
+		on_callback = callback,
+		value = value or Color.white
+	}, o))
+	if o and o.ret_vec then
+		function item:Value()
+			local v = BeardLib.Items.ColorTextBox.Value(self)
+			return Vector3(v.r, v.g, v.b)
+		end
+	end
+	return item
+end
+
+function ItemExt:add_funcs(clss, menu)
+	menu = menu or clss._menu
+	for n, func in pairs(ItemExt) do
+		clss[n] = ClassClbk(menu, n)
+	end
 end
 
 for _, item in pairs(C) do

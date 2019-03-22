@@ -30,7 +30,12 @@ function Part:init(parent, menu, name, opt, mopt)
         title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
     if opt.make_tabs then
-        self._tabs = self:Menu("Tabs", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, scrollbar = false}, opt))
+        self._tabs = self:Menu("Tabs", table.merge({
+            align_method = "centered_grid",
+            offset = 0,
+            inherit_values = {offset = {6, 4}},
+            scrollbar = false,
+        }, opt.tabs_opt))
         opt.make_tabs(self._tabs)
         title_h = title_h + self._tabs:OuterHeight()
     end

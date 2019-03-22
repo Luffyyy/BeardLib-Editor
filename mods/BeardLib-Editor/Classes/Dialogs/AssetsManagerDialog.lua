@@ -263,6 +263,31 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
     end
 end
 
+function AssetsManagerDialog:clean_add_asset_tbl(tbl)
+    local new_tbl = {}
+    for k, v in pairs(tbl) do
+        if not tonumber(k) and type(v) ~= "table" then
+            new_tbl[k] = v
+        end
+    end
+
+    for _, asset in pairs(tbl) do
+        if type(asset) == "table" and asset._meta then
+            local exists
+            for _, v in ipairs(new_tbl) do
+                if type(v) == "table" and asset._meta == v._meta and asset.path == v.path then
+                    exists = true
+                    break
+                end
+            end
+            if not exists then
+                table.insert(new_tbl, asset)
+            end
+        end
+    end
+    return new_tbl
+end
+
 function AssetsManagerDialog:clean_add_xml()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
@@ -278,8 +303,8 @@ function AssetsManagerDialog:clean_add_xml()
         end
     end
 
-    for k,v in pairs(add) do
-        if tonumber(k) and type(v) == "table" and v._meta then
+    for k,v in ipairs(add) do
+        if type(v) == "table" and v._meta then
             local exists
             for _, tbl in pairs(new_add) do
                 if type(tbl) == "table" and tbl._meta == v._meta and ((tbl.path and tbl.path == v.path) or (tbl.name and tbl.name == v.name)) then
@@ -288,8 +313,8 @@ function AssetsManagerDialog:clean_add_xml()
                 end
             end
             if not exists then
-                if not v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. v._meta) then
-                    table.insert(new_add, v)
+                if not v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. (v.type or v._meta)) then
+                    table.insert(new_add, self:clean_add_asset_tbl(v))
                 end
             end
         end
@@ -332,9 +357,10 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
                     break
                 end
             end
+            local clean = self:clean_add_asset_tbl(v)
             if not exists then
-                table.insert(add, v)
-                table.insert(to_copy, v)
+                table.insert(add, clean)
+                table.insert(to_copy, clean)
             end
         end
         local function save()

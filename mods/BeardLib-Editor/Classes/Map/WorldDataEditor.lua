@@ -84,13 +84,7 @@ function WData:update_positions()
 end
 
 function WData:make_tabs(tabs)
-    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "fixes"}
-    self._tabs = self:Menu("Managers", {
-        align_method = "centered_grid",
-        offset = 0,
-        background_color = BLE.Options:GetValue("BackgroundColor"),
-        background_visible = true
-    })
+    local managers = {"main", "environment", "sound", "wires", "portal", "groups"}
     self._current_layer = "main"
     for i, name in pairs(managers) do
         self._tabs:SButton(name, ClassClbk(self, "build_menu", name:lower()), {
@@ -151,9 +145,9 @@ function WData:build_default_menu()
 		end
     end
 
-    local other = self:DivGroup("Other", {align_method = "centered_grid", enabled = BeardLib.current_level ~= nil})
-    other:SButton("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
-    other:SButton("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
+    local mng = self:DivGroup("Managers", {align_method = "centered_grid", enabled = BeardLib.current_level ~= nil})
+    mng:SButton("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
+    mng:SButton("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
 	self:reset()
     self:build_continents()
@@ -161,15 +155,6 @@ end
 
 function WData:LoadFromExtract(ext, asset)
     self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}) 
-end
-
-function WData:remove_brush_layer()
-    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
-        self:data().brush = nil
-        MassUnitManager:delete_all_units()
-        self:save()
-        self:GetPart("opt"):save()
-    end)
 end
 
 function WData:button_pos(near, item)
@@ -214,14 +199,6 @@ end
 
 function WData:open_continent_settings(continent)
     self._continent_settings:Show({continent = continent, callback = callback(self, self, "build_default_menu")})
-end
-
-function WData:remove_brush_layer()
-    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
-        self:data().brush = nil
-        MassUnitManager:delete_all_units()
-        self:save()
-    end)
 end
 
 function WData:remove_continent(continent)
@@ -466,17 +443,6 @@ end
 function WData:build_main_layer_menu()
     self:build_default_menu()
 end
-
-function WData:build_fixes_layer_menu()
-	local fixes = self:Divider("Fixes", {text = "Quick fixes for common issues"})
-    if self._assets_manager then
-        self:Button("Clean add.xml", ClassClbk(self._assets_manager, "clean_add_xml"), {help = "This removes unused files from the add.xml and cleans duplicates"})
-    end
-    self:Button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
-        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
-    })
-end
-
 
 function WData:build_wires_layer_menu()
     local existing_wires = self:Group("Existing")
