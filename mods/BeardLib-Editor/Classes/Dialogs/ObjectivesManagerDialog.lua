@@ -104,8 +104,8 @@ function ObjectivesManagerDialog:load_objectvies()
         for _, objective in ipairs(self._objectives) do
             if objective._meta == "objective" then
                 local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
-                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, Utils.EditorIcons.cross)
-                obj:ImgButton("Settings", ClassClbk(self, "edit_or_add_objective", objective), nil, Utils.EditorIcons.settings_gear)
+                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, BLE.Utils:GetIcon("cross"))
+                obj:ImgButton("Settings", ClassClbk(self, "edit_or_add_objective", objective), nil, BLE.Utils:GetIcon("settings_gear"))
             end
         end
     end

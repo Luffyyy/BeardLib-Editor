@@ -31,6 +31,10 @@ Utils.EditorIcons = {
     ["settings_gear"] = {385, 385, 115, 115},
 }
 
+function Utils:GetIcon(name)
+    return Utils.EditorIcons[name]
+end
+
 local MDL = Idstring("model")
 local static
 local editor_menu
