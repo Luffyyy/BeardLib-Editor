@@ -14,18 +14,20 @@ end
 
 function ContinentSettingsDialog:SetName(item)
     local name = item:Value()
+    local warn = self:GetItem("NameWarning")
+    if alive(warn) then
+        warn:Destroy()
+    end
+    
     self._new_name = nil
+    
     if name == "" then
-        self:Divider("NameWarning", {text = "Warning: Continent name cannot be empty, name will not be saved."})
+        self:Divider("NameWarning", {text = "Warning: Continent name cannot be empty, name will not be saved.", index = 2})
     elseif name == "environments" or string.begins(name, " ") then
-        self:Divider("NameWarning", {text = "Warning: Continent name cannot begin with a space or be named as an existing level folder, name will not be saved."})
+        self:Divider("NameWarning", {text = "Warning: Continent name cannot begin with a space or be named as an existing level folder, name will not be saved.", index = 2})
     elseif managers.worlddefinition._continent_definitions[name] then
-        self:Divider("NameWarning", {text = "Warning: Continent name already exists, name will not be saved."})
+        self:Divider("NameWarning", {text = "Warning: Continent name already exists, name will not be saved.", index = 2})
     else
-        local warn = self:GetItem("NameWarning")
-        if alive(warn) then
-            warn:Destroy()
-        end
         self._new_name = name
     end
 end
