@@ -84,7 +84,7 @@ function WData:update_positions()
 end
 
 function WData:make_tabs(tabs)
-    local managers = {"main", "environment", "sound", "wires", "portal", "groups"}
+    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai"}
     self._current_layer = "main"
     for i, name in pairs(managers) do
         self._tabs:SButton(name, ClassClbk(self, "build_menu", name:lower()), {
@@ -97,7 +97,12 @@ end
 
 function WData:build_default_menu()
     self.super.build_default_menu(self)
-    self.layers = self.layers or {environment = EnvironmentLayerEditor:new(self), sound = SoundLayerEditor:new(self), portal = PortalLayerEditor:new(self)}
+    self.layers = self.layers or {
+        environment = EnvironmentLayerEditor:new(self), 
+        sound = SoundLayerEditor:new(self), 
+        portal = PortalLayerEditor:new(self),
+        ai = AiLayerEditor:new(self),
+    }
 
     local alert_opt = {divider_type = true, position = "RightTop", w = 24, h = 24}
     local function make_alert(text)
@@ -507,7 +512,7 @@ function WData:build_groups_layer_menu()
     end
 end
 
-function WData:build_ai_layer_menu()    
+--[[function WData:build_ai_layer_menu()    
     local states = {
         "empty",
         "airport",
@@ -520,7 +525,7 @@ function WData:build_ai_layer_menu()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
     self:Button("SpawnNavSurface", callback(self, self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
     self:Button("SpawnCoverPoint", callback(self, self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
-end
+end]]
 
 function WData:reset()
     for _, editor in pairs(self.layers) do
