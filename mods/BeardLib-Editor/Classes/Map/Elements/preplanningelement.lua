@@ -23,14 +23,14 @@ function EditorPrePlanning:_build_panel()
 	    BeardLibEditor.SelectDialog:Show({
 	        selected_list = self._element.values.allowed_types,
 	        list = types,
-	        callback = callback(self, self, "_data_updated", "allowed_types")
+	        callback = ClassClbk(self, "_data_updated", "allowed_types")
 	    })		
 	end)	
 	self:Button("SelectDisablesTypes", function()
 	    BeardLibEditor.SelectDialog:Show({
 	        selected_list = self._element.values.disables_types,
 	        list = types,
-	        callback = callback(self, self, "_data_updated", "disables_types")
+	        callback = ClassClbk(self, "_data_updated", "disables_types")
 	    })		
 	end)
 end

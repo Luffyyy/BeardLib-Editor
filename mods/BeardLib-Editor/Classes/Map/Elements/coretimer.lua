@@ -18,7 +18,7 @@ end
 
 function EditorTimer:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("digital_gui_unit_ids", nil, nil, {text = "Timer Units", check_unit = callback(self, self, "check_unit")})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, nil, {text = "Timer Units", check_unit = ClassClbk(self, "check_unit")})
 	self:NumberCtrl("timer", {floats = 1, min = 0, help = "Specifies how long time (in seconds) to wait before execute"})
 	self:Text("Creates a timer element. When the timer runs out, execute will be run. The timer element can be operated on using the timer operator element")
 end

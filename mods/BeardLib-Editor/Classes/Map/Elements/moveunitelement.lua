@@ -68,7 +68,7 @@ function EditorMoveUnit:_build_panel()
     self:BooleanCtrl("remember_unit_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})
-    self:AxisControls(callback(self, self, "set_element_position"), {no_rot = true, group = transform}, "EndPosition")
+    self:AxisControls(ClassClbk(self, "set_element_position"), {no_rot = true, group = transform}, "EndPosition")
     self:Button("ResetEndPosition", function()
         self._element.values.end_pos = self._element.values.position
         self:update_positions()
@@ -149,7 +149,7 @@ function EditorRotateUnit:_build_panel()
     self:BooleanCtrl("remember_unit_rot", {text = "Remember Unit Rotation"})
     local end_rot = self._element.values.end_rot or self._element.values.displacement
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the rotation"})
-    self:AxisControls(callback(self, self, "set_element_position"), {no_pos = true, group = transform}, "EndRotation")
+    self:AxisControls(ClassClbk(self, "set_element_position"), {no_pos = true, group = transform}, "EndRotation")
     self:Button("ResetEndRotation", function()
         self._element.values.end_rot = self._element.values.rotation
 		self:update_positions()

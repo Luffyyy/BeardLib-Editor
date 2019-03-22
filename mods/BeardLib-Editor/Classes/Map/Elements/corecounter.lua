@@ -22,7 +22,7 @@ end
 
 function EditorCounter:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Timer Units", check_unit = callback(self, self, "check_unit")})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Timer Units", check_unit = ClassClbk(self, "check_unit")})
 	self:NumberCtrl("counter_target", {floats = 0, min = 0, help = "Specifies how many times the counter should be executed before running its on executed"})
 	self:Text("Units with number gui extension can have their value updated from a counter.")
 end

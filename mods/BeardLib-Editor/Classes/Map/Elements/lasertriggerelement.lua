@@ -292,9 +292,9 @@ end
 
 function EditorLaserTrigger:fill_connections_box()
 	self._connections_box:ClearItems()
-	self:Button("Deselect", callback(self, self, "select_connection"), {group = self._connections_box})
+	self:Button("Deselect", ClassClbk(self, "select_connection"), {group = self._connections_box})
 	for i, connection in ipairs(self._element.values.connections) do
-		self:Button("Connection #" .. tostring(i), callback(self, self, "select_connection"), {group = self._connections_box, selected_index = i})
+		self:Button("Connection #" .. tostring(i), ClassClbk(self, "select_connection"), {group = self._connections_box, selected_index = i})
 	end
 end
 
@@ -321,10 +321,10 @@ function EditorLaserTrigger:update_selection(item)
 	self._selected_connection_box:ClearItems()
 	if self._selected_connection then
 		local connection = self._element.values.connections[self._selected_connection]
-    	static:AxisControls(callback(self, self, "set_connection_from_position"), {
+    	static:AxisControls(ClassClbk(self, "set_connection_from_position"), {
 			group = self._selected_connection_box, translate_text = "To Position", rotate_text = "To Rotation"
 		}, "selected_connection_from")
-    	static:AxisControls(callback(self, self, "set_connection_to_position"), {
+    	static:AxisControls(ClassClbk(self, "set_connection_to_position"), {
 			group = self._selected_connection_box, translate_text = "From Position", rotate_text = "From Rotation"
 		}, "selected_connection_to")
 		local from = self._element.values.points[connection.from]
@@ -353,7 +353,7 @@ end
 function EditorLaserTrigger:_build_panel()
 	self:_create_panel()
 	self:Text("Editing points:\nLMB to create/remove/place a point\nRMB to connect points\nMMB to move an existing point")
-	self:Toggle("EditPoints", callback(self, self, "set_edit_points"), false, {group = self._class_group})
+	self:Toggle("EditPoints", ClassClbk(self, "set_edit_points"), false, {group = self._class_group})
 	self._connections_box = self:Group("Connections", {group = self._class_group, max_h = 400, scrollbar = true})
 	self._selected_connection_box = self:Group("SelectedConnection", {group = self._class_group})
 	self:NumberCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval"})

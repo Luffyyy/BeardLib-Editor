@@ -18,7 +18,7 @@ end
 
 function EditorStopwatch:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Digital GUI Units", check_unit = callback(self, self, "check_unit")})
+	self:BuildUnitsManage("digital_gui_unit_ids", nil, self._draw.update_units, {text = "Digital GUI Units", check_unit = ClassClbk(self, "check_unit")})
 	self:Text("Creates a Stopwatch element. Continuously counts up once started until stopped or paused. Can be operated on using the StopwatchOperator element. Can be displayed on a digital gui.")
 end
 
@@ -130,7 +130,7 @@ function EditorStopwatchFilter:_build_panel()
 	self:BuildElementsManage("elements", nil, {"ElementCounter"})
 	self:ComboCtrl("needed_to_execute", {"all", "any"}, {help = "Select how many counter elements are needed to execute"})
 	self._value_ctrl = self:NumberCtrl("value", {help = "Specify value to trigger on.", enabled = self._element.values.Stopwatch_value_ids[1] == nil})
-	self:BuildElementsManage("Stopwatch_value_ids", nil, {"ElementStopwatch"}, callback(self, self, "set_Stopwatch_value"), {
+	self:BuildElementsManage("Stopwatch_value_ids", nil, {"ElementStopwatch"}, ClassClbk(self, "set_Stopwatch_value"), {
 		single_select = true,
 		text = "Stopwatch Element as value",
 		help = "Select a Stopwatch element as the value of this filter element"

@@ -181,7 +181,7 @@ function EditorInstanceSetParams:_build_from_params()
         elseif data.type == "special_objective_action" then
             value_ctrlr = self:ComboCtrl(name, clone(CopActionAct._act_redirects.SO), opt)
         end
-        local use = self:Toggle("use_"..name, callback(self, self, "_on_gui_toggle_use"), self._element.values.params[name] and true or false, {
+        local use = self:Toggle("use_"..name, ClassClbk(self, "_on_gui_toggle_use"), self._element.values.params[name] and true or false, {
             text = "Using Variable", value_ctrlr = value_ctrlr, var_name = name, help = "Toggle use of variable on/off", group = self._instance_menu
         })
         value_ctrlr:SetEnabled(use:Value())

@@ -144,7 +144,7 @@ function AssetsManagerDialog:show_assets()
         end
         local unused = type == UNIT and times == 0
         local color = not ready and Color.cyan or not loaded and Color.red or (unused and Color.yellow) or nil
-        self:Button(asset, callback(self, self, "set_unit_selected"), {
+        self:Button(asset, ClassClbk(self, "set_unit_selected"), {
 			asset_type = type,
             group = units,
             text = asset.."."..type.."("..(ready and times or "Copying")..")",
@@ -775,7 +775,7 @@ function AssetsManagerDialog:add_package(package)
     else
         BLE:log("[Warning] Something went wrong in AssetsManagerDialog:add_package_dialog")
     end
-    PackageManager:set_resource_loaded_clbk(Idstring(UNIT), callback(managers.sequence, managers.sequence, "clbk_pkg_manager_unit_loaded"))
+    PackageManager:set_resource_loaded_clbk(Idstring(UNIT), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
     project:save_main_xml(self._tbl._data)
     project:reload_mod(self._tbl._data.name)
     self:reload()

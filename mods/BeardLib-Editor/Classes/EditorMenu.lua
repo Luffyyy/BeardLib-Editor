@@ -9,9 +9,9 @@ function EditorMenu:init()
         auto_foreground = true,
         accent_color = accent_color,
         highlight_color = accent_color,
-		create_items = callback(self, self, "create_items"),
+		create_items = ClassClbk(self, "create_items"),
 	})
-	MenuCallbackHandler.BeardLibEditorMenu = callback(self, self, "set_enabled", true)
+	MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
     MenuHelperPlus:AddButton({
         id = "BeardLibEditorMenu",
         title = "BeardLibEditorMenu",
@@ -31,7 +31,7 @@ function EditorMenu:make_page(name, clbk, opt)
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))
     self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
-    self:Button(name, clbk or callback(self, self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
+    self:Button(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end

@@ -55,9 +55,9 @@ function Editor:init()
         allow_full_input = true,
         background_color = Color.transparent,
         accent_color = BLE.Options:GetValue("AccentColor"),
-        mouse_press = normal and callback(self, self, "mouse_pressed"),
-        mouse_release = normal and callback(self, self, "mouse_released"),
-        create_items = callback(self, self, "post_init"),
+        mouse_press = normal and ClassClbk(self, "mouse_pressed"),
+        mouse_release = normal and ClassClbk(self, "mouse_released"),
+        create_items = ClassClbk(self, "post_init"),
     })
 end
 
@@ -84,7 +84,7 @@ function Editor:post_init(menu)
     m.menu:build_tabs()
     m.world:Switch()
 
-    menu.mouse_move = callback(m.static, m.static, "mouse_moved")
+    menu.mouse_move = ClassClbk(m.static, "mouse_moved")
     if self._has_fix then
         m.menu:toggle_widget("move")
     end

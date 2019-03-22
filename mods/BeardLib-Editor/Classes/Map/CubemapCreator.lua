@@ -202,7 +202,7 @@ function CubemapCreator:next_cube()
 		self._parent:_set_fixed_resolution(Vector3(resolution, resolution, 0))
 
 		local params = {
-			done_callback = callback(self, self, "cube_map_done"),
+			done_callback = ClassClbk(self, "cube_map_done"),
 			name = cube.name,
 			simple_postfix = self._cubemap_params.simple_postfix,
 			source_path = self._temp_path,

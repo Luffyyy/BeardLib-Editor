@@ -26,7 +26,7 @@ function EnvEditor:load_included_environments()
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
-                    local env = self:Button(include.file, callback(self, self, "open_environment", file), {group = included, text = include.file})
+                    local env = self:Button(include.file, ClassClbk(self, "open_environment", file), {group = included, text = include.file})
                     env:ImgButton("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
                 end
             end
@@ -46,14 +46,14 @@ function EnvEditor:build_default_menu()
     if BeardLib.current_level then
         local included = self:DivGroup("IncludedEnvironments")
         self:load_included_environments()
-        included:GetToolbar():SButton("IncludeEnvironment", callback(self, self, "include_current_dialog"), {text = "Include current", offset = 0})
+        included:GetToolbar():SButton("IncludeEnvironment", ClassClbk(self, "include_current_dialog"), {text = "Include current", offset = 0})
     end
 		
     local quick = self:DivGroup("Quick actions")
-    self:Button("Browse", callback(self, self, "open_environment_dialog"), {group = quick})
-    self:Button("LoadGameDefault", callback(self, self, "database_load_env", "core/environments/default"), {group = quick})
-    self:Button("LoadCurrentDefault", callback(self, self, "database_load_env", env_path), {group = quick})
-    self:Button("Save", callback(self, self, "write_to_disk_dialog"), {group = quick})
+    self:Button("Browse", ClassClbk(self, "open_environment_dialog"), {group = quick})
+    self:Button("LoadGameDefault", ClassClbk(self, "database_load_env", "core/environments/default"), {group = quick})
+    self:Button("LoadCurrentDefault", ClassClbk(self, "database_load_env", env_path), {group = quick})
+    self:Button("Save", ClassClbk(self, "write_to_disk_dialog"), {group = quick})
     --SUN
     local sun = self:Group("Sun")
     self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", ret_vec = true, group = sun}))
@@ -549,7 +549,7 @@ function EnvEditor:open_environment(file)
 end
 
 function EnvEditor:open_environment_dialog()
-    BLE.FBD:Show({where = string.gsub(Application:base_path(), "\\", "/"), extensions = {"environment", "xml"}, file_click = callback(self, self, "open_environment")})
+    BLE.FBD:Show({where = string.gsub(Application:base_path(), "\\", "/"), extensions = {"environment", "xml"}, file_click = ClassClbk(self, "open_environment")})
 end
 
 function EnvEditor:write_to_disk(filepath)

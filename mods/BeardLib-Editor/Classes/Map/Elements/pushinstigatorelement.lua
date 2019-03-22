@@ -19,7 +19,7 @@ function EditorPushInstigator:_build_panel()
     self:BooleanCtrl("no_z")
     self:BooleanCtrl("forward")
     local vel = self._element.values.velocity
-    self:Slider("velocity_x", callback(self, self, "set_velocity"), vel.x or 0)
-    self:Slider("velocity_y", callback(self, self, "set_velocity"), vel.y or 0)
-    self:Slider("velocity_z", callback(self, self, "set_velocity"), vel.z or 0)     
+    self:Slider("velocity_x", ClassClbk(self, "set_velocity"), vel.x or 0)
+    self:Slider("velocity_y", ClassClbk(self, "set_velocity"), vel.y or 0)
+    self:Slider("velocity_z", ClassClbk(self, "set_velocity"), vel.z or 0)     
 end

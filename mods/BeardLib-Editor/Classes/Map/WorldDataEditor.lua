@@ -13,10 +13,10 @@ end
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:enable()
-    self:bind_opt("SpawnUnit", callback(self, self, "OpenSpawnUnitDialog"))
-    self:bind_opt("SpawnElement", callback(self, self, "OpenSpawnElementDialog"))
-    self:bind_opt("SelectUnit", callback(self, self, "OpenSelectUnitDialog"))
-    self:bind_opt("SelectElement", callback(self, self, "OpenSelectElementDialog"))
+    self:bind_opt("SpawnUnit", ClassClbk(self, "OpenSpawnUnitDialog"))
+    self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
+    self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
+    self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
 end
 
 function WData:loaded_continents()
@@ -129,23 +129,23 @@ function WData:build_default_menu()
     local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
-    spawn:SButton("Unit", callback(self, self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
-    spawn:SButton("Element", callback(self, self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
-    spawn:SButton("Instance", callback(self, self, "OpenSpawnInstanceDialog"))
-    spawn:SButton("Prefab", callback(self, self, "OpenSpawnPrefabDialog"))
+    spawn:SButton("Unit", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
+    spawn:SButton("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
+    spawn:SButton("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
+    spawn:SButton("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
 
     local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "centered_grid"})
-    select:SButton("Unit", callback(self, self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
-    select:SButton("Element", callback(self, self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
-    select:SButton("Instance", callback(self, self, "OpenSelectInstanceDialog", {}))
+    select:SButton("Unit", ClassClbk(self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
+    select:SButton("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
+    select:SButton("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
     if BeardLib.current_level then
         local load = self:DivGroup("Load", {align_method = "centered_grid"})
 		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "centered_grid"}) or nil
 		for _, ext in pairs(BLE.UsableAssets) do
-			load:SButton(ext, callback(self, self, "OpenLoadDialog", {ext = ext}))
+			load:SButton(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}))
 			if load_extract then
-				load_extract:SButton(ext, callback(self, self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}))
+				load_extract:SButton(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}))
 			end
 		end
     end
@@ -203,7 +203,7 @@ function WData:build_continents()
 end
 
 function WData:open_continent_settings(continent)
-    self._continent_settings:Show({continent = continent, callback = callback(self, self, "build_default_menu")})
+    self._continent_settings:Show({continent = continent, callback = ClassClbk(self, "build_default_menu")})
 end
 
 function WData:remove_continent(continent)
@@ -454,7 +454,7 @@ function WData:build_wires_layer_menu()
     managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
     for _, wire in pairs(managers.worlddefinition._world_data.wires) do
         local ud = wire.unit_data
-        self:Button(ud.name_id, callback(self._parent, self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
+        self:Button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
     end
     local loaded_wires = self:Group("Spawn")
     for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager:get_level_packages()})) do
@@ -497,7 +497,7 @@ function WData:build_groups_layer_menu()
                     for _, unit_id in pairs(editor_group.units) do
                         local unit = managers.worlddefinition:get_unit(unit_id)
                         if alive(unit) then 
-                            self:Button(tostring(unit_id), callback(self._parent, self._parent, "select_unit", unit), {group = group})
+                            self:Button(tostring(unit_id), ClassClbk(self._parent, "select_unit", unit), {group = group})
                         end
                     end
                 end
@@ -523,8 +523,8 @@ end
     self:ComboBox("GroupState", function(item)
         self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
-    self:Button("SpawnNavSurface", callback(self, self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
-    self:Button("SpawnCoverPoint", callback(self, self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    self:Button("SpawnNavSurface", ClassClbk(self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
+    self:Button("SpawnCoverPoint", ClassClbk(self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
 end]]
 
 function WData:reset()

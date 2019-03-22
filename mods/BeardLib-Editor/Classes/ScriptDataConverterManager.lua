@@ -68,7 +68,7 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
     local convert_data = convert_data or PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())
     local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
     if filename_dialog then
-        BeardLibEditor.InputDialog:Show({title = "File name", text = new_path, callback = callback(self, self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
+        BeardLibEditor.InputDialog:Show({title = "File name", text = new_path, callback = ClassClbk(self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
     else
         self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
     end
@@ -85,7 +85,7 @@ end
 
 function SConverter:MainItems()
     self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
-	self:Button("BackToShortcuts", callback(self, self, "BackToShortcuts"))
+	self:Button("BackToShortcuts", ClassClbk(self, "BackToShortcuts"))
 	self:Button("BrowseTo", ClassClbk(self, "OpenBrowseDialog"))
 end
 
@@ -94,14 +94,14 @@ function SConverter:RefreshFilesAndFolders()
     self:MainItems()
 	
     if not self.assets then
-        self:Button("OpenFolderInExplorer", callback(self, self, "OpenFolderInExplorer"))
+        self:Button("OpenFolderInExplorer", ClassClbk(self, "OpenFolderInExplorer"))
     end
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 0 then
         table.remove(up_level, #up_level)
 
         local up_string = table.concat(up_level, "/")
-        self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
+        self:Button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
 
     local holder = self:Menu("Holder", {align_method = "grid"})
@@ -112,7 +112,7 @@ function SConverter:RefreshFilesAndFolders()
     if folders then
         table.sort(folders)
         for i, folder in pairs(folders) do
-            self:Button(folder, callback(self, self, "FolderClick"), {text = folder, base_path = self.current_script_path .. folder .. "/", group = foldersgroup})
+            self:Button(folder, ClassClbk(self, "FolderClick"), {text = folder, base_path = self.current_script_path .. folder .. "/", group = foldersgroup})
         end
     end
     if files then
@@ -125,7 +125,7 @@ function SConverter:RefreshFilesAndFolders()
                 enabled = false
             end
             if table.contains(BeardLib.config.script_data_types, extension) or table.contains(BeardLib.config.script_data_formats, extension) then
-                self:Button(file, callback(self, self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled, group = filesgroup})
+                self:Button(file, ClassClbk(self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled, group = filesgroup})
             end
         end
     end
@@ -142,7 +142,7 @@ function SConverter:CreateScriptDataFileOption()
         table.remove(up_level, #up_level)
 
         local up_string = table.concat(up_level, "/")
-        self:Button("UpADirectory...", callback(self, self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
+        self:Button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
     if self.path_text then
         self.path_text:SetVisible(true)
@@ -160,14 +160,14 @@ function SConverter:CreateScriptDataFileOption()
     end
     self:ComboBox("From", nil, BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"), selected_from, {enabled = not self.assets})
     self:ComboBox("To", nil, BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"), selected_from)
-    self:Button("Convert", callback(self, self, "ConvertClick"))
-    self:Button("Cancel", callback(self, self, "FolderClick"), {base_path = self.current_script_path})
+    self:Button("Convert", ClassClbk(self, "ConvertClick"))
+    self:Button("Cancel", ClassClbk(self, "FolderClick"), {base_path = self.current_script_path})
 end
 
 function SConverter:CreateRootItems()
     self:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
-        self:Button(path_data.name, callback(self, self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
+        self:Button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
 end
 

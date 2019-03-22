@@ -49,7 +49,7 @@ function EditorSpawnEnemyGroup:_build_panel()
 			name = o,
 			text = o,
 			value = self._element.values.preferred_spawn_groups and table.contains(self._element.values.preferred_spawn_groups, o) or false,
-			on_callback = callback(self, self, "on_preferred_spawn_groups_checkbox_changed"),
+			on_callback = ClassClbk(self, "on_preferred_spawn_groups_checkbox_changed"),
 		})
 	end
 end

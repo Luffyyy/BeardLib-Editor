@@ -249,9 +249,9 @@ function EnvLayer:build_menu()
 	local environment_values = data.environment_values
 
     local environment_group = self:Group("Environment")
-    self:PathItem("Environment", callback(self, self, "change_environment"), environment_values.environment, "environment", true, nil, true, {group = environment_group})
+    self:PathItem("Environment", ClassClbk(self, "change_environment"), environment_values.environment, "environment", true, nil, true, {group = environment_group})
     local sky = self:Group("Sky")
-    self:Slider("SkyRotation", callback(self, self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360, group = sky})
+    self:Slider("SkyRotation", ClassClbk(self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360, group = sky})
     local colors = {
         "color_off",
         "color_payday",
@@ -292,29 +292,29 @@ function EnvLayer:build_menu()
 			end)
 		end
 	end, {group = environment_group})
-    self:ComboBox("ColorGrading", callback(self, self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
+    self:ComboBox("ColorGrading", ClassClbk(self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
 	
 	local utils = self:GetPart("world")
-    self:Button("SpawnEffect", callback(utils, utils, "BeginSpawning", self._effect_unit), {group = environment_group})
-    self:Button("SpawnEnvironmentArea", callback(utils, utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
+    self:Button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit), {group = environment_group})
+    self:Button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
 	
 	local dome_occ = self:Group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = self:Toggle("Draw", nil, false, {group = dome_occ})
     self:Button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit), {group = dome_occ})	
-	self:Button("Generate", callback(self, self, "generate_dome_occ", "all"), {group = dome_occ})
+	self:Button("Generate", ClassClbk(self, "generate_dome_occ", "all"), {group = dome_occ})
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
-    self:ComboBox("Resolution", callback(self, self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256), {group = dome_occ})
+    self:ComboBox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256), {group = dome_occ})
 	
 	local wind = self:Group("Wind")
     self._draw_wind = self:Toggle("Draw", nil, false, {group = wind})
-    self:Slider("WindDirection", callback(self, self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0, group = wind})
-    self:Slider("WindVariation", callback(self, self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0, group = wind})
-    self:Slider("TiltAngle", callback(self, self, "update_tilt_angle"), 0, {min = -90, max = 90, floats = 0, group = wind})
-    self:Slider("TiltVariation", callback(self, self, "update_tilt_variation"), 0, {min = -90, max = 90, floats = 0, group = wind})
-    self:Slider("Speed", callback(self, self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0, group = wind})
+    self:Slider("WindDirection", ClassClbk(self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0, group = wind})
+    self:Slider("WindVariation", ClassClbk(self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0, group = wind})
+    self:Slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), 0, {min = -90, max = 90, floats = 0, group = wind})
+    self:Slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), 0, {min = -90, max = 90, floats = 0, group = wind})
+    self:Slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0, group = wind})
     self._wind_text = self:Divider("Beaufort/WindDesc")
     self:update_wind_speed_labels()
-    self:Slider("SpeedVariation", callback(self, self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
+    self:Slider("SpeedVariation", ClassClbk(self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
 end
 
 function EnvLayer:build_unit_menu()
@@ -325,38 +325,38 @@ function EnvLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:Button("CreatePrefab", callback(S, S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
+        S:Button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
 		if unit:name() == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
             local effect = S:Group("Effect", {index = 1})
-		    S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = effect})
-		    self._unit_effects = S:PathItem("Effect", callback(self, self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true, nil, nil, {group = effect})
+		    S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = effect})
+		    self._unit_effects = S:PathItem("Effect", ClassClbk(self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true, nil, nil, {group = effect})
 		elseif unit:name() == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
             local ctrls = self._environment_area_ctrls
             local environment_area = S:Group("Environment Area", {index = 1})
-		    S:TextBox("Name", callback(self, self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = environment_area})
+		    S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = environment_area})
 
             local env = area:environment() or managers.viewport:game_default_environment()
-		    ctrls.environment_path = S:PathItem("AreaEnvironment", callback(self, self, "set_environment_area"), env, "environment", true, nil, nil, {
+		    ctrls.environment_path = S:PathItem("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", true, nil, nil, {
                 group = environment_area,
                 control_slice = 0.6,
             })
-		    ctrls.transition_time = S:NumberBox("FadeTime", callback(self, self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
+		    ctrls.transition_time = S:NumberBox("FadeTime", ClassClbk(self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
                 floats = 2,
                 group = environment_area
             })
-		    ctrls.prio = S:NumberBox("Prio", callback(self, self, "set_prio"), area:prio() or managers.environment_area:default_prio(), {group = environment_area})
-		    ctrls.permanent_cb = S:Toggle("Permanent", callback(self, self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT, {group = environment_area})
+		    ctrls.prio = S:NumberBox("Prio", ClassClbk(self, "set_prio"), area:prio() or managers.environment_area:default_prio(), {group = environment_area})
+		    ctrls.permanent_cb = S:Toggle("Permanent", ClassClbk(self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT, {group = environment_area})
 
 		    local env_filter = S:DivGroup("Filter", {align_method = "grid", group = environment_area})
 		    local filter_count = 0
 		    local filter_map = managers.viewport:get_predefined_environment_filter_map()
 		    local filter_list = area:filter_list()
 		    for name in table.sorted_map_iterator(managers.viewport:get_predefined_environment_filter_map()) do
-		        ctrls.env_filter_cb_map[name] = S:Toggle(name, callback(self, self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {
+		        ctrls.env_filter_cb_map[name] = S:Toggle(name, ClassClbk(self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {
                     group = env_filter, size_by_text = true
                 })
 		    end

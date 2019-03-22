@@ -47,7 +47,7 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
     local opt = {group = self._list_items_menu, offset = 4, text_offset_y = 0}
     local item
     if self._single_select then
-        item = self:Toggle(name, callback(self, self, "ToggleClbk", value), selected, opt)
+        item = self:Toggle(name, ClassClbk(self, "ToggleClbk", value), selected, opt)
     else
         if selected then
             opt.value = false
@@ -55,13 +55,13 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
             opt.foreground_highlight = false            
             opt.auto_foreground = false
             opt.can_be_ticked = false
-            item = self:Button("- "..name, callback(self, self, "ToggleClbk", value), opt)
+            item = self:Button("- "..name, ClassClbk(self, "ToggleClbk", value), opt)
         else
             opt.value = true
             opt.foreground_highlight = false
             opt.auto_foreground = false
             opt.can_be_unticked = false
-            item = self:Button("+ "..name, callback(self, self, "ToggleClbk", value), opt)
+            item = self:Button("+ "..name, ClassClbk(self, "ToggleClbk", value), opt)
         end                
     end
 
@@ -72,15 +72,15 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
 	end
     if self._tbl.values_name then
 	    if tonumber(v) then
-	        self:NumberBox("", callback(self, self, "ValueClbk", value), v, opt)
+	        self:NumberBox("", ClassClbk(self, "ValueClbk", value), v, opt)
         elseif type(v) == "boolean" then
-            self:Toggle("", callback(self, self, "ValueClbk", value), v, opt)
+            self:Toggle("", ClassClbk(self, "ValueClbk", value), v, opt)
 	    elseif v then
             if self._tbl.combo_items_func then
                 local items = self._tbl.combo_items_func(name, value)
-                self:ComboBox("", callback(self, self, "ValueClbk", value), items, table.get_key(items, v) or v, opt)
+                self:ComboBox("", ClassClbk(self, "ValueClbk", value), items, table.get_key(items, v) or v, opt)
             else
-	           self:TextBox("", callback(self, self, "ValueClbk", value), v, opt)
+	           self:TextBox("", ClassClbk(self, "ValueClbk", value), v, opt)
             end
 	    else
 	        self:Divider("...", opt)

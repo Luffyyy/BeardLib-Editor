@@ -8,9 +8,9 @@ function UpperMenu:init(parent, menu)
         {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
         {name = "env", rect = {15, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
-        {name = "save", rect = {260, 385, 115, 115}, callback = callback(self, self, "save"), enabled = normal},
-        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = callback(self, self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
-        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = callback(self, self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
+        {name = "save", rect = {260, 385, 115, 115}, callback = ClassClbk(self, "save"), enabled = normal},
+        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
+        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
     }
     local w = 300
     self._menu = menu:Menu({
@@ -55,7 +55,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         is_page = not clbk,
         enabled = enabled,
         cannot_be_enabled = enabled == false,
-        on_callback = callback(self, self, "select_tab", clbk or false),
+        on_callback = ClassClbk(self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
         w = self._menu:W() / #self._tabs,
         h = self._menu:H(),

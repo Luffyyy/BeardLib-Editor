@@ -15,13 +15,13 @@ function Static:init(parent, menu)
 end
 
 function Static:enable()
-    self:bind_opt("DeleteSelection", callback(self, self, "delete_selected_dialog"))
-    self:bind_opt("CopyUnit", callback(self, self, "CopySelection"))
-    self:bind_opt("PasteUnit", callback(self, self, "Paste"))
-    self:bind_opt("TeleportToSelection", callback(self, self, "KeyFPressed"))
+    self:bind_opt("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    self:bind_opt("CopyUnit", ClassClbk(self, "CopySelection"))
+    self:bind_opt("PasteUnit", ClassClbk(self, "Paste"))
+    self:bind_opt("TeleportToSelection", ClassClbk(self, "KeyFPressed"))
     local menu = self:GetPart("menu")
-    self:bind_opt("ToggleRotationWidget", callback(menu, menu, "toggle_widget", "rotation"))
-    self:bind_opt("ToggleMoveWidget", callback(menu, menu, "toggle_widget", "move"))
+    self:bind_opt("ToggleRotationWidget", ClassClbk(menu, "toggle_widget", "rotation"))
+    self:bind_opt("ToggleMoveWidget", ClassClbk(menu, "toggle_widget", "move"))
 end
 
 function Static:mouse_pressed(button, x, y)
@@ -151,11 +151,11 @@ end
 function Static:build_quick_buttons(cannot_be_saved)
 	self:SetTitle("Selection")
     local quick_buttons = self:Group("QuickButtons")
-    self:Button("Deselect", callback(self, self, "deselect_unit"), {group = quick_buttons})
-    self:Button("DeleteSelection", callback(self, self, "delete_selected_dialog"), {group = quick_buttons})
+    self:Button("Deselect", ClassClbk(self, "deselect_unit"), {group = quick_buttons})
+    self:Button("DeleteSelection", ClassClbk(self, "delete_selected_dialog"), {group = quick_buttons})
     if not cannot_be_saved then
-        self:Button("CreatePrefab", callback(self, self, "add_selection_to_prefabs"), {group = quick_buttons})
-        self:Button("AddRemovePortal", callback(self, self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = true})
+        self:Button("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"), {group = quick_buttons})
+        self:Button("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = true})
         local group = self:Group("Group", {visible = false}) --lmao
 		self:build_group_options()
     end
@@ -185,11 +185,11 @@ function Static:build_group_options()
     if can_group then
         if self._selected_group then
             self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
-            self:TextBox("GroupName", callback(self, self, "set_group_name"), self._selected_group.name, {group = group})
-            self:Button("UngroupUnits", callback(self, self, "remove_group"), {group = group})
+            self:TextBox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name, {group = group})
+            self:Button("UngroupUnits", ClassClbk(self, "remove_group"), {group = group})
         else
-            self:Button("AddToGroup", callback(self, self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"}) 
-            self:Button("GroupUnits", callback(self, self, "add_group"), {group = group})
+            self:Button("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"}) 
+            self:Button("GroupUnits", ClassClbk(self, "add_group"), {group = group})
         end
     end
 end
@@ -199,18 +199,18 @@ function Static:build_unit_editor_menu()
     self:SetTitle("Selection")
     local other = self:Group("Main")    
     self:build_positions_items()
-    self:TextBox("Name", callback(self, self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
-	self:TextBox("Id", callback(self, self, "set_unit_data"), nil, {group = other, enabled = false})
-	self:PathItem("UnitPath", callback(self, self, "set_unit_data"), nil, "unit", true, function(unit)
+    self:TextBox("Name", ClassClbk(self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
+	self:TextBox("Id", ClassClbk(self, "set_unit_data"), nil, {group = other, enabled = false})
+	self:PathItem("UnitPath", ClassClbk(self, "set_unit_data"), nil, "unit", true, function(unit)
 		local t = Utils:GetUnitType(unit)
 		return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
     end, false, {group = other})
-    self:ComboBox("Continent", callback(self, self, "set_unit_data"), self._parent._continents, 1, {group = other})
-	self:Toggle("Enabled", callback(self, self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
-    self:Toggle("HideOnProjectionLight", callback(self, self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableShadows", callback(self, self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableCollision", callback(self, self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableOnAIGraph", callback(self, self, "set_unit_data"), false, {group = other})
+    self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), self._parent._continents, 1, {group = other})
+	self:Toggle("Enabled", ClassClbk(self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
+    self:Toggle("HideOnProjectionLight", ClassClbk(self, "set_unit_data"), false, {group = other})
+    self:Toggle("DisableShadows", ClassClbk(self, "set_unit_data"), false, {group = other})
+    self:Toggle("DisableCollision", ClassClbk(self, "set_unit_data"), false, {group = other})
+    self:Toggle("DisableOnAIGraph", ClassClbk(self, "set_unit_data"), false, {group = other})
     self:build_extension_items()
 end
 
@@ -508,7 +508,7 @@ function Static:build_group_links(unit)
     
     local editor_groups = self:get_groups_from_unit(unit)
     for _, editor_group in pairs(editor_groups) do
-        create_link(editor_group.name, unit:unit_data().unit_id, group, callback(self, self, "select_group", editor_group))
+        create_link(editor_group.name, unit:unit_data().unit_id, group, ClassClbk(self, "select_group", editor_group))
     end
 
     local group_buttons = self:GetItem("Group")
@@ -516,7 +516,7 @@ function Static:build_group_links(unit)
         group:Destroy()
 	else
 		group_buttons:SetVisible(true)
-		self:Button("RemoveFromGroup", callback(self, self, "open_addremove_group_dialog", true), {group = group_buttons})
+		self:Button("RemoveFromGroup", ClassClbk(self, "open_addremove_group_dialog", true), {group = group_buttons})
     end
 end
 
@@ -786,7 +786,7 @@ end
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
 function Static:select_unit(mouse2)
-    local rays = self._parent:select_unit_by_raycast(self._parent._editor_all, callback(self, self, "check_unit_ok"))
+    local rays = self._parent:select_unit_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
     self:recalc_all_locals()
     if rays then
         for _, ray in pairs(rays) do
@@ -966,7 +966,7 @@ function Static:build_links(id, match, element)
                 for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
                     local linking_from = link.location
                     linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                    create_link(unit_link_text(ud, linking_from), id, linking_group, callback(self, self, "set_selected_unit", unit))               
+                    create_link(unit_link_text(ud, linking_from), id, linking_group, ClassClbk(self, "set_selected_unit", unit))               
                 end
             end
         end
@@ -1018,7 +1018,7 @@ function Static:delete_selected_dialog(item)
     if not self:selected_unit() then
         return
     end
-    Utils:YesNoQuestion("This will delete the selection", callback(self, self, "delete_selected")) 
+    Utils:YesNoQuestion("This will delete the selection", ClassClbk(self, "delete_selected")) 
 end
 
 function Static:update(t, dt)

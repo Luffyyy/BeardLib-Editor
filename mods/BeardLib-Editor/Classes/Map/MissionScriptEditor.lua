@@ -84,10 +84,10 @@ function MissionScriptEditor:_create_panel()
 	local element = self._element.class:gsub("Element", "") .. ""
 	self._class_group = self:Group(element) 
 	SE:SetTitle(element)
-	self:Button("DeselectElement", callback(self, self, "deselect_element"), {group = quick_buttons})    
-	self:Button("DeleteElement", callback(SE, SE, "delete_selected_dialog"), {group = quick_buttons})
-    self:Button("CreatePrefab", callback(SE, SE, "add_selection_to_prefabs"), {group = quick_buttons})
-	self:Button("ExecuteElement", callback(managers.mission, managers.mission, "execute_element", self._element), {group = quick_buttons})
+	self:Button("DeselectElement", ClassClbk(self, "deselect_element"), {group = quick_buttons})    
+	self:Button("DeleteElement", ClassClbk(SE, "delete_selected_dialog"), {group = quick_buttons})
+    self:Button("CreatePrefab", ClassClbk(SE, "add_selection_to_prefabs"), {group = quick_buttons})
+	self:Button("ExecuteElement", ClassClbk(managers.mission, "execute_element", self._element), {group = quick_buttons})
 	if self.test_element then
 		self:Button("TestElement", ClassClbk(self, "test_element"), {
 				text = "Start Testing Element",
@@ -106,7 +106,7 @@ function MissionScriptEditor:_create_panel()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
     rot = type(rot) == "number" and Rotation() or rot
-    SE:AxisControls(callback(self, self, "set_element_position"), {group = transform})
+    SE:AxisControls(ClassClbk(self, "set_element_position"), {group = transform})
     self:update_positions(pos, rot)
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
@@ -153,7 +153,7 @@ function MissionScriptEditor:update_positions(pos, rot)
 end
 
 function MissionScriptEditor:add_draw_units(draw)
-	draw.update_units = draw.update_units or callback(self, self, "update_draw_units", draw)
+	draw.update_units = draw.update_units or ClassClbk(self, "update_draw_units", draw)
 	draw.update_units()
 	draw.units = draw.units or {}
 	table.insert(self._draw_units, draw)
@@ -380,7 +380,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenUnitsManageDialog", {
+	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenUnitsManageDialog", {
 		value_name = value_name,
 		update_clbk = update_clbk, 
 		check_unit = opt.check_unit,
@@ -396,7 +396,7 @@ function MissionScriptEditor:BuildInstancesManage(value_name, table_data, update
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenInstancesManageDialog", {
+	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenInstancesManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk, 
 		table_data = table_data
@@ -407,7 +407,7 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", callback(self, self, "OpenElementsManageDialog", {
+	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk,
 		single_select = opt.single_select,
@@ -530,7 +530,7 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 		combo_free_typing = true,
         allow_multi_insert = NotNil(params.allow_multi_insert, true),
         not_table = params.not_table,
-        callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
+        callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
     })
     self:update_element()
 end
@@ -593,7 +593,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		single_select = params.single_select,
 		combo_free_typing = true,
 		not_table = params.not_table,
-		callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
+		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()
 end
@@ -633,7 +633,7 @@ function MissionScriptEditor:OpenInstancesManageDialog(params)
 		combo_free_typing = true,
 		values_name = params.table_data and params.table_data.values_name,
 		combo_items_func = params.table_data and params.table_data.combo_items_func,
-		callback = params.callback or callback(self, self, "ManageElementIdsClbk", params)
+		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()
 end
@@ -671,33 +671,33 @@ end
 function MissionScriptEditor:ListSelector(value_name, list, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local data = self:ItemData(opt)
-	self:Button(value_name, callback(self, self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
+	self:Button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
 end
 
 function MissionScriptEditor:NumberCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:NumberBox(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return self:NumberBox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:BooleanCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:Toggle(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return self:Toggle(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:StringCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:TextBox(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return self:TextBox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return self:ComboBox(value_name, callback(self, self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
+	return self:ComboBox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:PathItem(value_name, callback(self, self, "set_element_data"), self:ItemData(opt)[value_name], type, true, function(unit)
+    return self:PathItem(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, true, function(unit)
    	    return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
 	end, true, opt)
 end

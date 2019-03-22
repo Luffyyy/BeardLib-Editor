@@ -10,7 +10,7 @@ function AboutMenu:init()
 		texture = "textures/editor_logo",
 	})
     local info = self:Menu("Info", {w = 512, border_color = BeardLibEditor.Options:GetValue("AccentColor"), position = "Centerx"})
-    local function link_button(name, url) return self:Button(name, callback(nil, os, "execute", 'start "" "'..url..'"'), {text_align = "center", group = info, text = name}) end
+    local function link_button(name, url) return self:Button(name, SimpleClbk(os.execute, 'start "" "'..url..'"'), {text_align = "center", group = info, text = name}) end
     local function center_text(text, opt) return self:Divider(text, table.merge({color = false, group = info, text_align = "center", text = text}, opt)) end
     local div = {color = false, border_bottom = true, group = info, border_width = 512, border_center_as_title = true}
     self:Divider("About", div)

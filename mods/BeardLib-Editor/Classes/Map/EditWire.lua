@@ -4,7 +4,7 @@ function EditWire:editable(unit) return unit:wire_data() and unit:get_object(A_T
 
 function EditWire:build_menu(parent)
 	local group = self:Group("Wire")
-	self:NumberBox("Slack", callback(self._parent, self._parent, "set_unit_data"), 0, {group = group})
+	self:NumberBox("Slack", ClassClbk(self._parent, "set_unit_data"), 0, {group = group})
 	self:AxisControls(ClassClbk(self, "set_target_axis"), {group = group}, "TargetAxis")
 end
 

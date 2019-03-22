@@ -32,6 +32,6 @@ function EditorAIForceAttention:_build_panel()
 	self:BooleanCtrl("include_all_force_spawns", {help = "Includes all units that don't participate in the group AI", group = affected_units})
 	self:BuildElementsManage("included_units", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup"})
 	self:BuildElementsManage("excluded_units", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup"})
-	self:BuildElementsManage("att_unit_id", nil, nil, callback(self, self, "set_is_spawn"), {single_select = true, not_table = true})
+	self:BuildElementsManage("att_unit_id", nil, nil, ClassClbk(self, "set_is_spawn"), {single_select = true, not_table = true})
 	self:Text("Select a unit to force the AI's attention to. The 'Affected Units' panel allows you to control which units are affected by this and their behaviour.")
 end

@@ -101,7 +101,7 @@ function PortalLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:Button("CreatePrefab", callback(S, S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})    
+        S:Button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})    
         S:SetTitle("Portal Shape Selection")
 		if unit:name() == self._portal_shape_unit:id() then
             unit:unit_data().shape:create_panel(S)
@@ -285,9 +285,9 @@ function PortalLayer:load_portal_shapes()
     local group = self._menu:GetItem("Shapes")
     if group then
         group:ClearItems()
-        self:Button("NewShape", callback(self, self, "add_shape"), {group = group, label = "Shapes"})
+        self:Button("NewShape", ClassClbk(self, "add_shape"), {group = group, label = "Shapes"})
         for i=1, #self._selected_portal._shapes do
-            local btn = self:Button("shape_" .. tostring(i), callback(self, self, "select_shape"), {group = group})
+            local btn = self:Button("shape_" .. tostring(i), ClassClbk(self, "select_shape"), {group = group})
             btn.id = i
             btn:ImgButton("Remove", ClassClbk(self, "remove_shape"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
         end
@@ -304,9 +304,9 @@ function PortalLayer:load_portals()
     local portals = self:GetItem("Portals")
     if portals then
         portals:ClearItems()
-        self:Button("NewPortal", callback(self, self, "add_portal"), {group = portals})
+        self:Button("NewPortal", ClassClbk(self, "add_portal"), {group = portals})
         for name, portal in pairs(managers.portal:unit_groups()) do
-            local prtl = self:Button("portal_"..portal._name, callback(self, self, "clbk_select_portal"), {group = portals, text = portal._name})
+            local prtl = self:Button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {group = portals, text = portal._name})
             prtl:ImgButton("Remove", ClassClbk(self, "remove_portal"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
             prtl:ImgButton("Rename", ClassClbk(self, "rename_portal"), nil, {66, 1, 48, 48})
             prtl:ImgButton("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, {122, 1, 48, 48})

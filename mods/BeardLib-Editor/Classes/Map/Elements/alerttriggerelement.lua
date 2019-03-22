@@ -24,7 +24,7 @@ function EditorAlertTrigger:_build_panel()
 			name = o,
 			text = string.pretty(o, true),
 			value = table.contains(self._element.values.alert_types, o),
-			on_callback = callback(self, self, "on_alert_type_checkbox_changed"),
+			on_callback = ClassClbk(self, "on_alert_type_checkbox_changed"),
 		})
 		self._alert_type_check_boxes[o] = check
 	end
@@ -33,7 +33,7 @@ function EditorAlertTrigger:_build_panel()
 		text = "Preset:",
 		items = {"clear", "all"},
 		help = "Select a preset.",
-		on_callback = callback(self, self, "apply_preset"),
+		on_callback = ClassClbk(self, "apply_preset"),
 	})
 	local opt = NavigationManager.ACCESS_FLAGS
 	local filter_table = managers.navigation:convert_access_filter_to_table(self._element.values.filter)
@@ -43,7 +43,7 @@ function EditorAlertTrigger:_build_panel()
 			name = o,
 			text = string.pretty(o, true),
 			value = table.contains(filter_table, o),
-			on_callback = callback(self, self, "on_filter_checkbox_changed"),
+			on_callback = ClassClbk(self, "on_filter_checkbox_changed"),
 		})		
 		self._filter_check_boxes[o] = check
 	end

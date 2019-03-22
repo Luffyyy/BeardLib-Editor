@@ -14,7 +14,7 @@ function EditUnitCubemap:build_menu(units)
 		1024,
 		2048
 	}
-	self._cubemap_resolution = self:ComboBox("CubemapResolution", callback(self, self, "set_unit_data_parent"), res, 3, {help = "Select a resolution from the combobox", group = cubemap_options})
+	self._cubemap_resolution = self:ComboBox("CubemapResolution", ClassClbk(self, "set_unit_data_parent"), res, 3, {help = "Select a resolution from the combobox", group = cubemap_options})
 end
 
 function EditUnitCubemap:set_unit_data()	
