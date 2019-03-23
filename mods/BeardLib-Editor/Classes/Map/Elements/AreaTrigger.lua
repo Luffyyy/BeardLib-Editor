@@ -80,7 +80,7 @@ function EditorAreaTrigger:update(t, dt)
         end
     end
 	if self._shape then
-		local pos, rot = self._unit:position(),  self._unit:rotation()
+		local pos, rot = self._unit:position(), self._unit:rotation()
 	    self._shape:set_position(pos)
 	    self._cylinder_shape:set_position(pos)    
 	    self._shape:set_rotation(rot)

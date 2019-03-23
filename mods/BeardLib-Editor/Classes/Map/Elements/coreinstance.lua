@@ -224,3 +224,148 @@ function EditorInstanceSetParams:set_element_data(item, ...)
 	end
 	EditorInstanceSetParams.super.set_element_data(self, item, ...)
 end
+
+EditorInstanceParams = EditorInstanceParams or class(MissionScriptEditor)
+EditorInstanceParams.TYPES = {"number","enemy","objective","civilian","enemy_spawn_action","civilian_spawn_state","special_objective_action"}
+
+function EditorInstanceParams:create_element(...)
+	EditorInstanceParams.super.create_element(self)
+	self._element.class = "ElementInstanceParams"
+	self._element.module = "CoreElementInstance"
+
+	self._element.values.params = {}
+end
+
+function EditorInstanceParams:_add_var_dialog(text)
+	local typ
+	BLE.InputDialog:Show(
+        {
+            title = "Add Variable",
+			text = text or "",
+			create_items = function(menu)
+				typ = menu:combobox("Type", nil, self.TYPES)
+			end,
+            callback = function(name)
+				if not name or name == "" then
+					BLE.Dialog:Show({title = "ERROR!", message = "Variable name cannot be empty!", callback = ClassClbk(self, "_add_var_dialog", name)})
+                    return
+				end
+				for _, data in ipairs(self._element.values.params) do
+					if data.var_name == name then
+						BLE.Dialog:Show({title = "ERROR!", message = "Variable name already exists!", callback = ClassClbk(self, "_add_var_dialog", name)})
+						return
+					end
+				end
+				
+				local type = typ:SelectedItem()
+				if not type then
+					BLE.Dialog:Show({title = "ERROR!", message = "Variables must have a type!", callback = ClassClbk(self, "_add_var_dialog", name)})
+					return
+				end
+			
+				local default_value = nil
+			
+				if type == "number" then
+					default_value = 0
+				elseif type == "enemy" then
+					default_value = "units/payday2/characters/ene_swat_1/ene_swat_1"
+				elseif type == "civilian" then
+					default_value = ""
+				elseif type == "objective" then
+					default_value = managers.objectives:objectives_by_name()[1]
+				elseif type == "enemy_spawn_action" then
+					default_value = clone(CopActionAct._act_redirects.enemy_spawn)[1]
+				elseif type == "civilian_spawn_state" then
+					default_value = CopActionAct._act_redirects.civilian_spawn[1]
+				elseif type == "special_objective_action" then
+					default_value = CopActionAct._act_redirects.SO[1]
+				end
+			
+				local data = {
+					var_name = name,
+					type = type,
+					default_value = default_value
+				}
+			
+				table.insert(self._element.values.params, data)
+				self:_build_var_panel(data)
+            end
+        }
+    )
+end
+
+function EditorInstanceParams:_remove_var_name(var_name, item)
+	for i, data in ipairs(self._element.values.params) do
+		if data.var_name == var_name then
+			table.remove(self._element.values.params, i)
+
+			if self._panels[i] then
+				local rem_data = table.remove(self._panels, i)
+				rem_data.item:Destroy()
+				item:Destroy()
+			end
+
+			return
+		end
+	end
+end
+
+function EditorInstanceParams:_build_var_panel(data)
+	self._panels = self._panels or {}
+
+	if data.type == "number" then
+		self:_build_number(data)
+	elseif data.type == "enemy" then
+		self:_build_pathbox(data, 12)
+	elseif data.type == "civilian" then
+		self:_build_pathbox(data, 21)
+	elseif data.type == "objective" then
+		self:_build_combobox(data, managers.objectives:objectives_by_name())
+	elseif data.type == "enemy_spawn_action" then
+		self:_build_combobox(data, clone(CopActionAct._act_redirects.enemy_spawn))
+	elseif data.type == "civilian_spawn_state" then
+		self:_build_combobox(data, clone(CopActionAct._act_redirects.civilian_spawn))
+	elseif data.type == "special_objective_action" then
+		self:_build_combobox(data, clone(CopActionAct._act_redirects.SO))
+	end
+end
+
+function EditorInstanceParams:_build_remove_var(item)
+	self._pan:ImgButton("RemoveVariable", ClassClbk(self, "_remove_var_name", item.name), nil, BLE.Utils:GetIcon("cross"), {
+		offset = item.offset, size = 22
+	})
+	table.insert(self._panels, {var_name = item.var_name, item = item})
+end
+
+function EditorInstanceParams:_build_number(data)
+	self:_build_remove_var(self._pan:numberbox(data.var_name, ClassClbk(self, "_set_default_var_name", data), data.default_value, {
+		floats = 0, help = "Set a default number variable.", shrink_width = 0.91
+	}))
+end
+
+function EditorInstanceParams:_build_combobox(data, options)
+	self:_build_remove_var(self._pan:combobox(data.var_name, ClassClbk(self, "_set_default_var_name", data), options, data.default_value, {
+		shrink_width = 0.91, control_slice = 0.65
+	}))
+end
+
+function EditorInstanceParams:_build_pathbox(data, slot)
+	self:_build_remove_var(self._pan:pathbox(data.var_name, ClassClbk(self, "_set_default_var_name", data), data.default_value, "unit", {
+		slot = slot, shrink_width = 0.91
+	}))
+end
+
+
+function EditorInstanceParams:_set_default_var_name(data, item)
+	local value = item:Value()
+	data.default_value = tonumber(value) or value
+end
+
+function EditorInstanceParams:_build_panel()
+	self:_create_panel()
+	self._class_group:button("AddVariable", ClassClbk(self, "_add_var_dialog", false), nil, BLE.Utils:GetIcon("plus"))
+	self._pan = self._class_group:pan("Params", {align_method = "grid"})
+	for _, data in ipairs(self._element.values.params) do
+		self:_build_var_panel(data)
+	end
+end

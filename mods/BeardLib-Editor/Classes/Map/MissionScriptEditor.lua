@@ -3,6 +3,7 @@ function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
 	self._menu = self:GetPart("static")._holder
 	MenuUtils:new(self)
+	ItemExt:add_funcs(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
 	if element then

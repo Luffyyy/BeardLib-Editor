@@ -206,6 +206,7 @@
         <value_node value="ElementXAudioOperator"/>
         
         <!--Normal-->
+        <value_node value="ElementInstanceParams"/>
         <value_node value="ElementChangeVanSkin"/>
         <value_node value="ElementCharacterDamage"/>
         <value_node value="ElementCheckDLC"/>
@@ -369,7 +370,7 @@
         <value_node value="ElementStopEffect"/>
         <value_node value="ElementEndscreenVariant"/>
         <value_node value="ElementLootBagTrigger"/>
-	<value_node value="ElementCounterReset"/>
-	<value_node value="ElementTerminateAssault"/>
+	    <value_node value="ElementCounterReset"/>
+	    <value_node value="ElementTerminateAssault"/>
     </MissionElements>
 </mod>

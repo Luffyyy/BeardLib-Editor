@@ -19,14 +19,12 @@ local color
 ItemExt = {}
 
 function ItemExt:ImgButton(name, callback, texture, rect, o)
-	local s = self:H()
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
 		highlight_color = self.foreground:with_alpha(0.25),
 		auto_foreground = false,
-		w = s,
-		h = s,
+		size = self:H(),
 		offset = 2,
 		img_offset = 4,
 		texture = texture or BLE.Utils.EditorIcons.texture,
@@ -87,6 +85,10 @@ function ItemExt:slider(...)
 	return self:Slider(ItemExt:Pasta2(...))
 end
 
+function ItemExt:pan(name, o)
+	return self:Menu(table.merge({name = name, background_visible = false, auto_height = true}, o))
+end
+
 function ItemExt:divider(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = color, offset = {8, 4}}, o))
@@ -96,6 +98,10 @@ function ItemExt:group(name, o)
 	return self:Group(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
+function ItemExt:toolbar(name, o)
+	name = name or "ToolBar"
+	return self:ToolBar(table.merge({name = name, inherit_values = {offset = 0}}, o))
+end
 
 function ItemExt:divgroup(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
@@ -133,6 +139,46 @@ function ItemExt:colorbox(name, callback, value, o)
 		end
 	end
 	return item
+end
+
+
+local function check_slot(slot, unit)
+	return BeardLibEditor.Utils:InSlot(unit, slot) and not unit:match("husk")
+end
+
+function ItemExt:pathbox(name, callback, value, typ, o)
+	local p = self:pan(name, table.merge({align_method = "grid"}, o))
+	o = {}
+	o.control_slice = 0.7
+	o.on_callback = callback
+	o.text = string.pretty2(name)
+	local t = p:textbox("path", nil, value, o)
+	o.text = "Browse " .. tostring(typ).."s"
+	o.offset = {t.offset[1] * 4, t.offset[2]}
+	o.on_callback = nil
+	o.on_callback = p.btn_callback
+	local btn = p:button("select_button", function()
+		local list = BeardLibEditor.Utils:GetEntries({
+			type = typ, loaded = NotNil(o.loaded, true), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
+		})
+		if o.sort_func then
+			o.sort_func(list)
+		end
+		   BeardLibEditor.ListDialog:Show({
+			list = list,
+			sort = o.sort_func == nil,
+			callback = function(path) 
+				t:SetValue(path, true)
+				if not o.not_close then
+					BeardLibEditor.ListDialog:Hide()
+				end
+			end
+		})
+	end, o)
+	function p:Value()
+		return t:Value()
+	end
+	return p
 end
 
 function ItemExt:GetItem(name)
