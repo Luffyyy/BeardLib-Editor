@@ -18,10 +18,11 @@ function EditorShape:update(t, dt, selected_unit, all_units)
 	if shape then
 		shape:draw(t, dt, 1, 1, 1)
 	end
-	self._shape:set_position(self._element.values.position)
-	self._cylinder_shape:set_position(self._element.values.position)	
-	self._shape:set_rotation(self._element.values.rotation)
-	self._cylinder_shape:set_rotation(self._element.values.rotation)
+	local pos, rot = self._unit:position(),  self._unit:rotation()
+	self._shape:set_position(pos)
+	self._cylinder_shape:set_position(pos)	
+	self._shape:set_rotation(rot)
+	self._cylinder_shape:set_rotation(rot)
 	EditorShape.super.update(self, t, dt)
 end
 

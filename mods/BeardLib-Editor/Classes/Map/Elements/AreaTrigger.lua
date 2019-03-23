@@ -79,11 +79,12 @@ function EditorAreaTrigger:update(t, dt)
             end
         end
     end
-    if self._shape then
-	    self._shape:set_position(self._element.values.position)
-	    self._cylinder_shape:set_position(self._element.values.position)    
-	    self._shape:set_rotation(self._element.values.rotation)
-	    self._cylinder_shape:set_rotation(self._element.values.rotation)
+	if self._shape then
+		local pos, rot = self._unit:position(),  self._unit:rotation()
+	    self._shape:set_position(pos)
+	    self._cylinder_shape:set_position(pos)    
+	    self._shape:set_rotation(rot)
+	    self._cylinder_shape:set_rotation(rot)
 	end
 	EditorAreaTrigger.super.update(self, t, dt)
 end
