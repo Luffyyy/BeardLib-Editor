@@ -74,6 +74,7 @@
         <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
         <hook source_file="lib/managers/mission/elementspawncivilian" file="Fixes.lua"/>
         <hook source_file="lib/managers/mission/elementspawnenemydummy" file="Fixes.lua"/>
+        <hook source_file="lib/managers/missionassetsmanager" file="MissionAssetsManager.lua"/>
         <hook source_file="lib/setups/setup" file="Setup.lua"/>
         <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
         <hook source_file="lib/states/editorstate" file="EditorState.lua"/>

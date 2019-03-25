@@ -159,8 +159,9 @@ function Project:load_temp_package(p)
 end
 
 function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_pkg, done_clbk)
-    self:new_level_dialog(tostring(level_in_chain.level_id), function(name)
-        local level = clone(tweak_data.levels[level_in_chain.level_id])
+    local id = level_in_chain.level_id
+    self:new_level_dialog(tostring(id), function(name)
+        local level = clone(tweak_data.levels[id])
 
         table.insert(data, level)
         local packages = type(level.package) == "string" and {level.package} or level.package or {}
@@ -175,6 +176,11 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             packages = packages,
             script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
         })
+
+        local preplanning = tweak_data.preplanning.locations[id]
+        if preplanning then
+            level.preplanning = deep_clone(preplanning)
+        end
 
         if narr_pkg then
             table.insert(packages, narr_pkg)
