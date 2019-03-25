@@ -153,8 +153,8 @@ function MenuUtils:init(this, menu)
 				else
 					item:SetValue(rot[control](rot))
 				end
-	        end
-	    end
+			end
+		end
 	end
 
 	function this:SetShapeControls(shape, name)
@@ -197,11 +197,12 @@ function MenuUtils:init(this, menu)
 	end
 
 	function this:CopyAxis(item)
-		Application:set_clipboard(tostring(self["AxisControls"..item.parent.value_type](self, item.parent.axis_name)))
+		local menu = item.parent.parent
+		Application:set_clipboard(tostring(self["AxisControls"..menu.value_type](self, menu.axis_name)))
 	end
 	
 	function this:PasteAxis(item)
-		local menu = item.parent
+		local menu = item.parent.parent
 		local paste = Application:get_clipboard()
 		local result
 		pcall(function()
@@ -213,9 +214,7 @@ function MenuUtils:init(this, menu)
 		if type_name(result) == "Rotation" and menu.value_type == "Rotation" then
 			self:SetAxisControls(nil, result, menu.axis_name)
 		end
-		if menu.on_callback then
-			menu.on_callback(item)
-		end
+		menu:RunCallback()
 	end
 
 	function this:AxisControls(clbk, opt, name, pos, rot)
@@ -230,8 +229,8 @@ function MenuUtils:init(this, menu)
 	    if not opt.no_pos then
 			opt.text = opt.translate_text
 			translation = self:DivGroup("Translate"..name, opt)
+			translation.value_type = "Position"
 			local TB = translation:GetToolbar()
-			TB.value_type = "Position"
 			TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
 			TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
 	    end
@@ -239,8 +238,8 @@ function MenuUtils:init(this, menu)
 	    	opt.group = group
 			opt.text = opt.rotate_text
 			rotation = self:DivGroup("Rotate"..name, opt)
+			rotation.value_type = "Rotation"
 			local TB = rotation:GetToolbar()
-			TB.value_type = "Rotation"
 			TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
 			TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
 		end
@@ -255,7 +254,7 @@ function MenuUtils:init(this, menu)
 			else
 				opt.group = rotation
 			end
-	    	if alive(opt.group) then
+			if alive(opt.group) then
 	        	self[name..control] = self:NumberBox(control, clbk, 0, opt)
 	        end
 		end
