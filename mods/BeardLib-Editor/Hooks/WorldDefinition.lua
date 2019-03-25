@@ -647,7 +647,7 @@ function WorldDef:prepare_for_spawn_instance(instance)
 	end
 	if self._init_done then
 		self:spawn_quick()
-		PackageManager:set_resource_loaded_clbk(Idstring("unit"), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
+		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
 	end
 end
 

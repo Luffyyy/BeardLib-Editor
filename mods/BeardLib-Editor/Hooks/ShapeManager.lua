@@ -36,7 +36,7 @@ function Shape:update_size(item)
 end
 
 function ShapeBox:create_panel(clss, group)
-	clss:ShapeControls(ClassClbk(self, "update_size"), {group = group}, "", self._properties, true)
+	clss:ShapeControls(_G.ClassClbk(self, "update_size"), {group = group}, "", self._properties, true)
 end
 
 function Shape:position()
