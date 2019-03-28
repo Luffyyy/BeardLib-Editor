@@ -280,7 +280,7 @@ function WorldDef:delete_unit(unit, keep_links)
 	local statics
 	if unit:wire_data() then
 		statics = self._world_data.wires
-	elseif unit:ai_editor_data() or unit == patrol_point_unit:id() then
+	elseif unit:ai_editor_data() or unit:name() == patrol_point_unit:id() then
 		statics = self._world_data.ai
 	elseif not ud.instance then
 		statics = self._continent_definitions[continent_name]
