@@ -203,10 +203,12 @@
         <value_node value="ElementCustomSound"/>
         <value_node value="ElementExecuteWithCode"/>
         <value_node value="ElementOverrideInstigator"/>
-	<value_node value="ElementXAudio"/>
+	    <value_node value="ElementXAudio"/>
         <value_node value="ElementXAudioOperator"/>
         
         <!--Normal-->
+        <value_node value="ElementTangoAward"/>
+        <value_node value="ElementTangoFilter"/>
         <value_node value="ElementInstanceParams"/>
         <value_node value="ElementChangeVanSkin"/>
         <value_node value="ElementCharacterDamage"/>
