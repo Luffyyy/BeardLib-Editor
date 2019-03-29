@@ -29,7 +29,10 @@ function AiEditor:init(parent)
 end
 
 function AiEditor:is_my_unit(unit)
-    if unit == self._patrol_point_unit or unit == self._nav_surface_unit then
+    -- nav surfaces aren't my unit because there's no way to
+    -- get cloned values from do_spawn_unit for unit:ai_editor_data()
+    -- so i have to manually listen for it to spawn elsewhere
+    if unit == self._patrol_point_unit then
         return true
     end
     return false
@@ -147,7 +150,7 @@ function AiEditor:_build_ai_data()
         )
 
         for i, v in ipairs(points.points) do
-            local patrol_point = self:Button(name .. "_" .. i,
+            self:Button(name .. "_" .. i,
                 ClassClbk(self, "_select_patrol_point", v.unit), {
                     group = patrol_path,
                     text = string.format("[%d] Unit ID: %d", i, v.unit_id)
@@ -190,6 +193,10 @@ end
 
 function AiEditor:unit_spawned(unit)
     self:_add_patrol_point(unit)
+
+    if unit:name() == self._nav_surface_unit then
+        table.insert(self._created_units, unit)
+    end
 end
 
 function AiEditor:unit_deleted(unit)
@@ -363,14 +370,14 @@ function AiEditor:_select_patrol_point(unit)
     managers.editor:select_unit(unit)
 end
 
---[[function AiEditor:do_spawn_unit(unit_path, ud)
-    local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
-    table.merge(unit:unit_data(), ud)
-    ud = unit:unit_data()
+function AiEditor:do_spawn_unit(unit_path, ud)
+    ud.rotation = ud.rotation or Rotation()
+    ud.continent = ud.continent or managers.editor._current_continent
+    ud.unit_id = managers.worlddefinition:GetNewUnitID(ud.continent, "ai")
     ud.name = unit_path
-    ud.unit_id = managers.worlddefinition:GetNewUnitID(managers.editor._current_continent, "ai")
-    ud.position = unit:position()
-    ud.rotation = unit:rotation()
+
+    local data = { unit_data = ud }
+    local unit = managers.worlddefinition:create_unit(data, "ai")
 
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
         managers.ai_data:add_patrol_point(self._selected_path, unit)
@@ -379,7 +386,10 @@ end
     table.insert(self._created_units, unit)
 
     self:build_menu()
-end]]
+
+    return unit
+end
+
 function AiEditor:_add_patrol_point(unit)
     if alive(unit) and unit:name() == self._patrol_point_unit then
         managers.ai_data:add_patrol_point(self._selected_path, unit)

@@ -290,7 +290,7 @@ function Editor:GetSpawnPosition(data)
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
-    if m.world:is_world_unit(unit_path) and unit_path ~= "core/units/patrol_point/patrol_point" then
+    if m.world:is_world_unit(unit_path) then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
@@ -345,7 +345,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
             }
         elseif t == Idstring("ai") then
             -- hack for now. patrol points dont have ai_editor_data but are still ai
-            if data.unit_data.name ~= "core/units/patrol_point/patrol_point" then
+            if data.unit_data.name then
                 data.ai_editor_data = ad or {
                     visibilty_exlude_filter = {},
                     visibilty_include_filter = {},
