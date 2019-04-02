@@ -1,14 +1,3 @@
-local ids = getmetatable(Idstring())
-function ids:s()
-    local t = self:t()
-    return managers.editor._idstrings[t] or t
-end
-
-getmetatable(Idstring()).construct = function(self, id)
-    local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="@ID%s@">', id))
-    return xml and xml.id or nil
-end
-
 function string.underscore_name(str)
     str = tostring(str)
     return str:gsub("([^A-Z%W])([A-Z])", "%1%_%2"):gsub("([A-Z]+)([A-Z][^A-Z$])", "%1%_%2"):lower()
@@ -278,6 +267,23 @@ Utils.IntensityOptions = {
     "inside of borg queen",
     "megatron"
 }
+
+local intensities = {}
+for _, v in pairs(Utils.IntensityOptions) do
+    intensities[v:id():t()] = v
+end
+
+local ids = getmetatable(Idstring())
+function ids:s()
+    local t = self:t()
+    return managers.editor and managers.editor._idstrings[t] or intensities[t] or t
+end
+
+
+function ids:construct(id)
+    local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="@ID%s@">', id))
+    return xml and xml.id or nil
+end
 
 function Utils:GetIntensityPreset(multiplier)
     local intensity = LightIntensityDB:reverse_lookup(multiplier)

@@ -72,3 +72,14 @@ function EditorConsole:Log(msg, ...) self:PrintMessage("info", msg, ...) end
 function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission", msg, ...) end
 function EditorConsole:Error(msg, ...) self:PrintMessage("error", msg, ...) end
 function EditorConsole:Clear() self:ClearItems() end
+
+
+function EditorConsole:disable()
+    self._menu:SetVisible(false)
+    self._options_menu:SetVisible(false)
+end
+
+function EditorConsole:enable()
+    self._menu:SetVisible(true)
+    self._options_menu:SetVisible(true)
+end

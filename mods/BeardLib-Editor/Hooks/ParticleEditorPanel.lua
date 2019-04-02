@@ -1,0 +1,424 @@
+
+function CoreParticleEditorPanel:create_panel(parent)
+	self._stacklist_boxes = {}
+	self._stack_member_combos = {}
+	self._stack_panels = {}
+	self._panel = parent:Menu({auto_height = true, align_method = "grid"})
+
+	self._gv_splitter = self._panel:pan("gvsplitter") --EWS:SplitterWindow(splitter, "", "SP_NOBORDER")
+	self._top_splitter = self._panel:pan("splitter") -- EWS:SplitterWindow(self._panel, "", "SP_NOBORDER")
+	local effect_panel = self:create_effect_panel(self._gv_splitter)
+	self._status_box = self:create_status_box(self._gv_splitter)
+	local atom_panel = self:create_atom_panel(self._top_splitter)
+	--local top_sizer = EWS:BoxSizer("VERTICAL")
+
+	--self._panel:set_sizer(top_sizer)
+	--top_sizer:add(splitter, 1, 0, "EXPAND")
+	--splitter:set_sash_gravity(0)
+	--splitter:split_vertically(gv_splitter, atom_panel, 100)
+	--gv_splitter:set_sash_gravity(0)
+	--gv_splitter:split_horizontally(effect_panel, self._status_box, 100)
+	self:update_atom_combo()
+
+	if #self._effect._atoms > 0 then
+		self._atom_combo:SetValue(1)
+		self:on_select_atom()
+	else
+		self._atom = nil
+	end
+
+	--self._stack_notebook:connect("EVT_COMMAND_NOTEBOOK_PAGE_CHANGED", ClassClbk(self, "clear_box_help"), "")
+	self:update_view(true)
+end
+
+function CoreParticleEditorPanel:update_atom_combo()
+	self._atom_combo:Clear()
+
+	for _, atom in ipairs(self._effect._atoms) do
+		self._atom_combo:Append(atom._name)
+	end
+end
+
+function CoreParticleEditorPanel:create_effect_panel(parent)
+	local panel = parent:pan("effect", {align_method = "centered_grid"})
+    self._render_selected_only_check = panel:tickbox("RemderSelectedAtomOnly", ClassClbk(self, "on_set_selected_only"))
+    self._atom_textctrl = panel:textbox("Name", ClassClbk(self, "on_rename_atom"))
+    self._atom_combo = panel:combobox("AtomSelector", ClassClbk(self, "on_select_atom"))
+    local buttons_panel = panel:pan("buttons", {align_method = "grid_from_right"})
+	buttons_panel:SButton("Add", ClassClbk(self, "on_add_atom"))
+	buttons_panel:SButton("Remove", ClassClbk(self, "on_remove_atom"))
+	buttons_panel:SButton("Copy", ClassClbk(self, "on_copy_atom"))
+    buttons_panel:SButton("Paste", ClassClbk(self, "on_paste_atom"))
+
+	--[[local atoms_sizer = EWS:StaticBoxSizer(panel, "VERTICAL", "Atoms")
+
+	row_sizer:add(EWS:StaticText(panel, "Atom:", "", ""), 0, 0, "EXPAND")
+	row_sizer:add(self._atom_combo, 0, 0, "EXPAND")
+	row_sizer:add(remove_button, 0, 0, "EXPAND")
+	row_sizer:add(copy_button, 0, 0, "EXPAND")
+	row_sizer:add(paste_button, 0, 0, "EXPAND")
+	atoms_sizer:add(row_sizer, 0, 0, "EXPAND")
+	row_sizer = EWS:BoxSizer("HORIZONTAL")
+    
+	row_sizer:add(EWS:StaticText(panel, "Rename/add atom:", "", ""), 0, 0, "LEFT,ALIGN_CENTER_VERTICAL")
+	row_sizer:add(self._atom_textctrl, 0, 2, "LEFT")
+	row_sizer:add(add_button, 0, 2, "LEFT")
+	atoms_sizer:add(row_sizer, 0, 0, "EXPAND")
+	atoms_sizer:add(self._render_selected_only_check, 0, 0, "EXPAND")
+	top_sizer:add(atoms_sizer, 0, 0, "EXPAND")
+    
+    ]]
+    
+	self._effect_properties_panel = panel:divgroup("EffectProperties")
+
+--	self:create_graph_view(self._editor._main_frame)
+	--top_sizer:add(self._effect_properties_panel, 0, 0, "EXPAND")
+	--panel:set_sizer(top_sizer)
+
+    
+	return panel
+end
+
+function CoreParticleEditorPanel:on_add_atom()
+    BLE.InputDialog:Show({title = "Atom name", text = "", callback = function(name)
+        if name == "" then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name cannot be empty!", callback = ClassClbk(self, "on_add_atom")})
+            return
+        end
+        if self._effect:find_atom(name) then
+            BLE.Dialog:Show({title = "ERROR!", message = "Atom with that name already exists!", callback = ClassClbk(self, "on_add_atom")})
+           return
+        end
+        self._effect:add_atom(CoreEffectAtom:new(name))
+        self:update_atom_combo()
+        self._atom_combo:SetSelectedItem(name)
+        self:on_select_atom()
+    end})
+end
+
+function CoreParticleEditorPanel:update_status_box()
+    local s = ""
+    s = s ..self._box_status .. "\n"
+    s = s .. "\n"
+    s = s .. self._box_help_header .. "\n"
+    s = s .. self._box_help .. "\n"
+	self._status_box:SetText(s)
+end
+
+function CoreParticleEditorPanel:create_graph_view(parent)
+	self._graph_view_dialog = EWS:Dialog(parent, "Stacks And Channels Overview", "", Vector3(-1, -1, 0), Vector3(500, 400, 0), "CAPTION,RESIZE_BORDER")
+	self._graph = EWS:Graph()
+	local gv = EWS:GraphView(self._graph_view_dialog, "", self._graph)
+
+	gv:set_clipping(false)
+	gv:toggle_style("SUNKEN_BORDER")
+
+	self._graph_view = gv
+	local top_sizer = EWS:BoxSizer("VERTICAL")
+
+	top_sizer:add(gv, 1, 0, "EXPAND")
+	self._graph_view_dialog:set_sizer(top_sizer)
+
+	if self._editor._view_menu:is_checked("SHOW_STACK_OVERVIEW") then
+		self:show_stack_overview(true)
+	end
+end
+
+function CoreParticleEditorPanel:create_atom_panel(parent)
+    local panel = parent:pan("atom")
+	local notebook = panel:notebook("Stacks")
+	self._atom_panel = notebook:pan("Atom", {auto_height = false, h = 360})
+
+	local initializer_page = self:create_stack_panel(notebook, "initializer")
+	local simulator_page = self:create_stack_panel(notebook, "simulator")
+	local visualizer_page = self:create_stack_panel(notebook, "visualizer")
+
+	notebook:AddItemPage("Atom", self._atom_panel)
+	notebook:AddItemPage("Initializer Stack", initializer_page)
+	notebook:AddItemPage("Simulator Stack", simulator_page)
+	notebook:AddItemPage("Visualizer Stack", visualizer_page)
+	notebook:SetPage(1)
+ 
+    self._stack_notebook = notebook
+--	local top_sizer = EWS:BoxSizer("HORIZONTAL")
+
+--	top_sizer:add(notebook, 1, 0, "EXPAND")
+--	panel:set_sizer(top_sizer)
+
+	return panel
+end
+
+
+function CoreParticleEditorPanel:create_stack_panel(parent, stacktype)
+	local panel = parent:pan(stacktype, {align_method = "grid_from_right"})
+	local stacklist = panel:pan("list") -- EWS:ListBox(panel, "", "LB_SINGLE,LB_HSCROLL")
+
+	--set_widget_help(stacklist, "Copy and paste using Ctrl-C/Ctrl-V")
+	--stacklist:connect("EVT_COMMAND_LISTBOX_SELECTED", ClassClbk(self, "on_select_stack_member"), stacktype)
+	--stacklist:connect("EVT_KEY_DOWN", ClassClbk(self, "on_key_stack_member"), stacktype)
+
+	self._stacklist_boxes[stacktype] = stacklist
+	local stack_member_combo = panel:ComboBox({text = " ", control_slice = 1})
+	local member_names = stack_member_names[stacktype]
+	local last = nil
+
+	for _, mn in ipairs(member_names) do
+		stack_member_combo:Append(mn.ui_name)
+		last = mn.ui_name
+	end
+
+	stack_member_combo:set_value(last)
+
+	self._stack_member_combos[stacktype] = stack_member_combo
+	panel:SButton("Up", ClassClbk(self, "on_stack_up", stacktype))
+	panel:SButton("Down", ClassClbk(self, "on_stack_down", stacktype))
+	panel:SButton("Remove", ClassClbk(self, "on_stack_remove", stacktype))
+	panel:SButton("Add", ClassClbk(self, "on_stack_add", stacktype))
+	panel:SButton("Copy", ClassClbk(self, "on_stack_copy", stacktype))
+	panel:SButton("Paste", ClassClbk(self, "on_stack_paste", stacktype))
+
+	self._stack_panels[stacktype] = panel:pan("Affector")
+
+	return panel
+end
+
+function CoreParticleEditorPanel:create_status_box(parent)
+	return parent:divider("")
+end
+
+function CoreParticleEditorPanel:on_select_atom()
+	local atom = self._effect:find_atom(self._atom_combo:SelectedItem())
+	self._atom = atom
+
+	if atom then
+		self._atom_textctrl:SetValue(atom:name())
+	end
+
+	self:update_view(true, true)
+end
+
+function CoreParticleEditorPanel:update_view(clear, undoredo)
+	local n = Node("effect")
+
+	self._effect:save(n)
+
+	local new_xml = n:to_xml()
+
+	if not undoredo then
+		self._undo_stack:push({
+			name = self._effect:name(),
+			xml = new_xml
+		})
+	end
+
+	local name = self._effect:name()
+
+	if name == "" then
+		name = "New Effect"
+	end
+
+	if new_xml ~= self._last_saved_xml then
+		name = name .. "*"
+	end
+
+	self._editor:set_page_name(self, base_path(name))
+
+	if clear then
+		self._atom_panel:ClearItems()
+
+		if self._atom then
+			self._atom:fill_property_container_sheet(self._atom_panel, self)
+		else
+			--self._atom_panel:set_sizer(EWS:BoxSizer("VERTICAL"))
+		end
+	elseif self._atom then
+		--self:fill_timelines()
+	end
+
+	if clear then
+		self._effect_properties_panel:ClearItems()
+
+		if self._effect then
+			self._effect:fill_property_container_sheet(self._effect_properties_panel, self)
+		else
+		--	self._effect_properties_panel:set_sizer(EWS:BoxSizer("VERTICAL"))
+		end
+	end
+
+	if clear then
+		for stacktype, c in pairs(self._stacklist_boxes) do
+			c:ClearItems()
+
+			if self._atom then
+                for i, m in ipairs(self._atom:stack(stacktype):stack()) do
+                    c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member", {i = i, type = stacktype}))
+				end
+			end
+
+			self._stack_panels[stacktype]:ClearItems()
+			--self._stack_panels[stacktype]:set_sizer(EWS:BoxSizer("VERTICAL"))
+		end
+	end
+--[[
+	for stacktype, panel in pairs(self._stack_panels) do
+		panel:fit_inside()
+    end
+    ]]
+
+	local valid = self._effect:validate()
+	self._valid_effect = valid.valid
+
+	if not valid.valid then
+		self._box_status = valid.message
+	end
+    self._status_box:SetVisible(not valid.valid)
+
+	self:update_status_box()
+
+	--if self._editor._view_menu:is_checked("SHOW_STACK_OVERVIEW") then
+	--	self:update_graph_view()
+	--end
+
+	--self:safety_backup()
+
+	if valid.valid then
+		self:update_effect_instance()
+	end
+end
+
+function CoreParticleEditorPanel:update(t, dt)
+	if self._valid_effect then
+		if self._dirty_effect then
+			self:reload_effect_definition()
+
+			self._dirty_effect = false
+		end
+
+		if (not self._effect_id or not World:effect_manager():alive(self._effect_id)) and self._frames_since_spawn > 1 then
+			local quality = self._quality
+			quality = quality or 0.5
+			self._quality = nil
+            local gizmo = self._editor:effect_gizmo()
+			self._effect_id = World:effect_manager():spawn({
+				effect = Idstring("unique_test_effect_name"),
+				parent = gizmo:get_object(Idstring("rp_root_point")),
+				custom_quality = quality
+			})
+			self._frames_since_spawn = 0
+		else
+			self._frames_since_spawn = self._frames_since_spawn + 1
+		end
+	elseif self._effect_id then
+		World:effect_manager():kill(self._effect_id)
+
+		self._effect_id = nil
+	end
+
+	--[[if self._editor._view_menu:is_checked("SHOW_STACK_OVERVIEW") then
+		self._graph_view:update_graph(dt)
+	end]]
+end
+function CoreParticleEditorPanel:set_init_positions()
+end
+
+local effect_ids = Idstring("effect")
+local unique_ids = Idstring("unique_test_effect_name")
+
+function CoreParticleEditorPanel:reload_effect_definition()
+	local n = Node("effect")
+
+	if self._render_selected_only_check:get_value() and self._atom then
+		self._atom:save(n)
+	else
+		self._effect:save(n)
+	end
+
+    local file = io.open("tmpeffect", "w")
+    if file then
+        file:write(n:to_xml())
+        file:close()
+        DB:remove_entry(effect_ids, unique_ids)
+        if managers.dyn_resource:has_resource(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE) then
+            managers.dyn_resource:unload(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE)
+        end
+        DelayedCalls:Add("ReloadEffectSomething", 0.1, function()
+            DB:create_entry(effect_ids, unique_ids, "tmpeffect")
+            managers.dyn_resource:load(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE)
+        end)
+    end
+
+	self._effect_id = nil
+end
+
+function CoreParticleEditorPanel:close()
+	local n = Node("effect")
+
+	self:on_lose_focus()
+	self._effect:save(n)
+
+	if n:to_xml() ~= self._last_saved_xml then
+        local n = self._effect:name()
+
+        if n == "" then
+            n = "New Effect"
+        end
+
+        BLE.Utils:YesNoQuestion("Effect " .. n .. " was modified since last saved, save changes?", function()
+            self:on_save()
+        end)
+	end
+
+	--self._graph_view_dialog:destroy()
+    self._panel:Destroy()
+
+	return true
+end
+
+function CoreParticleEditorPanel:on_lose_focus()
+	if self._effect_id and self._effect_id > 0 then
+		World:effect_manager():kill(self._effect_id)
+	end
+
+	--self:show_stack_overview(false)
+end
+
+function CoreParticleEditorPanel:on_select_stack_member(select)
+    self._stack_panels[select.type]:ClearItems()
+    self._atom:stack(select.type):stack()[select.i]:fill_property_container_sheet(self._stack_panels[select.type], self)
+end
+
+function CoreParticleEditorPanel:on_save_as()
+    BLE.FBD:Show({where = self._editor._last_used_dir or string.gsub(Application:base_path(), "\\", "/"), save = true, extensions = {"effect"}, file_click = function(f)
+	    if not f then
+			return
+		end
+
+        self._effect:set_name(f)
+    
+        self._editor._last_used_dir = f
+        local node = Node("effect")
+    
+        self._effect:save(node)
+    
+        local new_xml = node:to_xml()
+    
+        self._undo_stack:push({
+            name = self._effect:name(),
+            xml = new_xml
+        })
+    
+        return self:do_save(true)
+    end})
+end
+
+function CoreParticleEditorPanel:do_save()
+	local n = Node("effect")
+
+    self._effect:save(n)
+    FileIO:WriteTo(self._effect:name(), n:to_xml())
+   
+	self._last_saved_xml = n:to_xml()
+	self._editor:set_page_name(self, base_path(self._effect:name()))
+
+	return true
+end

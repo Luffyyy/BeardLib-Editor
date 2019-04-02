@@ -10,6 +10,7 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
+    self._particle_editor_test = true --Very broken xd
     self._current_script = "default"
     self._current_continent = "world"
     self._grid_size = 1
@@ -87,6 +88,16 @@ function Editor:post_init(menu)
     menu.mouse_move = ClassClbk(m.static, "mouse_moved")
     if self._has_fix then
         m.menu:toggle_widget("move")
+    end
+
+    if self._particle_editor_test then
+        self._particle_editor_menu = menu:Menu({
+            auto_foreground = true,
+            align_method = "grid",
+            background_color = BLE.Options:GetValue("BackgroundColor"),
+            w = 500,
+        })
+        self._particle_editor = ParticleEditor:new(self._particle_editor_menu)
     end
 end
 
@@ -290,7 +301,7 @@ function Editor:GetSpawnPosition(data)
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
-    if m.world:is_world_unit(unit_path) then
+    if m.world:is_world_unit(unit_path) and unit_path ~= "core/units/patrol_point/patrol_point" then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
@@ -345,7 +356,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
             }
         elseif t == Idstring("ai") then
             -- hack for now. patrol points dont have ai_editor_data but are still ai
-            if data.unit_data.name then
+            if data.unit_data.name ~= "core/units/patrol_point/patrol_point" then
                 data.ai_editor_data = ad or {
                     visibilty_exlude_filter = {},
                     visibilty_include_filter = {},
@@ -393,7 +404,7 @@ function Editor:set_enabled(enabled)
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
     for _, manager in pairs(m) do
-        if enabled then
+        if enabled and not self._particle_editor_test then
             if manager.enable then
                 manager:enable()
             end        
@@ -595,12 +606,17 @@ function Editor:update(t, dt)
     if self:enabled() then
         self._current_pos = self:current_position() or self._current_pos
         if not m.cubemap_creator:creating_cube_map() then
-            for _, manager in pairs(m) do
-                if manager.update then
-                    manager:update(t, dt)
+            if not self._particle_editor_test then
+                for _, manager in pairs(m) do
+                    if manager.update then
+                        manager:update(t, dt)
+                    end
                 end
             end
-
+            
+            if self._particle_editor then
+                self._particle_editor:update(t, dt)
+            end
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
             self:draw_marker(t, dt)

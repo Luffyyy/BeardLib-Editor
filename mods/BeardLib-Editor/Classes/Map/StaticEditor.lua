@@ -5,14 +5,17 @@ local Utils = BLE.Utils
 function Static:init(parent, menu)
     Static.super.init(self, parent, menu, "Selection")
     self._selected_units = {}
+    self._nav_surfaces = {}
     self._ignore_raycast = {}
     self._ignored_collisions = {}
     self._set_units = {}
     self._set_elements = {}
+    self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
 end
 
 function Static:enable()
+    Static.super.enable(self)
     self:bind_opt("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
     self:bind_opt("CopyUnit", ClassClbk(self, "CopySelection"))
     self:bind_opt("PasteUnit", ClassClbk(self, "Paste"))
@@ -23,6 +26,9 @@ function Static:enable()
 end
 
 function Static:mouse_pressed(button, x, y)
+    if not self:enabled() then
+        return
+    end
     if button == Idstring("0") then
         if self:Value("EndlessSelection") then
             self._reset_raycast = TimerManager:game():time() + self:Value("EndlessSelectionReset")
@@ -72,7 +78,11 @@ end
 
 function Static:update_grid_size() self:set_unit() end
 function Static:deselect_unit(item) self:set_unit(true) end
-function Static:mouse_released(button, x, y) 
+function Static:mouse_released(button, x, y)
+    if not self:enabled() then
+        return
+    end
+    
     self._mouse_hold = false
     self._widget_hold = false
     self._drag_select = false
@@ -117,6 +127,25 @@ function Static:set_units()
 	self:update_positions()
     self._set_units = {}
     self._set_elements = {}
+end
+
+function Static:loaded_continents()
+    self._nav_surfaces = {}
+    for _, unit in pairs(managers.worlddefinition._all_units) do
+        if unit:name() == self._nav_surface then
+            table.insert(self._nav_surfaces, unit)
+        end
+    end
+end
+
+function Static:unit_spawned(unit)
+	if unit:name() == self._nav_surface and not table.contains(self._nav_surfaces, unit) then
+		table.insert(self._nav_surfaces, unit)
+	end
+end
+
+function Static:unit_deleted(unit)
+	table.delete(self._nav_surfaces, unit)
 end
 
 function Static:build_default_menu()
@@ -1006,7 +1035,9 @@ function Static:update(t, dt)
         self._ignore_raycast = {}
         self._reset_raycast = nil
     end
-
+    for _, unit in pairs(self._nav_surfaces) do 
+        Application:draw(unit, 0,0.8,1)
+    end
     for _, editor in pairs(self._editors) do
         if editor.update then
             editor:update(t, dt)

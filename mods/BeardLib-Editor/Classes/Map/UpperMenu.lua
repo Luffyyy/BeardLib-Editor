@@ -129,3 +129,11 @@ function UpperMenu:save()
     self._parent:Log("Saving Map..")
     BeardLibEditor.Utils:GetPart("opt"):save()
 end
+
+function UpperMenu:disable()
+    self._menu:SetVisible(false)
+end
+
+function UpperMenu:enable()
+    self._menu:SetVisible(true)
+end

@@ -22,6 +22,7 @@
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="MapEditor.lua"/>
 		<class file="EnvEditor.lua"/>
+		<class file="ParticleEditor.lua"/>
 		<class file="LoadLevelMenu.lua"/>
 
 		<classes directory="Dialogs">
