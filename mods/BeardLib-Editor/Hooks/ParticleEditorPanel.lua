@@ -69,7 +69,7 @@ function CoreParticleEditorPanel:create_effect_panel(parent)
     
     ]]
     
-	self._effect_properties_panel = panel:divgroup("EffectProperties")
+	self._effect_properties_panel = panel:divgroup("EffectProperties", {offset = {5, 4}})
 
 --	self:create_graph_view(self._editor._main_frame)
 	--top_sizer:add(self._effect_properties_panel, 0, 0, "EXPAND")

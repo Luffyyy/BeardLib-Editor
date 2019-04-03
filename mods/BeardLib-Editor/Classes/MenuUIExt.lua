@@ -91,7 +91,11 @@ function ItemExt:slider(...)
 end
 
 function ItemExt:pan(name, o)
-	return self:Menu(table.merge({name = name, background_visible = false, auto_height = true}, o))
+	return self:Menu(table.merge({name = name, auto_height = true}, o))
+end
+
+function ItemExt:lbl(name, o)
+	return self:Divider(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:divider(name, o)

@@ -125,7 +125,7 @@ function ParticleEditor:create_main_frame(menu)
 	batch_menu:SButton("Load and unload all effects", ClassClbk(self, "on_batch_all_load_unload"))
 
 	local top_panel = self:create_top_bar(self._main_frame)
-	self._effects_notebook = self:notebook("effects", {page_changed = ClassClbk(self, "on_effect_changed")}) 
+	self._effects_notebook = self:notebook("effects", {page_changed = ClassClbk(self, "on_effect_changed"), offset = 4}) 
 end
 
 function ParticleEditor:on_undo()
