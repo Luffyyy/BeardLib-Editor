@@ -1,4 +1,4 @@
-function CoreEffectPropertyContainer:fill_property_container_sheet(window, view)
+function CoreEffectPropertyContainer:fill_property_container_sheet(window, view, no_border)
 	local property_container = self
 
 	local top_sizer = window:divgroup(property_container:name(), {text = property_container:ui_name(), align_method = "grid"})
@@ -7,11 +7,14 @@ function CoreEffectPropertyContainer:fill_property_container_sheet(window, view)
 		top_sizer.help = property_container:name() .. "\n" .. property_container:description()
 	end
 
+	local bgcolor = BLE.Options:GetValue("BackgroundColor")
+
 	for i, p in ipairs(property_container:properties()) do
 		if p._visible then
 		--	local name_text = window:divider(p:name(), {help = property_container:name() .. " / " .. p:name() .. "\n"..p:help()})
 
-			local w = p:create_widget(window, view)
+			p._bgcolor = bgcolor
+			local w = p:create_widget(window, view, no_border)
 
 --[[
 		
@@ -31,19 +34,18 @@ function CoreEffectPropertyContainer:fill_property_container_sheet(window, view)
 	end
 end
 
-function CoreEffectProperty:create_widget(parent, view)
+function CoreEffectProperty:create_widget(parent, view, no_border)
     local widget = nil
     local name = self:name()
-
 	if self._type == "value_list" then
-		widget = parent:combobox(name, ClassClbk(self, "on_commit", view), self._values)
+		widget = parent:combobox(name, ClassClbk(self, "on_commit", view), self._values, nil, {background_color = self._bgcolor, highlight_color = nil})
 		widget:set_value(self._value)
  	elseif self._type == "timeline" then
 		--widget = EWS:TimelineEdit(parent, "")
 
 		--view[self._timeline_init_callback](view, widget)
 	elseif self._type == "vector3" or self._type == "vector2" then
-		widget = parent:Vector3(name, ClassClbk(self, "on_commit", view), math.string_to_vector(self._value), {vector2 = true})
+		widget = parent:Vector3(name, ClassClbk(self, "on_commit", view), math.string_to_vector(self._value), {vector2 = true, background_color = self._bgcolor})
 	elseif self._type == "box" then
 	--[[	widget = EWS:AABBSelector(parent, "", math.string_to_vector(self._min), math.string_to_vector(self._max))
 
@@ -63,12 +65,11 @@ function CoreEffectProperty:create_widget(parent, view)
 			view = view
 		})]]
 	elseif self._type == "variant" then
-		widget = parent:pan(name)
-		local combo = widget:combobox("Variant", ClassClbk(self, "on_set_variant", {
+		widget = parent:pan(name, {background_color = self._bgcolor})
+		local combo = widget:combobox(name, ClassClbk(self, "on_set_variant", {
 			update = true,
 			container = widget,
 			view = view,
-			variant_panel = variant_panel,
 			container_sizer = sizer
 		}))
 
@@ -89,9 +90,9 @@ function CoreEffectProperty:create_widget(parent, view)
 			container_sizer = sizer
 		}, combo)
 	elseif self._type == "compound" then
-		widget = parent:pan(name)
+		widget = parent:pan(name, {background_color = self._bgcolor})
 
-		self._compound_container:fill_property_container_sheet(widget, view)
+		self._compound_container:fill_property_container_sheet(widget, view, true)
     elseif self._type == "list_objects" then
         local vars
 
@@ -165,11 +166,11 @@ function CoreEffectProperty:create_widget(parent, view)
 	elseif self._type == "percentage" then
 		widget = create_percentage_slider(parent, view, self)
 	elseif self._type == "keys" then
-		widget = parent:pan(name)
+		widget = parent:pan(name, {background_color = self._bgcolor})
 		local keys_pan
 		local function sort_keys()
-			--doesn't sort in xml?
 			table.sort(keys_pan._my_items, function(a,b) return tonumber(a.key.t) < tonumber(b.key.t) end)
+			table.sort(self._keys, function(a,b) return tonumber(a.t) < tonumber(a.t) end)
 		end
 		local function load_keys()
 			keys_pan:ClearItems()
@@ -207,7 +208,7 @@ function CoreEffectProperty:create_widget(parent, view)
 					table.remove(self._keys, i)
 					pan:Destroy()
 					view:update_view(false)
-				end, nil, BLE.Utils:GetIcon("cross"), {size = t:TextHeight()})
+				end, nil, BLE.Utils:GetIcon("minus"), {index = 1, size = t:TextHeight()})
 			end
 			--[[
 				if self._presets then
@@ -221,6 +222,28 @@ function CoreEffectProperty:create_widget(parent, view)
 			sort_keys()
 			load_keys()
 		end)
+		if self._presets then
+			local presets = {}
+			for _, preset in pairs(self._presets) do
+				table.insert(presets, preset[1])
+			end
+			widget:combobox("Presets", function(item)
+				self._keys = {}
+				for _, preset in pairs(self._presets[item:Value()][2]) do
+					local val = preset[2]
+					log(tostring(val))
+					if type_name(val) == "Vector3" then
+						if key == "vector2" then
+							val = val.x .. " " .. val.y
+						else
+							val = val.x .. " " .. val.y .. " " .. val.z
+						end
+					end
+					table.insert(self._keys, {t = preset[1], v = val})
+				end
+				load_keys()
+			end, presets, nil)
+		end
 		widget:tickbox("Loop", function(item) self._looping = tostring(item:Value()) end, self._looping == "true")
 
 		keys_pan = widget:pan("Keys")
@@ -231,11 +254,16 @@ function CoreEffectProperty:create_widget(parent, view)
 		widget = create_text_field(parent, view, self)
 	end
 
+	if widget and not no_border then
+		widget.offset[2] = 12
+		widget:SetBorder({bottom = true, size = 1, color = widget.foreground:with_alpha(0.2)})
+	end
+
 	return widget
 end
 
 function create_text_field(parent, view, prop)
-    return parent:textbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value)
+    return parent:textbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor})
 end
 
 function create_color_selector(parent, view, prop)
@@ -243,154 +271,31 @@ function create_color_selector(parent, view, prop)
         local c = item:Value() * 255
         prop._value = c.r .. " " .. c.g .. " " .. c.b
         view:update_view(false)
-    end, math.string_to_vector(prop._value) * 0.00392156862745098)
+    end, math.string_to_vector(prop._value) * 0.00392156862745098, {background_color = prop._bgcolor})
 end
 
 function create_texture_selector(parent, view, prop)
-    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "texture")
+    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "texture", {background_color = prop._bgcolor})
 end
 
 function create_effect_selector(parent, view, prop)
-    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect")
+    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect", {background_color = prop._bgcolor})
 end
 
 function create_percentage_slider(parent, view, prop)
-    return parent:slider(prop:name(), ClassClbk(prop, "on_commit", view), tonumber(prop._value), {min = 0, max = 1})
+    return parent:slider(prop:name(), ClassClbk(prop, "on_commit", view), tonumber(prop._value), {min = 0, max = 1, background_color = prop._bgcolor})
 end
 
 function create_check(parent, view, prop)
     return parent:tickbox(prop:name(), function(item)
 		prop._value = item:Value() and "true" or "false"
 		view:update_view(false)
-	end, prop._value == "true")
-end
-
-function create_key_curve_widget(parent, view, prop)
-	local function refresh_list(vars)
-		local listbox = vars.listbox
-		local prop = vars.prop
-
-		listbox:clear()
-
-		for _, k in ipairs(prop._keys) do
-			listbox:append("t = " .. k.t .. ", v = " .. k.v)
-		end
-
-		vars.view:update_view(false)
-	end
-
-	local function on_add(vars)
-		local listbox = vars.listbox
-		local t = vars.t
-		local v = vars.v
-		local prop = vars.prop
-
-		if #prop._keys < prop._max_keys then
-			prop:add_key({
-				t = t:get_value(),
-				v = v:get_value()
-			})
-			vars:refresh_list()
-		end
-	end
-
-	local function on_remove(vars)
-		local listbox = vars.listbox
-		local t = vars.t
-		local v = vars.v
-		local prop = vars.prop
-
-		if listbox:selected_index() < 0 then
-			return
-		end
-
-		if prop._min_keys < #prop._keys then
-			table.remove(prop._keys, listbox:selected_index() + 1)
-			vars:refresh_list()
-		end
-	end
-
-	local function on_select(vars)
-		local listbox = vars.listbox
-		local t = vars.t
-		local v = vars.v
-		local prop = vars.prop
-
-		if listbox:selected_index() < 0 then
-			return
-		end
-
-		t:set_value(prop._keys[listbox:selected_index() + 1].t)
-		v:set_value(prop._keys[listbox:selected_index() + 1].v)
-	end
-
-	local function on_set(vars)
-		local listbox = vars.listbox
-		local t = vars.t
-		local v = vars.v
-		local prop = vars.prop
-
-		if listbox:selected_index() < 0 then
-			return
-		end
-
-		prop._keys[listbox:selected_index() + 1].t = t:get_value()
-		prop._keys[listbox:selected_index() + 1].v = v:get_value()
-
-		vars:refresh_list()
-	end
-
-	local panel = EWS:Panel(parent, "", "")
-	local listbox = EWS:ListBox(panel, "", "LB_SINGLE,LB_HSCROLL")
-	local add_button = EWS:Button(panel, "Add", "", "BU_EXACTFIT")
-	local remove_button = EWS:Button(panel, "Remove", "", "BU_EXACTFIT")
-	local t = EWS:TextCtrl(panel, "0", "", "TE_PROCESS_ENTER")
-
-	t:set_min_size(Vector3(40, -1, 0))
-
-	local v = EWS:TextCtrl(panel, "0 0 0", "", "TE_PROCESS_ENTER")
-	local top_sizer = EWS:BoxSizer("VERTICAL")
-
-	top_sizer:add(listbox, 1, 0, "EXPAND")
-
-	local row_sizer = EWS:BoxSizer("HORIZONTAL")
-
-	row_sizer:add(add_button, 0, 4, "ALL")
-	row_sizer:add(remove_button, 0, 4, "ALL")
-	top_sizer:add(row_sizer, 0, 0, "EXPAND")
-
-	row_sizer = EWS:BoxSizer("HORIZONTAL")
-
-	row_sizer:add(EWS:StaticText(panel, "t = ", "", ""), 0, 4, "ALIGN_CENTER_VERTICAL,LEFT,RIGHT")
-	row_sizer:add(t, 0, 0, "")
-	row_sizer:add(EWS:StaticText(panel, "v = ", "", ""), 0, 4, "ALIGN_CENTER_VERTICAL,LEFT,RIGHT")
-	row_sizer:add(v, 1, 0, "EXPAND")
-	top_sizer:add(row_sizer, 0, 0, "EXPAND")
-	panel:set_sizer(top_sizer)
-
-	local vars = {
-		listbox = listbox,
-		t = t,
-		v = v,
-		prop = prop,
-		refresh_list = refresh_list,
-		view = view
-	}
-
-	refresh_list(vars)
-	add_button:connect("EVT_COMMAND_BUTTON_CLICKED", on_add, vars)
-	remove_button:connect("EVT_COMMAND_BUTTON_CLICKED", on_remove, vars)
-	v:connect("EVT_COMMAND_TEXT_ENTER", on_set, vars)
-	listbox:connect("EVT_COMMAND_LISTBOX_SELECTED", on_select, vars)
-	listbox:select_index(0)
-	on_select(vars)
-
-	return panel
+	end, prop._value == "true", {background_color = prop._bgcolor})
 end
 
 function CoreEffectProperty:on_set_variant(widget_view_variant, item)
 	local view = widget_view_variant.view
-	local variant_panel = widget_view_variant.variant_panel
+	local variant_panel = item.parent:GetItem("VariantPanel")
 	local container = widget_view_variant.container
 	local container_sizer = widget_view_variant.container_sizer
 	self._value = item:SelectedItem()
