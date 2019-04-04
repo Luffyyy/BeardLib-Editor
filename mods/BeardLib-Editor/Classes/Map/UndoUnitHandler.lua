@@ -23,7 +23,8 @@ function UHandler:init(parent, menu)
     }
 end
 
-function UHandler:enable() 
+function UHandler:enable()
+    UHandler.super.enable(self)
     self:bind_opt("Redo", ClassClbk(self, "Redo"))
     self:bind_opt("Undo", ClassClbk(self, "Undo"))
 end

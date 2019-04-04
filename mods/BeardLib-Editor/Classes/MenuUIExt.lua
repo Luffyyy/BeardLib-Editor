@@ -2,12 +2,8 @@
 --snek
 
 local C = BeardLib.Items
+ 
 local Item = C.Item
-Item.get_value = Item.Value
-Item.set_value = Item.SetValue
-Item.set_enabled = Item.SetEnabled
-Item.set_visible = Item.SetVisible
-
 local Slider = C.Slider
 
 function Slider:set_range(min, max)
@@ -22,6 +18,10 @@ ComboBox.get_value = ComboBox.SelectedItem
 
 local color
 ItemExt = {}
+ItemExt.get_value = Item.Value
+ItemExt.set_value = Item.SetValue
+ItemExt.set_enabled = Item.SetEnabled
+ItemExt.set_visible = Item.SetVisible
 
 function ItemExt:ImgButton(name, callback, texture, rect, o)
 	return self:ImageButton(table.merge({
@@ -228,7 +228,7 @@ function ItemExt:PasteAxis(item)
 end
 
 function ItemExt:Vector3(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({value_type = "Position", align_method = "centered_grid", color = false}, o))
+	local p = self:divgroup(name, table.merge({on_callback = clbk, value_type = "Position", align_method = "centered_grid", color = false}, o))
 	o = {}
 	value = value or Vector3()
 	local vector2 = p.vector2
@@ -250,6 +250,7 @@ function ItemExt:Vector3(name, clbk, value, o)
 	function p:Value()
 		return Vector3(items[1]:Value(), items[2]:Value(), items[3]:Value())
 	end
+	p.get_value = p.Value
 	
 	function p:SetValue(val, run_callback)
 		items[1]:SetValue(val.x)

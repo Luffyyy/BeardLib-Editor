@@ -10,7 +10,9 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
-    self._particle_editor_test = true --Very broken xd
+    self._particle_editor_test = false
+    self._mapeditor = {}
+
     self._current_script = "default"
     self._current_continent = "world"
     self._grid_size = 1
@@ -67,17 +69,25 @@ function Editor:m() return m end
 
 function Editor:post_init(menu)
     self.parts = m
-    m.menu = UpperMenu:new(self, menu)
-    m.status = StatusMenu:new(self, menu)
-    m.world = WorldDataEditor:new(self, menu)
-    m.mission = MissionEditor:new(self, menu)
-    m.static = StaticEditor:new(self, menu)
-    m.opt = InEditorOptions:new(self, menu)
-    m.console = EditorConsole:new(self, menu)
-    m.env = EnvEditor:new(self, menu)
-    m.instances = InstancesEditor:new(self, menu)
-    m.undo_handler = UndoUnitHandler:new(self, menu)
-    m.cubemap_creator = CubemapCreator:new(self, menu, self._camera_object)
+
+	self._editor_menu = menu:Menu({visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
+    m.menu = UpperMenu:new(self, self._editor_menu)
+    m.status = StatusMenu:new(self, self._editor_menu)
+    m.world = WorldDataEditor:new(self, self._editor_menu)
+    m.mission = MissionEditor:new(self, self._editor_menu)
+    m.static = StaticEditor:new(self, self._editor_menu)
+    m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.console = EditorConsole:new(self, self._editor_menu)
+    m.env = EnvEditor:new(self, self._editor_menu)
+    m.instances = InstancesEditor:new(self, self._editor_menu)
+    m.undo_handler = UndoUnitHandler:new(self, self._editor_menu)
+    m.cubemap_creator = CubemapCreator:new(self, self._editor_menu, self._camera_object)
+
+    for n, manager in pairs(m) do
+        self._mapeditor[n] = manager
+    end
+    m.particle = ParticleEditor:new(self, menu)
+
     for name, manager in pairs(m) do
         manager.manager_name = name
     end
@@ -88,16 +98,6 @@ function Editor:post_init(menu)
     menu.mouse_move = ClassClbk(m.static, "mouse_moved")
     if self._has_fix then
         m.menu:toggle_widget("move")
-    end
-
-    if self._particle_editor_test then
-        self._particle_editor_menu = menu:Menu({
-            auto_foreground = true,
-            align_method = "grid",
-            background_color = BLE.Options:GetValue("BackgroundColor"),
-            w = 500,
-        })
-        self._particle_editor = ParticleEditor:new(self._particle_editor_menu)
     end
 end
 
@@ -391,6 +391,8 @@ function Editor:set_camera(pos, rot)
 end
 
 function Editor:set_enabled(enabled)
+    enabled = NotNil(self._enabled, enabled)
+    self._editor_menu:SetVisible(enabled and not self._particle_editor_test)
     self._enabled = enabled
     if enabled then
         self._menu:Enable()
@@ -403,8 +405,8 @@ function Editor:set_enabled(enabled)
     if type(managers.enemy) == "table" then
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
-    for _, manager in pairs(m) do
-        if enabled and not self._particle_editor_test then
+    for n, manager in pairs(m) do
+        if enabled and ((self._particle_editor_test and n == "particle") or (not self._particle_editor_test and self._mapeditor[n])) then
             if manager.enable then
                 manager:enable()
             end        
@@ -606,17 +608,12 @@ function Editor:update(t, dt)
     if self:enabled() then
         self._current_pos = self:current_position() or self._current_pos
         if not m.cubemap_creator:creating_cube_map() then
-            if not self._particle_editor_test then
-                for _, manager in pairs(m) do
-                    if manager.update then
-                        manager:update(t, dt)
-                    end
+            for n, manager in pairs(m) do
+                if manager.update and manager:enabled() then
+                    manager:update(t, dt)
                 end
             end
-            
-            if self._particle_editor then
-                self._particle_editor:update(t, dt)
-            end
+        
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
             self:draw_marker(t, dt)

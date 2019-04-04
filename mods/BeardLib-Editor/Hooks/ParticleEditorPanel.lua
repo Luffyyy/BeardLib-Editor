@@ -69,8 +69,6 @@ function CoreParticleEditorPanel:create_effect_panel(parent)
     
     ]]
     
-	self._effect_properties_panel = panel:divgroup("EffectProperties", {offset = {5, 4}})
-
 --	self:create_graph_view(self._editor._main_frame)
 	--top_sizer:add(self._effect_properties_panel, 0, 0, "EXPAND")
 	--panel:set_sizer(top_sizer)
@@ -126,13 +124,16 @@ end
 
 function CoreParticleEditorPanel:create_atom_panel(parent)
     local panel = parent:pan("atom")
-	local notebook = panel:notebook("Stacks")
-	self._atom_panel = notebook:pan("Atom", {auto_height = false, h = 360})
+	local notebook = panel:notebook("Effect/Stacks Properties")
+	self._atom_panel = notebook:pan("Atom", {auto_height = false, h = 435})
+	self._effect_properties_panel = notebook:pan("EffectProperties", {auto_height = false, h = 435})
 
 	local initializer_page = self:create_stack_panel(notebook, "initializer")
 	local simulator_page = self:create_stack_panel(notebook, "simulator")
 	local visualizer_page = self:create_stack_panel(notebook, "visualizer")
 
+
+	notebook:AddItemPage("Effect", self._effect_properties_panel)
 	notebook:AddItemPage("Atom", self._atom_panel)
 	notebook:AddItemPage("Initializer Stack", initializer_page)
 	notebook:AddItemPage("Simulator Stack", simulator_page)
@@ -150,14 +151,8 @@ end
 
 
 function CoreParticleEditorPanel:create_stack_panel(parent, stacktype)
-	local panel = parent:pan(stacktype, {align_method = "grid_from_right"})
-	local stacklist = panel:pan("list") -- EWS:ListBox(panel, "", "LB_SINGLE,LB_HSCROLL")
-
-	--set_widget_help(stacklist, "Copy and paste using Ctrl-C/Ctrl-V")
-	--stacklist:connect("EVT_COMMAND_LISTBOX_SELECTED", ClassClbk(self, "on_select_stack_member"), stacktype)
-	--stacklist:connect("EVT_KEY_DOWN", ClassClbk(self, "on_key_stack_member"), stacktype)
-
-	self._stacklist_boxes[stacktype] = stacklist
+	local panel = parent:pan(stacktype, {align_method = "grid_from_right", auto_height = false, h = 435})
+	self._stacklist_boxes[stacktype] = panel:pan("list")
 	local stack_member_combo = panel:ComboBox({text = " ", control_slice = 1})
 	local member_names = stack_member_names[stacktype]
 	local last = nil
@@ -172,7 +167,6 @@ function CoreParticleEditorPanel:create_stack_panel(parent, stacktype)
 	self._stack_member_combos[stacktype] = stack_member_combo
 	panel:SButton("Up", ClassClbk(self, "on_stack_up", stacktype))
 	panel:SButton("Down", ClassClbk(self, "on_stack_down", stacktype))
-	panel:SButton("Remove", ClassClbk(self, "on_stack_remove", stacktype))
 	panel:SButton("Add", ClassClbk(self, "on_stack_add", stacktype))
 	panel:SButton("Copy", ClassClbk(self, "on_stack_copy", stacktype))
 	panel:SButton("Paste", ClassClbk(self, "on_stack_paste", stacktype))
@@ -251,7 +245,8 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 
 			if self._atom then
                 for i, m in ipairs(self._atom:stack(stacktype):stack()) do
-                    c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member", {i = i, type = stacktype}))
+					local btn = c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member"), {stack_index = i, stack_type = stacktype})
+					btn:ImgButton("Remove", ClassClbk(self, "on_stack_remove"), nil, BLE.Utils:GetIcon("minus"))
 				end
 			end
 
@@ -268,10 +263,14 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 	local valid = self._effect:validate()
 	self._valid_effect = valid.valid
 
+	
 	if not valid.valid then
 		self._box_status = valid.message
+	else
+		self._box_status = "Effect is valid"
 	end
-    self._status_box:SetVisible(not valid.valid)
+
+    --self._status_box:SetVisible(not valid.valid)
 
 	self:update_status_box()
 
@@ -382,9 +381,14 @@ function CoreParticleEditorPanel:on_lose_focus()
 	--self:show_stack_overview(false)
 end
 
-function CoreParticleEditorPanel:on_select_stack_member(select)
-    self._stack_panels[select.type]:ClearItems()
-    self._atom:stack(select.type):stack()[select.i]:fill_property_container_sheet(self._stack_panels[select.type], self)
+function CoreParticleEditorPanel:on_select_stack_member(item)
+	if item.parent._prev_stack_item then
+		item.parent._prev_stack_item:SetBorder({left = false})
+	end
+	item:SetBorder({left = true})
+    self._stack_panels[item.stack_type]:ClearItems()
+    self._atom:stack(item.stack_type):stack()[item.stack_index]:fill_property_container_sheet(self._stack_panels[item.stack_type], self)
+	item.parent._prev_stack_item = item
 end
 
 function CoreParticleEditorPanel:on_save_as()
@@ -421,4 +425,101 @@ function CoreParticleEditorPanel:do_save()
 	self._editor:set_page_name(self, base_path(self._effect:name()))
 
 	return true
+end
+
+function CoreParticleEditorPanel:on_stack_remove(item) 
+	self._atom:stack(item.parent.stack_type):remove(item.parent.stack_index)
+	self:update_view(true)
+end
+
+
+function CoreParticleEditorPanel:on_stack_up(stacktype)
+	local box = self._stacklist_boxes[stacktype]
+	local selected = box._prev_stack_item
+
+	if not selected then
+		return
+	end
+
+	local stack = self._atom:stack(stacktype)
+	local idx = selected.stack_index
+	idx = stack:move_up(idx)
+	self:update_view(true)
+	local items = self._stacklist_boxes[stacktype]:Items()
+	local item = items[idx]
+	if item then
+		item:RunCallback()
+	end
+end
+
+function CoreParticleEditorPanel:on_stack_down(stacktype)
+	local box = self._stacklist_boxes[stacktype]
+	local selected = box._prev_stack_item
+
+	if not selected then
+		return
+	end
+
+	local stack = self._atom:stack(stacktype)
+	local idx = selected.stack_index
+	idx = stack:move_down(idx)
+	self:update_view(true)
+	local items = self._stacklist_boxes[stacktype]:Items()
+	local item = items[idx]
+	if item then
+		item:RunCallback()
+	end
+end
+
+
+function CoreParticleEditorPanel:on_stack_copy(stacktype)
+	local box = self._stacklist_boxes[stacktype]
+	local selected = box._prev_stack_item
+
+	if not selected then
+		return
+	end
+
+	self._editor._clipboard_type = stacktype
+	self._editor._clipboard_object = deep_clone(self._atom:stack(stacktype):member(selected.stack_index))
+end
+
+function CoreParticleEditorPanel:on_stack_paste(stacktype)
+	if self._editor._clipboard_type ~= stacktype or not self._editor._clipboard_object then
+		return
+	end
+
+	local box = self._stacklist_boxes[stacktype]
+	local selected = box._prev_stack_item
+
+	if not selected then
+		self._atom:stack(stacktype):add_member(deep_clone(self._editor._clipboard_object))
+	else
+		self._atom:stack(stacktype):insert_member(deep_clone(self._editor._clipboard_object), selected.stack_index)
+	end
+
+	self:update_view(true)
+end
+
+function CoreParticleEditorPanel:on_stack_add(stacktype)
+	if not self._atom then
+		return
+	end
+
+	local members = stack_members[stacktype]
+	local member_names = stack_member_names[stacktype]
+	local to_add_idx = self._stack_member_combos[stacktype]:Value()
+
+	if tonumber(to_add_idx) and to_add_idx < 0 then
+		return
+	end
+
+	self._atom:stack(stacktype):add_member(members[member_names[to_add_idx].key]())
+	self:update_view(true)
+
+	local items = self._stacklist_boxes[stacktype]:Items()
+	local item = items[#items]
+	if item then
+		item:RunCallback()
+	end
 end

@@ -13,6 +13,7 @@ end
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:enable()
+    WData.super.enable(self)
     self:bind_opt("SpawnUnit", ClassClbk(self, "OpenSpawnUnitDialog"))
     self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))

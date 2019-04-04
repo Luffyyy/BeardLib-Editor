@@ -1,4 +1,4 @@
-UpperMenu = UpperMenu or class()
+UpperMenu = UpperMenu or class(EditorPart)
 function UpperMenu:get_menu_h() return self._menu:Panel():parent():h() - self._menu.h - 1 end
 function UpperMenu:init(parent, menu)
     self._parent = parent
@@ -128,12 +128,4 @@ end
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
     BeardLibEditor.Utils:GetPart("opt"):save()
-end
-
-function UpperMenu:disable()
-    self._menu:SetVisible(false)
-end
-
-function UpperMenu:enable()
-    self._menu:SetVisible(true)
 end

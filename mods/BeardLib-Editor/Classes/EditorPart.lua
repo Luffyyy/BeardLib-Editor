@@ -81,9 +81,11 @@ end
 function Part:update()
     local allowed = not BeardLib.managers.dialog:DialogOpened()
     local not_focused = not (self._parent._menu:Focused() or BeardLib.managers.dialog:Menu():Typing())
-	for _, trigger in pairs(self._triggers) do
-        if not_focused and (allowed or trigger.in_dialogs) and BeardLib.Utils.Input:Triggered(trigger) then
-            trigger.clbk()
+    if self._triggers then
+        for _, trigger in pairs(self._triggers) do
+            if not_focused and (allowed or trigger.in_dialogs) and BeardLib.Utils.Input:Triggered(trigger) then
+                trigger.clbk()
+            end
         end
     end
 end
@@ -109,17 +111,17 @@ end
 function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_dialogs) end
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
-function Part:enabled() return self._menu:Visible() end
+function Part:enabled() return self._enabled end
 function Part:value(v) return assert_value(ClassClbk(BLE.Options, "GetValue"), 'Map/' .. v, "Value") end
 function Part:part(n) return assert_value(ClassClbk(BLE.Utils, "GetPart"), n, "Part") end
 function Part:layer(l) return assert_value(ClassClbk(BLE.Utils, "GetLayer"), l, "Layer") end
 function Part:build_default_menu() self:ClearItems() end
 function Part:set_title(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
-function Part:enable() if self._menu then self._menu:SetVisible(true) end end
+function Part:enable() 
+    self._enabled = true 
+end
 function Part:disable()
-    if self._menu then
-        self._menu:SetVisible(false)
-    end
+    self._enabled = false
     self._triggers = {}
 end
 

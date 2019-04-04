@@ -4,32 +4,17 @@ function CoreEffectPropertyContainer:fill_property_container_sheet(window, view,
 	local top_sizer = window:divgroup(property_container:name(), {text = property_container:ui_name(), align_method = "grid"})
 
 	if property_container:description() ~= "" then
-		top_sizer.help = property_container:name() .. "\n" .. property_container:description()
+		top_sizer:GetToolbar():SButton("?", nil, {position = "TopRight", h = top_sizer:TextHeight(), help = property_container:name() .. "\n" .. property_container:description()})
 	end
 
 	local bgcolor = BLE.Options:GetValue("BackgroundColor")
 
 	for i, p in ipairs(property_container:properties()) do
 		if p._visible then
-		--	local name_text = window:divider(p:name(), {help = property_container:name() .. " / " .. p:name() .. "\n"..p:help()})
-
-			p._bgcolor = bgcolor
-			local w = p:create_widget(window, view, no_border)
-
---[[
-		
-			if i ~= #property_container:properties() then
-				local la = EWS:StaticLine(window, "", "LI_HORIZONTAL")
-
-				la:set_min_size(Vector3(10, 2, 0))
-				grid_sizer:add(la, 0, 0, "EXPAND")
-
-				local lb = EWS:StaticLine(window, "", "LI_HORIZONTAL")
-
-				lb:set_min_size(Vector3(10, 2, 0))
-				grid_sizer:add(lb, 1, 0, "EXPAND")
+			if not no_border then
+				p._bgcolor = bgcolor
 			end
-			]]
+			p:create_widget(window, view, no_border)
 		end
 	end
 end
@@ -45,7 +30,9 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 
 		--view[self._timeline_init_callback](view, widget)
 	elseif self._type == "vector3" or self._type == "vector2" then
-		widget = parent:Vector3(name, ClassClbk(self, "on_commit", view), math.string_to_vector(self._value), {vector2 = true, background_color = self._bgcolor})
+		widget = parent:Vector3(name, ClassClbk(self, "on_commit", view), math.string_to_vector(self._value), {
+			vector2 = true, background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent
+		})
 	elseif self._type == "box" then
 	--[[	widget = EWS:AABBSelector(parent, "", math.string_to_vector(self._min), math.string_to_vector(self._max))
 
@@ -95,6 +82,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		self._compound_container:fill_property_container_sheet(widget, view, true)
     elseif self._type == "list_objects" then
         local vars
+		local prev
 
 		local function on_add_object()
 			table.insert(vars.property._list_members, deep_clone(self._list_objects[vars.combo:SelectedItem()]))
@@ -102,12 +90,8 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			vars.view:update_view(false)
 		end
 
-		local function on_remove_object()
-			if not vars.list_box.selected then
-				return
-			end
-
-			table.delete(vars.property._list_members, vars.list_box.selected)
+		local function on_remove_object(item)
+			table.delete(vars.property._list_members, item.parent.property)
 			vars:fill_list()
 			vars:on_select_object()
 			vars.view:update_view(false)
@@ -119,22 +103,27 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
             end
             vars.list_box.selected = item
 			vars.sheet:ClearItems()
-            item:SetBorder({left = true})
-			vars.property._list_members[vars.list_box:selected_index() + 1]:create_widget(vars.sheet, vars.view)
+			if prev then
+				prev:SetBorder({left = false})
+			end
+			item:SetBorder({left = true})
+			prev = item
+			item.property._bgcolor = self._bgcolor
+			item.property:create_widget(vars.sheet, vars.view)
 		end
 
 		local function fill_list()
 			vars.list_box:ClearItems()
 
-            for _, p in ipairs(vars.property._list_members) do
-                vars.list_box:Button(self, on_select_object)
+            for i, p in ipairs(vars.property._list_members) do
+				local btn = vars.list_box:button(p:name(), on_select_object, {property = p})
+				btn:ImgButton("Remove", on_remove_object, nil, BLE.Utils:GetIcon("minus"))
 			end
 		end
 
-		widget = parent:pan(name, {align_method = "grid"})
+		widget = parent:pan(name, {align_method = "grid", background_color = self._bgcolor})
 		local list_box = widget:pan("", {h = 250})
-		local remove_button = widget:SButton("Remove", on_remove_object)
-		local combo = widget:combobox(" ", nil, nil, nil, {control_slice = 1, shrink_width = 0.7})
+		local combo = widget:combobox(" ", nil, nil, nil, {control_slice = 1, shrink_width = 0.93})
 
 		for n, p in pairs(self._list_objects) do
 			combo:Append(n)
@@ -170,7 +159,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		local keys_pan
 		local function sort_keys()
 			table.sort(keys_pan._my_items, function(a,b) return tonumber(a.key.t) < tonumber(b.key.t) end)
-			table.sort(self._keys, function(a,b) return tonumber(a.t) < tonumber(a.t) end)
+			table.sort(self._keys, function(a,b) return tonumber(a.t) < tonumber(b.t) end)
 		end
 		local function load_keys()
 			keys_pan:ClearItems()
@@ -316,6 +305,11 @@ function CoreEffectProperty:on_commit(view, item)
 
 	local value = item:get_value()
 	if self._value ~= value then
+		if self._type == "vector3" then
+			value = value.x.." "..value.y
+		elseif self._type == "vector2" then
+			value = value.x.." "..value.y.." "..value.z
+		end
 		self._value = value
 
 		view:update_view(false)

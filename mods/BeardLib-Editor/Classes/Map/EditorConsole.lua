@@ -22,7 +22,7 @@ function EditorConsole:init(parent, menu)
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
     })
     MenuUtils:new(self, self._options_menu)
-    self._options_menu:Panel():set_leftbottom(self._menu:Panel():lefttop())    
+    self._options_menu:Panel():set_leftbottom(self._menu:Panel():position())    
     local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
     self:Button("Console", ClassClbk(self, "ToggleConsole"), opt)
     self:Button("Clear", ClassClbk(self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
@@ -75,11 +75,13 @@ function EditorConsole:Clear() self:ClearItems() end
 
 
 function EditorConsole:disable()
+    self._enabled = false
     self._menu:SetVisible(false)
     self._options_menu:SetVisible(false)
 end
 
 function EditorConsole:enable()
+    self._enabled = true
     self._menu:SetVisible(true)
     self._options_menu:SetVisible(true)
 end

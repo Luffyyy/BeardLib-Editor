@@ -52,24 +52,43 @@ collect_member_names(stack_members.visualizer, stack_member_names.visualizer)
 
 ParticleEditor = ParticleEditor or class(EditorPart)
 
-function ParticleEditor:init(menu)
-	if managers.editor then
-	--	managers.editor:set_listener_enabled(true)
-	end
+function ParticleEditor:init(editor, menu)
+	self._parent = editor
+	self._triggers = {}
+
+	self._menu = menu:Menu({
+		visible = false,
+		auto_foreground = true,
+		align_method = "grid",
+		background_color = BLE.Options:GetValue("BackgroundColor"),
+		visible = false,
+		w = 500,
+	})
 
 	self._gizmo_movement = "NO_MOVE"
 	self._gizmo_accum = 0
 	self._gizmo_anchor = Vector3(0, 300, 100)
 	self._effects = {}
 
-	self:create_main_frame(menu)
+	self:create_main_frame()
 end
 
-function ParticleEditor:create_main_frame(menu)
-	menu = menu or self._menu
-	self._menu = menu
-	ItemExt:add_funcs(self, menu)
-	menu:ClearItems()
+function ParticleEditor:disable()
+	ParticleEditor.super.disable(self)
+	self._menu:SetVisible(false)
+end
+
+function ParticleEditor:enable()
+	ParticleEditor.super.enable(self)
+	self._menu:SetVisible(true)
+	self:bind_opt("Undo", ClassClbk(self, "on_undo"))
+    self:bind_opt("Redo", ClassClbk(self, "on_redo"))
+    self:bind_opt("SaveMap", ClassClbk(self, "on_save"))
+end
+
+function ParticleEditor:create_main_frame()
+	ItemExt:add_funcs(self)
+	self._menu:ClearItems()
 	--self._main_frame = EWS:Frame("Tsar Bomba Particle Editor", Vector3(-1, -1, -1), Vector3(1000, 800, -1), "DEFAULT_FRAME_STYLE,FRAME_FLOAT_ON_PARENT", Global.frame)
 	--local menu_bar = EWS:MenuBar()
 	--local file_menu = EWS:Menu("")
@@ -80,6 +99,9 @@ function ParticleEditor:create_main_frame(menu)
 	file:SButton("SaveEffect(Ctrl+S)", ClassClbk(self, "on_save"))
 	file:SButton("SaveEffectAs", ClassClbk(self, "on_save_as"))
 	file:SButton("CloseEffect", ClassClbk(self, "on_close_effect"))
+	file:SButton("Exit", ClassClbk(self, "on_close"))
+
+	self._parent._particle_editor_test = true
 	--menu_bar:append(file_menu, "File")
 
 	local edit = self:popup("Edit")
@@ -112,19 +134,18 @@ function ParticleEditor:create_main_frame(menu)
 	gizmo:SButton("Effect Gizmo Rotation Z To Positive X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), 90)))
 	gizmo:SButton("Effect Gizmo Rotation Z To Negative X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), -90)))
 
-	self._view_menu = self:popup("View")
+	--self._view_menu = self:popup("View")
 
-	self._view_menu:tickbox("Enable Debug Drawing (atom bounding volumes etc.)", false, ClassClbk(self, "on_debug_draw"))
-	self._view_menu:tickbox("Performance And Analysis Stats", false, ClassClbk(self, "on_effect_stats"))
-	self._view_menu:separator()
-	self._view_menu:tickbox("Show a graph of all operation stacks and channel reads/writes", false, ClassClbk(self, "on_show_stack_overview"))
+	--self._view_menu:tickbox("Enable Debug Drawing (atom bounding volumes etc.)", false, ClassClbk(self, "on_debug_draw"))
+	--self._view_menu:tickbox("Performance And Analysis Stats", false, ClassClbk(self, "on_effect_stats"))
+	--self._view_menu:separator()
+	--self._view_menu:tickbox("Show a graph of all operation stacks and channel reads/writes", false, ClassClbk(self, "on_show_stack_overview"))
 
-	local batch_menu = self:popup("Batch")
+	--local batch_menu = self:popup("Batch")
 
-	batch_menu:SButton("Batch all effects, remove update_render policy for effects not screen aligned", ClassClbk(self, "on_batch_all_remove_update_render"))
-	batch_menu:SButton("Load and unload all effects", ClassClbk(self, "on_batch_all_load_unload"))
+	--batch_menu:SButton("Batch all effects, remove update_render policy for effects not screen aligned", ClassClbk(self, "on_batch_all_remove_update_render"))
+	--batch_menu:SButton("Load and unload all effects", ClassClbk(self, "on_batch_all_load_unload"))
 
-	local top_panel = self:create_top_bar(self._main_frame)
 	self._effects_notebook = self:notebook("effects", {page_changed = ClassClbk(self, "on_effect_changed"), offset = 4}) 
 end
 
@@ -134,82 +155,6 @@ function ParticleEditor:on_undo()
 	if cur_effect then
 		cur_effect:undo()
 	end
-end
-
-function ParticleEditor:on_batch_all_remove_update_render()
-	local ret = EWS:message_box(self._main_frame, "You are about to batch all effects of project database and remove update_render\nfor atoms that do not have a visualizer with screen_aligned set.\nAre you sure you want to continue?", "Are you sure you wish to continue?", "YES_NO", Vector3(-1, -1, 0))
-
-	if ret ~= "YES" then
-		return false
-	end
-
-	local any_saved = false
-
-	for _, name in ipairs(managers.database:list_entries_of_type("effect")) do
-		local n = DB:load_node("effect", name)
-		local effect = CoreEffectDefinition:new()
-
-		effect:load(n)
-
-		local should_save = false
-
-		for _, atom in ipairs(effect._atoms) do
-			local cull_policy = atom:get_property("cull_policy")
-
-			if cull_policy._value == "update_render" then
-				local had_screen_aligned = false
-
-				for _, visualizer in ipairs(atom._stacks.visualizer._stack) do
-					if visualizer:name() == "billboard" and visualizer:get_property("billboard_type")._value == "screen_aligned" then
-						had_screen_aligned = true
-					end
-				end
-
-				if not had_screen_aligned then
-					cull_policy._value = "freeze"
-					should_save = true
-				end
-			end
-		end
-
-		if should_save then
-			Application:error("FIXME: ParticleEditor:on_batch_all_remove_update_render(), (using Database:save_node())")
-		end
-	end
-
-	if any_saved then
-		cat_debug("debug", "Saved entries, saving database...")
-	else
-		cat_debug("debug", "Nothing modified, not saving database")
-	end
-end
-
-function ParticleEditor:on_batch_all_load_unload()
-	local ret = EWS:message_box(self._main_frame, "You are about to batch all effects of project database and load and unload them.\nAre you sure you want to continue?", "Are you sure you wish to continue?", "YES_NO", Vector3(-1, -1, 0))
-
-	if ret ~= "YES" then
-		return false
-	end
-
-	cat_debug("debug", "Loading all effects once...")
-
-	for _, name in ipairs(managers.database:list_entries_of_type("effect")) do
-		local n = DB:load_node("effect", name)
-		local effect = CoreEffectDefinition:new()
-
-		effect:load(n)
-
-		local valid = effect:validate()
-
-		if not valid.valid then
-			cat_debug("debug", "Skipping engine load of", name, " since validation failed:", valid.message)
-		else
-			cat_debug("debug", "Loading", name)
-			CoreEngineAccess._editor_reload_node(n, Idstring("effect"), Idstring("unique_test_effect_name"))
-		end
-	end
-
-	cat_debug("debug", "Done!")
 end
 
 function ParticleEditor:on_redo()
@@ -263,20 +208,6 @@ function ParticleEditor:on_play_highest()
 	if cur_effect then
 		cur_effect:update_effect_instance(1)
 	end
-end
-
-function ParticleEditor:on_debug_draw()
-	local b = "true"
-
-	if not self._view_menu:is_checked("DEBUG_DRAWING") then
-		b = "false"
-	end
-
-	Application:console_command("set show_tngeffects " .. b)
-end
-
-function ParticleEditor:on_effect_stats()
-	Application:console_command("stats tngeffects")
 end
 
 function ParticleEditor:on_show_stack_overview()
@@ -358,15 +289,6 @@ function ParticleEditor:on_reset_gizmo_rotation()
 	self:effect_gizmo():set_rotation(Rotation())
 end
 
-function ParticleEditor:create_top_bar(parent)
-	--local panel = self:pan("TopBar")
-	--panel:button("Play", ClassClbk(self, "on_play"))
-	--panel:button("PlayLowestQualityOnce", ClassClbk(self, "on_play_lowest"))
-	--panel:button("PlayHighestQualityOnce", ClassClbk(self, "on_play_highest"))
-	--panel:divider("Click on parameters and container names for usage hints")
-
-	return panel
-end
 
 function ParticleEditor:effect_gizmo()
 	if not self._effect_gizmo or not alive(self._effect_gizmo) then
@@ -431,9 +353,9 @@ function ParticleEditor:close()
 end
 
 function ParticleEditor:on_close_effect()
-	local curi = self:current_effect_index()
-	if curi > 0 then
-		if not self:current_effect():close() then
+	local cur = self:current_effect()
+	if cur then
+		if not cur:close() then
 			return
 		end
 
@@ -452,11 +374,8 @@ function ParticleEditor:on_close()
 	end
 
 	self:remove_gizmo()
---	managers.toolhub:close("Particle Editor")
-
---	if managers.editor then
-	--	managers.editor:set_listener_enabled(false)
---	end
+	self._parent._particle_editor_test = false
+	self._parent:set_enabled()
 end
 
 function ParticleEditor:remove_gizmo()

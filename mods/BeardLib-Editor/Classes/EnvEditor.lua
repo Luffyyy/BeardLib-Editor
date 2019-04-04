@@ -54,6 +54,7 @@ function EnvEditor:build_default_menu()
     self:Button("LoadGameDefault", ClassClbk(self, "database_load_env", "core/environments/default"), {group = quick})
     self:Button("LoadCurrentDefault", ClassClbk(self, "database_load_env", env_path), {group = quick})
     self:Button("Save", ClassClbk(self, "write_to_disk_dialog"), {group = quick})
+    self:Button("EffectEditor", ClassClbk(self, "open_effect_editor"), {group = quick})
     --SUN
     local sun = self:Group("Sun")
     self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", ret_vec = true, group = sun}))
@@ -571,6 +572,11 @@ function EnvEditor:write_to_disk(filepath)
         file:close()
         BLE.Utils:Notify("Success!", "Saved environment "..filepath)
     end
+end
+
+function EnvEditor:open_effect_editor()
+    self._parent._particle_editor_test = true
+    self._parent:set_enabled()
 end
 
 function EnvEditor:write_to_disk_dialog()

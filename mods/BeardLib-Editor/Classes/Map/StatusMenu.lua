@@ -24,3 +24,5 @@ function StatusMenu:SetStatus(status)
         self._text:SetText(status)
     end
 end
+
+function StatusMenu:enabled() return true end
