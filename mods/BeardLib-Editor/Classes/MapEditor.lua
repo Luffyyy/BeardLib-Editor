@@ -10,7 +10,7 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
-    self._particle_editor_test = false
+    self._particle_editor_active = false
     self._mapeditor = {}
 
     self._current_script = "default"
@@ -70,7 +70,7 @@ function Editor:m() return m end
 function Editor:post_init(menu)
     self.parts = m
 
-	self._editor_menu = menu:Menu({visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
+	self._editor_menu = menu:Menu({label = "editor_menu", align_method = "none", visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
     m.menu = UpperMenu:new(self, self._editor_menu)
     m.status = StatusMenu:new(self, self._editor_menu)
     m.world = WorldDataEditor:new(self, self._editor_menu)
@@ -244,7 +244,7 @@ function Editor:mouse_released(button, x, y)
 end
 
 function Editor:mouse_pressed(button, x, y)
-    if self._menu:MouseInside() then
+    if self._editor_menu:ChildrenMouseFocused("editor_menu") then
         return
     end
     if m.world:mouse_pressed(button, x, y) then
@@ -392,7 +392,7 @@ end
 
 function Editor:set_enabled(enabled)
     enabled = NotNil(self._enabled, enabled)
-    self._editor_menu:SetVisible(enabled and not self._particle_editor_test)
+    self._editor_menu:SetVisible(enabled and not self._particle_editor_active)
     self._enabled = enabled
     if enabled then
         self._menu:Enable()
@@ -406,7 +406,7 @@ function Editor:set_enabled(enabled)
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
     for n, manager in pairs(m) do
-        if enabled and ((self._particle_editor_test and n == "particle") or (not self._particle_editor_test and self._mapeditor[n])) then
+        if enabled and ((self._particle_editor_active and n == "particle") or (not self._particle_editor_active and self._mapeditor[n])) then
             if manager.enable then
                 manager:enable()
             end        

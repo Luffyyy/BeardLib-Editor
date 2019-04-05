@@ -101,7 +101,6 @@ function ParticleEditor:create_main_frame()
 	file:SButton("CloseEffect", ClassClbk(self, "on_close_effect"))
 	file:SButton("Exit", ClassClbk(self, "on_close"))
 
-	self._parent._particle_editor_test = true
 	--menu_bar:append(file_menu, "File")
 
 	local edit = self:popup("Edit")
@@ -111,9 +110,9 @@ function ParticleEditor:create_main_frame()
 
 	local effect = self:popup("Effect")
 
-	effect:SButton("Play(F1)", ClassClbk(self, "on_play"))
-	effect:SButton("Play Lowest Quality Once\tF2", ClassClbk(self, "on_play_lowest"))
-	effect:SButton("Play Highest Quality Once\tF3", ClassClbk(self, "on_play_highest"))
+	effect:SButton("Play", ClassClbk(self, "on_play"))
+	effect:SButton("Play Lowest Quality Once", ClassClbk(self, "on_play_lowest"))
+	effect:SButton("Play Highest Quality Once", ClassClbk(self, "on_play_highest"))
 
 	local gizmo = self:popup("Effect Gizmo")
 
@@ -303,6 +302,7 @@ function ParticleEditor:effect_gizmo()
 end
 
 function ParticleEditor:update(t, dt)
+	ParticleEditor.super.update(self, t, dt)
 	local cur_effect = self:current_effect()
 
 	if cur_effect then
@@ -374,7 +374,7 @@ function ParticleEditor:on_close()
 	end
 
 	self:remove_gizmo()
-	self._parent._particle_editor_test = false
+	self._parent._particle_editor_active = false
 	self._parent:set_enabled()
 end
 

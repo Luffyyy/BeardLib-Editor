@@ -19,12 +19,15 @@ function Part:init(parent, menu, name, opt, mopt)
         background_color = BLE.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
+        private = {offset = 0},
+        position = function(item)
+            item:Panel():set_world_bottom(item:Panel():parent():world_bottom() + 1)
+        end,
         w = 300,
-        h = self:GetPart("menu"):get_menu_h()
+        h = self:GetPart("menu"):get_menu_h() - 1
     }, mopt))
     self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
     MenuUtils:new(self)
-    self._menu:Panel():set_world_bottom(self._menu:Panel():parent():world_bottom() + 1)
     local title_h = 4
     if not opt.no_title then
         title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()

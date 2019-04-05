@@ -3,7 +3,7 @@ function CoreParticleEditorPanel:create_panel(parent)
 	self._stacklist_boxes = {}
 	self._stack_member_combos = {}
 	self._stack_panels = {}
-	self._panel = parent:Menu({auto_height = true, align_method = "grid"})
+	self._panel = parent:Menu({auto_align = false, auto_height = true, align_method = "grid"})
 
 	self._gv_splitter = self._panel:pan("gvsplitter") --EWS:SplitterWindow(splitter, "", "SP_NOBORDER")
 	self._top_splitter = self._panel:pan("splitter") -- EWS:SplitterWindow(self._panel, "", "SP_NOBORDER")
@@ -222,8 +222,6 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 
 		if self._atom then
 			self._atom:fill_property_container_sheet(self._atom_panel, self)
-		else
-			--self._atom_panel:set_sizer(EWS:BoxSizer("VERTICAL"))
 		end
 	elseif self._atom then
 		--self:fill_timelines()
@@ -234,31 +232,25 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 
 		if self._effect then
 			self._effect:fill_property_container_sheet(self._effect_properties_panel, self)
-		else
-		--	self._effect_properties_panel:set_sizer(EWS:BoxSizer("VERTICAL"))
 		end
 	end
 
 	if clear then
 		for stacktype, c in pairs(self._stacklist_boxes) do
 			c:ClearItems()
+			self._stack_panels[stacktype]:ClearItems()
 
 			if self._atom then
-                for i, m in ipairs(self._atom:stack(stacktype):stack()) do
-					local btn = c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member"), {stack_index = i, stack_type = stacktype})
+				for i, m in ipairs(self._atom:stack(stacktype):stack()) do
+					local btn = c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member"), {divider_type = #m._properties == 0, stack_index = i, stack_type = stacktype})
 					btn:ImgButton("Remove", ClassClbk(self, "on_stack_remove"), nil, BLE.Utils:GetIcon("minus"))
+					if c._prev_stack_item and c._prev_stack_item.stack_index == i and c._prev_stack_item.stack_type == stacktype then
+						btn:RunCallback()
+					end
 				end
 			end
-
-			self._stack_panels[stacktype]:ClearItems()
-			--self._stack_panels[stacktype]:set_sizer(EWS:BoxSizer("VERTICAL"))
 		end
 	end
---[[
-	for stacktype, panel in pairs(self._stack_panels) do
-		panel:fit_inside()
-    end
-    ]]
 
 	local valid = self._effect:validate()
 	self._valid_effect = valid.valid
@@ -278,11 +270,13 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 	--	self:update_graph_view()
 	--end
 
-	--self:safety_backup()
+	self:safety_backup()
 
 	if valid.valid then
 		self:update_effect_instance()
 	end
+	
+	self._panel:AlignItems(true, true)
 end
 
 function CoreParticleEditorPanel:update(t, dt)
@@ -389,6 +383,7 @@ function CoreParticleEditorPanel:on_select_stack_member(item)
     self._stack_panels[item.stack_type]:ClearItems()
     self._atom:stack(item.stack_type):stack()[item.stack_index]:fill_property_container_sheet(self._stack_panels[item.stack_type], self)
 	item.parent._prev_stack_item = item
+	self:update_view()
 end
 
 function CoreParticleEditorPanel:on_save_as()
@@ -522,4 +517,7 @@ function CoreParticleEditorPanel:on_stack_add(stacktype)
 	if item then
 		item:RunCallback()
 	end
+end
+
+function CoreParticleEditorPanel:safety_backup()
 end

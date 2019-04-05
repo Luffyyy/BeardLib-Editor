@@ -575,7 +575,7 @@ function EnvEditor:write_to_disk(filepath)
 end
 
 function EnvEditor:open_effect_editor()
-    self._parent._particle_editor_test = true
+    self._parent._particle_editor_active = true
     self._parent:set_enabled()
 end
 

@@ -17,6 +17,8 @@ function CoreEffectPropertyContainer:fill_property_container_sheet(window, view,
 			p:create_widget(window, view, no_border)
 		end
 	end
+
+	window:AlignItems()
 end
 
 function CoreEffectProperty:create_widget(parent, view, no_border)
@@ -87,14 +89,14 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		local function on_add_object()
 			table.insert(vars.property._list_members, deep_clone(self._list_objects[vars.combo:SelectedItem()]))
 			vars:fill_list()
-			vars.view:update_view(false)
+			vars.view:update_view()
 		end
 
 		local function on_remove_object(item)
 			table.delete(vars.property._list_members, item.parent.property)
 			vars:fill_list()
 			vars:on_select_object()
-			vars.view:update_view(false)
+			vars.view:update_view()
 		end
 
         local function on_select_object(item)
@@ -110,6 +112,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			prev = item
 			item.property._bgcolor = self._bgcolor
 			item.property:create_widget(vars.sheet, vars.view)
+			vars.view:update_view()
 		end
 
 		local function fill_list()
