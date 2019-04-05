@@ -353,14 +353,12 @@ function ParticleEditor:close()
 end
 
 function ParticleEditor:on_close_effect()
-	local cur = self:current_effect()
-	if cur then
-		if not cur:close() then
-			return
-		end
+	local effect = self:current_effect()
 
-		self._effects_notebook:RemovePage(curi)
-		table.remove(self._effects, curi)
+	if effect then
+		self._effects_notebook:RemovePageWithItem(effect:panel())
+		effect:close()
+		table.delete(self._effects, curi)
 	end
 
 	self:remove_gizmo()
@@ -372,7 +370,8 @@ function ParticleEditor:on_close()
 			return
 		end
 	end
-
+	self._effects_notebook:RemoveAllPages()
+	self._effects = {}
 	self:remove_gizmo()
 	self._parent._particle_editor_active = false
 	self._parent:set_enabled()
@@ -424,15 +423,10 @@ function ParticleEditor:effect_for_page(page)
 end
 
 function ParticleEditor:set_page_name(page, name)
-	--[[local i = 0
-
-	while i < self._effects_notebook:GetPageCount() do
-		if self._effects_notebook:get_page(i) == page:panel() and self._effects_notebook:get_page_text(i) ~= name then
-			self._effects_notebook:set_page_text(i, name)
-		end
-
-		i = i + 1
-	end]]
+	local i = self._effects_notebook:GetItemPage(page:panel())
+	if i then
+		self._effects_notebook:SetPageName(i, name)
+	end
 end
 
 function ParticleEditor:on_new()

@@ -199,20 +199,17 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 				pan:ImgButton("Remove", function()
 					table.remove(self._keys, i)
 					pan:Destroy()
+					load_keys()
 					view:update_view(false)
 				end, nil, BLE.Utils:GetIcon("minus"), {index = 1, size = t:TextHeight()})
 			end
-			--[[
-				if self._presets then
-					widget:set_presets(self._presets)
-				end
-			]]
 		end
 		widget:button("AddKey", function()
 			table.insert(self._keys, 1, {t = 0, v = key == "vector3" and "0 0 0" or key == "vector2" and "0 0" or "0"})
 			local keys = widget:GetItem("Keys")
 			sort_keys()
 			load_keys()
+			view:update_view()
 		end)
 		if self._presets then
 			local presets = {}
@@ -223,7 +220,6 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 				self._keys = {}
 				for _, preset in pairs(self._presets[item:Value()][2]) do
 					local val = preset[2]
-					log(tostring(val))
 					if type_name(val) == "Vector3" then
 						if key == "vector2" then
 							val = val.x .. " " .. val.y

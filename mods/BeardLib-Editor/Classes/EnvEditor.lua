@@ -50,11 +50,11 @@ function EnvEditor:build_default_menu()
     end
 		
     local quick = self:DivGroup("Quick actions")
+    self:Button("EffectEditor", ClassClbk(self, "open_effect_editor"), {group = quick})
     self:Button("Browse", ClassClbk(self, "open_environment_dialog"), {group = quick})
     self:Button("LoadGameDefault", ClassClbk(self, "database_load_env", "core/environments/default"), {group = quick})
     self:Button("LoadCurrentDefault", ClassClbk(self, "database_load_env", env_path), {group = quick})
     self:Button("Save", ClassClbk(self, "write_to_disk_dialog"), {group = quick})
-    self:Button("EffectEditor", ClassClbk(self, "open_effect_editor"), {group = quick})
     --SUN
     local sun = self:Group("Sun")
     self:add_sky_param(self:ColorBox("sun_ray_color", nil, nil, {text = "Color", ret_vec = true, group = sun}))

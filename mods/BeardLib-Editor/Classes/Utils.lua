@@ -507,6 +507,7 @@ function Utils:GetEntries(params)
 end
 
 function Utils:ShortPath(path, times)
+    times = times or 3
     local path_splt = string.split(path, "/")
     for i=1, #path_splt - times do table.remove(path_splt, 1) end
     path = "..."

@@ -206,16 +206,17 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 	end
 
 	local name = self._effect:name()
-
 	if name == "" then
 		name = "New Effect"
+	else
+		name = BLE.Utils:ShortPath(name)
 	end
 
 	if new_xml ~= self._last_saved_xml then
 		name = name .. "*"
 	end
-
-	self._editor:set_page_name(self, base_path(name))
+	
+	self._editor:set_page_name(self, name)
 
 	if clear then
 		self._atom_panel:ClearItems()
@@ -405,7 +406,8 @@ function CoreParticleEditorPanel:on_save_as()
             name = self._effect:name(),
             xml = new_xml
         })
-    
+	
+		BLE.FBD:Hide()
         return self:do_save(true)
     end})
 end
@@ -417,8 +419,7 @@ function CoreParticleEditorPanel:do_save()
     FileIO:WriteTo(self._effect:name(), n:to_xml())
    
 	self._last_saved_xml = n:to_xml()
-	self._editor:set_page_name(self, base_path(self._effect:name()))
-
+	self._editor:set_page_name(self, BLE.Utils:ShortPath(self._effect:name()))
 	return true
 end
 
