@@ -244,7 +244,7 @@ function Editor:mouse_released(button, x, y)
 end
 
 function Editor:mouse_pressed(button, x, y)
-    if self._editor_menu:ChildrenMouseFocused("editor_menu") then
+    if self._editor_menu:ChildrenMouseFocused() then
         return
     end
     if m.world:mouse_pressed(button, x, y) then
