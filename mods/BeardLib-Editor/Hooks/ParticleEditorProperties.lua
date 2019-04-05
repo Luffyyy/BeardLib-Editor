@@ -36,23 +36,19 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			vector2 = true, background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent
 		})
 	elseif self._type == "box" then
-	--[[	widget = EWS:AABBSelector(parent, "", math.string_to_vector(self._min), math.string_to_vector(self._max))
-
-		local function on_box_commit(widget_view)
-			if math.string_to_vector(self._min) ~= widget_view.widget:get_min() or math.string_to_vector(self._max) ~= widget_view.widget:get_max() then
-				local minv = widget_view.widget:get_min()
-				local maxv = widget_view.widget:get_max()
+		widget = parent:divgroup(name, {background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent})
+		local function on_box_commit()
+			local minv = widget:GetItem("Min"):Value()
+			local maxv = widget:GetItem("Max"):Value()
+			if math.string_to_vector(self._min) ~= minv or math.string_to_vector(self._max) ~= maxv then
 				self._min = minv.x .. " " .. minv.y .. " " .. minv.z
 				self._max = maxv.x .. " " .. maxv.y .. " " .. maxv.z
 
-				widget_view.view:update_view(false)
+				view:update_view(false)
 			end
 		end
-
-		widget:connect("EVT_SELECTOR_UPDATED", on_box_commit, {
-			widget = widget,
-			view = view
-		})]]
+		widget:Vector3("Min", on_box_commit, math.string_to_vector(self._min))
+		widget:Vector3("Max", on_box_commit, math.string_to_vector(self._max))
 	elseif self._type == "variant" then
 		widget = parent:pan(name, {background_color = self._bgcolor})
 		local combo = widget:combobox(name, ClassClbk(self, "on_set_variant", {
