@@ -208,6 +208,8 @@
         <value_node value="ElementXAudioOperator"/>
         
         <!--Normal-->
+        <value_node value="ElementSideJobAward"/>
+        <value_node value="ElementSideJobFilter"/>
         <value_node value="ElementTangoAward"/>
         <value_node value="ElementTangoFilter"/>
         <value_node value="ElementInstanceParams"/>
