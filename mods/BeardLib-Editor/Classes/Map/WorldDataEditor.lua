@@ -439,6 +439,7 @@ function WData:build_menu(name, item)
     for _, tab in pairs(self._tabs:Items()) do
         tab:SetBorder({bottom = false})
     end
+    item = item or self._tabs:GetItem(name)
     item:SetBorder({bottom = true})
     if type(layer) == "table" then
         layer:build_menu()

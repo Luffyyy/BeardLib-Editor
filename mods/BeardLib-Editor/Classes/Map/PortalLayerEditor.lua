@@ -257,7 +257,7 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
         self._parent:Switch()
     end
     if self._parent._current_layer ~= "portal" then
-        self._parent:build_menu("portal", self) --TODO: change to less dumb
+        self._parent:build_menu("portal")
     end
     self._selected_shape = nil
     self._menu:GetItem("Shapes"):ClearItems()
