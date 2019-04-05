@@ -10,6 +10,9 @@ function Editor:init()
         PackageManager:load("core/packages/editor")
     end
 
+    self._particle_editor_active = false
+    self._mapeditor = {}
+
     self._current_script = "default"
     self._current_continent = "world"
     self._grid_size = 1
@@ -66,17 +69,25 @@ function Editor:m() return m end
 
 function Editor:post_init(menu)
     self.parts = m
-    m.menu = UpperMenu:new(self, menu)
-    m.status = StatusMenu:new(self, menu)
-    m.world = WorldDataEditor:new(self, menu)
-    m.mission = MissionEditor:new(self, menu)
-    m.static = StaticEditor:new(self, menu)
-    m.opt = InEditorOptions:new(self, menu)
-    m.console = EditorConsole:new(self, menu)
-    m.env = EnvEditor:new(self, menu)
-    m.instances = InstancesEditor:new(self, menu)
-    m.undo_handler = UndoUnitHandler:new(self, menu)
-    m.cubemap_creator = CubemapCreator:new(self, menu, self._camera_object)
+
+	self._editor_menu = menu:Menu({label = "editor_menu", align_method = "none", visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
+    m.menu = UpperMenu:new(self, self._editor_menu)
+    m.status = StatusMenu:new(self, self._editor_menu)
+    m.world = WorldDataEditor:new(self, self._editor_menu)
+    m.mission = MissionEditor:new(self, self._editor_menu)
+    m.static = StaticEditor:new(self, self._editor_menu)
+    m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.console = EditorConsole:new(self, self._editor_menu)
+    m.env = EnvEditor:new(self, self._editor_menu)
+    m.instances = InstancesEditor:new(self, self._editor_menu)
+    m.undo_handler = UndoUnitHandler:new(self, self._editor_menu)
+    m.cubemap_creator = CubemapCreator:new(self, self._editor_menu, self._camera_object)
+
+    for n, manager in pairs(m) do
+        self._mapeditor[n] = manager
+    end
+    m.particle = ParticleEditor:new(self, menu)
+
     for name, manager in pairs(m) do
         manager.manager_name = name
     end
@@ -233,7 +244,7 @@ function Editor:mouse_released(button, x, y)
 end
 
 function Editor:mouse_pressed(button, x, y)
-    if self._menu:MouseInside() then
+    if self._editor_menu:ChildrenMouseFocused("editor_menu") then
         return
     end
     if m.world:mouse_pressed(button, x, y) then
@@ -290,7 +301,7 @@ function Editor:GetSpawnPosition(data)
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
-    if m.world:is_world_unit(unit_path) then
+    if m.world:is_world_unit(unit_path) and unit_path ~= "core/units/patrol_point/patrol_point" then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
         local unit = m.world:do_spawn_unit(unit_path, data)
@@ -345,7 +356,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
             }
         elseif t == Idstring("ai") then
             -- hack for now. patrol points dont have ai_editor_data but are still ai
-            if data.unit_data.name then
+            if data.unit_data.name ~= "core/units/patrol_point/patrol_point" then
                 data.ai_editor_data = ad or {
                     visibilty_exlude_filter = {},
                     visibilty_include_filter = {},
@@ -380,6 +391,8 @@ function Editor:set_camera(pos, rot)
 end
 
 function Editor:set_enabled(enabled)
+    enabled = NotNil(self._enabled, enabled)
+    self._editor_menu:SetVisible(enabled and not self._particle_editor_active)
     self._enabled = enabled
     if enabled then
         self._menu:Enable()
@@ -392,8 +405,8 @@ function Editor:set_enabled(enabled)
     if type(managers.enemy) == "table" then
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
-    for _, manager in pairs(m) do
-        if enabled then
+    for n, manager in pairs(m) do
+        if enabled and ((self._particle_editor_active and n == "particle") or (not self._particle_editor_active and self._mapeditor[n])) then
             if manager.enable then
                 manager:enable()
             end        
@@ -595,12 +608,12 @@ function Editor:update(t, dt)
     if self:enabled() then
         self._current_pos = self:current_position() or self._current_pos
         if not m.cubemap_creator:creating_cube_map() then
-            for _, manager in pairs(m) do
-                if manager.update then
+            for n, manager in pairs(m) do
+                if manager.update and manager:enabled() then
                     manager:update(t, dt)
                 end
             end
-
+        
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
             self:draw_marker(t, dt)

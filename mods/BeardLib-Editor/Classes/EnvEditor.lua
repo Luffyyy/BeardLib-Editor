@@ -50,6 +50,7 @@ function EnvEditor:build_default_menu()
     end
 		
     local quick = self:DivGroup("Quick actions")
+    self:Button("EffectEditor", ClassClbk(self, "open_effect_editor"), {group = quick})
     self:Button("Browse", ClassClbk(self, "open_environment_dialog"), {group = quick})
     self:Button("LoadGameDefault", ClassClbk(self, "database_load_env", "core/environments/default"), {group = quick})
     self:Button("LoadCurrentDefault", ClassClbk(self, "database_load_env", env_path), {group = quick})
@@ -571,6 +572,11 @@ function EnvEditor:write_to_disk(filepath)
         file:close()
         BLE.Utils:Notify("Success!", "Saved environment "..filepath)
     end
+end
+
+function EnvEditor:open_effect_editor()
+    self._parent._particle_editor_active = true
+    self._parent:set_enabled()
 end
 
 function EnvEditor:write_to_disk_dialog()

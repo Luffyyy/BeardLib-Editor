@@ -13,6 +13,7 @@ end
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:enable()
+    WData.super.enable(self)
     self:bind_opt("SpawnUnit", ClassClbk(self, "OpenSpawnUnitDialog"))
     self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
@@ -97,6 +98,7 @@ end
 
 function WData:build_default_menu()
     self.super.build_default_menu(self)
+
     self.layers = self.layers or {
         environment = EnvironmentLayerEditor:new(self), 
         sound = SoundLayerEditor:new(self), 
@@ -567,6 +569,10 @@ function WData:is_spawning()
 end
 
 function WData:mouse_pressed(button, x, y)
+    if not self:enabled() then
+        return
+    end
+
     if button == Idstring("0") then
         if self._currently_spawning_element then
             self._do_switch = true

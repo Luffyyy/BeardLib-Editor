@@ -111,7 +111,8 @@ function Options:build_default_menu()
     self:toggle_autosaving()
 end
 
-function Options:enable() 
+function Options:enable()
+    Options.super.enable(self)
     self:bind_opt("SaveMap", ClassClbk(self, "KeySPressed"))
     self:bind_opt("IncreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed"))
     self:bind_opt("DecreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed", true))

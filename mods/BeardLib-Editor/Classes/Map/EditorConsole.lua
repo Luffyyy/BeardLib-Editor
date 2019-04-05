@@ -1,6 +1,17 @@
 EditorConsole = EditorConsole or class()
 function EditorConsole:init(parent, menu)
     self._parent = parent
+    self._menu = menu:Menu({
+        name = "console_output",
+        w = 600,
+        h = 100,
+        size_by_text = true,
+        dbg = true,
+        override_size_limit = true,
+        should_scroll_down = true,
+        position = "CenterBottom",
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+    })
     self._options_menu = menu:Menu({
         name = "console_options",
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
@@ -8,21 +19,13 @@ function EditorConsole:init(parent, menu)
         auto_height = true,
         offset = 0,
         items_size = 18,
+        position = function(item)
+            item:Panel():set_leftbottom(self._menu:Panel():position())    
+        end,
         scrollbar = false,
         align_method = "grid",
-    })       
-    self._menu = menu:Menu({
-        name = "console_output",
-        w = 600,
-        h = 100,
-        size_by_text = true,
-        override_size_limit = true,
-        should_scroll_down = true,
-        position = "CenterBottom",
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
     })
     MenuUtils:new(self, self._options_menu)
-    self._options_menu:Panel():set_leftbottom(self._menu:Panel():lefttop())    
     local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
     self:Button("Console", ClassClbk(self, "ToggleConsole"), opt)
     self:Button("Clear", ClassClbk(self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
@@ -72,3 +75,12 @@ function EditorConsole:Log(msg, ...) self:PrintMessage("info", msg, ...) end
 function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission", msg, ...) end
 function EditorConsole:Error(msg, ...) self:PrintMessage("error", msg, ...) end
 function EditorConsole:Clear() self:ClearItems() end
+
+
+function EditorConsole:disable()
+    self._enabled = false
+end
+
+function EditorConsole:enable()
+    self._enabled = true
+end

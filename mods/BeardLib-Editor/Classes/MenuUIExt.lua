@@ -2,12 +2,8 @@
 --snek
 
 local C = BeardLib.Items
+ 
 local Item = C.Item
-Item.get_value = Item.Value
-Item.set_value = Item.SetValue
-Item.set_enabled = Item.SetEnabled
-Item.set_visible = Item.SetVisible
-
 local Slider = C.Slider
 
 function Slider:set_range(min, max)
@@ -15,14 +11,23 @@ function Slider:set_range(min, max)
 	self.max = max
 end
 
+local ComboBox = C.ComboBox
+
+ComboBox.set_value = ComboBox.SetSelectedItem
+ComboBox.get_value = ComboBox.SelectedItem
+
 local color
 ItemExt = {}
+ItemExt.get_value = Item.Value
+ItemExt.set_value = Item.SetValue
+ItemExt.set_enabled = Item.SetEnabled
+ItemExt.set_visible = Item.SetVisible
 
 function ItemExt:ImgButton(name, callback, texture, rect, o)
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
-		highlight_color = self.foreground:with_alpha(0.25),
+		highlight_color = self:GetForeground():with_alpha(0.25),
 		auto_foreground = false,
 		size = self:H(),
 		offset = 2,
@@ -39,7 +44,7 @@ function ItemExt:SButton(name, callback, o)
 		on_callback = callback,
 		size_by_text = true,
 		offset = 2,
-		highlight_color = self.foreground:with_alpha(0.25),
+		highlight_color = self:GetForeground():with_alpha(0.25),
 	--	auto_foreground = false,
 		foreground_highlight = false,
 		text_align = "center",
@@ -86,7 +91,11 @@ function ItemExt:slider(...)
 end
 
 function ItemExt:pan(name, o)
-	return self:Menu(table.merge({name = name, background_visible = false, auto_height = true}, o))
+	return self:Menu(table.merge({name = name, auto_height = true}, o))
+end
+
+function ItemExt:lbl(name, o)
+	return self:Divider(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:divider(name, o)
@@ -94,8 +103,25 @@ function ItemExt:divider(name, o)
 	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = color, offset = {8, 4}}, o))
 end
 
+function ItemExt:separator(o)
+	color = color or BLE.Options:GetValue("AccentColor")
+	return self:Divider(table.merge({
+		name = "div", text = "", h = 2, size_by_text = false, border_bottom = true, border_color = self.foreground:with_alpha(0.5)
+	}, o))
+end
+
 function ItemExt:group(name, o)
-	return self:Group(table.merge({name = name, text = string.pretty2(name)}, o))
+	color = color or BLE.Options:GetValue("AccentColor")
+	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name)}, o))
+end
+
+function ItemExt:notebook(name, o)
+	color = color or BLE.Options:GetValue("AccentColor")
+	return self:NoteBook(table.merge({color = color, name = name, text = string.pretty2(name)}, o))
+end
+
+function ItemExt:popup(name, o)
+	return self:PopupMenu(table.merge({size_by_text = true, name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:toolbar(name, o)
@@ -111,7 +137,7 @@ function ItemExt:divgroup(name, o)
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
-	}))
+	}, o))
 end
 
 function ItemExt:combobox(name, callback, items, value, o)
@@ -159,7 +185,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o.on_callback = p.btn_callback
 	local btn = p:button("select_button", function()
 		local list = BeardLibEditor.Utils:GetEntries({
-			type = typ, loaded = NotNil(o.loaded, true), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
+			type = typ, loaded = NotNil(o.loaded, typ ~= "texture"), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
@@ -178,6 +204,67 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	function p:Value()
 		return t:Value()
 	end
+	return p
+end
+
+function ItemExt:CopyAxis(item)
+	local menu = item.parent.parent
+	Application:set_clipboard(tostring(menu:Value()))
+end
+
+function ItemExt:PasteAxis(item)
+	local menu = item.parent.parent
+	local paste = Application:get_clipboard()
+	local result
+	pcall(function()
+		result = loadstring("return " .. paste)()
+	end)
+	if type_name(result) == "Vector3" and menu.value_type == "Position" then
+		menu:SetValue(result, true)
+	end
+	if type_name(result) == "Rotation" and menu.value_type == "Rotation" then
+		
+	end
+end
+
+function ItemExt:Vector3(name, clbk, value, o)
+	local p = self:divgroup(name, table.merge({on_callback = clbk, value_type = "Position", align_method = "centered_grid", color = false}, o))
+	o = {}
+	value = value or Vector3()
+	local vector2 = p.vector2
+	local TB = p:GetToolbar()
+	TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+	TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	local controls = {"x", "y", "z"}
+	local items = {}
+	for i, control in pairs(controls) do
+		items[i] = p:numberbox(control, function()
+			p:RunCallback()
+		end, value[control], {w = (p:ItemsWidth() / (vector2 and 2 or 3)) - p:OffsetX(), control_slice = 0.6})
+	end
+
+	if vector2 then
+		items[3]:SetVisible(false)
+	end
+
+	function p:Value()
+		return Vector3(items[1]:Value(), items[2]:Value(), items[3]:Value())
+	end
+	p.get_value = p.Value
+	
+	function p:SetValue(val, run_callback)
+		items[1]:SetValue(val.x)
+		items[2]:SetValue(val.y)
+		items[3]:SetValue(val.z)
+		if run_callback then
+			self:RunCallback()
+		end
+	end
+
+	function p:SetVector2()
+		items[3]:SetVisible(false)
+	end
+	
 	return p
 end
 
