@@ -847,7 +847,7 @@ function WData:OpenSpawnUnitDialog(params)
                     end
                 else
                     BLE.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
-                        self._assets_manager:find_package(unit, true)
+                        self._assets_manager:find_package(unit, "unit", true)
                     end}})
                 end
 			end

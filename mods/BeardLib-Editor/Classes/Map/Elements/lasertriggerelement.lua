@@ -10,7 +10,7 @@ function EditorLaserTrigger:init(...)
 	local assets = self:GetPart("world")._assets_manager
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
 		BeardLibEditor.Utils:QuickDialog({title = "Lasers ain't working!", message = "This element requires the 'gen_prop_lazer_blaster_dome' unit to be loaded or else it won't work!"}, {{"Load it", function()
-            assets:find_package(unit, true)
+            assets:find_package(unit, "unit", true)
 		end}})
 		return
 	end

@@ -391,7 +391,7 @@ function Editor:set_camera(pos, rot)
 end
 
 function Editor:set_enabled(enabled)
-    enabled = NotNil(self._enabled, enabled)
+    enabled = NotNil(enabled, self._enabled)
     self._editor_menu:SetVisible(enabled and not self._particle_editor_active)
     self._enabled = enabled
     if enabled then
