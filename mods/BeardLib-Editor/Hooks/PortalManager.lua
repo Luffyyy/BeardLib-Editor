@@ -50,3 +50,16 @@ function PortalUnitGroup:draw(t, dt, mul, skip_shapes, skip_units)
 		end
 	end
 end
+
+function PortalUnitGroup:_change_visibility(unit, diff)
+	if alive(unit) then
+		unit:unit_data()._visibility_counter = unit:unit_data()._visibility_counter + diff
+
+		if unit:unit_data()._visibility_counter > 0 or (managers.editor and managers.editor:enabled()) then
+			unit:set_visible(true)
+			managers.portal:remove_from_hide_list(unit)
+		else
+			managers.portal:add_to_hide_list(unit)
+		end
+	end
+end

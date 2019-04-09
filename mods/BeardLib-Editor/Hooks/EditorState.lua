@@ -10,6 +10,9 @@ function EditorState:at_enter()
 	end
 	 
 	managers.editor:set_enabled(true)
+	for k,v in pairs(managers.portal._unit_groups) do
+		v._is_inside = nil
+	end
     managers.achievment.award = function() end
     local job_id = managers.job:current_job_id()
     if job_id then
@@ -25,5 +28,8 @@ function EditorState:at_exit()
 	if Global.editor_mode then
 		managers.editor:set_enabled(false)
 		managers.mission:activate()
+	end
+	for k,v in pairs(managers.portal._unit_groups) do
+		v._is_inside = nil
 	end
 end
