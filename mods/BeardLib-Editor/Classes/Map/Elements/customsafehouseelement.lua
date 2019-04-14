@@ -37,11 +37,13 @@ end
 function EditorCustomSafehouseFilter:set_element_data(item)
 	EditorCustomSafehouseFilter.super.set_element_data(self, item)
 	if item.name == "room_id" then
-		local current_selection = self._tier_box:Value()
+		local current_selection = self._tier_box:SelectedItem()
 		local num_tiers = managers.custom_safehouse:get_room_max_tier(self._character_box:SelectedItem())
 		local tiers = {}
-		for i = 1, num_tiers do
-			table.insert(tiers, i)
+		if num_tiers then
+			for i = 1, num_tiers do
+				table.insert(tiers, i)
+			end
 		end
 		self._tier_box:SetItems(tiers)
 		self._tier_box:SetValue(math.clamp(current_selection, 0, num_tiers))
@@ -110,11 +112,13 @@ end
 function EditorCustomSafehouseAwardTrophy:set_element_data(item)
 	EditorCustomSafehouseAwardTrophy.super.set_element_data(self, item)
 	if item.name == "trophy" then
-		local id = self._trophy_box:Value()
+		local id = self._trophy_box:SelectedItem()
 		local trophy = managers.custom_safehouse:get_trophy(id) or managers.custom_safehouse:get_daily(id)
 		local objectives = {}
-		for idx, objective in ipairs(trophy.objectives) do
-			table.insert(objective.achievement_id or objective.progress_id)
+		if trophy then
+			for idx, objective in ipairs(trophy.objectives) do
+				table.insert(objectives, objective.achievement_id or objective.progress_id)
+			end
 		end
 		self._objective_box:SetItems(objectives)
 		self._objective_box:SetValue(1)
