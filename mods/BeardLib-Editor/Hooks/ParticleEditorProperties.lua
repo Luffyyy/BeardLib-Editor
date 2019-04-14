@@ -33,7 +33,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		--view[self._timeline_init_callback](view, widget)
 	elseif self._type == "vector3" or self._type == "vector2" then
 		widget = parent:Vector3(name, ClassClbk(self, "on_commit", view), math.string_to_vector(self._value), {
-			vector2 = true, background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent
+			vector2 = self._type == "vector2", background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent
 		})
 	elseif self._type == "box" then
 		widget = parent:divgroup(name, {background_visible = self._bgcolor and true, background_color = self._bgcolor, unhighlight_color = Color.transparent})
@@ -186,7 +186,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 
 				local vec = math.string_to_vector(vs)
 				if key == "vector2" or key == "vector3" then
-					control = pan:Vector3("Value", set_value, vec, {shrink_width = 0.6, vector2 = true})
+					control = pan:Vector3("Value", set_value, vec, {shrink_width = 0.6, vector2 = key == "vector2"})
 				elseif key == "color" then
 					control = pan:colorbox("Value", set_value, vec, {ret_vec = true, shrink_width = 0.6})
 				elseif key == "float" or "opacity" or "time" then
@@ -300,9 +300,9 @@ function CoreEffectProperty:on_commit(view, item)
 
 	local value = item:get_value()
 	if self._value ~= value then
-		if self._type == "vector3" then
+		if self._type == "vector2" then
 			value = value.x.." "..value.y
-		elseif self._type == "vector2" then
+		elseif self._type == "vector3" then
 			value = value.x.." "..value.y.." "..value.z
 		end
 		self._value = value
