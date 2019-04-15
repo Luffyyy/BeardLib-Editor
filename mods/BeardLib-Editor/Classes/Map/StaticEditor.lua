@@ -3,7 +3,7 @@ StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BLE.Utils
 function Static:init(parent, menu)
-    Static.super.init(self, parent, menu, "Selection")
+    Static.super.init(self, parent, menu, "Selection", nil, {auto_align = false})
     self._selected_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
@@ -154,6 +154,7 @@ function Static:build_default_menu()
     self:SetTitle("Selection")
     self:Divider("No selection >.<", {bordr_left = false})
     self:Button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
+    self:AlignItems()
 end
 
 function Static:build_quick_buttons(cannot_be_saved)
@@ -164,7 +165,7 @@ function Static:build_quick_buttons(cannot_be_saved)
     if not cannot_be_saved then
         self:Button("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"), {group = quick_buttons})
         self:Button("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = true})
-        local group = self:Group("Group", {visible = false}) --lmao
+        local group = self:Group("Group") --lmao
 		self:build_group_options()
     end
 end
@@ -189,17 +190,15 @@ function Static:build_group_options()
 		end
 	end
 	group:ClearItems()
-    group:SetVisible(can_group)
-    if can_group then
-        if self._selected_group then
-            self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
-            self:TextBox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name, {group = group})
-            self:Button("UngroupUnits", ClassClbk(self, "remove_group"), {group = group})
-        else
-            self:Button("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"}) 
-            self:Button("GroupUnits", ClassClbk(self, "add_group"), {group = group})
-        end
+    if self._selected_group then
+        self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
+        self:TextBox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name, {group = group})
+        self:Button("DestroyGroup", ClassClbk(self, "remove_group"), {group = group})
+    else
+        self:Button("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"})
+        self:Button("GroupUnits", ClassClbk(self, "add_group"), {group = group, text = (can_group and "Group Units" or "Make a Group")})
     end
+    self:AlignItems()
 end
 
 function Static:build_unit_editor_menu()
@@ -305,18 +304,20 @@ function Static:open_addremove_group_dialog(remove)
         list = groups,
         force = true,
         callback = function(item)
-            self:select_group(item.group)
+            local group = item.group
+            self:select_group(group)   
             for _, unit in pairs(units) do 
                 if alive(unit) then
-                    if remove and table.contains(self._selected_group.units, unit:unit_data().unit_id) then
-                        table.delete(self._selected_group.units, unit:unit_data().unit_id)
-                    elseif not table.contains(self._selected_group.units, unit:unit_data().unit_id) then
-                        table.insert(self._selected_group.units, unit:unit_data().unit_id)
+                    if remove and table.contains(group.units, unit:unit_data().unit_id) then
+                        table.delete(group.units, unit:unit_data().unit_id)
+                    elseif not table.contains(group.units, unit:unit_data().unit_id) then
+                        table.insert(group.units, unit:unit_data().unit_id)
                         self:set_selected_unit(unit, true)
                     end
-                    if #self._selected_group.units <= 1 then
+                    if #group.units <= 1 then
                         self:remove_group()
                     end
+                    self:part("world"):refresh()
                 end
             end
             BeardLibEditor.ListDialog:hide()
@@ -460,24 +461,30 @@ function Static:set_group_name(item, group, name)
         end
     end
     if not exists then
-        if item then self._selected_group.name = item:Value() return end
+        if item then
+            self._selected_group.name = item:Value()
+            self:part("world"):refresh()
+            return
+        end
         for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
             if editor_group.name == group.name then
                 editor_group.name = name
             end
         end
     end
+    self:part("world"):refresh()
 end
 
 function Static:remove_group(item, group)
     group = group or self._selected_group
-    if group then 
+    if group then
         table.delete(managers.worlddefinition._continent_definitions[group.continent].editor_groups, group)
 	    if self._selected_group then 
             self._selected_group = nil
             self:build_group_options()
         end     
     end
+    self:part("world"):refresh()
 end
 
 function Static:add_group(item)
@@ -499,6 +506,7 @@ function Static:add_group(item)
             self._selected_group = group
             self:build_group_options()
         end
+        self:part("world"):refresh()
     end})
 end
 
@@ -838,7 +846,8 @@ function Static:set_multi_selected()
 	end
     self:build_positions_items()
 	self:update_positions()
-	self:build_group_options()
+    self:build_group_options()
+    self:AlignItems()
 end
 
 function Static:set_unit(reset)
@@ -891,6 +900,7 @@ function Static:set_menu_unit(unit)
     self:GetItem("UnitPath"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
     self:build_group_links(unit)
+    self:AlignItems()
 end
 
 local function element_link_text(element, link, warn)

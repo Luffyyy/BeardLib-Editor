@@ -353,4 +353,8 @@ function MenuUtils:init(this, menu)
 	function this:RemoveItem(item)
 		return menu:RemoveItem(item)
 	end
+
+	function this:AlignItems()
+		return menu:AlignItems(true)
+	end
 end

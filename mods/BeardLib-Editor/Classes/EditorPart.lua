@@ -47,6 +47,7 @@ function Part:init(parent, menu, name, opt, mopt)
     MenuUtils:new(self, self._holder)
     self:build_default_menu()
     self:make_collapse_all_button()
+    self._menu:AlignItems(true)
 end
 
 function Part:make_collapse_all_button()

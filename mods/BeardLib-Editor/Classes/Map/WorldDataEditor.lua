@@ -430,9 +430,6 @@ function WData:select_all_units_from_script(script, item)
 end
 
 function WData:build_menu(name, item)
-    if self._current_layer == name then
-        return
-    end
     self.super.build_default_menu(self)
     self._current_layer = name
     local layer = self.layers[name]
@@ -481,13 +478,13 @@ function WData:build_groups_layer_menu()
                     toolbar:ImgButton("Remove", function() 
                         BLE.Utils:YesNoQuestion("This will delete the group", function()
                             self:GetPart("static"):remove_group(nil, editor_group)
-                            self:build_menu("groups", nil)
+                            self:build_menu("groups")
                         end)
                     end, tx, {184, 2, 48, 48}, {highlight_color = Color.red})
                     toolbar:ImgButton("Rename", function() 
                         BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
                             self:GetPart("static"):set_group_name(nil, editor_group, name)
-                            self:build_menu("groups", nil)
+                            self:build_menu("groups")
                         end})
                     end, tx, {66, 1, 48, 48})
                     toolbar:ImgButton("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), tx, {122, 1, 48, 48})
@@ -499,8 +496,8 @@ function WData:build_groups_layer_menu()
 
                     for _, unit_id in pairs(editor_group.units) do
                         local unit = managers.worlddefinition:get_unit(unit_id)
-                        if alive(unit) then 
-                            self:Button(tostring(unit_id), ClassClbk(self._parent, "select_unit", unit), {group = group})
+                        if alive(unit) then
+                            group:button(tostring(unit_id), ClassClbk(self._parent, "select_unit", unit), {text = unit:editor_id() .. "/" .. tostring(unit_id)})
                         end
                     end
                 end
@@ -871,4 +868,8 @@ function WData:OpenLoadDialog(params)
             self._assets_manager:find_package(asset, ext, true)
 	    end
 	})
+end
+
+function WData:refresh()
+    self:build_menu(self._current_layer)
 end

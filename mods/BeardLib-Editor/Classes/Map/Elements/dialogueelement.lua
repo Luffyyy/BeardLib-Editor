@@ -19,16 +19,16 @@ function EditorDialogue:test_element()
 	managers.dialog:quit_dialog()
 	managers.dialog:queue_dialog(self._element.values.dialogue, {
 		case = "russian",
-		on_unit = self._unit,
+		position = self._element.values.position,
 		skip_idle_check = true
 	})
-	managers.editor:set_wanted_mute(false)
-	managers.editor:set_listener_enabled(true)
+	--managers.editor:set_wanted_mute(false)
+	--managers.editor:set_listener_enabled(true)
 end
 function EditorDialogue:stop_test_element()
 	managers.dialog:quit_dialog()
-	managers.editor:set_wanted_mute(true)
-	managers.editor:set_listener_enabled(false)
+	--managers.editor:set_wanted_mute(true)
+	--managers.editor:set_listener_enabled(false)
 end
 function EditorDialogue:_build_panel()
 	self:_create_panel()

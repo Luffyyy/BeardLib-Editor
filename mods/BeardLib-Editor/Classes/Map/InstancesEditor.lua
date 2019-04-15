@@ -31,6 +31,7 @@ function Instance:set_instance(reset)
     if alive(unit) and unit:fake() then
         if not reset then
             self:set_menu_unit(unit)
+            self:AlignItems()
             return
         end
     end
@@ -275,4 +276,5 @@ function Instance:set_data(item)
     else
         BeardLibEditor:log("[Error] This is not a valid instance")
     end
+    self:AlignItems()
 end

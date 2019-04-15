@@ -396,14 +396,14 @@ end
 
 function SndLayer:activate()
 	SoundLayerEditor.super.activate(self)
-	managers.editor:set_listener_enabled(true)
-	managers.editor:set_wanted_mute(false)
+	--managers.editor:set_listener_enabled(true)
+	--managers.editor:set_wanted_mute(false)
 end
 
 function SndLayer:deactivate(params)
-	managers.editor:set_listener_enabled(false)
+	--managers.editor:set_listener_enabled(false)
 	SoundLayerEditor.super.deactivate(self)
 	if not params or not params.simulation then
-		managers.editor:set_wanted_mute(true)
+		--managers.editor:set_wanted_mute(true)
 	end
 end
