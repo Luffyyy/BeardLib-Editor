@@ -257,11 +257,6 @@ function EditorSpecialObjective:manage_flags()
     })
 end
 
-function EditorSpecialObjective:set_element_position(...)
-    self.super.set_element_position(self, ...)
-    self._element.values.search_position = self:AxisControlsPosition("SearchPosition")
-end
-
 function EditorSpecialObjective:_build_panel()
 	self:_create_panel()
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
@@ -272,8 +267,7 @@ function EditorSpecialObjective:_build_panel()
 	self:Button("ManageAccessFlags", ClassClbk(self, "manage_flags"), {group = self._class_group, help = "Decide which types of AI are affected by this element"})
 	self:BuildElementsManage("followup_elements", nil, {"ElementSpecialObjective", "ElementSpecialObjectiveGroup"})
 	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"})
-	self:AxisControls(ClassClbk(self, "set_element_position"), {no_rot = true, group = self._class_group}, "SearchPosition")
-	self:SetAxisControls(self._element.values.search_position, nil, "SearchPosition")
+    self:Vector3Ctrl("search_position", {group = self._class_group})
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
 	self:BooleanCtrl("align_position", {text = "Align position"})

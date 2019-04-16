@@ -107,7 +107,7 @@ function MissionScriptEditor:_create_panel()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
-    rot = type(rot) == "number" and Rotation() or rot
+	rot = type(rot) == "number" and Rotation() or rot
     SE:AxisControls(ClassClbk(self, "set_element_position"), {group = transform})
     self:update_positions(pos, rot)
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
@@ -704,3 +704,8 @@ function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 	end, true, opt)
 end
 
+function MissionScriptEditor:Vector3Ctrl(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+	local value = self:ItemData(opt)[value_name]
+	return (opt.group or self._menu):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+end
