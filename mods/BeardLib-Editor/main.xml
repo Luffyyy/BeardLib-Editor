@@ -91,6 +91,9 @@
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
             <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
 			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
+			<option type="number" min="100" max="1600" default_value="300" name="MapEditorPanelWidth"/>
+			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
+            
             <option_group name="Input">
                 <option type="string" default_value="f" name="SpawnUnit"/>
                 <option type="string" default_value="g" name="SpawnElement"/>

@@ -9,6 +9,8 @@ function Options:init()
 		help = "The extract directory will be used to load units from extract and be able to edit lights", group = main
 	})
 	self:Slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {group = main, min = 1, max = 100000})
+	self:Slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {group = main, min = 100, max = 1600})
+	self:Slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {group = main, min = 100, max = 1600})
 
 	local visual = self:DivGroup("Visual")
 	self:Button("ResetVisualOptions", ClassClbk(self, "reset_options", visual), {group = visual})

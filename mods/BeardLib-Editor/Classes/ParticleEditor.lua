@@ -62,7 +62,7 @@ function ParticleEditor:init(editor, menu)
 		align_method = "grid",
 		background_color = BLE.Options:GetValue("BackgroundColor"),
 		visible = false,
-		w = 500,
+		w = BLE.Options:GetValue("ParticleEditorPanelWidth"),
 	})
 
 	self._gizmo_movement = "NO_MOVE"

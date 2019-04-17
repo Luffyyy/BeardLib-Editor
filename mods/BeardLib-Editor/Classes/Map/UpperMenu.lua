@@ -12,13 +12,13 @@ function UpperMenu:init(parent, menu)
         {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
         {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
     }
-    local w = 300
+    local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
         name = "upper_menu",
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
         w = w,
-        h = w / #self._tabs - 4,
+        h = 300 / #self._tabs - 4,
         auto_foreground = true,
         offset = 0,
         align_method = "grid",
@@ -57,7 +57,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         cannot_be_enabled = enabled == false,
         on_callback = ClassClbk(self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
-        w = self._menu:W() / #self._tabs,
+        w = 300 / #self._tabs,
         h = self._menu:H(),
         icon_w = s - 12,
         icon_h = s - 12,      

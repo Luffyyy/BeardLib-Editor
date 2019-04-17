@@ -23,7 +23,7 @@ function Part:init(parent, menu, name, opt, mopt)
         position = function(item)
             item:Panel():set_world_bottom(item:Panel():parent():world_bottom() + 1)
         end,
-        w = 300,
+        w = BLE.Options:GetValue("MapEditorPanelWidth"),
         h = self:GetPart("menu"):get_menu_h() - 1
     }, mopt))
     self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
