@@ -634,17 +634,15 @@ function WorldDef:prepare_for_spawn_instance(instance)
 	end
 	self:_load_continent_init_package(package_data.init_package)
 	self:_load_continent_package(package_data.package)
-	if Application:editor() or not instance.mission_placed then
-		local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
-		if prepared_unit_data.statics then
-			self._needed_to_spawn = self._needed_to_spawn or {}
-			for _, static in ipairs(prepared_unit_data.statics) do
-				table.insert(self._needed_to_spawn, static)
-			end
+	
+	local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
+	if prepared_unit_data.statics then
+		self._needed_to_spawn = self._needed_to_spawn or {}
+		for _, static in ipairs(prepared_unit_data.statics) do
+			table.insert(self._needed_to_spawn, static)
 		end
-	else
-		managers.world_instance:prepare_serialized_instance_data(instance)
 	end
+ 
 	if self._init_done then
 		self:spawn_quick()
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))

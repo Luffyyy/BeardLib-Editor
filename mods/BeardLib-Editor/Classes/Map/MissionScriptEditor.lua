@@ -38,7 +38,6 @@ end
 function MissionScriptEditor:work()
 	self.super.build_default_menu(self)
 	self:_build_panel()
-	self:AlignItems()
     self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
@@ -60,6 +59,7 @@ function MissionScriptEditor:work()
 			table.insert(self._links, element)
 		end
 	end
+	self:AlignItems()
 end
 
 function MissionScriptEditor:get_on_executed_units()
