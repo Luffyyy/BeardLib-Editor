@@ -299,14 +299,13 @@ function CoreEffectProperty:on_commit(view, item)
 	end
 
 	local value = item:get_value()
+	if self._type == "vector2" then
+		value = value.x.." "..value.y
+	elseif self._type == "vector3" then
+		value = value.x.." "..value.y.." "..value.z
+	end
 	if self._value ~= value then
-		if self._type == "vector2" then
-			value = value.x.." "..value.y
-		elseif self._type == "vector3" then
-			value = value.x.." "..value.y.." "..value.z
-		end
 		self._value = value
-
 		view:update_view(false)
 	end
 end

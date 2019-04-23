@@ -332,16 +332,20 @@ function CoreParticleEditorPanel:reload_effect_definition()
         file:write(n:to_xml())
         file:close()
         DB:remove_entry(effect_ids, unique_ids)
-        if managers.dyn_resource:has_resource(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE) then
-            managers.dyn_resource:unload(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE)
+        local dyn = managers.dyn_resource
+        if dyn:has_resource(effect_ids, unique_ids, dyn.DYN_RESOURCES_PACKAGE) then
+            local key = dyn._get_resource_key(effect_ids, unique_ids, dyn.DYN_RESOURCES_PACKAGE)
+            local entry = dyn._dyn_resources[key]
+            entry.ref_c = 1 --Forces it to unload if for some reason it's loaded twice
+            dyn:unload(effect_ids, unique_ids, dyn.DYN_RESOURCES_PACKAGE, false)
         end
+        DelayedCalls:Remove("ReloadEffectSomething")
         DelayedCalls:Add("ReloadEffectSomething", 0.1, function()
-            DB:create_entry(effect_ids, unique_ids, "tmpeffect")
+			DB:create_entry(effect_ids, unique_ids, "tmpeffect")
             managers.dyn_resource:load(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE)
+            self._effect_id = nil
         end)
     end
-
-	self._effect_id = nil
 end
 
 function CoreParticleEditorPanel:close()

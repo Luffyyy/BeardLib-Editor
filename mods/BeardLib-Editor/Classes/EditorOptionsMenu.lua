@@ -58,7 +58,7 @@ function Options:set_theme(item)
 end
 
 function Options:reset_options(menu)
-	for _, item in pairs(menu._my_items) do
+	for _, item in pairs(menu:Items()) do
 		if item.menu_type then
 			self:reset_options(item)
 		else

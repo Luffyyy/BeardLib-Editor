@@ -25,7 +25,7 @@ function UpperMenu:init(parent, menu)
         scrollbar = false,
         visible = true,
     })
-    local s = self._menu:W() / #self._tabs
+    local s = 300 / #self._tabs
     self._line = self._menu:Panel():rect({
         color = self._menu.accent_color,
         layer = 10,
