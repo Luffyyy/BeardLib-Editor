@@ -51,15 +51,47 @@ function PortalUnitGroup:draw(t, dt, mul, skip_shapes, skip_units)
 	end
 end
 
-function PortalUnitGroup:_change_visibility(unit, diff)
-	if alive(unit) then
-		unit:unit_data()._visibility_counter = unit:unit_data()._visibility_counter + diff
 
-		if unit:unit_data()._visibility_counter > 0 or (managers.editor and managers.editor:enabled()) then
+function PortalUnitGroup:update(t, dt)
+	if managers.editor and managers.editor:enabled() then
+		for _, unit in pairs(self._units) do
 			unit:set_visible(true)
 			managers.portal:remove_from_hide_list(unit)
-		else
-			managers.portal:add_to_hide_list(unit)
+		end
+	else
+		local is_inside
+	
+		for _, pos in ipairs(managers.portal:check_positions()) do
+			is_inside = self:inside(pos)
+	
+			if is_inside then
+				break
+			end
+		end
+	
+		if is_inside ~= nil and self._is_inside ~= is_inside then
+			self._is_inside = is_inside
+			local diff = self._is_inside and 1 or -1
+	
+			self:_change_units_visibility(diff)
 		end
 	end
+end
+
+function PortalManager:check_positions()
+	if #self._check_positions > 0 then
+		return self._check_positions
+	end
+
+    for _, vp in ipairs(managers.viewport:all_really_active_viewports()) do
+		if vp._name ~= "MapEditor" then
+            local camera = vp:camera()
+    
+            if alive(camera) and vp:is_rendering_scene("World") then
+                table.insert(self._check_positions, camera:position())
+            end
+        end
+	end
+
+	return self._check_positions
 end
