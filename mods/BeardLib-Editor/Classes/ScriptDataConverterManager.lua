@@ -4,7 +4,6 @@ function SConverter:init()
     SConverter.script_file_from_types = {
         {name = "binary", func = "ScriptSerializer:from_binary", open_type = "rb"},
         {name = "json", func = "json.custom_decode"},
-        {name = "xml", func = "ScriptSerializer:from_xml"},
         {name = "generic_xml", func = "ScriptSerializer:from_generic_xml"},
         {name = "custom_xml", func = "ScriptSerializer:from_custom_xml"},
     }
@@ -49,6 +48,9 @@ function SConverter:init()
 end
 
 function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
+    if not from_i or not to_i then
+        return
+    end
     local to_data = self.script_file_to_types[to_i]
     local file_split = string.split(file, "%.")
     local filename_split = string.split(file_split[1], "/")

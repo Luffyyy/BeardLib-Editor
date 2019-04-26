@@ -52,13 +52,15 @@ function ElementLaserTrigger:remake_dummies()
         unit:set_slot(0)
         World:delete_unit(unit)		
     end
-    for _, point in pairs(self._values.points) do
-        local unit = safe_spawn_unit(Idstring("units/payday2/props/gen_prop_lazer_blaster_dome/gen_prop_lazer_blaster_dome"), point.pos, point.rot)
-        local materials = unit:get_objects_by_type(Idstring("material"))
-        for _, m in ipairs(materials) do
-            m:set_variable(Idstring("contour_opacity"), 0)
+    if not Global.editor_safe_mode then
+        for _, point in pairs(self._values.points) do
+            local unit = safe_spawn_unit(Idstring("units/payday2/props/gen_prop_lazer_blaster_dome/gen_prop_lazer_blaster_dome"), point.pos, point.rot)
+            local materials = unit:get_objects_by_type(Idstring("material"))
+            for _, m in ipairs(materials) do
+                m:set_variable(Idstring("contour_opacity"), 0)
+            end
+            table.insert(self._dummy_units, unit)
+            point.pos = point.pos + point.rot:y() * 3
         end
-        table.insert(self._dummy_units, unit)
-        point.pos = point.pos + point.rot:y() * 3
     end
 end

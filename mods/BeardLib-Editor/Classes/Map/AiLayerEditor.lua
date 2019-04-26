@@ -228,7 +228,9 @@ function AiEditor:unit_deleted(unit)
 end
 
 function AiEditor:update(t, dt)
-    self:_draw(t, dt)
+    if not Global.editor_safe_mode then
+        self:_draw(t, dt)
+    end
 end
 
 function AiEditor:_draw(t, dt)
@@ -389,8 +391,6 @@ function AiEditor:_create_new_patrol_path()
 
                 if not managers.ai_data:add_patrol_path(name) then
                     self:_create_new_patrol_path()
-                else
-                    self:build_menu()
                 end
             end
         }
@@ -426,8 +426,6 @@ function AiEditor:_add_patrol_point(unit)
 
     -- don't care if it is alive i guess
     table.insert(self._created_units, unit)
-
-    self:build_menu()
 end
 
 function AiEditor:data()
