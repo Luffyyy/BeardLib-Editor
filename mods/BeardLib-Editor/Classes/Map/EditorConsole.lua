@@ -1,51 +1,47 @@
-EditorConsole = EditorConsole or class()
+EditorConsole = EditorConsole or class(EditorPart)
 function EditorConsole:init(parent, menu)
     self._parent = parent
-    self._menu = menu:Menu({
-        name = "console_output",
-        w = 600,
-        h = 100,
-        size_by_text = true,
-        dbg = true,
-        override_size_limit = true,
-        should_scroll_down = true,
-        position = "CenterBottom",
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-    })
     self._options_menu = menu:Menu({
         name = "console_options",
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        w = 600,
         auto_height = true,
         offset = 0,
+        layer = 999,
         items_size = 18,
-        position = function(item)
-            item:Panel():set_leftbottom(self._menu:Panel():position())    
-        end,
+        position = "TopLeft",
         scrollbar = false,
+        visible = false,
         align_method = "grid",
+    })
+    self._menu = menu:Menu({
+        name = "console_output",
+        h = 400,
+        layer = 999,
+        size_by_text = true,
+        override_size_limit = true,
+        should_scroll_down = true,
+        visible = false,
+        position = function(item)
+            item:Panel():set_position(self._options_menu:Panel():leftbottom())    
+        end,
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
     })
     MenuUtils:new(self, self._options_menu)
     local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
-    self:Button("Console", ClassClbk(self, "ToggleConsole"), opt)
+    self:Button("Close", ClassClbk(self, "ToggleConsole"), opt)
     self:Button("Clear", ClassClbk(self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
     self.info = self:Toggle("Info", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
     self.mission = self:Toggle("Mission", ClassClbk(self, "FilterConsole"), false, table.merge(opt, {border_color = Color.green}))
     self.error = self:Toggle("Errors", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
     MenuUtils:new(self)
     self:Clear()
-    self:ToggleConsole()
+    self.closed = true
+    self._triggers = {}
 end
 
 function EditorConsole:ToggleConsole()
     self.closed = not self.closed
-    if self.closed then
-        self._options_menu:SetPosition("Bottom")
-    else
-        self._options_menu:SetPosition(function(menu)
-            menu:Panel():set_bottom(self._menu:Panel():top() - 2)
-        end)
-    end
+    self._options_menu:SetVisible(not self.closed)
     self._menu:SetVisible(not self.closed)
 end
 
@@ -78,9 +74,12 @@ function EditorConsole:Clear() self:ClearItems() end
 
 
 function EditorConsole:disable()
+    EditorConsole.super.disable(self)
     self._enabled = false
 end
 
 function EditorConsole:enable()
+    EditorConsole.super.enable(self)
+    self:bind_opt("ToggleConsole", ClassClbk(self, "ToggleConsole"))
     self._enabled = true
 end

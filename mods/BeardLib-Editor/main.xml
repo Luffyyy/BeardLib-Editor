@@ -93,6 +93,7 @@
 			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
 			<option type="number" min="100" max="1600" default_value="300" name="MapEditorPanelWidth"/>
 			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
+			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
             
             <option_group name="Input">
                 <option type="string" default_value="f" name="SpawnUnit"/>
@@ -115,6 +116,7 @@
                 <option type="string" default_value="delete" name="DeleteSelection"/>
 				<option type="string" default_value="left ctrl+z" name="Undo"/>
 				<option type="string" default_value="left ctrl+y" name="Redo"/>
+				<option type="string" default_value="f1" name="ToggleConsole"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>

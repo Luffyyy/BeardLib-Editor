@@ -439,7 +439,8 @@ end
 
 local navsurface_ids = Idstring("core/units/nav_surface/nav_surface")
 function Options:build_nav_segments() -- Add later the options to the menu
-    BLE.Utils:YesNoQuestion("This will disable the player and AI, build the nav data and reload the game. Proceed?", function()
+    BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
+        self:save()
         local settings = {}
         local nav_surfaces = {}
 
