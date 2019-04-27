@@ -14,7 +14,7 @@ function Part:init(parent, menu, name, opt, mopt)
     self._menu = menu:Menu(table.merge({
         name = name,
         control_slice = 0.5,
-        size = 18,
+        size = BLE.Options:GetValue("MapEditorFontSize"),
         auto_foreground = true,
         background_color = BLE.Options:GetValue("BackgroundColor"),
         scrollbar = false,
@@ -30,7 +30,7 @@ function Part:init(parent, menu, name, opt, mopt)
     MenuUtils:new(self)
     local title_h = 4
     if not opt.no_title then
-        title_h = self:Divider("Title", {size = 24, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
+        title_h = self:Divider("Title", {size = BLE.Options:GetValue("MapEditorFontSize") * 1.335, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
     if opt.make_tabs then
         self._tabs = self:Menu("Tabs", table.merge({

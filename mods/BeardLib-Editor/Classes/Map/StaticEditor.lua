@@ -1268,7 +1268,7 @@ function Static:SpawnCopyData(copy_data, prefab)
                         end
                     end
                     if table.size(missing_units) > 0 then
-                        assets:find_packages(missing_units, find_packages)
+                        assets:find_packages({unit = missing_units}, find_packages)
                     else
                         Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
                         all_ok_spawn()

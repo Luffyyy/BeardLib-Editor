@@ -55,8 +55,10 @@ end
 function PortalUnitGroup:update(t, dt)
 	if managers.editor and managers.editor:enabled() then
 		for _, unit in pairs(self._units) do
-			unit:set_visible(true)
-			managers.portal:remove_from_hide_list(unit)
+			if alive(unit) then
+				unit:set_visible(true)
+				managers.portal:remove_from_hide_list(unit)
+			end
 		end
 	else
 		local is_inside
