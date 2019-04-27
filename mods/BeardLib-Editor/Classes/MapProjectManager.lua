@@ -6,7 +6,7 @@ local Project = MapProjectManager
 local CXML = "custom_xml"
 
 function Project:init()
-    self._diffs = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish", "One Down"}       
+    self._diffs = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish", "Death Sentence"}       
     self._templates_directory = Path:Combine(BLE.ModPath, "Templates")
     self._add_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
     self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
@@ -615,6 +615,7 @@ function Project:edit_main_xml(data, save_clbk)
     self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
     self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
     self:Button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"), {group = narrative})
+    self:Toggle("HideFromCrimenet", up, data.hide_from_crimenet, {group = narrative})
     local updating = self:DivGroup("Updating", divgroup_opt)
     local mod_assets = XML:GetNodes(data, "AssetUpdates")
     if not mod_assets then
@@ -787,6 +788,7 @@ function Project:set_project_data(item)
     narr.debrief_event = events:match(",") and string.split(events, ",") or {events}
     narr.briefing_event = self:GetItem("BriefingEvent"):Value()
     narr.contact = self:GetItem("Contact"):SelectedItem()
+    narr.hide_from_crimenet = self:GetItem("HideFromCrimenet"):Value()
 	if mod_assets then
 		mod_assets.id = self:GetItem("DownloadId"):Value()
 		mod_assets.version = self:GetItem("Version"):Value()
@@ -824,6 +826,7 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     local aitype = table.map_keys(LevelsTweakData.LevelType)
     self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
     self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
+    self:Toggle("RetainBags", up, level.repossess_bags, {group = self._curr_editing})
     self:Button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level), {group = self._curr_editing})
 
     self:small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
@@ -924,6 +927,7 @@ function Project:set_project_level_data(level, level_in_chain)
     level.max_bags = self:GetItem("MaxBags"):Value()
     level.team_ai_off = self:GetItem("TeamAiOff"):Value()
     level.intro_event = self:GetItem("IntroEvent"):Value()
+    level.repossess_bags = self:GetItem("RetainBags"):Value()
     local outro = self:GetItem("OutroEvent"):Value()
     level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
     self:set_edit_title(title)
