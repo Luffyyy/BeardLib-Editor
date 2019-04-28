@@ -269,14 +269,14 @@ function StaticEditor:update_positions()
                 unit:editable_gui():set_blend_mode(unit:editable_gui():blend_mode())
             end
         end
-    end
-    for _, editor in pairs(self._editors) do
-        if editor.update_positions then
-            editor:update_positions(unit)
+        for _, editor in pairs(self._editors) do
+            if editor.update_positions then
+                editor:update_positions(unit)
+            end
         end
-	end
-    if self._built_multi then
-        self:SetTitle("Selection - " .. tostring(#self._selected_units))
+        if self._built_multi then
+            self:SetTitle("Selection - " .. tostring(#self._selected_units))
+        end
     end
 end
 

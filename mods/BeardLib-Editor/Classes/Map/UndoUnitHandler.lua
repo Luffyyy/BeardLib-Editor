@@ -21,6 +21,8 @@ function UHandler:init(parent, menu)
         delete = function(k) self:delete_unit(k) end,
         spawn = function(k) self:restore_unit(k) end
     }
+
+    self._static = self:GetPart("static")
 end
 
 function UHandler:enable()
@@ -31,6 +33,7 @@ end
 
 function UHandler:SaveUnitValues(units, action_type)
     local event_tbl = {}
+    local selected_units = self:selected_units()
     for _, unit in pairs(units) do
         if alive(unit) and not unit:fake() then
             if action_type == "pos" then
@@ -40,14 +43,14 @@ function UHandler:SaveUnitValues(units, action_type)
                     rot = unit:rotation(), prev_rot = unit:unit_data()._prev_rot
                 })
             elseif action_type == "delete" or action_type == "spawn" then
-                table.insert(event_tbl, {unit = unit, copy_data = self:build_unit_data(unit)})
+                table.insert(event_tbl, {unit = unit, was_selected = table.contains(selected_units, unit), copy_data = self:build_unit_data(unit)})
             end
         end
     end
     if self._history_point then --Uh oh! YOU'VE CHANGED THE PAST
         local new_history = {}
         for i, event in pairs(self._history) do
-            if i<=self._history_point then
+            if i<self._history_point then
                 table.insert(new_history, event)
             end
         end
@@ -77,11 +80,15 @@ function UHandler:Undo()
     
     local point = self._history[self._history_point]
     local action_type = point.action_type
+    if action_type == "spawn" then
+        self._static:set_unit(true)
+    end
     for _, event in pairs(point.event_tbl) do
         self._undo_funcs[action_type](event)
     end
 
-    self:GetPart("static"):recalc_all_locals()
+    self._static:recalc_all_locals()
+    self._static:update_positions()
 end
 
 function UHandler:Redo()
@@ -102,11 +109,15 @@ function UHandler:Redo()
 
     local point = self._history[point]
     local action_type = point.action_type
+    if action_type == "spawn" then
+        self._static:set_unit(true)
+    end
     for _, event in pairs(point.event_tbl) do
         self._redo_funcs[action_type](event)
     end
 
-    self:GetPart("static"):recalc_all_locals()
+    self._static:recalc_all_locals()
+    self._static:update_positions()
 end
 
 function UHandler:build_unit_data(unit)
@@ -124,7 +135,7 @@ function UHandler:redo_unit_pos_rot(event)
     local unit = event.unit
     if alive(unit) then
         BLE.Utils:SetPosition(unit, event.pos, event.rot, unit:unit_data())
-		local static = self:GetPart("static")
+		local static = self._static
 		static:set_units()
 		static:update_positions()
     end
@@ -134,7 +145,7 @@ function UHandler:undo_unit_pos_rot(event)
     local unit = event.unit
     if alive(unit) then
 		BLE.Utils:SetPosition(unit, event.prev_pos or unit:position(), event.prev_rot, unit:unit_data())
-		local static = self:GetPart("static")
+		local static = self._static
 		static:set_units()
 		static:update_positions()
     end
@@ -143,12 +154,13 @@ end
 function UHandler:restore_unit(event)
     local copy_data = event.copy_data
     if copy_data.type == "element" then
-        self:GetPart("mission"):add_element(copy_data.mission_element_data.class, true, copy_data.mission_element_data)
-        self:GetPart("static"):build_links(copy_data.mission_element_data.id, BLE.Utils.LinkTypes.Element, copy_data.mission_element_data)
+        self:GetPart("mission"):add_element(copy_data.mission_element_data.class, false, copy_data.mission_element_data)
+        self._static:build_links(copy_data.mission_element_data.id, BLE.Utils.LinkTypes.Element, copy_data.mission_element_data)
     else
-        local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, false, copy_data.unit_id)
+        local new_unit = self._parent:SpawnUnit(copy_data.unit_data.name, copy_data.unit_data, event.was_selected, copy_data.unit_id)
         event.unit = new_unit
-		BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation)
+        BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation)
+        BLE.Utils:SetPosition(new_unit, copy_data.unit_data.position, copy_data.unit_data.rotation) --No clue why this fails sometimes (doesn't update the collision)
     end
 end
 
@@ -156,6 +168,6 @@ function UHandler:delete_unit(event)
     local unit = event.unit
     if alive(unit) then
         self._parent:DeleteUnit(unit)
-        self:GetPart("static"):reset_selected_units()
+        self._static:set_unit(true)
     end
 end
