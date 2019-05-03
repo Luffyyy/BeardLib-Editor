@@ -617,10 +617,10 @@ function Project:edit_main_xml(data, save_clbk)
     self:Button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"), {group = narrative})
     self:Toggle("HideFromCrimenet", up, data.hide_from_crimenet, {group = narrative})
     local updating = self:DivGroup("Updating", divgroup_opt)
-    local mod_assets = XML:GetNodes(data, "AssetUpdates")
+    local mod_assets = XML:GetNode(data, "AssetUpdates")
     if not mod_assets then
         mod_assets = {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop", use_local_dir = true}
-        table.insert(data, mod_assets)
+        data.AssetUpdates = mod_assets
     end
     if mod_assets.provider == "lastbullet" then
         mod_assets.provider = "modworkshop"
