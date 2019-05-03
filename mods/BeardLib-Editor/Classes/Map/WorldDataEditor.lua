@@ -18,6 +18,8 @@ function WData:enable()
     self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
     self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
+    self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
+    self:bind_opt("LoadUnitFromExtract", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit"}))
 end
 
 function WData:loaded_continents()
@@ -126,33 +128,42 @@ function WData:build_default_menu()
     end
 
 
-    local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "centered_grid"})
+    local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     local spawn_unit = BLE.Options:GetValue("Input/SpawnUnit")
     local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
+    local load_unit = BLE.Options:GetValue("Input/LoadUnit")
+    local load_unit_fe = BLE.Options:GetValue("Input/LoadUnitFromExtract")
     spawn:SButton("Unit", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
     spawn:SButton("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
     spawn:SButton("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
     spawn:SButton("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
 
-    local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "centered_grid"})
+    local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     select:SButton("Unit", ClassClbk(self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
     select:SButton("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
     select:SButton("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
     if BeardLib.current_level then
-        local load = self:DivGroup("Load", {align_method = "centered_grid"})
-		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "centered_grid"}) or nil
-		for _, ext in pairs(BLE.UsableAssets) do
-			load:SButton(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}))
-			if load_extract then
-				load_extract:SButton(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}))
+        local load = self:DivGroup("Load", {align_method = "grid"})
+		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "grid"}) or nil
+        for _, ext in pairs(BLE.UsableAssets) do
+            local text
+            if ext == "unit" then
+                text = "Unit("..load_unit..")"
+            end
+			load:SButton(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
+            if load_extract then
+                if ext == "unit" then
+                    text = "Unit("..load_unit_fe..")"
+                end
+				load_extract:SButton(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
 			end
 		end
     end
 
-    local mng = self:DivGroup("Managers", {align_method = "centered_grid", enabled = BeardLib.current_level ~= nil})
+    local mng = self:DivGroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
     mng:SButton("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
     mng:SButton("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
@@ -198,7 +209,7 @@ function WData:build_continents()
                 script:ImgButton("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
                 script:ImgButton("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
                 script:ImgButton("Rename", ClassClbk(self, "rename_script", sname), tx, {66, 1, 48, 48})
-                script:ImgButton("Rename", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48})
+                script:ImgButton("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48})
             end
         end
     end
@@ -225,16 +236,6 @@ function WData:toggle_unit_visibility(units)
         if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end
     end
     return visible
-end
-
-function WData:select_all_units_from_continent(continent)
-    local selected_units = {}
-    for _, unit in pairs(self:get_all_units_from_continent(continent)) do
-        table.insert(selected_units, unit)
-    end
-    self:GetPart("mission"):remove_script()
-    self:GetPart("static")._selected_units = selected_units
-    self:GetPart("static"):set_selected_unit()
 end
 
 function WData:get_all_units_from_continent(continent)
@@ -414,19 +415,40 @@ function WData:_clear_all_elements_from_script(script, continent, no_refresh, no
     end
 end
 
-function WData:select_all_units_from_script(script, item)
+function WData:select_all_units_from_continent(continent)
+    local static = self:GetPart("static")
     local selected_units = {}
+    local _selected_units = static._selected_units
+    local pressed_ctrl = ctrl()
+
+    for _, unit in pairs(self:get_all_units_from_continent(continent)) do
+        table.insert(pressed_ctrl and _selected_units or selected_units, unit)
+    end
+    self:GetPart("mission"):remove_script()
+    if not ctrl() then
+        static._selected_units = selected_units
+    end
+    static:set_selected_unit()
+end
+
+function WData:select_all_units_from_script(script, item)
+    local static = self:GetPart("static")
+    local selected_units = {}
+    local _selected_units = static._selected_units
+    local pressed_ctrl = ctrl()
     for _, unit in pairs(self:GetPart("mission")._units) do
         if unit:mission_element() then
             local element = unit:mission_element().element
             if element.script == script then
-                table.insert(selected_units, unit)
+                table.insert(pressed_ctrl and _selected_units or selected_units, unit)
             end
         end
     end
     self:GetPart("mission"):remove_script()
-    self:GetPart("static")._selected_units = selected_units
-    self:GetPart("static"):set_selected_unit()    
+    if not pressed_ctrl then
+        static._selected_units = selected_units
+    end
+    static:set_selected_unit()    
 end
 
 function WData:build_menu(name, item)
@@ -588,7 +610,7 @@ function WData:mouse_pressed(button, x, y)
         self._currently_spawning_element = nil
         self:SetTitle()
         self:GetPart("menu"):set_tabs_enabled(true)
-        if self._do_switch and self:Value("SelectAndGoToMenu") then
+        if self._do_switch and self:Val("SelectAndGoToMenu") then
             self:GetPart("static"):Switch()
             self._do_switch = false
         end

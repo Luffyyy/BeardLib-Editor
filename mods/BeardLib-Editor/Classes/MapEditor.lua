@@ -50,7 +50,7 @@ function Editor:init()
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
     
-    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(BLE.Options:GetValue("Input/ToggleMapEditor"))
+    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(BLE.Options:GetValue("Input/ToggleMapEditor")))
     local normal = not Global.editor_safe_mode
     self._menu = MenuUI:new({
         layer = 100,

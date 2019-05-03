@@ -194,7 +194,7 @@ function EnvLayer:update(t, dt)
 		end
 	end
 
-	if self:Value("EnvironmentUnits") then
+	if self:Val("EnvironmentUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
 			if alive(unit) then

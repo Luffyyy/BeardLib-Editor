@@ -38,6 +38,12 @@ function Options:init()
 	keybind("DecreaseCameraSpeed")
 	keybind("ToggleGUI")
 	keybind("ToggleRuler")
+	keybind("SpawnUnit")
+	keybind("SpawnElement")
+	keybind("SelectUnit")
+	keybind("SelectElement")
+	keybind("LoadUnit")
+	keybind("LoadUnitFromExtract")
 
 	self:Button("ResetOptions", ClassClbk(self, "reset_options"))
 end

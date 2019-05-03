@@ -26,7 +26,7 @@ function MissionElementUnit:init(unit)
         Color("2c2c2c"),
         Color("5fc16f"),
     }
-    self._color = EditorPart:Value("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Value("ElementsColor")
+    self._color = EditorPart:Val("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Val("ElementsColor")
     local texture, rect = "textures/editor_icons_df", {368, 14, 128, 128}
     local size = iconsize / 4
     local font_size = iconsize / 8

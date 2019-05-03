@@ -30,8 +30,8 @@ function Static:mouse_pressed(button, x, y)
         return
     end
     if button == Idstring("0") then
-        if self:Value("EndlessSelection") then
-            self._reset_raycast = TimerManager:game():time() + self:Value("EndlessSelectionReset")
+        if self:Val("EndlessSelection") then
+            self._reset_raycast = TimerManager:game():time() + self:Val("EndlessSelectionReset")
         end
         self._widget_hold = true
         self._parent:reset_widget_values()
@@ -65,7 +65,7 @@ function Static:mouse_pressed(button, x, y)
             self:select_unit()
         end
     elseif button == Idstring("1") then
-        if self:Value("EndlessSelection") then
+        if self:Val("EndlessSelection") then
             self._reset_raycast = nil
             self._ignore_raycast = {}
         else
@@ -159,13 +159,13 @@ end
 
 function Static:build_quick_buttons(cannot_be_saved)
 	self:SetTitle("Selection")
-    local quick_buttons = self:Group("QuickButtons")
-    self:Button("Deselect", ClassClbk(self, "deselect_unit"), {group = quick_buttons})
-    self:Button("DeleteSelection", ClassClbk(self, "delete_selected_dialog"), {group = quick_buttons})
+    local quick = self:Group("QuickButtons", {align_method = "grid"})
+    quick:SButton("Deselect", ClassClbk(self, "deselect_unit"))
+    quick:SButton("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
     if not cannot_be_saved then
-        self:Button("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"), {group = quick_buttons})
-        self:Button("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {group = quick_buttons, text = "Add To / Remove From Portal", visible = true})
-        local group = self:Group("Group") --lmao
+        quick:SButton("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
+        quick:SButton("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
+        local group = self:Group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
 end
@@ -191,34 +191,74 @@ function Static:build_group_options()
 	end
 	group:ClearItems()
     if self._selected_group then
-        self:Divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group", group = group})
-        self:TextBox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name, {group = group})
-        self:Button("DestroyGroup", ClassClbk(self, "remove_group"), {group = group})
+        group:divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group"})
+        group:textbox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name)
+        group:SButton("DestroyGroup", ClassClbk(self, "remove_group"))
     else
-        self:Button("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {group = group, text = "Add Unit(s) To Group"})
-        self:Button("GroupUnits", ClassClbk(self, "add_group"), {group = group, text = (can_group and "Group Units" or "Make a Group")})
+        group:SButton("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
+        group:SButton("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
     end
     self:AlignItems()
+end
+
+function Static:unit_value(value_key, toggle)
+    local selected_units = self._selected_units
+    local selected_unit = selected_units[1]
+    local value = selected_unit:unit_data()[value_key]
+    if selected_unit then
+        if #selected_units > 1 then
+            local values_differ
+            for _, unit in pairs(selected_units) do
+                local ud = unit:unit_data()
+                if ud[value_key] then
+                    if ud[value_key] ~= value then
+                        values_differ = true
+                    end
+                end
+            end
+            return values_differ and "*" or value, values_differ
+        else
+            return value
+        end
+    end
 end
 
 function Static:build_unit_editor_menu()
     Static.super.build_default_menu(self)
     self:SetTitle("Selection")
-    local other = self:Group("Main")    
+    self:build_unit_main_values()
     self:build_positions_items()
-    self:TextBox("Name", ClassClbk(self, "set_unit_data"), nil, {group = other, help = "the name of the unit"})
-	self:TextBox("Id", ClassClbk(self, "set_unit_data"), nil, {group = other, enabled = false})
-	self:PathItem("UnitPath", ClassClbk(self, "set_unit_data"), nil, "unit", true, function(unit)
-		local t = Utils:GetUnitType(unit)
-		return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
-    end, false, {group = other})
-    self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), self._parent._continents, 1, {group = other})
-	self:Toggle("Enabled", ClassClbk(self, "set_unit_data"), true, {group = other, help = "Setting the unit enabled or not[Debug purpose only]"})
-    self:Toggle("HideOnProjectionLight", ClassClbk(self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableShadows", ClassClbk(self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableCollision", ClassClbk(self, "set_unit_data"), false, {group = other})
-    self:Toggle("DisableOnAIGraph", ClassClbk(self, "set_unit_data"), false, {group = other})
     self:build_extension_items()
+end
+
+function Static:build_unit_main_values()
+    local name = self:unit_value("name")
+    local main = self:Group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})    
+    if not self._built_multi then
+        main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit"})
+        main:textbox("Id", ClassClbk(self, "set_unit_data"), nil, {enabled = false})
+    end
+
+    main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {check = function(unit)
+        local t = Utils:GetUnitType(unit)
+        return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
+    end})
+
+    local continent, values_differ = self:unit_value("continent")
+    local list = self._parent._continents
+    if values_differ then
+        list = table.list_add({"*", list})
+    end
+    
+    local con = main:combobox("Continent", ClassClbk(self, "set_unit_data"), list, 1, {visible = not self._built_multi or continent ~= nil})
+    con:SetSelectedItem(continent)
+    
+
+    main:tickbox("Enabled", ClassClbk(self, "set_unit_data"), true, {size_by_text = true, help = "Setting the unit enabled or not[Debug purpose only]"})
+    main:tickbox("HideOnProjectionLight", ClassClbk(self, "set_unit_data"), self:unit_value("hide_on_projection_light") == true, {size_by_text = true})
+    main:tickbox("DisableShadows", ClassClbk(self, "set_unit_data"), self:unit_value("disable_shadows") == true, {size_by_text = true})
+    main:tickbox("DisableCollision", ClassClbk(self, "set_unit_data"), self:unit_value("disable_collision") == true, {size_by_text = true})
+    main:tickbox("DisableOnAIGraph", ClassClbk(self, "set_unit_data"), self:unit_value("disable_on_ai_graph") == true, {size_by_text = true})
 end
 
 function Static:build_extension_items()
@@ -338,15 +378,8 @@ function Static:set_unit_data()
         if ud and ud.unit_id then
             local prev_id = ud.unit_id
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
-            local path_changed = unit:unit_data().name ~= self:GetItem("UnitPath"):Value()
-            local u_path = self:GetItem("UnitPath"):Value()
-            ud.name = (u_path and u_path ~= "" and u_path) or ud.name
+
             ud.unit_id = self:GetItem("Id"):Value()
-            ud.disable_shadows = self:GetItem("DisableShadows"):Value()
-            ud.disable_collision = self:GetItem("DisableCollision"):Value()
-            ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
-            ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
-			unit:set_enabled(self:GetItem("Enabled"):Value())
 			
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data and editor:editable(unit) then
@@ -370,31 +403,64 @@ function Static:set_unit_data()
                 self:GetItem("Id"):SetValue(ud.unit_id)
 			end
 			
+            self:set_unit_simple_values(unit)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
-            for index = 0, unit:num_bodies() - 1 do
-                local body = unit:body(index)
-                if body then
-                    body:set_collisions_enabled(not ud.disable_collision)
-                    body:set_collides_with_mover(not ud.disable_collision)
-                end
-            end       
-            unit:set_shadows_disabled(unit:unit_data().disable_shadows)     
-            if PackageManager:has(Idstring("unit"), ud.name:id()) and path_changed then
-                self._parent:SpawnUnit(ud.name, unit, false, ud.unit_id)
-                self._parent:DeleteUnit(unit, true)
-            end
+            self:set_unit_path(unit, self:GetItem("UnitPath"):Value())
         end
-    else            
+    else
+        local i = 0
         for _, unit in pairs(self._selected_units) do
 			local ud = unit:unit_data()
-			if not unit:mission_element() then
-				self:set_unit_continent(unit, ud.continent, self:GetItem("Continent"):SelectedItem(), true)
-			end
+            if alive(unit) and not unit:mission_element() then
+                i = i + 1
+                self:set_unit_simple_values(unit)
+                self:set_unit_continent(unit, ud.continent, self:GetItem("Continent"):SelectedItem(), true)
+                self:set_unit_path(unit, self:GetItem("UnitPath"):Value(), i ~= 1)
+            end
         end
     end
     --TODO: put in a different place
     self:GetPart("instances"):update_positions()
     self:GetPart("world"):update_positions()
+end
+
+function Static:set_unit_simple_values(unit)
+    if not alive(unit) or not unit.unit_data then
+        return
+    end
+    local ud = unit:unit_data()
+
+    ud.disable_shadows = self:GetItem("DisableShadows"):Value()
+    ud.disable_collision = self:GetItem("DisableCollision"):Value()
+    ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
+    ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
+
+    for index = 0, unit:num_bodies() - 1 do
+        local body = unit:body(index)
+        if body then
+            body:set_collisions_enabled(not ud.disable_collision)
+            body:set_collides_with_mover(not ud.disable_collision)
+        end
+    end
+    unit:set_enabled(self:GetItem("Enabled"):Value())
+    unit:set_shadows_disabled(ud.disable_shadows)
+end
+
+function Static:set_unit_path(unit, path, add)
+    local ud = unit:unit_data()
+    
+    if ud.name == path then
+        return
+    end
+
+    local new_unit = unit
+    
+    if path and path ~= "" and path ~= "*" and PackageManager:has(Idstring("unit"), path:id()) then
+        ud.name = path
+        new_unit = self._parent:SpawnUnit(ud.name, unit, add == true, ud.unit_id)
+        self._parent:DeleteUnit(unit, true)
+    end
+    return new_unit
 end
 
 function Static:set_unit_continent(unit, old_continent, new_continent, set)
@@ -595,7 +661,7 @@ function Static:add_selection_to_prefabs(item, prefab_name)
         BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
         FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
-        remove_old_links = self:Toggle("RemoveOldLinks", nil, self:Value("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements", group = input_menu})
+        remove_old_links = self:Toggle("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements", group = input_menu})
     end})
 end
 
@@ -647,7 +713,7 @@ function Static:check_unit_ok(unit)
     if not ud then
         return false
     end
-    if self:Value("EndlessSelection") then
+    if self:Val("EndlessSelection") then
         if ud.unit_id and self._ignore_raycast[ud.unit_id] == true then
             return false
         else
@@ -659,7 +725,7 @@ function Static:check_unit_ok(unit)
             return false
         end
     end
-    if ud.instance and not self:Value("SelectInstances") then
+    if ud.instance and not self:Val("SelectInstances") then
         return false
     end
     if ud.unit_id == 0 and ud.name_id == "none" and not ud.name and not ud.position then
@@ -773,7 +839,7 @@ function Static:set_selected_unit(unit, add)
     end
     if #self._selected_units > 1 then
         self:set_multi_selected()
-        if self:Value("SelectAndGoToMenu") then
+        if self:Val("SelectAndGoToMenu") then
             self:Switch()
         end
     else
@@ -788,7 +854,7 @@ function Static:set_selected_unit(unit, add)
             else
                 self:set_unit()
             end
-            if self:Value("SelectAndGoToMenu") then
+            if self:Val("SelectAndGoToMenu") then
                 self:Switch()
             end
         else
@@ -824,26 +890,7 @@ function Static:set_multi_selected()
     self._built_multi = true
     self._editors = {}
 	self:ClearItems()
-	--TODO: Support more values.
-	local other = self:Group("Main")
-	local same_continent
-	local continent = self:selected_unit():unit_data().continent
-	local has_continents
-	local continents_are_different
-	for _, unit in pairs(self:selected_units()) do
-		local ud = unit:unit_data()
-		if ud.continent then
-			has_continents = true
-			if ud.continent ~= continent then
-				continents_are_different = true
-			end
-		end
-	end
-	if has_continents then
-		local list = continents_are_different and table.list_add({"*"}, self._parent._continents) or self._parent._continents
-		local value = continents_are_different and 1 or table.get_key(list, continent)
-		self:ComboBox("Continent", ClassClbk(self, "set_unit_data"), list, value, {group = other})
-	end
+    self:build_unit_main_values()
     self:build_positions_items()
 	self:update_positions()
     self:build_group_options()
@@ -1055,7 +1102,7 @@ function Static:update(t, dt)
     end
     local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
     self._pen:set(color)
-    local draw_bodies = self:Value("DrawBodies")
+    local draw_bodies = self:Val("DrawBodies")
     if managers.viewport:get_current_camera() then
         for _, unit in pairs(self._selected_units) do
             if alive(unit) and not unit:fake() then
@@ -1173,7 +1220,7 @@ end
 
 function Static:CopySelection()
     if #self._selected_units > 0 and not self._parent._menu._highlighted then
-        self._copy_data = self:GetCopyData(self:Value("RemoveOldLinks"), true) --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
+        self._copy_data = self:GetCopyData(self:Val("RemoveOldLinks"), true) --Sadly thanks for ovk's "crash at all cost" coding I cannot use script converter because it would crash.
         if #self._copy_data == 0 then
         	self._copy_data = nil
         end

@@ -9,7 +9,7 @@ function EditZipLine:build_menu(units)
 		text = "End position",
 		group = zipline_options,
 		no_rot = true,
-		step = self:Value("GridSize")
+		step = self:Val("GridSize")
 	}, "EndPos", units[1]:zipline():end_pos())
 	
 	self:Button("ResetPositionEnd", ClassClbk(self, "use_pos"), {group = zipline_options})

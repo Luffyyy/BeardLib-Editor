@@ -45,6 +45,7 @@ function Part:init(parent, menu, name, opt, mopt)
     
     self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     MenuUtils:new(self, self._holder)
+    ItemExt:add_funcs(self, self._holder)
     self:build_default_menu()
     self:make_collapse_all_button()
     self._menu:AlignItems(true)
@@ -76,7 +77,7 @@ function Part:bind(opt, clbk, in_dialogs)
         key = opt
     end
     if key then
-        local trigger = BeardLib.Utils.Input:TriggerDataFromString(key, clbk)
+        local trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(key), clbk)
         trigger.in_dialogs = in_dialogs
         table.insert(self._triggers, trigger)
     end
@@ -131,7 +132,7 @@ end
 
 -- Aliases
 Part.Enabled = Part.enabled
-Part.Value = Part.value
+Part.Val = Part.value
 Part.GetPart = Part.part
 Part.GetLayer = Part.layer
 Part.SetTitle = Part.set_title

@@ -201,6 +201,9 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 			end
 		})
 	end, o)
+	function p:SetValue(...)
+		return t:SetValue(...)
+	end
 	function p:Value()
 		return t:Value()
 	end
@@ -275,8 +278,10 @@ end
 function ItemExt:add_funcs(clss, menu)
 	menu = menu or clss._menu
 	for n, func in pairs(ItemExt) do
-		clss[n] = function(self, ...)
-			return menu[n](menu, ...)
+		if not n:find("set_") and not n:find("get_") then
+			clss[n] = function(self, ...)
+				return menu[n](menu, ...)
+			end
 		end
 	end
 end

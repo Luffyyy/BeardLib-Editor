@@ -827,6 +827,7 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
     self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
     self:Toggle("RetainBags", up, level.repossess_bags, {group = self._curr_editing})
+    self:Toggle("PlayerInvulnerable", up, level.player_invulnerable, {group = self._curr_editing})
     self:Button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level), {group = self._curr_editing})
 
     self:small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
@@ -928,6 +929,7 @@ function Project:set_project_level_data(level, level_in_chain)
     level.team_ai_off = self:GetItem("TeamAiOff"):Value()
     level.intro_event = self:GetItem("IntroEvent"):Value()
     level.repossess_bags = self:GetItem("RetainBags"):Value()
+    level.player_invulnerable = self:GetItem("PlayerInvulnerable"):Value()
     local outro = self:GetItem("OutroEvent"):Value()
     level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
     self:set_edit_title(title)

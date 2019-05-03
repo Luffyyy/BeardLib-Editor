@@ -20,8 +20,8 @@ function Options:build_default_menu()
     local main = self:Group("Editor", groups_opt)
     self._current_continent = main:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), nil, nil)
     self._current_script = main:combobox("CurrentScript", ClassClbk(self, "set_current_script"), nil, nil)
-    local grid_size = self:Value("GridSize")
-    local snap_rotation = self:Value("SnapRotation")
+    local grid_size = self:Val("GridSize")
+    local snap_rotation = self:Val("SnapRotation")
     main:slider("GridSize", ClassClbk(self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
     main:slider("SnapRotation", ClassClbk(self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})    
     self._parent:update_grid_size(grid_size)
@@ -29,35 +29,35 @@ function Options:build_default_menu()
     if not BeardLib.current_level then
         main:textbox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""))
     end
-    main:numberbox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Value("AutoSaveMinutes"), {help = "Set the time for auto saving"})
-    main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Value("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
-    main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Value("SaveMapFilesInBinary"), {help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
-    main:tickbox("BackupMaps", ClassClbk(self, "update_option_value"), self:Value("BackupMaps"))
-    main:tickbox("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Value("RemoveOldLinks"), {
+    main:numberbox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Val("AutoSaveMinutes"), {help = "Set the time for auto saving"})
+    main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Val("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
+    main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Val("SaveMapFilesInBinary"), {help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    main:tickbox("BackupMaps", ClassClbk(self, "update_option_value"), self:Val("BackupMaps"))
+    main:tickbox("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Val("RemoveOldLinks"), {
         text = "Remove Old Links Of Copied Elements",
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
-    main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Value("KeepMouseActiveWhileFlying"))
+    main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Val("KeepMouseActiveWhileFlying"))
 
     local camera = self:Group("Camera", groups_opt)
-    local cam_speed = self:Value("CameraSpeed")
-    local fov = self:Value("CameraFOV")
-    local far_clip = self:Value("CameraFarClip")
+    local cam_speed = self:Val("CameraSpeed")
+    local fov = self:Val("CameraFOV")
+    local far_clip = self:Val("CameraFarClip")
     camera:slider("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1})
     camera:slider("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
     camera:slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
     camera:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false)
 
     local map = self:Group("Map", groups_opt)
-    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Value("EditorUnits"), {help = "Draw editor units"})
-    map:tickbox("EnvironmentUnits", ClassClbk(self, "update_option_value"), self:Value("EnvironmentUnits"), {help = "Draw environment units"})
-    map:tickbox("SoundUnits", ClassClbk(self, "update_option_value"), self:Value("SoundUnits"), {help = "Draw sound units"})
-    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Value("HighlightUnits"))
+    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})
+    map:tickbox("EnvironmentUnits", ClassClbk(self, "update_option_value"), self:Val("EnvironmentUnits"), {help = "Draw environment units"})
+    map:tickbox("SoundUnits", ClassClbk(self, "update_option_value"), self:Val("SoundUnits"), {help = "Draw sound units"})
+    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"))
     map:tickbox("HighlightOccluders", nil, false)
-    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Value("HighlightInstances"))
-    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Value("ShowElements"))
-    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Value("DrawOnlyElementsOfCurrentScript"))
-    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Value("DrawBodies"))
+    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"))
+    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"))
+    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"))
+    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"))
     map:tickbox("DrawPortals", nil, false)
 
     local navigation_debug = self:Group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
@@ -68,22 +68,22 @@ function Options:build_default_menu()
         self._draw_options[opt] = group:tickbox(opt, ClassClbk(self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0})
     end
     local raycast = self:Group("Raycast/Selecting", groups_opt)
-    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Value("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
-    raycast:tickbox("SurfaceMove", ClassClbk(self, "update_option_value"), self:Value("SurfaceMove"))
+    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
+    raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
-    raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Value("SelectEditorGroups"))
-    raycast:tickbox("SelectInstances", ClassClbk(self, "update_option_value"), self:Value("SelectInstances"))
+    raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
+    raycast:tickbox("SelectInstances", ClassClbk(self, "update_option_value"), self:Val("SelectInstances"))
     raycast:tickbox("SelectAllRaycast", nil, false)
-    raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Value("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
-    raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Value("EndlessSelectionReset"), {
+    raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Val("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
+    raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Val("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection",
         control_slice = 0.25,
     })
     raycast:numberbox("RaycastDistance", nil, 200000)
 
     local mission = self:Group("Mission", groups_opt)
-    mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Value("RandomizedElementsColor"))
-    mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Value("ElementsColor"))
+    mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Val("RandomizedElementsColor"))
+    mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
 
     --Can't find a place for these
     local fixes = self:Group("Fixes", groups_opt)
@@ -201,7 +201,7 @@ function Options:update(t, dt)
         self:save()
     end
 
-    if self:Value("HighlightUnits") and managers.viewport:get_current_camera() then
+    if self:Val("HighlightUnits") and managers.viewport:get_current_camera() then
         for _, body in ipairs(World:find_bodies("intersect", "sphere", self._parent._camera_pos, 2500)) do
             if self._parent:_should_draw_body(body) then
                 self._pen:set(Color.white)
@@ -251,7 +251,7 @@ function Options:save()
     })
     local h = bg and bg:parent():h()
     self._saving = true
-    local save_in_binary = self:Value("SaveMapFilesInBinary")
+    local save_in_binary = self:Val("SaveMapFilesInBinary")
     local xml = save_in_binary and "binary" or "generic_xml"
     local cusxml = save_in_binary and "binary" or "custom_xml"
     local include = {
@@ -337,7 +337,7 @@ function Options:save()
 		bg:set_alpha(0)
 		play_value(bg, "alpha", 1)
 	end
-    if FileIO:Exists(path) and self:Value("BackupMaps") then
+    if FileIO:Exists(path) and self:Val("BackupMaps") then
         local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
         local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
@@ -396,7 +396,7 @@ function Options:save_nav_data(include)
     local had_include = not not include
     include = include or {}
     local save_data = managers.navigation:get_save_data()
-    local save_in_binary = self:Value("SaveMapFilesInBinary")
+    local save_in_binary = self:Val("SaveMapFilesInBinary")
     local typ = save_in_binary and "binary" or "generic_xml"
     if save_data then
         table.insert(include, {_meta = "file", file = "nav_manager_data.nav_data", type = typ})
@@ -429,7 +429,7 @@ function Options:save_cover_data(include)
         local rot = unit:rotation()
         table.insert(covers.rotations, math.round(rot:yaw()))
     end
-    local typ = self:Value("SaveMapFilesInBinary") and "binary" or "custom_xml"
+    local typ = self:Val("SaveMapFilesInBinary") and "binary" or "custom_xml"
     table.insert(include, {_meta = "file", file = "cover_data.cover_data", type = typ})
     self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, typ))
     if not had_include then
@@ -544,4 +544,9 @@ function Options:remove_brush_layer()
         self:part("world"):data().brush = nil
         MassUnitManager:delete_all_units()
     end)
+end
+
+function Options:toggle_surfacemove(item)
+    self:update_option_value(item)
+    self._parent:set_use_surface_move(item:Value())
 end

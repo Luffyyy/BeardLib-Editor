@@ -100,7 +100,7 @@ function Instance:update_positions()
 end
 
 function Instance:update(item)
-    if self:Value("HighlightInstances") then
+    if self:Val("HighlightInstances") then
         for _, instance_data in pairs(managers.world_instance:instances_data_by_continent(managers.editor._current_continent)) do
             local instance_units = self:get_instance_units_by_name(instance_data.name)
 

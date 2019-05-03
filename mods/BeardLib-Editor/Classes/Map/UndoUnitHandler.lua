@@ -81,7 +81,7 @@ function UHandler:Undo()
     local point = self._history[self._history_point]
     local action_type = point.action_type
     if action_type == "spawn" then
-        self._static:set_unit(true)
+        self._static:reset_selected_units()
     end
     for _, event in pairs(point.event_tbl) do
         self._undo_funcs[action_type](event)
@@ -110,7 +110,7 @@ function UHandler:Redo()
     local point = self._history[point]
     local action_type = point.action_type
     if action_type == "spawn" then
-        self._static:set_unit(true)
+        self._static:reset_selected_units()
     end
     for _, event in pairs(point.event_tbl) do
         self._redo_funcs[action_type](event)

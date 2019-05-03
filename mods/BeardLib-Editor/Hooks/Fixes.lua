@@ -6,7 +6,44 @@ local F = table.remove(RequiredScript:split("/"))
 local UnitIds = Idstring("unit")
 
 local civ = F == "elementspawncivilian"
-if civ or F == "elementspawnenemydummy" then
+if F == "coreelementarea" then
+	core:module("CoreElementArea")
+	function ElementAreaTrigger:init(...)
+		ElementAreaTrigger.super.init(self, ...)
+	
+		self._last_project_amount_all = 0
+		self:_finalize_values()
+	end
+	function ElementAreaTrigger:_finalize_values()
+		if self._shapes then
+			for _, shape in pairs(self._shapes) do
+				shape:destroy()
+			end
+		end
+		self._shapes = {}
+		self._shape_elements = {}
+		self._rules_elements = {}
+		if not self._values.use_shape_element_ids then
+			if not self._values.shape_type or self._values.shape_type == "box" then
+				self:_add_shape(CoreShapeManager.ShapeBoxMiddle:new({
+					position = self._values.position,
+					rotation = self._values.rotation,
+					width = self._values.width,
+					depth = self._values.depth,
+					height = self._values.height
+				}))
+			elseif self._values.shape_type == "cylinder" then
+				self:_add_shape(CoreShapeManager.ShapeCylinderMiddle:new({
+					position = self._values.position,
+					rotation = self._values.rotation,
+					height = self._values.height,
+					radius = self._values.radius
+				}))
+			end
+		end
+		self._inside = {}
+	end
+elseif civ or F == "elementspawnenemydummy" then
 	local C = civ and ElementSpawnCivilian or ElementSpawnEnemyDummy
 	--Makes sure unit path is updated.
 	Hooks:PostHook(C, "_finalize_values", "EditorFinalizeValues", function(self)

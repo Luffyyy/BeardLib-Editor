@@ -75,6 +75,7 @@
         <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
         <hook source_file="lib/managers/mission/elementspawncivilian" file="Fixes.lua"/>
         <hook source_file="lib/managers/mission/elementspawnenemydummy" file="Fixes.lua"/>
+    	<hook source_file="core/lib/managers/mission/coreelementarea" file="Fixes.lua"/>
         <hook source_file="lib/managers/missionassetsmanager" file="MissionAssetsManager.lua"/>
         <hook source_file="lib/setups/setup" file="Setup.lua"/>
         <hook source_file="lib/setups/gamesetup" file="GameSetup.lua"/>
@@ -96,10 +97,12 @@
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
             
             <option_group name="Input">
-                <option type="string" default_value="f" name="SpawnUnit"/>
-                <option type="string" default_value="g" name="SpawnElement"/>
-                <option type="string" default_value="v" name="SelectUnit"/>
-                <option type="string" default_value="b" name="SelectElement"/>
+                <option type="string" default_value="1" name="SpawnUnit"/>
+                <option type="string" default_value="2" name="SpawnElement"/>
+                <option type="string" default_value="3" name="SelectUnit"/>
+                <option type="string" default_value="4" name="SelectElement"/>
+                <option type="string" default_value="5" name="LoadUnit"/>
+                <option type="string" default_value="6" name="LoadUnitFromExtract"/>
 
                 <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
@@ -135,14 +138,14 @@
                 <option type="boolean" default_value="true" name="RemoveOldLinks"/>
                 <option type="boolean" default_value="false" name="EndlessSelection"/>
                 <option type="number" default_value="0.5" name="EndlessSelectionReset"/>
-                <option type="boolean" default_value="false" name="SelectAndGoToMenu"/>
+                <option type="boolean" default_value="true" name="SelectAndGoToMenu"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
                 <option type="boolean" default_value="true" name="SoundUnits"/>
                 <option type="boolean" default_value="true" name="EnvironmentUnits"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="HighlightInstances"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
-                <option type="boolean" default_value="false" name="ShowElements"/>
+                <option type="boolean" default_value="true" name="ShowElements"/>
                 <option type="boolean" default_value="false" name="KeepMouseActiveWhileFlying"/>
                 <option type="boolean" default_value="false" name="SelectEditorGroups"/>
                 <option type="boolean" default_value="false" name="SurfaceMove"/>

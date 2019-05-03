@@ -86,7 +86,7 @@ function SndLayer:reset_selected_units()
 end
 
 function SndLayer:update(t, dt)
-	if self:Value("SoundUnits") then
+	if self:Val("SoundUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in ipairs(self._created_units) do
 			if alive(unit) then
