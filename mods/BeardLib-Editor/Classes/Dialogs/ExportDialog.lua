@@ -7,18 +7,18 @@ function ExportDialog:_Show(params)
     end
     self._assets = params.assets
     self._assets_manager = params.assets_manager
-    MenuUtils:new(self, self._menu:Menu({name = "holder", index = 3, auto_height = true}))
+    ItemExt:add_funcs(self, self._menu:pan({name = "holder", index = 3, auto_height = true}))
 
     local semi_opt = {help = "Semi optional asset, some units don't need it and some do, better keep it on."}
     local opt = {help = "Optional asset, the game can load it by itself."}
     
-    self:Divider("Include:")
-    self:Toggle("NetworkUnits", nil, true)
-    self:Toggle("Animations", nil, true, semi_opt)
-    self:Toggle("SoundBanks", nil, true, semi_opt)
-    self:Toggle("Textures", nil, false, opt)
-    self:Toggle("Models", nil, false, opt)
-    self:Toggle("CookedPhysics", nil, false, opt)
+    self:divider("Include:")
+    self:tickbox("NetworkUnits", nil, true)
+    self:tickbox("Animations", nil, true, semi_opt)
+    self:tickbox("SoundBanks", nil, true, semi_opt)
+    self:tickbox("Textures", nil, false, opt)
+    self:tickbox("Models", nil, false, opt)
+    self:tickbox("CookedPhysics", nil, false, opt)
 end
 
 function ExportDialog:hide(success)

@@ -31,7 +31,7 @@ function EditorMenu:make_page(name, clbk, opt)
         w = self._main_menu._panel:w() - 250,
     }, opt or {}))
     self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
-    self:Button(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
+    self:button(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end
@@ -49,11 +49,11 @@ function EditorMenu:create_items(menu)
         h = self._main_menu._panel:h(),
         position = "Left",
 	})
-	MenuUtils:new(self, self._tabs)   
-    local div = self:Divider("BeardLib-Editor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
+	ItemExt:add_funcs(self, self._tabs)   
+    local div = self:divider("BeardLib-Editor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
 
     local s = self._tabs.items_size - 2
-    div:ImgButton("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
+    div:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
         highlight_color = false, w = s, h = s
     })
 end

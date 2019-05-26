@@ -2,7 +2,7 @@ EditUnitEditableGui = EditUnitEditableGui or class(EditUnit)
 function EditUnitEditableGui:editable(unit)	return self.super.editable(self, unit) and unit:editable_gui() ~= nil end
 
 function EditUnitEditableGui:build_menu(units)
-	local gui_options = self:Group("EditableGui")
+	local gui_options = self:group("EditableGui")
 	self._element_guis = {}
 	self._fonts = {
 		"core/fonts/diesel",
@@ -50,25 +50,25 @@ function EditUnitEditableGui:build_menu(units)
 		managers.editor:Log("Detected new font in editable gui! font name = %s, please report this to us!", default_font)
 		table.insert(self._fonts, default_font)
 	end
-	self._color = self:ColorBox("Color", ClassClbk(self, "set_unit_data_parent"), gui:font_color())
-	self._text = self:TextBox("Text", ClassClbk(self, "set_unit_data_parent"), gui:text())
-	self._font = self:ComboBox("Font", ClassClbk(self, "set_unit_data_parent"), self._fonts, table.get_key(self._fonts, gui:font()), {help = "Select a font from the combobox"})
-	self._font_size = self:Slider("FontSize", ClassClbk(self, "set_unit_data_parent"), gui:font_size(), {floats = 2, min = 0.1, max = 10, help = "Set the font size using the slider"})
-	self._horizontal_align = self:ComboBox("HorizontalAlign", ClassClbk(self, "set_unit_data_parent"), self._aligns.horizontal, table.get_key(self._aligns.horizontal, gui:align()), {help = "Select an align from the combobox"})
-	self._vertical_align = self:ComboBox("VerticalAlign", ClassClbk(self, "set_unit_data_parent"), self._aligns.vertical, table.get_key(self._aligns.vertical, gui:vertical()), {help = "Select an align from the combobox"})
-	self._wrapping = self:Toggle("TextWrapping", ClassClbk(self, "set_unit_data_parent"), gui:wrap())
-	self._word_wrapping = self:Toggle("TextWordWrapping", ClassClbk(self, "set_unit_data_parent"), gui:word_wrap(), {enabled = gui:wrap()}) --
-	self._debug = self:Toggle("Debug", ClassClbk(self, "set_unit_data_parent"))
-	self._render_template = self:ComboBox("RenderTemplate", ClassClbk(self, "set_unit_data_parent"), self._render_templates, table.get_key(self._render_templates, gui:render_template()), {help = "Select a Render Template from the combobox"})
-	self._blend_mode = self:ComboBox("BlendMode", ClassClbk(self, "set_unit_data_parent"), self._blend_modes, table.get_key(self._blend_modes, gui:blend_mode()), {
+	self._color = self:colorbox("Color", ClassClbk(self, "set_unit_data_parent"), gui:font_color())
+	self._text = self:textbox("Text", ClassClbk(self, "set_unit_data_parent"), gui:text())
+	self._font = self:combobox("Font", ClassClbk(self, "set_unit_data_parent"), self._fonts, table.get_key(self._fonts, gui:font()), {help = "Select a font from the combobox"})
+	self._font_size = self:slider("FontSize", ClassClbk(self, "set_unit_data_parent"), gui:font_size(), {floats = 2, min = 0.1, max = 10, help = "Set the font size using the slider"})
+	self._horizontal_align = self:combobox("HorizontalAlign", ClassClbk(self, "set_unit_data_parent"), self._aligns.horizontal, table.get_key(self._aligns.horizontal, gui:align()), {help = "Select an align from the combobox"})
+	self._vertical_align = self:combobox("VerticalAlign", ClassClbk(self, "set_unit_data_parent"), self._aligns.vertical, table.get_key(self._aligns.vertical, gui:vertical()), {help = "Select an align from the combobox"})
+	self._wrapping = self:tickbox("TextWrapping", ClassClbk(self, "set_unit_data_parent"), gui:wrap())
+	self._word_wrapping = self:tickbox("TextWordWrapping", ClassClbk(self, "set_unit_data_parent"), gui:word_wrap(), {enabled = gui:wrap()}) --
+	self._debug = self:tickbox("Debug", ClassClbk(self, "set_unit_data_parent"))
+	self._render_template = self:combobox("RenderTemplate", ClassClbk(self, "set_unit_data_parent"), self._render_templates, table.get_key(self._render_templates, gui:render_template()), {help = "Select a Render Template from the combobox"})
+	self._blend_mode = self:combobox("BlendMode", ClassClbk(self, "set_unit_data_parent"), self._blend_modes, table.get_key(self._blend_modes, gui:blend_mode()), {
 		help = "Select a Blend Mode from the combobox", 
 		enabled = gui:render_template() == "Text",
 	})
-	self._alpha = self:Slider("Alpha", ClassClbk(self, "set_unit_data_parent"), gui:alpha(), {floats = 2, min = 0, max = 1, help = "Set the alpha using the slider"})
+	self._alpha = self:slider("Alpha", ClassClbk(self, "set_unit_data_parent"), gui:alpha(), {floats = 2, min = 0, max = 1, help = "Set the alpha using the slider"})
 	self._shapes = {}
 	for i, s in ipairs({"x", "y", "w", "h"}) do
 		local shape = gui:shape()
-		self._shapes[i] = self:Slider(s:upper(), ClassClbk(self, "set_unit_data_parent"), shape[i], {floats = 2, min = 0, max = 1, help = "Set shape using the slider"})
+		self._shapes[i] = self:slider(s:upper(), ClassClbk(self, "set_unit_data_parent"), shape[i], {floats = 2, min = 0, max = 1, help = "Set shape using the slider"})
 	end
 end
 

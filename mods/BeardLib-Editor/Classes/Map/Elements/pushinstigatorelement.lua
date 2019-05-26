@@ -13,5 +13,5 @@ function EditorPushInstigator:_build_panel()
     self:NumberCtrl("multiply", {floats = 2, min = 0.1, help = "Set the mass of the push"})  
     self:BooleanCtrl("no_z")
     self:BooleanCtrl("forward")
-    self:Vector3Ctrl("velocity", {group = self._class_group})
+    self._class_group:Vector3Ctrl("velocity")
 end

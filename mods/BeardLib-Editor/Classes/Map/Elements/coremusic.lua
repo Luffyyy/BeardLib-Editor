@@ -29,7 +29,7 @@ function EditorMusic:_build_panel()
 	end
 
 	self._element.values.music_event = self._element.values.music_event or managers.music:music_events(paths[1])[1]	
-	self:ComboBox("Category", ClassClbk(self, "set_category"), managers.music:music_path(self._element.values.music_event), 1)
+	self:combobox("Category", ClassClbk(self, "set_category"), managers.music:music_path(self._element.values.music_event), 1)
 	self._music = self:ComboCtrl("music_event", managers.music:music_events(path_value))
 	self:BooleanCtrl("use_instigator")
 end

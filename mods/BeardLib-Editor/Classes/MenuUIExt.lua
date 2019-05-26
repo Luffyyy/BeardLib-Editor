@@ -23,7 +23,11 @@ ItemExt.set_value = Item.SetValue
 ItemExt.set_enabled = Item.SetEnabled
 ItemExt.set_visible = Item.SetVisible
 
-function ItemExt:ImgButton(name, callback, texture, rect, o)
+function ItemExt:getmenu()
+	return self
+end
+
+function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
@@ -37,7 +41,7 @@ function ItemExt:ImgButton(name, callback, texture, rect, o)
 	}, o))
 end
 
-function ItemExt:SButton(name, callback, o)    
+function ItemExt:tb_btn(name, callback, o)    
 	return self:Button(table.merge({
 		name = name,
 		text = string.pretty2(name),
@@ -52,14 +56,20 @@ function ItemExt:SButton(name, callback, o)
 	}, o))
 end
 
-function ItemExt:SqButton(name, callback, o)    
+function ItemExt:s_btn(name, callback, o)
+	o = o or {}
+	o.offset = self.offset
+	return self:tb_btn(name, callback, o)
+end
+
+function ItemExt:sq_btn(name, callback, o)    
 	local s = (o and o.size) or self.items_size
 	o = o or {}
 	o.min_width = s
 	o.min_height = s
 	o.max_height = s
 	o.max_width = s
-	return self:SButton(name, callback, o)
+	return self:tb_btn(name, callback, o)
 end
 
 function ItemExt:Pasta1(name, callback, o)
@@ -88,6 +98,12 @@ end
 
 function ItemExt:slider(...)
 	return self:Slider(ItemExt:Pasta2(...))
+end
+
+function ItemExt:keybind(...)
+	local k = self:KeyBind(ItemExt:Pasta2(...))
+	k.supports_additional = true
+	return k
 end
 
 function ItemExt:pan(name, o)
@@ -173,7 +189,7 @@ local function check_slot(slot, unit)
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
-	local p = self:pan(name, table.merge({align_method = "grid"}, o))
+	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid"}, o))
 	o = {}
 	o.control_slice = 0.7
 	o.on_callback = callback
@@ -222,28 +238,38 @@ function ItemExt:PasteAxis(item)
 	pcall(function()
 		result = loadstring("return " .. paste)()
 	end)
-	if type_name(result) == "Vector3" and menu.value_type == "Position" then
+	if result and result._is_a_shape or type_name(result) == menu.value_type then
 		menu:SetValue(result, true)
-	end
-	if type_name(result) == "Rotation" and menu.value_type == "Rotation" then
-		
 	end
 end
 
+function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
+	o = o or {}
+	if o.use_gridsnap_step then
+		o.step = managers.editor._grid_size
+	end
+	local a = self:Vector3(name.."Position", clbk, pos, o)
+	if o.use_gridsnap_step then
+		o.step = nil -- managers.editor._snap_rotation
+	end
+	local b = self:Rotation(name.."Rotation", clbk, rot, o)
+	return a,b
+end
+
 function ItemExt:Vector3(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({on_callback = clbk, value_type = "Position", align_method = "centered_grid", color = false}, o))
+	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Vector3", align_method = "centered_grid", color = false}, o))
 	o = {}
 	value = value or Vector3()
 	local vector2 = p.vector2
 	local TB = p:GetToolbar()
-	TB:SqButton("p", ClassClbk(self, "PasteAxis"), {offset = 0})
-	TB:SqButton("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
 		items[i] = p:numberbox(control, function()
 			p:RunCallback()
-		end, value[control], {w = (p:ItemsWidth() / (vector2 and 2 or 3)) - p:OffsetX(), control_slice = 0.6})
+		end, value and value[control] or 0, {w = (p:ItemsWidth() / (vector2 and 2 or 3)) - p:OffsetX(), control_slice = 0.8, step = p.step})
 	end
 
 	if vector2 then
@@ -267,13 +293,102 @@ function ItemExt:Vector3(name, clbk, value, o)
 	function p:SetVector2()
 		items[3]:SetVisible(false)
 	end
-	
+
+	function p:SetStep(step)
+		items[1].step = step
+		items[2].step = step
+		items[3].step = step
+	end
+
 	return p
 end
 
-function ItemExt:GetItem(name)
-	return self:GetItem(name)
+function ItemExt:Rotation(name, clbk, value, o)
+	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Rotation", align_method = "centered_grid", color = false}, o))
+	o = {}
+	value = value or Rotation()
+	local TB = p:GetToolbar()
+	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	local controls = {"yaw", "pitch", "roll"}
+	local items = {}
+	for i, control in pairs(controls) do
+		items[i] = p:numberbox(control:sub(1, 1), function()
+			p:RunCallback()
+		end, value and value[control](value) or 0, {w = p:ItemsWidth() / 3 - p:OffsetX(), control_slice = 0.8})
+	end
+
+	function p:Value()
+		return Rotation(items[1]:Value(), items[2]:Value(), items[3]:Value())
+	end
+	p.get_value = p.Value
+	
+	function p:SetValue(val, run_callback)
+		items[1]:SetValue(val:yaw())
+		items[2]:SetValue(val:pitch())
+		items[3]:SetValue(val:roll())
+		if run_callback then
+			self:RunCallback()
+		end
+	end
+
+	function p:SetStep(step)
+		items[1].step = step
+		items[2].step = step
+		items[3].step = step
+	end
+
+	return p
 end
+
+function ItemExt:Shape(name, clbk, value, o)
+	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Shape", align_method = "centered_grid", color = false}, o))
+	o = {}
+	value = value or Rotation()
+	local TB = p:GetToolbar()
+	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
+	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	local controls = {"width", "height", "depth", "radius"}
+	local items = {}
+	for i, control in pairs(controls) do
+		items[i] = p:numberbox(control:sub(1,1), function()
+			p:RunCallback()
+		end, value and value[control] or 0, {w = p:ItemsWidth() / 3 - p:OffsetX(), control_slice = 0.8, visible = not p.no_radius or control ~= "radius"})
+	end
+
+	function p:Value()
+		return {_shape = true, width = items[1]:Value(), height = items[2]:Value(), depth = items[3]:Value(), radius = item[4]:Value()}
+	end
+	p.get_value = p.Value
+	
+	function p:SetStep(step)
+		items[1].step = step
+		items[2].step = step
+		items[3].step = step
+		items[4].step = step
+	end
+
+	function p:SetValue(val, run_callback)
+		items[1]:SetValue(val.width)
+		items[2]:SetValue(val.height)
+		items[3]:SetValue(val.depth)
+		items[4]:SetValue(val.radius)
+		if run_callback then
+			self:RunCallback()
+		end
+	end
+
+	return p
+end
+
+
+ItemExt.GetItem = Item.GetItem
+ItemExt.ClearItems = Item.ClearItems
+ItemExt.AlignItems = Item.AlignItems
+ItemExt.GetItemValue = Item.GetItemValue
+ItemExt.SetItemValue = Item.SetItemValue
+ItemExt.RemoveItem = Item.RemoveItem
+
 
 function ItemExt:add_funcs(clss, menu)
 	menu = menu or clss._menu

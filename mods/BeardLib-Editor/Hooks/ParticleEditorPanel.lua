@@ -45,10 +45,10 @@ function CoreParticleEditorPanel:create_effect_panel(parent)
     self._atom_textctrl = panel:textbox("Name", ClassClbk(self, "on_rename_atom"))
     self._atom_combo = panel:combobox("AtomSelector", ClassClbk(self, "on_select_atom"))
     local buttons_panel = panel:pan("buttons", {align_method = "grid_from_right"})
-	buttons_panel:SButton("Add", ClassClbk(self, "on_add_atom"))
-	buttons_panel:SButton("Remove", ClassClbk(self, "on_remove_atom"))
-	buttons_panel:SButton("Copy", ClassClbk(self, "on_copy_atom"))
-    buttons_panel:SButton("Paste", ClassClbk(self, "on_paste_atom"))
+	buttons_panel:tb_btn("Add", ClassClbk(self, "on_add_atom"))
+	buttons_panel:tb_btn("Remove", ClassClbk(self, "on_remove_atom"))
+	buttons_panel:tb_btn("Copy", ClassClbk(self, "on_copy_atom"))
+    buttons_panel:tb_btn("Paste", ClassClbk(self, "on_paste_atom"))
 
 	--[[local atoms_sizer = EWS:StaticBoxSizer(panel, "VERTICAL", "Atoms")
 
@@ -165,11 +165,11 @@ function CoreParticleEditorPanel:create_stack_panel(parent, stacktype)
 	stack_member_combo:set_value(last)
 
 	self._stack_member_combos[stacktype] = stack_member_combo
-	panel:SButton("Up", ClassClbk(self, "on_stack_up", stacktype))
-	panel:SButton("Down", ClassClbk(self, "on_stack_down", stacktype))
-	panel:SButton("Add", ClassClbk(self, "on_stack_add", stacktype))
-	panel:SButton("Copy", ClassClbk(self, "on_stack_copy", stacktype))
-	panel:SButton("Paste", ClassClbk(self, "on_stack_paste", stacktype))
+	panel:tb_btn("Up", ClassClbk(self, "on_stack_up", stacktype))
+	panel:tb_btn("Down", ClassClbk(self, "on_stack_down", stacktype))
+	panel:tb_btn("Add", ClassClbk(self, "on_stack_add", stacktype))
+	panel:tb_btn("Copy", ClassClbk(self, "on_stack_copy", stacktype))
+	panel:tb_btn("Paste", ClassClbk(self, "on_stack_paste", stacktype))
 
 	self._stack_panels[stacktype] = panel:pan("Affector")
 
@@ -244,7 +244,7 @@ function CoreParticleEditorPanel:update_view(clear, undoredo)
 			if self._atom then
 				for i, m in ipairs(self._atom:stack(stacktype):stack()) do
 					local btn = c:button(m:ui_name(), ClassClbk(self, "on_select_stack_member"), {divider_type = #m._properties == 0, stack_index = i, stack_type = stacktype})
-					btn:ImgButton("Remove", ClassClbk(self, "on_stack_remove"), nil, BLE.Utils:GetIcon("minus"))
+					btn:tb_imgbtn("Remove", ClassClbk(self, "on_stack_remove"), nil, BLE.Utils:GetIcon("minus"))
 					if c._prev_stack_item and c._prev_stack_item.stack_index == i and c._prev_stack_item.stack_type == stacktype then
 						btn:RunCallback()
 					end

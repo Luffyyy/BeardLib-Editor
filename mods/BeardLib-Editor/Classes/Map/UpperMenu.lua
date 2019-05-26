@@ -34,7 +34,7 @@ function UpperMenu:init(parent, menu)
         w = s,
         h = 2,
     })
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
 end
 
 function UpperMenu:build_tabs()

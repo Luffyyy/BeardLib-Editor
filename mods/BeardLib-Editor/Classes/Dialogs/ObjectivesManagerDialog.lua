@@ -14,7 +14,7 @@ function ObjectivesManagerDialog:init(params, menu)
     }, params)
     ObjectivesManagerDialog.super.init(self, p, menu)
     self._settings = ObjectiveSettingsDialog:new(BLE._dialogs_opt)
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
 end
 
 function ObjectivesManagerDialog:_Show()
@@ -44,10 +44,10 @@ function ObjectivesManagerDialog:_Show()
         BeardLibEditor.Utils:Notify("Error", "Your map is not setuped correctly")
     end
     self._missing_units = {}
-	local objectives = self:DivGroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})
-	local add = self._menu:SqButton("Add", ClassClbk(self, "edit_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
+	local objectives = self:divgroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})
+	local add = self._menu:sq_btn("Add", ClassClbk(self, "edit_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
     
-    self:TextBox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
+    self:textbox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end})
@@ -103,9 +103,9 @@ function ObjectivesManagerDialog:load_objectvies()
     if self._objectives then
         for _, objective in ipairs(self._objectives) do
             if objective._meta == "objective" then
-                local obj = self:Divider(objective.id, {group = objectives, label = "objectives"})
-                obj:ImgButton("Remove", ClassClbk(self, "remove_objective", objective), nil, BLE.Utils:GetIcon("cross"))
-                obj:ImgButton("Settings", ClassClbk(self, "edit_or_add_objective", objective), nil, BLE.Utils:GetIcon("settings_gear"))
+                local obj = objectives:divider(objective.id, {label = "objectives"})
+                obj:tb_imgbtn("Remove", ClassClbk(self, "remove_objective", objective), nil, BLE.Utils:GetIcon("cross"))
+                obj:tb_imgbtn("Settings", ClassClbk(self, "edit_or_add_objective", objective), nil, BLE.Utils:GetIcon("settings_gear"))
             end
         end
     end

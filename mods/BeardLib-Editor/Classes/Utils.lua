@@ -649,3 +649,15 @@ end
 function Utils:GetConvertedResolution()
     return {width = managers.gui_data:full_1280_size().width, height = managers.gui_data:full_1280_size().height}
 end
+
+DummyItem = DummyItem or class()
+function DummyItem:init(name, v)
+	self.name = name
+	self.value = v
+end
+function DummyItem:Value()
+	return self.value
+end
+function DummyItem:SetValue(v)
+	self.value = v
+end

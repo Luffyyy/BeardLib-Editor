@@ -4,7 +4,7 @@ local EnvLayer = EnvironmentLayerEditor
 function EnvLayer:init(parent)
 	self:init_basic(parent, "EnvironmentLayerEditor")
 	self._menu = parent._holder
-	MenuUtils:new(self)
+	ItemExt:add_funcs(self)
 	self._wind_speeds = {
 	 	{speed = 0, beaufort = 0, description = "Calm"},
 		{speed = 0.3, beaufort = 1, description = "Light air"},
@@ -248,10 +248,10 @@ function EnvLayer:build_menu()
 	local data = self:data()
 	local environment_values = data.environment_values
 
-    local environment_group = self:Group("Environment")
-    self:PathItem("Environment", ClassClbk(self, "change_environment"), environment_values.environment, "environment", true, nil, true, {group = environment_group})
-    local sky = self:Group("Sky")
-    self:Slider("SkyRotation", ClassClbk(self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360, group = sky})
+    local environment_group = self:group("Environment")
+	environment_group:pathbox("Environment", ClassClbk(self, "change_environment"), environment_values.environment, "environment", {not_close = true})
+    local sky = self:group("Sky")
+    sky:slider("SkyRotation", ClassClbk(self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360})
     local colors = {
         "color_off",
         "color_payday",
@@ -264,7 +264,7 @@ function EnvLayer:build_menu()
         "color_matrix"
 	}
 
-	self:Button("BuildCubemaps", function()
+	environment_group:button("BuildCubemaps", function()
 		local cubes = self:selected_unit() and "selected" or "all"
 		if not self:selected_unit() then 
 			BLE.Utils:YesNoQuestion("No cubemap gizmos were selected. Would you like to build cubemaps for all gizmos in the level?",
@@ -277,8 +277,8 @@ function EnvLayer:build_menu()
 				self:create_cube_map("selected")
 			end)
 		end
-	end, {group = environment_group})
-	self:Button("BuildProjectionLights", function()
+	end)
+	environment_group:button("BuildProjectionLights", function()
 		local lights = self:selected_unit() and self:selected_unit():get_object(Idstring("lo_omni")) or nil
 		if not lights then 
 			BLE.Utils:YesNoQuestion("No lights were selected. Would you like to build projection lights for all lights in the level?",
@@ -291,30 +291,30 @@ function EnvLayer:build_menu()
 				self:GetPart("cubemap_creator"):create_projection_light("selected") 
 			end)
 		end
-	end, {group = environment_group})
-    self:ComboBox("ColorGrading", ClassClbk(self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading), {group = environment_group})
+	end)
+    environment_group:combobox("ColorGrading", ClassClbk(self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading))
 	
 	local utils = self:GetPart("world")
-    self:Button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit), {group = environment_group})
-    self:Button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit), {group = environment_group})
+    environment_group:button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit))
+    environment_group:button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit))
 	
-	local dome_occ = self:Group("DomeOcclusion", {visible = true}) 
-    --self._draw_occ_shape = self:Toggle("Draw", nil, false, {group = dome_occ})
-    self:Button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit), {group = dome_occ})	
-	self:Button("Generate", ClassClbk(self, "generate_dome_occ", "all"), {group = dome_occ})
+	local dome_occ = self:group("DomeOcclusion", {visible = true}) 
+    --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
+    dome_occ:button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit))	
+	dome_occ:button("Generate", ClassClbk(self, "generate_dome_occ", "all"))
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
-    self:ComboBox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256), {group = dome_occ})
+    dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
 	
-	local wind = self:Group("Wind")
-    self._draw_wind = self:Toggle("Draw", nil, false, {group = wind})
-    self:Slider("WindDirection", ClassClbk(self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0, group = wind})
-    self:Slider("WindVariation", ClassClbk(self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0, group = wind})
-    self:Slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), 0, {min = -90, max = 90, floats = 0, group = wind})
-    self:Slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), 0, {min = -90, max = 90, floats = 0, group = wind})
-    self:Slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0, group = wind})
-    self._wind_text = self:Divider("Beaufort/WindDesc")
+	local wind = self:group("Wind")
+    self._draw_wind = wind:tickbox("Draw", nil, false)
+    wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0})
+    wind:slider("WindVariation", ClassClbk(self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0})
+    wind:slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), 0, {min = -90, max = 90, floats = 0})
+    wind:slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), 0, {min = -90, max = 90, floats = 0})
+    wind:slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0})
+    self._wind_text = self:divider("Beaufort/WindDesc")
     self:update_wind_speed_labels()
-    self:Slider("SpeedVariation", ClassClbk(self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0, group = wind})
+    wind:slider("SpeedVariation", ClassClbk(self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0})
 end
 
 function EnvLayer:build_unit_menu()
@@ -325,39 +325,37 @@ function EnvLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:Button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
+        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
 		if unit:name() == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
-            local effect = S:Group("Effect", {index = 1})
-		    S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = effect})
-		    self._unit_effects = S:PathItem("Effect", ClassClbk(self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect", true, nil, nil, {group = effect})
+            local effect = S:group("Effect", {index = 1})
+		    effect:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
+			self._unit_effects = S:pathbox("Effect", ClassClbk(self, "change_unit_effect"), effect:selected_unit():unit_data().effect or "none", "effect")		
 		elseif unit:name() == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
             local ctrls = self._environment_area_ctrls
-            local environment_area = S:Group("Environment Area", {index = 1})
-		    S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = environment_area})
+            local environment_area = environment_area:group("Environment Area", {index = 1})
+		    S:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 
             local env = area:environment() or managers.viewport:game_default_environment()
-		    ctrls.environment_path = S:PathItem("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", true, nil, nil, {
-                group = environment_area,
+		    ctrls.environment_path = environment_area:pathbox("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", {
                 control_slice = 0.6,
-            })
-		    ctrls.transition_time = S:NumberBox("FadeTime", ClassClbk(self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
+			})
+		    ctrls.transition_time = environment_area:numberbox("FadeTime", ClassClbk(self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
                 floats = 2,
-                group = environment_area
             })
-		    ctrls.prio = S:NumberBox("Prio", ClassClbk(self, "set_prio"), area:prio() or managers.environment_area:default_prio(), {group = environment_area})
-		    ctrls.permanent_cb = S:Toggle("Permanent", ClassClbk(self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT, {group = environment_area})
+		    ctrls.prio = environment_area:numberbox("Prio", ClassClbk(self, "set_prio"), area:prio() or managers.environment_area:default_prio())
+		    ctrls.permanent_cb = environment_area:tickbox("Permanent", ClassClbk(self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT)
 
-		    local env_filter = S:DivGroup("Filter", {align_method = "grid", group = environment_area})
+		    local env_filter = environment_area:divgroup("Filter", {align_method = "grid"})
 		    local filter_count = 0
 		    local filter_map = managers.viewport:get_predefined_environment_filter_map()
 		    local filter_list = area:filter_list()
 		    for name in table.sorted_map_iterator(managers.viewport:get_predefined_environment_filter_map()) do
-		        ctrls.env_filter_cb_map[name] = S:Toggle(name, ClassClbk(self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {
-                    group = env_filter, size_by_text = true
+		        ctrls.env_filter_cb_map[name] = env_filter:tickbox(name, ClassClbk(self, "set_env_filter", name), filter_list and table.is_list_value_union(filter_map[name], filter_list), {
+                    size_by_text = true
                 })
 		    end
 		    if area then
@@ -379,8 +377,8 @@ function EnvLayer:set_unit_pos(item)
 	local unit = self:selected_unit()
 	local S = self:GetPart("static")
 	if unit then
-		unit:set_position(S:AxisControlsPosition())
-		unit:set_rotation(S:AxisControlsRotation())
+		unit:set_position(S:GetItem("Position"):Value())
+		unit:set_rotation(S:GetItem("Rotation"):Value())
 		unit:unit_data().position = unit:position()
 		unit:unit_data().rotation = unit:rotation()		
 	end

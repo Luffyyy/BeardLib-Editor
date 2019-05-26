@@ -6,7 +6,7 @@ function EditUnitCubemap:editable(unit)
 end
 
 function EditUnitCubemap:build_menu(units)
-	local cubemap_options = self:Group("Cubemap")
+	local cubemap_options = self:group("Cubemap")
 	local res = {
 		128,
 		256,
@@ -14,7 +14,7 @@ function EditUnitCubemap:build_menu(units)
 		1024,
 		2048
 	}
-	self._cubemap_resolution = self:ComboBox("CubemapResolution", ClassClbk(self, "set_unit_data_parent"), res, 3, {help = "Select a resolution from the combobox", group = cubemap_options})
+	self._cubemap_resolution = cubemap_options:combobox("CubemapResolution", ClassClbk(self, "set_unit_data_parent"), res, 3, {help = "Select a resolution from the combobox"})
 end
 
 function EditUnitCubemap:set_unit_data()	

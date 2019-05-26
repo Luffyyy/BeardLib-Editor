@@ -3,7 +3,7 @@ StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BLE.Utils
 function Static:init(parent, menu)
-    Static.super.init(self, parent, menu, "Selection", nil, {auto_align = false})
+    Static.super.init(self, parent, menu, "Selection", nil, {delay_align_items = true})
     self._selected_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
@@ -152,20 +152,19 @@ function Static:build_default_menu()
     Static.super.build_default_menu(self)
     self._editors = {}
     self:SetTitle("Selection")
-    self:Divider("No selection >.<", {bordr_left = false})
-    self:Button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
-    self:AlignItems()
+    self:divider("No selection >.<", {bordr_left = false})
+    self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
 end
 
 function Static:build_quick_buttons(cannot_be_saved)
 	self:SetTitle("Selection")
-    local quick = self:Group("QuickButtons", {align_method = "grid"})
-    quick:SButton("Deselect", ClassClbk(self, "deselect_unit"))
-    quick:SButton("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    local quick = self:group("QuickButtons", {align_method = "grid"})
+    quick:tb_btn("Deselect", ClassClbk(self, "deselect_unit"))
+    quick:tb_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
     if not cannot_be_saved then
-        quick:SButton("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
-        quick:SButton("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
-        local group = self:Group("Group", {align_method = "grid"}) --lmao
+        quick:tb_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
+        quick:tb_btn("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
+        local group = self:group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
 end
@@ -193,12 +192,11 @@ function Static:build_group_options()
     if self._selected_group then
         group:divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group"})
         group:textbox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name)
-        group:SButton("DestroyGroup", ClassClbk(self, "remove_group"))
+        group:tb_btn("DestroyGroup", ClassClbk(self, "remove_group"))
     else
-        group:SButton("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
-        group:SButton("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
+        group:tb_btn("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
+        group:tb_btn("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
     end
-    self:AlignItems()
 end
 
 function Static:unit_value(value_key, toggle)
@@ -233,7 +231,7 @@ end
 
 function Static:build_unit_main_values()
     local name = self:unit_value("name")
-    local main = self:Group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})    
+    local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})    
     if not self._built_multi then
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit"})
         main:textbox("Id", ClassClbk(self, "set_unit_data"), nil, {enabled = false})
@@ -280,27 +278,27 @@ end
 function Static:build_positions_items(cannot_be_saved)
     self._editors = {}
     self:build_quick_buttons(cannot_be_saved)
-    local transform = self:Group("Transform")
-    self:Button("IgnoreRaycastOnce", function()
+    local transform = self:group("Transform")
+    transform:button("IgnoreRaycastOnce", function()
         for _, unit in pairs(self:selected_units()) do
             if unit:unit_data().unit_id then
                 self._ignore_raycast[unit:unit_data().unit_id] = true
             end
         end      
-    end, {group = transform})
-    self:AxisControls(ClassClbk(self, "set_unit_data"), {group = transform, on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
+    end)
+    transform:Vec3Rot("", ClassClbk(self, "set_unit_data"), nil, nil, {on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
 
 function StaticEditor:update_positions()
     local unit = self._selected_units[1]
     if unit then
         if #self._selected_units > 1 or not unit:mission_element() then
-            self:SetAxisControls(unit:position(), unit:rotation())
+            self:GetItem("Position"):SetValue(unit:position())
+            self:GetItem("Rotation"):SetValue(unit:rotation())
             self:GetPart("instances"):update_positions()
             self:GetPart("world"):update_positions()
-            for i, control in pairs(self._axis_controls) do
-                self[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
-            end
+            self:GetItem("Position"):SetStep(self._parent._grid_size)
+            --self:GetItem("Rotation"):SetStep(self._parent._snap_rotation)
         elseif unit:mission_element() and self:GetPart("mission")._current_script then
             self:GetPart("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end
@@ -366,8 +364,8 @@ function Static:open_addremove_group_dialog(remove)
 end
 
 function Static:set_unit_data()
-    self._parent:set_unit_positions(self:AxisControlsPosition())
-    self._parent:set_unit_rotations(self:AxisControlsRotation())
+    self._parent:set_unit_positions(self:GetItemValue("Position"))
+    self._parent:set_unit_rotations(self:GetItemValue("Rotation"))
 
     if #self._selected_units == 1 then    
         if not self:GetItem("Continent") then
@@ -578,15 +576,14 @@ end
 
 function Static:build_group_links(unit)
     local function create_link(text, id, group, clbk)
-        self:Button(id, clbk, {
+        group:button(id, clbk, {
             text = text,
-            group = group,
             font_size = 16,
             label = "groups"
         })
     end
     
-    local group = self:GetItem("InsideGroups") or self:Group("InsideGroups", {max_height = 200, h = 200})
+    local group = self:GetItem("InsideGroups") or self:group("InsideGroups", {max_height = 200, h = 200})
     
     local editor_groups = self:get_groups_from_unit(unit)
     for _, editor_group in pairs(editor_groups) do
@@ -598,7 +595,7 @@ function Static:build_group_links(unit)
         group:Destroy()
 	else
 		group_buttons:SetVisible(true)
-		self:Button("RemoveFromGroup", ClassClbk(self, "open_addremove_group_dialog", true), {group = group_buttons})
+		group_buttons:button("RemoveFromGroup", ClassClbk(self, "open_addremove_group_dialog", true))
     end
 end
 
@@ -661,7 +658,7 @@ function Static:add_selection_to_prefabs(item, prefab_name)
         BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
         FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
-        remove_old_links = self:Toggle("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements", group = input_menu})
+        remove_old_links = input_menu:tickbox("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements"})
     end})
 end
 
@@ -894,7 +891,6 @@ function Static:set_multi_selected()
     self:build_positions_items()
 	self:update_positions()
     self:build_group_options()
-    self:AlignItems()
 end
 
 function Static:set_unit(reset)
@@ -947,7 +943,6 @@ function Static:set_menu_unit(unit)
     self:GetItem("UnitPath"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
     self:build_group_links(unit)
-    self:AlignItems()
 end
 
 local function element_link_text(element, link, warn)
@@ -971,7 +966,7 @@ function Static:build_links(id, match, element)
     match = match or Utils.LinkTypes.Unit
     local function create_link(text, id, group, clbk)
         warn = warn or ""
-        self:Button(id, clbk, {
+        self:button(id, clbk, {
             text = text,
             group = group,
             font_size = 16,
@@ -980,7 +975,7 @@ function Static:build_links(id, match, element)
     end
     
     local links = managers.mission:get_links_paths_new(id, match)
-    local links_group = self:GetItem("LinkedBy") or self:Group("LinkedBy", {max_height = 200})
+    local links_group = self:GetItem("LinkedBy") or self:group("LinkedBy", {max_height = 200})
     local same_links = {}
     links_group:ClearItems()
 
@@ -1002,7 +997,7 @@ function Static:build_links(id, match, element)
     end
 
     if match == Utils.LinkTypes.Element then
-        local linking_group = self:GetItem("LinkingTo") or self:Group("LinkingTo", {max_height = 200})
+        local linking_group = self:GetItem("LinkingTo") or self:group("LinkingTo", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
         end
@@ -1237,7 +1232,7 @@ function Static:SpawnPrefab(prefab)
     self:SpawnCopyData(prefab, true)
     if self.x then
         local cam = managers.viewport:get_current_camera()
-        self:SetAxisControls(cam:position() + cam:rotation():y(), self:AxisControlsRotation())
+        self:GetItem("Position"):SetValue(cam:position() + cam:rotation():y())
         self:set_unit_data()
     end
 end

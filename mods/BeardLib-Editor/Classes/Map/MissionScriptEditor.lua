@@ -2,7 +2,6 @@ MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
 	self._menu = self:GetPart("static")._holder
-	MenuUtils:new(self)
 	ItemExt:add_funcs(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
@@ -80,35 +79,30 @@ function MissionScriptEditor:_create_panel()
 		return
 	end
 	local SE = self:GetPart("static")
-	self._main_group = self:Group("Main")
-	local quick_buttons = self:Group("QuickButtons")
-	local transform = self:Group("Transform")
+	self._main_group = self:group("Main")
+	local quick_buttons = self:group("QuickButtons")
+	local transform = self:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
-	self._class_group = self:Group(element) 
+	self._class_group = self:group(element) 
 	SE:SetTitle(element)
-	self:Button("DeselectElement", ClassClbk(self, "deselect_element"), {group = quick_buttons})    
-	self:Button("DeleteElement", ClassClbk(SE, "delete_selected_dialog"), {group = quick_buttons})
-    self:Button("CreatePrefab", ClassClbk(SE, "add_selection_to_prefabs"), {group = quick_buttons})
-	self:Button("ExecuteElement", ClassClbk(managers.mission, "execute_element", self._element), {group = quick_buttons})
+	quick_buttons:button("DeselectElement", ClassClbk(self, "deselect_element"))    
+	quick_buttons:button("DeleteElement", ClassClbk(SE, "delete_selected_dialog"))
+    quick_buttons:button("CreatePrefab", ClassClbk(SE, "add_selection_to_prefabs"))
+	quick_buttons:button("ExecuteElement", ClassClbk(managers.mission, "execute_element", self._element))
 	if self.test_element then
-		self:Button("TestElement", ClassClbk(self, "test_element"), {
-				text = "Start Testing Element",
-				group = quick_buttons})
-
-		self:Button("StopTestElement", ClassClbk(self, "stop_test_element"), {
-				text = "Stop Testing Element",
-				group = quick_buttons})
+		quick_buttons:button("StartTestingElement", ClassClbk(self, "test_element"))
+		quick_buttons:button("StopTestingElement", ClassClbk(self, "stop_test_element"))
 	end
  
-	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element, group = self._main_group})
+	self:StringCtrl("editor_name", {help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element._main_group})
  	self:StringCtrl("id", {group = self._main_group, data = self._element, enabled = false})
- 	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element, group = self._main_group})
+ 	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {data = self._element._main_group})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
 	rot = type(rot) == "number" and Rotation() or rot
-    SE:AxisControls(ClassClbk(self, "set_element_position"), {group = transform})
+	transform:Vec3Rot("", ClassClbk(self, "set_element_position"))
     self:update_positions(pos, rot)
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
@@ -144,13 +138,11 @@ end
 
 function MissionScriptEditor:update_positions(pos, rot)
 	local SE = self:GetPart("static")
-	if not SE.x or not pos or not rot then
+	if not pos or not rot then
 		return
 	end
-    SE:SetAxisControls(pos, rot)
-    for i, control in pairs(self._axis_controls) do
-    	SE[control]:SetStep(i < 4 and self._parent._grid_size or self._parent._snap_rotation)
-    end
+	SE:SetItemValue("Position", pos)
+	SE:SetItemValue("Rotation", rot)
     self:update_element(true)  
 end
 
@@ -373,8 +365,8 @@ end
 
 function MissionScriptEditor:set_element_position(menu)
 	local SE = self:GetPart("static")
-	self._element.values.position = SE:AxisControlsPosition()
-	self._element.values.rotation = SE:AxisControlsRotation()
+	self._element.values.position = self:GetItem("Position"):Value()
+	self._element.values.rotation = self:GetItem("Rotation"):Value()
 	self:update_element(true)
 end
 
@@ -382,7 +374,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenUnitsManageDialog", {
+	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenUnitsManageDialog", {
 		value_name = value_name,
 		update_clbk = update_clbk, 
 		check_unit = opt.check_unit,
@@ -391,32 +383,32 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		single_select = opt.single_select,
 		need_name_id = opt.need_name_id, 
 		table_data = table_data
-	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list", group = group or self._class_group}, opt))
+	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
 end
 
 function MissionScriptEditor:BuildInstancesManage(value_name, table_data, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenInstancesManageDialog", {
+	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenInstancesManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk, 
 		table_data = table_data
-	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(instances)", help = "Decide which instances are in this list", group = group or self._class_group}, opt))
+	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(instances)", help = "Decide which instances are in this list"}, opt))
 end
 
 function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
 	opt.group = nil
-	self:Button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
+	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk,
 		single_select = opt.single_select,
 		not_table = opt.not_table,
 		table_data = table_data,
 		classes = classes
-	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list", group = group or self._class_group}, opt))
+	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list"}, opt))
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
@@ -657,7 +649,7 @@ end
 function MissionScriptEditor:Text(text, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-    return self:Divider(text, opt)
+    return self:divider(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
@@ -673,39 +665,47 @@ end
 function MissionScriptEditor:ListSelector(value_name, list, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local data = self:ItemData(opt)
-	self:Button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
+	return (opt.group or self._menu):button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
 end
 
 function MissionScriptEditor:NumberCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:NumberBox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._menu):numberbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:BooleanCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:Toggle(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._menu):tickbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:StringCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:TextBox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._menu):textbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return self:ComboBox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
+	return (opt.group or self._menu):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return self:PathItem(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, true, function(unit)
-   	    return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
-	end, true, opt)
+	opt.check = function(unit)
+		return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
+	end
+	opt.not_close = true
+    return (opt.group or self._menu):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
 end
 
 function MissionScriptEditor:Vector3Ctrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
 	return (opt.group or self._menu):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+end
+
+function MissionScriptEditor:RotationCtrl(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+	local value = self:ItemData(opt)[value_name]
+	return (opt.group or self._menu):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end

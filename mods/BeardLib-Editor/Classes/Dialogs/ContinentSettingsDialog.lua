@@ -7,9 +7,9 @@ function ContinentSettingsDialog:_Show(params)
     end
     local continent = params.continent
     self._current = continent
-    MenuUtils:new(self)
-    self:TextBox("Name", callback(self, self, "SetName"), continent, {index = 2})
-    self:Toggle("EditorOnly", nil, managers.worlddefinition._continents[continent].editor_only, {index = 3})
+    ItemExt:add_funcs(self)
+    self:textbox("Name", callback(self, self, "SetName"), continent, {index = 2})
+    self:tickbox("EditorOnly", nil, managers.worlddefinition._continents[continent].editor_only, {index = 3})
 end
 
 function ContinentSettingsDialog:SetName(item)
@@ -22,11 +22,11 @@ function ContinentSettingsDialog:SetName(item)
     self._new_name = nil
     
     if name == "" then
-        self:Divider("NameWarning", {text = "Warning: Continent name cannot be empty, name will not be saved.", index = 2})
+        self:divider("NameWarning", {text = "Warning: Continent name cannot be empty, name will not be saved.", index = 2})
     elseif name == "environments" or string.begins(name, " ") then
-        self:Divider("NameWarning", {text = "Warning: Continent name cannot begin with a space or be named as an existing level folder, name will not be saved.", index = 2})
+        self:divider("NameWarning", {text = "Warning: Continent name cannot begin with a space or be named as an existing level folder, name will not be saved.", index = 2})
     elseif managers.worlddefinition._continent_definitions[name] then
-        self:Divider("NameWarning", {text = "Warning: Continent name already exists, name will not be saved.", index = 2})
+        self:divider("NameWarning", {text = "Warning: Continent name already exists, name will not be saved.", index = 2})
     else
         self._new_name = name
     end

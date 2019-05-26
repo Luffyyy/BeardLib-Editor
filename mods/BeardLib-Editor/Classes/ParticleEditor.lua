@@ -94,44 +94,44 @@ function ParticleEditor:create_main_frame()
 	--local file_menu = EWS:Menu("")
 
 	local file = self:popup("File")
-	file:SButton("NewEffect", ClassClbk(self, "on_new"))
-	file:SButton("OpenEffect", ClassClbk(self, "on_open"))
-	file:SButton("SaveEffect(Ctrl+S)", ClassClbk(self, "on_save"))
-	file:SButton("SaveEffectAs", ClassClbk(self, "on_save_as"))
-	file:SButton("CloseEffect", ClassClbk(self, "on_close_effect"))
-	file:SButton("Exit", ClassClbk(self, "on_close"))
+	file:tb_btn("NewEffect", ClassClbk(self, "on_new"))
+	file:tb_btn("OpenEffect", ClassClbk(self, "on_open"))
+	file:tb_btn("SaveEffect(Ctrl+S)", ClassClbk(self, "on_save"))
+	file:tb_btn("SaveEffectAs", ClassClbk(self, "on_save_as"))
+	file:tb_btn("CloseEffect", ClassClbk(self, "on_close_effect"))
+	file:tb_btn("Exit", ClassClbk(self, "on_close"))
 
 	--menu_bar:append(file_menu, "File")
 
 	local edit = self:popup("Edit")
 
-	edit:SButton("Undo(Ctrl-Z)", ClassClbk(self, "on_undo"))
-	edit:SButton("Redo(Ctrl-Y)", ClassClbk(self, "on_redo"))
+	edit:tb_btn("Undo(Ctrl-Z)", ClassClbk(self, "on_undo"))
+	edit:tb_btn("Redo(Ctrl-Y)", ClassClbk(self, "on_redo"))
 
 	local effect = self:popup("Effect")
 
-	effect:SButton("Play", ClassClbk(self, "on_play"))
-	effect:SButton("Play Lowest Quality Once", ClassClbk(self, "on_play_lowest"))
-	effect:SButton("Play Highest Quality Once", ClassClbk(self, "on_play_highest"))
+	effect:tb_btn("Play", ClassClbk(self, "on_play"))
+	effect:tb_btn("Play Lowest Quality Once", ClassClbk(self, "on_play_lowest"))
+	effect:tb_btn("Play Highest Quality Once", ClassClbk(self, "on_play_highest"))
 
 	local gizmo = self:popup("Effect Gizmo")
 
 	self._gizmo_menu = gizmo
 
-	gizmo:SButton("Move Effect Gizmo To Origin", ClassClbk(self, "on_move_gizmo_to_origo"))
-	gizmo:SButton("Move Effect Gizmo In Front Of Camera", ClassClbk(self, "on_move_gizmo_to_camera"))
-	gizmo:SButton("Move Effect Gizmo To Player", ClassClbk(self, "on_move_gizmo_to_player"))
+	gizmo:tb_btn("Move Effect Gizmo To Origin", ClassClbk(self, "on_move_gizmo_to_origo"))
+	gizmo:tb_btn("Move Effect Gizmo In Front Of Camera", ClassClbk(self, "on_move_gizmo_to_camera"))
+	gizmo:tb_btn("Move Effect Gizmo To Player", ClassClbk(self, "on_move_gizmo_to_player"))
 	gizmo:separator()
 	gizmo:tickbox("PARENT_NO_MOVE", ClassClbk(self, "on_automove_gizmo_no_move"), true, {text = "Do Not Move Effect Gizmo"})
 	gizmo:tickbox("PARENT_JUMP", ClassClbk(self, "on_automove_gizmo_jump"), false, {text = "Move Effect Gizmo In Jump Pattern"})
 	gizmo:tickbox("PARENT_SMOOTH", ClassClbk(self, "on_automove_gizmo_smooth"), false, {text = "Move Effect Gizmo In Smooth Pattern"})
 	gizmo:tickbox("PARENT_CIRCLE", ClassClbk(self, "on_automove_gizmo_circle"), false, {text = "Move Effect Gizmo In Circle Pattern"})
 	gizmo:separator()
-	gizmo:SButton("Zero Effect Gizmo Rotation", ClassClbk(self, "on_reset_gizmo_rotation"))
-	gizmo:SButton("Effect Gizmo Rotation Z To Positive Y", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(1, 0, 0), -90)))
-	gizmo:SButton("Effect Gizmo Rotation Z To Negative Y", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(1, 0, 0), 90)))
-	gizmo:SButton("Effect Gizmo Rotation Z To Positive X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), 90)))
-	gizmo:SButton("Effect Gizmo Rotation Z To Negative X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), -90)))
+	gizmo:tb_btn("Zero Effect Gizmo Rotation", ClassClbk(self, "on_reset_gizmo_rotation"))
+	gizmo:tb_btn("Effect Gizmo Rotation Z To Positive Y", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(1, 0, 0), -90)))
+	gizmo:tb_btn("Effect Gizmo Rotation Z To Negative Y", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(1, 0, 0), 90)))
+	gizmo:tb_btn("Effect Gizmo Rotation Z To Positive X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), 90)))
+	gizmo:tb_btn("Effect Gizmo Rotation Z To Negative X", ClassClbk(self, "on_set_gizmo_rotation", Rotation(Vector3(0, 1, 0), -90)))
 
 	--self._view_menu = self:popup("View")
 
@@ -142,8 +142,8 @@ function ParticleEditor:create_main_frame()
 
 	--local batch_menu = self:popup("Batch")
 
-	--batch_menu:SButton("Batch all effects, remove update_render policy for effects not screen aligned", ClassClbk(self, "on_batch_all_remove_update_render"))
-	--batch_menu:SButton("Load and unload all effects", ClassClbk(self, "on_batch_all_load_unload"))
+	--batch_menu:tb_btn("Batch all effects, remove update_render policy for effects not screen aligned", ClassClbk(self, "on_batch_all_remove_update_render"))
+	--batch_menu:tb_btn("Load and unload all effects", ClassClbk(self, "on_batch_all_load_unload"))
 
 	self._effects_notebook = self:notebook("effects", {page_changed = ClassClbk(self, "on_effect_changed"), offset = 4}) 
 end

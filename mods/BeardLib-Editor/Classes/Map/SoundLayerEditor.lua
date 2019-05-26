@@ -3,7 +3,7 @@ local SndLayer = SoundLayerEditor
 function SndLayer:init(parent)
 	self:init_basic(parent, "SoundLayerEditor")
 	self._menu = parent._holder
-	MenuUtils:new(self)
+	ItemExt:add_funcs(self)
 	self._created_units = {}
 	self._environment_unit = "core/units/sound_environment/sound_environment"
 	self._emitter_unit = "core/units/sound_emitter/sound_emitter"
@@ -149,26 +149,24 @@ function SndLayer:emitter_events()
 end
 
 function SndLayer:build_menu()
-	local defaults = self:Group("Defaults")
+	local defaults = self:group("Defaults")
 
 	local environments = managers.sound_environment:environments()
-	self._default_environment = self:ComboBox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()), {group = defaults})
+	self._default_environment = defaults:combobox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()))
 	local events = self:ambience_events()
-	self._default_ambience = self:ComboBox("Ambience", ClassClbk(self, "select_default_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()), {
-		group = defaults,
+	self._default_ambience = defaults:combobox("Ambience", ClassClbk(self, "select_default_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()), {
 		enabled = #events > 0
 	})
 	local occ_events = self:occasional_events()
-	self._default_occasional = self:ComboBox("Occasional", ClassClbk(self, "select_default_occasional"), occ_events, table.get_key(occ_events, managers.sound_environment:default_occasional()), {
-		group = defaults, 
+	self._default_occasional = defaults:combobox("Occasional", ClassClbk(self, "select_default_occasional"), occ_events, table.get_key(occ_events, managers.sound_environment:default_occasional()), {
 		enabled = #occ_events > 0
 	})
-	self._ambience_enabled = self:Toggle("AmbienceEnabled", ClassClbk(self, "set_ambience_enabled"), managers.sound_environment:ambience_enabled(), {group = defaults, enabled = #events > 0})
+	self._ambience_enabled = defaults:tickbox("AmbienceEnabled", ClassClbk(self, "set_ambience_enabled"), managers.sound_environment:ambience_enabled(), {enabled = #events > 0})
 
-	self:Button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
-    self:Button("SpawnSoundEnvironment", ClassClbk(self._parent, "BeginSpawning", self._environment_unit))
-    self:Button("SpawnSoundEmitter", ClassClbk(self._parent, "BeginSpawning", self._emitter_unit))
-    self:Button("SpawnSoundAreaEmitter", ClassClbk(self._parent, "BeginSpawning", self._area_emitter_unit))
+	self:button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
+    self:button("SpawnSoundEnvironment", ClassClbk(self._parent, "BeginSpawning", self._environment_unit))
+    self:button("SpawnSoundEmitter", ClassClbk(self._parent, "BeginSpawning", self._emitter_unit))
+    self:button("SpawnSoundAreaEmitter", ClassClbk(self._parent, "BeginSpawning", self._area_emitter_unit))
 end
 
 function SndLayer:build_unit_menu()
@@ -179,30 +177,23 @@ function SndLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:Button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
+        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
 
 		if unit:name() == self._environment_unit:id() then
 			S:SetTitle("Sound Environment Selection")
-			local sound_environment = S:Group("SoundEnvironment", {index = 1})
-            S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = sound_environment})
+			local sound_environment = S:group("SoundEnvironment", {index = 1})
+            sound_environment:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 			local environments = managers.sound_environment:environments()
-			self._effect = S:ComboBox("Effect", ClassClbk(self, "select_sound_environment"), managers.sound_environment:environments(), table.get_key(environments, managers.sound_environment:default_environment()), {
-				group = sound_environment
-			})
-
-			self._use_environment = S:Toggle("UseEnvironment", ClassClbk(self, "toggle_use_environment"), true, {group = sound_environment})
+			self._effect = sound_environment:combobox("Effect", ClassClbk(self, "select_sound_environment"), managers.sound_environment:environments(), table.get_key(environments, managers.sound_environment:default_environment()))
+			self._use_environment = S:tickbox("UseEnvironment", ClassClbk(self, "toggle_use_environment"), true)
 
 			local events = self:ambience_events()
-			self._ambience = S:ComboBox("Ambience", ClassClbk(self, "select_environment_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()), {
-				group = sound_environment,
-			})
-			self._use_ambience = S:Toggle("UseAmbience", ClassClbk(self, "toggle_use_ambience"), true, {group = sound_environment})
+			self._ambience = sound_environment:combobox("Ambience", ClassClbk(self, "select_environment_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()))
+			self._use_ambience = sound_environment:tickbox("UseAmbience", ClassClbk(self, "toggle_use_ambience"), true)
 
 			local occ_events = self:occasional_events()
-			self._occasional = S:ComboBox("Occasional", ClassClbk(self, "select_environment_occasional"), occ_events, table.get_key(occ_events, managers.sound_environment:default_occasional()), {
-				group = sound_environment, 
-			})
-			self._use_occasional = S:Toggle("UseOccasional", ClassClbk(self, "toggle_use_occasional"), true, {group = sound_environment})
+			self._occasional = sound_environment:combobox("Occasional", ClassClbk(self, "select_environment_occasional"), occ_events, table.get_key(occ_events, managers.sound_environment:default_occasional()))
+			self._use_occasional = sound_environment:tickbox("UseOccasional", ClassClbk(self, "toggle_use_occasional"), true)
 			self:set_sound_environment_parameters()
 		elseif unit:name() == self._emitter_unit:id() or  unit:name() == self._area_emitter_unit:id() then
 			if unit:name() == self._emitter_unit:id() then
@@ -210,11 +201,11 @@ function SndLayer:build_unit_menu()
 			elseif unit:name() == self._area_emitter_unit:id() then
 				S:SetTitle("Sound Area Emitter Selection")	
 			end
-			local sound_emitter = S:Group("SoundEmitter", {index = 1})
-            S:TextBox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "", {group = sound_emitter})
+			local sound_emitter = S:group("SoundEmitter", {index = 1})
+            sound_emitter:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 
 			local events = self:emitter_events{}
-			self._emitter_events_combobox = S:ComboBox("Events", ClassClbk(self, "select_emitter_event"), events, table.get_key(events, default_emitter_path and managers.sound_environment:emitter_events(default_emitter_path)[1]), {group = sound_emitter})
+			self._emitter_events_combobox = sound_emitter:combobox("Events", ClassClbk(self, "select_emitter_event"), events, table.get_key(events, default_emitter_path and managers.sound_environment:emitter_events(default_emitter_path)[1]))
 			self:set_sound_emitter_parameters()
 		end
 	end

@@ -14,21 +14,21 @@ local difficulty_loc = {
 function LoadLevelMenu:init()
 	local menu = BeardLibEditor.Menu
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
-	MenuUtils:new(self)
-	local tabs = self:Menu("Tabs", {align_method = "grid", offset = 0, auto_height = true})
-	local opt = {size_by_text = true, group = tabs, offset = 0}
-	local w = self:Toggle("Vanilla", ClassClbk(self, "load_levels"), false, opt).w
-	w = w + self:Toggle("Custom", ClassClbk(self, "load_levels"), true, opt).w
-	local search = self:TextBox("Search", ClassClbk(self, "search_levels"), nil, {w = tabs.w - w, group = tabs, index = 1, control_slice = 0.85, offset = 0})
-    local load_options = self:Menu("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
+	ItemExt:add_funcs(self)
+	local tabs = self:pan("Tabs", {align_method = "grid", offset = 0, auto_height = true})
+	local opt = {size_by_text = true, offset = 0}
+	local w = tabs:tickbox("Vanilla", ClassClbk(self, "load_levels"), false, opt).w
+	w = w + tabs:tickbox("Custom", ClassClbk(self, "load_levels"), true, opt).w
+	local search = tabs:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = tabs.w - w, index = 1, control_slice = 0.85, offset = 0})
+    local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
     local half_w = load_options:ItemsWidth() / 2
     local third_w = load_options:ItemsWidth() / 3
-	self:ComboBox("Difficulty", nil, difficulty_loc, 1, {group = load_options, items_localized = true, items_pretty = true, w = half_w, offset = 0})
-	self:Toggle("OneDown", nil, false, {group = load_options, w = half_w, offset = 0})
-    self:Toggle("Safemode", nil, false, {group = load_options, w = third_w})
-    self:Toggle("CheckLoadTime", nil, false, {group = load_options, w = third_w})
-	self:Toggle("LogSpawnedUnits", nil, false, {group = load_options, w = third_w})
-	self._levels = self:Menu("Levels", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
+	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true, w = half_w, offset = 0})
+	load_options:tickbox("OneDown", nil, false, {w = half_w, offset = 0})
+    load_options:tickbox("Safemode", nil, false, {w = third_w})
+    load_options:tickbox("CheckLoadTime", nil, false, {w = third_w})
+	load_options:tickbox("LogSpawnedUnits", nil, false, {w = third_w})
+	self._levels = self:pan("Levels", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
 	self:load_levels()
 end
 
@@ -126,13 +126,12 @@ function LoadLevelMenu:load_levels()
 			local function level_button(id, day)
 				local level_t = tweak_data.levels[id]
 				if level_t and level_t.world_name then
-					self:Button(id, ClassClbk(self, "load_level"), {
+					(day or narrative):button(id, ClassClbk(self, "load_level"), {
 						text = loc:text(level_t.name_id) .." / " .. id,
 						name = id,
 						narr_id = narr_id,
 						vanilla = not level_t.custom,
 						offset = {12, 4},
-						group = day or narrative,
 						label = "levels",
 					})
 					has_items = true
@@ -144,7 +143,7 @@ function LoadLevelMenu:load_levels()
 					if id then
 						level_button(id)
 					elseif #level > 0 then
-						local day = self:DivGroup("Day #"..tostring(i), {group = narrative})
+						local day = narrative:divgroup("Day #"..tostring(i))
 						for _, grouped_level in pairs(level) do
 							id = grouped_level.level_id
 							if id then

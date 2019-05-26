@@ -292,9 +292,9 @@ end
 
 function EditorLaserTrigger:fill_connections_box()
 	self._connections_box:ClearItems()
-	self:Button("Deselect", ClassClbk(self, "select_connection"), {group = self._connections_box})
+	self._connections_box:button("Deselect", ClassClbk(self, "select_connection"))
 	for i, connection in ipairs(self._element.values.connections) do
-		self:Button("Connection #" .. tostring(i), ClassClbk(self, "select_connection"), {group = self._connections_box, selected_index = i})
+		self._connections_box:button("Connection #" .. tostring(i), ClassClbk(self, "select_connection"), {selected_index = i})
 	end
 end
 
@@ -302,8 +302,8 @@ function EditorLaserTrigger:set_connection_from_position(item)
 	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local from = self._element.values.points[connection.from]
-	from.pos = static:AxisControlsPosition("selected_connection_from")
-	from.rot = static:AxisControlsRotation("selected_connection_from")
+	from.pos = self:GetItemValue("FromPosition")
+	from.rot = self:GetItemValue("FromRotation")
 	self:remake_dummies()
 end
 
@@ -311,8 +311,8 @@ function EditorLaserTrigger:set_connection_to_position(item)
 	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local to = self._element.values.points[connection.to]
-	to.pos = static:AxisControlsPosition("selected_connection_to")
-	to.rot = static:AxisControlsRotation("selected_connection_to")
+	to.pos = self:GetItemValue("ToPosition")
+	to.rot = self:GetItemValue("ToRotation")
 	self:remake_dummies()
 end
 
@@ -321,21 +321,10 @@ function EditorLaserTrigger:update_selection(item)
 	self._selected_connection_box:ClearItems()
 	if self._selected_connection then
 		local connection = self._element.values.connections[self._selected_connection]
-    	static:AxisControls(ClassClbk(self, "set_connection_from_position"), {
-			group = self._selected_connection_box, translate_text = "To Position", rotate_text = "To Rotation"
-		}, "selected_connection_from")
-    	static:AxisControls(ClassClbk(self, "set_connection_to_position"), {
-			group = self._selected_connection_box, translate_text = "From Position", rotate_text = "From Rotation"
-		}, "selected_connection_to")
 		local from = self._element.values.points[connection.from]
 		local to = self._element.values.points[connection.to]
-	    static:SetAxisControls(from.pos, from.rot, "selected_connection_from")
-	    static:SetAxisControls(to.pos, to.rot, "selected_connection_to")
-		for i, control in pairs(self._axis_controls) do
-			local step = i < 4 and self._parent._grid_size or self._parent._snap_rotation
-			static["selected_connection_from"..control]:SetStep(step)
-			static["selected_connection_to"..control]:SetStep(step)
-		end
+		self._selected_connection_box:Vec3Rot("From", ClassClbk(self, "set_connection_from_position"), from.pos, from.rot, {use_gridsnap_step = true})
+		self._selected_connection_box:Vec3Rot("To", ClassClbk(self, "set_connection_to_position"), to.pos, to.rot, {use_gridsnap_step = true})
 	end
 end
 
@@ -353,9 +342,9 @@ end
 function EditorLaserTrigger:_build_panel()
 	self:_create_panel()
 	self:Text("Editing points:\nLMB to create/remove/place a point\nRMB to connect points\nMMB to move an existing point")
-	self:Toggle("EditPoints", ClassClbk(self, "set_edit_points"), false, {group = self._class_group})
-	self._connections_box = self:Group("Connections", {group = self._class_group, max_h = 400, scrollbar = true})
-	self._selected_connection_box = self:Group("SelectedConnection", {group = self._class_group})
+	self._class_group:tickbox("EditPoints", ClassClbk(self, "set_edit_points"), false)
+	self._connections_box = self._class_group:group("Connections", {max_h = 400, scrollbar = true})
+	self._selected_connection_box = self._class_group:group("SelectedConnection")
 	self:NumberCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval"})
 	self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type"})
 	self:ComboCtrl("color", {"red","green","blue"})

@@ -43,7 +43,7 @@ function SConverter:init()
     end
     local menu = BeardLibEditor.Menu
     self._menu = menu:make_page("ScriptData")
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
     self:CreateRootItems()
 end
 
@@ -86,9 +86,9 @@ function SConverter:GetFilesAndFolders(current_path)
 end
 
 function SConverter:MainItems()
-    self.path_text = self:Divider("BeardLibEditorPathText", {text = self.current_script_path})
-	self:Button("BackToShortcuts", ClassClbk(self, "BackToShortcuts"))
-	self:Button("BrowseTo", ClassClbk(self, "OpenBrowseDialog"))
+    self.path_text = self:divider("BeardLibEditorPathText", {text = self.current_script_path})
+	self:button("BackToShortcuts", ClassClbk(self, "BackToShortcuts"))
+	self:button("BrowseTo", ClassClbk(self, "OpenBrowseDialog"))
 end
 
 function SConverter:RefreshFilesAndFolders()
@@ -96,25 +96,25 @@ function SConverter:RefreshFilesAndFolders()
     self:MainItems()
 	
     if not self.assets then
-        self:Button("OpenFolderInExplorer", ClassClbk(self, "OpenFolderInExplorer"))
+        self:button("OpenFolderInExplorer", ClassClbk(self, "OpenFolderInExplorer"))
     end
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 0 then
         table.remove(up_level, #up_level)
 
         local up_string = table.concat(up_level, "/")
-        self:Button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
+        self:button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
 
-    local holder = self:Menu("Holder", {align_method = "grid"})
+    local holder = self:pan("Holder", {align_method = "grid"})
     local w,h = (holder:ItemsWidth() - 16) / 2, self._menu:Height() - holder:Y()  - 8
-    local foldersgroup = self:Group("Folders", {group = holder, w = w, h = h, auto_height = false, auto_align = false})
-    local filesgroup = self:Group("Files", {group = holder, w = w, h = h, auto_height = false, auto_align = false})
+    local foldersgroup = holder:group("Folders", {w = w, h = h, auto_height = false, auto_align = false})
+    local filesgroup = holder:group("Files", {w = w, h = h, auto_height = false, auto_align = false})
     local files, folders = self:GetFilesAndFolders(self.current_script_path)
     if folders then
         table.sort(folders)
         for i, folder in pairs(folders) do
-            self:Button(folder, ClassClbk(self, "FolderClick"), {text = folder, base_path = self.current_script_path .. folder .. "/", group = foldersgroup})
+            foldersgroup:button(folder, ClassClbk(self, "FolderClick"), {text = folder, base_path = self.current_script_path .. folder .. "/"})
         end
     end
     if files then
@@ -127,7 +127,7 @@ function SConverter:RefreshFilesAndFolders()
                 enabled = false
             end
             if table.contains(BeardLib.config.script_data_types, extension) or table.contains(BeardLib.config.script_data_formats, extension) then
-                self:Button(file, ClassClbk(self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled, group = filesgroup})
+                filesgroup:button(file, ClassClbk(self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled})
             end
         end
     end
@@ -144,7 +144,7 @@ function SConverter:CreateScriptDataFileOption()
         table.remove(up_level, #up_level)
 
         local up_string = table.concat(up_level, "/")
-        self:Button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
+        self:button("UpADirectory...", ClassClbk(self, "FolderClick"), {base_path = up_string .. (up_string == "" and "" or "/")})
     end
     if self.path_text then
         self.path_text:SetVisible(true)
@@ -160,16 +160,16 @@ function SConverter:CreateScriptDataFileOption()
             break
         end
     end
-    self:ComboBox("From", nil, BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"), selected_from, {enabled = not self.assets})
-    self:ComboBox("To", nil, BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"), selected_from)
-    self:Button("Convert", ClassClbk(self, "ConvertClick"))
-    self:Button("Cancel", ClassClbk(self, "FolderClick"), {base_path = self.current_script_path})
+    self:combobox("From", nil, BeardLib.Utils:GetSubValues(self.script_file_from_types, "name"), selected_from, {enabled = not self.assets})
+    self:combobox("To", nil, BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"), selected_from)
+    self:button("Convert", ClassClbk(self, "ConvertClick"))
+    self:button("Cancel", ClassClbk(self, "FolderClick"), {base_path = self.current_script_path})
 end
 
 function SConverter:CreateRootItems()
     self:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
-        self:Button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
+        self:button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
 end
 

@@ -26,8 +26,11 @@ function EditorMoveUnit:update_positions(...)
 	EditorMoveUnit.super.update_positions(self, ...)
 	if self._element.values.unit_position_as_start_position then
 		self._element.values.end_pos = self._element.values.position
-	end
-	self:SetAxisControls(self._element.values.end_pos or self._element.values.displacement, nil, "EndPosition")
+    end
+    local end_pos = self:GetItem("EndPosition")
+    if end_pos then
+        end_pos:SetValue(self._element.values.end_pos or self._element.values.displacement)
+    end
 end
 
 function EditorMoveUnit:set_element_data(item)   
@@ -47,7 +50,7 @@ end
 
 function EditorMoveUnit:set_element_position(...)
     EditorMoveUnit.super.set_element_position(self, ...)
-    local pos = self:AxisControlsPosition("EndPosition")
+    local pos = self:GetItem("EndPosition"):Value()
     if self._element.values.is_displacement then
         self._element.values.displacement = pos
         self._element.values.end_pos = nil
@@ -68,8 +71,8 @@ function EditorMoveUnit:_build_panel()
     self:BooleanCtrl("remember_unit_position")
     local end_pos = self._element.values.end_pos or self._element.values.displacement
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the movement"})
-    self:AxisControls(ClassClbk(self, "set_element_position"), {no_rot = true, group = transform}, "EndPosition")
-    self:Button("ResetEndPosition", function()
+    self._class_group:Vector3("EndPosition", ClassClbk(self, "set_element_position"))
+    self:button("ResetEndPosition", function()
         self._element.values.end_pos = self._element.values.position
         self:update_positions()
     end)
@@ -105,8 +108,11 @@ function EditorRotateUnit:update_positions(...)
 	EditorMoveUnit.super.update_positions(self, ...)
 	if self._element.values.use_unit_rot then
 		self._element.values.end_rot = self._element.values.rotation
-	end
-	self:SetAxisControls(nil, self._element.values.end_rot or self._element.values.offset, "EndRotation")
+    end
+    local end_rot = self:GetItem("EndRotation")
+    if end_rot then
+        end_rot:SetValue(self._element.values.end_rot or self._element.values.offset)
+    end
 end
 
 function EditorRotateUnit:set_element_data(item)   
@@ -127,7 +133,7 @@ end
 
 function EditorRotateUnit:set_element_position(...)
     EditorRotateUnit.super.set_element_position(self, ...)
-    local rot = self:AxisControlsRotation("EndRotation")
+    local rot = self:GetItem("EndRotation"):Value()
     if self._element.values.offset then
         self._element.values.offset = rot
         self._element.values.end_rot = nil
@@ -149,8 +155,8 @@ function EditorRotateUnit:_build_panel()
     self:BooleanCtrl("remember_unit_rot", {text = "Remember Unit Rotation"})
     local end_rot = self._element.values.end_rot or self._element.values.displacement
     self:NumberCtrl("speed", {floats = 2, min = 0.1, help = "Set the speed of the rotation"})
-    self:AxisControls(ClassClbk(self, "set_element_position"), {no_pos = true, group = transform}, "EndRotation")
-    self:Button("ResetEndRotation", function()
+    self._class_group:Rotation("EndRotation", ClassClbk(self, "set_element_position"))
+    self:button("ResetEndRotation", function()
         self._element.values.end_rot = self._element.values.rotation
 		self:update_positions()
 		self:update_element()

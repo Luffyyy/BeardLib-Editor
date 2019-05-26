@@ -3,29 +3,29 @@ local Options = EditorOptionsMenu
 function Options:init()
 	local O = BLE.Options
 	local EMenu = BLE.Menu
-	MenuUtils:new(self, EMenu:make_page("Options"))
-	local main = self:DivGroup("Main")
-	self:TextBox("ExtractDirectory", ClassClbk(self, "set_clbk"), O:GetValue("ExtractDirectory"), {
-		help = "The extract directory will be used to load units from extract and be able to edit lights", group = main
+	ItemExt:add_funcs(self, EMenu:make_page("Options"))
+	local main = self:divgroup("Main")
+	main:textbox("ExtractDirectory", ClassClbk(self, "set_clbk"), O:GetValue("ExtractDirectory"), {
+		help = "The extract directory will be used to load units from extract and be able to edit lights"
 	})
-	self:Slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {group = main, min = 1, max = 100000})
-	self:Slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {group = main, min = 100, max = 1600})
-	self:Slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {group = main, min = 8, max = 42})
-	self:Slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {group = main, min = 100, max = 1600})
+	main:slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
+	main:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
+	main:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
+	main:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 100, max = 1600})
 	
-	local visual = self:DivGroup("Visual")
-	self:Button("ResetVisualOptions", ClassClbk(self, "reset_options", visual), {group = visual})
-	self:ColorBox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"), {group = visual})
-	self:ColorBox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"), {group = visual})
+	local visual = self:divgroup("Visual")
+	visual:button("ResetVisualOptions", ClassClbk(self, "reset_options", visual))
+	visual:colorbox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"))
+	visual:colorbox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"))
 
-	local themes = self:DivGroup("Themes", {group = visual, last_y_offset = 0})
-	self:Button("Dark", ClassClbk(self, "set_theme"), {group = themes, text = "Dark[Default]"})
-	self:Button("Light", ClassClbk(self, "set_theme"), {group = themes})
-	local input = self:DivGroup("Input")
+	local themes = visual:divgroup("Themes", {last_y_offset = 0})
+	themes:button("Dark", ClassClbk(self, "set_theme"), {text = "Dark[Default]"})
+	themes:button("Light", ClassClbk(self, "set_theme"))
+	local input = self:divgroup("Input")
 	local function keybind(setting, supports_mouse, text)
-		return self:KeyBind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), group = input, supports_mouse = supports_mouse})
+		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse})
 	end
-	self:Button("ResetInputOptions", ClassClbk(self, "reset_options", input), {group = input})
+	input:button("ResetInputOptions", ClassClbk(self, "reset_options", input))
 	keybind("TeleportToSelection")
 	keybind("CopyUnit")
 	keybind("PasteUnit")
@@ -45,7 +45,7 @@ function Options:init()
 	keybind("LoadUnit")
 	keybind("LoadUnitFromExtract")
 
-	self:Button("ResetOptions", ClassClbk(self, "reset_options"))
+	self:button("ResetOptions", ClassClbk(self, "reset_options"))
 end
 
 function Options:set_item_value(name, value)

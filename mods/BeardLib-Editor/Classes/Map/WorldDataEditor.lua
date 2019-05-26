@@ -90,7 +90,7 @@ function WData:make_tabs(tabs)
     local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai"}
     self._current_layer = "main"
     for i, name in pairs(managers) do
-        self._tabs:SButton(name, ClassClbk(self, "build_menu", name:lower()), {
+        self._tabs:tb_btn(name, ClassClbk(self, "build_menu", name:lower()), {
             enabled = not Global.editor_safe_mode,
             text = string.capitalize(name),
             border_bottom = i == 1
@@ -110,8 +110,8 @@ function WData:build_default_menu()
 
     local alert_opt = {divider_type = true, position = "RightTop", w = 24, h = 24}
     local function make_alert(text)
-        local div = self:Divider(text, {border_color = Color.yellow, border_lock_height = false})
-        div:ImgButton("Alert", nil, nil, {30, 190, 72, 72}, {divider_type = true, w = 24, h = 24})
+        local div = self:divider(text, {border_color = Color.yellow, border_lock_height = false})
+        div:tb_imgbtn("Alert", nil, nil, {30, 190, 72, 72}, {divider_type = true, w = 24, h = 24})
     end
 
     if not BeardLib.current_level then
@@ -127,45 +127,44 @@ function WData:build_default_menu()
         make_alert("Physics settings fix was not installed\nsome features are disabled.")
     end
 
-
-    local spawn = self:DivGroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
+    local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     local spawn_unit = BLE.Options:GetValue("Input/SpawnUnit")
     local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
     local load_unit = BLE.Options:GetValue("Input/LoadUnit")
     local load_unit_fe = BLE.Options:GetValue("Input/LoadUnitFromExtract")
-    spawn:SButton("Unit", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
-    spawn:SButton("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
-    spawn:SButton("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
-    spawn:SButton("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
+    spawn:s_btn("Unit", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Unit("..spawn_unit..")"})
+    spawn:s_btn("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
+    spawn:s_btn("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
+    spawn:s_btn("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
 
-    local select = self:DivGroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    select:SButton("Unit", ClassClbk(self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
-    select:SButton("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
-    select:SButton("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
+    local select = self:divgroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
+    select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
+    select:s_btn("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
+    select:s_btn("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
     if BeardLib.current_level then
-        local load = self:DivGroup("Load", {align_method = "grid"})
-		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:DivGroup("LoadFromExtract", {align_method = "grid"}) or nil
+        local load = self:divgroup("Load", {align_method = "grid"})
+		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:divgroup("LoadFromExtract", {align_method = "grid"}) or nil
         for _, ext in pairs(BLE.UsableAssets) do
             local text
             if ext == "unit" then
                 text = "Unit("..load_unit..")"
             end
-			load:SButton(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
+			load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
             if load_extract then
                 if ext == "unit" then
-                    text = "Unit("..load_unit_fe..")"
+                    text = "Unit("..load_unit..")"
                 end
-				load_extract:SButton(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
+				load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
 			end
 		end
     end
 
-    local mng = self:DivGroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
-    mng:SButton("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
-    mng:SButton("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
+    local mng = self:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
+    mng:s_btn("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
+    mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
 	self:reset()
     self:build_continents()
@@ -187,29 +186,29 @@ end
 function WData:build_continents()
     local tx = "textures/editor_icons_df"
     if managers.worlddefinition then
-        local continents = self:Group("Continents")
+        local continents = self:group("Continents")
         local toolbar = continents:GetToolbar()
-        toolbar:SqButton("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
+        toolbar:sq_btn("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
-            local continent = self:Group(name, {group = continents, text = name})
+            local continent = continents:group(name, {text = name})
             local ctoolbar = continent:GetToolbar()
-            ctoolbar:ImgButton("Remove", ClassClbk(self, "remove_continent", name), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
-            ctoolbar:ImgButton("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
-            ctoolbar:ImgButton("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115})
-            ctoolbar:ImgButton("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {122, 1, 48, 48})
-            ctoolbar:SqButton("AddScript", ClassClbk(self, "add_new_mission_script", name), {text = "+", help = "Add mission script"})
-            ctoolbar:ImgButton("SetVisible", function(item) 
+            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
+            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
+            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115})
+            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {122, 1, 48, 48})
+            ctoolbar:sq_btn("AddScript", ClassClbk(self, "add_new_mission_script", name), {text = "+", help = "Add mission script"})
+            ctoolbar:tb_imgbtn("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
                 item:SetEnabled(item.enabled) 
             end, tx, {155, 95, 64, 64})
 
             for sname, data in pairs(managers.mission._missions[name]) do
-                local script = self:Divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, group = continent, text = sname, offset = {8, 4}})
-                script:ImgButton("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
-                script:ImgButton("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
-                script:ImgButton("Rename", ClassClbk(self, "rename_script", sname), tx, {66, 1, 48, 48})
-                script:ImgButton("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48})
+                local script = continent:divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, text = sname, offset = {8, 4}})
+                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {184, 2, 48, 48}, {highlight_color = Color.red})
+                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
+                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), tx, {66, 1, 48, 48})
+                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48})
             end
         end
     end
@@ -472,45 +471,43 @@ function WData:build_main_layer_menu()
 end
 
 function WData:build_wires_layer_menu()
-    local existing_wires = self:Group("Existing")
+    local existing_wires = self:group("Existing")
     managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
     for _, wire in pairs(managers.worlddefinition._world_data.wires) do
         local ud = wire.unit_data
-        self:Button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)), {group = existing_wires})
+        existing_wires:button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)))
     end
-    local loaded_wires = self:Group("Spawn")
+    local loaded_wires = self:group("Spawn")
     for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager:get_level_packages()})) do
-        self:Button(wire, function()
-            self:BeginSpawning(wire)
-        end, {group = loaded_wires})
+        loaded_wires:button(wire, function() self:BeginSpawning(wire) end)
     end
 end
 
 function WData:build_groups_layer_menu()
     local tx  = "textures/editor_icons_df"
 
-    local groups = self:Menu("Groups", {offset = 2, auto_align = false})
+    local groups = self:pan("Groups", {offset = 2, auto_align = false})
     local continents = managers.worlddefinition._continent_definitions
     for _, continent in pairs(self._parent._continents) do
         if continents[continent].editor_groups then
             for _, editor_group in pairs(continents[continent].editor_groups) do
                 if editor_group.units then
-                    local group = self:Group(editor_group.name, {group = groups, text = editor_group.name, auto_align = false, closed = true})
+                    local group = groups:group(editor_group.name, {text = editor_group.name, auto_align = false, closed = true})
                     local toolbar = group:GetToolbar()
-                    toolbar:ImgButton("Remove", function() 
+                    toolbar:tb_imgbtn("Remove", function() 
                         BLE.Utils:YesNoQuestion("This will delete the group", function()
                             self:GetPart("static"):remove_group(nil, editor_group)
                             self:build_menu("groups")
                         end)
                     end, tx, {184, 2, 48, 48}, {highlight_color = Color.red})
-                    toolbar:ImgButton("Rename", function() 
+                    toolbar:tb_imgbtn("Rename", function() 
                         BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
                             self:GetPart("static"):set_group_name(nil, editor_group, name)
                             self:build_menu("groups")
                         end})
                     end, tx, {66, 1, 48, 48})
-                    toolbar:ImgButton("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), tx, {122, 1, 48, 48})
-                    toolbar:ImgButton("SetVisible", function(item) 
+                    toolbar:tb_imgbtn("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), tx, {122, 1, 48, 48})
+                    toolbar:tb_imgbtn("SetVisible", function(item) 
                         self:GetPart("static"):toggle_group_visibility(editor_group) 
                         item.enabled_alpha = editor_group.visible and 1 or 0.5
                         item:SetEnabled(item.enabled) 
@@ -530,7 +527,7 @@ function WData:build_groups_layer_menu()
     end
     groups:AlignItems(true)
     if #groups:Items() == 0 then
-        self:Divider("No groups found in the map.")
+        self:divider("No groups found in the map.")
     end
 end
 
@@ -542,11 +539,11 @@ end
         "street",
         "zombie_apocalypse"
     }
-    self:ComboBox("GroupState", function(item)
+    self:combobox("GroupState", function(item)
         self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
     end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
-    self:Button("SpawnNavSurface", ClassClbk(self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
-    self:Button("SpawnCoverPoint", ClassClbk(self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    self:button("SpawnNavSurface", ClassClbk(self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
+    self:button("SpawnCoverPoint", ClassClbk(self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
 end]]
 
 function WData:reset()

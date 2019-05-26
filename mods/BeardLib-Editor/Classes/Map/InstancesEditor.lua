@@ -7,19 +7,19 @@ function Instance:init(parent, menu)
     self._units = {}
     self._triggers = {}
     self._static = self:GetPart("static")
-    MenuUtils:new(self, self._static:GetMenu())
+    ItemExt:add_funcs(self, self._static:getmenu())
 end
 
 function Instance:build_editor_menu()
     Instance.super.build_default_menu(self)
     self._editors = {}
-    local other = self:Group("Main")    
+    local other = self:group("Main")    
     self._static:build_positions_items(true)
     self._static:SetTitle("Instance Selection")
-    self:TextBox("Name", ClassClbk(self, "set_data"), nil, {group = other, help = "the name of the instance(make sure it's unique!)"})
-    self:ComboBox("Continent", ClassClbk(self, "set_data"), self._parent._continents, 1, {group = other})
-    self:ComboBox("Script", ClassClbk(self, "set_data"), table.map_keys(managers.mission._scripts), 1, {group = other})
-    self:Toggle("MissionPlaced", ClassClbk(self, "set_data"), false, {group = other})
+    other:textbox("Name", ClassClbk(self, "set_data"), nil, {help = "the name of the instance(make sure it's unique!)"})
+    other:combobox("Continent", ClassClbk(self, "set_data"), self._parent._continents, 1)
+    other:combobox("Script", ClassClbk(self, "set_data"), table.map_keys(managers.mission._scripts), 1)
+    other:tickbox("MissionPlaced", ClassClbk(self, "set_data"), false)
 end
 
 function Instance:set_instance(reset)
@@ -201,7 +201,7 @@ function Instance:set_data(item)
         for i, ins in pairs(continent.instances) do
             if instance.name ~= new_name and ins.name == new_name then
                 no_saving_name = true
-                self:Divider("NameWarning", {group = main, index = "After|Name", text = "*Warning: name is taken by a different instance", color = false})
+                main:divider("NameWarning", {index = "After|Name", text = "*Warning: name is taken by a different instance", color = false})
             end
             if name == instance.continent and ins.name == instance.name and not instance_in_continent then
                 instance_in_continent = ins

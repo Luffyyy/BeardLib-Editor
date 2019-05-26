@@ -38,7 +38,7 @@ function AssetsManagerDialog:init(params, menu)
         item:Panel():set_lefttop(self._menu:Panel():righttop())
     end)
     self._menus = {self._unit_info}
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
     self._unready_assets = {}
     self._export_dialog = ExportDialog:new(BLE._dialogs_opt)
 end
@@ -50,37 +50,35 @@ function AssetsManagerDialog:_Show()
     self._params = nil
     self._assets = {unit = {}}
     self._missing_assets = {unit = {}}
-    local btn = self:Button("Close", ClassClbk(self, "hide", true), {position = "Bottom", count_height = true})
+    local btn = self:button("Close", ClassClbk(self, "hide", true), {position = "Bottom", count_height = true})
     local group_h = (self._menu:Height() / 2) - 24
-    local packages = self:DivGroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
-    local units = self:DivGroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
+    local packages = self:divgroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
+    local units = self:divgroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
     local utoolbar = units:GetToolbar()
     local ptoolbar = packages:GetToolbar()
-    ptoolbar:SButton("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
-    local search_opt = {group = ptoolbar, w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
-    self:TextBox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
-    search_opt.group = utoolbar
-    self:TextBox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
+    ptoolbar:tb_btn("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
+    local search_opt = {w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
+    ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
+    utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
 
-    self:Divider("AssetsManagerStatus", {
+    self._unit_info:divider("AssetsManagerStatus", {
         text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
-        group = self._unit_info,
         visible = false,
         color = false,
     })
-    self:Button("FixBySearchingPackages", ClassClbk(self, "find_packages", false), {group = self._unit_info})
-    self:Button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"), {group = self._unit_info})
-    self:Button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false), {group = self._unit_info})
-    self:Button("PackageReport", ClassClbk(self, "package_report"), {group = self._unit_info})
-    self:Divider("UnitInfoTitle", {text = "Unit Inspection", group = self._unit_info})
-    self:Divider("UnitInfo", {text = "None Selected.", color = false, group = self._unit_info})
-    local actions = self:DivGroup("Actions", {group = self._unit_info})
-    self:Button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false), {offset = 0, group = actions, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
+    self._unit_info:button("FixBySearchingPackages", ClassClbk(self, "find_packages", false))
+    self._unit_info:button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"))
+    self._unit_info:button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false))
+    self._unit_info:button("PackageReport", ClassClbk(self, "package_report"))
+    self._unit_info:divider("UnitInfoTitle", {text = "Unit Inspection"})
+    self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
+    local actions = self._unit_info:divgroup("Actions")
+    actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, enabled = false})
+    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
 
-    self:Button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, group = actions, enabled = false})
-    self:Button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, group = actions, enabled = false})
-    self:Button("UnloadAsset", ClassClbk(self, "unload_asset", false, false), {offset = 0, group = actions, enabled = false})
+    actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, enabled = false})
+    actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, enabled = false})
+    actions:button("UnloadAsset", ClassClbk(self, "unload_asset", false, false), {offset = 0, enabled = false})
 
     self:reload()
 end
@@ -144,9 +142,8 @@ function AssetsManagerDialog:show_assets()
         end
         local unused = type == UNIT and times == 0
         local color = not ready and Color.cyan or not loaded and Color.red or (unused and Color.yellow) or nil
-        self:Button(asset, ClassClbk(self, "set_unit_selected"), {
+        units:button(asset, ClassClbk(self, "set_unit_selected"), {
 			asset_type = type,
-            group = units,
             text = asset.."."..type.."("..(ready and times or "Copying")..")",
 			label = "assets",
 			disabled_alpha = 0.8,
@@ -196,8 +193,8 @@ function AssetsManagerDialog:show_packages()
                 local size = not custom and BLE.Utils:GetPackageSize(package)
                 if size or custom then
                     local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
-                    local pkg = self:Divider(package, {text = text, group = packages, label = "packages"})
-                    pkg:ImgButton("RemovePackage", ClassClbk(self, "remove_package", package), nil, {184, 2, 48, 48})
+                    local pkg = packages:divider(package, {text = text, label = "packages"})
+                    pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, {184, 2, 48, 48})
                 end
             end
         end

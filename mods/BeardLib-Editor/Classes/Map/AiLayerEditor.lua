@@ -5,7 +5,7 @@ function AiEditor:init(parent)
     self:init_basic(parent, "AiLayerEditor")
     self._parent = parent
     self._menu = parent._holder
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
 
     self._brush = Draw:brush()
     self._graph_types = {surface = "surface"}
@@ -79,8 +79,8 @@ function AiEditor:build_menu()
     self:save()
     self:ClearItems()
 
-    local graphs = self:Group("Graphs")
-    self:Button(
+    local graphs = self:group("Graphs")
+    graphs:button(
         "CalculateAll",
         ClassClbk(
             self,
@@ -89,11 +89,10 @@ function AiEditor:build_menu()
                 vis_graph = true,
                 build_type = "all"
             }
-        ),
-        {group = graphs}
+        )
     )
 
-    self:Button(
+    graphs:button(
         "CalculateSelected",
         ClassClbk(
             self,
@@ -102,46 +101,44 @@ function AiEditor:build_menu()
                 vis_graph = true,
                 build_type = "selected"
             }
-        ),
-        {group = graphs}
+        )
     )
 
-    self:Button("ClearAll", ClassClbk(self, "_clear_graphs"), {group = graphs, offset = {6, 6}})
-    self:Button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {group = graphs, offset = {6, 6}})
+    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"), {offset = {6, 6}})
+    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {offset = {6, 6}})
 
     local navigation_debug =
-        self:Group("NavigationDebug", {group = graphs, text = "Navigation Debug [Toggle what to draw]"})
-    local group = self:Menu("Draw", {align_method = "grid", group = navigation_debug})
+        graphs:group("NavigationDebug", {text = "Navigation Debug [Toggle what to draw]"})
+    local group = navigation_debug:pan("Draw", {align_method = "grid"})
 
     self._draw_options = {}
     local w = group.w / 2
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
         self._draw_options[opt] =
-            self:Toggle(
+        group:tickbox(
             opt,
             ClassClbk(self, "_draw_nav_segments"),
             false,
-            {w = w, items_size = 15, offset = 0, group = group}
+            {w = w, items_size = 15, offset = 0}
         )
     end
 
-    local ai_settings = self:Group("AiSettings")
-    self:ComboBox(
+    local ai_settings = self:group("AiSettings")
+    ai_settings:combobox(
         "GroupState",
         function(item)
             self:data().ai_settings.group_state = item:SelectedItem()
         end,
         self._group_states,
-        table.get_key(self._group_states, self:data().ai_settings.group_state),
-        {group = ai_settings}
+        table.get_key(self._group_states, self:data().ai_settings.group_state)
     )
 
     self:_build_ai_data()
 end
 
 function AiEditor:_build_ai_data()
-    local ai_data = self:Group("AiData")
-    ai_data:GetToolbar():SqButton(
+    local ai_data = self:group("AiData")
+    ai_data:GetToolbar():sq_btn(
         "CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
         {text = "+", help = "Create new patrol path"}
@@ -149,8 +146,8 @@ function AiEditor:_build_ai_data()
 
     local patrol_paths = managers.ai_data:all_patrol_paths()
     for name, points in pairs(patrol_paths) do
-        local patrol_path = self:Group(name, {group = ai_data, closed = true})
-        patrol_path:GetToolbar():SqButton(
+        local patrol_path = ai_data:group(name, {closed = true})
+        patrol_path:GetToolbar():sq_btn(
             "CreateNewPoint",
             -- send it the name instead of the points tbl to be super safe
             function()
@@ -162,14 +159,7 @@ function AiEditor:_build_ai_data()
 
         for i, v in ipairs(points.points) do
             local patrol_point =
-                self:Button(
-                name .. "_" .. i,
-                ClassClbk(self, "_select_patrol_point", v.unit),
-                {
-                    group = patrol_path,
-                    text = string.format("[%d] Unit ID: %d", i, v.unit_id)
-                }
-            )
+            patrol_path:button(name.."_"..i, ClassClbk(self, "_select_patrol_point", v.unit), {text = string.format("[%d] Unit ID: %d", i, v.unit_id)})
         end
     end
 end
@@ -183,7 +173,7 @@ function AiEditor:build_unit_menu()
     if alive(unit) then
         S:build_positions_items(true)
         S:update_positions()
-        S:Button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"), {group = S:GetItem("QuickButtons")})
+        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
         S:SetTitle("Patrol Point Selection")
     end
 end
@@ -197,8 +187,8 @@ function AiEditor:set_unit_pos(item)
     local unit = self:selected_unit()
     local S = self:GetPart("static")
     if unit then
-        unit:set_position(S:AxisControlsPosition())
-        unit:set_rotation(S:AxisControlsRotation())
+        unit:set_position(S:GetItemValue("Position"))
+        unit:set_rotation(S:GetItemValue("Rotation"))
         unit:unit_data().position = unit:position()
         unit:unit_data().rotation = unit:rotation()
     end

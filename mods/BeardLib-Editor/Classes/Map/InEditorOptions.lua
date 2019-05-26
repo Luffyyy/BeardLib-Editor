@@ -17,7 +17,7 @@ function Options:build_default_menu()
         end
     end
 
-    local main = self:Group("Editor", groups_opt)
+    local main = self:group("Editor", groups_opt)
     self._current_continent = main:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), nil, nil)
     self._current_script = main:combobox("CurrentScript", ClassClbk(self, "set_current_script"), nil, nil)
     local grid_size = self:Val("GridSize")
@@ -39,7 +39,7 @@ function Options:build_default_menu()
     })
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Val("KeepMouseActiveWhileFlying"))
 
-    local camera = self:Group("Camera", groups_opt)
+    local camera = self:group("Camera", groups_opt)
     local cam_speed = self:Val("CameraSpeed")
     local fov = self:Val("CameraFOV")
     local far_clip = self:Val("CameraFarClip")
@@ -48,7 +48,7 @@ function Options:build_default_menu()
     camera:slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
     camera:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false)
 
-    local map = self:Group("Map", groups_opt)
+    local map = self:group("Map", groups_opt)
     map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})
     map:tickbox("EnvironmentUnits", ClassClbk(self, "update_option_value"), self:Val("EnvironmentUnits"), {help = "Draw environment units"})
     map:tickbox("SoundUnits", ClassClbk(self, "update_option_value"), self:Val("SoundUnits"), {help = "Draw sound units"})
@@ -60,14 +60,14 @@ function Options:build_default_menu()
     map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"))
     map:tickbox("DrawPortals", nil, false)
 
-    local navigation_debug = self:Group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
-    local group = self:Menu("Draw", {align_method = "grid", group = navigation_debug})
+    local navigation_debug = self:group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
+    local group = navigation_debug:pan("Draw", {align_method = "grid"})
     self._draw_options = {}
     local w = group.w / 2
     for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
         self._draw_options[opt] = group:tickbox(opt, ClassClbk(self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0})
     end
-    local raycast = self:Group("Raycast/Selecting", groups_opt)
+    local raycast = self:group("Raycast/Selecting", groups_opt)
     raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
     raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
@@ -81,12 +81,12 @@ function Options:build_default_menu()
     })
     raycast:numberbox("RaycastDistance", nil, 200000)
 
-    local mission = self:Group("Mission", groups_opt)
+    local mission = self:group("Mission", groups_opt)
     mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Val("RandomizedElementsColor"))
     mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
 
     --Can't find a place for these
-    local fixes = self:Group("Fixes", groups_opt)
+    local fixes = self:group("Fixes", groups_opt)
     fixes:button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
         help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
     })
@@ -96,7 +96,7 @@ function Options:build_default_menu()
         fixes:button("Clean add.xml", ClassClbk(world._assets_manager, "clean_add_xml"), {help = "This removes unused files from the add.xml and cleans duplicates"})
     end
 
-    local other = self:Group("Other", groups_opt)
+    local other = self:group("Other", groups_opt)
     other:button("TeleportPlayer", ClassClbk(self, "drop_player"))
     other:button("LogPosition", ClassClbk(self, "position_debug"))
     if BeardLib.current_level then

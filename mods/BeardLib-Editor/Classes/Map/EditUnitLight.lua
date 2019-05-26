@@ -13,22 +13,22 @@ function EditUnitLight:build_menu(units)
 		self._idstrings[light.object:name():key()] = light.name
 		table.insert(options, light.name)
 	end
-	local light_options = self:Group("Light")
-	self._debug = self:Toggle("Debug", function(item)
+	local light_options = self:group("Light")
+	self._debug = light_options:tickbox("Debug", function(item)
 		self._debugging = item:Value()
-	end, false, {group = light_options})
-	self._lights_combo = self:ComboBox("Lights", ClassClbk(self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox", group = light_options})
-	self._color = self:ColorBox("Color", ClassClbk(self, "set_unit_data_parent"), nil, {group = light_options})
-	self._enabled = self:Toggle("Enabled", ClassClbk(self, "set_unit_data_parent"), true, {group = light_options})
-	self._near_range = self:NumberBox("NearRange[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the near range of the light in cm", group = light_options})
-	self._far_range = self:NumberBox("FarRange[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the range of the light in cm", group = light_options})
-	self._upper_clipping = self:NumberBox("UpperClipping[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the upper clipping in cm", group = light_options})
-	self._lower_clipping = self:NumberBox("LowerClipping[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the lower clipping in cm", group = light_options})
+	end, false)
+	self._lights_combo = light_options:combobox("Lights", ClassClbk(self, "set_unit_data_parent"), options, 1, {help = "Select a light to edit from the combobox"})
+	self._color = light_options:colorbox("Color", ClassClbk(self, "set_unit_data_parent"), nil)
+	self._enabled = light_options:tickbox("Enabled", ClassClbk(self, "set_unit_data_parent"), true)
+	self._near_range = light_options:numberbox("NearRange[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the near range of the light in cm"})
+	self._far_range = light_options:numberbox("FarRange[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {min = 0, floats = 0, help = "Sets the range of the light in cm"})
+	self._upper_clipping = light_options:numberbox("UpperClipping[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the upper clipping in cm"})
+	self._lower_clipping = light_options:numberbox("LowerClipping[cm]", ClassClbk(self, "set_unit_data_parent"), 0, {floats = 0, help = "Sets the lower clipping in cm"})
 
-	self._intensity = self:ComboBox("Intensity", ClassClbk(self, "set_unit_data_parent"), BLE.Utils.IntensityOptions, 1, {help = "Select an intensity from the combobox", group = light_options})
-	self._falloff = self:Slider("Falloff", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the light falloff exponent", floats = 1, min = 1, max = 10, group = light_options})
-	self._start_angle = self:Slider("StartAngle", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
-	self._end_angle = self:Slider("EndAngle", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179, group = light_options})
+	self._intensity = light_options:combobox("Intensity", ClassClbk(self, "set_unit_data_parent"), BLE.Utils.IntensityOptions, 1, {help = "Select an intensity from the combobox"})
+	self._falloff = light_options:slider("Falloff", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the light falloff exponent", floats = 1, min = 1, max = 10})
+	self._start_angle = light_options:slider("StartAngle", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179})
+	self._end_angle = light_options:slider("EndAngle", ClassClbk(self, "set_unit_data_parent"), 1, {help = "Controls the start angle of the spot light", floats = 0, min = 1, max = 179})
 	local res = {
 		16,
 		32,
@@ -39,9 +39,8 @@ function EditUnitLight:build_menu(units)
 		1024,
 		2048
 	}
-	self._shadow_resolution = self:ComboBox("ShadowResolution", ClassClbk(self, "set_unit_data_parent"), res, 4, {help = "Select an resolution from the combobox", group = light_options})
-	self._spot_texture = self:PathItem("SpotTexture", ClassClbk(self, "set_unit_data_parent"), self.DEFAULT_SPOT_PROJECTION_TEXTURE, "texture", false, nil, false, {
-		group = light_options,
+	self._shadow_resolution = light_options:combobox("ShadowResolution", ClassClbk(self, "set_unit_data_parent"), res, 4, {help = "Select an resolution from the combobox"})
+	self._spot_texture = light_options:pathbox("SpotTexture", ClassClbk(self, "set_unit_data_parent"), self.DEFAULT_SPOT_PROJECTION_TEXTURE, "texture", {
 		sort_func = function(list)
 			local begins = string.begins
 			local spot = "units/lights/spot_light_projection_textures"

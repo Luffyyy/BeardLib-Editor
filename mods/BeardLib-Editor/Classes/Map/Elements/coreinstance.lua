@@ -158,7 +158,7 @@ end
 function EditorInstanceSetParams:_build_from_params()
     self._instance_menu:ClearItems()
     if not self._element.values.instance then
-    	self:Divider("No instance selected", {color = false, group = self._instance_menu})
+    	self._instance_menu:divider("No instance selected", {color = false})
         return
     end
     local params = managers.world_instance:get_instance_params_by_name(self._element.values.instance)
@@ -181,13 +181,13 @@ function EditorInstanceSetParams:_build_from_params()
         elseif data.type == "special_objective_action" then
             value_ctrlr = self:ComboCtrl(name, clone(CopActionAct._act_redirects.SO), opt)
         end
-        local use = self:Toggle("use_"..name, ClassClbk(self, "_on_gui_toggle_use"), self._element.values.params[name] and true or false, {
-            text = "Using Variable", value_ctrlr = value_ctrlr, var_name = name, help = "Toggle use of variable on/off", group = self._instance_menu
+        local use = self._instance_menu:tickbox("use_"..name, ClassClbk(self, "_on_gui_toggle_use"), self._element.values.params[name] and true or false, {
+            text = "Using Variable", value_ctrlr = value_ctrlr, var_name = name, help = "Toggle use of variable on/off"
         })
         value_ctrlr:SetEnabled(use:Value())
     end
     if #self._instance_menu._my_items == 0 then
-    	self:Divider("No parameters", {color = false, group = self._instance_menu})
+    	self._instance_menu:divider("No parameters", {color = false})
     end
 end
 
@@ -209,7 +209,7 @@ function EditorInstanceSetParams:_build_panel()
 
 	self:ComboCtrl("instance", names)
 	self:BooleanCtrl("apply_on_execute")
-	self._instance_menu = self:DivGroup("Instance Params")
+	self._instance_menu = self:divgroup("Instance Params")
 	self:_build_from_params()
 end
 
@@ -331,7 +331,7 @@ function EditorInstanceParams:_build_var_panel(data)
 end
 
 function EditorInstanceParams:_build_remove_var(item)
-	self._pan:ImgButton("RemoveVariable", ClassClbk(self, "_remove_var_name", item.name), nil, BLE.Utils:GetIcon("cross"), {
+	self._pan:tb_imgbtn("RemoveVariable", ClassClbk(self, "_remove_var_name", item.name), nil, BLE.Utils:GetIcon("cross"), {
 		offset = item.offset, size = 22
 	})
 	table.insert(self._panels, {var_name = item.var_name, item = item})

@@ -17,6 +17,7 @@ function Part:init(parent, menu, name, opt, mopt)
         size = BLE.Options:GetValue("MapEditorFontSize"),
         auto_foreground = true,
         background_color = BLE.Options:GetValue("BackgroundColor"),
+       -- full_bg_color = BLE.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
         private = {offset = 0},
@@ -27,13 +28,13 @@ function Part:init(parent, menu, name, opt, mopt)
         h = self:GetPart("menu"):get_menu_h() - 1
     }, mopt))
     self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
     local title_h = 4
     if not opt.no_title then
-        title_h = self:Divider("Title", {size = BLE.Options:GetValue("MapEditorFontSize") * 1.335, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
+        title_h = self:divider("Title", {size = BLE.Options:GetValue("MapEditorFontSize") * 1.335, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
     end
     if opt.make_tabs then
-        self._tabs = self:Menu("Tabs", table.merge({
+        self._tabs = self:pan("Tabs", table.merge({
             align_method = "centered_grid",
             offset = 0,
             inherit_values = {offset = {6, 4}},
@@ -43,8 +44,7 @@ function Part:init(parent, menu, name, opt, mopt)
         title_h = title_h + self._tabs:OuterHeight()
     end
     
-    self._holder = self:Menu("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
-    MenuUtils:new(self, self._holder)
+    self._holder = self:pan("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     ItemExt:add_funcs(self, self._holder)
     self:build_default_menu()
     self:make_collapse_all_button()
@@ -54,7 +54,7 @@ end
 function Part:make_collapse_all_button()
     local title = self._menu:GetItem("Title")
     if title then
-        title:ImgButton("CollapseAll", ClassClbk(self, "collapse_all", false), nil, {161, 158, 50, 50}, {offset = 0})
+        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, {161, 158, 50, 50}, {offset = 0})
     end
 end
 

@@ -4,7 +4,7 @@ function CoreEffectPropertyContainer:fill_property_container_sheet(window, view,
 	local top_sizer = window:divgroup(property_container:name(), {text = property_container:ui_name(), align_method = "grid"})
 
 	if property_container:description() ~= "" then
-		top_sizer:GetToolbar():SButton("?", nil, {position = "TopRight", h = top_sizer:TextHeight(), help = property_container:name() .. "\n" .. property_container:description()})
+		top_sizer:GetToolbar():tb_btn("?", nil, {position = "TopRight", h = top_sizer:TextHeight(), help = property_container:name() .. "\n" .. property_container:description()})
 	end
 
 	local bgcolor = BLE.Options:GetValue("BackgroundColor")
@@ -116,7 +116,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 
             for i, p in ipairs(vars.property._list_members) do
 				local btn = vars.list_box:button(p:name(), on_select_object, {property = p})
-				btn:ImgButton("Remove", on_remove_object, nil, BLE.Utils:GetIcon("minus"))
+				btn:tb_imgbtn("Remove", on_remove_object, nil, BLE.Utils:GetIcon("minus"))
 			end
 		end
 
@@ -129,7 +129,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			combo:SetValue(n)
 		end
 
-		local add_button = widget:SButton("Add", on_add_object)
+		local add_button = widget:tb_btn("Add", on_add_object)
 		local sheet = widget:pan("Sheet")
 		vars = {
 			property = self,
@@ -192,7 +192,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 				elseif key == "float" or "opacity" or "time" then
 					control = key == "opacity" and pan:slider("Value", set_value, vs, {min = 0, max = 255, shrink_width = 0.6}) or pan:numberbox("Value", set_value, vs, {shrink_width = 0.6})
 				end
-				pan:ImgButton("Remove", function()
+				pan:tb_imgbtn("Remove", function()
 					table.remove(self._keys, i)
 					pan:Destroy()
 					load_keys()

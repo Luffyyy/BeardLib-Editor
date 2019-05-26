@@ -12,8 +12,8 @@ function EditUnit:is_editable(parent, name)
 		return nil
 	end
 	self:init_basic(parent, name)
-	self._menu = parent:GetMenu()
-	MenuUtils:new(self)
+	self._menu = parent:getmenu()
+	ItemExt:add_funcs(self)
 	self:build_menu(units)
 	return self
 end

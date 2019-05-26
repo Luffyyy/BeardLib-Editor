@@ -26,14 +26,14 @@ function SelectListDialogValue:ShowItem(t, selected)
 end
 
 function SelectListDialogValue:MakeListItems(params)
-    MenuUtils:new(self, self._list_menu)
+    ItemExt:add_funcs(self, self._list_menu)
     self._list_menu:ClearItems()
     self._tbl.values_name = self._tbl.values_name or params and params.values_name
     self._tbl.combo_items_func = self._tbl.combo_items_func or params and params.combo_items_func
     self._tbl.values_list_width = self._tbl.values_list_width or params and params.values_list_width or 200
-    self._list_items_menu = self:DivGroup("Select or Deselect", {w = self._list_menu:ItemsWidth() - (self._tbl.values_name and self._tbl.values_list_width or 0), offset = 0, auto_align = false})
+    self._list_items_menu = self:divgroup("Select or Deselect", {w = self._list_menu:ItemsWidth() - (self._tbl.values_name and self._tbl.values_list_width or 0), offset = 0, auto_align = false})
     if self._tbl.values_name then
-    	self._values_list_menu = self:DivGroup(self._tbl.values_name, {w = self._tbl.values_list_width, offset = 0, auto_align = false})
+    	self._values_list_menu = self:divgroup(self._tbl.values_name, {w = self._tbl.values_list_width, offset = 0, auto_align = false})
     end
     self.super.MakeListItems(self, params)
 end
@@ -44,10 +44,10 @@ function SelectListDialogValue:ValueClbk(value, item)
 end
 
 function SelectListDialogValue:ToggleItem(name, selected, value)
-    local opt = {group = self._list_items_menu, offset = 4, text_offset_y = 0}
+    local opt = {offset = 4, text_offset_y = 0}
     local item
     if self._single_select then
-        item = self:Toggle(name, ClassClbk(self, "ToggleClbk", value), selected, opt)
+        item = self._list_items_menu:tickbox(name, ClassClbk(self, "ToggleClbk", value), selected, opt)
     else
         if selected then
             opt.value = false
@@ -55,35 +55,35 @@ function SelectListDialogValue:ToggleItem(name, selected, value)
             opt.foreground_highlight = false            
             opt.auto_foreground = false
             opt.can_be_ticked = false
-            item = self:Button("- "..name, ClassClbk(self, "ToggleClbk", value), opt)
+            item = self._list_items_menu:button("- "..name, ClassClbk(self, "ToggleClbk", value), opt)
         else
             opt.value = true
             opt.foreground_highlight = false
             opt.auto_foreground = false
             opt.can_be_unticked = false
-            item = self:Button("+ "..name, ClassClbk(self, "ToggleClbk", value), opt)
+            item = self._list_items_menu:button("+ "..name, ClassClbk(self, "ToggleClbk", value), opt)
         end                
     end
 
-    opt = {control_slice = 1, group = self._values_list_menu, offset = 4, color = false, free_typing = self._params.combo_free_typing, text_offset_y = 0}
+    opt = {control_slice = 1, offset = 4, color = false, free_typing = self._params.combo_free_typing, text_offset_y = 0}
 	local v
 	if selected then
 		v = value.value
 	end
     if self._tbl.values_name then
 	    if tonumber(v) then
-	        self:NumberBox("", ClassClbk(self, "ValueClbk", value), v, opt)
+	        self._values_list_menu:numberbox("", ClassClbk(self, "ValueClbk", value), v, opt)
         elseif type(v) == "boolean" then
-            self:Toggle("", ClassClbk(self, "ValueClbk", value), v, opt)
+            self._values_list_menu:tickbox("", ClassClbk(self, "ValueClbk", value), v, opt)
 	    elseif v then
             if self._tbl.combo_items_func then
                 local items = self._tbl.combo_items_func(name, value)
-                self:ComboBox("", ClassClbk(self, "ValueClbk", value), items, table.get_key(items, v) or v, opt)
+                self._values_list_menu:combobox("", ClassClbk(self, "ValueClbk", value), items, table.get_key(items, v) or v, opt)
             else
-	           self:TextBox("", ClassClbk(self, "ValueClbk", value), v, opt)
+	           self._values_list_menu:textbox("", ClassClbk(self, "ValueClbk", value), v, opt)
             end
 	    else
-	        self:Divider("...", opt)
+	        self._values_list_menu:divider("...", opt)
 	    end
     end
     table.insert(self._visible_items, item)

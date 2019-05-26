@@ -5,7 +5,7 @@ end
 function NavFieldBuilder:_create_build_progress_bar(title, num_divistions)
 	local status = BLE.Utils:GetPart("status")
 	if not self._created_button then
-		status._menu:Button({name = "Cancel", text_align = "right", callback = function()
+		status._menu:button({name = "Cancel", text_align = "right", callback = function()
 			self._progress_dialog_cancel = true
 			BLE.Utils:GetPart("opt"):reenable_disabled_units()
 		end})

@@ -13,18 +13,18 @@ function Project:init()
     self._level_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
 
     self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})
-    MenuUtils:new(self)
+    ItemExt:add_funcs(self)
 
-    local btns = self:Menu("QuickActions", {align_method = "centered_grid", inherit_values = {
+    local btns = self:pan("QuickActions", {align_method = "centered_grid", inherit_values = {
         offset = 4,
         scrollbar = false,
         text_align = "center"
     }})
-    local opt = {group = btns, w = btns:ItemsWidth() / 3, border_bottom = true}
-    self:Button("NewProject", ClassClbk(self, "new_project_dialog", ""), opt)
-    self:Button("CloneExistingHeist", ClassClbk(self, "select_narr_as_project"), opt)
-    self:Button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
-    self._curr_editing = self:DivGroup("CurrEditing", {
+    local opt = {w = btns:ItemsWidth() / 3, border_bottom = true}
+    btns:button("NewProject", ClassClbk(self, "new_project_dialog", ""), opt)
+    btns:button("CloneExistingHeist", ClassClbk(self, "select_narr_as_project"), opt)
+    btns:button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
+    self._curr_editing = self:divgroup("CurrEditing", {
         private = {size = 24},
         border_left = false,
         auto_height = false, h = self._menu:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2
@@ -602,21 +602,21 @@ function Project:edit_main_xml(data, save_clbk)
         BLE:log("[ERROR] Narrative data is missing from the main.xml!")
         return
     end
-    local divgroup_opt = {group = self._curr_editing, border_position_below_title = true, private = {size = 22}}
+    local divgroup_opt = {border_position_below_title = true, private = {size = 22}}
     local up = ClassClbk(self, "set_project_data")
-    local narrative = self:DivGroup("Narrative", divgroup_opt)
-    self:TextBox("ProjectName", up, data.name, {group = narrative})
+    local narrative = self._curr_editing:divgroup("Narrative", divgroup_opt)
+    narrative:textbox("ProjectName", up, data.name)
     local contacts = table.map_keys(tweak_data.narrative.contacts)
-    self:ComboBox("Contact", up, contacts, table.get_key(contacts, narr.contact or "custom"), {group = narrative})
-    self:TextBox("BriefingEvent", up, narr.briefing_event, {group = narrative})
+    narrative:combobox("Contact", up, contacts, table.get_key(contacts, narr.contact or "custom"))
+    narrative:textbox("BriefingEvent", up, narr.briefing_event)
     narr.crimenet_callouts = type(narr.crimenet_callouts) == "table" and narr.crimenet_callouts or {narr.crimenet_callouts}
     narr.debrief_event = type(narr.debrief_event) == "table" and narr.debrief_event or {narr.debrief_event}
 
-    self:TextBox("DebriefEvent", up, table.concat(narr.debrief_event, ","), {group = narrative})
-    self:TextBox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","), {group = narrative})
-    self:Button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"), {group = narrative})
-    self:Toggle("HideFromCrimenet", up, data.hide_from_crimenet, {group = narrative})
-    local updating = self:DivGroup("Updating", divgroup_opt)
+    narrative:textbox("DebriefEvent", up, table.concat(narr.debrief_event, ","))
+    narrative:textbox("CrimenetCallouts", up, table.concat(narr.crimenet_callouts, ","))
+    narrative:button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"))
+    narrative:tickbox("HideFromCrimenet", up, data.hide_from_crimenet)
+    local updating = self._curr_editing:divgroup("Updating", divgroup_opt)
     local mod_assets = XML:GetNode(data, "AssetUpdates")
     if not mod_assets then
         mod_assets = {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop", use_local_dir = true}
@@ -625,16 +625,16 @@ function Project:edit_main_xml(data, save_clbk)
     if mod_assets.provider == "lastbullet" then
         mod_assets.provider = "modworkshop"
     end
-    self:TextBox("DownloadId", up, mod_assets.id, {group = updating, filter = "number", floats = 0})
-    self:TextBox("Version", up, mod_assets.version, {group = updating, filter = "number"})
-    self:Toggle("Downloadable", up, mod_assets.is_standalone ~= false, {group = updating, 
+    updating:textbox("DownloadId", up, mod_assets.id, {filter = "number", floats = 0})
+    updating:textbox("Version", up, mod_assets.version, {filter = "number"})
+    updating:tickbox("Downloadable", up, mod_assets.is_standalone ~= false, {
         help = "Can the level be downloaded by clients connecting? this can only work if the level has no extra dependencies"
     })
 
-    local chain = self:DivGroup("Chain", divgroup_opt)
-    self:Button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"), {group = chain})
-    self:Button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""), {group = chain})
-    local levels_group = self:DivGroup("Levels", {group = chain, last_y_offset = 6})
+    local chain = self._curr_editing:divgroup("Chain", divgroup_opt)
+    chain:button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"))
+    chain:button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""))
+    local levels_group = chain:divgroup("Levels", {last_y_offset = 6})
     local function get_level(level_id)
         for _, v in pairs(levels) do
             if v.id == level_id then
@@ -650,21 +650,20 @@ function Project:edit_main_xml(data, save_clbk)
         local tx = "textures/editor_icons_df"
 
         if level_in_chain.level_id then
-            btn:ImgButton(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
+            btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
             if chain_group then
-                btn:ImgButton("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {highlight_color = Color.red})
+                btn:tb_imgbtn("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {highlight_color = Color.red})
             else
-                btn:ImgButton("Group", ClassClbk(self, "group_level", narr, level_in_chain), tx, EU.EditorIcons["plus"], {highlight_color = Color.red})
+                btn:tb_imgbtn("Group", ClassClbk(self, "group_level", narr, level_in_chain), tx, EU.EditorIcons["plus"], {highlight_color = Color.red})
             end        
         end
-        btn:ImgButton("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), tx, EU.EditorIcons["arrow_down"], {highlight_color = Color.red, enabled = my_index < #narr_chain})
-        btn:ImgButton("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), tx, EU.EditorIcons["arrow_up"], {highlight_color = Color.red, enabled = my_index > 1})
+        btn:tb_imgbtn("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), tx, EU.EditorIcons["arrow_down"], {highlight_color = Color.red, enabled = my_index < #narr_chain})
+        btn:tb_imgbtn("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), tx, EU.EditorIcons["arrow_up"], {highlight_color = Color.red, enabled = my_index > 1})
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
         local level = get_level(level_id)
-        local btn = self:Button(level_id, level and ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk), {
-            group = group or levels_group,
+        local btn = (group or levels_group):button(level_id, level and ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk), {
             text = level_id
         })
         return btn, level
@@ -675,7 +674,7 @@ function Project:edit_main_xml(data, save_clbk)
                 local btn, actual_level = build_level_button(v, false)
                 build_level_ctrls(v, false, btn, actual_level)
             else
-                local grouped = self:DivGroup("Day "..tostring(i).."[Grouped]", {group = levels_group})
+                local grouped = levels_group:divgroup("Day "..tostring(i).."[Grouped]")
                 build_level_ctrls(v, nil, grouped)
                 for k, level in pairs(v) do
                     local btn, actual_level = build_level_button(level, v, grouped, k == 1)
@@ -685,7 +684,7 @@ function Project:edit_main_xml(data, save_clbk)
         end
     end
     if #levels_group._my_items == 0 then
-        self:Divider("NoLevelsNotice", {text = "No levels found, sadly.", group = levels_group})
+        levels_group:divider("NoLevelsNotice", {text = "No levels found, sadly."})
     end
     self._contract_costs = {}
     self._experience_multipliers = {}
@@ -702,29 +701,29 @@ function Project:edit_main_xml(data, save_clbk)
     narr.max_mission_xp = type(narr.max_mission_xp) == "table" and narr.max_mission_xp or convertnumber(narr.max_mission_xp)
     narr.min_mission_xp = type(narr.min_mission_xp) == "table" and narr.min_mission_xp or convertnumber(narr.min_mission_xp)
     narr.payout = type(narr.payout) == "table" and narr.payout or convertnumber(narr.payout)
-    local diff_settings = self:DivGroup("DifficultySettings", divgroup_opt)
-    local diff_settings_holder = self:Menu("DifficultySettingsHolder", {
-        group = diff_settings, text_offset_y = 0, align_method = "grid", offset = {diff_settings.offset[1], 0}})
+    local diff_settings = self._curr_editing:divgroup("DifficultySettings", divgroup_opt)
+    local diff_settings_holder = diff_settings:pan("DifficultySettingsHolder", {
+        text_offset_y = 0, align_method = "grid", offset = {diff_settings.offset[1], 0}})
 
-    local diff_settings_opt = {group = diff_settings_holder, w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, items_size = 18}
-    local diff_settings_texts = self:DivGroup("Setting", diff_settings_opt)
+    local diff_settings_opt = {w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, size = 18}
+    local diff_settings_texts = diff_settings_holder:divgroup("Setting", diff_settings_opt)
     
     diff_settings_opt.border_left = false 
 
-    local div_texts_opt = {group = diff_settings_texts, size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
-    self:Divider("Contract Cost", div_texts_opt)
-    self:Divider("Payout", div_texts_opt)
-    self:Divider("Stealth XP bonus", div_texts_opt)
-    self:Divider("Minimum XP", div_texts_opt)
-    self:Divider("Maximum XP", div_texts_opt)
+    local div_texts_opt = {size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
+    diff_settings_texts:divider("Contract Cost", div_texts_opt)
+    diff_settings_texts:divider("Payout", div_texts_opt)
+    diff_settings_texts:divider("Stealth XP bonus", div_texts_opt)
+    diff_settings_texts:divider("Minimum XP", div_texts_opt)
+    diff_settings_texts:divider("Maximum XP", div_texts_opt)
 
     for i, diff in pairs(self._diffs) do
-        local group = self:DivGroup(diff, diff_settings_opt)
-        self._contract_costs[i] = self:NumberBox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
-        self._payouts[i] = self:NumberBox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
-        self._experience_multipliers[i] = self:NumberBox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
-        self._max_mission_xps[i] = self:NumberBox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
-        self._min_mission_xps[i] = self:NumberBox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, group = group, size_by_text = true, text = "", control_slice = 1})
+        local group = diff_settings_holder:divgroup(diff, diff_settings_opt)
+        self._contract_costs[i] = group:numberbox("ContractCost"..i, up, narr.contract_cost[i] or 0, {max = 10000000, min = 0, size_by_text = true, text = "", control_slice = 1})
+        self._payouts[i] = group:numberbox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, size_by_text = true, text = "", control_slice = 1})
+        self._experience_multipliers[i] = group:numberbox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, size_by_text = true, text = "", control_slice = 1})
+        self._max_mission_xps[i] = group:numberbox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, size_by_text = true, text = "", control_slice = 1})
+        self._min_mission_xps[i] = group:numberbox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, size_by_text = true, text = "", control_slice = 1})
     end 
 
     self:small_button("Save", save_clbk)
@@ -801,7 +800,7 @@ function Project:set_project_data(item)
 end
 
 function Project:small_button(name, clbk)
-    self._curr_editing:GetToolbar():SButton(name, clbk, {
+    self._curr_editing:GetToolbar():tb_btn(name, clbk, {
         min_width = 100,
         text_offset = {8, 2},
         border_bottom = true,
@@ -811,24 +810,24 @@ end
 function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
 	self._curr_editing:ClearItems()
     local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
-    self:TextBox("LevelId", up, level.id, {group = self._curr_editing})    
-    self:TextBox("BriefingDialog", up, level.briefing_dialog, {group = self._curr_editing}, {group = self._curr_editing})
+    self._curr_editing:textbox("LevelId", up, level.id)    
+    self._curr_editing:textbox("BriefingDialog", up, level.briefing_dialog)
     level.intro_event = type(level.intro_event) == "table" and level.intro_event[1] or level.intro_event
     level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
 
-    self:TextBox("IntroEvent", up, level.intro_event, {group = self._curr_editing})
-    self:TextBox("OutroEvent", up, table.concat(level.outro_event, ","), {group = self._curr_editing})
+    self._curr_editing:textbox("IntroEvent", up, level.intro_event)
+    self._curr_editing:textbox("OutroEvent", up, table.concat(level.outro_event, ","))
     if level.ghost_bonus == 0 then
         level.ghost_bonus = nil
     end
-    self:NumberBox("GhostBonus", up, level.ghost_bonus or 0, {max = 1, min = 0, step = 0.1, group = self._curr_editing})
-    self:NumberBox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0, group = self._curr_editing})
+    self._curr_editing:numberbox("GhostBonus", up, level.ghost_bonus or 0, {max = 1, min = 0, step = 0.1})
+    self._curr_editing:numberbox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0})
     local aitype = table.map_keys(LevelsTweakData.LevelType)
-    self:ComboBox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1, {group = self._curr_editing})
-    self:Toggle("TeamAiOff", up, level.team_ai_off, {group = self._curr_editing})
-    self:Toggle("RetainBags", up, level.repossess_bags, {group = self._curr_editing})
-    self:Toggle("PlayerInvulnerable", up, level.player_invulnerable, {group = self._curr_editing})
-    self:Button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level), {group = self._curr_editing})
+    self._curr_editing:combobox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1)
+    self._curr_editing:tickbox("TeamAiOff", up, level.team_ai_off)
+    self._curr_editing:tickbox("RetainBags", up, level.repossess_bags)
+    self._curr_editing:tickbox("PlayerInvulnerable", up, level.player_invulnerable)
+    self._curr_editing:button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level))
 
     self:small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
     self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))

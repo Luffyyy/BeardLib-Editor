@@ -3,21 +3,23 @@ local A_TARGET = Idstring("a_target")
 function EditWire:editable(unit) return unit:wire_data() and unit:get_object(A_TARGET) end
 
 function EditWire:build_menu(parent)
-	local group = self:Group("Wire")
-	self:NumberBox("Slack", ClassClbk(self._parent, "set_unit_data"), 0, {group = group})
-	self:AxisControls(ClassClbk(self, "set_target_axis"), {group = group}, "TargetAxis")
+	local group = self:group("Wire")
+	group:numberbox("Slack", ClassClbk(self._parent, "set_unit_data"), 0)
+	group:Vec3Rot("Target", ClassClbk(self, "set_target_axis"))
 end
 
 function EditWire:update_positions() 
 	self:set_unit_data()
 	local object = self:target_object()
-	self:SetAxisControls(object:position(), object:rotation(), "TargetAxis")
+	self:SetItemValue("TargetPosition", object:position())
+	self:SetItemValue("TargetRotation", object:rotation())
 end
 
 function EditWire:set_menu_unit(unit)   
 	self._menu:GetItem("Slack"):SetValue(unit and unit:wire_data() and unit:wire_data().slack)
 	local object = self:target_object()
-	self:SetAxisControls(object:position(), object:rotation(), "TargetAxis")
+	self:SetItemValue("TargetPosition", object:position())
+	self:SetItemValue("TargetRotation", object:rotation())
 end
 
 function EditWire:target_object()
@@ -32,15 +34,15 @@ end
 
 function EditWire:set_target_axis()
 	local object = self:target_object()
-	object:set_position(self:AxisControlsPosition("TargetAxis"))
-	object:set_rotation(self:AxisControlsRotation("TargetAxis"))
+	object:set_position(self:GetItem("TargetPosition"):Value())
+	object:set_rotation(self:GetItem("TargetRotation"):Value())
 	self:set_unit_data_parent()
 end
 
 function EditWire:set_unit_data()
 	local unit = self:selected_unit()
 	if unit then
-		unit:wire_data().slack = self._menu:GetItem("Slack"):Value()
+		unit:wire_data().slack = self:GetItem("Slack"):Value()
 		local target = unit:get_object(A_TARGET)
 		unit:wire_data().target_pos = target:position()
 		local rot = target:rotation()

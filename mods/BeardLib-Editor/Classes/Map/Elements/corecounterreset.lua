@@ -28,5 +28,5 @@ end
 function EditorCounterReset:_build_panel(panel, panel_sizer)
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementCounter"})
-	self:NumberBox("counter_target", {min = 0, floats = 0})
+	self:NumberCtrl("counter_target", {min = 0, floats = 0})
 end

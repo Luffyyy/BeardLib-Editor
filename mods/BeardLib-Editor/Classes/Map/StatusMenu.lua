@@ -9,7 +9,7 @@ function StatusMenu:init(parent, menu)
         w = 200,
         h = 100
     })
-    self._text = self._menu:Divider({name = "Text", text = "", text_align = "right"})
+    self._text = self._menu:divider({name = "Text", text = "", text_align = "right"})
 end
 
 function StatusMenu:SetVisible(visible)

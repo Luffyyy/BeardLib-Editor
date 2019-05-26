@@ -4,21 +4,15 @@ function EditZipLine:editable(unit)
 end
 
 function EditZipLine:build_menu(units)
-	local zipline_options = self:Group("Zipline")
-	self:AxisControls(ClassClbk(self, "set_unit_data_parent"), {
-		text = "End position",
-		group = zipline_options,
-		no_rot = true,
-		step = self:Val("GridSize")
-	}, "EndPos", units[1]:zipline():end_pos())
-	
-	self:Button("ResetPositionEnd", ClassClbk(self, "use_pos"), {group = zipline_options})
-	self:Button("UseCameraPosForPositionEnd", ClassClbk(self, "use_camera_pos"), {group = zipline_options})
-	self:Button("UseCameraPosForLinePositionEnd", ClassClbk(self, "use_camera_pos_for_line"), {group = zipline_options})
-	self._speed = self:NumberBox("Speed [cm/s]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s", group = zipline_options})
-	self._slack = self:NumberBox("Slack [cm]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm", group = zipline_options})
- 	self._type = self:ComboBox("Type", ClassClbk(self, "set_unit_data_parent"), ZipLine.TYPES, table.get_key(ZipLine.TYPES, units[1]:zipline():usage_type()), {group = zipline_options})
-	self._ai_ignore_bag = self:Toggle("AIIgnoreBag", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():ai_ignores_bag(), {text = "AI Ignore Bag", group = zipline_options})
+	local zipline_options = self:group("Zipline")
+	self._epos = zipline_options:Vector3("EndPosition", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():end_pos(), {step = self:Val("GridSize")})
+	zipline_options:button("ResetPositionEnd", ClassClbk(self, "use_pos"))
+	zipline_options:button("UseCameraPosForPositionEnd", ClassClbk(self, "use_camera_pos"))
+	zipline_options:button("UseCameraPosForLinePositionEnd", ClassClbk(self, "use_camera_pos_for_line"))
+	self._speed = zipline_options:numberbox("Speed [cm/s]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():speed(), {floats = 0, min = 0, help = "Sets the speed of the zipline in cm/s"})
+	self._slack = zipline_options:numberbox("Slack [cm]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm"})
+ 	self._type = zipline_options:combobox("Type", ClassClbk(self, "set_unit_data_parent"), ZipLine.TYPES, table.get_key(ZipLine.TYPES, units[1]:zipline():usage_type()))
+	self._ai_ignore_bag = zipline_options:tickbox("AIIgnoreBag", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():ai_ignores_bag(), {text = "AI Ignore Bag"})
 end
 
 function EditZipLine:set_unit_data()
@@ -28,7 +22,7 @@ function EditZipLine:set_unit_data()
 		unit:zipline():set_slack(self._slack:Value())
 		unit:zipline():set_usage_type(self._type:SelectedItem())
 		unit:zipline():set_ai_ignores_bag(self._ai_ignore_bag:Value())
-		unit:zipline():set_end_pos(self:AxisControlsPosition("EndPos"))
+		unit:zipline():set_end_pos(self._epos:Value())
 	end
 end
 
@@ -41,7 +35,7 @@ function EditZipLine:update(t, dt)
 end
 
 function EditZipLine:update_end_pos()
-	self:SetAxisControls(self:selected_unit():zipline():end_pos(), nil, "EndPos")
+	self._epos:SetValue(self:selected_unit():zipline():end_pos())
 	self:set_unit_data_parent()
 end
 function EditZipLine:use_pos()
