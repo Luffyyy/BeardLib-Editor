@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<tweak name="settings/physics_settings" extension="physics_settings">
+	<search>
+		<physics_settings/>
+		<body_templates/>
+		<template/>
+		<properties editor_only="true"/>
+	</search>
+	<target mode="attributes" multiple="true">
+		<attr name="editor_only" value="false"/>
+	</target>
+</tweak>

@@ -1,0 +1,15 @@
+{
+	"name" : "BeardLib-Editor",
+	"description" : "BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!",
+	"author" : "GREAT BIG BUSHY BEARD & Luffy",
+	"blt_version" : 2.0,
+	"undisablable" : true,
+	"image" : "Assets/textures/editor_logo.png",
+	"contact" : "https://twitter.com/LuffyDaFloffi",
+	"hooks" : [
+        {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"},
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorpanel", "script_path" : "Hooks/ParticleEditorPanel.lua"},
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorproperties", "script_path" : "Hooks/ParticleEditorProperties.lua"},
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditoreffect", "script_path" : "Hooks/ParticleEditorEffect.lua"}
+	]
+}
