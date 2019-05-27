@@ -14,7 +14,7 @@ function Instance:build_editor_menu()
     Instance.super.build_default_menu(self)
     self._editors = {}
     local other = self:group("Main")    
-    self._static:build_positions_items(true)
+    self._static:build_positions_items(true, true)
     self._static:SetTitle("Instance Selection")
     other:textbox("Name", ClassClbk(self, "set_data"), nil, {help = "the name of the instance(make sure it's unique!)"})
     other:combobox("Continent", ClassClbk(self, "set_data"), self._parent._continents, 1)

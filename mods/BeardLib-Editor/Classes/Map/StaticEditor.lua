@@ -156,14 +156,16 @@ function Static:build_default_menu()
     self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
 end
 
-function Static:build_quick_buttons(cannot_be_saved)
+function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
 	self:SetTitle("Selection")
     local quick = self:group("QuickButtons", {align_method = "grid"})
-    quick:tb_btn("Deselect", ClassClbk(self, "deselect_unit"))
-    quick:tb_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    quick:s_btn("Deselect", ClassClbk(self, "deselect_unit"))
+    quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    if not cannot_be_prefab then
+        quick:s_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
+    end
     if not cannot_be_saved then
-        quick:tb_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
-        quick:tb_btn("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
+        quick:s_btn("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
         local group = self:group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
@@ -192,10 +194,10 @@ function Static:build_group_options()
     if self._selected_group then
         group:divider("GroupToolTip", {text = "Hold ctrl and press mouse 2 to add units to/remove units from group"})
         group:textbox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name)
-        group:tb_btn("DestroyGroup", ClassClbk(self, "remove_group"))
+        group:s_btn("DestroyGroup", ClassClbk(self, "remove_group"))
     else
-        group:tb_btn("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
-        group:tb_btn("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
+        group:s_btn("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
+        group:s_btn("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
     end
 end
 
@@ -275,9 +277,9 @@ function Static:build_extension_items()
     end
 end
 
-function Static:build_positions_items(cannot_be_saved)
+function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
     self._editors = {}
-    self:build_quick_buttons(cannot_be_saved)
+    self:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
     local transform = self:group("Transform")
     transform:button("IgnoreRaycastOnce", function()
         for _, unit in pairs(self:selected_units()) do

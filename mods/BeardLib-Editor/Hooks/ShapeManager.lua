@@ -32,7 +32,13 @@ end
 function Shape:create_panel() end
 
 function Shape:update_size(item)
-	self:set_property(item.name, item:Value())
+	local val = item:Value()
+	self:set_property("width", val.width)
+	self:set_property("height", val.height)
+	self:set_property("depth", val.depth)
+	if not item.no_radius then
+		self:set_property("radius", val.radius)
+	end
 end
 
 function ShapeBox:create_panel(clss, group)

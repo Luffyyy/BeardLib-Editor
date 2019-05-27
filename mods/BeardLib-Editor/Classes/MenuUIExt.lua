@@ -357,7 +357,7 @@ function ItemExt:Shape(name, clbk, value, o)
 	end
 
 	function p:Value()
-		return {_shape = true, width = items[1]:Value(), height = items[2]:Value(), depth = items[3]:Value(), radius = item[4]:Value()}
+		return {_shape = true, width = items[1]:Value(), height = items[2]:Value(), depth = items[3]:Value(), radius = items[4]:Value()}
 	end
 	p.get_value = p.Value
 	

@@ -100,8 +100,7 @@ function PortalLayer:build_unit_menu()
 	local unit = self:selected_unit()
 	if alive(unit) then
 		S:build_positions_items(true)
-		S:update_positions()
-        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))    
+        S:update_positions()
         S:SetTitle("Portal Shape Selection")
 		if unit:name() == self._portal_shape_unit:id() then
             unit:unit_data().shape:create_panel(S, S:GetItem("Transform"))

@@ -177,7 +177,6 @@ function SndLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
 
 		if unit:name() == self._environment_unit:id() then
 			S:SetTitle("Sound Environment Selection")

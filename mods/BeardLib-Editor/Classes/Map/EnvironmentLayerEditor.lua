@@ -325,7 +325,6 @@ function EnvLayer:build_unit_menu()
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
 		if unit:name() == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
             local effect = S:group("Effect", {index = 1})
@@ -336,7 +335,7 @@ function EnvLayer:build_unit_menu()
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
             local ctrls = self._environment_area_ctrls
-            local environment_area = environment_area:group("Environment Area", {index = 1})
+            local environment_area = S:group("Environment Area", {index = 1})
 		    S:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 
             local env = area:environment() or managers.viewport:game_default_environment()

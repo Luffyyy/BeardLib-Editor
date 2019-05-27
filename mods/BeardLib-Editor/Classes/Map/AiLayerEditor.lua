@@ -173,7 +173,6 @@ function AiEditor:build_unit_menu()
     if alive(unit) then
         S:build_positions_items(true)
         S:update_positions()
-        S:GetItem("QuickButtons"):button("CreatePrefab", ClassClbk(S, "add_selection_to_prefabs"))
         S:SetTitle("Patrol Point Selection")
     end
 end
