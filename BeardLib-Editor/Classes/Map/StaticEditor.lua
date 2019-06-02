@@ -235,8 +235,8 @@ function Static:build_unit_main_values()
     local name = self:unit_value("name")
     local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})    
     if not self._built_multi then
-        main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit"})
-        main:textbox("Id", ClassClbk(self, "set_unit_data"), nil, {enabled = false})
+        main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, offset=0})
+        main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
     end
 
     main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {check = function(unit)
@@ -379,7 +379,7 @@ function Static:set_unit_data()
             local prev_id = ud.unit_id
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
 
-            ud.unit_id = self:GetItem("Id"):Value()
+            --ud.unit_id = self:GetItem("ID"):Value()
 			
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data and editor:editable(unit) then
@@ -387,7 +387,7 @@ function Static:set_unit_data()
                 end
 			end
 			
-            BeardLib.Utils:RemoveAllNumberIndexes(ud, true) --Custom xml issues happen in here also 😂🔫 
+            BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
             ud.lights = Utils:LightData(unit)
             ud.triggers = Utils:TriggersData(unit)
             ud.editable_gui = Utils:EditableGuiData(unit)
@@ -400,7 +400,7 @@ function Static:set_unit_data()
 
 			if old_continent ~= new_continent then
 				self:set_unit_continent(unit, old_continent, new_continent)
-                self:GetItem("Id"):SetValue(ud.unit_id)
+                self:GetItem("ID"):SetText("ID "..ud.unit_id)
 			end
 			
             self:set_unit_simple_values(unit)
@@ -916,7 +916,7 @@ function Static:set_menu_unit(unit)
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
     self:GetItem("Enabled"):SetValue(unit:enabled())
     self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
-	self:GetItem("Id"):SetValue(unit:unit_data().unit_id, false, true)
+	self:GetItem("ID"):SetText("ID "..unit:unit_data().unit_id)
 	local not_brush = not unit:unit_data().brush_unit
 	local disable_shadows = self:GetItem("DisableShadows")
 	local disable_collision = self:GetItem("DisableCollision")
@@ -968,9 +968,8 @@ function Static:build_links(id, match, element)
     match = match or Utils.LinkTypes.Unit
     local function create_link(text, id, group, clbk)
         warn = warn or ""
-        self:button(id, clbk, {
+        group:button(id, clbk, {
             text = text,
-            group = group,
             font_size = 16,
             label = "elements"
         })

@@ -22,6 +22,7 @@ function AiEditor:init(parent)
 
     self._ai_settings = {}
     self._created_units = {}
+    self._disabled_units = {}
 
     --self:_init_ai_settings()
     --self:_init_mop_settings()
@@ -80,6 +81,9 @@ function AiEditor:build_menu()
     self:ClearItems()
 
     local graphs = self:group("Graphs")
+    graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._parent._has_fix})
+    graphs:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._parent._has_fix})
+--[[
     graphs:button(
         "CalculateAll",
         ClassClbk(
@@ -103,9 +107,9 @@ function AiEditor:build_menu()
             }
         )
     )
-
-    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"), {offset = {6, 6}})
-    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {offset = {6, 6}})
+]]
+    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"))
+    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"))
 
     local navigation_debug =
         graphs:group("NavigationDebug", {text = "Navigation Debug [Toggle what to draw]"})
@@ -132,6 +136,9 @@ function AiEditor:build_menu()
         self._group_states,
         table.get_key(self._group_states, self:data().ai_settings.group_state)
     )
+
+    local other = self:group("Other")
+    other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 
     self:_build_ai_data()
 end
@@ -355,11 +362,19 @@ function AiEditor:_calc_graphs(params)
 end
 
 function AiEditor:_clear_graphs()
-    -- TODO
+    for _, unit in pairs(World:find_units_quick("all")) do
+        if unit:name() == self._nav_surface_unit then
+            managers.editor:DeleteUnit(unit)
+        end
+    end
 end
 
 function AiEditor:_clear_selected_nav_segment()
-    -- TODO
+    for _, unit in pairs(self:selected_units()) do
+        if unit:name() == self._nav_surface_unit then
+            managers.editor:DeleteUnit(unit)
+        end
+    end
 end
 
 function AiEditor:_draw_nav_segments(item)
@@ -419,4 +434,101 @@ end
 
 function AiEditor:data()
     return self._parent:data().ai_settings
+end
+
+function AiEditor:build_nav_segments() -- Add later the options to the menu
+    BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
+        self:part("opt"):save()
+        local settings = {}
+        local nav_surfaces = {}
+
+        local persons = managers.slot:get_mask("persons")
+
+        --first disable the units so the raycast will know.
+        for _, unit in pairs(World:find_units_quick("all")) do
+            local is_person = unit:in_slot(persons)
+            local ud = unit:unit_data()
+            if is_person or (ud and ud.disable_on_ai_graph) then
+                unit:set_enabled(false)
+                table.insert(self._disabled_units, unit)
+
+                if is_person then
+                    --Why are they active even though the main unit is disabled? Good question.
+                    if unit:brain() then
+                       unit:brain()._current_logic.update = nil
+                    end
+                    
+                    for _, extension in pairs(unit:extensions()) do
+                        unit:set_extension_update_enabled(extension:id(), false)
+                    end
+                end
+            elseif unit:name() == self._nav_surface_unit then
+                table.insert(nav_surfaces, unit)
+            end
+        end
+
+        for _, unit in pairs(nav_surfaces) do
+            local ray = World:raycast(unit:position() + Vector3(0, 0, 50), unit:position() - Vector3(0, 0, 150), nil, managers.slot:get_mask("all"))
+            if ray and ray.position then
+                table.insert(settings, {
+                    position = unit:position(),
+                    id = unit:editor_id(),
+                    color = Color(),
+                    location_id = unit:ai_editor_data().location_id
+                })
+            end
+        end
+
+        if #settings > 0 then
+            managers.navigation:clear()
+            managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
+        else
+            if #nav_surfaces > 0 then
+                BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
+            else
+                BLE.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
+                local W = self:part("world")
+                W:Switch()
+                if W._current_layer ~= "ai" then
+                    W:build_menu("ai")
+                end
+            end
+            self:reenable_disabled_units()
+        end
+    end)
+end
+
+function AiEditor:reenable_disabled_units()
+    for _, unit in pairs(self._disabled_units) do
+        if alive(unit) then
+            unit:set_enabled(true)
+            if unit:in_slot(persons) then
+                for _, extension in pairs(unit:extensions()) do
+                    unit:set_extension_update_enabled(extension:id(), true)
+                end
+            end
+        end
+    end
+    self._disabled_units = {}
+end
+
+function AiEditor:build_visibility_graph()
+    local all_visible = true
+    local exclude, include
+    if not all_visible then
+        exclude = {}
+        include = {}
+        for _, unit in ipairs(World:find_units_quick("all")) do
+            if unit:name() == Idstring("core/units/nav_surface/nav_surface") then
+                exclude[unit:unit_data().unit_id] = unit:ai_editor_data().visibilty_exlude_filter
+                include[unit:unit_data().unit_id] = unit:ai_editor_data().visibilty_include_filter
+            end
+        end
+    end
+    local ray_lenght = 150
+    managers.navigation:build_visibility_graph(function()
+        managers.groupai:set_state("none")
+    end, all_visible, exclude, include, ray_lenght)
+
+    self:part("opt"):save_nav_data()
 end

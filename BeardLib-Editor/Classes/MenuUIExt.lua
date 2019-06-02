@@ -126,6 +126,14 @@ function ItemExt:separator(o)
 	}, o))
 end
 
+function ItemExt:s_group(name, o)
+	o = o or {}
+	o.inherit_values = o.inherit_values or {}
+	o.inherit_values.offset = o.offset or self.inherit_values and self.inherit_values.offset or self.offset
+	o.offset = {1, o.inherit_values.offset[2]}
+	return self:group(name, o)
+end
+
 function ItemExt:group(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name)}, o))
@@ -193,7 +201,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o = {}
 	o.control_slice = 0.7
 	o.on_callback = callback
-	o.text = string.pretty2(name)
+	o.text = p.text or string.pretty2(name)
 	local t = p:textbox("path", nil, value, o)
 	o.text = "Browse " .. tostring(typ).."s"
 	o.offset = {t.offset[1] * 4, t.offset[2]}

@@ -3,7 +3,6 @@ local Options = InEditorOptions
 function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")    
     self._wanted_elements = {}
-    self._disabled_units = {}
 end
 
 --TODO: cleanup
@@ -18,8 +17,6 @@ function Options:build_default_menu()
     end
 
     local main = self:group("Editor", groups_opt)
-    self._current_continent = main:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), nil, nil)
-    self._current_script = main:combobox("CurrentScript", ClassClbk(self, "set_current_script"), nil, nil)
     local grid_size = self:Val("GridSize")
     local snap_rotation = self:Val("SnapRotation")
     main:slider("GridSize", ClassClbk(self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
@@ -103,9 +100,6 @@ function Options:build_default_menu()
         other:button("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
     end
     other:button("OpenWorldInExplorer", ClassClbk(self, "open_in_explorer", true))
-    other:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._has_fix})
-    other:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._has_fix})
-    other:button("SaveCoverData", ClassClbk(self, "save_cover_data", false))
     other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false)
 
     self:toggle_autosaving()
@@ -122,7 +116,6 @@ end
 
 function Options:pause_game(item) Application:set_pause(item.value) end
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
-function Options:set_current_continent(item) self._parent._current_continent = item:SelectedItem() end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
@@ -135,14 +128,6 @@ function Options:KeySPressed()
     if ctrl() then
         self:save()
     end
-end
-
-function Options:loaded_continents(continents, current_continent)
-    self._current_continent:SetItems(continents)
-    self._current_continent:SetSelectedItem(current_continent)   
-    self._current_script:SetItems(table.map_keys(managers.mission._scripts))
-    self._current_script:SetValue(1)
-    self:GetPart("mission"):set_elements_vis()
 end
 
 function Options:update_option_value(item)
@@ -175,11 +160,6 @@ end
 function Options:get_value(opt)
     local item = self:GetItem(opt)
     return item and item:Value()
-end
-
-function Options:set_current_script(item)
-    self._parent._current_script = item:SelectedItem()
-    self:GetPart("mission"):set_elements_vis()
 end
 
 function Options:draw_nav_segments(item)
@@ -437,103 +417,6 @@ function Options:save_cover_data(include)
     end
 end
 
-local navsurface_ids = Idstring("core/units/nav_surface/nav_surface")
-function Options:build_nav_segments() -- Add later the options to the menu
-    BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
-        self:save()
-        local settings = {}
-        local nav_surfaces = {}
-
-        local persons = managers.slot:get_mask("persons")
-
-        --first disable the units so the raycast will know.
-        for _, unit in pairs(World:find_units_quick("all")) do
-            local is_person = unit:in_slot(persons)
-            local ud = unit:unit_data()
-            if is_person or (ud and ud.disable_on_ai_graph) then
-                unit:set_enabled(false)
-                table.insert(self._disabled_units, unit)
-
-                if is_person then
-                    --Why are they active even though the main unit is disabled? Good question.
-                    if unit:brain() then
-                       unit:brain()._current_logic.update = nil
-                    end
-                    
-                    for _, extension in pairs(unit:extensions()) do
-                        unit:set_extension_update_enabled(extension:id(), false)
-                    end
-                end
-            elseif unit:name() == navsurface_ids then
-                table.insert(nav_surfaces, unit)
-            end
-        end
-
-        for _, unit in pairs(nav_surfaces) do
-            local ray = World:raycast(unit:position() + Vector3(0, 0, 50), unit:position() - Vector3(0, 0, 150), nil, managers.slot:get_mask("all"))
-            if ray and ray.position then
-                table.insert(settings, {
-                    position = unit:position(),
-                    id = unit:editor_id(),
-                    color = Color(),
-                    location_id = unit:ai_editor_data().location_id
-                })
-            end
-        end
-
-        if #settings > 0 then
-            managers.navigation:clear()
-            managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
-        else
-            if #nav_surfaces > 0 then
-                BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
-            else
-                BLE.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
-                local W = self:GetPart("world")
-                W:Switch()
-                if W._current_layer ~= "ai" then
-                    W:build_menu("ai")
-                end
-            end
-            self:reenable_disabled_units()
-        end
-    end)
-end
-
-function Options:reenable_disabled_units()
-    for _, unit in pairs(self._disabled_units) do
-        if alive(unit) then
-            unit:set_enabled(true)
-            if unit:in_slot(persons) then
-                for _, extension in pairs(unit:extensions()) do
-                    unit:set_extension_update_enabled(extension:id(), true)
-                end
-            end
-        end
-    end
-    self._disabled_units = {}
-end
-
-function Options:build_visibility_graph()
-    local all_visible = true
-    local exclude, include
-    if not all_visible then
-        exclude = {}
-        include = {}
-        for _, unit in ipairs(World:find_units_quick("all")) do
-            if unit:name() == Idstring("core/units/nav_surface/nav_surface") then
-                exclude[unit:unit_data().unit_id] = unit:ai_editor_data().visibilty_exlude_filter
-                include[unit:unit_data().unit_id] = unit:ai_editor_data().visibilty_include_filter
-            end
-        end
-    end
-    local ray_lenght = 150
-    managers.navigation:build_visibility_graph(function()
-        managers.groupai:set_state("none")
-    end, all_visible, exclude, include, ray_lenght)
-
-    self:save_nav_data()
-end
 
 function Options:open_in_explorer(world_path)
     Application:shell_explore_to_folder(string.gsub(world_path == true and self:map_world_path() or self:map_path(), "/", "\\"))

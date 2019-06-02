@@ -184,7 +184,7 @@ function SndLayer:build_unit_menu()
             sound_environment:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 			local environments = managers.sound_environment:environments()
 			self._effect = sound_environment:combobox("Effect", ClassClbk(self, "select_sound_environment"), managers.sound_environment:environments(), table.get_key(environments, managers.sound_environment:default_environment()))
-			self._use_environment = S:tickbox("UseEnvironment", ClassClbk(self, "toggle_use_environment"), true)
+			self._use_environment = sound_environment:tickbox("UseEnvironment", ClassClbk(self, "toggle_use_environment"), true)
 
 			local events = self:ambience_events()
 			self._ambience = sound_environment:combobox("Ambience", ClassClbk(self, "select_environment_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()))
@@ -351,7 +351,7 @@ function SndLayer:set_sound_environment_parameters()
 	if alive(self:selected_unit()) and self:selected_unit():name() == self._environment_unit:id() then
 		local area = self:selected_unit():unit_data().environment_area
 		if area then
-			area:create_panel(S)
+			area:create_panel(S, S:GetItem("Transform"))
 			self._effect:SetEnabled(true)
 			self._ambience:SetEnabled(true)
 			self._occasional:SetEnabled(true)
@@ -378,7 +378,7 @@ function SndLayer:set_sound_emitter_parameters()
 		if self:selected_unit():name() == self._area_emitter_unit:id() then
 			local area = self:selected_unit():unit_data().emitter
 			if area then
-				area:create_panel(S)
+				area:create_panel(S, S:GetItem("Transform"))
 			end
 		end
 	end

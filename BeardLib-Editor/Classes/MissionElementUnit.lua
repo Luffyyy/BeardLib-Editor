@@ -59,7 +59,7 @@ end
 
 function MissionElementUnit:update_text(t, dt)
 	if self.element and self._text and alive(self._text) then
-		self._text:set_text(tostring(self.element.editor_name) .. "\n" .. tostring(self.element.class):gsub("Element", ""))
+		self._text:set_text(tostring(self.element.editor_name) .. "\n" .. tostring(self.element.id) .. " - " .. tostring(self.element.class):gsub("Element", ""))
 	end
 end
 

@@ -17,7 +17,7 @@ function Part:init(parent, menu, name, opt, mopt)
         size = BLE.Options:GetValue("MapEditorFontSize"),
         auto_foreground = true,
         background_color = BLE.Options:GetValue("BackgroundColor"),
-       -- full_bg_color = BLE.Options:GetValue("BackgroundColor"),
+        full_bg_color = BLE.Options:GetValue("BackgroundColor"),
         scrollbar = false,
         visible = false,
         private = {offset = 0},

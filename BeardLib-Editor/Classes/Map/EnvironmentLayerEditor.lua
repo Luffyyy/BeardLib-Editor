@@ -335,20 +335,21 @@ function EnvLayer:build_unit_menu()
 			local area = unit:unit_data().environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
             local ctrls = self._environment_area_ctrls
-            local environment_area = S:group("Environment Area", {index = 1})
-		    S:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
+            local area_pan = S:group("Environment Area", {index = 1})
+		    area_pan:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 
             local env = area:environment() or managers.viewport:game_default_environment()
-		    ctrls.environment_path = environment_area:pathbox("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", {
+		    ctrls.environment_path = area_pan:pathbox("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", {
+				text = "Environment",
                 control_slice = 0.6,
 			})
-		    ctrls.transition_time = environment_area:numberbox("FadeTime", ClassClbk(self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
+		    ctrls.transition_time = area_pan:numberbox("FadeTime", ClassClbk(self, "set_transition_time"), area:transition_time() or managers.environment_area:default_transition_time(), {
                 floats = 2,
             })
-		    ctrls.prio = environment_area:numberbox("Prio", ClassClbk(self, "set_prio"), area:prio() or managers.environment_area:default_prio())
-		    ctrls.permanent_cb = environment_area:tickbox("Permanent", ClassClbk(self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT)
+		    ctrls.prio = area_pan:numberbox("Prio", ClassClbk(self, "set_prio"), area:prio() or managers.environment_area:default_prio())
+		    ctrls.permanent_cb = area_pan:tickbox("Permanent", ClassClbk(self, "set_permanent"), area:permanent() or self.ENABLE_PERMANENT)
 
-		    local env_filter = environment_area:divgroup("Filter", {align_method = "grid"})
+		    local env_filter = area_pan:divgroup("Filter", {align_method = "grid"})
 		    local filter_count = 0
 		    local filter_map = managers.viewport:get_predefined_environment_filter_map()
 		    local filter_list = area:filter_list()
@@ -358,13 +359,13 @@ function EnvLayer:build_unit_menu()
                 })
 		    end
 		    if area then
-		    	area:create_panel(S)
+		    	area:create_panel(S, S:GetItem("Transform"))
 		    end  
 		elseif unit:name() == self._dome_occ_shape_unit:id() then
 			S:SetTitle("Dome Occlusion Selection")
 			local area = unit:unit_data().occ_shape
 			if area then
-				area:create_panel(S)
+				area:create_panel(S, S:GetItem("Transform"))
 			end
 		end
 	end

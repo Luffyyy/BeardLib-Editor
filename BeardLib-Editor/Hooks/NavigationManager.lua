@@ -107,7 +107,7 @@ function NavigationManager:build_complete_clbk(draw_options)
 	if self._build_complete_clbk then
 		self._build_complete_clbk()
 	end
-	BLE.Utils:GetPart("opt"):reenable_disabled_units()
+	BLE.Utils:GetLayer("ai"):reenable_disabled_units()
 end
 
 local search = NavigationManager.search_coarse

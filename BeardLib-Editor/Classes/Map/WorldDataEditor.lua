@@ -22,8 +22,11 @@ function WData:enable()
     self:bind_opt("LoadUnitFromExtract", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit"}))
 end
 
-function WData:loaded_continents()
+function WData:loaded_continents(continents, current_continent)
     self:build_default_menu()
+
+    self:GetPart("mission"):set_elements_vis()
+
     for _, manager in pairs(self.layers) do
         if manager.loaded_continents then
             manager:loaded_continents()
@@ -166,7 +169,8 @@ function WData:build_default_menu()
     mng:s_btn("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
     mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
-	self:reset()
+    self:reset()
+    
     self:build_continents()
 end
 
@@ -188,6 +192,11 @@ function WData:build_continents()
     if managers.worlddefinition then
         local continents = self:group("Continents")
         local toolbar = continents:GetToolbar()
+        local all_continents = self._parent._continents
+        local all_scripts = table.map_keys(managers.mission._scripts)
+        self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, self._parent._current_continent) or 1)
+        self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, self._parent._current_script) or 1)    
+
         toolbar:sq_btn("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = continents:group(name, {text = name})
@@ -212,6 +221,15 @@ function WData:build_continents()
             end
         end
     end
+end
+
+function WData:set_current_script(item)
+    self._parent._current_script = item:SelectedItem()
+    self:GetPart("mission"):set_elements_vis()
+end
+
+function WData:set_current_continent(item) 
+    self._parent._current_continent = item:SelectedItem()
 end
 
 function WData:open_continent_settings(continent)
