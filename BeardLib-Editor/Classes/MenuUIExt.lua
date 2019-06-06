@@ -202,7 +202,9 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o.control_slice = 0.7
 	o.on_callback = callback
 	o.text = p.text or string.pretty2(name)
-	local t = p:textbox("path", nil, value, o)
+	local t = p:textbox("path", function()
+		p:RunCallback()
+	end, value, o)
 	o.text = "Browse " .. tostring(typ).."s"
 	o.offset = {t.offset[1] * 4, t.offset[2]}
 	o.on_callback = nil
@@ -218,15 +220,18 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 			list = list,
 			sort = o.sort_func == nil,
 			callback = function(path) 
-				t:SetValue(path, true)
+				p:SetValue(path, true)
 				if not o.not_close then
 					BeardLibEditor.ListDialog:Hide()
 				end
 			end
 		})
 	end, o)
-	function p:SetValue(...)
-		return t:SetValue(...)
+	function p:SetValue(val, run_callback)
+		t:SetValue(val, false)
+		if run_callback then
+			self:RunCallback()
+		end
 	end
 	function p:Value()
 		return t:Value()
