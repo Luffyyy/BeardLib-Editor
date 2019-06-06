@@ -200,7 +200,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid"}, o))
 	o = {}
 	o.control_slice = 0.7
-	o.on_callback = callback
+	p.on_callback = callback
 	o.text = p.text or string.pretty2(name)
 	local t = p:textbox("path", function()
 		p:RunCallback()
