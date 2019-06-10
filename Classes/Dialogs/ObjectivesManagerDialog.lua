@@ -17,6 +17,11 @@ function ObjectivesManagerDialog:init(params, menu)
     ItemExt:add_funcs(self)
 end
 
+function ObjectivesManagerDialog:Destroy()
+    ObjectivesManagerDialog.super.Destroy(self)
+    self._settings:Destroy()
+end
+
 function ObjectivesManagerDialog:_Show()
     if not self.super._Show(self, {yes = false}) then
         return

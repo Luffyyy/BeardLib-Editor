@@ -739,6 +739,11 @@ function Static:check_unit_ok(unit)
     end
 end
 
+function Static:set_selected_units(units)
+    self._selected_units = units
+    self:set_selected_unit()
+end
+
 function Static:reset_selected_units()
     self:GetPart("mission"):remove_script()
     self:GetPart("world"):reset_selected_units()

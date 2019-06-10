@@ -24,7 +24,7 @@ Hooks:PostHook(GameSetup, "load_packages", "BeardLibEditorLoadPackages", functio
 end)
 
 Hooks:PostHook(GameSetup, "destroy", "BeardLibEditorDestroy",function()
-	if managers.editor then
-		managers.editor:destroy()
+	if alive(BLE._vp) then
+		BLE._vp:destroy()
 	end
 end)

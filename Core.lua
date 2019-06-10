@@ -12,6 +12,7 @@ function BLE:Init()
 	self.HooksDirectory =  Path:CombineDir(self.ModPath, "Hooks")
 	self.ClassDirectory =  Path:CombineDir(self.ModPath, "Classes")
 	self.DataDirectory = Path:CombineDir(self.ModPath, "Data")
+	self.DialogsDirectory = Path:CombineDir(self.ClassDirectory, "Dialogs")
 	self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
@@ -22,6 +23,24 @@ end
 
 function BLE:RunningFix()
     return self.HasFix
+end
+
+function BLE:Dofiles(path)
+    for _, file in pairs(FileIO:GetFiles(path)) do
+        dofile(Path:Combine(path,file))
+    end
+end
+
+function BLE:MapEditorCodeReload()
+    self:Dofiles(self.ClassDirectory)
+    self:Dofiles(self.MapClassesDir)
+    self:Dofiles(self.DialogsDirectory)
+    local enabled = self.MapEditor:enabled()
+    table.delete(self.Updaters, self.MapEditor)
+    local data = self.MapEditor:destroy()
+    self.MapEditor = MapEditor:new(data)
+    table.insert(self.Updaters, self.MapEditor)
+    self.MapEditor:set_enabled(enabled)
 end
 
 function BLE:InitManagers()
@@ -41,7 +60,22 @@ function BLE:InitManagers()
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
        
     if Global.editor_mode then
+        self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
+        self._camera_object = World:create_camera()
+        self._camera_object:set_near_range(20)
+        self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
+        self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
+        self._camera_object:set_position(Vector3(864, -789, 458))
+        self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
+        self._vp:set_camera(self._camera_object)
+    
         self.MapEditor = MapEditor:new()
+        if FileIO:Exists("mods/developer.txt") then --Code refresh is only for developers!
+            self.FileWatcher = FileWatcher:new(Path:Combine(self.ClassDirectory), {
+                callback = ClassClbk(self, "MapEditorCodeReload"),
+                scan_t = 0.5
+            })
+        end
         table.insert(self.Updaters, self.MapEditor)
     end
 
@@ -317,6 +351,9 @@ function BLE:Update(t, dt)
             manager:update(t, dt)
         end
     end
+    if self.FileWatcher then
+        self.FileWatcher:Update(t, dt)
+    end
 end
 
 function BLE:PausedUpdate(t, dt)
@@ -324,6 +361,9 @@ function BLE:PausedUpdate(t, dt)
         if manager.paused_update then
             manager:paused_update(t, dt)
         end
+    end
+    if self.FileWatcher then
+        self.FileWatcher:Update(t, dt)
     end
 end
 

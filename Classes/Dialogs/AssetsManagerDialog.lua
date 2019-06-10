@@ -28,19 +28,28 @@ function AssetsManagerDialog:init(params, menu)
         w = 800,
         h = 600,
         position = function(item)
-            item:SetPositionByString("Center")
-            item:Panel():move(-self._unit_info:Width() / 2)
+            if alive(self._unit_info) then
+                item:SetPositionByString("Center")
+                item:Panel():move(-self._unit_info:Width() / 2)
+            end
         end,
         auto_height = false,
         items_size = 20,
     }, params), menu)
     self._unit_info:SetPosition(function(item)
-        item:Panel():set_lefttop(self._menu:Panel():righttop())
+        if alive(self._menu) then
+            item:Panel():set_lefttop(self._menu:Panel():righttop())
+        end
     end)
     self._menus = {self._unit_info}
     ItemExt:add_funcs(self)
     self._unready_assets = {}
     self._export_dialog = ExportDialog:new(BLE._dialogs_opt)
+end
+
+function AssetsManagerDialog:Destroy()
+    AssetsManagerDialog.super.Destroy(self)
+    self._export_dialog:Destroy()
 end
 
 function AssetsManagerDialog:_Show()

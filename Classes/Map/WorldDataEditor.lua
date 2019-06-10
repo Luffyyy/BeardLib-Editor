@@ -12,6 +12,12 @@ end
 
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
+function WData:destroy()
+    self._continent_settings:Destroy()
+    self._assets_manager:Destroy()
+    self._objectives_manager:Destroy()
+end
+
 function WData:enable()
     WData.super.enable(self)
     self:bind_opt("SpawnUnit", ClassClbk(self, "OpenSpawnUnitDialog"))
@@ -189,10 +195,10 @@ end
 --Continents
 function WData:build_continents()
     local tx = "textures/editor_icons_df"
-    if managers.worlddefinition then
+    local all_continents = self._parent._continents
+    if all_continents then
         local continents = self:group("Continents")
         local toolbar = continents:GetToolbar()
-        local all_continents = self._parent._continents
         local all_scripts = table.map_keys(managers.mission._scripts)
         self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, self._parent._current_continent) or 1)
         self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, self._parent._current_script) or 1)    

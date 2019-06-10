@@ -114,6 +114,7 @@ function UpperMenu:Switch(manager)
         self._parent._current_menu:SetVisible(false)
     end
     self._parent._current_menu = menu
+    self._parent._current_menu_name = item.name
     menu:SetVisible(true)
     self:move_line_to(item)
 end
