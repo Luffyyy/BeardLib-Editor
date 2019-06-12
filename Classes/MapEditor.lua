@@ -537,7 +537,7 @@ function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value
 function Editor:destroy()
     local scroll_y_tbl = {}
     for name, manager in pairs(self.parts) do
-        if manager._holder then
+        if alive(manager._holder) then
             scroll_y_tbl[name] = manager._holder.items_panel:y()
         end
         if manager.destroy then

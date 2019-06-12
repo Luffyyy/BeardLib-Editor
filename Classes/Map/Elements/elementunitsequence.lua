@@ -72,15 +72,19 @@ end
 
 function EditorUnitSequence:_build_panel()
 	self:_create_panel()
-	self:BooleanCtrl("only_for_local_player")
-	self:BuildUnitsManage("trigger_list", {
-		key = "notify_unit_id", values_name = "Sequence To Trigger", value_key = "notify_unit_sequence", orig = {notify_unit_id = 0, name = "run_sequence", notify_unit_sequence = "", time = 0}, combo_items_func = function(name, value)
-			local unit_name = value.unit:name() or ""
-			local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
-			return sequences
-		end 
+    self:BooleanCtrl("only_for_local_player")
+    self:BuildUnitsManage("trigger_list", {
+        key = "notify_unit_id", orig = {notify_unit_id = 0, name = "run_sequence", notify_unit_sequence = "", time = 0}, 
+        values = {
+            {name = "Sequence to Trigger", key = "notify_unit_sequence"},
+            {name = "Time To Trigger", key = "time"}
+        },
+        combo_items_func = function(name, entry, i)
+            if i == 1 then
+                local unit_name = entry.unit:name() or ""
+                local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
+                return sequences
+            end
+		end
 	}, self._draw.update_units, {text = "Manage trigger list"})
-	self:BuildUnitsManage("trigger_list", {
-		key = "notify_unit_id", values_name = "Time To Trigger", value_key = "time", orig = {notify_unit_id = 0, name = "run_sequence", notify_unit_sequence = "", time = 0}
-	}, self._draw.update_units, {text = "Manage trigger list / trigger time"})
 end

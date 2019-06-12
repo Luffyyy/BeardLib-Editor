@@ -68,10 +68,9 @@ function ContinentSettingsDialog:hide(success)
                 end
             end
         end
-    end    
-    
-    managers.editor:load_continents(worlddef._continent_definitions)
-
+        
+        managers.editor:load_continents(worlddef._continent_definitions)        
+    end
     self._new_name = nil
     self._current = nil
 

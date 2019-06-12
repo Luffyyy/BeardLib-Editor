@@ -51,6 +51,9 @@ function EditorInstanceInputEvent:_draw_instance_link(instance_name)
 end
 
 function EditorInstanceInputEvent:update(t, dt, instance_name)
+	if not alive(self._unit) then
+		return
+	end
 	local r, g, b = self._unit:mission_element()._color:unpack()
 	for i, data in ipairs(self._element.values.event_list) do
 		if not self:_draw_instance_link(data.instance) then
@@ -71,7 +74,7 @@ end
 function EditorInstanceInputEvent:_build_panel()
     self:_create_panel()
     self:BuildInstancesManage("event_list", {values_name = "Event", value_key = "event", default_value = "none", key = "instance", orig = {instance = "", event = "none"}, combo_items_func = function(name)
-        return self:_get_events(name)
+		return self:_get_events(name)
     end})
 end
 

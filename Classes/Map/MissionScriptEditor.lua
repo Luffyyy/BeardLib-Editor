@@ -109,22 +109,19 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
     self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
-	local on_exec = {values_name = "Delay", value_key = "delay", default_value = 0, key = "id", orig = {id = 0, delay = 0}}
+	local on_exec = {values = {{name = "Delay", key = "delay"}}, key = "id", orig = {id = 0, delay = 0}}
+	if self.ON_EXECUTED_ALTERNATIVES then
+		on_exec.orig.alternative = "none"
+		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
+		table.insert(alts, "none")
+		on_exec.combo_items_func = function() return alts end 
+		table.insert(on_exec.values, {name = "Alternative", key = "alternative"})
+	end
 	self:BuildElementsManage("on_executed", on_exec, nil, ClassClbk(self, "get_on_executed_units"), {
 		group = self._main_group, help = "This list contains elements that this element will execute."
 	})
 	if self.USES_POINT_ORIENTATION then
 		self:BuildElementsManage("orientation_elements")
-	end
-	if self.ON_EXECUTED_ALTERNATIVES then
-		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
-		table.insert(alts, "none")
-		on_exec = clone(on_exec)
-		on_exec.values_name = "Alternative"
-		on_exec.value_key = "alternative"
-		on_exec.default_value = "none"
-		on_exec.combo_items_func = function() return alts end 
-		self:BuildElementsManage("on_executed", on_exec, nil, nil, {text = "Manage On Executed list / Alternative"})
 	end
 end
 
@@ -172,6 +169,10 @@ function MissionScriptEditor:update_draw_units(draw)
 end
 
 function MissionScriptEditor:update(t, dt)
+	if not alive(self._unit) then
+		return
+	end
+	
 	self:draw_links()
 	for _, draw in pairs(self._draw_units) do
 		for id, unit in pairs(draw.units) do
@@ -435,36 +436,39 @@ end
 
 function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
     local current_list = self._element.values[params.value_name] or {}
-    self._element.values[params.value_name] = not params.not_table and {} or nil
-    for _, data in pairs(final_selected_list) do
+	self._element.values[params.value_name] = not params.not_table and {} or nil
+	local tdata = params.table_data
+    for i, data in pairs(final_selected_list) do
         local id
-        local value
+        local values
         if type(data) == "table" then
             local unit = data.unit
             local element = data.element
             local instance = data.instance
             id = (unit and (params.need_name_id and unit:unit_data().name_id or unit:unit_data().unit_id)) or instance or element and element.id
-            value = data.value
-        else
+			values = data.values
+		else
             id = data
-        end
-        if params.table_data then           
+		end
+        if tdata then           
 			local add = data.orig_tbl
             if not add then
-                add = clone(params.table_data.orig)
-                add[params.table_data.key] = id
+				add = clone(tdata.orig)
+				add[tdata.key] = id
             end
-            if value and params.table_data.value_key then
-                add[params.table_data.value_key] = value
+			if values and tdata.values then
+				for i, value in pairs(tdata.values) do
+					add[value.key] = values[i]
+				end
             end
             if params.not_table then
             	self._element.values[params.value_name] = add
-            else
+			else
             	table.insert(self._element.values[params.value_name], add)
             end
         elseif params.not_table then
         	self._element.values[params.value_name] = id
-        else
+		else
             table.insert(self._element.values[params.value_name], id)
         end
     end
@@ -475,158 +479,140 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
 end
 
 function MissionScriptEditor:OpenElementsManageDialog(params)
-    local selected_list = {}
-    local list = {}
-    local current_list = self._element.values[params.value_name] or {}
-    current_list = type(current_list) ~= "table" and {current_list} or current_list
-    for _, script in pairs(managers.mission._missions) do
+	local elements = {}
+	for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
-                for i, element in pairs(tbl.elements) do
+                for _, element in pairs(tbl.elements) do
                     if element.id ~= self._element.id then
-                        local data = {
-                            name =  element.editor_name .. " - " .. element.class:gsub("Element", "") .. " [" .. element.id .."]",
-                            element = element,
-                        }
-                        if params.table_data then
-                            for _, v in pairs(current_list) do
-                                if type(v) == "table" and v[params.table_data.key] == element.id then
-									if params.table_data.value_key then
-										data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
-									else
-										data.value = nil
-									end
-									data.orig_tbl = v
-									table.insert(selected_list, clone(data or {}))
-                                end
-                            end
-                        elseif table.contains(current_list, element.id) then 
-							table.insert(selected_list, data)
-                        end
-                        if not params.classes or table.contains(params.classes, element.class) then
-                            if params.table_data and params.table_data.value_key then
-                                data.value = params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
-							end
-							data.orig_tbl = nil
-                            table.insert(list, data)
-                        end
-                    end
-                end
-            end
-        end
-    end
-    BeardLibEditor.SelectDialogValue:Show({
-        selected_list = selected_list,
-        list = list,
-        values_name = params.table_data and params.table_data.values_name,
-		combo_items_func = params.table_data and params.table_data.combo_items_func,
-		single_select = params.single_select,
-		combo_free_typing = true,
-        allow_multi_insert = NotNil(params.allow_multi_insert, true),
-        not_table = params.not_table,
-        callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
-    })
-    self:update_element()
+						table.insert(elements, element)
+					end
+				end
+			end
+		end
+	end
+
+	self:OpenManageListDialog(params, elements, 
+		function(element)
+			return element.editor_name .. " - " .. element.class:gsub("Element", "") .. " [" .. element.id .."]"
+		end,
+		function(element)
+			return not params.classes or table.contains(params.classes, element.class)
+		end
+	)
 end
 
 function MissionScriptEditor:OpenUnitsManageDialog(params)
+	self:OpenManageListDialog(params, managers.worlddefinition._all_units, 
+		function(unit)
+			local ud = unit:unit_data()
+			local groups = self:part("static"):get_groups_from_unit(unit)
+			local groups_str
+			if next(groups) then
+				groups_str = "Groups: "
+				for i, grp in ipairs(groups) do
+					groups_str = groups_str .. grp.name .. (i < #groups and "|" or "")
+				end
+			end
+
+			return string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or "")
+		end,
+		function(element)
+			return not params.classes or table.contains(params.classes, element.class)
+		end
+	)
+end
+
+function MissionScriptEditor:OpenInstancesManageDialog(params)
+	self:OpenManageListDialog(params, managers.world_instance:instance_names_by_script(self._element.script), 
+		function(instance) return instance end,
+		function(element) return true end
+	)
+end
+
+local UNIT = "unit"
+local INSTANCE = "instance"
+local ELEMENT = "element"
+
+function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, check_object)
 	local selected_list = {}
 	local list = {}
 	local current_list = self._element.values[params.value_name] or {}
 	current_list = type(current_list) ~= "table" and {current_list} or current_list
-    for k, unit in pairs(managers.worlddefinition._all_units) do
-    	if alive(unit) then
-	 		local ud = unit:unit_data()
-			 if ud and not ud.instance then
-				
-				local groups = self:part("static"):get_groups_from_unit(unit)
-				local groups_str
-				if next(groups) then
-					groups_str = "Groups: "
-					for i, grp in ipairs(groups) do
-						groups_str = groups_str .. grp.name .. (i < #groups and "|" or "")
-					end
-				end
+	local tdata = params.table_data
+	if tdata and tdata.values_name then
+		tdata.values = {{name = tdata.values_name, key = tdata.value_key}}
+	end
+	local is_unit
+	local is_instance
+	local obj = objects[1]
+	local object_id_key
+	if obj and obj.unit_data then
+		if obj:unit_data().instance then
+			is_instance = true
+		end
+		is_unit = true
+	end
+	for k, object in pairs(objects) do
+		if (not is_unit or alive(object)) and (not is_instance or object.unit_data and object:unit_data().instance) then
+			local id
+			local object_key = UNIT
+			if is_instance then
+				entry.instance = instance
+				id = object
+				object_key = INSTANCE
+			elseif is_unit then
+				id = object:unit_data().unit_id
+			else
+				object_key = ELEMENT
+				id = object.id
+			end
+			local entry = {name = name_func(object), [object_key] = object}
 
-				local data = {
-					name = string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or ""),
-					unit = unit,
-				}
-				if params.table_data then
-					for _, v in pairs(current_list) do
-						if type(v) == "table" and v[params.table_data.key] == ud.unit_id then
-							if params.table_data.value_key then
-								data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
-							else
-								data.value = nil
-							end
-							data.orig_tbl = v
-							table.insert(selected_list, clone(data or {}))
+			--Adding units which are selected.
+			if tdata then
+				for _, element_v in pairs(current_list) do
+					if type(element_v) == "table" and element_v[tdata.key] == id then
+						if #tdata.values > 0 then
+							entry.values = {}
 						end
+						for _, value in pairs(tdata.values) do
+							table.insert(entry.values, element_v[value.key] or tdata.orig[value.key] or tdata.default_value)
+						end
+						entry.orig_tbl = element_v
+						table.insert(selected_list, clone(entry))
 					end
-				elseif table.contains(current_list, ud.unit_id) then
-					table.insert(selected_list, data)
 				end
-				if (not params.units or table.contains(params.units, ud.name)) and (not params.check_unit or params.check_unit(unit)) then
-					if params.table_data and params.table_data.value_key then
-						data.value = params.table_data.orig[params.table_data.value_key] or params.table_data.default_value
+			elseif table.contains(current_list, id) then
+				table.insert(selected_list, entry)
+			end
+
+			--Adding all units to be selectable.
+			if check_object(object) then
+				if tdata and tdata.values then
+					if #tdata.values > 0 then
+						entry.values = {}
 					end
-					data.orig_tbl = nil
-					table.insert(list, data)
+					for _, value in pairs(tdata.values) do
+						table.insert(entry.values, tdata.orig[value.key] or tdata.default_value)
+					end
 				end
+				entry.orig_tbl = nil
+				table.insert(list, entry)
 			end
 	 	end
-    end
+	end
+	
 	BeardLibEditor.SelectDialogValue:Show({
 	    selected_list = selected_list,
-	    list = list,
-		values_name = params.table_data and params.table_data.values_name,
-		combo_items_func = params.table_data and params.table_data.combo_items_func,
+		list = list,
+		entry_values = tdata and tdata.values,
+		combo_items_func = tdata and tdata.combo_items_func,
 		allow_multi_insert = NotNil(params.allow_multi_insert, true),
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
 		combo_free_typing = true,
 		not_table = params.not_table,
-		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
-	})
-	self:update_element()
-end
-
-function MissionScriptEditor:OpenInstancesManageDialog(params)
-	local selected_list = {}
-	local list = {}
-	local current_list = self._element.values[params.value_name] or {}
-	current_list = type(current_list) ~= "table" and {current_list} or current_list
-    for k, instance in pairs(managers.world_instance:instance_names_by_script(self._element.script)) do
- 		local data = {
-	   		name = instance,
-	   		instance = instance,
- 		}
-		if params.table_data then
-			for _, v in pairs(current_list) do
-				if type(v) == "table" and v[params.table_data.key] == instance then
-                    if params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-                        data.value = v[params.table_data.value_key] or params.table_data.orig[params.table_data.value_key]
-                    end
-			 		table.insert(selected_list, data)
-				end
-			end
-		else
-			if table.contains(current_list, data) then
-				table.insert(selected_list, data)
-			end
-		end
-        if params.table_data and params.table_data.value_key and params.table_data.orig[params.table_data.value_key] then
-            data.value = data.value or params.table_data.orig[params.table_data.value_key]
-        end
-		table.insert(list, data)
-	end
-	BeardLibEditor.SelectDialogValue:Show({
-		selected_list = selected_list,
-		list = list,
-		combo_free_typing = true,
-		values_name = params.table_data and params.table_data.values_name,
-		combo_items_func = params.table_data and params.table_data.combo_items_func,
 		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
 	})
 	self:update_element()

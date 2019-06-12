@@ -60,6 +60,9 @@ function EditorAreaTrigger:get_shape()
 end
 
 function EditorAreaTrigger:update(t, dt)
+	if not alive(self._unit) then
+		return
+	end
     if not self._element.values.use_shape_element_ids then
         local shape = self:get_shape()
         if shape then
