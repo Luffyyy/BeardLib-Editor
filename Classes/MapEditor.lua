@@ -62,7 +62,7 @@ function Editor:init(data)
             self.parts.static:set_selected_units(data.selected_units)
         end
         if data.last_menu then
-            self.parts[data.last_menu]:Switch()
+            self.parts[data.last_menu]:Switch(true)
         end
         if data.particle_editor_active then
             self.parts.env:open_effect_editor()
@@ -72,7 +72,7 @@ function Editor:init(data)
                 self.parts[name]._holder:SetScrollY(y)        
             end
         end
-        if data.enabld then
+        if data.enabled then
             self:set_enabled(true)
         end
     end

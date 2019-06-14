@@ -13,9 +13,11 @@ end
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
 function WData:destroy()
-    self._continent_settings:Destroy()
-    self._assets_manager:Destroy()
-    self._objectives_manager:Destroy()
+    if self._continent_settings then
+        self._continent_settings:Destroy()
+        self._assets_manager:Destroy()
+        self._objectives_manager:Destroy()
+    end
 end
 
 function WData:enable()

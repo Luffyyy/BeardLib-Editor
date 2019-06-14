@@ -500,7 +500,9 @@ function Utils:GetEntries(params)
 
     for entry in pairs(BLE.DBPaths[params.type]) do
         if (not params.loaded or IsLoaded(entry)) and (not params.check or params.check(entry)) then
-            table.insert(entries, filenames and Path:GetFileName(entry) or entry)
+            if not params.match or string.find(entry, params.match) ~= nil then
+                table.insert(entries, filenames and Path:GetFileName(entry) or entry)
+            end
         end
     end
     return entries

@@ -108,9 +108,9 @@ function Part:init_basic(parent, name)
     self._shape_controls = {"width", "height", "depth", "radius"}
 end
 
-function Part:Switch()
+function Part:Switch(no_anim)
     if self:GetPart("menu"):is_tab_enabled(self.manager_name) then
-        self:GetPart("menu"):Switch(self)
+        self:GetPart("menu"):Switch(self, no_anim)
     end
 end
 function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_dialogs) end

@@ -217,27 +217,31 @@ local function check_slot(slot, unit)
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
-	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid"}, o))
+	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid", text = o.text or string.pretty2(name)}, o))
 	o = {}
-	o.control_slice = 0.7
+	o.offset = 0
+	o.control_slice = p.control_slice or 0.7
 	p.on_callback = callback
-	o.text = p.text or string.pretty2(name)
+	o.text = p.text
 	local t = p:textbox("path", function()
 		p:RunCallback()
 	end, value, o)
+	if p.disable_input then
+		t.divider_type = true
+	end
 	o.text = "Browse " .. tostring(typ).."s"
-	o.offset = {t.offset[1] * 4, t.offset[2]}
+	o.offset = {p.offset[1] * 4, p.offset[2]}
 	o.on_callback = nil
 	o.on_callback = p.btn_callback
 	local btn = p:button("select_button", function()
-		local list = BeardLibEditor.Utils:GetEntries({
+		local list = not p.custom_list and BeardLibEditor.Utils:GetEntries({
 			type = typ, loaded = NotNil(o.loaded, typ ~= "texture"), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
 		end
-		   BeardLibEditor.ListDialog:Show({
-			list = list,
+		BeardLibEditor.ListDialog:Show({
+			list = p.custom_list or list,
 			sort = o.sort_func == nil,
 			callback = function(path) 
 				p:SetValue(path, true)
@@ -437,7 +441,7 @@ end
 for n, item in pairs(C) do
 	if n ~= "ContextMenu" then
 		for n, func in pairs(ItemExt) do
-			item[n] = item[n] or func
+			item[n] = func
 		end
 	end
 end

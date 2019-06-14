@@ -106,7 +106,7 @@ function UpperMenu:update_toggle(item)
     item:SetEnabled(item.enabled)
 end
 
-function UpperMenu:Switch(manager)
+function UpperMenu:Switch(manager, no_anim)
     local item = self:GetItem(manager.manager_name)
     local menu = manager._menu
 
@@ -116,14 +116,19 @@ function UpperMenu:Switch(manager)
     self._parent._current_menu = menu
     self._parent._current_menu_name = item.name
     menu:SetVisible(true)
-    self:move_line_to(item)
+    self:move_line_to(item, no_anim)
 end
 
-function UpperMenu:move_line_to(item)
+function UpperMenu:move_line_to(item, no_anim)
     if not alive(item) then
         return
     end
-    play_value(self._line, "x", item:X())
+    if no_anim then
+        self._line:stop()
+        self._line:set_x(item:X())
+    else
+        play_value(self._line, "x", item:X())
+    end
 end
 
 function UpperMenu:save()
