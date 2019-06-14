@@ -72,6 +72,9 @@ function Editor:init(data)
                 self.parts[name]._holder:SetScrollY(y)        
             end
         end
+        if data.enabld then
+            self:set_enabled(true)
+        end
     end
 end
 
@@ -552,6 +555,7 @@ function Editor:destroy()
     self._menu:Destroy()
     local selected_units = self:selected_units()
     return {
+        enabled = self._enabled,
         last_menu = self._current_menu_name,
         selected_units = #selected_units > 0 and selected_units or nil,
         particle_editor_active = self._particle_editor_active,

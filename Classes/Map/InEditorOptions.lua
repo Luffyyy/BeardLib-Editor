@@ -24,7 +24,7 @@ function Options:build_default_menu()
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     if not BeardLib.current_level then
-        main:textbox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.game_settings.level_id or ""))
+        main:textbox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.current_level_id or ""))
     end
     main:numberbox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Val("AutoSaveMinutes"), {help = "Set the time for auto saving"})
     main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Val("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
@@ -343,7 +343,7 @@ function Options:save_main_xml(include)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
-        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(data, Global.current_level_id)
         local temp = include and table.list_add(include, clone(level.include)) or level.include
         level.include = {directory = level.include.directory}
         for i, include_data in ipairs(temp) do

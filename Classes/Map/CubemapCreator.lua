@@ -13,8 +13,8 @@ end
 function CubemapCreator:_init_paths()
 	-- need to encase it in ""
 	self._gen_path = string.format("\"%s\"", Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.py"))
-	self._cubelights_path = "levels/mods/" .. Global.game_settings.level_id .. "/cube_lights"
-	self._cubemaps_path = "levels/mods/" .. Global.game_settings.level_id .. "/cubemaps"
+	self._cubelights_path = "levels/mods/" .. Global.current_level_id .. "/cube_lights"
+	self._cubemaps_path = "levels/mods/" .. Global.current_level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
 	FileIO:MakeDir(self._temp_path)
 end
@@ -622,7 +622,7 @@ function CubemapCreator:_move_output(output_path)
 
 	-- Updating Add.xml
 	local file_path = Path:Combine(self._params.output_path, tostring(self._params.output_name))
-	local xml_path = Path:Combine(map_path, "levels", Global.game_settings.level_id, "add.xml")
+	local xml_path = Path:Combine(map_path, "levels", Global.current_level_id, "add.xml")
 	local add = FileIO:ReadScriptData(xml_path, "custom_xml")
 	for _, tbl in pairs(add) do
 		if tbl.path == file_path then 

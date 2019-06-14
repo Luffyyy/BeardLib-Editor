@@ -31,7 +31,7 @@ function ObjectivesManagerDialog:_Show()
     local project = BeardLibEditor.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
-        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(data, Global.current_level_id)
         local sdm = level.script_data_mods
         if sdm then
             for _, mod in pairs(sdm) do

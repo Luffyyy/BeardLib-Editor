@@ -47,6 +47,14 @@ function SConverter:init()
     self:CreateRootItems()
 end
 
+function SConverter:Load(data)
+    
+end
+
+function SConverter:Destroy()
+    return {}
+end
+
 function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
     if not from_i or not to_i then
         return

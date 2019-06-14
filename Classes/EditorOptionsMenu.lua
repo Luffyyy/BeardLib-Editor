@@ -48,6 +48,14 @@ function Options:init()
 	self:button("ResetOptions", ClassClbk(self, "reset_options"))
 end
 
+function Options:Load(data)
+    
+end
+
+function Options:Destroy()
+    return {}
+end
+
 function Options:set_item_value(name, value)
 	self:GetItem(name):SetValue(value, true)
 end

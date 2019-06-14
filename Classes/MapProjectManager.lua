@@ -32,13 +32,21 @@ function Project:init()
     self:set_edit_title()
 end
 
+function Project:Load(data)
+    
+end
+
+function Project:Destroy()
+    return {}
+end
+
 function Project:ReadConfig(file)
     return FileIO:ReadScriptData(file, CXML, true)
 end
 
 function Project:current_level(data)
-    for _, level in pairs(XML:GetNodes(data, "level")) do
-        if level.id == Global.game_settings.level_id then
+    for _, level in pairs(XML:GetNodes(data, Global.editor_loaded_instance and "instance" or "level")) do
+        if level.id == Global.current_level_id then
             return level
         end
     end
@@ -117,7 +125,7 @@ function Project:get_packages_of_level(level)
 end
 
 function Project:get_level_by_id(t, id)
-    for _, level in pairs(XML:GetNodes(t, "level")) do
+    for _, level in pairs(XML:GetNodes(t, Global.editor_loaded_instance and "instance" or "level")) do
         if level.id == id then
             return level
         end
@@ -370,6 +378,40 @@ function Project:do_reload_mod(old_name, name, save_prev)
     end
 end
 
+function Project:save_current_project(mod)
+    local t = self._current_data
+    local id = t.orig_id or t.name
+    local map_path = Path:Combine(BeardLib.config.maps_dir, id)
+    local levels = XML:GetNodes(t, "level")
+    local something_changed
+    for _, level in pairs(levels) do
+        if level.orig_id then
+            local include_dir = Path:Combine("levels", level.id)
+            level.include.directory = include_dir
+            if level.add.file then
+                level.add.file = Path:Combine(include_dir, "add.xml")
+            end
+            FileIO:MoveTo(Path:Combine(map_path, "levels", level.orig_id), Path:Combine(map_path, include_dir))
+            tweak_data.levels[level.orig_id] = nil
+            table.delete(tweak_data.levels._level_index, level.orig_id)
+            level.orig_id = nil
+            something_changed = true
+        end
+    end
+    t.orig_id = nil
+    FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, CXML, true))
+    mod._clean_config = t
+    if t.name ~= id then
+        tweak_data.narrative.jobs[id] = nil
+        table.delete(tweak_data.narrative._jobs_index, id)
+        FileIO:MoveTo(map_path, Path:Combine(BeardLib.config.maps_dir, t.name))
+        something_changed = true
+    end
+    if something_changed then
+        self:do_reload_mod(id, t.name)
+    end
+end
+
 function Project:_select_project(mod, save_prev)
     if save_prev then
         local save = self:GetItem("Save")
@@ -379,39 +421,7 @@ function Project:_select_project(mod, save_prev)
     end
     self._current_mod = mod
     BLE.ListDialog:hide()
-    self:edit_main_xml(self:get_clean_config(mod, true), function()        
-        local t = self._current_data
-        local id = t.orig_id or t.name
-        local map_path = Path:Combine(BeardLib.config.maps_dir, id)
-        local levels = XML:GetNodes(t, "level")
-        local something_changed
-        for _, level in pairs(levels) do
-            if level.orig_id then
-                local include_dir = Path:Combine("levels", level.id)
-                level.include.directory = include_dir
-                if level.add.file then
-                    level.add.file = Path:Combine(include_dir, "add.xml")
-                end
-                FileIO:MoveTo(Path:Combine(map_path, "levels", level.orig_id), Path:Combine(map_path, include_dir))
-                tweak_data.levels[level.orig_id] = nil
-                table.delete(tweak_data.levels._level_index, level.orig_id)
-                level.orig_id = nil
-                something_changed = true
-            end
-        end
-        t.orig_id = nil
-        FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(t, CXML, true))
-        mod._clean_config = t
-        if t.name ~= id then
-            tweak_data.narrative.jobs[id] = nil
-            table.delete(tweak_data.narrative._jobs_index, id)
-            FileIO:MoveTo(map_path, Path:Combine(BeardLib.config.maps_dir, t.name))
-            something_changed = true
-        end
-        if something_changed then
-            self:do_reload_mod(id, t.name)
-        end
-    end)
+    self:edit_main_xml(self:get_clean_config(mod, true), ClassClbk(self, "save_current_project", mod))
 end
 
 function Project:new_project_dialog(name, clbk, no_callback)
@@ -448,6 +458,7 @@ function Project:delete_level_dialog_clbk(level)
     end
     local chain = XML:GetNode(self._current_data, "narrative").chain
     local level_id = type(level) == "table" and level.id or level
+
     for k, v in ipairs(chain) do
         if success then
             break
@@ -477,7 +488,7 @@ function Project:delete_level_dialog_clbk(level)
     if save then
 		save:RunCallback()
     end   
-    self:do_reload_mod(t.name, t.name, true)
+    self:do_reload_mod(t.name, t.name)
 end
 
 function Project:create_new_level(name)
@@ -648,17 +659,19 @@ function Project:edit_main_xml(data, save_clbk)
         local my_index = table.get_key(narr_chain, level_in_chain)
 
         local tx = "textures/editor_icons_df"
-
+        local toolbar = btn
         if level_in_chain.level_id then
             btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
             if chain_group then
                 btn:tb_imgbtn("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {highlight_color = Color.red})
             else
                 btn:tb_imgbtn("Group", ClassClbk(self, "group_level", narr, level_in_chain), tx, EU.EditorIcons["plus"], {highlight_color = Color.red})
-            end        
+            end
+        else
+            toolbar = btn:GetToolbar()
         end
-        btn:tb_imgbtn("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), tx, EU.EditorIcons["arrow_down"], {highlight_color = Color.red, enabled = my_index < #narr_chain})
-        btn:tb_imgbtn("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), tx, EU.EditorIcons["arrow_up"], {highlight_color = Color.red, enabled = my_index > 1})
+        toolbar:tb_imgbtn("MoveDown", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index + 1), tx, EU.EditorIcons["arrow_down"], {highlight_color = Color.red, enabled = my_index < #narr_chain})
+        toolbar:tb_imgbtn("MoveUp", ClassClbk(self, "set_chain_index", narr_chain, level_in_chain, my_index - 1), tx, EU.EditorIcons["arrow_up"], {highlight_color = Color.red, enabled = my_index > 1})
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
@@ -883,7 +896,7 @@ end
 
 function Project:group_level(narr, level_in_chain)
     local chain = {}
-    for i, v in pairs(narr.chain) do
+    for i, v in ipairs(narr.chain) do
         if v ~= level_in_chain then
             table.insert(chain, {name = v.level_id or "Day "..tostring(i).."[Grouped]", value = v})
         end

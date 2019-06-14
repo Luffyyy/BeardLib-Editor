@@ -411,7 +411,7 @@ function Static:set_unit_data()
         local i = 0
         for _, unit in pairs(self._selected_units) do
 			local ud = unit:unit_data()
-            if alive(unit) and not unit:mission_element() then
+            if alive(unit) and ud.unit_id then
                 i = i + 1
                 self:set_unit_simple_values(unit)
                 self:set_unit_continent(unit, ud.continent, self:GetItem("Continent"):SelectedItem(), true)
@@ -1253,7 +1253,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     local unit_ids = Idstring("unit")
     local add
     if data then
-        add = project:get_level_by_id(data, Global.game_settings.level_id).add
+        add = project:get_level_by_id(data, Global.current_level_id).add
     end
 	self:reset_selected_units()
     for _, v in pairs(copy_data) do

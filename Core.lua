@@ -35,22 +35,40 @@ function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
     self:Dofiles(self.DialogsDirectory)
-    local enabled = self.MapEditor:enabled()
-    table.delete(self.Updaters, self.MapEditor)
-    local data = self.MapEditor:destroy()
-    self.MapEditor = MapEditor:new(data)
-    table.insert(self.Updaters, self.MapEditor)
-    self.MapEditor:set_enabled(enabled)
+
+    self.Dialog:Destroy()
+    self.ListDialog:Destroy()
+    self.SelectDialog:Destroy()
+    self.SelectDialogValue:Destroy()
+    self.ColorDialog:Destroy()
+    self.InputDialog:Destroy()
+    self.FBD:Destroy()
+
+    local data = {}
+    if self.Menu then
+        data.menu = self.Menu:Destroy()
+        data.script_data = self.ScriptDataConverter:Destroy()
+        data.project = self.MapProject:Destroy()
+        data.load = self.LoadLevel:Destroy()
+        data.options = self.EditorOptions:Destroy()
+        data.about = self.AboutMenu:Destroy()
+    end
+
+    if self.MapEditor then
+        table.delete(self.Updaters, self.MapEditor)
+        data.editor = self.MapEditor:destroy()
+    end
+
+    self:InitManagers(data)
 end
 
-function BLE:InitManagers()
-	self:LoadHashlist()
-
-    local acc_color = self.Options:GetValue("AccentColor")
-    local bg_color = self.Options:GetValue("BackgroundColor")
-	local M = self.managers
+function BLE:InitManagers(data)
+    data = data or {}
+    if not self.ConstPackages then
+        self:LoadHashlist()
+    end
 	
-    self._dialogs_opt = {accent_color = acc_color, background_color = bg_color}
+    self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
     self.ListDialog = ListDialog:new(self._dialogs_opt)
     self.SelectDialog = SelectListDialog:new(self._dialogs_opt)
@@ -58,67 +76,73 @@ function BLE:InitManagers()
     self.ColorDialog = ColorDialog:new(self._dialogs_opt)
     self.InputDialog = InputDialog:new(self._dialogs_opt)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
-       
-    if Global.editor_mode then
-        self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
-        self._camera_object = World:create_camera()
-        self._camera_object:set_near_range(20)
-        self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
-        self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
-        self._camera_object:set_position(Vector3(864, -789, 458))
-        self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
-        self._vp:set_camera(self._camera_object)
     
-        self.MapEditor = MapEditor:new()
-        if FileIO:Exists("mods/developer.txt") then --Code refresh is only for developers!
-            self.FileWatcher = FileWatcher:new(Path:Combine(self.ClassDirectory), {
-                callback = ClassClbk(self, "MapEditorCodeReload"),
-                scan_t = 0.5
-            })
+    if Global.editor_mode then
+        if not self._vp then
+            self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
+            self._camera_object = World:create_camera()
+            self._camera_object:set_near_range(20)
+            self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
+            self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
+            self._camera_object:set_position(Vector3(864, -789, 458))
+            self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
+            self._vp:set_camera(self._camera_object)
         end
+        
+        self.MapEditor = MapEditor:new(data.editor)
         table.insert(self.Updaters, self.MapEditor)
     end
 
+    if not self.FileWatcher and FileIO:Exists("mods/developer.txt") then --Code refresh is only for developers!
+        self.FileWatcher = FileWatcher:new(Path:Combine(self.ClassDirectory), {
+            callback = ClassClbk(self, "MapEditorCodeReload"),
+            scan_t = 0.5
+        })
+    end
+
     self.Menu = EditorMenu:new()
-    self.ScriptDataConverter = ScriptDataConverterManager:new()
-    self.MapProject = MapProjectManager:new()
-    self.LoadLevel = LoadLevelMenu:new()
-    self.EditorOptions = EditorOptionsMenu:new()
-    AboutMenu:new()
+    self.ScriptDataConverter = ScriptDataConverterManager:new(data.script_data)
+    self.MapProject = MapProjectManager:new(data.project)
+    self.LoadLevel = LoadLevelMenu:new(data.load)
+    self.EditorOptions = EditorOptionsMenu:new(data.options)
+    self.AboutMenu = AboutMenu:new(data.about)
+    self.Menu:Load(data.menu)
 
-    local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
-    if prefabs then
-        for _, prefab in pairs(prefabs) do
-            self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptData(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+    if not self.ConstPackages then
+        local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
+        if prefabs then
+            for _, prefab in pairs(prefabs) do
+                self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptData(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+            end
         end
+        --Packages that are always loaded
+        self.ConstPackages = {
+            "packages/game_base_init",
+            "packages/game_base",
+            "packages/start_menu",
+            "packages/load_level",
+            "packages/load_default",
+            "packages/boot_screen",
+            "packages/toxic",
+            "packages/dyn_resources",
+            "packages/wip/game_base",
+            "core/packages/base",
+            "core/packages/editor"
+        }
+    
+        local prefix = "packages/dlcs/"
+        local sufix = "/game_base"
+        for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
+            table.insert(self.ConstPackages, prefix .. tostring(dlc_package) .. sufix)
+        end
+        for i, difficulty in ipairs(tweak_data.difficulties) do
+            table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
+        end
+        for path, _ in pairs(self.Utils.allowed_units) do
+            Global.DBPaths.unit[path] = true
+        end
+        self:LoadCustomAssets()
     end
-    --Packages that are always loaded
-    self.ConstPackages = {
-        "packages/game_base_init",
-        "packages/game_base",
-        "packages/start_menu",
-        "packages/load_level",
-        "packages/load_default",
-        "packages/boot_screen",
-        "packages/toxic",
-        "packages/dyn_resources",
-        "packages/wip/game_base",
-        "core/packages/base",
-        "core/packages/editor"
-	}
-
-    local prefix = "packages/dlcs/"
-    local sufix = "/game_base"
-    for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
-        table.insert(self.ConstPackages, prefix .. tostring(dlc_package) .. sufix)
-    end
-    for i, difficulty in ipairs(tweak_data.difficulties) do
-        table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
-    end
-    for path, _ in pairs(self.Utils.allowed_units) do
-        Global.DBPaths.unit[path] = true
-    end
-    self:LoadCustomAssets()
 end
 
 function BLE:LoadCustomAssets()
@@ -130,7 +154,7 @@ function BLE:LoadCustomAssets()
             local directory = config.full_directory or Path:Combine(mod.ModPath, config.directory)
             self:LoadCustomAssetsToHashList(config, directory)
         end
-        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(data, Global.current_level_id)
         if level then
             self:log("Loading Custom Assets to Hashlist")
             level.add = level.add or {}
@@ -370,10 +394,12 @@ end
 function BLE:SetLoadingText(text)
     if alive(Global.LoadingText) then
         local project = BeardLib.current_level and BeardLib.current_level._mod
-        local s = "Level ".. tostring(Global.game_settings.level_id)
+        local typ = Global.editor_loaded_instance and "Instance level" or "Level"
+        local s = typ.. tostring(Global.current_level_id)
         if project then
-            s = "Project " .. tostring(project.Name) .. ":" .. tostring(Global.game_settings.level_id)
+            s = typ.." in project " .. tostring(project.Name) .. ":" .. tostring(Global.current_level_id)
         end
+
         if Global.editor_safe_mode then
         	s = "[SAFE MODE]" .. "\n" .. s
         end

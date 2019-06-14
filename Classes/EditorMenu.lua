@@ -1,5 +1,5 @@
 EditorMenu = EditorMenu or class() 
-function EditorMenu:init()
+function EditorMenu:init(load)
     self._menus = {}
     local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
 	self._main_menu = MenuUI:new({
@@ -11,14 +11,33 @@ function EditorMenu:init()
         highlight_color = accent_color,
 		create_items = ClassClbk(self, "create_items"),
 	})
-	MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
-    MenuHelperPlus:AddButton({
-        id = "BeardLibEditorMenu",
-        title = "BeardLibEditorMenu",
-        node_name = "options",
-        position = managers.menu._is_start_menu and 9 or 7,
-        callback = "BeardLibEditorMenu",
-    })
+    MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
+    local node = MenuHelperPlus:GetNode(nil, "options")
+    if not node:item("BeardLibEditorMenu") then
+        MenuHelperPlus:AddButton({
+            id = "BeardLibEditorMenu",
+            title = "BeardLibEditorMenu",
+            node = node,
+            position = managers.menu._is_start_menu and 9 or 7,
+            callback = "BeardLibEditorMenu",
+        })
+    end
+end
+
+function EditorMenu:Load(data)
+    if data then
+        if data.last_page then
+            self:select_page(data.last_page)
+        end
+        if data.opened then
+            self:set_enabled(true)
+        end
+    end
+end
+
+function EditorMenu:Destroy()
+    self._main_menu:Destroy()
+    return {last_page = self._current_page, opened = self._enabled}
 end
 
 function EditorMenu:make_page(name, clbk, opt)
@@ -78,16 +97,18 @@ function EditorMenu:set_enabled(enabled)
                 managers.editor._enabled = false
             end
         end
+        self._enabled = true
     elseif opened then
         BeardLib.managers.dialog:CloseDialog(self)
         self._main_menu:Disable()
         if in_editor then
             managers.editor._enabled = true
         end
+        self._enabled = false
     end
 end
 
-function EditorMenu:select_page(page, item)
+function EditorMenu:select_page(page)
     for name, m in pairs(self._menus) do
         self._tabs:GetItem(name):SetBorder({left = false})
         m:SetVisible(false)
@@ -97,6 +118,6 @@ function EditorMenu:select_page(page, item)
         return
     end
     self._current_page = page
-    item:SetBorder({left = true})
+    self._tabs:GetItem(page):SetBorder({left = true})
     self._menus[page]:SetVisible(true)
 end

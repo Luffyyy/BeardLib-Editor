@@ -31,3 +31,11 @@ function AboutMenu:init()
     link_button("Guides", "https://modworkshop.net/wiki.php?action=view&id=27")
     link_button("Feedback", "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues")
 end
+
+function AboutMenu:Load(data)
+    
+end
+
+function AboutMenu:Destroy()
+    return {}
+end

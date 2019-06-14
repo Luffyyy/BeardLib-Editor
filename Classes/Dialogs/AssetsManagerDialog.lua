@@ -97,7 +97,7 @@ function AssetsManagerDialog:load_assets()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
-        local level = project:get_level_by_id(data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(data, Global.current_level_id)
         local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
         local add = project:read_xml(add_path)
         if add then
@@ -133,7 +133,7 @@ function AssetsManagerDialog:show_assets()
     local project = BLE.MapProject
     local mod = project:current_mod()
     if self._tbl._data then
-        add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
+        add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
     end
     local panic
 	local new_asset = function(asset, type, times)
@@ -187,7 +187,7 @@ function AssetsManagerDialog:show_packages()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     self._tbl._data = data
-    self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+    self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
 
     local packages = self:GetItem("Packages", true)
     if not packages then
@@ -195,7 +195,7 @@ function AssetsManagerDialog:show_packages()
     end
     packages:ClearItems("packages")
     if self._tbl._data then
-        local level = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+        local level = project:get_level_by_id(self._tbl._data, Global.current_level_id)
         if level.packages then
             for i, package in pairs(level.packages) do
                 local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
@@ -686,7 +686,7 @@ function AssetsManagerDialog:check_data()
         local project = BLE.MapProject
         local mod, data = project:get_mod_and_config()
         self._tbl._data = data
-        self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id)
+        self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
     end
 end
 
@@ -746,7 +746,7 @@ function AssetsManagerDialog:set_unit_selected(item)
         local project = BLE.MapProject
         local mod = project:current_mod()
         if self._tbl._data then
-            add = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).add
+            add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
         end
         if self._assets[type] and self._assets[type][asset] then
             load_from = (load_from or "") .. "\n".."Map Assets"
@@ -770,7 +770,7 @@ end
 function AssetsManagerDialog:add_package(package)
     self:check_data()
     local project = BLE.MapProject
-    local level_packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
+    local level_packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
     table.insert(level_packages, package)
     PackageManager:set_resource_loaded_clbk(Idstring(UNIT), nil)
     if PackageManager:package_exists(package.."_init") and not PackageManager:loaded(package.."_init") then
@@ -805,7 +805,7 @@ end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
-    local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
+    local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id).packages
     for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
             table.insert(packages, {package = name, name = name})
@@ -827,7 +827,7 @@ end
 function AssetsManagerDialog:remove_package(package, item)
     BLE.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
         local project = BLE.MapProject
-        local packages = project:get_level_by_id(self._tbl._data, Global.game_settings.level_id).packages
+        local packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
         for i, pkg in ipairs(packages) do
             if pkg == package then
                 table.remove(packages, i)

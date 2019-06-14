@@ -67,4 +67,20 @@ elseif civ or F == "elementspawnenemydummy" then
 		end
 		return orig(self, params, ...)
 	end
+elseif F == "levelstweakdata" then
+	Hooks:PostHook(LevelsTweakData, "init", "BLEInstanceFix", function(self)
+		if BeardLib.current_level and Global.editor_loaded_instance then
+			local instance = BeardLib.current_level
+			local id = Global.game_settings.level_id
+			self[id] = table.merge(clone(instance._config), {
+				name_id = "none",
+				briefing_id = "none",
+				world_name = "instances/mods/".. Global.current_level_id,
+				ai_group_type = self.ai_groups.default,
+				intro_event = "nothing",
+				outro_event = "nothing",
+				custom = true
+			})
+		end
+	end)
 end

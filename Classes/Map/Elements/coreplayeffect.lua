@@ -1,7 +1,7 @@
 EditorPlayEffect = EditorPlayEffect or class(MissionScriptEditor)
 EditorPlayEffect.USES_POINT_ORIENTATION = true
 function EditorPlayEffect:create_element()
-	self.super.create_element(self)
+	EditorPlayEffect.super.create_element(self)
 	self._element.class = "ElementPlayEffect"
 	self._element.values.effect = "none"
 	self._element.values.screen_space = false
@@ -21,7 +21,7 @@ end
 
 EditorStopEffect = EditorStopEffect or class(MissionScriptEditor)
 function EditorStopEffect:create_element()
-	self.super.create_element(self)
+	EditorStopEffect.super.create_element(self)
 	self._element.class = "ElementStopEffect"
 	self._element.module = "CoreElementPlayEffect"
 	self._element.values.operation = "fade_kill"

@@ -88,6 +88,12 @@ function ItemExt:button(...)
 	return self:Button(ItemExt:Pasta1(...))
 end
 
+function ItemExt:ubutton(name, clbk, o)
+	o = o or {}
+	o.border_bottom = true
+	return self:Button(ItemExt:Pasta1(name, clbk, o))
+end
+
 function ItemExt:numberbox(...)
 	return self:NumberBox(ItemExt:Pasta2(...))
 end
@@ -111,7 +117,11 @@ function ItemExt:pan(name, o)
 end
 
 function ItemExt:lbl(name, o)
-	return self:Divider(table.merge({name = name, text = string.pretty2(name)}, o))
+	return self:Divider(table.merge({name = name, text = name}, o))
+end
+
+function ItemExt:ulbl(name, o)
+	return self:Divider(table.merge({name = name, border_bottom = true, text = name}, o))
 end
 
 function ItemExt:divider(name, o)
@@ -151,6 +161,16 @@ end
 function ItemExt:toolbar(name, o)
 	name = name or "ToolBar"
 	return self:ToolBar(table.merge({name = name, inherit_values = {offset = 0}}, o))
+end
+
+function ItemExt:tholder(name, o, text_o)
+	local holder = self:holder(name, o)
+	holder:ulbl(name, text_o or o and o.text_o or nil)
+	return holder
+end
+
+function ItemExt:holder(name, o)
+	return self:Holder(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:divgroup(name, o)
