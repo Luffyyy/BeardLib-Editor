@@ -219,7 +219,7 @@ end
 function ItemExt:pathbox(name, callback, value, typ, o)
 	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid", text = o.text or string.pretty2(name)}, o))
 	o = {}
-	o.offset = 0
+	--o.offset = 0
 	o.control_slice = p.control_slice or 0.7
 	p.on_callback = callback
 	o.text = p.text
