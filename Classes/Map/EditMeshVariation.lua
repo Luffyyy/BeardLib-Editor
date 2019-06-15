@@ -75,15 +75,17 @@ function EditMeshVariation:get_material_configs_from_meta(unit)
         for _, entry in ipairs(list) do
 			local node = BLE.Utils:ParseXml("material_config", entry)
 
-			for _, group in ipairs(groups) do
-				local group_name = node:has_parameter("group") and node:parameter("group")
-
-                if group_name == group and not table.contains(available_groups, entry) then
-                    if self:material_config_ok(node, unit) then
-                        table.insert(available_groups, entry)
+            if node then
+                for _, group in ipairs(groups) do
+                    local group_name = node:has_parameter("group") and node:parameter("group")
+    
+                    if group_name == group and not table.contains(available_groups, entry) then
+                        if self:material_config_ok(node, unit) then
+                            table.insert(available_groups, entry)
+                        end
                     end
-				end
-			end
+                end
+            end
         end
 
         table.insert(available_groups, "default")
