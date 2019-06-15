@@ -349,7 +349,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
                 position = self:GetSpawnPosition(ud),
                 rotation = ud and ud.rotation or Rotation(0,0,0),
                 continent = ud and ud.continent or self._current_continent,
-                material_variation = ud and ud.material or ud.material_variation,
+                material_variation = ud and (ud.material or ud.material_variation),
                 disable_shadows = ud and ud.disable_shadows,
                 disable_collision = ud and ud.disable_collision,
                 hide_on_projection_light = ud and ud.hide_on_projection_light,
