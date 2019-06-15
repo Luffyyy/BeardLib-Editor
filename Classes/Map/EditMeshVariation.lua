@@ -26,7 +26,7 @@ function EditMeshVariation:set_unit_data()
     unit:unit_data().material_variation = nil
     
     local node = not default and BLE.Utils:ParseXml("material_config", material)
-    if default or (DB:has(Idstring("material_config"), material:id()) and (self:material_config_ok(node, unit)) then
+    if default or (DB:has(Idstring("material_config"), material:id()) and self:material_config_ok(node, unit)) then
         unit:unit_data().material_variation = material
     end
     
