@@ -18,6 +18,9 @@ function WData:destroy()
         self._assets_manager:Destroy()
         self._objectives_manager:Destroy()
     end
+    for _, layer in pairs(self.layers) do
+        layer:destroy()
+    end
 end
 
 function WData:enable()

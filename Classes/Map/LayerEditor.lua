@@ -13,3 +13,9 @@ function LayerEditor:loaded_continents()
         table.delete(self._created_units, unit)
     end
 end
+
+function LayerEditor:destroy()
+    for _, unit in pairs(self._created_units) do
+		managers.editor:DeleteUnit(unit)
+	end
+end

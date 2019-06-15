@@ -544,28 +544,28 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 		tdata.values = {{name = tdata.values_name, key = tdata.value_key}}
 	end
 	local is_unit
-	local is_instance
+	local is_element
 	local obj = objects[1]
 	local object_id_key
-	if obj and obj.unit_data then
-		if obj:unit_data().instance then
-			is_instance = true
+	if obj and type(obj) ~= "string" then
+		if obj.unit_data then
+			is_unit = true
+		elseif obj.script then
+			is_element = true
 		end
-		is_unit = true
 	end
 	for k, object in pairs(objects) do
-		if (not is_unit or alive(object)) and (not is_instance or object.unit_data and object:unit_data().instance) then
+		if (not is_unit or alive(object)) then
 			local id
 			local object_key = UNIT
-			if is_instance then
-				entry.instance = instance
-				id = object
-				object_key = INSTANCE
+			if is_element then
+				object_key = ELEMENT
+				id = object.id
 			elseif is_unit then
 				id = object:unit_data().unit_id
 			else
-				object_key = ELEMENT
-				id = object.id
+				id = object
+				object_key = INSTANCE
 			end
 			local entry = {name = name_func(object), [object_key] = object}
 
