@@ -38,6 +38,7 @@ function EditMeshVariation:set_unit_data()
     local final_mat = (material and Idstring(material)) or PackageManager:unit_data(unit:name()):material_config()
     if DB:has(Idstring("material_config"), final_mat) then
         unit:set_material_config((material and Idstring(material)) or PackageManager:unit_data(unit:name()):material_config(), true)
+        unit:unit_data().material = unit:unit_data().material_variation
     end
 end
 

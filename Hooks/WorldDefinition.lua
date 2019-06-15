@@ -414,7 +414,8 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		ud.hide_on_projection_light = data.hide_on_projection_light
 		ud.override_texture = data.override_texture
 		ud.cubemap = data.cubemap
-		
+		ud.material_variation = data.material_variation
+
 		local wd = unit:wire_data()
 		if wd then
 			local target = unit:get_object(Idstring("a_target"))
