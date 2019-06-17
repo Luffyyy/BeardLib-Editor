@@ -466,7 +466,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
 			else
             	table.insert(self._element.values[params.value_name], add)
             end
-        elseif params.not_table then
+		elseif params.not_table then
         	self._element.values[params.value_name] = id
 		else
             table.insert(self._element.values[params.value_name], id)
@@ -517,8 +517,8 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 
 			return string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or "")
 		end,
-		function(element)
-			return not params.classes or table.contains(params.classes, element.class)
+		function(unit)
+			return (not params.units or table.contains(params.units,  unit:unit_data().name)) and (not params.check_unit or params.check_unit(unit))
 		end
 	)
 end

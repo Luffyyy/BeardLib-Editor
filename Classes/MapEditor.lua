@@ -58,8 +58,17 @@ function Editor:init(data)
 
     --Data of last session (Currently for reloading map editor code)
     if data then
+        local unit = data.selected_units
         if data.selected_units then
-            self.parts.static:set_selected_units(data.selected_units)
+            local ok = true
+            for _, unit in pairs(data.selected_units) do
+                if not alive(unit) then
+                    ok = false
+                end
+            end
+            if ok then
+                self.parts.static:set_selected_units(data.selected_units)
+            end
         end
         if data.last_menu then
             self.parts[data.last_menu]:Switch(true)
