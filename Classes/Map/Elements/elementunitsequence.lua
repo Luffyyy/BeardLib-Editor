@@ -80,7 +80,7 @@ function EditorUnitSequence:_build_panel()
             {name = "Time To Trigger", key = "time"}
         },
         combo_items_func = function(name, entry, i)
-            if i == 1 then
+            if i == 1 and alive(entry.unit) then
                 local unit_name = entry.unit:name() or ""
                 local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
                 return sequences

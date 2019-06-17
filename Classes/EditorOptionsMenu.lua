@@ -3,7 +3,8 @@ local Options = EditorOptionsMenu
 function Options:init()
 	local O = BLE.Options
 	local EMenu = BLE.Menu
-	ItemExt:add_funcs(self, EMenu:make_page("Options"))
+	local page = EMenu:make_page("Options")
+	ItemExt:add_funcs(self, page)
 	local main = self:divgroup("Main")
 	main:textbox("ExtractDirectory", ClassClbk(self, "set_clbk"), O:GetValue("ExtractDirectory"), {
 		help = "The extract directory will be used to load units from extract and be able to edit lights"
@@ -45,7 +46,7 @@ function Options:init()
 	keybind("LoadUnit")
 	keybind("LoadUnitFromExtract")
 
-	self:button("ResetOptions", ClassClbk(self, "reset_options"))
+	self:button("ResetOptions", ClassClbk(self, "reset_options", page))
 end
 
 function Options:Load(data)
