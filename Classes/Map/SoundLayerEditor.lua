@@ -276,7 +276,7 @@ function SndLayer:on_restart_emitters()
 end
 
 function SndLayer:do_spawn_unit(unit_path, mud)
-	local unit = World:spawn_unit(unit_path:id(), umudd.position or Vector3(), mud.rotation or Rotation())
+	local unit = World:spawn_unit(unit_path:id(), mud.position or Vector3(), mud.rotation or Rotation())
 	table.merge(unit:unit_data(), mud)
 	local ud = unit:unit_data()
 	ud.name = unit_path
