@@ -12,20 +12,14 @@ end
 
 function SndLayer:loaded_continents()
 	EnvironmentLayerEditor.super.loaded_continents(self)
-	for _, area in ipairs(clone(managers.sound_environment:areas())) do
-		local unit = self:do_spawn_unit(self._environment_unit, {name_id = area:name(), position = area:position(), rotation = area:rotation()})
-		unit:unit_data().environment_area = area
-		unit:unit_data().environment_area:set_unit(unit)
+	for _, area in ipairs(managers.sound_environment:areas()) do
+		self:do_spawn_unit(self._environment_unit, {environment_area = area, name_id = area:name(), position = area:position(), rotation = area:rotation()})
 	end
-	for _, emitter in ipairs(clone(managers.sound_environment:emitters())) do
-		local unit = self:do_spawn_unit(self._emitter_unit, {name_id = emitter:name(), position = emitter:position(), rotation = emitter:rotation()})
-		unit:unit_data().emitter = emitter
-		unit:unit_data().emitter:set_unit(unit)
+	for _, emitter in ipairs(managers.sound_environment:emitters()) do
+		self:do_spawn_unit(self._emitter_unit, {emitter = emitter, name_id = emitter:name(), position = emitter:position(), rotation = emitter:rotation()})
 	end
-	for _, emitter in ipairs(clone(managers.sound_environment:area_emitters())) do
-		local unit = self:do_spawn_unit(self._area_emitter_unit, {name_id = emitter:name(), position = emitter:position(), rotation = emitter:rotation()})
-		unit:unit_data().emitter = emitter
-		unit:unit_data().emitter:set_unit(unit)
+	for _, emitter in ipairs(managers.sound_environment:area_emitters()) do
+		self:do_spawn_unit(self._area_emitter_unit, {emitter = emitter, name_id = emitter:name(), position = emitter:position(), rotation = emitter:rotation()})
 	end
 end
 
@@ -281,32 +275,42 @@ function SndLayer:on_restart_emitters()
 	end
 end
 
-function SndLayer:do_spawn_unit(unit_path, ud)
-	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
-	table.merge(unit:unit_data(), ud)
-	unit:unit_data().name = unit_path
-	unit:unit_data().sound_unit = true
-	unit:unit_data().position = unit:position()
-	unit:unit_data().rotation = unit:rotation()
+function SndLayer:do_spawn_unit(unit_path, mud)
+	local unit = World:spawn_unit(unit_path:id(), umudd.position or Vector3(), mud.rotation or Rotation())
+	table.merge(unit:unit_data(), mud)
+	local ud = unit:unit_data()
+	ud.name = unit_path
+	ud.sound_unit = true
+	ud.position = unit:position()
+	ud.rotation = unit:rotation()
 	table.insert(self._created_units, unit)
 	if alive(unit) then
 		if unit:name() == Idstring(self._emitter_unit) then
-            local emitter = unit:unit_data().emitter
+			local emitter = ud.emitter
+			if emitter and not alive(emitter:unit()) then
+				emitter:set_unit(unit)
+			end
 			if not emitter or emitter:unit() ~= unit then
-				unit:unit_data().emitter = managers.sound_environment:add_emitter(emitter and emitter:get_params() or {})
-				unit:unit_data().emitter:set_unit(unit)
+				ud.emitter = managers.sound_environment:add_emitter(emitter and emitter:get_params() or {})
+				ud.emitter:set_unit(unit)
 			end
 		elseif unit:name() == Idstring(self._area_emitter_unit) then
-            local emitter = unit:unit_data().emitter
+			local emitter = ud.emitter
+			if emitter and not alive(emitter:unit()) then
+				emitter:set_unit(unit)
+			end
 			if not emitter or emitter:unit() ~= unit then
-				unit:unit_data().emitter = managers.sound_environment:add_area_emitter(emitter and emitter:save_level_data() or {})
-				unit:unit_data().emitter:set_unit(unit)
+				ud.emitter = managers.sound_environment:add_area_emitter(emitter and emitter:save_level_data() or {})
+				ud.emitter:set_unit(unit)
 			end
 		elseif unit:name() == Idstring(self._environment_unit) then
-            local area = unit:unit_data().environment_area
+			local area = ud.environment_area
+			if area and not alive(area:unit()) then
+				area:set_unit(unit)
+			end
 			if not area or area:unit() ~= unit then
-				unit:unit_data().environment_area = managers.sound_environment:add_area(area and area:get_params() or {})
-				unit:unit_data().environment_area:set_unit(unit)
+				ud.environment_area = managers.sound_environment:add_area(area and area:get_params() or {})
+				ud.environment_area:set_unit(unit)
 			end
 		end
 	end

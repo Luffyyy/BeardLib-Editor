@@ -109,7 +109,7 @@ function EnvLayer:_load_effects(effects)
 end
 
 function EnvLayer:_load_environment_areas()
-	for _, area in ipairs(clone(managers.environment_area:areas())) do
+	for _, area in ipairs(managers.environment_area:areas()) do
 		local unit = self:do_spawn_unit(self._environment_area_unit, {environment_area = area, position = area:position(), rotation = area:rotation()})
 		local new_name_id = unit:unit_data().environment_area:set_unit(unit)
 		if new_name_id then
@@ -577,26 +577,30 @@ function EnvLayer:play_effect(unit, effect)
 	end
 end
 
-function EnvLayer:do_spawn_unit(unit_path, ud)
-	local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
-	table.merge(unit:unit_data(), ud)
-	unit:unit_data().name = unit_path
-	unit:unit_data().environment_unit = true
-	unit:unit_data().position = unit:position()
-	unit:unit_data().rotation = unit:rotation()
+function EnvLayer:do_spawn_unit(unit_path, mud)
+	local unit = World:spawn_unit(unit_path:id(), mud.position or Vector3(), mud.rotation or Rotation())
+	table.merge(unit:unit_data(), mud)
+	local ud = unit:unit_data()
+	ud.name = unit_path
+	ud.environment_unit = true
+	ud.position = unit:position()
+	ud.rotation = unit:rotation()
 	table.insert(self._created_units, unit)
 	if alive(unit) then
 		if unit:name() == Idstring(self._environment_area_unit) then
-			local area = unit:unit_data().environment_area
+			local area = ud.environment_area
+			if area and not alive(area:unit()) then
+				area:set_unit(unit)
+			end
 			if not area or area:unit() ~= unit then
-				unit:unit_data().environment_area = managers.environment_area:add_area(area and area:save_level_data() or {})
-				unit:unit_data().environment_area:set_unit(unit)
+				ud.environment_area = managers.environment_area:add_area(area and area:save_level_data() or {})
+				ud.environment_area:set_unit(unit)
 			end
 		end
 		if unit:name() == Idstring(self._dome_occ_shape_unit) then
-			if not unit:unit_data().occ_shape then
-				unit:unit_data().occ_shape = CoreShapeManager.ShapeBox:new({})
-				unit:unit_data().occ_shape:set_unit(unit)
+			if not ud.occ_shape then
+				ud.occ_shape = CoreShapeManager.ShapeBox:new({})
+				ud.occ_shape:set_unit(unit)
 			end
 		end
 	end

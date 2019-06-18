@@ -1,10 +1,13 @@
 LayerEditor = LayerEditor or class(EditorPart)
 
 function LayerEditor:loaded_continents()
-    --Better handle this event, don't recreate things as it may cause pointless slowdowns/problems.
+    self:destroy_units_temp()
+end
+
+function LayerEditor:destroy_units_temp()
     for _, unit in pairs(clone(self._created_units)) do
         local ud = unit:unit_data()
-        local obj = ud.environment_area or ud.emitter
+        local obj = ud.environment_area or ud.emitter or ud.occ_shape
         if obj then
             obj._unit = nil --Doesn't fully fix issue #300 but fixes when doing the same in SoundEnvironmentManager.lua
         end
@@ -15,7 +18,5 @@ function LayerEditor:loaded_continents()
 end
 
 function LayerEditor:destroy()
-    for _, unit in pairs(self._created_units) do
-		managers.editor:DeleteUnit(unit)
-	end
+    self:destroy_units_temp()
 end
