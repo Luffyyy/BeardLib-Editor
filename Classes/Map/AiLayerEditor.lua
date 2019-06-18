@@ -22,6 +22,7 @@ function AiEditor:init(parent)
 
     self._ai_settings = {}
     self._created_units = {}
+    self._units = {}
     self._disabled_units = {}
 
     --self:_init_ai_settings()
@@ -48,12 +49,12 @@ function AiEditor:loaded_continents()
     end
 
     for _, unit in pairs(World:find_units_quick("all")) do
-        if alive(unit) and unit:name() == self._patrol_point_unit:id() then
-            table.insert(self._created_units, unit)
+        if alive(unit) and (unit:name() == self._patrol_point_unit:id() or unit:name() == self._nav_surface_unit) then
+            table.insert(self._units, unit)
         end
     end
 
-    managers.ai_data:load_units(self._created_units or {})
+    managers.ai_data:load_units(self._units or {})
 
     --self:_update_patrol_paths_list()
     --self:_update_motion_paths_list()
@@ -68,9 +69,9 @@ function AiEditor:save()
 end
 
 function AiEditor:reset_selected_units()
-    for k, unit in ipairs(clone(self._created_units)) do
+    for k, unit in ipairs(clone(self._units)) do
         if not alive(unit) then
-            table.remove(self._created_units, k)
+            table.remove(self._units, k)
         end
     end
     self:save()
@@ -79,8 +80,9 @@ end
 function AiEditor:build_menu()
     self:save()
     self:ClearItems()
-
-    local graphs = self:group("Graphs")
+    self:alert("WIP section")
+    local graphs = self:group("Graphs")    
+    graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._parent._has_fix})
     graphs:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._parent._has_fix})
 --[[
@@ -138,6 +140,7 @@ function AiEditor:build_menu()
     )
 
     local other = self:group("Other")
+    other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 
     self:_build_ai_data()
@@ -207,7 +210,7 @@ function AiEditor:unit_spawned(unit)
 end
 
 function AiEditor:unit_deleted(unit)
-    for _, u in ipairs(self._created_units) do
+    for _, u in ipairs(self._units) do
         if u:name() == self._nav_surface_unit and u ~= unit then
             u:ai_editor_data().visibilty_exlude_filter[unit:unit_data().unit_id] = nil
             u:ai_editor_data().visibilty_include_filter[unit:unit_data().unit_id] = nil
@@ -220,7 +223,7 @@ function AiEditor:unit_deleted(unit)
         managers.ai_data:delete_point_by_unit(unit)
     end
 
-    table.delete(self._created_units, unit)
+    table.delete(self._units, unit)
 end
 
 function AiEditor:update(t, dt)
@@ -230,7 +233,7 @@ function AiEditor:update(t, dt)
 end
 
 function AiEditor:_draw(t, dt)
-    for _, unit in ipairs(self._created_units) do
+    for _, unit in ipairs(self._units) do
         local selected = unit == self._selected_unit
 
         if unit:name() == self._nav_surface_unit then
@@ -244,7 +247,7 @@ function AiEditor:_draw(t, dt)
 
             if selected then
                 for id, _ in pairs(unit:ai_editor_data().visibilty_exlude_filter) do
-                    for _, to_unit in ipairs(self._created_units) do
+                    for _, to_unit in ipairs(self._units) do
                         if to_unit:unit_data().unit_id == id then
                             Application:draw_link(
                                 {
@@ -260,7 +263,7 @@ function AiEditor:_draw(t, dt)
                 end
 
                 for id, _ in pairs(unit:ai_editor_data().visibilty_include_filter) do
-                    for _, to_unit in ipairs(self._created_units) do
+                    for _, to_unit in ipairs(self._units) do
                         if to_unit:unit_data().unit_id == id then
                             Application:draw_link(
                                 {
@@ -418,7 +421,7 @@ end
         managers.ai_data:add_patrol_point(self._selected_path, unit)
     end
 
-    table.insert(self._created_units, unit)
+    table.insert(self._units, unit)
 
     self:build_menu()
 end]]
@@ -429,7 +432,7 @@ function AiEditor:_add_patrol_point(unit)
     end
 
     -- don't care if it is alive i guess
-    table.insert(self._created_units, unit)
+    table.insert(self._units, unit)
 end
 
 function AiEditor:data()

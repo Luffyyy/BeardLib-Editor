@@ -122,23 +122,21 @@ function WData:build_default_menu()
         ai = AiLayerEditor:new(self),
     }
 
-    local alert_opt = {divider_type = true, position = "RightTop", w = 24, h = 24}
-    local function make_alert(text)
-        local div = self:divider(text, {border_color = Color.yellow, border_lock_height = false})
-        div:tb_imgbtn("Alert", nil, nil, {30, 190, 72, 72}, {divider_type = true, w = 24, h = 24})
-    end
-
     if not BeardLib.current_level then
         local s = "Preview mode"
         s = s .. "\nSaving the map will not clone the map, it'll just save it."
         s = s .. "\nIf you wish to clone it please use the 'Clone Existing Heist' feature in projects menu."
-        make_alert(s)
+        self:alert(s)
+    end
+    local has_extract = FileIO:Exists(BLE.ExtractDirectory)
+    if not has_extract then
+        self:alert("You don't have an extract directory\nSome features will not work!")
     end
     if Global.editor_safe_mode then
-        make_alert("Safe mode\nSome features are disabled")
+        self:alert("Safe mode\nSome features are disabled")
     end
     if not self._parent._has_fix then
-        make_alert("Physics settings fix was not installed\nsome features are disabled.")
+        self:alert("Physics settings fix was not installed\nsome features are disabled.")
     end
 
     local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
@@ -160,7 +158,7 @@ function WData:build_default_menu()
 
     if BeardLib.current_level then
         local load = self:divgroup("Load", {align_method = "grid"})
-		local load_extract = FileIO:Exists(BLE.ExtractDirectory) and self:divgroup("LoadFromExtract", {align_method = "grid"}) or nil
+		local load_extract = has_extract and self:divgroup("LoadFromExtract", {align_method = "grid"}) or nil
         for _, ext in pairs(BLE.UsableAssets) do
             local text
             if ext == "unit" then

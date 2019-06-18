@@ -132,7 +132,7 @@ end
 function Static:loaded_continents()
     self._nav_surfaces = {}
     for _, unit in pairs(managers.worlddefinition._all_units) do
-        if unit:name() == self._nav_surface then
+        if alive(unit) and unit:name() == self._nav_surface then
             table.insert(self._nav_surfaces, unit)
         end
     end
