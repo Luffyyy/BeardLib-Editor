@@ -179,16 +179,25 @@ function Static:build_group_options()
 	end
     local selected_units = self:selected_units()
     local can_group = #selected_units > 1
-	local inside_group = false
+    local inside_group = false
+    local is_unit = false
 	local sud = selected_unit:unit_data()
 	if can_group then
 		for _, unit in pairs(selected_units) do
 			local ud = unit:unit_data()
 			if not ud.unit_id or not ud.continent or managers.worlddefinition:is_world_unit(unit) then
 				can_group = false
-				break
+                break
 			end
-		end
+        end
+    else
+        local unit = selected_units[1]
+        if alive(unit) then
+            local ud = unit:unit_data()
+            if ud.unit_id and ud.continent then
+                is_unit = true
+            end
+        end
 	end
 	group:ClearItems()
     if self._selected_group then
@@ -196,8 +205,12 @@ function Static:build_group_options()
         group:textbox("GroupName", ClassClbk(self, "set_group_name"), self._selected_group.name)
         group:s_btn("DestroyGroup", ClassClbk(self, "remove_group"))
     else
-        group:s_btn("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
-        group:s_btn("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
+        if can_group or is_unit then
+            group:s_btn("AddToGroup", ClassClbk(self, "open_addremove_group_dialog", false), {text = "Add Unit(s) To Group"})
+            group:s_btn("GroupUnits", ClassClbk(self, "add_group"), {text = (can_group and "Group Units" or "Make a Group")})
+        else
+            group:Destroy()
+        end
     end
 end
 
