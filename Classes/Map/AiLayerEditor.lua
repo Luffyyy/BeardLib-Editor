@@ -227,59 +227,59 @@ function AiEditor:unit_deleted(unit)
 end
 
 function AiEditor:update(t, dt)
-    if not Global.editor_safe_mode then
-        self:_draw(t, dt)
-    end
+    self:_draw(t, dt)
 end
 
 function AiEditor:_draw(t, dt)
     for _, unit in ipairs(self._units) do
-        local selected = unit == self._selected_unit
-
-        if unit:name() == self._nav_surface_unit then
-            local a = selected and 0.75 or 0.5
-            local r = selected and 0 or 1
-            local g = selected and 1 or 1
-            local b = selected and 0 or 1
-
-            self._brush:set_color(Color(a, r, g, b))
-            self:_draw_surface(unit, t, dt, a, r, g, b)
-
-            if selected then
-                for id, _ in pairs(unit:ai_editor_data().visibilty_exlude_filter) do
-                    for _, to_unit in ipairs(self._units) do
-                        if to_unit:unit_data().unit_id == id then
-                            Application:draw_link(
-                                {
-                                    g = 0,
-                                    b = 0,
-                                    r = 1,
-                                    from_unit = unit,
-                                    to_unit = to_unit
-                                }
-                            )
+        if alive(unit) then
+            local selected = unit == self._selected_unit
+    
+            if unit:name() == self._nav_surface_unit then
+                local a = selected and 0.75 or 0.5
+                local r = selected and 0 or 1
+                local g = selected and 1 or 1
+                local b = selected and 0 or 1
+    
+                self._brush:set_color(Color(a, r, g, b))
+                self:_draw_surface(unit, t, dt, a, r, g, b)
+    
+                if selected then
+                    for id, _ in pairs(unit:ai_editor_data().visibilty_exlude_filter) do
+                        for _, to_unit in ipairs(self._units) do
+                            if to_unit:unit_data().unit_id == id then
+                                Application:draw_link(
+                                    {
+                                        g = 0,
+                                        b = 0,
+                                        r = 1,
+                                        from_unit = unit,
+                                        to_unit = to_unit
+                                    }
+                                )
+                            end
+                        end
+                    end
+    
+                    for id, _ in pairs(unit:ai_editor_data().visibilty_include_filter) do
+                        for _, to_unit in ipairs(self._units) do
+                            if to_unit:unit_data().unit_id == id then
+                                Application:draw_link(
+                                    {
+                                        g = 1,
+                                        b = 0,
+                                        r = 0,
+                                        from_unit = unit,
+                                        to_unit = to_unit
+                                    }
+                                )
+                            end
                         end
                     end
                 end
-
-                for id, _ in pairs(unit:ai_editor_data().visibilty_include_filter) do
-                    for _, to_unit in ipairs(self._units) do
-                        if to_unit:unit_data().unit_id == id then
-                            Application:draw_link(
-                                {
-                                    g = 1,
-                                    b = 0,
-                                    r = 0,
-                                    from_unit = unit,
-                                    to_unit = to_unit
-                                }
-                            )
-                        end
-                    end
-                end
+            elseif unit:name() == self._patrol_point_unit then
+            -- Nothing
             end
-        elseif unit:name() == self._patrol_point_unit then
-        -- Nothing
         end
     end
 

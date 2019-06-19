@@ -133,7 +133,13 @@ function WData:build_default_menu()
         self:alert("You don't have an extract directory\nSome features will not work!")
     end
     if Global.editor_safe_mode then
-        self:alert("Safe mode\nSome features are disabled")
+        local warn = self:alert("Safe mode\nMost features are disabled")
+        warn:tb_btn("Load normal mode", function()
+            BLE.Utils:YesNoQuestion("Are you sure you want to load into normal mode?", function()
+                managers.game_play_central:restart_the_game()
+                Global.editor_safe_mode = nil
+            end)
+        end)
     end
     if not self._parent._has_fix then
         self:alert("Physics settings fix was not installed\nsome features are disabled.")

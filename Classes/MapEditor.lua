@@ -12,6 +12,7 @@ function Editor:init(data)
     self._particle_editor_active = false
     self._mapeditor = {}
     self.parts = {}
+    self._safemode = Global.editor_safe_mode
 
     self._current_script = "default"
     self._current_continent = "world"
@@ -44,7 +45,7 @@ function Editor:init(data)
     }
     
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(BLE.Options:GetValue("Input/ToggleMapEditor")))
-    local normal = not Global.editor_safe_mode
+    local normal = not self._safemode
     self._menu = MenuUI:new({
         layer = 100,
         scroll_speed = 100,
@@ -651,6 +652,9 @@ end
 --Update functions
 function Editor:paused_update(t, dt) self:update(t, dt) end
 function Editor:update(t, dt)
+    if self._safemode then
+        return
+    end
     if BeardLib.Utils.Input:Triggered(self._toggle_trigger) then
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()

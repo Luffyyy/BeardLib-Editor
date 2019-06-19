@@ -805,8 +805,8 @@ function AssetsManagerDialog:all_ok_dialog()
         if Global.editor_safe_mode then
             opt.message = opt.message .. " Load to normal mode?"
             BLE.Utils:QuickDialog(opt, {{"Yes", function()
-                Global.editor_safe_mode = nil
                 managers.game_play_central:restart_the_game()
+                Global.editor_safe_mode = nil
             end}})
         else
             BLE.Dialog:Show(opt)

@@ -214,6 +214,7 @@ end
 function ItemExt:alert(text, color)
 	local div = self:lbl(text, {color = true, background_color = self.full_bg_color, border_color = color or Color.yellow, border_lock_height = false})
 	div:tb_imgbtn("Alert", nil, nil, {30, 190, 72, 72}, {divider_type = true, offset = 0, w = 24, h = 24})
+	return div
 end
 
 local function check_slot(slot, unit)
