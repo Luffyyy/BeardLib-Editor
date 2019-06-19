@@ -695,3 +695,15 @@ function MissionScriptEditor:RotationCtrl(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
 	return (opt.group or self._menu):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
+
+function MissionScriptEditor:Info(text, color, opt)
+	opt = opt or {}
+	opt.group = opt.group or self._class_group
+	return (opt.group or self._menu):info(text, color)
+end
+
+function MissionScriptEditor:Alert(text, color, opt)
+	opt = opt or {}
+	opt.group = opt.group or self._class_group
+	return (opt.group or self._menu):alert(text, color)
+end

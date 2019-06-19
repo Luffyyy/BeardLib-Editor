@@ -217,6 +217,12 @@ function ItemExt:alert(text, color)
 	return div
 end
 
+function ItemExt:info(text, color)
+	local div = self:lbl(text, {color = true, background_color = self.full_bg_color, border_lock_height = false})
+	div:tb_imgbtn("Info", nil, nil, {128, 210, 72, 72}, {divider_type = true, offset = 0, w = 24, h = 24})
+	return div
+end
+
 local function check_slot(slot, unit)
 	return BeardLibEditor.Utils:InSlot(unit, slot) and not unit:match("husk")
 end

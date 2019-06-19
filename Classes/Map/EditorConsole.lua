@@ -30,9 +30,9 @@ function EditorConsole:init(parent, menu)
     local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
     self:button("Close", ClassClbk(self, "ToggleConsole"), opt)
     self:button("Clear", ClassClbk(self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
-    self.info = self:tickbox("Info", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
-    self.mission = self:tickbox("Mission", ClassClbk(self, "FilterConsole"), false, table.merge(opt, {border_color = Color.green}))
-    self.error = self:tickbox("Errors", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
+    self.info_log = self:tickbox("Info", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
+    self.mission_log = self:tickbox("Mission", ClassClbk(self, "FilterConsole"), false, table.merge(opt, {border_color = Color.green}))
+    self.error_log = self:tickbox("Errors", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.red}))
     ItemExt:add_funcs(self)
     self:Clear()
     self.closed = true
@@ -67,9 +67,9 @@ function EditorConsole:FilterConsole(item)
     end
 end
 
-function EditorConsole:Log(msg, ...) self:PrintMessage("info", msg, ...) end 
-function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission", msg, ...) end
-function EditorConsole:Error(msg, ...) self:PrintMessage("error", msg, ...) end
+function EditorConsole:Log(msg, ...) self:PrintMessage("info_log", msg, ...) end 
+function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission_log", msg, ...) end
+function EditorConsole:Error(msg, ...) self:PrintMessage("error_log", msg, ...) end
 function EditorConsole:Clear() self:ClearItems() end
 
 
