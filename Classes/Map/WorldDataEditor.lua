@@ -167,7 +167,7 @@ function WData:build_default_menu()
 			load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
             if load_extract then
                 if ext == "unit" then
-                    text = "Unit("..load_unit..")"
+                    text = "Unit("..load_unit_fe..")"
                 end
 				load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
 			end

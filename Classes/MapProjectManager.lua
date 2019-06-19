@@ -44,6 +44,15 @@ function Project:ReadConfig(file)
     return FileIO:ReadScriptData(file, CXML, true)
 end
 
+function Project:for_each_level(data, func)
+    for _, level in pairs(XML:GetNodes(data, "level")) do
+        func(level)
+    end
+    for _, level in pairs(XML:GetNodes(data, "instance")) do
+        func(level)
+    end
+end
+
 function Project:current_level(data)
     for _, level in pairs(XML:GetNodes(data, Global.editor_loaded_instance and "instance" or "level")) do
         if level.id == Global.current_level_id then
@@ -51,6 +60,19 @@ function Project:current_level(data)
         end
     end
     return nil
+end
+
+function Project:get_level_by_id(t, id)
+    for _, level in pairs(XML:GetNodes(t, "level")) do
+        if level.id == id then
+            return level
+        end
+    end
+    for _, level in pairs(XML:GetNodes(t, "instance")) do
+        if level.id == id then
+            return level
+        end
+    end
 end
 
 function Project:current_mod()
@@ -122,14 +144,6 @@ function Project:get_packages_of_level(level)
         end
     end
     return packages
-end
-
-function Project:get_level_by_id(t, id)
-    for _, level in pairs(XML:GetNodes(t, Global.editor_loaded_instance and "instance" or "level")) do
-        if level.id == id then
-            return level
-        end
-    end
 end
 
 local ignore_modules = {["GlobalValue"] = true}

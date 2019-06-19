@@ -614,41 +614,52 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
         local project = BLE.MapProject
         local mod, data = project:get_mod_and_config()
         if data then
-            local level = project:current_level(data)
-            level.add = level.add or {}
-            local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-			local add = project:read_xml(add_path)
-			
-			if add then
+            local current_level = project:current_level(data)
+            current_level.add = current_level.add or {directory = "assets"}
+            local current_add_path = current_level.add.file or Path:Combine(current_level.include.directory, "add.xml")
+			local current_add = project:read_xml(current_add_path)
 
+            local add_xmls = {}
+            project:for_each_level(data, function(level)
+                level.add = level.add or {}   
+                local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+                local add = project:read_xml(add_path)
+                if add.directory == current_add.directory then --Although unlikely, count for cases where the other level has the assets in a different location.
+                    table.insert(add_xmls, add)
+                end
+            end)
+            
+			if current_add then
 				local function delete_asset(deleting_node, deleting_asset)
 					deleting_asset = deleting_asset or deleting_node
-					local used
-					for _, node in pairs(add) do
-						if type(node) == "table" and node ~= deleting_node then
-							for _, asset in pairs(node) do
-								if type(asset) == "table" and asset._meta == deleting_asset._meta and asset.path == deleting_asset.path then
-									used = true
-									break
-								end
-							end
-						end
-					end
+                    local used
+                    --Check all present maps in the project so we don't delete it for a different level.
+                    for _, add in pairs(add_xmls) do
+                        for _, node in pairs(add) do
+                            if type(node) == "table" and node ~= deleting_node then
+                                for _, asset in pairs(node) do
+                                    if type(asset) == "table" and asset._meta == deleting_asset._meta and asset.path == deleting_asset.path then
+                                        used = true
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
 					if not used then
-						local file = Path:Combine(mod.ModPath, add.directory, deleting_asset.path.."."..deleting_asset._meta)
+						local file = Path:Combine(mod.ModPath, current_add.directory, deleting_asset.path.."."..deleting_asset._meta)
 						if FileIO:Exists(file) then
 							FileIO:Delete(file)
 						end
 					end
 				end
 
-				for k, node in pairs(add) do
+				for k, node in pairs(current_add) do
 					if type(node) == "table" then
 						local path = node.path or node.name
-						local asset_type = node.type or node._meta						
+						local asset_type = node.type or node._meta
 						prnt("check", path, name, asset_type, typ)
 						if path == name and asset_type == typ then
-							--TODO: check multiple maps if the asset is actually used.
 							if node._meta == UNIT_LOAD or node._meta == ADD then
 								for _, asset in pairs(node) do
 									if type(asset) == "table" then
@@ -658,7 +669,7 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 							else
 								delete_asset(node)
 							end
-							table.remove_key(add, k)
+							table.remove_key(current_add, k)
 							if asset_type == UNIT then
 								BLE.Utils.allowed_units[name] = nil
 							end
@@ -667,8 +678,8 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 					end
                 end
             end
-            project:save_xml(add_path, add)
-            FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, add.directory))
+            project:save_xml(current_add_path, current_add)
+            FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, current_add.directory))
             if no_dialog ~= false then
                 self:reload()
             end
