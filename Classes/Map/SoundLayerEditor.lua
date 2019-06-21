@@ -283,6 +283,7 @@ function SndLayer:do_spawn_unit(unit_path, mud)
 	ud.sound_unit = true
 	ud.position = unit:position()
 	ud.rotation = unit:rotation()
+	ud.sound_unit = true
 	table.insert(self._created_units, unit)
 	if alive(unit) then
 		if unit:name() == Idstring(self._emitter_unit) then

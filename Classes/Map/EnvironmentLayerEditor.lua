@@ -585,6 +585,7 @@ function EnvLayer:do_spawn_unit(unit_path, mud)
 	ud.environment_unit = true
 	ud.position = unit:position()
 	ud.rotation = unit:rotation()
+	ud.env_unit = true
 	table.insert(self._created_units, unit)
 	if alive(unit) then
 		if unit:name() == Idstring(self._environment_area_unit) then

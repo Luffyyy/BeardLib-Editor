@@ -737,6 +737,12 @@ function Static:check_unit_ok(unit)
             return false
         end
     end
+    if ud.env_unit and not self:Val("EnvironmentUnits") then
+        return false
+    end
+    if ud.sound_unit and not self:Val("SoundUnits") then
+        return false
+    end
     if ud.instance and not self:Val("SelectInstances") then
         return false
     end
