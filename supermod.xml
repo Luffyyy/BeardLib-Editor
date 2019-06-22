@@ -3,5 +3,5 @@
 	<tweak definition="Data/ApplyPhysics.xml" />
 
 	<native_module platform="mswindows" filename="Tools/blep.dll" />
-\	<native_module platform="mswindows" filename="Tools/lfs_sblt.dll" />
+	<native_module platform="mswindows" filename="Tools/lfs_sblt.dll" />
 </mod>

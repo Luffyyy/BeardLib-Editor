@@ -32,6 +32,7 @@
 			<class file="SelectListDialogValue.lua"/>
 			<class file="ContinentSettingsDialog.lua"/>
 			<class file="ObjectiveSettingsDialog.lua"/>
+			<class file="MultiSelectListDialog.lua"/>
 		</classes>
 
 		<classes directory="Map">

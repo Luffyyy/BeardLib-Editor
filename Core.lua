@@ -43,6 +43,7 @@ function BLE:MapEditorCodeReload()
     self.ColorDialog:Destroy()
     self.InputDialog:Destroy()
     self.FBD:Destroy()
+    self.MSLD:Destroy()
 
     local data = {}
     if self.Menu then
@@ -76,7 +77,8 @@ function BLE:InitManagers(data)
     self.ColorDialog = ColorDialog:new(self._dialogs_opt)
     self.InputDialog = InputDialog:new(self._dialogs_opt)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
-    
+    self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)    
+
     if Global.editor_mode then
         if not self._vp then
             self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)

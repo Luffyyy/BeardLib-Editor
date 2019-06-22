@@ -29,8 +29,12 @@ function WData:enable()
     self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
     self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
-    self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
-    self:bind_opt("LoadUnitFromExtract", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit"}))
+    if BeardLib.current_level then
+        self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
+    end
+    if FileIO:Exists(BLE.ExtractDirectory) then
+        self:bind_opt("LoadUnitFromExtract", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit"}))
+    end
 end
 
 function WData:loaded_continents(continents, current_continent)
@@ -142,7 +146,7 @@ function WData:build_default_menu()
         end)
     end
     if not self._parent._has_fix then
-        self:alert("Physics settings fix was not installed\nsome features are disabled.")
+        self:alert("Physics settings fix is not installed\nsome features are disabled.")
     end
 
     local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
@@ -158,26 +162,22 @@ function WData:build_default_menu()
     spawn:s_btn("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
 
     local select = self:divgroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog", {}), {text = "Unit("..select_unit..")"})
+    select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog"), {text = "Unit("..select_unit..")"})
     select:s_btn("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
     select:s_btn("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
-    if BeardLib.current_level then
-        local load = self:divgroup("Load", {align_method = "grid"})
-		local load_extract = has_extract and self:divgroup("LoadFromExtract", {align_method = "grid"}) or nil
-        for _, ext in pairs(BLE.UsableAssets) do
-            local text
-            if ext == "unit" then
-                text = "Unit("..load_unit..")"
-            end
-			load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
-            if load_extract then
-                if ext == "unit" then
-                    text = "Unit("..load_unit_fe..")"
-                end
-				load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
-			end
-		end
+    local load = self:divgroup("Load", {enabled = BeardLib.current_level, align_method = "grid"})
+    local load_extract = self:divgroup("LoadFromExtract", {enabled = has_extract, align_method = "grid"})
+    for _, ext in pairs(BLE.UsableAssets) do
+        local text
+        if ext == "unit" then
+            text = "Unit("..load_unit..")"
+        end
+        load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
+        if ext == "unit" then
+            text = "Unit("..load_unit_fe..")"
+        end
+        load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
     end
 
     local mng = self:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
@@ -764,38 +764,60 @@ function WData:OpenSelectUnitDialog(params)
 
     params = params or {}
     local units = {}
+    local held_ctrl
     for k, unit in pairs(World:find_units_quick("disabled", "all")) do
         local ud = unit:unit_data()
         if ud and ud.name and not ud.instance then
             if unit:enabled() or (ud.name_id and ud.continent) then
-                table.insert(units, table.merge({
+                table.insert(units, {
                     name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "environment" or ud.sound_unit and "sound" or tostring(ud.unit_id)) .."]",
                     unit = unit,
                     color = not unit:enabled() and Color.grey,
-                }, params))
+                })
             end
         end
     end
-    BLE.ListDialog:Show({
+    BLE.MSLD:Show({
         list = units,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),
         callback = params.on_click or function(item)
-            self._parent:select_unit(item.unit)         
-            self:CloseDialog()
+            held_ctrl = ctrl()
+            self._parent:select_unit(item.unit, held_ctrl)
+            if not held_ctrl then
+                self:CloseDialog()
+            end
+        end,
+        select_multi_clbk = function(items)
+            self:part("static"):reset_selected_units()
+            for _, item in pairs(items) do
+                self._parent:select_unit(item.unit, true)
+                if not held_ctrl then
+                    self:CloseDialog()
+                end  
+            end
         end
     })
 end
 
 function WData:OpenSelectInstanceDialog(params)
 	params = params or {}
-	BLE.ListDialog:Show({
+	BLE.MSLD:Show({
 	    list = managers.world_instance:instance_names(),
         force = true,
 	    callback = params.on_click or function(name)
 	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))	        
 	    	BLE.ListDialog:hide()
-	    end
+        end,
+        select_multi_clbk = function(items)
+            self:part("static"):reset_selected_units()
+            for _, name in pairs(items) do
+                self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)), true)
+                if not held_ctrl then
+                    self:CloseDialog()
+                end  
+            end
+        end
 	})
 end
 
@@ -820,17 +842,26 @@ function WData:OpenSelectElementDialog(params)
             end
         end
     end
-	BLE.ListDialog:Show({
+	BLE.MSLD:Show({
 	    list = elements,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),        
 	    callback = params.on_click or function(item)
-            self._parent:select_element(item.element, held_ctrl)
             held_ctrl = ctrl()
+            self._parent:select_element(item.element, held_ctrl)
             if not held_ctrl then
                 self:CloseDialog()
             end
-	    end
+	    end,
+        select_multi_clbk = function(items)
+            self:part("static"):reset_selected_units()
+            for _, item in pairs(items) do
+                self._parent:select_element(item.element, held_ctrl)
+                if not held_ctrl then
+                    self:CloseDialog()
+                end  
+            end
+        end
 	}) 
 end
 
@@ -852,6 +883,7 @@ end
 
 function WData:CloseDialog()
     BLE.ListDialog:hide()
+    BLE.MSLD:hide()
     self._opened = {}
 end
 

@@ -18,7 +18,7 @@ function SelectListDialogValue:ShowItem(t, selected)
     end
 
     if self:SearchCheck(t) then
-        if not self._limit or self:ItemsCount() <= 250 then
+        if not self._limit or self:ItemsCount() <= self._max_items then
             return true
         end
     end
@@ -143,8 +143,6 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
                 else
                     item:textbox("", ClassClbk(self, "ValueClbk", i), v, opt)
                 end
-            else
-                item:divider("...", opt)
             end
         end
     end
