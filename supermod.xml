@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <mod>
-	<tweak definition="Data/ApplyPhysics.xml" />
+	<tweak definition="physics.xml" />
 
 	<native_module platform="mswindows" filename="Tools/blep.dll" />
 	<native_module platform="mswindows" filename="Tools/lfs_sblt.dll" />
