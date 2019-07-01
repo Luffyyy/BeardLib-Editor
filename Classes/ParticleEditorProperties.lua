@@ -283,8 +283,10 @@ function CoreEffectProperty:on_set_variant(widget_view_variant, item)
 	local container = widget_view_variant.container
 	local container_sizer = widget_view_variant.container_sizer
 	self._value = item:SelectedItem()
+	log("!!!!")
+	log(tostring(self._value))
 	local variant = self._variants[self._value]
-
+	
 	variant_panel:ClearItems()
 	variant:create_widget(variant_panel, view)
 
