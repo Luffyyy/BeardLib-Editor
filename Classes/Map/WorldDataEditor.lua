@@ -166,7 +166,7 @@ function WData:build_default_menu()
     select:s_btn("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
     select:s_btn("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
-    local load = self:divgroup("Load", {enabled = BeardLib.current_level, align_method = "grid"})
+    local load = self:divgroup("Load", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self:divgroup("LoadFromExtract", {enabled = has_extract, align_method = "grid"})
     for _, ext in pairs(BLE.UsableAssets) do
         local text
