@@ -218,6 +218,7 @@
         <value_node value="ElementOverrideInstigator"/>
 	    <value_node value="ElementXAudio"/>
         <value_node value="ElementXAudioOperator"/>
+	<value_node value="ElementBLCustomAchievement"/>
         
         <!--Normal-->
         <value_node value="ElementSideJobAward"/>
