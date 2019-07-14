@@ -7,6 +7,12 @@ BLE.Updaters = {}
 BLE.DBPaths = {}
 BLE.Prefabs = {}
 
+function BLE:PreModuleInit()
+    if not FileIO:Exists(Path:Combine(self.ModPath, "Data", "Paths.bin")) then
+        self:ModError("Data files are missing. Go to BeardLib's mods manager and download it there. Or, download it manually from Modworkshop")
+    end
+end
+
 function BLE:Init()
 	self.AssetsDirectory =  Path:CombineDir(self.ModPath, "Assets")
 	self.HooksDirectory =  Path:CombineDir(self.ModPath, "Hooks")
@@ -18,7 +24,15 @@ function BLE:Init()
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
 	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"		
-	self.UsableAssets = {"unit", "effect", "environment", "scene"}
+    self.UsableAssets = {"unit", "effect", "environment", "scene"}
+    
+    Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", ClassClbk(BLE, "Update"))
+    Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", ClassClbk(BLE, "PausedUpdate"))
+    Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
+        LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
+    end)
+    Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", ClassClbk(BLE, "InitManagers"))
 end
 
 function BLE:RunningFix()
@@ -410,11 +424,3 @@ function BLE:SetLoadingText(text)
         return s
     end
 end
-
-Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
-Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", ClassClbk(BLE, "Update"))
-Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", ClassClbk(BLE, "PausedUpdate"))
-Hooks:Add("LocalizationManagerPostInit", "BeardLibEditorLocalization", function(loc)
-	LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
-end)
-Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", ClassClbk(BLE, "InitManagers"))

@@ -14,31 +14,32 @@ function EditMeshVariation:build_menu(units)
 end
 
 function EditMeshVariation:set_unit_data()
-	local unit = self:selected_unit()
-    unit:unit_data().mesh_variation = self._menu:GetItem("MeshVariation"):SelectedItem()
-    local mesh_variation = unit:unit_data().mesh_variation
+    local unit = self:selected_unit()
+    local ud = unit:unit_data()
+    ud.mesh_variation = self._menu:GetItem("MeshVariation"):SelectedItem()
+    local mesh_variation = ud.mesh_variation
     if mesh_variation and mesh_variation ~= "" then
         managers.sequence:run_sequence_simple2(mesh_variation, "change_state", unit)
     end
 
     local material = self._menu:GetItem("MaterialVariation"):Value()
     local default = material == "default"
-    unit:unit_data().material_variation = nil
+    ud.material_variation = nil
     
     local node = not default and BLE.Utils:ParseXml("material_config", material)
     if default or (DB:has(Idstring("material_config"), material:id()) and self:material_config_ok(node, unit)) then
-        unit:unit_data().material_variation = material
+        ud.material_variation = material
     end
     
-    material = unit:unit_data().material_variation
+    material = ud.material_variation
     if material == "default" then
         material = nil
     end
 
     local final_mat = (material and Idstring(material)) or PackageManager:unit_data(unit:name()):material_config()
-    if DB:has(Idstring("material_config"), final_mat) then
+    if ud.material ~= ud.material_variation and DB:has(Idstring("material_config"), final_mat) then
         unit:set_material_config((material and Idstring(material)) or PackageManager:unit_data(unit:name()):material_config(), true)
-        unit:unit_data().material = unit:unit_data().material_variation
+        ud.material = ud.material_variation
     end
 end
 
