@@ -12,7 +12,7 @@ end
 
 function CubemapCreator:_init_paths()
 	-- need to encase it in ""
-	self._gen_path = string.format("\"%s\"", Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.py"))
+	self._gen_path = string.format("\"%s\"", Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.exe"))
 	self._cubelights_path = "levels/mods/" .. Global.current_level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.current_level_id .. "/cubemaps"
 	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"

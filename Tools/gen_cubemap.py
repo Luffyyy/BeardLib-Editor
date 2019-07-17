@@ -5,11 +5,13 @@ then converts them based on the type.
 
 Input example: C:\Program Files (x86)\Steam\steamapps\common\PAYDAY 2\mods\BeardLib-Editor\Tools\gen_cubemap.py" reflect -i cubemap_gizmo_001_1_xneg.tga cubemap_gizmo_001_2_xpos.tga cubemap_gizmo_001_3_yneg.tga cubemap_gizmo_001_4_ypos.tga cubemap_gizmo_001_5_zneg.tga cubemap_gizmo_001_6_zpos.tga -o 100246.dds
 """
-from os import path, remove, rename, getcwd
-import sys
+import argparse
 import logging
 import subprocess
-import argparse
+import sys
+
+from os import path, remove, rename, getcwd
+from pathlib import Path
 
 import_status = False
 try:
@@ -19,12 +21,10 @@ except ImportError:
 else:
     import_status = True
 
-__location__ = path.realpath(
-    path.join(getcwd(), path.dirname(__file__)))
 
-dir_path = (path.abspath(path.dirname(__file__)))
-texass_path = path.join(__location__, "texassemble.exe")
-texconv_path = path.join(__location__, "texconv.exe")
+dir_path = Path(sys.argv[0]).parent
+texass_path = str(dir_path / 'texassemble.exe')
+texconv_path = str(dir_path / 'texconv.exe')
 
 temp = "temp"
 
@@ -39,38 +39,39 @@ def get_args():
         "-i", help="input 6 filenames for each cube face or a single file for dome_occlusion", nargs="+")
     parser.add_argument("-o", help="output filename")
 
-    args = parser.parse_args(sys.argv[1:])
-
-    if not args.type:
-        logging.error("[ERROR] Incorrect argument specified")
-        sys.exit(1)
+    args = parser.parse_args()
 
     return args.type, args.i, args.o
+
 
 # can't specify output with texconv so I have to move the output
 # from the rootdir to the temp folder
 
 
 def move_and_rename_cubemap(cubemap_name):
-    cubemap_path = path.abspath("") + "\\"
+    print('cubemap name', cubemap_name)
     # lazy way to remove .tga
-    cubemap_name_new = cubemap_name[:-4] + ".texture"
+    cubemap_name_new = cubemap_name[:-4] + '.texture'
 
-    if not path.isfile(path.join(__location__, temp, cubemap_name_new)):
-        rename(cubemap_path + cubemap_name,
-               path.join(__location__, temp, cubemap_name_new))
+    new_filename = dir_path / 'temp' / cubemap_name_new
+    if not new_filename.exists():
+        rename(Path().resolve() / cubemap_name, new_filename)
+
     # remove old cubemap name
-    if path.isfile(path.join(__location__, temp, cubemap_name)):
-        remove(path.join(__location__, temp, cubemap_name))
+    old_filename = dir_path / 'temp' / cubemap_name
+    if old_filename.exists():
+        print('removing old filename', old_filename)
+        remove(old_filename)
+
     sys.exit(0)
+
 
 # this script is called from lua by execute() with an absolute path,
 # meaning that I have to make every filename have an absolute path too
-
-
 def fix_paths(output_arg):
+    output_paths = []
     if output_arg:
-        output_paths = ["-o", path.join(__location__, temp, output_arg)]
+        output_paths = ["-o", str(dir_path / 'temp' / output_arg)]
     return output_paths
 
 
@@ -90,12 +91,13 @@ def start_process(proc_path, input):
 
 
 def convert_cubemaps(output_path, argtype):
+    args = ['-m']
     if argtype == "reflect":
-        args = ["-m", "10", "-f", "BC1_UNORM", "-y"]
+        args += ['10', '-f', 'BC1_UNORM', '-y']
     elif argtype == "light":
-        args = ["-m", "8", "-f", "BC3_UNORM", "-y"]
+        args += ['8', '-f', 'BC3_UNORM', '-y']
     elif argtype == "dome_occ":
-        args = ["-m", "1", "-f", "BC1_UNORM", "-y"]
+        args += ['1', '-f', 'BC1_UNORM', '-y']
 
     # for some reason it always fails to write if I specify output
     output_path.remove("-o")
@@ -107,12 +109,8 @@ def generate_cubemaps(files, output_path, argtype):
     if argtype == "dome_occ":
         return
 
-    s = ["cube"]
-    for filename in files:
-        s.append(filename)
-    s.extend(output_path)
-    s.append("-y")
-    #s.extend(["-w", str(cube_res), "-h", str(cube_res)])
+    s = ["cube", *files, *output_path, '-y']
+    # s.extend(["-w", str(cube_res), "-h", str(cube_res)])
     start_process(texass_path, s)
 
 
@@ -122,8 +120,8 @@ def blur_cubes(files, argtype):
 
     for cube in files:
         img = Image.open(cube)
-        w, h = img.size
         processed = img.filter(ImageFilter.GaussianBlur(radius=1))
+
         # the cubemap alpha has to be completely opaque
         if argtype == "reflect":
             processed.putalpha(0)
@@ -132,8 +130,7 @@ def blur_cubes(files, argtype):
 
 if __name__ == "__main__":
     argtype, in_files, out_file = get_args()
-    logging.basicConfig(filename=dir_path +
-                        "\\cubemapgen.log", level=logging.INFO)
+    logging.basicConfig(filename=dir_path / "cubemapgen.log", level=logging.INFO)
 
     cubemap_path = fix_paths(out_file)
     print('CUBEMAP PATH', cubemap_path)
