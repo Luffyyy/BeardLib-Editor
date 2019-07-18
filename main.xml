@@ -5,7 +5,7 @@
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"
 		auto_image_color="true"
-		min_lib_ver="3.35"
+		min_lib_ver="3.38"
 		core_class="Core.lua"
 	>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="BeardLib-Editor package data" folder_name="Data" install_directory="$ModPath$"/>

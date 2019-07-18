@@ -165,7 +165,7 @@ function Project:get_clean_config(mod, do_clone)
     if mod._modules then
         for i, module in pairs(mod._modules) do
             if module.clean_table and not ignore_modules[module.type_name] and config[i] then
-                module:do_clean_table(config[i])
+                module:DoCleanTable(config[i])
             end
         end
     end
