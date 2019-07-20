@@ -31,6 +31,7 @@ function EditorAreaTrigger:set_shape_property(item)
 	self:set_element_data(item)
 	self._shape:set_property(item.name, item:Value())
 	self._cylinder_shape:set_property(item.name, item:Value())
+	self._sphere_shape:set_property(item.name, item:Value())
 end
 
 function EditorAreaTrigger:destroy()
@@ -45,18 +46,23 @@ function EditorAreaTrigger:destroy()
 	if self._cylinder_shape then
 		self._cylinder_shape:destroy()
 	end
+	if self._sphere_shape then
+		self._sphere_shape:destroy()
+	end
 end
 
 function EditorAreaTrigger:create_shapes()
 	self._shape = CoreShapeManager.ShapeBoxMiddle:new({position = self._element.values.position, rotation = self._element.values.rotation, width = self._element.values.width, depth = self._element.values.depth, height = self._element.values.height})
 	self._cylinder_shape = CoreShapeManager.ShapeCylinderMiddle:new({position = self._element.values.position, rotation = self._element.values.rotation, radius = self._element.values.radius, height = self._element.values.height})	
+	self._sphere_shape = CoreShapeManager.ShapeSphere:new({position = self._element.values.position, rotation = self._element.values.rotation, radius = self._element.values.radius, height = self._element.values.height})
 end
 
 function EditorAreaTrigger:get_shape()
 	if not self._shape then
 		self:create_shapes()
 	end
-	return self._element.values.shape_type == "box" and self._shape or self._element.values.shape_type == "cylinder" and self._cylinder_shape
+	local st = self._element.values.shape_type
+	return st == "box" and self._shape or st == "cylinder" and self._cylinder_shape or st == "sphere" and self._sphere_shape
 end
 
 function EditorAreaTrigger:update(t, dt)
@@ -86,8 +92,10 @@ function EditorAreaTrigger:update(t, dt)
 		local pos, rot = self._unit:position(), self._unit:rotation()
 	    self._shape:set_position(pos)
 	    self._cylinder_shape:set_position(pos)    
+	    self._sphere_shape:set_position(pos)    
 	    self._shape:set_rotation(rot)
 	    self._cylinder_shape:set_rotation(rot)
+	    self._sphere_shape:set_rotation(rot)
 	end
 	EditorAreaTrigger.super.update(self, t, dt)
 end
@@ -95,13 +103,14 @@ end
 function EditorAreaTrigger:set_shape_type()
 	local is_box = self._element.values.shape_type == "box"
 	local is_cylinder = self._element.values.shape_type == "cylinder"
+	local is_sphere = self._element.values.shape_type == "sphere"
 	local uses_external = self._element.values.use_shape_element_ids
 	is_box = (not uses_external and is_box)
 	is_cylinder = (not uses_external and is_cylinder)
 	self._depth:SetEnabled(is_box)
 	self._width:SetEnabled(is_box)
 	self._height:SetEnabled(is_box or is_cylinder)
-	self._radius:SetEnabled(is_cylinder)
+	self._radius:SetEnabled(is_cylinder or is_sphere)
 	if self._use_disabled then
 		self._shape_type:SetEnabled(not uses_external)
 		self._use_disabled:SetEnabled(uses_external)
@@ -139,7 +148,7 @@ function EditorAreaTrigger:_build_panel(disable_params)
 	self:BuildElementsManage("rules_element_ids", nil, {"ElementInstigatorRule"}, ClassClbk(self, "nil_if_empty"))
 	self:create_values_ctrlrs(disable_params)
  	
-	self._shape_type = self:ComboCtrl("shape_type", {"box", "cylinder"}, {help = "Select shape for area"})
+	self._shape_type = self:ComboCtrl("shape_type", {"box", "cylinder", "sphere"}, {help = "Select shape for area"})
 	self._width = self:NumberCtrl("width", {floats = 0, on_callback = ClassClbk(self, "set_shape_property"), help ="Set the width for the shape"})
 	self._depth = self:NumberCtrl("depth", {floats = 0, on_callback = ClassClbk(self, "set_shape_property"), help ="Set the depth for the shape"})
 	self._height = self:NumberCtrl("height", {floats = 0, on_callback = ClassClbk(self, "set_shape_property"), help ="Set the height for the shape"})

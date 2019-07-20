@@ -39,6 +39,13 @@ if F == "coreelementarea" then
 					height = self._values.height,
 					radius = self._values.radius
 				}))
+			elseif self._values.shape_type == "sphere" then
+				self:_add_shape(CoreShapeManager.ShapeSphere:new({
+					position = self._values.position,
+					rotation = self._values.rotation,
+					height = self._values.height,
+					radius = self._values.radius
+				}))
 			end
 		end
 		self._inside = {}
