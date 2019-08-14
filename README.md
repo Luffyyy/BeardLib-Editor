@@ -14,7 +14,7 @@ Help would be really appreciated in the wiki!
 https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
 
 ## Installation
-This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://github.com/simon-wh/PAYDAY-2-BeardLib). Without them the editor will not run. Make sure you have both fully updated. **We ask you to download the GitHub version of BeardLib since the editor uses the latest features of BeardLib that may not be in the public/MWS version. The link we provided links to the repository.**
+This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://github.com/simon-wh/PAYDAY-2-BeardLib). Without them the editor will not run. Make sure you have both fully updated. **We ask you to download the GitHub version of BeardLib since the editor uses the latest features of BeardLib that may not be in the public/MWS version. The link we provided is the repo of BeardLib.**
 
 Then install the mod as any BLT mod, drop to mods folder.
 
