@@ -397,7 +397,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
             if #copy_data > 0 then
                 FileIO:CopyFilesToAsync(copy_data, function(success)
                     if success then
-                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, nil, true)
+                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, true)
                         if failed_all then
                             BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
                         else

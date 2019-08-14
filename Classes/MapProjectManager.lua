@@ -531,7 +531,7 @@ function Project:create_new_narrative(name)
     data.name = name
     narr.id = name
     local proj_path = Path:Combine(BeardLib.config.maps_dir, name)
-    FileIO:CopyTo(Path:Combine(self._templates_directory, "Project"), proj_path)
+    FileIO:CopyDirTo(Path:Combine(self._templates_directory, "Project"), proj_path)
     FileIO:MakeDir(Path:Combine(proj_path, "assets"))
     FileIO:MakeDir(Path:Combine(proj_path, "levels"))
     FileIO:WriteTo(Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))  
