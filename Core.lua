@@ -227,7 +227,7 @@ function BLE:LoadHashlist()
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
         local id = pkg.id
         self.DBPackages[id] = self.DBPackages[id] or {}
-        for _, type in pairs(table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"}) do
+        for _, type in pairs(table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
             self.DBPackages[id][type] = self.DBPackages[id][type] or {}
         end
         self:ReadCustomPackageConfig(id, pkg.config, pkg.dir)
