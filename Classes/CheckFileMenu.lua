@@ -51,34 +51,49 @@ end
 
 function CheckFileMenu:DoCheckFile(file)
     local mod = BeardLib.Utils:FindModWithMatchingPath(file)
-    if mod then    
+
+    if mod then
         local Checker = BLE.Utils.Export:new()
         Checker.pack_extra_info = true
+        local assets_dir
+        if mod.AddFiles then
+            assets_dir = Path:CombineDir(mod.ModPath, mod.AddFiles._config.directory)
+        else
+            assets_dir = Path:CombineDir(mod.ModPath, "/assets")
+        end
+    
+        if not FileIO:Exists(assets_dir) then
+            return
+        end
+    
         Checker.assets_dir = Path:CombineDir(mod.ModPath, mod.AddFiles._config.directory)
         Checker.return_on_missing = false
-
+    
         local splt = string.split(file:gsub(Checker.assets_dir, ""), "%.")
         local path = splt[1]
         local ext = splt[2]
-
-        local errors = Checker:CheckFileFromMod(ext, path, mod)
+    
+        local errors = Checker:CheckFile(ext, path)
         if not errors then
             self._holder:Divider({text = string.format("Missing file %s", tostring(file))})
         else
             if #errors > 0 then
                 local group = self._holder:group(file, {text = file, background_color = self._menu.background_color, font_size = 18})
                 for _, err_file in pairs(errors) do
-                    group:Button({
-                        on_callback = function()
-                            os.execute(string.format('start explorer.exe /select,"%s"', file:gsub("/", "\\")))
-                        end,
-                        text = string.format("Missing file %s. Used by %s in %s", err_file.path.."."..err_file._meta, tostring(err_file.extra_info.file), tostring(err_file.extra_info.where))
-                    })
+                    if err_file._meta ~= "cooked_physics" then
+                        group:Button({
+                            on_callback = function()
+                                os.execute(string.format('start explorer.exe /select,"%s"', file:gsub("/", "\\")))
+                            end,
+                            text = string.format("Missing file %s. Used by %s in %s", err_file.path.."."..err_file._meta, tostring(err_file.extra_info.file), tostring(err_file.extra_info.where))
+                        })
+                    end
+                end
+                if #group:Items() == 0 then
+                    group:Destroy()
                 end
             end
         end
-    else
-
     end
 end
 

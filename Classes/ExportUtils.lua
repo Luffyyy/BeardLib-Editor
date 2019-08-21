@@ -25,7 +25,7 @@ function Utils:Log(...)
 end
 
 --At the moment only used to confirm all dependencies are loaded
-function Utils:CheckFileFromMod(ext, path, mod)
+function Utils:CheckFile(ext, path)
 	if not Utils.Reading[ext] then
 		self:Log("Extension %s does not have a read function!", ext)
 		return
