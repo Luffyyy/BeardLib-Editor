@@ -94,8 +94,8 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
     end
 end
 
-function Utils:ParseXml(typ, path, scriptdata)
-	local file = Path:Combine(BLE.ExtractDirectory, path.."."..typ)
+function Utils:ParseXml(typ, path, scriptdata, assets_dir)
+	local file = Path:Combine(assets_dir or BLE.ExtractDirectory, path.."."..typ)
 	local load = function(path)
 		if scriptdata then
 			return FileIO:ReadScriptData(path, "binary")
@@ -107,7 +107,7 @@ function Utils:ParseXml(typ, path, scriptdata)
         return load(file)
 	else
         --This is confusing..
-        local key_file = Path:Combine(BLE.ExtractDirectory, BLEP.swap_endianness(path:key()).."."..typ)
+        local key_file = Path:Combine(assets_dir or BLE.ExtractDirectory, BLEP.swap_endianness(path:key()).."."..typ)
 		if FileIO:Exists(key_file) then
 			return load(key_file)
 		else

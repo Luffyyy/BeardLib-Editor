@@ -16,6 +16,7 @@
 		<class file="EditorMenu.lua"/>
 		<class file="EditorPart.lua"/>		
 		<class file="EditorOptionsMenu.lua"/>
+		<class file="CheckFileMenu.lua"/>
 		<class file="AboutMenu.lua"/>
 		<class file="MissionElementUnit.lua"/>
 		<class file="MapProjectManager.lua"/>

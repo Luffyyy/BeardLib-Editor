@@ -66,6 +66,7 @@ function BLE:MapEditorCodeReload()
         data.project = self.MapProject:Destroy()
         data.load = self.LoadLevel:Destroy()
         data.options = self.EditorOptions:Destroy()
+        data.check_file = self.CheckFileMenu:Destroy()
         data.about = self.AboutMenu:Destroy()
     end
 
@@ -118,6 +119,7 @@ function BLE:InitManagers(data)
 
     self.Menu = EditorMenu:new()
     self.ScriptDataConverter = ScriptDataConverterManager:new(data.script_data)
+    self.CheckFileMenu = CheckFileMenu:new(data.check_file)
     self.MapProject = MapProjectManager:new(data.project)
     self.LoadLevel = LoadLevelMenu:new(data.load)
     self.EditorOptions = EditorOptionsMenu:new(data.options)
@@ -373,12 +375,48 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                 self:LoadCustomAssetsToHashList(v, directory)
             else
                 path = Path:Normalize(path)
+                local dir = Path:Combine(directory, path)
 
-                local file_path = Path:Combine(directory, path) ..".".. typ
-				if FileIO:Exists(file_path) then
-					self.DBPaths[typ] = self.DBPaths[typ] or {}
-					self.DBPaths[typ][path] = true
-					self.Utils.allowed_units[path] = true
+                if CustomPackageManager.UNIT_SHORTCUTS[typ] then
+                    if FileIO:Exists(dir..".unit") and FileIO:Exists(dir..".model") and FileIO:Exists(dir..".object") then
+                        self.DBPaths.unit[path] = true
+                        self.DBPaths.model[path] = true
+                        self.DBPaths.object[path] = true
+                    
+                        local failed
+                    
+                        for load_type, load in pairs(C.UNIT_SHORTCUTS[typ]) do
+                            if FileIO:Exists(dir.."."..load_type) then
+                                self.DBPaths[load_type] = self.DBPaths[load_type] or {}
+                                self.DBPaths[load_type][path] = true
+                            else
+                                failed = true
+                            end
+                            if type(load) == "table" then
+                                for _, suffix in pairs(load) do
+                                    if FileIO:Exists(path..suffix.."."..load_type) then
+                                        self.DBPaths[load_type][path..suffix] = true
+                                    else
+                                        failed = true
+                                    end
+                                end
+                            end
+                        end
+                        if not failed then
+                            self.Utils.allowed_units[path] = true
+                        end
+                    end
+                elseif CustomPackageManager.TEXTURE_SHORTCUTS[typ] then
+                    for _, suffix in pairs(C.TEXTURE_SHORTCUTS[typ]) do
+                        self.DBPaths.texture[path..suffix] = true
+                    end
+                else
+                    local file_path = dir ..".".. typ
+                    if FileIO:Exists(file_path) then
+                        self.DBPaths[typ] = self.DBPaths[typ] or {}
+                        self.DBPaths[typ][path] = true
+                        self.Utils.allowed_units[path] = true
+                    end
                 end
             end
         end
