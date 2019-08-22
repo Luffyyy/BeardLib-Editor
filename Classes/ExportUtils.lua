@@ -30,10 +30,6 @@ function Utils:CheckFile(ext, path)
 		self:Log("Extension %s does not have a read function!", ext)
 		return
     end
-    
-    if not DB:has(ext:id(), path:id()) then
-        return false
-    end
 
 	local config = {}
     if not Utils.Reading[ext](self, path, config, {}) then
