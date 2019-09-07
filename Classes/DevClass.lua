@@ -9,9 +9,12 @@ Then, remove the if true then return end above.
 ]]
 
 function BLE:DestroyDev()
-    local data = SomeClass:Destroy()
-    SomeClassGlobal = nil
-    return data
+    if SomeClassGlobal then
+        local data = SomeClassGlobal:Destroy()
+        SomeClassGlobal = nil
+        return data
+    end
+    return {}
 end
 
 function BLE:CreateDev(data)
