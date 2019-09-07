@@ -70,6 +70,10 @@ function BLE:MapEditorCodeReload()
         data.about = self.AboutMenu:Destroy()
     end
 
+    if BLE.DestroyDev then
+        data.dev = BLE:DestroyDev()
+    end
+
     if self.MapEditor then
         table.delete(self.Updaters, self.MapEditor)
         data.editor = self.MapEditor:destroy()
@@ -93,6 +97,7 @@ function BLE:InitManagers(data)
     self.InputDialog = InputDialog:new(self._dialogs_opt)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
     self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)    
+
 
     if Global.editor_mode then
         if not self._vp then
@@ -125,6 +130,10 @@ function BLE:InitManagers(data)
     self.EditorOptions = EditorOptionsMenu:new(data.options)
     self.AboutMenu = AboutMenu:new(data.about)
     self.Menu:Load(data.menu)
+
+    if BLE.CreateDev then
+        BLE:CreateDev(data.dev)
+    end
 
     if not self.ConstPackages then
         local prefabs = FileIO:GetFiles(self.PrefabsDirectory)

@@ -15,6 +15,7 @@
 		<class file="MenuUIExt.lua"/>
 		<class file="EditorMenu.lua"/>
 		<class file="EditorPart.lua"/>		
+		<class file="DevClass.lua"/>		
 		<class file="EditorOptionsMenu.lua"/>
 		<class file="CheckFileMenu.lua"/>
 		<class file="AboutMenu.lua"/>
