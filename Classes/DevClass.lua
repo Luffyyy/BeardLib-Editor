@@ -9,14 +9,14 @@ Then, remove the if true then return end above.
 ]]
 
 function BLE:DestroyDev()
-    local data = BeardLib.managers.mods_menu:Destroy()
-    BeardLib.managers.mods_menu = nil
+    local data = SomeClass:Destroy()
+    SomeClassGlobal = nil
     return data
 end
 
 function BLE:CreateDev(data)
-    if not BeardLib.managers.mods_menu then
-        BeardLib.managers.mods_menu = BeardLibModsMenu:new(data)
+    if not SomeClassGlobal then
+        SomeClassGlobal = SomeClass:new(data)
     end
 end
 
