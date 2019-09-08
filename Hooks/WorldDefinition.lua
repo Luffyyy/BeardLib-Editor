@@ -27,11 +27,203 @@ function WorldDef:init(params, ...)
 	self:create("ai")
 end
 
-function WorldDef:create(layer, offset)
-	local return_data = WorldDef.super.create(self, layer, offset)
+function WorldDefinition:create(layer, offset)
+	Application:check_termination()
+
+	offset = offset or Vector3()
+	local return_data = {}
+
+	if (layer == "level_settings" or layer == "all") and self._definition.level_settings then
+		self:_load_level_settings(self._definition.level_settings.settings, offset)
+
+		return_data = self._definition.level_settings.settings
+	end
+
+	if layer == "markers" then
+		return_data = self._definition.world_data.markers
+	end
+
+	if layer == "values" then
+		local t = {}
+
+		for name, continent in pairs(self._continent_definitions) do
+			t[name] = continent.values
+		end
+
+		return_data = t
+	end
+
+	if layer == "editor_groups" then
+		return_data = self:_create_editor_groups()
+	end
+
+	if layer == "continents" then
+		return_data = self._continents
+	end
+
+	if layer == "instances" or layer == "all" then
+		for name, continent in pairs(self._continent_definitions) do
+			if continent.instances then
+				for _, data in ipairs(continent.instances) do
+					managers.world_instance:add_instance_data(data)
+					table.insert(return_data, data)
+				end
+			end
+		end
+	end
+
+	if layer == "ai" and self._definition.ai then
+		for _, values in ipairs(self._definition.ai) do
+			local unit = self:_create_ai_editor_unit(values, offset)
+
+			if unit then
+				table.insert(return_data, unit)
+			end
+		end
+	end
+
+	if layer == "ai" or layer == "all" then
+		if self._definition.ai_nav_graphs then
+			self:_load_ai_nav_graphs(self._definition.ai_nav_graphs, offset)
+			Application:cleanup_thread_garbage()
+		end
+
+		if self._definition.ai_mop_graphs then
+			self:_load_ai_mop_graphs(self._definition.ai_mop_graphs, offset)
+			Application:cleanup_thread_garbage()
+		end
+	end
+
+	Application:check_termination()
+
+	if (layer == "ai_settings" or layer == "all") and self._definition.ai_settings then
+		return_data = self:_load_ai_settings(self._definition.ai_settings, offset)
+	end
+
+	Application:check_termination()
+
+	if (layer == "portal" or layer == "all") and self._definition.portal then
+		self:_create_portal(self._definition.portal, offset)
+
+		return_data = self._definition.portal
+	end
+
+	Application:check_termination()
+
+	if layer == "sounds" or layer == "all" then
+		return_data = self:_create_sounds(self._definition.sounds)
+	end
+
+	Application:check_termination()
+
+	if layer == "mission_scripts" then
+		return_data.scripts = return_data.scripts or {}
+
+		if self._definition.mission_scripts then
+			for _, values in ipairs(self._definition.mission_scripts) do
+				for name, script in pairs(values) do
+					return_data.scripts[name] = script
+				end
+			end
+		end
+
+		for name, continent in pairs(self._continent_definitions) do
+			if continent.mission_scripts then
+				for _, values in ipairs(continent.mission_scripts) do
+					for name, script in pairs(values) do
+						return_data.scripts[name] = script
+					end
+				end
+			end
+		end
+	end
+
+	if layer == "mission" then
+		if self._definition.mission then
+			for _, values in ipairs(self._definition.mission) do
+				table.insert(return_data, self:_create_mission_unit(values, offset))
+			end
+		end
+
+		for name, continent in pairs(self._continent_definitions) do
+			if continent.mission then
+				for _, values in ipairs(continent.mission) do
+					table.insert(return_data, self:_create_mission_unit(values, offset))
+				end
+			end
+		end
+	end
+
+	if (layer == "brush" or layer == "all") and self._definition.brush then
+		self:_create_massunit(self._definition.brush, offset)
+	end
+
+	Application:check_termination()
+
+	if layer == "environment" or layer == "all" then
+		local environment = self._definition.environment
+
+		self:_create_environment(environment, offset)
+
+		return_data = environment
+	end
+
+	if layer == "world_camera" or layer == "all" then
+		self:_create_world_cameras(self._definition.world_camera)
+	end
+
+	if (layer == "wires" or layer == "all") and self._definition.wires then
+		for _, values in ipairs(self._definition.wires) do
+			table.insert(return_data, self:_create_wires_unit(values, offset))
+		end
+	end
+
 	if layer == "statics" or layer == "all" then
+		local is_editor = Application:editor()
+
+		if self._definition.statics then
+			for _, values in ipairs(self._definition.statics) do
+				local unit = self:_create_statics_unit(values, offset)
+				if unit then
+					table.insert(return_data, unit)
+				end
+			end
+		end
+
+		for name, continent in pairs(self._continent_definitions) do
+			if continent.statics then
+				for _, values in ipairs(continent.statics) do
+					local unit = self:_create_statics_unit(values, offset)
+					if unit then
+						table.insert(return_data, unit)
+					end
+				end
+			end
+		end
+
 		self:spawn_quick(return_data, offset)
 	end
+
+	if layer == "dynamics" or layer == "all" then
+		if self._definition.dynamics then
+			for _, values in ipairs(self._definition.dynamics) do
+				table.insert(return_data, self:_create_dynamics_unit(values, offset))
+			end
+		end
+
+		for name, continent in pairs(self._continent_definitions) do
+			if continent.dynamics then
+				for _, values in ipairs(continent.dynamics) do
+					local unit = self:_create_dynamics_unit(values, offset)
+
+					if unit then
+						table.insert(return_data, unit)
+					end
+				end
+			end
+		end
+	end
+
 	return return_data
 end
 
@@ -39,18 +231,9 @@ function WorldDef:spawn_quick(return_data, offset)
 	offset = offset or Vector3()
 	if self._needed_to_spawn then
 		for _, values in ipairs(self._needed_to_spawn) do
-			local unit_data = values.unit_data
-			if unit_data.delayed_load then
-				self._delayed_units[unit_data.unit_id] = {
-					unit_data,
-					offset,
-					return_data
-				}
-			else
-				self:_create_statics_unit(values, offset)
-				if unit and return_data then
-					table.insert(return_data, unit)
-				end
+			self:_create_statics_unit(values, offset)
+			if unit and return_data then
+				table.insert(return_data, unit)
 			end
 		end
 		self._needed_to_spawn = nil
