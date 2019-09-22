@@ -22,7 +22,7 @@ end
 
 function EditorObjective:set_element_data(params, ...)
 	EditorObjective.super.set_element_data(self, params, ...)
-	if params.value == "objective" then
+	if params.name == "objective" then
 	--	self:update_sub_objectives()
 	end
 end

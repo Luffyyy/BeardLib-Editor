@@ -5,6 +5,7 @@ function MissionScriptEditor:init(element, old_element)
 	ItemExt:add_funcs(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
+	self._hed = self._element.values
 	if element then
 		self._element = element
 	else
@@ -20,7 +21,7 @@ function MissionScriptEditor:init(element, old_element)
 end
 
 function MissionScriptEditor:create_element()		
-	local cam = managers.viewport:get_current_camera()	
+	local cam = managers.viewport:get_current_camera()
 	self._element = {}	
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"

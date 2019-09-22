@@ -36,9 +36,13 @@ function EditorWaypoint:create_element()
 	self._element.values.only_in_civilian = false	
 end
 
+function EditorWaypoint:_set_text()
+	self._text:SetText("Text: " .. (self._hed.text_id and managers.localization:text(self._hed.text_id) or "No Text id set."))
+end
+
 function EditorWaypoint:set_element_data(params, ...)
 	EditorWaypoint.super.set_element_data(self, params, ...)
-	if params.value == "text_id" then
+	if params.name == "text_id" then
 		self:_set_text()
 	end
 end
@@ -48,4 +52,6 @@ function EditorWaypoint:_build_panel()
 	self:BooleanCtrl("only_in_civilian", {help = "This waypoint will only be visible for players that are in civilian mode"})
 	self:ComboCtrl("icon", self._icon_options, {help = "Select an icon"})
 	self:StringCtrl("text_id")
+	self._text = self._class_group:divider("")
+	self:_set_text()
 end
