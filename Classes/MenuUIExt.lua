@@ -286,7 +286,7 @@ function ItemExt:PasteAxis(item)
 	pcall(function()
 		result = loadstring("return " .. paste)()
 	end)
-	if result and result._is_a_shape or type_name(result) == menu.value_type then
+	if result and type(result) == "table" and result._is_a_shape or type_name(result) == menu.value_type then
 		menu:SetValue(result, true)
 	end
 end
