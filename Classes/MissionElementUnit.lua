@@ -2,7 +2,7 @@ MissionElementUnit = MissionElementUnit or class()
 function MissionElementUnit:init(unit)
     self._unit = unit
 
-    local iconsize = 48
+    local iconsize = 32
     local root = self._unit:get_object(Idstring("c_sphere"))
     if root == nil then
         return
@@ -27,7 +27,7 @@ function MissionElementUnit:init(unit)
         Color("5fc16f"),
     }
     self._color = EditorPart:Val("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Val("ElementsColor")
-    local texture, rect = "textures/editor_icons_df", {368, 14, 128, 128}
+    local texture, rect = "textures/editor_icons_df", {399, 44, 64, 64}
     local size = iconsize / 4
     local font_size = iconsize / 8
     self._icon = self._ws:panel():bitmap({
@@ -49,7 +49,7 @@ function MissionElementUnit:init(unit)
         h = font_size,
         rotation = 360,
         align = "center",
-        color = self._color,
+        color = Color.black,
         text = "",
     })
     self._enabled = true
@@ -81,11 +81,11 @@ function MissionElementUnit:visible()
 end
 
 function MissionElementUnit:select()
-    self._icon:set_texture_rect(230, 14, 128, 128)
+    self._icon:set_texture_rect(261, 44, 64, 64)
 end
 
 function MissionElementUnit:unselect()
-    self._icon:set_texture_rect(368, 14, 128, 128)
+    self._icon:set_texture_rect(399, 44, 64, 64)
 end
 
 function MissionElementUnit:set_color(color)
