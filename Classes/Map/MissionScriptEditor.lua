@@ -5,7 +5,6 @@ function MissionScriptEditor:init(element, old_element)
 	ItemExt:add_funcs(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
-	self._hed = self._element.values
 	if element then
 		self._element = element
 	else
@@ -18,6 +17,7 @@ function MissionScriptEditor:init(element, old_element)
 		end
 		return managers.mission:add_element(self._element)
 	end
+	self._hed = self._element.values
 end
 
 function MissionScriptEditor:create_element()		
@@ -271,14 +271,13 @@ function MissionScriptEditor:draw_link_exec(element_unit, unit)
 
 	    self._brush:center_text(element_unit:position() + dir, text, managers.editor:camera_rotation():x(), -managers.editor:camera_rotation():z())
 	    local element_col = element_unit:mission_element()._color
-		self._brush:set_color(element_col)
-	    local r, g, b = element_col:unpack()
+		self._brush:set_color(element_col:contrast())
 	    self:draw_link({
 	        from_unit = element_unit,
 	        to_unit = unit,
-	        r = r * 0.75,
-	        g = g * 0.75,
-	        b = b * 0.75
+	        r = 1,
+	        g = 1,
+	        b = 1
 	    })
 	end
 end
@@ -634,9 +633,7 @@ function MissionScriptEditor:ItemData(item)
 end
 
 function MissionScriptEditor:Text(text, opt)
-	opt = opt or {}
-	opt.group = opt.group or self._class_group
-    return self:divider(text, opt)
+    return ((opt and opt.group) or self._class_group):divider(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
