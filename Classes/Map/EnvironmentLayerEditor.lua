@@ -329,7 +329,7 @@ function EnvLayer:build_unit_menu()
 			S:SetTitle("Effect Selection")
             local effect = S:group("Effect", {index = 1})
 		    effect:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
-			self._unit_effects = S:pathbox("Effect", ClassClbk(self, "change_unit_effect"), effect:selected_unit():unit_data().effect or "none", "effect")		
+			self._unit_effects = effect:pathbox("Effect", ClassClbk(self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect")	
 		elseif unit:name() == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
 			local area = unit:unit_data().environment_area
