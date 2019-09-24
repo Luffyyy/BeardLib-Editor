@@ -49,7 +49,7 @@ function MissionElementUnit:init(unit)
         h = font_size,
         rotation = 360,
         align = "center",
-        color = Color.black,
+        color = self._color,
         text = "",
     })
     self._enabled = true
