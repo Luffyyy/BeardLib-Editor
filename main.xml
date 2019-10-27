@@ -392,5 +392,6 @@
 	    <value_node value="ElementCounterReset"/>
 	    <value_node value="ElementTerminateAssault"/>
 	    <value_node value="ElementEnvironmentOperator"/>
+	    <value_node value="ElementVehicleBoarding"/>
     </MissionElements>
 </mod>
