@@ -46,7 +46,7 @@ function ObjectivesManagerDialog:_Show()
     end
     if not self._objectives then
         self:hide()
-        BeardLibEditor.Utils:Notify("Error", "Your map is not setuped correctly")
+        BeardLibEditor.Utils:Notify("Error", "Your map is not setup correctly")
     end
     self._missing_units = {}
 	local objectives = self:divgroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})

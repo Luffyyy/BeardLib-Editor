@@ -196,7 +196,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             add = {directory = "assets"},
             include = {directory = Path:Combine("levels", name)},
             packages = packages,
-            script_data_mods = BeardLib.Utils:CleanCustomXmlTable(deep_clone(self._level_module_template).script_data_mods)
+            script_data_mods = deep_clone(self._level_module_template).script_data_mods
         })
 
         local preplanning = tweak_data.preplanning.locations[id]

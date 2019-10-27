@@ -229,6 +229,7 @@ local function check_slot(slot, unit)
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
+	o = o or {}
 	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid", text = o.text or string.pretty2(name)}, o))
 	local o2 = {}
 	o2.control_slice = p.control_slice or 0.7
@@ -286,7 +287,7 @@ function ItemExt:PasteAxis(item)
 	pcall(function()
 		result = loadstring("return " .. paste)()
 	end)
-	if result and result._is_a_shape or type_name(result) == menu.value_type then
+	if result and type(result) == "table" and result._is_a_shape or type_name(result) == menu.value_type then
 		menu:SetValue(result, true)
 	end
 end

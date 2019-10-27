@@ -35,9 +35,11 @@ function EditorAreaTrigger:set_shape_property(item)
 end
 
 function EditorAreaTrigger:destroy()
-	for _, script in pairs(self._scripts) do
-		if script.destroy then
-			script:destroy()
+	if self._scripts then
+		for _, script in pairs(self._scripts) do
+			if script.destroy then
+				script:destroy()
+			end
 		end
 	end
 	if self._shape then
@@ -88,6 +90,11 @@ function EditorAreaTrigger:update(t, dt)
             end
         end
     end
+	self:update_shape_position()
+	EditorAreaTrigger.super.update(self, t, dt)
+end
+
+function EditorAreaTrigger:update_shape_position()
 	if self._shape then
 		local pos, rot = self._unit:position(), self._unit:rotation()
 	    self._shape:set_position(pos)
@@ -97,7 +104,13 @@ function EditorAreaTrigger:update(t, dt)
 	    self._cylinder_shape:set_rotation(rot)
 	    self._sphere_shape:set_rotation(rot)
 	end
-	EditorAreaTrigger.super.update(self, t, dt)
+end
+
+function EditorAreaTrigger:set_element_data(params, ...)
+	EditorAreaTrigger.super.set_element_data(self, params, ...)
+	if params.name == "shape_type" then
+		self:set_shape_type(self)
+	end
 end
 
 function EditorAreaTrigger:set_shape_type()

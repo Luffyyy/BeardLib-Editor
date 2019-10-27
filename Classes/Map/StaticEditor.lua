@@ -272,6 +272,7 @@ function Static:build_unit_main_values()
     main:tickbox("DisableShadows", ClassClbk(self, "set_unit_data"), self:unit_value("disable_shadows") == true, {size_by_text = true})
     main:tickbox("DisableCollision", ClassClbk(self, "set_unit_data"), self:unit_value("disable_collision") == true, {size_by_text = true})
     main:tickbox("DisableOnAIGraph", ClassClbk(self, "set_unit_data"), self:unit_value("disable_on_ai_graph") == true, {size_by_text = true})
+    main:tickbox("DelayLoading", ClassClbk(self, "set_unit_data"), self:unit_value("delayed_load") == true, {size_by_text = true})
 end
 
 function Static:build_extension_items()
@@ -447,6 +448,7 @@ function Static:set_unit_simple_values(unit)
     ud.disable_collision = self:GetItem("DisableCollision"):Value()
     ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
     ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
+    ud.delayed_load = self:GetItem("DelayLoading"):Value()
 
     for index = 0, unit:num_bodies() - 1 do
         local body = unit:body(index)
@@ -946,16 +948,19 @@ function Static:set_menu_unit(unit)
 	local disable_collision = self:GetItem("DisableCollision")
 	local hide_on_projection_light = self:GetItem("HideOnProjectionLight")
 	local disable_on_ai_graph = self:GetItem("DisableOnAIGraph")
+	local delayed_load = self:GetItem("DelayLoading")
 
 	disable_shadows:SetVisible(not_brush)
 	disable_collision:SetVisible(not_brush)
 	hide_on_projection_light:SetVisible(not_brush)
 	disable_on_ai_graph:SetVisible(not_brush)
+	delayed_load:SetVisible(not_brush)
 
     disable_shadows:SetValue(unit:unit_data().disable_shadows, false, true)
     disable_collision:SetValue(unit:unit_data().disable_collision, false, true)
     hide_on_projection_light:SetValue(unit:unit_data().hide_on_projection_light, false, true)
 	disable_on_ai_graph:SetValue(unit:unit_data().disable_on_ai_graph, false, true)
+	delayed_load:SetValue(unit:unit_data().delayed_load, false, true)
 	
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then

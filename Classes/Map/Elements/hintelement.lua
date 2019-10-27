@@ -12,7 +12,7 @@ end
 
 function EditorHint:set_element_data(params, ...)
 	EditorHint.super.set_element_data(self, params, ...)
-	if params.value == "hint_id" then
+	if params.name == "hint_id" then
 		self:_set_text()
 	end
 end
