@@ -22,5 +22,5 @@ function EditorPointOfNoReturn:_build_panel()
 	self:NumberCtrl("time_overkill_145", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "Overkill"})
 	self:NumberCtrl("time_easy_wish", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "Mayhem"})
 	self:NumberCtrl("time_overkill_290", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "DeathWish"})
-	self:NumberCtrl("time_sm_wish", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "One Down"})
+	self:NumberCtrl("time_sm_wish", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "Death Sentence"})
 end
