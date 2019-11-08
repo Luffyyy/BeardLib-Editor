@@ -283,8 +283,8 @@ function Static:build_extension_items()
         editable_gui = EditUnitEditableGui, 
         zipline = EditZipLine, 
         wire = EditWire, 
-        mesh_variation = EditMeshVariation, 
-        ai_data = EditAIData,
+        mesh_variation = EditMeshVariation,
+        -- ai_data = EditAIData,
         cubemap = EditUnitCubemap,
     }) do
         self._editors[k] = v:new():is_editable(self)

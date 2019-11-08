@@ -8,8 +8,8 @@ function AiEditor:init(parent)
     ItemExt:add_funcs(self)
 
     self._brush = Draw:brush()
-    self._graph_types = {surface = "surface"}
-    self._unit_graph_types = {surface = Idstring("core/units/nav_surface/nav_surface")}
+    self._graph_types = { surface = "surface" }
+    self._unit_graph_types = { surface = Idstring("core/units/nav_surface/nav_surface") }
     self._nav_surface_unit = Idstring("core/units/nav_surface/nav_surface")
     self._patrol_point_unit = "core/units/patrol_point/patrol_point"
     self._group_states = {
@@ -29,11 +29,11 @@ function AiEditor:init(parent)
     --self:_init_mop_settings()
     self._patrol_path_brush = Draw:brush()
     self._only_draw_selected_patrol_path = false
-    self._default_values = {all_visible = true}
+    self._default_values = { all_visible = true }
 end
 
 function AiEditor:is_my_unit(unit)
-    if unit == self._patrol_point_unit:id() then
+    if unit == self._patrol_point_unit:id() or unit == self._nav_surface_unit then
         return true
     end
     return false
@@ -81,63 +81,57 @@ function AiEditor:build_menu()
     self:save()
     self:ClearItems()
     self:alert("WIP section")
-    local graphs = self:group("Graphs")    
+    local graphs = self:group("Graphs")
     graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
-    graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), {enabled = self._parent._parent._has_fix})
-    graphs:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), {enabled = self._parent._parent._has_fix})
---[[
-    graphs:button(
-        "CalculateAll",
-        ClassClbk(
-            self,
-            "_calc_graphs",
-            {
-                vis_graph = true,
-                build_type = "all"
-            }
+    graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
+    graphs:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), { enabled = self._parent._parent._has_fix })
+    --[[
+        graphs:button(
+            "CalculateAll",
+            ClassClbk(
+                self,
+                "_calc_graphs",
+                {
+                    vis_graph = true,
+                    build_type = "all"
+                }
+            )
         )
-    )
 
-    graphs:button(
-        "CalculateSelected",
-        ClassClbk(
-            self,
-            "_calc_graphs",
-            {
-                vis_graph = true,
-                build_type = "selected"
-            }
+        graphs:button(
+            "CalculateSelected",
+            ClassClbk(
+                self,
+                "_calc_graphs",
+                {
+                    vis_graph = true,
+                    build_type = "selected"
+                }
+            )
         )
-    )
-]]
+    ]]
     graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"))
     graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"))
 
-    local navigation_debug =
-        graphs:group("NavigationDebug", {text = "Navigation Debug [Toggle what to draw]"})
-    local group = navigation_debug:pan("Draw", {align_method = "grid"})
+    local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debug [Toggle what to draw]" })
+    local group = navigation_debug:pan("Draw", { align_method = "grid" })
 
     self._draw_options = {}
     local w = group.w / 2
-    for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
-        self._draw_options[opt] =
-        group:tickbox(
-            opt,
+    for _, opt in pairs({ "quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers" }) do
+        self._draw_options[opt] = group:tickbox(opt,
             ClassClbk(self, "_draw_nav_segments"),
             false,
-            {w = w, items_size = 15, offset = 0}
-        )
+            { w = w, items_size = 15, offset = 0 })
     end
 
     local ai_settings = self:group("AiSettings")
-    ai_settings:combobox(
-        "GroupState",
+    ai_settings:combobox("GroupState",
         function(item)
             self:data().ai_settings.group_state = item:SelectedItem()
         end,
         self._group_states,
-        table.get_key(self._group_states, self:data().ai_settings.group_state)
-    )
+        table.get_key(self._group_states, self:data().ai_settings.group_state))
 
     local other = self:group("Other")
     other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
@@ -148,28 +142,23 @@ end
 
 function AiEditor:_build_ai_data()
     local ai_data = self:group("AiData")
-    ai_data:GetToolbar():sq_btn(
-        "CreateNew",
+    ai_data:GetToolbar():sq_btn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
-        {text = "+", help = "Create new patrol path"}
-    )
+        { text = "+", help = "Create new patrol path" })
 
     local patrol_paths = managers.ai_data:all_patrol_paths()
     for name, points in pairs(patrol_paths) do
-        local patrol_path = ai_data:group(name, {closed = true})
-        patrol_path:GetToolbar():sq_btn(
-            "CreateNewPoint",
-            -- send it the name instead of the points tbl to be super safe
+        local patrol_path = ai_data:group(name, { closed = true })
+        patrol_path:GetToolbar():sq_btn("CreateNewPoint",
+        -- send it the name instead of the points tbl to be super safe
             function()
                 self._parent:BeginSpawning(self._patrol_point_unit)
                 self._selected_path = name
             end,
-            {text = "+", help = "Create new patrol point"}
-        )
+            { text = "+", help = "Create new patrol point" })
 
         for i, v in ipairs(points.points) do
-            local patrol_point =
-            patrol_path:button(name.."_"..i, ClassClbk(self, "_select_patrol_point", v.unit), {text = string.format("[%d] Unit ID: %d", i, v.unit_id)})
+            patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), { text = string.format("[%d] Unit ID: %d", i, v.unit_id) })
         end
     end
 end
@@ -183,24 +172,79 @@ function AiEditor:build_unit_menu()
     if alive(unit) then
         S:build_positions_items(true)
         S:update_positions()
-        S:SetTitle("Patrol Point Selection")
+        if unit:name() == self._patrol_point_unit:id() then
+            S:SetTitle("Patrol Point Selection")
+        elseif unit:name() == self._nav_surface_unit then
+            S:SetTitle("Navigation Segment Selection")
+
+            local ai = S:group("AIEditorData")
+            ai:textbox("LocationId", ClassClbk(self, "set_unit_data"),
+                unit:ai_editor_data().location_id or "location_unknown", {
+                    help = "Select a location id to be associated with this navigation point"
+                }
+            )
+            ai:divider("LocOfLocation", {
+                text = "Text = " .. managers.localization:text("location_unknown")
+            })
+            ai:numberbox("SuspicionMultiplier", ClassClbk(self, "set_unit_data"),
+                unit:ai_editor_data().suspicion_multiplier, {
+                    min = 1,
+                    floats = 1,
+                    help = "multiplier applied to suspicion buildup rate"
+                }
+            )
+            ai:numberbox("DetectionMultiplier", ClassClbk(self, "set_unit_data"),
+                unit:ai_editor_data().detection_multiplier, {
+                    min = 0.01,
+                    help = "multiplier applied to AI detection speed. min is 0.01"
+                }
+            )
+        end
     end
 end
 
-function AiEditor:update_positions()
-    self:set_unit_pos()
+function AiEditor:update_positions() self:set_unit_pos() end
+
+function AiEditor:set_selected_unit()
+    local unit = self:selected_unit()
+
+    if not alive(unit) or unit:name() == self._nav_surface_unit then
+        managers.navigation:set_selected_segment(unit)
+    end
 end
 
-function AiEditor:set_unit_pos(item)
-    log('setting unit pos')
+function AiEditor:set_unit_pos()
     local unit = self:selected_unit()
-    local S = self:GetPart("static")
     if unit then
         unit:set_position(S:GetItemValue("Position"))
         unit:set_rotation(S:GetItemValue("Rotation"))
         unit:unit_data().position = unit:position()
         unit:unit_data().rotation = unit:rotation()
     end
+
+    self:save()
+end
+
+function AiEditor:set_unit_data()
+    local S = self:GetPart("static")
+    local unit = self:selected_unit()
+    if alive(unit) and unit:name() == self._nav_surface_unit then
+        log("setting unit data")
+        unit:ai_editor_data().location_id = S:GetItemValue("LocationId")
+
+        S:GetItem("LocOfLocation"):SetText("Text = " .. managers.localization:text(
+            self:selected_unit():ai_editor_data().location_id or "location_unknown"
+        ))
+        managers.navigation:set_location_ID(unit:unit_data().unit_id, S:GetItemValue("LocationId"))
+
+        unit:ai_editor_data().suspicion_multiplier = S:GetItemValue("SuspicionMultiplier")
+        managers.navigation:set_suspicion_multiplier(unit:unit_data().unit_id, S:GetItemValue("SuspicionMultiplier"))
+
+        unit:ai_editor_data().detection_multiplier = S:GetItemValue("DetectionMultiplier")
+        managers.navigation:set_detection_multiplier(unit:unit_data().unit_id, S:GetItemValue("DetectionMultiplier"))
+
+    end
+
     S:set_unit_data()
     self:save()
 end
@@ -234,51 +278,47 @@ function AiEditor:_draw(t, dt)
     for _, unit in ipairs(self._units) do
         if alive(unit) then
             local selected = unit == self._selected_unit
-    
+
             if unit:name() == self._nav_surface_unit then
                 local a = selected and 0.75 or 0.5
                 local r = selected and 0 or 1
                 local g = selected and 1 or 1
                 local b = selected and 0 or 1
-    
+
                 self._brush:set_color(Color(a, r, g, b))
                 self:_draw_surface(unit, t, dt, a, r, g, b)
-    
+
                 if selected then
                     for id, _ in pairs(unit:ai_editor_data().visibilty_exlude_filter) do
                         for _, to_unit in ipairs(self._units) do
                             if to_unit:unit_data().unit_id == id then
-                                Application:draw_link(
-                                    {
-                                        g = 0,
-                                        b = 0,
-                                        r = 1,
-                                        from_unit = unit,
-                                        to_unit = to_unit
-                                    }
-                                )
+                                Application:draw_link({
+                                    g = 0,
+                                    b = 0,
+                                    r = 1,
+                                    from_unit = unit,
+                                    to_unit = to_unit
+                                })
                             end
                         end
                     end
-    
+
                     for id, _ in pairs(unit:ai_editor_data().visibilty_include_filter) do
                         for _, to_unit in ipairs(self._units) do
                             if to_unit:unit_data().unit_id == id then
-                                Application:draw_link(
-                                    {
-                                        g = 1,
-                                        b = 0,
-                                        r = 0,
-                                        from_unit = unit,
-                                        to_unit = to_unit
-                                    }
-                                )
+                                Application:draw_link({
+                                    g = 1,
+                                    b = 0,
+                                    r = 0,
+                                    from_unit = unit,
+                                    to_unit = to_unit
+                                })
                             end
                         end
                     end
                 end
             elseif unit:name() == self._patrol_point_unit then
-            -- Nothing
+                -- Nothing
             end
         end
     end
@@ -299,12 +339,10 @@ end
 
 function AiEditor:_draw_patrol_paths(t, dt)
     if self._only_draw_selected_patrol_path and self._current_patrol_path then
-        self:_draw_patrol_path(
-            self._current_patrol_path,
+        self:_draw_patrol_path(self._current_patrol_path,
             managers.ai_data:all_patrol_paths()[self._current_patrol_path],
             t,
-            dt
-        )
+            dt)
     else
         for name, path in pairs(managers.ai_data:all_patrol_paths()) do
             self:_draw_patrol_path(name, path, t, dt)
@@ -322,18 +360,16 @@ function AiEditor:_draw_patrol_path(name, path, t, dt)
 
             self._patrol_path_brush:set_color(Color.white:with_alpha(selected_path and 1 or 0.25))
 
-            Application:draw_link(
-                {
-                    g = 1,
-                    thick = true,
-                    b = 1,
-                    r = 1,
-                    height_offset = 0,
-                    from_unit = point.unit,
-                    to_unit = to_unit,
-                    circle_multiplier = selected_path and 0.5 or 0.25
-                }
-            )
+            Application:draw_link({
+                g = 1,
+                thick = true,
+                b = 1,
+                r = 1,
+                height_offset = 0,
+                from_unit = point.unit,
+                to_unit = to_unit,
+                circle_multiplier = selected_path and 0.5 or 0.25
+            })
             self:_draw_patrol_point(point.unit, i == 1, i == #path.points, selected_path, t, dt)
 
             if point.unit == self._selected_unit then
@@ -387,21 +423,19 @@ function AiEditor:_draw_nav_segments(item)
 end
 
 function AiEditor:_create_new_patrol_path()
-    BLE.InputDialog:Show(
-        {
-            title = "Patrol Path Name",
-            text = "none",
-            callback = function(name)
-                if not name or name == "" then
-                    return
-                end
-
-                if not managers.ai_data:add_patrol_path(name) then
-                    self:_create_new_patrol_path()
-                end
+    BLE.InputDialog:Show({
+        title = "Patrol Path Name",
+        text = "none",
+        callback = function(name)
+            if not name or name == "" then
+                return
             end
-        }
-    )
+
+            if not managers.ai_data:add_patrol_path(name) then
+                self:_create_new_patrol_path()
+            end
+        end
+    })
 end
 
 function AiEditor:_select_patrol_point(unit)
@@ -439,7 +473,8 @@ function AiEditor:data()
     return self._parent:data().ai_settings
 end
 
-function AiEditor:build_nav_segments() -- Add later the options to the menu
+function AiEditor:build_nav_segments()
+    -- Add later the options to the menu
     BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
         self:part("opt"):save()
         local settings = {}
@@ -458,9 +493,9 @@ function AiEditor:build_nav_segments() -- Add later the options to the menu
                 if is_person then
                     --Why are they active even though the main unit is disabled? Good question.
                     if unit:brain() then
-                       unit:brain()._current_logic.update = nil
+                        unit:brain()._current_logic.update = nil
                     end
-                    
+
                     for _, extension in pairs(unit:extensions()) do
                         unit:set_extension_update_enabled(extension:id(), false)
                     end
