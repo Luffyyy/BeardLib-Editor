@@ -1,6 +1,9 @@
 AiLayerEditor = AiLayerEditor or class(LayerEditor)
 local AiEditor = AiLayerEditor
 
+local EU = BLE.Utils
+local tx = "textures/editor_icons_df"
+
 function AiEditor:init(parent)
     self:init_basic(parent, "AiLayerEditor")
     self._parent = parent
@@ -9,12 +12,12 @@ function AiEditor:init(parent)
 
     self._draw_helpers = {
         { name = "quads", needs_unit = true, dont_disable = true },
-        { name = "doors"},
-        { name = "blockers"},
-        { name = "vis_graph", needs_unit = true},
-        { name = "coarse_graph"},
-        { name = "nav_links", needs_unit = true},
-        { name = "covers"}
+        { name = "doors" },
+        { name = "blockers" },
+        { name = "vis_graph", needs_unit = true },
+        { name = "coarse_graph" },
+        { name = "nav_links", needs_unit = true },
+        { name = "covers" }
     }
 
     self._brush = Draw:brush()
@@ -47,6 +50,17 @@ function AiEditor:is_my_unit(unit)
         return true
     end
     return false
+end
+
+function AiEditor:_current_patrol_units(path_name)
+    local t = {}
+    local path = managers.ai_data:patrol_path(path_name)
+
+    for _, point in ipairs(path.points) do
+        table.insert(t, point.unit)
+    end
+
+    return t
 end
 
 function AiEditor:loaded_continents()
@@ -142,7 +156,13 @@ function AiEditor:build_menu()
     other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 
-    self:_build_ai_data()
+    local ai_data = self:group("AiData")
+    ai_data:GetToolbar():sq_btn("CreateNew",
+        ClassClbk(self, "_create_new_patrol_path"),
+        { text = "+", help = "Create new patrol path" }
+    )
+
+    self:_build_ai_data(ai_data)
 end
 
 function AiEditor:_build_draw_data(group)
@@ -172,25 +192,28 @@ function AiEditor:_build_draw_data(group)
     end
 end
 
-function AiEditor:_build_ai_data()
-    local ai_data = self:group("AiData")
-    ai_data:GetToolbar():sq_btn("CreateNew",
-        ClassClbk(self, "_create_new_patrol_path"),
-        { text = "+", help = "Create new patrol path" })
-
+function AiEditor:_build_ai_data(ai_data)
     local patrol_paths = managers.ai_data:all_patrol_paths()
     for name, points in pairs(patrol_paths) do
-        local patrol_path = ai_data:group(name, { closed = true })
-        patrol_path:GetToolbar():sq_btn("CreateNewPoint",
-        -- send it the name instead of the points tbl to be super safe
-            function()
-                self._parent:BeginSpawning(self._patrol_point_unit)
-                self._selected_path = name
-            end,
-            { text = "+", help = "Create new patrol point" })
+        local patrol_path = ai_data:group(name)
+        patrol_path:GetToolbar():tb_imgbtn("DeletePath", ClassClbk(self, "_delete_patrol_path", name),
+            tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+        )
+
+        patrol_path:GetToolbar():sq_btn("CreateNewPoint", function()
+            self._parent:BeginSpawning(self._patrol_point_unit)
+            self._selected_path = name
+        end, { text = "+", help = "Create new patrol point" })
+
+
 
         for i, v in ipairs(points.points) do
-            patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), { text = string.format("[%d] Unit ID: %d", i, v.unit_id) })
+            local patrol_point = patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
+                text = string.format("[%d] Unit ID: %d", i, v.unit_id)
+            })
+            patrol_point:tb_imgbtn("DeletePoint", ClassClbk(self, "_delete_patrol_point", v.unit),
+                tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+            )
         end
     end
 end
@@ -202,8 +225,22 @@ function AiEditor:build_unit_menu()
 
     local unit = self:selected_unit()
     if alive(unit) then
+        local name = unit:unit_data().name
+        local main = S:group("Main", { align_method = "grid", visible = name ~= nil })
+
+        main:GetToolbar():lbl("ID", {
+            text = "ID: " .. unit:unit_data().unit_id,
+            size_by_text = true,
+            offset = 0
+        })
+        main:textbox("Name", ClassClbk(self, "set_unit_data"), unit:unit_data().name_id, {
+            help = "the name of the unit",
+            control_slice = 0.8 }
+        )
+
         S:build_positions_items(true)
         S:update_positions()
+
         if unit:name() == self._patrol_point_unit:id() then
             S:SetTitle("Patrol Point Selection")
         elseif unit:name() == self._nav_surface_unit then
@@ -258,20 +295,34 @@ end
 function AiEditor:set_unit_data()
     local S = self:GetPart("static")
     local unit = self:selected_unit()
-    if alive(unit) and unit:name() == self._nav_surface_unit then
-        log("setting unit data")
-        unit:ai_editor_data().location_id = S:GetItemValue("LocationId")
 
-        S:GetItem("LocOfLocation"):SetText("Text = " .. managers.localization:text(
-            self:selected_unit():ai_editor_data().location_id or "location_unknown"
-        ))
-        managers.navigation:set_location_ID(unit:unit_data().unit_id, S:GetItemValue("LocationId"))
+    if alive(unit) then
+        S:GetItem("ID"):SetText("ID " .. unit:unit_data().unit_id)
+        managers.worlddefinition:set_name_id(unit, S:GetItemValue("Name"))
 
-        unit:ai_editor_data().suspicion_multiplier = S:GetItemValue("SuspicionMultiplier")
-        managers.navigation:set_suspicion_multiplier(unit:unit_data().unit_id, S:GetItemValue("SuspicionMultiplier"))
+        if unit:name() == self._nav_surface_unit then
+            unit:ai_editor_data().location_id = S:GetItemValue("LocationId")
 
-        unit:ai_editor_data().detection_multiplier = S:GetItemValue("DetectionMultiplier")
-        managers.navigation:set_detection_multiplier(unit:unit_data().unit_id, S:GetItemValue("DetectionMultiplier"))
+            S:GetItem("LocOfLocation"):SetText("Text = " .. managers.localization:text(
+                self:selected_unit():ai_editor_data().location_id or "location_unknown"
+            ))
+            managers.navigation:set_location_ID(
+                unit:unit_data().unit_id,
+                S:GetItemValue("LocationId")
+            )
+
+            unit:ai_editor_data().suspicion_multiplier = S:GetItemValue("SuspicionMultiplier")
+            managers.navigation:set_suspicion_multiplier(
+                unit:unit_data().unit_id,
+                S:GetItemValue("SuspicionMultiplier")
+            )
+
+            unit:ai_editor_data().detection_multiplier = S:GetItemValue("DetectionMultiplier")
+            managers.navigation:set_detection_multiplier(
+                unit:unit_data().unit_id,
+                S:GetItemValue("DetectionMultiplier")
+            )
+        end
 
     end
 
@@ -280,7 +331,9 @@ function AiEditor:set_unit_data()
 end
 
 function AiEditor:unit_spawned(unit)
-    self:_add_patrol_point(unit)
+    if unit:name() == self._patrol_point_unit:id() then
+        self:_add_patrol_point(unit)
+    end
 end
 
 function AiEditor:unit_deleted(unit)
@@ -298,6 +351,7 @@ function AiEditor:unit_deleted(unit)
     end
 
     table.delete(self._units, unit)
+    self:save()
 end
 
 function AiEditor:update_draw_data(unit)
@@ -325,6 +379,13 @@ function AiEditor:update_draw_data(unit)
             self._draw_options[data.name]:SetEnabled(should_enable)
         end
     end
+end
+
+function AiEditor:update_ai_data()
+    local ai_data = self:GetItem("AiData")
+    ai_data:ClearItems()
+
+    self:_build_ai_data(ai_data)
 end
 
 function AiEditor:update(t, dt)
@@ -490,9 +551,35 @@ function AiEditor:_create_new_patrol_path()
 
             if not managers.ai_data:add_patrol_path(name) then
                 self:_create_new_patrol_path()
+            else
+                self:update_ai_data()
             end
         end
     })
+end
+
+function AiEditor:_delete_patrol_path(path_name)
+    EU:YesNoQuestion("Do you want to delete this patrol path?", function()
+        local to_delete = self:_current_patrol_units(path_name)
+        for _, unit in ipairs(to_delete) do
+            managers.editor:DeleteUnit(unit)
+        end
+
+        managers.ai_data:remove_patrol_path(path_name)
+        self:update_ai_data()
+
+        self._current_patrol_path = nil
+
+        self:save()
+    end)
+end
+
+function AiEditor:_delete_patrol_point(unit)
+    EU:YesNoQuestion("Do you want to delete this patrol point?", function()
+        managers.editor:DeleteUnit(unit)
+
+        self:update_ai_data()
+    end)
 end
 
 function AiEditor:_select_patrol_point(unit)
@@ -524,6 +611,7 @@ function AiEditor:_add_patrol_point(unit)
 
     -- don't care if it is alive i guess
     table.insert(self._units, unit)
+    self:update_ai_data()
 end
 
 function AiEditor:data()

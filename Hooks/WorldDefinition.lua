@@ -240,11 +240,11 @@ function WorldDef:spawn_quick(return_data, offset)
 	end
 end
 
+local patrol_point_unit = "core/units/patrol_point/patrol_point"
 function WorldDef:is_world_unit(unit)
-	return unit:wire_data() or unit:ai_editor_data()
+	return unit:wire_data() or unit:ai_editor_data() or unit:name() == patrol_point_unit:id()
 end
 
-local patrol_point_unit = "core/units/patrol_point/patrol_point"
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	if not unit_id or unit_id <= 0 then
 		return
@@ -743,6 +743,7 @@ function WorldDef:GetNewUnitID(continent, t, is_world)
         local tbl = self._unit_ids[continent]
         local i = self._continents[continent] and self._continents[continent].base_id
         if is_world or t and (t:id() == Idstring("wire") or t:id() == Idstring("ai")) then
+			log("correct table")
             tbl = self._world_unit_ids
             i = 1
         end

@@ -306,7 +306,7 @@ end
 
 function StaticEditor:update_positions()
     local unit = self._selected_units[1]
-    if unit then
+    if alive(unit) then
         if #self._selected_units > 1 or not unit:mission_element() then
             self:GetItem("Position"):SetValue(unit:position())
             self:GetItem("Rotation"):SetValue(unit:rotation())
@@ -382,7 +382,7 @@ function Static:set_unit_data()
     self._parent:set_unit_positions(self:GetItemValue("Position"))
     self._parent:set_unit_rotations(self:GetItemValue("Rotation"))
 
-    if #self._selected_units == 1 then    
+    if #self._selected_units == 1 then
         if not self:GetItem("Continent") then
             return
         end 
@@ -390,6 +390,7 @@ function Static:set_unit_data()
 		local ud = unit:unit_data()
         if ud and ud.unit_id then
             local prev_id = ud.unit_id
+            log("setting nameid", tostring(self:GetItem("Name"):Value()))
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
 
             --ud.unit_id = self:GetItem("ID"):Value()
