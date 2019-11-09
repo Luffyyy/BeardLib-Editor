@@ -55,7 +55,7 @@ function FileWatcher:Update(t, dt)
                             self._folders = {}
                         end
                         first = true
-                        self:CollectFilesAndFolders(path)
+                        self:CollectFilesAndFolders(self._path)
                     end                        
                 end
 
