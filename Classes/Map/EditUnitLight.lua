@@ -109,13 +109,13 @@ function EditUnitLight:set_unit_data()
 	light:set_color(self._color:VectorValue())
 	if self._shadow_resolution:Enabled() then
 		local res = self._shadow_resolution:SelectedItem()	
-		unit:unit_data().projection_lights = unit:unit_data().projection_lights or {}
+		unit:unit_data().projection_lights = {}
 		unit:unit_data().projection_lights[self._idstrings[light:name():key()]] = {x = res, y = res}
 	end
 	if self._spot_texture:Enabled() then
 		local tex = self._spot_texture:Value()
 		light:set_projection_texture(Idstring(tex), false, false)
-		unit:unit_data().projection_textures = unit:unit_data().projection_textures or {}
+		unit:unit_data().projection_textures = {}
 		unit:unit_data().projection_textures[self._idstrings[light:name():key()]] = tex		
 	end
 	self:update_light()
