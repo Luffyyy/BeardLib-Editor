@@ -7,6 +7,16 @@ function AiEditor:init(parent)
     self._menu = parent._holder
     ItemExt:add_funcs(self)
 
+    self._draw_helpers = {
+        { name = "quads", needs_unit = true, dont_disable = true },
+        { name = "doors"},
+        { name = "blockers"},
+        { name = "vis_graph", needs_unit = true},
+        { name = "coarse_graph"},
+        { name = "nav_links", needs_unit = true},
+        { name = "covers"}
+    }
+
     self._brush = Draw:brush()
     self._graph_types = { surface = "surface" }
     self._unit_graph_types = { surface = Idstring("core/units/nav_surface/nav_surface") }
@@ -74,6 +84,8 @@ function AiEditor:reset_selected_units()
             table.remove(self._units, k)
         end
     end
+
+    self:update_draw_data(nil)
     self:save()
 end
 
@@ -116,14 +128,7 @@ function AiEditor:build_menu()
     local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debug [Toggle what to draw]" })
     local group = navigation_debug:pan("Draw", { align_method = "grid" })
 
-    self._draw_options = {}
-    local w = group.w / 2
-    for _, opt in pairs({ "quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers" }) do
-        self._draw_options[opt] = group:tickbox(opt,
-            ClassClbk(self, "_draw_nav_segments"),
-            false,
-            { w = w, items_size = 15, offset = 0 })
-    end
+    self:_build_draw_data(group)
 
     local ai_settings = self:group("AiSettings")
     ai_settings:combobox("GroupState",
@@ -138,6 +143,33 @@ function AiEditor:build_menu()
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 
     self:_build_ai_data()
+end
+
+function AiEditor:_build_draw_data(group)
+    self._draw_options = {}
+    local w = group.w / 2
+
+    local unit = self:selected_unit()
+    for _, data in pairs(self._draw_helpers) do
+        local needs_unit_text = ""
+        local should_enable = true
+        if data.needs_unit then
+            if alive(unit) and unit:name() == self._nav_surface_unit then
+                needs_unit_text = ("(seg id: %i)"):format(unit:unit_data().unit_id)
+                should_enable = true
+            else
+                needs_unit_text = "(no seg)"
+                should_enable = false or (data.dont_disable and true or false)
+            end
+        end
+
+        self._draw_options[data.name] = group:tickbox(
+            data.name .. (needs_unit_text),
+            ClassClbk(self, "_draw_nav_segments"),
+            false,
+            { w = w, items_size = 15, offset = 0, enabled = should_enable }
+        )
+    end
 end
 
 function AiEditor:_build_ai_data()
@@ -208,9 +240,7 @@ function AiEditor:update_positions() self:set_unit_pos() end
 function AiEditor:set_selected_unit()
     local unit = self:selected_unit()
 
-    if not alive(unit) or unit:name() == self._nav_surface_unit then
-        managers.navigation:set_selected_segment(unit)
-    end
+    self:update_draw_data(unit)
 end
 
 function AiEditor:set_unit_pos()
@@ -268,6 +298,33 @@ function AiEditor:unit_deleted(unit)
     end
 
     table.delete(self._units, unit)
+end
+
+function AiEditor:update_draw_data(unit)
+    if not alive(unit) or unit:name() == self._nav_surface_unit then
+        managers.navigation:set_selected_segment(unit)
+        managers.navigation:set_debug_draw_state(self._draw_options)
+    end
+
+    if not self._draw_options then
+        return
+    end
+
+    for _, data in pairs(self._draw_helpers) do
+        local needs_unit_text = ""
+        local should_enable = data.dont_disable
+        if data.needs_unit then
+            if alive(unit) and unit:name() == self._nav_surface_unit then
+                needs_unit_text = ("(seg id: %i)"):format(unit:unit_data().unit_id)
+                should_enable = true
+            else
+                needs_unit_text = "(no seg)"
+            end
+
+            self._draw_options[data.name]:SetText(data.name .. needs_unit_text)
+            self._draw_options[data.name]:SetEnabled(should_enable)
+        end
+    end
 end
 
 function AiEditor:update(t, dt)
