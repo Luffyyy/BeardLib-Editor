@@ -43,7 +43,6 @@
 			<class file="MissionEditor.lua"/>
 			<class file="StaticEditor.lua"/>        
 			<class file="EditWire.lua"/>
-			<class file="EditAIData.lua"/>
 			<class file="EditMeshVariation.lua"/>
 			<class file="InEditorOptions.lua"/>
 			<class file="UpperMenu.lua"/>
