@@ -303,7 +303,7 @@ end
 
 function Editor:DeleteUnit(unit, keep_links)
     if alive(unit) then
-        if unit:mission_element() then 
+        if unit:mission_element() then
             managers.mission:delete_element(unit:mission_element().element.id) 
             if managers.editor then
                 self.parts.mission:remove_element_unit(unit)

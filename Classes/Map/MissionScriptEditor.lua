@@ -472,11 +472,6 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
             table.insert(self._element.values[params.value_name], id)
         end
 	end
-	
-	-- #421 dont create .mission entry if the table is empty
-	if not params.not_table and table.empty(self._element.values[params.value_name]) then
-		self._element.values[params.value_name] = nil
-	end
 
     if params.update_clbk then
         params.update_clbk(params.value_name)

@@ -155,7 +155,7 @@ end
 
 function EditorAreaTrigger:_build_panel(disable_params)
 	self:_create_panel()
-	self:BuildUnitsManage("unit_ids")
+	self:BuildUnitsManage("unit_ids", nil, ClassClbk(self, "nil_if_empty"))
 	self:BuildElementsManage("spawn_unit_elements", nil, {"ElementSpawnUnit"})
 	self:BuildElementsManage("use_shape_element_ids", nil, {"ElementAreaTrigger", "ElementShape"}, ClassClbk(self, "nil_if_empty"))
 	self:BuildElementsManage("rules_element_ids", nil, {"ElementInstigatorRule"}, ClassClbk(self, "nil_if_empty"))
