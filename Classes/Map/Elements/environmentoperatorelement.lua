@@ -13,8 +13,6 @@ function EditorEnvironmentOperator:create_element(unit)
 	self._element.values.environment = ""
 	self._element.values.blend_time = 0
 	self._element.values.elements = {}
-
-	self._actions = EditorEnvironmentOperator.ACTIONS
 end
 
 function EditorEnvironmentOperator:clear(...)
@@ -24,7 +22,9 @@ end
 function EditorEnvironmentOperator:_build_panel()
 	self:_create_panel()
 
-	self:ComboCtrl("operation", self._actions, {help = "Select an operation for the selected elements"})
+	self:ComboCtrl("operation", EditorEnvironmentOperator.ACTIONS, {
+		help = "Select an operation for the selected elements"
+	})
 	self:PathCtrl("environment", "environment")
 	self:NumberCtrl("blend_time", {
 		floats = 2,
