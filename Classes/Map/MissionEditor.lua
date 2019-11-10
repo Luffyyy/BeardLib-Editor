@@ -97,7 +97,7 @@ function MissionEditor:mouse_released(...)
 end
 
 function MissionEditor:add_element(name, add_to_selection, old_element, no_select)
-    local clss = self:get_editor_class(name) 
+    local clss = self:get_editor_class(name)
     if clss then
         local unit = clss:init(nil, old_element)
         if unit then

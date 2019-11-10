@@ -85,11 +85,16 @@ function EditorAreaTrigger:update(t, dt)
                     self._scripts[id] = clss:new(element)
                 end
             else
-                local shape = self._scripts[id]:get_shape()
+				if not self._scripts[id]._shape then
+					EditorAreaTrigger.create_shapes(self._scripts[id])
+				end
+
+                local shape = EditorAreaTrigger.get_shape(self._scripts[id])
                 shape:draw(t, dt, 0.85, 0.85, 0.85)
             end
         end
     end
+
 	self:update_shape_position()
 	EditorAreaTrigger.super.update(self, t, dt)
 end

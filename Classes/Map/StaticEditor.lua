@@ -390,7 +390,6 @@ function Static:set_unit_data()
 		local ud = unit:unit_data()
         if ud and ud.unit_id then
             local prev_id = ud.unit_id
-            log("setting nameid", tostring(self:GetItem("Name"):Value()))
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
 
             --ud.unit_id = self:GetItem("ID"):Value()
