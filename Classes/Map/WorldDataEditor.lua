@@ -806,8 +806,8 @@ function WData:OpenSelectInstanceDialog(params)
 	    list = managers.world_instance:instance_names(),
         force = true,
 	    callback = params.on_click or function(name)
-	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))	        
-	    	BLE.ListDialog:hide()
+	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))
+	    	self:CloseDialog()
         end,
         select_multi_clbk = function(items)
             self:part("static"):reset_selected_units()
