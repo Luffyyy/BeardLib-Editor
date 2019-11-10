@@ -342,7 +342,7 @@ function CubemapCreator:_create_dome_occlusion(params)
 		source_path = self._temp_path,
 		output_path = self._cubelights_path,
 		output_name = "dome_occlusion",
-		dome_occ = true
+		dome_occ = { wait_frames = 5}
 	})
 
 	self._saved_resolution = RenderSettings.resolution
@@ -425,8 +425,6 @@ function CubemapCreator:_create_dome_occlusion(params)
 	end
 
 	self._params.step = 0
-
-	self:generate_dome_occlusion(self._temp_path)
 end
 
 function CubemapCreator:generate_dome_occlusion(path)
@@ -437,6 +435,15 @@ end
 
 function CubemapCreator:_tick_generate_dome_occlusion(t, dt)
     if self._params and self._params.dome_occ then
+		if self._params.step == 0 then
+			self._params.dome_occ.wait_frames = self._params.dome_occ.wait_frames - 1
+
+			if self._params.dome_occ.wait_frames > 0 then
+				return
+			end
+
+			self:generate_dome_occlusion(self._temp_path)
+		end
         self._params.step = self._params.step + 1
 
         if self._params.step == 2 then
