@@ -1,6 +1,9 @@
 EditMeshVariation = EditMeshVariation or class(EditUnit)
 function EditMeshVariation:editable(unit)
-    local mesh_variations = table.merge(managers.sequence:get_editable_state_sequence_list(unit:name()) or {}, managers.sequence:get_triggable_sequence_list(unit:name()))
+    local mesh_variations = table.merge(
+        managers.sequence:get_editable_state_sequence_list(unit:name()) or {},
+        managers.sequence:get_triggable_sequence_list(unit:name())
+    )
     local materials = self:get_material_configs_from_meta(unit)
 
     return #mesh_variations > 0 or #materials > 0
@@ -56,6 +59,10 @@ end
 
 function EditMeshVariation:get_material_configs_from_meta(unit)
     local unit_name = unit:unit_data().name
+    if not unit_name then
+        return {}
+    end
+
     local name = unit_name:id()
 	self._avalible_material_groups = self._avalible_material_groups or {}
 
