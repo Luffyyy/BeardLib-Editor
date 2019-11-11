@@ -167,11 +167,31 @@ function EditorAIAttention:_chk_set_link_values()
     end
 end
 
-
+function EditorAIAttention:nil_if_empty(value_name)
+	if self._element.values[value_name] and #self._element.values[value_name] == 0 then
+		self._element.values[value_name] = nil
+	end
+end
 
 function EditorAIAttention:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"})
+
+	self:BuildUnitsManage("att_obj_u_id", nil, nil, {
+		text = "Attention Object",
+		single_select = true,
+		not_table = true,
+		check_unit = function(unit)
+			return unit:in_slot(38)
+		end
+	})
+
+	self:BuildElementsManage("instigator_ids", nil, {
+		"ElementSpawnEnemyDummy",
+		"ElementSpawnCivilian",
+		"ElementSpawnEnemyGroup",
+		"ElementSpawnCivilianGroup"
+	}, ClassClbk(self, "nil_if_empty"))
+
 	self:BooleanCtrl("use_instigator")
 	self:ComboCtrl("preset", table.list_add({"none"}, tweak_data.attention.indexes), {help = "Select the attention preset."})
 	self:ComboCtrl("operation", {"set","add","override"}, {help = "Select an operation."})
