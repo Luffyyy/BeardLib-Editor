@@ -55,7 +55,7 @@ function EditorInstanceInputEvent:update(t, dt, instance_name)
 		return
 	end
 	local r, g, b = self._unit:mission_element()._color:unpack()
-	for i, data in ipairs(self._element.values.event_list) do
+	for i, data in pairs(self._element.values.event_list) do
 		if not self:_draw_instance_link(data.instance) then
 			table.remove(self._element.values.event_list, i)
 		end
