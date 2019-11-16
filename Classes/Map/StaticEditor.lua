@@ -129,25 +129,6 @@ function Static:set_units()
     self._set_elements = {}
 end
 
-function Static:loaded_continents()
-    self._nav_surfaces = {}
-    for _, unit in pairs(managers.worlddefinition._all_units) do
-        if alive(unit) and unit:name() == self._nav_surface then
-            table.insert(self._nav_surfaces, unit)
-        end
-    end
-end
-
-function Static:unit_spawned(unit)
-	if unit:name() == self._nav_surface and not table.contains(self._nav_surfaces, unit) then
-		table.insert(self._nav_surfaces, unit)
-	end
-end
-
-function Static:unit_deleted(unit)
-	table.delete(self._nav_surfaces, unit)
-end
-
 function Static:build_default_menu()
     Static.super.build_default_menu(self)
     self._editors = {}

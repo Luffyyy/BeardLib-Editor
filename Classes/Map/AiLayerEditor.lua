@@ -205,8 +205,6 @@ function AiEditor:_build_ai_data(ai_data)
             self._selected_path = name
         end, { text = "+", help = "Create new patrol point" })
 
-
-
         for i, v in ipairs(points.points) do
             local patrol_point = patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
                 text = string.format("[%d] Unit ID: %d", i, v.unit_id)
@@ -398,6 +396,8 @@ function AiEditor:_draw(t, dt)
             local selected = unit == self._selected_unit
 
             if unit:name() == self._nav_surface_unit then
+                Application:draw(unit, 0, 0.8, 1)
+
                 local a = selected and 0.75 or 0.5
                 local r = selected and 0 or 1
                 local g = selected and 1 or 1
@@ -586,14 +586,30 @@ function AiEditor:_select_patrol_point(unit)
     managers.editor:select_unit(unit)
 end
 
---[[function AiEditor:do_spawn_unit(unit_path, ud)
-    local unit = World:spawn_unit(unit_path:id(), ud.position or Vector3(), ud.rotation or Rotation())
-    table.merge(unit:unit_data(), ud)
-    ud = unit:unit_data()
-    ud.name = unit_path
-    ud.unit_id = managers.worlddefinition:GetNewUnitID(managers.editor._current_continent, "ai")
-    ud.position = unit:position()
-    ud.rotation = unit:rotation()
+function AiEditor:do_spawn_unit(unit_path, ud)
+    local new_unit_id = managers.worlddefinition:GetNewUnitID(ud.continent or managers.editor._current_continent, "ai")
+
+    local shared_data = {
+        unit_data = {
+            unit_id = ud.unit_id or new_unit_id,
+            name = unit_path,
+            position = ud.position,
+            rotation = ud.rotation or Rotation(0, 0, 0),
+            continent = ud.continent or managers.editor._current_continent,
+        }
+    }
+
+    if Idstring(unit_path) == self._nav_surface_unit then
+        shared_data.ai_editor_data = ud.ai_editor_data or {
+            visibilty_exlude_filter = {},
+            visibilty_include_filter = {},
+            location_id = "location_unknown",
+            suspicion_mul = 1,
+            detection_mul = 1
+        }
+    end
+
+    local unit = managers.worlddefinition:create_unit(shared_data, Idstring("ai"))
 
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
         managers.ai_data:add_patrol_point(self._selected_path, unit)
@@ -602,7 +618,7 @@ end
     table.insert(self._units, unit)
 
     self:build_menu()
-end]]
+end
 
 function AiEditor:_add_patrol_point(unit)
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
