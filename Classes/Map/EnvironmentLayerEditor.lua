@@ -408,9 +408,9 @@ function EnvLayer:change_color_grading(item)
 	self:save()
 end
 
-function EnvLayer:set_environment_area()
+function EnvLayer:set_environment_area(env)
 	local area = self:selected_unit():unit_data().environment_area
-	area:set_environment(self._environment_area_ctrls.environment_path.value)
+	area:set_environment(self._environment_area_ctrls.environment_path.Value())
 	self:save()
 end
 
