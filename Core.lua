@@ -23,9 +23,9 @@ function BLE:Init()
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
-	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"		
+	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
     self.UsableAssets = {"unit", "effect", "environment", "scene"}
-    
+
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
     Hooks:Add("GameSetupUpdate", "BeardLibEditorGameSetupUpdate", ClassClbk(BLE, "Update"))
     Hooks:Add("GameSetupPauseUpdate", "BeardLibEditorGameSetupPausedUpdate", ClassClbk(BLE, "PausedUpdate"))
@@ -87,7 +87,7 @@ function BLE:InitManagers(data)
     if not self.ConstPackages then
         self:LoadHashlist()
     end
-	
+
     self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
     self.ListDialog = ListDialog:new(self._dialogs_opt)
@@ -110,7 +110,7 @@ function BLE:InitManagers(data)
             self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
             self._vp:set_camera(self._camera_object)
         end
-        
+
         self.MapEditor = MapEditor:new(data.editor)
         table.insert(self.Updaters, self.MapEditor)
     end
@@ -156,10 +156,10 @@ function BLE:InitManagers(data)
             "core/packages/base",
             "core/packages/editor"
         }
-    
+
         local prefix = "packages/dlcs/"
         local sufix = "/game_base"
-        for dlc_package, bundled in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
+        for dlc_package, _ in pairs(tweak_data.BUNDLED_DLC_PACKAGES) do
             table.insert(self.ConstPackages, prefix .. tostring(dlc_package) .. sufix)
         end
         for i, difficulty in ipairs(tweak_data.difficulties) do
@@ -207,7 +207,7 @@ function BLE:LoadCustomAssets()
                         self.DBPaths[typ][path] = true
                     end
                 end
-            end            
+            end
         end
     end
 end
@@ -288,7 +288,7 @@ function BLE:GeneratePackageData()
 					packages_paths[current_pkg] = packages_paths[current_pkg] or {}
 					pkg = packages_paths[current_pkg]
                 end
-                
+
 				local path, typ = unpack(string.split(line, "%."))
                 if pkg then
                     if typ then -- Added typ check here
@@ -297,7 +297,7 @@ function BLE:GeneratePackageData()
                 end
                 if typ then -- Added typ check here
                     paths[typ] = paths[typ] or {}
-                
+
                     if DB:has(typ, path) then
                         paths[typ][path] = true
                         if pkg then
@@ -312,7 +312,7 @@ function BLE:GeneratePackageData()
     else
         self:log("[GeneratePackageData] packages.txt is missing...")
     end
-    
+
     FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "Paths.bin"), paths, "binary")
     FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
     Global.DBPaths = nil
@@ -394,9 +394,9 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                         self.DBPaths.unit[path] = true
                         self.DBPaths.model[path] = true
                         self.DBPaths.object[path] = true
-                    
+
                         local failed
-                    
+
                         for load_type, load in pairs(C.UNIT_SHORTCUTS[typ]) do
                             if FileIO:Exists(dir.."."..load_type) then
                                 self.DBPaths[load_type] = self.DBPaths[load_type] or {}

@@ -185,12 +185,17 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 				end
 
 				local vec = math.string_to_vector(vs)
+				local control
 				if key == "vector2" or key == "vector3" then
-					control = pan:Vector3("Value", set_value, vec, {shrink_width = 0.6, vector2 = key == "vector2"})
+					pan:Vector3("Value", set_value, vec, {shrink_width = 0.6, vector2 = key == "vector2"})
 				elseif key == "color" then
-					control = pan:colorbox("Value", set_value, vec, {ret_vec = true, shrink_width = 0.6})
-				elseif key == "float" or "opacity" or "time" then
-					control = key == "opacity" and pan:slider("Value", set_value, vs, {min = 0, max = 255, shrink_width = 0.6}) or pan:numberbox("Value", set_value, vs, {shrink_width = 0.6})
+					pan:colorbox("Value", set_value, vec, {ret_vec = true, shrink_width = 0.6})
+				elseif key == "float" or key == "opacity" or key == "time" then
+					if key == "opacity" then
+						pan:slider("Value", set_value, vs, {min = 0, max = 255, shrink_width = 0.6})
+					else
+						pan:numberbox("Value", set_value, vs, {shrink_width = 0.6})
+					end
 				end
 				pan:tb_imgbtn("Remove", function()
 					table.remove(self._keys, i)
