@@ -741,8 +741,8 @@ function Project:edit_main_xml(data, save_clbk)
     diff_settings_texts:divider("Contract Cost", div_texts_opt)
     diff_settings_texts:divider("Payout", div_texts_opt)
     diff_settings_texts:divider("Stealth XP bonus", div_texts_opt)
-    diff_settings_texts:divider("Minimum XP", div_texts_opt)
     diff_settings_texts:divider("Maximum XP", div_texts_opt)
+    diff_settings_texts:divider("Minimum XP", div_texts_opt)
 
     for i, diff in pairs(self._diffs) do
         local group = diff_settings_holder:divgroup(diff, diff_settings_opt)
@@ -750,7 +750,7 @@ function Project:edit_main_xml(data, save_clbk)
         self._payouts[i] = group:numberbox("Payout"..i, up, narr.payout[i] or 0, {max = 100000000, min = 0, size_by_text = true, text = "", control_slice = 1})
         self._experience_multipliers[i] = group:numberbox("ExperienceMul"..i, up, narr.experience_mul[i] or 0, {max = 5, min = 0, size_by_text = true, text = "", control_slice = 1})
         self._max_mission_xps[i] = group:numberbox("MaxMissionXp"..i, up, narr.max_mission_xp[i] or 0, {max = 10000000, min = 0, size_by_text = true, text = "", control_slice = 1})
-        self._min_mission_xps[i] = group:numberbox("minMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, size_by_text = true, text = "", control_slice = 1})
+        self._min_mission_xps[i] = group:numberbox("MinMissionXp"..i, up, narr.min_mission_xp[i] or 0, {max = 100000, min = 0, size_by_text = true, text = "", control_slice = 1})
     end 
 
     self:small_button("Save", save_clbk)
