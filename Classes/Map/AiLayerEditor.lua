@@ -266,6 +266,7 @@ function AiEditor:build_unit_menu()
                     help = "multiplier applied to AI detection speed. min is 0.01"
                 }
             )
+            S:build_links(unit:unit_data().unit_id)
         end
     end
 end

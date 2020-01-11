@@ -975,6 +975,7 @@ end
 
 function Static:build_links(id, match, element)
     match = match or Utils.LinkTypes.Unit
+    local warn
     local function create_link(text, id, group, clbk)
         warn = warn or ""
         group:button(id, clbk, {
@@ -1030,13 +1031,13 @@ function Static:build_links(id, match, element)
             end
         end
 
-        for id, unit in pairs(managers.worlddefinition._all_units) do
+        for uid, unit in pairs(managers.worlddefinition._all_units) do
             if alive(unit) then
                 local ud = unit:unit_data()
-                for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
+                for _, link in pairs(managers.mission:get_links_paths_new(uidid, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
                     local linking_from = link.location
                     linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                    create_link(unit_link_text(ud, linking_from), id, linking_group, ClassClbk(self, "set_selected_unit", unit))               
+                    create_link(unit_link_text(ud, linking_from), uid, linking_group, ClassClbk(self, "set_selected_unit", unit))               
                 end
             end
         end
