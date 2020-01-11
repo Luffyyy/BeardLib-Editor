@@ -63,8 +63,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		for vn, p in pairs(self._variants) do
 			combo:Append(tostring(vn))
 		end
-		combo:set_value(tostring(self._value))
-
+		combo:SetSelectedItem(self._value)
 		local variant_panel = widget:pan("VariantPanel")
 
 		self:on_set_variant({
@@ -288,8 +287,6 @@ function CoreEffectProperty:on_set_variant(widget_view_variant, item)
 	local container = widget_view_variant.container
 	local container_sizer = widget_view_variant.container_sizer
 	self._value = item:SelectedItem()
-	log("!!!!")
-	log(tostring(self._value))
 	local variant = self._variants[self._value]
 	
 	variant_panel:ClearItems()
