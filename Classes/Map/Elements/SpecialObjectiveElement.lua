@@ -61,6 +61,10 @@ function EditorSpecialObjective:update(t, dt)
 end
 
 function EditorSpecialObjective:update_selected(t, dt)
+    if not alive(self._unit) then
+        return
+    end
+
 	-- TODO
 	--[[if self._element.values.patrol_path ~= 'none' then
         managers.editor:layer('Ai'):draw_patrol_path_externaly(self._element.values.patrol_path)
@@ -76,12 +80,14 @@ function EditorSpecialObjective:update_selected(t, dt)
     pen:sphere(self._element.values.search_position, self._element.values.search_distance)
     brush:sphere(self._element.values.search_position, 10, 4)
 	Application:draw_line(self._element.values.search_position, self._unit:position(), 0, 1, 0)
-	
-	local selected_unit = self:selected_unit()
+
+    local selected_unit = self:selected_unit()
+    local unit_sel = self._unit == selected_unit
+
     if self._element.values.spawn_instigator_ids then
         for _, id in ipairs(self._element.values.spawn_instigator_ids) do
             local unit = self:GetPart('mission'):get_element_unit(id)
-            local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
+            local draw = not selected_unit or unit == selected_unit or unit_sel
 
             if draw then
                 self:draw_link(
@@ -126,7 +132,7 @@ function EditorSpecialObjective:_draw_follow_up()
 	if self._element.values.followup_elements then
 		for _, element_id in ipairs(self._element.values.followup_elements) do
 			local unit = self:GetPart("mission"):get_element_unit(element_id)
-			local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
+			local draw = not selected_unit or unit == selected_unit or unit_sel
 			if draw then
 				self:draw_link({
 					from_unit = self._unit,
