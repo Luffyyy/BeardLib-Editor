@@ -82,7 +82,7 @@ function Static:mouse_released(button, x, y)
     if not self:enabled() then
         return
     end
-    
+
     self._mouse_hold = false
     self._widget_hold = false
     self._drag_select = false
@@ -374,13 +374,13 @@ function Static:set_unit_data()
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())
 
             --ud.unit_id = self:GetItem("ID"):Value()
-			
+
             for _, editor in pairs(self._editors) do
                 if editor.set_unit_data and editor:editable(unit) then
                     editor:set_unit_data()
                 end
 			end
-			
+
             BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
             ud.lights = Utils:LightData(unit)
             ud.triggers = Utils:TriggersData(unit)
@@ -388,7 +388,7 @@ function Static:set_unit_data()
             ud.ladder = Utils:LadderData(unit)
             ud.zipline = Utils:ZiplineData(unit)
 			ud.cubemap = Utils:CubemapData(unit)
-			
+
 			local old_continent = ud.continent
             local new_continent = self:GetItem("Continent"):SelectedItem()
 
@@ -396,7 +396,6 @@ function Static:set_unit_data()
 				self:set_unit_continent(unit, old_continent, new_continent)
                 self:GetItem("ID"):SetText("ID "..ud.unit_id)
 			end
-			
             self:set_unit_simple_values(unit)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             self:set_unit_path(unit, self:GetItem("UnitPath"):Value())
@@ -443,13 +442,12 @@ end
 
 function Static:set_unit_path(unit, path, add)
     local ud = unit:unit_data()
-    
+
     if ud.name == path then
         return
     end
 
     local new_unit = unit
-    
     if path and path ~= "" and path ~= "*" and PackageManager:has(Idstring("unit"), path:id()) then
         ud.name = path
         new_unit = self._parent:SpawnUnit(ud.name, unit, add == true, ud.unit_id)
@@ -941,7 +939,7 @@ function Static:set_menu_unit(unit)
     hide_on_projection_light:SetValue(unit:unit_data().hide_on_projection_light, false, true)
 	disable_on_ai_graph:SetValue(unit:unit_data().disable_on_ai_graph, false, true)
 	delayed_load:SetValue(unit:unit_data().delayed_load, false, true)
-	
+
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then
             editor:set_menu_unit(unit)
@@ -1125,7 +1123,7 @@ function Static:update(t, dt)
             end
         end
     end
-    
+
     self:_update_drag_select_draw()
 end
 
