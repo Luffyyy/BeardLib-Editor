@@ -40,17 +40,17 @@ function Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
     end
     if not collisions_only then
         for _, object in pairs(opt.objects) do
-            if object:visibility() then --if it's not visible, it's either not important or it should update itself afterwards.
+            if alive(object) and object:visibility() then --if it's not visible, it's either not important or it should update itself afterwards.
                 object:set_visibility(false)
-                object:set_visibility(true) 
+                object:set_visibility(true)
             end
         end
     end
     if Static._widget_hold or EditorMenu._slider_hold then
         Static._ignored_collisions[key] = opt
     else
-        for _, body in pairs(opt.bodies) do    
-            if body:enabled() then --same thing here
+        for _, body in pairs(opt.bodies) do
+            if alive(body) and body:enabled() then --same thing here
                 body:set_enabled(false)
                 body:set_enabled(true)
             end
@@ -77,8 +77,14 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
             end
             optimization[unit_key] = opt
         end
-        
-		self:UpdateCollisionsAndVisuals(unit_key, opt)
+
+        --If you try setting a position through the textbox or even just calling this function the collisions will fail to update for some units.
+        --So we added a delayedcall for it, this engine..
+        DelayedCalls:Remove(unit_key)
+        DelayedCalls:Add(unit_key, 0.01, function()
+            self:UpdateCollisionsAndVisuals(unit_key, opt)
+        end)
+
 		if ud then
 			ud.position = position
 			if rotation then
