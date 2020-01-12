@@ -856,7 +856,7 @@ function WData:OpenSelectElementDialog(params)
         select_multi_clbk = function(items)
             self:part("static"):reset_selected_units()
             for _, item in pairs(items) do
-                self._parent:select_element(item.element, held_ctrl)
+                self._parent:select_element(item.element, true)
                 if not held_ctrl then
                     self:CloseDialog()
                 end  

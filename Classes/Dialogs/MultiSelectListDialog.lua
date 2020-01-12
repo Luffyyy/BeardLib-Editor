@@ -62,17 +62,32 @@ end
 
 function MultiSelectListDialog:SelectPresent()
     if self._multi_select then
-        for _, item in pairs(self._list_menu:Items()) do
-            local v = self._list[item.list_i]
+        local select = function(itm)
+            local v = self._list[itm.list_i]
             if not table.contains(self._selected_list, v) then
                 table.insert(self._selected_list, v)
-                item:SetValue(true)    
+            end
+            itm:SetValue(true)
+        end
+        for _, item in pairs(self._list_menu:Items()) do
+            if item.menu_type then
+                for _, child_item in pairs(item:Items()) do
+                    select(child_item)
+                end
+            else
+                select(item)
             end
         end
     else
         local selected = {}
         for _, item in pairs(self._list_menu:Items()) do
-            table.insert(selected, self._list[item.list_i])
+            if item.menu_type then
+                for _, child_item in pairs(item:Items()) do
+                    table.insert(selected, self._list[child_item.list_i])
+                end
+            else
+                table.insert(selected, self._list[item.list_i])
+            end
         end
         if self._select_multi_clbk then
             self._select_multi_clbk(selected)
@@ -82,12 +97,21 @@ end
 
 function MultiSelectListDialog:UnselectPresent()
     if self._multi_select then
-        for _, item in pairs(self._list_menu:Items()) do
-            local v = self._list[item.list_i]
+        local unselect = function(itm)
+            local v = self._list[itm.list_i]
             if table.contains(self._selected_list, v) then
                 table.delete(self._selected_list, v)
             end
-            item:SetValue(false)
+            itm:SetValue(false)
+        end
+        for _, item in pairs(self._list_menu:Items()) do
+            if item.menu_type then
+                for _, child_item in pairs(item:Items()) do
+                    unselect(child_item)
+                end
+            else
+                unselect(item)
+            end
         end
     end
 end
