@@ -24,36 +24,21 @@ function Utils:GetIcon(name)
     return Utils.EditorIcons[name]
 end
 
-local MDL = Idstring("model")
 local static
 local editor_menu
-local optimization = {}
 
 Utils.LinkTypes = {Unit = 1, Element = 2, Instance = 3}
 
-function Utils:UpdateCollisionsAndVisuals(key, opt, collisions_only)
-    Static = Static or self:GetPart("static")
+function Utils:UpdateCollisionsAndVisuals(unit, skip)
     editor_menu = editor_menu or managers.editor._menu
-    opt = opt or optimization[key]
-    if not opt then
-        return
-    end
-    if not collisions_only then
-        for _, object in pairs(opt.objects) do
-            if alive(object) and object:visibility() then --if it's not visible, it's either not important or it should update itself afterwards.
-                object:set_visibility(false)
-                object:set_visibility(true)
-            end
-        end
-    end
-    if Static._widget_hold or EditorMenu._slider_hold then
-        Static._ignored_collisions[key] = opt
+    static = static or self:GetPart("static")
+
+    if not skip and static._widget_hold or editor_menu._slider_hold then
+        table.insert(static._ignored_collisions, unit)
     else
-        for _, body in pairs(opt.bodies) do
-            if alive(body) and body:enabled() then --same thing here
-                body:set_enabled(false)
-                body:set_enabled(true)
-            end
+        if alive(unit) and unit:enabled() then
+            unit:set_enabled(false)
+            unit:set_enabled(true)
         end
     end
 end
@@ -66,23 +51,14 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
         unit:set_rotation(rotation)
     end
     if unit.get_objects_by_type then
-        local opt
+        static = static or self:GetPart("static")
         local unit_key = unit:key()
-        if not optimization[unit_key] then --Should I run this on all units? yeah probably should not.
-            opt = {bodies = {}, objects = {}}
-            opt.objects = unit:get_objects_by_type(MDL)
-            opt.bodies = {}
-            for i = 0, unit:num_bodies() - 1 do
-                table.insert(opt.bodies, unit:body(i))
-            end
-            optimization[unit_key] = opt
-        end
 
         --If you try setting a position through the textbox or even just calling this function the collisions will fail to update for some units.
         --So we added a delayedcall for it, this engine..
         DelayedCalls:Remove(unit_key)
         DelayedCalls:Add(unit_key, 0.01, function()
-            self:UpdateCollisionsAndVisuals(unit_key, opt)
+            self:UpdateCollisionsAndVisuals(unit)
         end)
 
 		if ud then
@@ -92,10 +68,11 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
 			end
 		end
         local me = unit:mission_element()
+
         if me then
-            Static._set_elements[me.element.id] = me
+            static._set_elements[me.element.id] = me
         elseif ud.name and not ud.instance then
-            Static._set_units[unit_key] = unit
+            static._set_units[unit_key] = unit
         end
     end
 end

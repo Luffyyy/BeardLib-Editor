@@ -101,8 +101,8 @@ function Static:mouse_released(button, x, y)
 	end
 
 	self._drag_units = nil
-    for key, ignored in pairs(self._ignored_collisions) do
-        Utils:UpdateCollisionsAndVisuals(key, ignored, true)
+    for _, unit in pairs(self._ignored_collisions) do
+        Utils:UpdateCollisionsAndVisuals(unit, true)
     end
 
     self:set_units()
