@@ -97,6 +97,7 @@ function Static:mouse_released(button, x, y)
                 table.delete(self._selected_units, unit)
             end
         end
+        self:selection_to_menu()
 	end
 
 	self._drag_units = nil
@@ -105,7 +106,6 @@ function Static:mouse_released(button, x, y)
     end
 
     self:set_units()
-    self:selection_to_menu()
     self._ignored_collisions = {}
 end
 
