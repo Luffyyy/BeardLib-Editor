@@ -327,19 +327,20 @@ function StaticEditor:update_positions()
 end
 
 function Static:open_addremove_group_dialog(remove)
-    local groups = {}
+    local list_groups = {}
     local continents = managers.worlddefinition._continent_definitions
     if remove then
         local groups = self:get_groups_from_unit(self._selected_units[1])
         for _, group in pairs(groups) do
-            self._parent:Log(tostring(group.name))
-            if group.name then table.insert(groups, {name = group.name, group = group}) end
+            if group.name then
+                table.insert(list_groups, {name = group.name, group = group})
+            end
         end
     else
         for _, continent in pairs(self._parent._continents) do  
             if continents[continent].editor_groups then
                 for _, editor_group in pairs(continents[continent].editor_groups) do
-                    if editor_group.name then table.insert(groups, {name = editor_group.name, group = editor_group}) end
+                    if editor_group.name then table.insert(list_groups, {name = editor_group.name, group = editor_group}) end
                 end
             end
         end
@@ -347,7 +348,7 @@ function Static:open_addremove_group_dialog(remove)
 
     local units = self._selected_units
     BLE.ListDialog:Show({
-        list = groups,
+        list = list_groups,
         force = true,
         callback = function(item)
             local group = item.group
@@ -595,9 +596,9 @@ function Static:build_group_links(unit)
             label = "groups"
         })
     end
-    
+
     local group = self:GetItem("InsideGroups") or self:group("InsideGroups", {max_height = 200, h = 200})
-    
+
     local editor_groups = self:get_groups_from_unit(unit)
     for _, editor_group in pairs(editor_groups) do
         create_link(editor_group.name, unit:unit_data().unit_id, group, ClassClbk(self, "select_group", editor_group))
