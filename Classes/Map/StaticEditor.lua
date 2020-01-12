@@ -59,8 +59,8 @@ function Static:mouse_pressed(button, x, y)
                     self._parent._rotate_widget:set_rotate_widget_unit_rot(self._selected_units[1]:rotation())
                     self._parent._using_rotate_widget = true
                 end
-            end         
-        end  
+            end
+        end
         if not self._parent._using_rotate_widget and not self._parent._using_move_widget then
             self:select_unit()
         end
@@ -294,6 +294,7 @@ function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
             end
         end
     end)
+
     transform:Vec3Rot("", ClassClbk(self, "set_unit_data"), nil, nil, {on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
 
@@ -337,7 +338,7 @@ function Static:open_addremove_group_dialog(remove)
             end
         end
     else
-        for _, continent in pairs(self._parent._continents) do  
+        for _, continent in pairs(self._parent._continents) do
             if continents[continent].editor_groups then
                 for _, editor_group in pairs(continents[continent].editor_groups) do
                     if editor_group.name then table.insert(list_groups, {name = editor_group.name, group = editor_group}) end
@@ -352,8 +353,8 @@ function Static:open_addremove_group_dialog(remove)
         force = true,
         callback = function(item)
             local group = item.group
-            self:select_group(group)   
-            for _, unit in pairs(units) do 
+            self:select_group(group)
+            for _, unit in pairs(units) do
                 if alive(unit) then
                     if remove and table.contains(group.units, unit:unit_data().unit_id) then
                         table.delete(group.units, unit:unit_data().unit_id)
@@ -369,7 +370,7 @@ function Static:open_addremove_group_dialog(remove)
             end
             BeardLibEditor.ListDialog:hide()
         end
-    }) 
+    })
 end
 
 function Static:set_unit_data()
@@ -379,7 +380,7 @@ function Static:set_unit_data()
     if #self._selected_units == 1 then
         if not self:GetItem("Continent") then
             return
-        end 
+        end
 		local unit = self._selected_units[1]
 		local ud = unit:unit_data()
         if ud and ud.unit_id then
@@ -981,10 +982,10 @@ end
 
 local function element_link_text(element, link, warn)
     --ugly
-    return tostring(element.editor_name) 
-        .. "\n" .. tostring(element.id) 
-        .. " | " .. (link and string.pretty2(link) 
-        .. " | " or "") .. tostring(element.class):gsub("Element", "") 
+    return tostring(element.editor_name)
+        .. "\n" .. tostring(element.id)
+        .. " | " .. (link and string.pretty2(link)
+        .. " | " or "") .. tostring(element.class):gsub("Element", "")
         .. "\n" .. (warn or "")
 end
 
@@ -1017,7 +1018,7 @@ function Static:build_links(id, match, element)
         same_links[link.element.id] = true
         create_link(element_link_text(link.element, link.upper_k or link.key), link.id, links_group, ClassClbk(self._parent, "select_element", link.element))
     end
-    
+
     if match == Utils.LinkTypes.Unit then
         --Get portals that have the unit attached to - https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/49
         local portal_layer = self:GetLayer("portal")
@@ -1121,7 +1122,7 @@ function Static:update(t, dt)
         self._ignore_raycast = {}
         self._reset_raycast = nil
     end
-    for _, unit in pairs(self._nav_surfaces) do 
+    for _, unit in pairs(self._nav_surfaces) do
         Application:draw(unit, 0,0.8,1)
     end
     for _, editor in pairs(self._editors) do
@@ -1427,7 +1428,7 @@ function Static:_update_drag_select()
 			top_left = Vector3(self._drag_start_pos.x, end_pos.y, 0)
 			bottom_right = Vector3(end_pos.x, self._drag_start_pos.y, 0)
         end
-        
+
 		local units = World:find_units("camera_frustum", managers.editor:camera(), top_left, bottom_right, 500000, self._parent._editor_all)
 		self._drag_units = {}
 

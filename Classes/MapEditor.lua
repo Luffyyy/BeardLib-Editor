@@ -463,7 +463,7 @@ function Editor:set_unit_positions(pos)
 			local unit = selected_units[i]
             if unit ~= reference then
                 local ud = unit:unit_data()
-                BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud) 
+                BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(reference:rotation()), nil, ud)
             end
 		end
     end
@@ -479,7 +479,7 @@ function Editor:set_unit_rotations(rot)
 			local unit = selected_units[i]
             if unit ~= reference then
                 local ud = unit:unit_data()
-                BLE.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud) 
+                BLE.Utils:SetPosition(unit, reference:position() + ud.local_pos:rotate_with(rot), rot * ud.local_rot, ud)
             end
 		end
     end
@@ -489,9 +489,9 @@ function Editor:set_unit_position(unit, pos, rot)
     local ud = unit:unit_data()
     rot = rot or ud.rotation
     if pos then
-        BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(rot), rot, ud) 
+        BLE.Utils:SetPosition(unit, pos + ud.local_pos:rotate_with(rot), rot, ud)
     else
-        BLE.Utils:SetPosition(unit, ud.position, rot, ud) 
+        BLE.Utils:SetPosition(unit, ud.position, rot, ud)
     end
 end
 
@@ -792,9 +792,9 @@ function Editor:update_widgets(t, dt)
             local widget_rot = self:widget_rot()
             if self._using_move_widget and self._move_widget:enabled() then
                 local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
-                if self._last_pos ~= result_pos then 
+                if self._last_pos ~= result_pos then
                     self:set_unit_positions(result_pos)
-                    self:update_positions()                    
+                    self:update_positions()
                 end
                 self._last_pos = result_pos
             end
