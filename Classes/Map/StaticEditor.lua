@@ -246,6 +246,7 @@ function Static:build_unit_main_values()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:mission_element() then
             has_elements = true
+            break
         end
     end
 

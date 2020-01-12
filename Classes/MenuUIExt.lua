@@ -329,7 +329,7 @@ function ItemExt:Vector3(name, clbk, value, o)
 		return Vector3(items[1]:Value(), items[2]:Value(), items[3]:Value())
 	end
 	p.get_value = p.Value
-	
+
 	function p:SetValue(val, run_callback)
 		items[1]:SetValue(val.x)
 		items[2]:SetValue(val.y)
