@@ -133,7 +133,7 @@ function Static:build_default_menu()
     Static.super.build_default_menu(self)
     self._editors = {}
     self:SetTitle("Selection")
-    self:divider("No selection >.<", {bordr_left = false})
+    self:divider("No selection >_<", {border_left = false})
     self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
 end
 
