@@ -185,7 +185,7 @@ function WData:build_default_menu()
     mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
     self:reset()
-    
+
     self:build_continents()
 end
 
@@ -211,8 +211,9 @@ function WData:build_continents()
         local all_scripts = table.map_keys(managers.mission._scripts)
         self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, self._parent._current_continent) or 1)
         self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, self._parent._current_script) or 1)    
+        local icons = BLE.Utils.EditorIcons
 
-        toolbar:sq_btn("NewContinent", ClassClbk(self, "new_continent"), {text = "+", help = "Add continent"})
+        toolbar:tb_imgbtn("NewContinent", ClassClbk(self, "new_continent"), tx, icons.plus, {help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = continents:group(name, {text = name})
             local ctoolbar = continent:GetToolbar()
@@ -220,7 +221,7 @@ function WData:build_continents()
             ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red})
             ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115})
             ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {122, 1, 48, 48})
-            ctoolbar:sq_btn("AddScript", ClassClbk(self, "add_new_mission_script", name), {text = "+", help = "Add mission script"})
+            ctoolbar:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), tx, icons.plus, {help = "Add mission script"})
             ctoolbar:tb_imgbtn("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
