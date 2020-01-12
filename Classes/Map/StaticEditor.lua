@@ -693,7 +693,7 @@ function Static:widget_unit()
             end
         end
     end
-    return nil
+    return unit
 end
 
 function Static:recalc_all_locals()
@@ -859,7 +859,7 @@ end
 function Static:selection_to_menu()
     self:StorePreviousPosRot()
     local unit = self:selected_unit()
-    self._parent:use_widgets(selected_unit and alive(selected_unit) and selected_unit:enabled())
+    self._parent:use_widgets(unit and alive(unit) and unit:enabled())
     for _, check_unit in pairs(self:selected_units()) do
         if check_unit:mission_element() then
             check_unit:mission_element():select()
