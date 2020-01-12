@@ -402,7 +402,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
 		self:unit_spawned(unit)
     else
         BLE:log("Got a nil unit '%s' while attempting to spawn it", tostring(unit_path))
-    end    
+    end
     return unit
 end
 

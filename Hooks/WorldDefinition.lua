@@ -702,7 +702,7 @@ function WorldDef:ResetUnitID(unit, continent_name)
 	local is_world = self:is_world_unit(unit)
 	local continent = ud.continent
 	local unit_id = self:GetNewUnitID(continent, nil, is_world)
-	
+
 	for _, link in pairs(managers.mission:get_links_paths_new(ud.unit_id, Utils.LinkTypes.Unit)) do
 		link.tbl[link.key] = unit_id
 	end
@@ -713,10 +713,10 @@ function WorldDef:ResetUnitID(unit, continent_name)
 			portal._ids[unit_id] = true
 		end
 	end
-	
+
 	ud.unit_id = tonumber(unit_id)
 	unit:set_editor_id(unit_id)
-	
+
 	if is_world then
 		self._world_unit_ids[unit_id] = true
 	elseif continent then
