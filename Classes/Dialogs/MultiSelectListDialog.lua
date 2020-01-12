@@ -183,7 +183,7 @@ function MultiSelectListDialog:MakeListItems(params)
             end
         end
     end
-    
+
     self:show_dialog()
     self._list_menu:AlignItems(true)
 end

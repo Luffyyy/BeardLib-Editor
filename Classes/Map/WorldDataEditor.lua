@@ -794,7 +794,7 @@ function WData:OpenSelectUnitDialog(params)
                 self._parent:select_unit(item.unit, true)
                 if not held_ctrl then
                     self:CloseDialog()
-                end  
+                end
             end
         end
     })
@@ -832,7 +832,7 @@ function WData:OpenSelectElementDialog(params)
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
-                for i, element in pairs(tbl.elements) do
+                for _, element in pairs(tbl.elements) do
                 	table.insert(elements, {
                         create_group = string.pretty2(element.class:gsub("Element", "")),
                 		name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]",
@@ -845,7 +845,7 @@ function WData:OpenSelectElementDialog(params)
 	BLE.MSLD:Show({
 	    list = elements,
         force = true,
-        no_callback = ClassClbk(self, "CloseDialog"),        
+        no_callback = ClassClbk(self, "CloseDialog"),
 	    callback = params.on_click or function(item)
             held_ctrl = ctrl()
             self._parent:select_element(item.element, held_ctrl)
@@ -859,10 +859,10 @@ function WData:OpenSelectElementDialog(params)
                 self._parent:select_element(item.element, true)
                 if not held_ctrl then
                     self:CloseDialog()
-                end  
+                end
             end
         end
-	}) 
+	})
 end
 
 function WData:BeginSpawningElements(element)

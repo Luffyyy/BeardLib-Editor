@@ -42,7 +42,7 @@ function Part:init(parent, menu, name, opt, mopt)
         opt.make_tabs(self._tabs)
         title_h = title_h + self._tabs:OuterHeight()
     end
-    
+
     self._holder = self:pan("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
     ItemExt:add_funcs(self, self._holder)
     self:build_default_menu()

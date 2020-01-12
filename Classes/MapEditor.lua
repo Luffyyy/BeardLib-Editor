@@ -8,7 +8,7 @@ function Editor:init(data)
     if not PackageManager:loaded("core/packages/editor") then
         PackageManager:load("core/packages/editor")
     end
-    
+
     self._particle_editor_active = false
     self._mapeditor = {}
     self.parts = {}
@@ -43,7 +43,7 @@ function Editor:init(data)
         ["@ID5dac81a18d09497c@"] = "xz",
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
-    
+
     self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(BLE.Options:GetValue("Input/ToggleMapEditor")))
     local normal = not self._safemode
     self._menu = MenuUI:new({
@@ -118,7 +118,7 @@ function Editor:post_init(menu)
     if managers.worlddefinition and managers.worlddefinition._continent_definitions then
         self:load_continents(managers.worlddefinition._continent_definitions)
     end
-    
+
     m.menu:build_tabs()
     m.world:Switch()
 
