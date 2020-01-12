@@ -90,16 +90,13 @@ function Static:mouse_released(button, x, y)
     self:remove_polyline()
 
     if self._drag_units and #self._drag_units > 0 then
-        for key, unit in pairs(self._drag_units) do
-            if ctrl() then 
-                self:set_selected_unit(unit, true)
+        for _, unit in pairs(self._drag_units) do
+            if ctrl() then
+                self:set_selected_unit(unit, true, true)
             elseif alt() then
                 table.delete(self._selected_units, unit)
-
             end
         end
-        
-        if #self._selected_units < 1 then self:set_unit(true) end
 	end
 
 	self._drag_units = nil
@@ -108,6 +105,7 @@ function Static:mouse_released(button, x, y)
     end
 
     self:set_units()
+    self:selection_to_menu()
     self._ignored_collisions = {}
 end
 
@@ -120,9 +118,13 @@ function Static:set_units()
     end
     for _, me in pairs(self._set_elements) do
         local element = me.element
-        element.values.position = me._unit:position()
-        element.values.rotation = me._unit:rotation()
-        managers.mission:set_element(element)
+        if alive(me._unit) then
+            element.values.position = me._unit:position()
+            element.values.rotation = me._unit:rotation()
+            managers.mission:set_element(element)
+        else
+            BLE:log('Something is wrong with element with ID %s', tostring(element.id))
+        end
 	end
 	self:update_positions()
     self._set_units = {}
@@ -147,7 +149,7 @@ function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
     end
     if not cannot_be_saved then
         quick:s_btn("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
-        local group = self:group("Group", {align_method = "grid"}) --lmao
+        self:group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
 end
@@ -208,6 +210,8 @@ function Static:unit_value(value_key, toggle)
                     if ud[value_key] ~= value then
                         values_differ = true
                     end
+                elseif value ~= nil then
+                    values_differ = true
                 end
             end
             return values_differ and "*" or value, values_differ
@@ -238,15 +242,22 @@ function Static:build_unit_main_values()
         return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
     end})
 
-    local continent, values_differ = self:unit_value("continent")
-    local list = self._parent._continents
-    if values_differ then
-        list = table.list_add({"*", list})
+    local has_elements = false
+    for _, unit in pairs(self:selected_units()) do
+        if alive(unit) and unit:mission_element() then
+            has_elements = true
+        end
     end
-    
-    local con = main:combobox("Continent", ClassClbk(self, "set_unit_data"), list, 1, {visible = not self._built_multi or continent ~= nil})
-    con:SetSelectedItem(continent)
-    
+
+    if not has_elements then
+        local continent, values_differ = self:unit_value("continent")
+        local list = self._parent._continents
+        if values_differ then
+            list = table.list_add({"*", list})
+        end
+        local con = main:combobox("Continent", ClassClbk(self, "set_unit_data"), list, 1, {visible = not self._built_multi or continent ~= nil})
+        con:SetSelectedItem(continent)
+    end
 
     main:tickbox("Enabled", ClassClbk(self, "set_unit_data"), true, {size_by_text = true, help = "Setting the unit enabled or not[Debug purpose only]"})
     main:tickbox("HideOnProjectionLight", ClassClbk(self, "set_unit_data"), self:unit_value("hide_on_projection_light") == true, {size_by_text = true})
@@ -299,7 +310,7 @@ function StaticEditor:update_positions()
             self:GetPart("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end
         for _, unit in pairs(self:selected_units()) do
-            if unit:editable_gui() then
+            if alive(unit) and unit:editable_gui() then
                 unit:editable_gui():set_blend_mode(unit:editable_gui():blend_mode())
             end
         end
@@ -396,6 +407,7 @@ function Static:set_unit_data()
 				self:set_unit_continent(unit, old_continent, new_continent)
                 self:GetItem("ID"):SetText("ID "..ud.unit_id)
 			end
+
             self:set_unit_simple_values(unit)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
             self:set_unit_path(unit, self:GetItem("UnitPath"):Value())
@@ -407,7 +419,11 @@ function Static:set_unit_data()
             if alive(unit) and ud.unit_id then
                 i = i + 1
                 self:set_unit_simple_values(unit)
-                self:set_unit_continent(unit, ud.continent, self:GetItem("Continent"):SelectedItem(), true)
+
+                local continent = self:GetItem("Continent")
+                if continent then
+                    self:set_unit_continent(unit, ud.continent, continent:SelectedItem(), true)
+                end
                 self:set_unit_path(unit, self:GetItem("UnitPath"):Value(), i ~= 1)
             end
         end
@@ -448,6 +464,7 @@ function Static:set_unit_path(unit, path, add)
     end
 
     local new_unit = unit
+
     if path and path ~= "" and path ~= "*" and PackageManager:has(Idstring("unit"), path:id()) then
         ud.name = path
         new_unit = self._parent:SpawnUnit(ud.name, unit, add == true, ud.unit_id)
@@ -685,7 +702,7 @@ function Static:recalc_all_locals()
         reference:unit_data().local_pos = Vector3()
         reference:unit_data().local_rot = Rotation()
         for _, unit in pairs(self._selected_units) do
-            if unit ~= reference then
+            if alive(unit) and unit ~= reference then
                 self:recalc_locals(unit, reference)
             end
         end
@@ -753,7 +770,7 @@ function Static:reset_selected_units()
     self._selected_group = nil
 end
 
-function Static:set_selected_unit(unit, add)
+function Static:set_selected_unit(unit, add, skip_menu)
     add = add == true
     self:recalc_all_locals()
     local units = {unit}
@@ -834,12 +851,21 @@ function Static:set_selected_unit(unit, add)
         self._selected_units[1] = unit
     end
 
+    if not skip_menu then
+        self:selection_to_menu()
+    end
+end
+
+function Static:selection_to_menu()
     self:StorePreviousPosRot()
     local unit = self:selected_unit()
-    self._parent:use_widgets(unit and alive(unit) and unit:enabled())
-    for _, unit in pairs(self:selected_units()) do
-        if unit:mission_element() then unit:mission_element():select() end
+    self._parent:use_widgets(selected_unit and alive(selected_unit) and selected_unit:enabled())
+    for _, check_unit in pairs(self:selected_units()) do
+        if check_unit:mission_element() then
+            check_unit:mission_element():select()
+        end
     end
+
     if #self._selected_units > 1 then
         self:set_multi_selected()
         if self:Val("SelectAndGoToMenu") then
@@ -886,10 +912,6 @@ function Static:select_unit(mouse2)
 end
 
 function Static:set_multi_selected()
-    if self._drag_units then 
-        return
-    end
-
     self._built_multi = true
     self._editors = {}
 	self:ClearItems()
