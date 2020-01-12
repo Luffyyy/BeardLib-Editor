@@ -73,7 +73,7 @@ function Static:mouse_pressed(button, x, y)
         end
         self:select_unit(true)
         self._mouse_hold = true
-    end  
+    end
 end
 
 function Static:update_grid_size() self:set_unit() end
@@ -270,11 +270,11 @@ end
 function Static:build_extension_items()
     self._editors = {}
     for k, v in pairs({
-        light = EditUnitLight, 
-        ladder = EditLadder, 
-        editable_gui = EditUnitEditableGui, 
-        zipline = EditZipLine, 
-        wire = EditWire, 
+        light = EditUnitLight,
+        ladder = EditLadder,
+        editable_gui = EditUnitEditableGui,
+        zipline = EditZipLine,
+        wire = EditWire,
         mesh_variation = EditMeshVariation,
         cubemap = EditUnitCubemap,
     }) do
@@ -291,7 +291,7 @@ function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
             if unit:unit_data().unit_id then
                 self._ignore_raycast[unit:unit_data().unit_id] = true
             end
-        end      
+        end
     end)
     transform:Vec3Rot("", ClassClbk(self, "set_unit_data"), nil, nil, {on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
@@ -937,8 +937,9 @@ function Static:set_unit(reset)
 end
 
 --Default menu for unit editing
-function Static:set_menu_unit(unit)   
+function Static:set_menu_unit(unit)
     self:build_unit_editor_menu()
+
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
     self:GetItem("Enabled"):SetValue(unit:enabled())
     self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
