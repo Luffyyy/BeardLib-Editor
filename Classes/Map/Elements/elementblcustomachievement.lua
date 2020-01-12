@@ -2,6 +2,7 @@ EditorBLCustomAchievement = EditorBLCustomAchievement or class(MissionScriptEdit
 function EditorBLCustomAchievement:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementBLCustomAchievement"
+	self._element.values.amount_increase = 1
 end
 
 function EditorBLCustomAchievement:_build_panel()
