@@ -71,6 +71,9 @@ function Editor:init(data)
                 self.parts.static:set_selected_units(data.selected_units)
             end
         end
+        if data.mission_units then
+            self.parts.mission._units = data.mission_units
+        end
         if data.last_menu then
             self.parts[data.last_menu]:Switch(true)
         end
@@ -79,7 +82,7 @@ function Editor:init(data)
         end
         if data.scroll_y_tbl then
             for name, y in pairs(data.scroll_y_tbl) do
-                self.parts[name]._holder:SetScrollY(y)        
+                self.parts[name]._holder:SetScrollY(y)
             end
         end
         if data.enabled then
@@ -568,6 +571,7 @@ function Editor:destroy()
         enabled = self._enabled,
         last_menu = self._current_menu_name,
         selected_units = #selected_units > 0 and selected_units or nil,
+        mission_units = self.parts.mission:units(),
         particle_editor_active = self._particle_editor_active,
         scroll_y_tbl = scroll_y_tbl
     }
