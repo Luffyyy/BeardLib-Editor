@@ -69,7 +69,7 @@ function EditorMenu:create_items(menu)
         position = "Left",
 	})
 	ItemExt:add_funcs(self, self._tabs)   
-    local div = self:divider("BeardLib-Editor", {items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
+    local div = self:divider("title", {text = "BeardLib-Editor", items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
 
     local s = self._tabs.items_size - 2
     div:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {

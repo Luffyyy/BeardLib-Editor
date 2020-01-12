@@ -23,7 +23,7 @@ function BLE:CreateDev(data)
     end
 end
 
-SomeClass = SomeClass or class() 
+SomeClass = SomeClass or class()
 function SomeClass:init(data)
     self._menu = MenuUI:new({})
 end
