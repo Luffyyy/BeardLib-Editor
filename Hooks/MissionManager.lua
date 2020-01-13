@@ -509,9 +509,9 @@ function MScript:create_mission_element_unit(element)
 
 	local unit_name = "units/mission_element/element"
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
-	unit:mission_element():set_enabled(enabled, true)
-    unit:unit_data().position = element.values.position   
-   	unit:unit_data().rotation = element.values.rotation 
+	--unit:mission_element():set_enabled(enabled, true)
+    unit:unit_data().position = element.values.position
+   	unit:unit_data().rotation = element.values.rotation
     unit:unit_data().local_pos = Vector3()
     unit:unit_data().local_rot = Rotation()
 	unit:mission_element().element = element
