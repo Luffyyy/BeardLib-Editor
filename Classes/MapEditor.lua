@@ -439,7 +439,7 @@ function Editor:set_enabled(enabled)
         if enabled and ((self._particle_editor_active and n == "particle") or (not self._particle_editor_active and self._mapeditor[n])) then
             if manager.enable then
                 manager:enable()
-            end        
+            end
         else
             if manager.disable then
                 manager:disable()

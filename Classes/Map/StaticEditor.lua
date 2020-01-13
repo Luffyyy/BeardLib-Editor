@@ -382,7 +382,7 @@ function Static:set_unit_data()
             return
         end
 		local unit = self._selected_units[1]
-		local ud = unit:unit_data()
+        local ud = unit:unit_data()
         if ud and ud.unit_id then
             local prev_id = ud.unit_id
             managers.worlddefinition:set_name_id(unit, self:GetItem("Name"):Value())

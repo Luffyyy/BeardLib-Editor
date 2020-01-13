@@ -271,7 +271,7 @@ function EnvLayer:build_menu()
 			function()
 				self:create_cube_map("all")
 			end)
-		else 
+		else
 			BLE.Utils:YesNoQuestion("Would you like to build cubemaps for all selected gizmos in the level?",
 			function()
 				self:create_cube_map("selected")
@@ -293,18 +293,18 @@ function EnvLayer:build_menu()
 		end
 	end)
     environment_group:combobox("ColorGrading", ClassClbk(self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading))
-	
+
 	local utils = self:GetPart("world")
     environment_group:button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit))
     environment_group:button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit))
-	
+
 	local dome_occ = self:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
     dome_occ:button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit))	
 	dome_occ:button("Generate", ClassClbk(self, "generate_dome_occ", "all"))
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
     dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
-	
+
 	local wind = self:group("Wind")
     self._draw_wind = wind:tickbox("Draw", nil, false)
     wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0})
@@ -491,7 +491,7 @@ function EnvLayer:generate_dome_occ()
 		return
 	end
 	local res = self:data().environment_values.dome_occ_resolution or 256
-	
+
 	self:GetPart("cubemap_creator"):create_dome_occlusion(shape, res)
 end
 

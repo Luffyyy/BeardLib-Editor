@@ -227,23 +227,23 @@ function Utils:GetLights(unit)
     return lights
 end
 
-local t = {}
+local vals = {}
 for _, intensity in ipairs(LightIntensityDB:list()) do
-    table.insert(t, LightIntensityDB:lookup(intensity))
+    table.insert(vals, LightIntensityDB:lookup(intensity))
 end
-table.sort(t)
-Utils.IntensityValues = t
+table.sort(vals)
+Utils.IntensityValues = vals
 Utils.IntensityOptions = {
-    "none", 
-    "identity", 
-    "match", 
-    "candle", 
-    "desklight", 
-    "neonsign", 
-    "flashlight", 
-    "monitor", 
-    "dimilight", 
-    "streetlight", 
+    "none",
+    "identity",
+    "match",
+    "candle",
+    "desklight",
+    "neonsign",
+    "flashlight",
+    "monitor",
+    "dimilight",
+    "streetlight",
     "searchlight",
     "reddot",
     "sun",

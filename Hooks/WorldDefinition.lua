@@ -271,7 +271,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 			move = (old_continent ~= new_continent)
 		end
 	end
-	
+
 	local function set_unit(static, statics, key)
 		static.unit_data = ud
 		static.wire_data = wd
@@ -294,7 +294,7 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 			end
 		end
 	end
-	
+
 	--Failed to find it, now let's go through the slow way.
 	managers.editor:Log("Could not find the unit %s, attempting to search for it..", tostring(unit_id))
 	local static, statics, key = self:find_unit_slow(unit_id)
@@ -581,7 +581,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		data.ladder = data.ladder or BLE.Utils:LadderData(unit)
 		data.zipline = data.zipline or BLE.Utils:ZiplineData(unit)
 		data.cubemap = data.cubemap or BLE.Utils:CubemapData(unit)
-	
+
 		BeardLib.Utils:RemoveAllNumberIndexes(ud, true)
 		ud.projection_lights = data.projection_lights
 		ud.projection_textures = data.projection_textures
@@ -738,12 +738,11 @@ function WorldDef:RemoveUnitID(unit, continent_name)
 end
 
 function WorldDef:GetNewUnitID(continent, t, is_world)
-    if continent then       
+    if continent then
         self._unit_ids[continent] = self._unit_ids[continent] or {}
         local tbl = self._unit_ids[continent]
         local i = self._continents[continent] and self._continents[continent].base_id
         if is_world or t and (t:id() == Idstring("wire") or t:id() == Idstring("ai")) then
-			log("correct table")
             tbl = self._world_unit_ids
             i = 1
         end
@@ -819,7 +818,7 @@ function WorldDef:prepare_for_spawn_instance(instance)
 	end
 	self:_load_continent_init_package(package_data.init_package)
 	self:_load_continent_package(package_data.package)
-	
+
 	local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, self._continents[instance.continent])
 	if prepared_unit_data.statics then
 		self._needed_to_spawn = self._needed_to_spawn or {}
@@ -827,7 +826,7 @@ function WorldDef:prepare_for_spawn_instance(instance)
 			table.insert(self._needed_to_spawn, static)
 		end
 	end
- 
+
 	if self._init_done then
 		self:spawn_quick()
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
@@ -856,7 +855,7 @@ if Unit then
 		end
 		return data
 	end
-	
+
 	function Unit:force_add_unit_data(...)
 		if self:unit_data() then
 			return
