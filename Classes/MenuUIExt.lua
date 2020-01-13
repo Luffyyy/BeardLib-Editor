@@ -246,14 +246,14 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o2.on_callback = nil
 	o2.on_callback = p.btn_callback
 	local btn = p:button("select_button", function()
-		local list = not p.custom_list and BeardLibEditor.Utils:GetEntries({
+		local list = p.custom_list or BeardLibEditor.Utils:GetEntries({
 			type = typ, loaded = NotNil(o.loaded, typ ~= "texture"), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
 		end
 		BeardLibEditor.ListDialog:Show({
-			list = o.custom_list or list,
+			list = list,
 			sort = o.sort_func == nil,
 			callback = function(path) 
 				p:SetValue(path, true)

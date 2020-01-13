@@ -7,7 +7,6 @@ function EditMeshVariation:editable(unit)
     local materials = self:get_material_configs_from_meta(unit)
 
     return #mesh_variations > 0 or #materials > 0
-
 end
 
 function EditMeshVariation:build_menu(units)
@@ -28,12 +27,12 @@ function EditMeshVariation:set_unit_data()
     local material = self._menu:GetItem("MaterialVariation"):Value()
     local default = material == "default"
     ud.material_variation = nil
-    
+
     local node = not default and BLE.Utils:ParseXml("material_config", material)
     if default or (DB:has(Idstring("material_config"), material:id()) and self:material_config_ok(node, unit)) then
         ud.material_variation = material
     end
-    
+
     material = ud.material_variation
     if material == "default" then
         material = nil
@@ -89,7 +88,7 @@ function EditMeshVariation:get_material_configs_from_meta(unit)
             if node then
                 for _, group in ipairs(groups) do
                     local group_name = node:has_parameter("group") and node:parameter("group")
-    
+
                     if group_name == group and not table.contains(available_groups, entry) then
                         if self:material_config_ok(node, unit) then
                             table.insert(available_groups, entry)
