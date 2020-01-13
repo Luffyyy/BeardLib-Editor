@@ -538,6 +538,6 @@ end
 
 function MScript:debug_output(debug, color)
 	if managers.editor then
-		Utils:GetPart("console"):LogMission(debug)
+		Utils:GetPart("console"):LogMission(debug:gsub('%%', '%'))
 	end
 end

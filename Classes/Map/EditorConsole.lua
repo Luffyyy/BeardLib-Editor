@@ -46,10 +46,10 @@ function EditorConsole:ToggleConsole()
 end
 
 function EditorConsole:PrintMessage(type, message, ...)
-    message = string.format(message, ...)
-    local date = Application:date("%X")  
+    message = message:format(...)
+    local date = Application:date("%X")
     self:divider(date .. ": " .. tostring(message), {type = type, visible = self[type]:Value(), border_color = type == "mission" and Color.green or type == "error" and Color.red or Color.yellow})
-    
+
     if #self._menu._my_items > 100 then --hardcoded for now
         self:RemoveItem(self._menu._my_items[1])
     end
