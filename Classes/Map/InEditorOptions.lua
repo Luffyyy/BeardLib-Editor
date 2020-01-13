@@ -9,18 +9,12 @@ end
 function Options:build_default_menu()
     self.super.build_default_menu(self)
     local groups_opt = {offset = {8, 4}}
-    local function value_clbk(upd_clbk)
-        self:update_option_value()
-        if upd_clbk then
-            upd_clbk()
-        end
-    end
 
     local main = self:group("Editor", groups_opt)
     local grid_size = self:Val("GridSize")
     local snap_rotation = self:Val("SnapRotation")
     main:slider("GridSize", ClassClbk(self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
-    main:slider("SnapRotation", ClassClbk(self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})    
+    main:slider("SnapRotation", ClassClbk(self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     if not BeardLib.current_level then
@@ -56,6 +50,7 @@ function Options:build_default_menu()
     map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"))
     map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"))
     map:tickbox("DrawPortals", nil, false)
+    map:numberbox("InstanceIndexSize", ClassClbk(self, "update_option_value"), self:Val("InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
 
     local navigation_debug = self:group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
     local group = navigation_debug:pan("Draw", {align_method = "grid"})

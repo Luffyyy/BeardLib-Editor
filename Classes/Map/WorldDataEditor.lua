@@ -696,11 +696,12 @@ function WData:OpenSpawnInstanceDialog()
             if continent then
                 continent.instances = continent.instances or {}
                 local instance_name = Path:GetFileName(Path:GetDirectory(item)).."_"
-                local instances = managers.world_instance:instance_names()
+                local instance_names = managers.world_instance:instance_names()
                 local i = 1
-                while(table.contains(instances, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
+                while(table.contains(instance_names, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
                     i = i + 1
                 end
+                local index_size = self:Val("InstanceIndexSize")
                 instance_name = instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i
                 local instance = {
                     continent = self._parent._current_continent,
@@ -709,8 +710,8 @@ function WData:OpenSpawnInstanceDialog()
                     position = self._parent:cam_spawn_pos(),
                     rotation = Rotation(),
                     script = self._parent._current_script,
-                    index_size = 1000,
-                    start_index = managers.world_instance:get_safe_start_index(1000, self._parent._current_continent)
+                    index_size = index_size,
+                    start_index = managers.world_instance:get_safe_start_index(index_size, self._parent._current_continent)
                 }
                 table.insert(continent.instances, instance)
                 for _, mission in pairs(managers.mission._missions) do
