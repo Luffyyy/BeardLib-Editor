@@ -504,7 +504,11 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 end
 
 function MissionScriptEditor:OpenUnitsManageDialog(params)
-	self:OpenManageListDialog(params, table.map_values(managers.worlddefinition._all_units), 
+	local units = table.map_values(managers.worlddefinition._all_units)
+	units = table.filter_list(units, function(unit)
+		return not unit:unit_data().instance
+	end)
+	self:OpenManageListDialog(params, units,
 		function(unit)
 			local ud = unit:unit_data()
 			local groups = self:part("static"):get_groups_from_unit(unit)
