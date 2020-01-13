@@ -7,7 +7,7 @@ Currently there's an editor for maps, environment and effects.
 
 ## Level Editor?
 Yep! You can create new levels from scratch using BeardLib-Editor.
-Don't know how to? Read the guide here: https://modworkshop.net/wiki.php?action=view&id=15
+Don't know how to? Read the guide here: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor
 Help would be really appreciated in the wiki!
 
 ## Report a bug/Request a feature
@@ -29,7 +29,7 @@ Additionally, you **must** extract the game files using [Bundle Modder](https://
     log(mods/logs and a txt file with a date as a name) and see if there are any conflicting mods. If you do report an issue, 
     please give as much information as possible.
     Q: How do I make a level?
-    A: Go to the beginner guide if you missed: https://modworkshop.net/wiki.php?action=view&id=15.
+    A: Go to the beginner guide if you missed: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor.
     Q: There isn't a guide for 'X'
     A: Since I'm more active on actually developing the editor, I cannot focus on making guides. Any help would be appreciated.
     Q: Why can't I play multiplayer when using the mod?
