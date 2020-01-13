@@ -347,23 +347,23 @@ function Project:select_narr_as_project()
     for id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.custom and not narr.hidden then
             --dunno why the name_id is nil for some of them..
-            table.insert(levels, {name = id.." / " .. managers.localization:text(narr.name_id or "heist_"..id:gsub("_prof", ""):gsub("_night", "")), narr = narr})
+            table.insert(levels, {name = id.." / " .. managers.localization:text((narr.name_id or ("heist_"..id)):gsub("_prof", ""):gsub("_night", "")), narr = narr})
         end
     end
     BLE.ListDialog:Show({
         list = levels,
         callback = function(selection)
-            BLE.ListDialog:hide()   
+            BLE.ListDialog:hide()
             self:new_project_dialog("", ClassClbk(self, "existing_narr_new_project_clbk", selection))
         end
-    })  
+    })
 end
 
 function Project:select_project_dialog()
     BLE.ListDialog:Show({
         list = self:get_projects_list(),
         callback = ClassClbk(self, "select_project")
-    }) 
+    })
 end
 
 function Project:select_project(selection)
@@ -451,7 +451,7 @@ end
 
 function Project:new_level_dialog(name, clbk, no_callback)
     BLE.InputDialog:Show({
-        title = "Enter a name for the level", 
+        title = "Enter a name for the level",
         yes = "Create level",
         text = name or "",
         no_callback = no_callback,
