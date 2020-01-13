@@ -1,5 +1,6 @@
 EnvironmentLayerEditor = EnvironmentLayerEditor or class(LayerEditor)
 local sky_rot_key = Idstring("sky_orientation/rotation"):key()
+local DEFAULT_CUBEMAP_RESOLUTION = 512
 local EnvLayer = EnvironmentLayerEditor
 function EnvLayer:init(parent)
 	self:init_basic(parent, "EnvironmentLayerEditor")
@@ -44,6 +45,7 @@ function EnvLayer:loaded_continents()
 	self:_load_effects(data.effects)
 	self:_load_environment_areas()
 	self:_load_dome_occ_shapes(data.dome_occ_shapes)
+	self:_load_cubemaps(data.cubemap_gizmos)
 	self:find_cubemaps()
 end
 
@@ -85,7 +87,7 @@ end
 function EnvLayer:data() return self._parent:data().environment end
 
 function EnvLayer:is_my_unit(unit)
-	if unit == self._environment_area_unit:id() or unit == self._effect_unit:id() or unit == self._dome_occ_shape_unit:id() then
+	if unit == self._environment_area_unit:id() or unit == self._effect_unit:id() or unit == self._dome_occ_shape_unit:id() or unit == self._cubemap_unit:id() then
 		return true
 	end
 	return false
@@ -131,6 +133,13 @@ function EnvLayer:_load_dome_occ_shapes(dome_occ_shapes)
 	self:save()
 end
 
+function EnvLayer:_load_cubemaps(cubemaps)
+	for _, data in ipairs(cubemaps) do
+		self:do_spawn_unit(self._cubemap_unit, data)
+	end
+	self:save()
+end
+
 function EnvLayer:save()
 	local effects = {}
 	local environment_areas = {}
@@ -155,6 +164,8 @@ function EnvLayer:save()
 			elseif unit:name() == self._dome_occ_shape_unit:id() then
 				local shape = unit:unit_data().occ_shape
 				table.insert(dome_occ_shapes, shape:save_level_data())
+			elseif unit:name() == self._cubemap_unit:id() then
+				table.insert(cubemap_gizmos, unit:unit_data())
 			end
 		end
 	end
@@ -322,21 +333,24 @@ function EnvLayer:build_unit_menu()
 	S._built_multi = false
 	S.super.build_default_menu(S)
 	local unit = self:selected_unit()
+	local name = unit:name()
+	local ud = unit:unit_data()
+
 	if alive(unit) then
 		S:build_positions_items(true)
 		S:update_positions()
-		if unit:name() == self._effect_unit:id() then
+		if name == self._effect_unit:id() then
 			S:SetTitle("Effect Selection")
             local effect = S:group("Effect", {index = 1})
-		    effect:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
-			self._unit_effects = effect:pathbox("Effect", ClassClbk(self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect")	
-		elseif unit:name() == self._environment_area_unit:id() then
+		    effect:textbox("Name", ClassClbk(self, "set_unit_name_id"), ud.name_id or "")
+			self._unit_effects = effect:pathbox("Effect", ClassClbk(self, "change_unit_effect"), self:selected_unit():unit_data().effect or "none", "effect")
+		elseif name == self._environment_area_unit:id() then
 			S:SetTitle("Environment Area Selection")
-			local area = unit:unit_data().environment_area
+			local area = ud.environment_area
 		    self._environment_area_ctrls = {env_filter_cb_map = {}}
             local ctrls = self._environment_area_ctrls
             local area_pan = S:group("Environment Area", {index = 1})
-		    area_pan:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
+		    area_pan:textbox("Name", ClassClbk(self, "set_unit_name_id"), ud.name_id or "")
 
             local env = area:environment() or managers.viewport:game_default_environment()
 		    ctrls.environment_path = area_pan:pathbox("AreaEnvironment", ClassClbk(self, "set_environment_area"), env, "environment", {
@@ -360,15 +374,46 @@ function EnvLayer:build_unit_menu()
 		    end
 		    if area then
 		    	area:create_panel(S, S:GetItem("Transform"))
-		    end  
-		elseif unit:name() == self._dome_occ_shape_unit:id() then
+		    end
+		elseif name == self._dome_occ_shape_unit:id() then
 			S:SetTitle("Dome Occlusion Selection")
-			local area = unit:unit_data().occ_shape
+			local area = ud.occ_shape
 			if area then
 				area:create_panel(S, S:GetItem("Transform"))
 			end
+		elseif name == self._cubemap_unit:id() then
+			S:SetTitle("Cubemap Selection")
+			local cm = S:group("Cubemap", {index = 1})
+			local res = cm:combobox("CubemapResolution", ClassClbk(self, "set_unit_data"), {128, 256, 512, 1024, 2048}, 3)
+			res:SetSelectedItem(ud.cubemap_resolution or DEFAULT_CUBEMAP_RESOLUTION)
+
+			cm:GetToolbar():lbl("ID", {
+				text = "ID " .. ud.unit_id,
+				size_by_text = true,
+				offset = 0
+			})
+			cm:textbox("Name", ClassClbk(self, "set_unit_data"), ud.name_id, {
+				help = "the name of the unit",
+				index = 1,
+				control_slice = 0.8
+			})
 		end
 	end
+end
+
+
+function EnvLayer:set_unit_data()
+	local S = self:GetPart("static")
+    local unit = self:selected_unit()
+	local ud = unit:unit_data()
+
+    if alive(unit) then
+        S:GetItem("ID"):SetText("ID " .. ud.unit_id)
+		managers.worlddefinition:set_name_id(unit, S:GetItemValue("Name"))
+		ud.cubemap_resolution = S:GetItem("CubemapResolution"):SelectedItem()
+		ud.cubemap = BLE.Utils:CubemapData(unit)
+	end
+	self:save()
 end
 
 function EnvLayer:update_positions() self:set_unit_pos() end
@@ -578,34 +623,50 @@ function EnvLayer:play_effect(unit, effect)
 end
 
 function EnvLayer:do_spawn_unit(unit_path, mud)
-	local unit = World:spawn_unit(unit_path:id(), mud.position or Vector3(), mud.rotation or Rotation())
-	table.merge(unit:unit_data(), mud)
-	local ud = unit:unit_data()
-	ud.name = unit_path
-	ud.environment_unit = true
-	ud.position = unit:position()
-	ud.rotation = unit:rotation()
-	ud.env_unit = true
-	table.insert(self._created_units, unit)
-	if alive(unit) then
-		if unit:name() == Idstring(self._environment_area_unit) then
-			local area = ud.environment_area
-			if area and not alive(area:unit()) then
-				area:set_unit(unit)
-			end
-			if not area or area:unit() ~= unit then
-				ud.environment_area = managers.environment_area:add_area(area and area:save_level_data() or {})
-				ud.environment_area:set_unit(unit)
-			end
-		end
-		if unit:name() == Idstring(self._dome_occ_shape_unit) then
-			if not ud.occ_shape then
-				ud.occ_shape = CoreShapeManager.ShapeBox:new({})
-				ud.occ_shape:set_unit(unit)
+	local unit
+	if unit_path == self._cubemap_unit then
+		local new_unit_id = managers.worlddefinition:GetNewUnitID(mud.continent or managers.editor._current_continent, nil, true)
+		unit = managers.worlddefinition:_create_statics_unit({
+			unit_data = {
+				unit_id = mud.unit_id or new_unit_id,
+				name = unit_path,
+				position = mud.position,
+				rotation = mud.rotation or Rotation(0, 0, 0),
+				continent = mud.continent or managers.editor._current_continent,
+				cubemap_resolution = mud.cubemap_resolution
+			}
+		}, Vector3())
+		self:unit_spawned(unit)
+	else
+		unit = World:spawn_unit(unit_path:id(), mud.position or Vector3(), mud.rotation or Rotation())
+		table.merge(unit:unit_data(), mud)
+		local ud = unit:unit_data()
+		ud.name = unit_path
+		ud.environment_unit = true
+		ud.position = unit:position()
+		ud.rotation = unit:rotation()
+		ud.env_unit = true
+		local name = unit:name()
+		if alive(unit) then
+			if name == self._environment_area_unit:id() then
+				local area = ud.environment_area
+				if area and not alive(area:unit()) then
+					area:set_unit(unit)
+				end
+				if not area or area:unit() ~= unit then
+					ud.environment_area = managers.environment_area:add_area(area and area:save_level_data() or {})
+					ud.environment_area:set_unit(unit)
+				end
+			elseif name == self._dome_occ_shape_unit:id() then
+				if not ud.occ_shape then
+					ud.occ_shape = CoreShapeManager.ShapeBox:new({})
+					ud.occ_shape:set_unit(unit)
+				end
 			end
 		end
 	end
 	self:save()
+	table.insert(self._created_units, unit)
 	return unit
 end
 

@@ -227,7 +227,7 @@ function AiEditor:build_unit_menu()
         local main = S:group("Main", { align_method = "grid", visible = name ~= nil })
 
         main:GetToolbar():lbl("ID", {
-            text = "ID: " .. unit:unit_data().unit_id,
+            text = "ID " .. unit:unit_data().unit_id,
             size_by_text = true,
             offset = 0
         })

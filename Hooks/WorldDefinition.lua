@@ -241,8 +241,9 @@ function WorldDef:spawn_quick(return_data, offset)
 end
 
 local patrol_point_unit = "core/units/patrol_point/patrol_point"
+local cubemap_gizmo_unit = "core/units/cubemap_gizmo/cubemap_gizmo"
 function WorldDef:is_world_unit(unit)
-	return unit:wire_data() or unit:ai_editor_data() or unit:name() == patrol_point_unit:id()
+	return unit:wire_data() or unit:ai_editor_data() or unit:name() == patrol_point_unit:id() or unit:name() == cubemap_gizmo_unit
 end
 
 function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
@@ -256,10 +257,16 @@ function WorldDef:set_unit(unit_id, unit, old_continent, new_continent)
 	local ud = unit:unit_data()
 	local wd = unit:wire_data()
 	local ad = unit:ai_editor_data()
+	local wrld = managers.worlddefinition._world_data
+	local name = unit:name()
 	if wd then
-		statics = managers.worlddefinition._world_data.wires
-	elseif ad or unit:name() == patrol_point_unit:id() then
-		statics = managers.worlddefinition._world_data.ai
+		statics = wrld.wires
+	elseif ad or name == patrol_point_unit:id() then
+		statics = wrld.ai
+	elseif name == cubemap_gizmo_unit then
+		wrld.environment = wrld.environment or {}
+		wrld.environment.cubemap_gizmos = wrld.environment.cubemap_gizmos or {}
+		statics = wrld.environment.cubemap_gizmos
 	elseif not ud.instance then
 		statics = self._continent_definitions[old_continent]
 		new_statics = self._continent_definitions[new_continent]
