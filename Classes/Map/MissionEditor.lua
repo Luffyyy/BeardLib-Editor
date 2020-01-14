@@ -12,6 +12,7 @@ function MissionEditor:init(parent, menu)
     self._units = {}
     self._parent = parent
     self._triggers = {}
+    self._name_ids = {}
 end
 
 function MissionEditor:set_elements_vis(vis)
@@ -23,6 +24,46 @@ function MissionEditor:set_elements_vis(vis)
             element_unit:set_enabled(enabled and (not draw_script or element_unit.element.script == self._parent._current_script))
         end
     end
+end
+
+function MissionEditor:get_name_id(clss)
+    local class_name = self:make_class_name(clss)
+    self._name_ids[class_name] = self._name_ids[class_name] or {}
+    local t = self._name_ids[class_name]
+
+    class_name = class_name .. '_'
+	for i = 1, 10000 do
+		i = (i < 10 and "00" or i < 100 and "0" or "") .. i
+		local name_id = class_name .. i
+        if not t[name_id] then
+            --Saved in MissionManager.
+			return name_id
+		end
+	end
+end
+
+function MissionEditor:make_class_name(clss)
+    return string.underscore_name(clss:gsub("Element", ""))
+end
+
+function MissionEditor:remove_name_id(clss, name_id)
+    local class_name = self:make_class_name(clss)
+	if self._name_ids[class_name] and self._name_ids[class_name][name_id] then
+		self._name_ids[class_name][name_id] = self._name_ids[class_name][name_id] - 1
+		if self._name_ids[class_name][name_id] == 0 then
+			self._name_ids[class_name][name_id] = nil
+		end
+	end
+end
+
+function MissionEditor:set_name_id(clss, name_id, old_name_id)
+    local class_name = self:make_class_name(clss)
+    if old_name_id then
+        self:remove_name_id(clss, old_name_id)
+    end
+
+    self._name_ids[class_name] = self._name_ids[class_name] or {}
+    self._name_ids[class_name][name_id] = (self._name_ids[class_name][name_id] or 0) + 1
 end
 
 function MissionEditor:remove_script()
@@ -99,6 +140,9 @@ end
 function MissionEditor:add_element(name, add_to_selection, old_element, no_select)
     local clss = self:get_editor_class(name)
     if clss then
+        if old_element then
+            old_element.editor_name = nil
+        end
         local unit = clss:init(nil, old_element)
         if unit then
 			self:set_elements_vis()

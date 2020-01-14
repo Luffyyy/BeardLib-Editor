@@ -10,7 +10,7 @@ function MissionScriptEditor:init(element, old_element)
 	else
 		self:create_element()
 		if not self._element.editor_name then
-			self._element.editor_name = string.underscore_name(self._element.class:gsub("Element", ""))
+			self._element.editor_name = self:GetPart("mission"):get_name_id(self._element.class)
 		end
 		if old_element then
 			table.merge(self._element, old_element)

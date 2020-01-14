@@ -518,7 +518,9 @@ function MScript:create_mission_element_unit(element)
 	unit:mission_element().element = element
 	unit:mission_element():update_text()
 	if managers.editor then
-		Utils:GetPart("mission"):add_element_unit(unit)
+		local mission = Utils:GetPart("mission")
+		mission:set_name_id(element.class, element.editor_name)
+		mission:add_element_unit(unit)
 	end
 	return unit
 end
