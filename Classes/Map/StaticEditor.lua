@@ -29,9 +29,19 @@ function Static:mouse_pressed(button, x, y)
     if not self:enabled() then
         return
     end
+    if button == Idstring("2") then
+        self:start_grabbing()
+    end
     if button == Idstring("0") then
         if self:Val("EndlessSelection") then
             self._reset_raycast = TimerManager:game():time() + self:Val("EndlessSelectionReset")
+        end
+        if self._grabbed_unit then
+            self:StorePreviousPosRot()
+            local pos = self._grabbed_unit:position()
+            self:finish_grabbing()
+            self._parent:set_unit_positions(pos)
+            return
         end
         self._widget_hold = true
         self._parent:reset_widget_values()
@@ -65,6 +75,11 @@ function Static:mouse_pressed(button, x, y)
             self:select_unit()
         end
     elseif button == Idstring("1") then
+        if self._grabbed_unit then
+            self._parent:set_unit_positions(self._grabbed_unit_original_pos)
+            self:finish_grabbing()
+            return
+        end
         if self:Val("EndlessSelection") then
             self._reset_raycast = nil
             self._ignore_raycast = {}
@@ -74,6 +89,16 @@ function Static:mouse_pressed(button, x, y)
         self:select_unit(true)
         self._mouse_hold = true
     end
+end
+
+function Static:finish_grabbing()
+    self._grabbed_unit = nil
+    self:GetPart("menu"):set_tabs_enabled(true)
+    local transform = self:GetItem('Transform')
+    self:set_title(self._original_title)
+    self._original_title = nil
+    self:update_ignored_collisions()
+    transform:SetEnabled(true)
 end
 
 function Static:update_grid_size() self:set_unit() end
@@ -101,12 +126,15 @@ function Static:mouse_released(button, x, y)
 	end
 
 	self._drag_units = nil
+    self:update_ignored_collisions()
+end
+
+function Static:update_ignored_collisions()
     for _, unit in pairs(self._ignored_collisions) do
         Utils:UpdateCollisionsAndVisuals(unit, true)
     end
-
-    self:set_units()
     self._ignored_collisions = {}
+    self:set_units()
 end
 
 function Static:set_units()
@@ -134,13 +162,13 @@ end
 function Static:build_default_menu()
     Static.super.build_default_menu(self)
     self._editors = {}
-    self:SetTitle("Selection")
+    self:set_title("Selection")
     self:divider("No selection >_<", {border_left = false})
     self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
 end
 
 function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
-	self:SetTitle("Selection")
+	self:set_title("Selection")
     local quick = self:group("QuickButtons", {align_method = "grid"})
     quick:s_btn("Deselect", ClassClbk(self, "deselect_unit"))
     quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
@@ -223,7 +251,7 @@ end
 
 function Static:build_unit_editor_menu()
     Static.super.build_default_menu(self)
-    self:SetTitle("Selection")
+    self:set_title("Selection")
     self:build_unit_main_values()
     self:build_positions_items()
     self:build_extension_items()
@@ -282,10 +310,29 @@ function Static:build_extension_items()
     end
 end
 
+function Static:build_grab_button(transform)
+    transform:button("Grab", ClassClbk(self, "start_grabbing"))
+end
+
+function Static:start_grabbing()
+    if self._grabbed_unit then
+        return
+    end
+    local unit = self:selected_unit()
+    self._grabbed_unit_original_pos = unit:position()
+    self._grabbed_unit = unit
+    self._original_title = self:get_title()
+    self:set_title("Press: LMB to place, RMB to cancel")
+    self:GetPart("menu"):set_tabs_enabled(false)
+    self:GetItem("Transform"):SetEnabled(false)
+end
+
 function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
     self._editors = {}
     self:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
     local transform = self:group("Transform")
+    self:build_grab_button(transform)
+
     transform:button("IgnoreRaycastOnce", function()
         for _, unit in pairs(self:selected_units()) do
             if unit:unit_data().unit_id then
@@ -320,8 +367,8 @@ function StaticEditor:update_positions()
                 editor:update_positions(unit)
             end
         end
-        if self._built_multi then
-            self:SetTitle("Selection - " .. tostring(#self._selected_units))
+        if self._built_multi and not self._grabbed_unit then
+            self:set_title("Selection - " .. tostring(#self._selected_units))
         end
     end
 end
@@ -687,7 +734,6 @@ function Static:mouse_moved(x, y)
 end
 
 function Static:widget_unit()
-    local unit = self:selected_unit()
     if self:Enabled() then
         for _, editor in pairs(self._editors) do
             if editor.widget_unit then
@@ -695,7 +741,7 @@ function Static:widget_unit()
             end
         end
     end
-    return unit
+    return self:selected_unit()
 end
 
 function Static:recalc_all_locals()
@@ -1089,7 +1135,7 @@ function Static:addremove_unit_portal(item)
         Utils:Notify("Success", string.format("Added/Removed %d units to selected portal", count))
     else
         Utils:Notify("Error", "No portal selected")  
-    end    
+    end
 end
 
 function Static:delete_selected(item)
@@ -1109,7 +1155,7 @@ function Static:delete_selected(item)
 end
 
 function Static:delete_selected_dialog(item)
-    if not self:selected_unit() then
+    if not self:selected_unit() or self._grabbed_unit then
         return
     end
     Utils:YesNoQuestion("This will delete the selection", ClassClbk(self, "delete_selected")) 
@@ -1129,6 +1175,13 @@ function Static:update(t, dt)
             editor:update(t, dt)
         end
     end
+
+    if alive(self._grabbed_unit) then
+        self._parent:set_unit_positions(self._parent._spawn_position)
+        Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
+        Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
+    end
+
     local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
     self._pen:set(color)
     local draw_bodies = self:Val("DrawBodies")
@@ -1257,7 +1310,7 @@ function Static:CopySelection()
 end
 
 function Static:Paste()
-    if not Global.editor_safe_mode and not self._parent._menu._highlighted and self._copy_data then
+    if not Global.editor_safe_mode and not self._grabbed_unit and not self._parent._menu._highlighted and self._copy_data then
         self:SpawnCopyData(self._copy_data)
     end
 end

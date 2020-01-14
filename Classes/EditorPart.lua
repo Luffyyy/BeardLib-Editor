@@ -121,8 +121,9 @@ function Part:part(n) return assert_value(ClassClbk(BLE.Utils, "GetPart"), n, "P
 function Part:layer(l) return assert_value(ClassClbk(BLE.Utils, "GetLayer"), l, "Layer") end
 function Part:build_default_menu() self:ClearItems() end
 function Part:set_title(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
-function Part:enable() 
-    self._enabled = true 
+function Part:get_title() return self._menu:GetItem("Title"):Text() end
+function Part:enable()
+    self._enabled = true
 end
 function Part:disable()
     self._enabled = false

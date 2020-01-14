@@ -21,8 +21,7 @@ function MissionScriptEditor:init(element, old_element)
 	self._hed = self._element.values
 end
 
-function MissionScriptEditor:create_element()		
-	local cam = managers.viewport:get_current_camera()
+function MissionScriptEditor:create_element()
 	self._element = {}
 	self._element.values = {}
 	self._element.class = self.CLASS
@@ -107,6 +106,7 @@ function MissionScriptEditor:_create_panel()
     local pos = self._element.values.position
     local rot = self._element.values.rotation
 	rot = type(rot) == "number" and Rotation() or rot
+	SE:build_grab_button(transform)
 	transform:Vec3Rot("", ClassClbk(self, "set_element_position"))
     self:update_positions(pos, rot)
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})

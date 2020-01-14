@@ -456,7 +456,6 @@ end
 function Editor:set_unit_positions(pos)
     local reference = self:widget_unit()
     if alive(reference) then
-        local old_pos = self:widget_unit():position()
 		BLE.Utils:SetPosition(reference, pos, reference:rotation())
 		local selected_units = self:selected_units()
 		for i=2, #selected_units do
@@ -585,7 +584,7 @@ function Editor:local_rot() return true end
 function Editor:enabled() return self._enabled end
 function Editor:selected_unit() return self:selected_units()[1] end
 function Editor:selected_units() return self.parts.static._selected_units end
-function Editor:widget_unit() return self.parts.static:widget_unit() or self:selected_unit() end
+function Editor:widget_unit() return self.parts.static:widget_unit() end
 function Editor:widget_rot() return self:widget_unit():rotation() end
 function Editor:is_using_widget() return self._using_move_widget or self._using_rotate_widget end
 function Editor:grid_size() return ctrl() and 1 or self._grid_size end
@@ -677,7 +676,7 @@ function Editor:update(t, dt)
                     manager:update(t, dt)
                 end
             end
-        
+
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
             self:draw_marker(t, dt)
@@ -783,7 +782,7 @@ function Editor:update_camera(t, dt)
 end
 
 function Editor:update_widgets(t, dt)
-    if alive(self:widget_unit()) then
+    if alive(self:widget_unit()) and not self.parts.static._grabbed_unit then
         local widget_pos = self:world_to_screen(self:widget_unit():position())
         if widget_pos.z > 50 then
             widget_pos = widget_pos:with_z(0)
@@ -830,10 +829,14 @@ function Editor:draw_marker(t, dt)
     local pos = self._current_pos
     if not self._use_surface_move and not ctrl() then
         local rays = World:raycast_all(self:get_cursor_look_point(0), self:get_cursor_look_point(10000), nil, self._editor_all)
+        local selected_units = self:selected_units()
         for _, ray in pairs(rays) do
-            if ray and ray.unit ~= self.parts.world._dummy_spawn_unit then
-                pos = ray.position
-                break
+            local unit = ray.unit
+            if ray and unit ~= self.parts.world._dummy_spawn_unit then
+                if not self.parts.static._grabbed_unit or not table.contains(selected_units, unit) then
+                    pos = ray.position
+                    break
+                end
             end
         end
     end

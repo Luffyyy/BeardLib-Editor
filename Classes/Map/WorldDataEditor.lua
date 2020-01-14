@@ -225,7 +225,7 @@ function WData:build_continents()
             ctoolbar:tb_imgbtn("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
-                item:SetEnabled(item.enabled) 
+                item:SetEnabled(item.enabled)
             end, tx, {155, 95, 64, 64})
 
             for sname, data in pairs(managers.mission._missions[name]) do
@@ -544,7 +544,7 @@ function WData:build_groups_layer_menu()
                     toolbar:tb_imgbtn("SetVisible", function(item) 
                         self:GetPart("static"):toggle_group_visibility(editor_group) 
                         item.enabled_alpha = editor_group.visible and 1 or 0.5
-                        item:SetEnabled(item.enabled) 
+                        item:SetEnabled(item.enabled)
                     end, tx, {155, 95, 64, 64}, {enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1})
 
                     for _, unit_id in pairs(editor_group.units) do
