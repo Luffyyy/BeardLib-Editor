@@ -36,6 +36,24 @@ function EditorInstigatorOperator:_build_panel()
 	self:Text("This element is an operator to instigator elements.")
 end
 
+function EditorInstigatorOperator:draw_links()
+	EditorInstigatorOperator.super.draw_links(self)
+	local selected_unit = self:selected_unit()
+	for _, id in ipairs(self._element.values.elements) do
+		local unit = self:GetPart("mission"):get_element_unit(id)
+		local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit
+		if draw then
+			self:draw_link({
+				g = 0.85,
+				b = 0.25,
+				r = 0.85,
+				from_unit = self._unit,
+				to_unit = unit
+			})
+		end
+	end
+end
+
 EditorInstigatorTrigger = EditorInstigatorTrigger or class(MissionScriptEditor)
 function EditorInstigatorTrigger:create_element(unit)
 	self.super.create_element(self)
@@ -55,3 +73,5 @@ function EditorInstigatorTrigger:_build_panel()
 	}, {help = "Select a trigger type for the selected elements"})
 	self:Text("This element is a trigger to instigator elements.")
 end
+
+EditorInstigatorTrigger.draw_links = EditorInstigatorOperator.draw_links

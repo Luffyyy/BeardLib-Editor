@@ -398,6 +398,7 @@
 	    <value_node value="ElementPrePlanningExecuteGroup"/>
 	    <value_node value="ElementPickupCriminalDeployables"/>
 	    <value_node value="ElementInstigatorOperator"/>
+	    <value_node value="ElementInstigatorTrigger"/>
     </MissionElements>
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>

@@ -173,7 +173,7 @@ function MissionScriptEditor:update(t, dt)
 	if not alive(self._unit) then
 		return
 	end
-	
+
 	self:draw_links()
 	for _, draw in pairs(self._draw_units) do
 		for id, unit in pairs(draw.units) do
