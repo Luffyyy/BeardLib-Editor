@@ -22,14 +22,6 @@ end
 
 function EditorMusic:_build_panel()
 	self:_create_panel()
-	local paths = clone(managers.music:music_paths())
-	if #paths <= 0 then
-		self:Text("No music available in project!")
-		return
-	end
-
-	self._element.values.music_event = self._element.values.music_event or managers.music:music_events(paths[1])[1]	
-	self:combobox("Category", ClassClbk(self, "set_category"), managers.music:music_path(self._element.values.music_event), 1)
-	self._music = self:ComboCtrl("music_event", managers.music:music_events(path_value))
+	self:StringCtrl("music_event")
 	self:BooleanCtrl("use_instigator")
 end

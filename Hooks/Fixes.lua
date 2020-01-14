@@ -10,7 +10,7 @@ if F == "coreelementarea" then
 	core:module("CoreElementArea")
 	function ElementAreaTrigger:init(...)
 		ElementAreaTrigger.super.init(self, ...)
-	
+
 		self._last_project_amount_all = 0
 		self:_finalize_values()
 	end
