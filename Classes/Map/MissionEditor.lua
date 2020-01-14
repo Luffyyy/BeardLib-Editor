@@ -13,10 +13,7 @@ function MissionEditor:init(parent, menu)
         local class_name = element:gsub('Element', 'Editor')
         if not rawget(_G, class_name) then
             local c = class(MissionScriptEditor)
-            function c:create_element()
-                c.super.create_element(self)
-                self._element.class = element
-            end
+            c.CLASS = element
             rawset(_G, class_name, c)
         end
     end

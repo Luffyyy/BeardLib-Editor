@@ -399,6 +399,9 @@
 	    <value_node value="ElementPickupCriminalDeployables"/>
 	    <value_node value="ElementInstigatorOperator"/>
 	    <value_node value="ElementInstigatorTrigger"/>
+	    <value_node value="ElementHeistTimer"/>
+	    <value_node value="ElementHeistTimerOperator"/>
+	    <value_node value="ElementHeistTimerTrigger"/>
     </MissionElements>
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>

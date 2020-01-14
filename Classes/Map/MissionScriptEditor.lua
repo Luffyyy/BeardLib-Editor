@@ -1,4 +1,5 @@
 MissionScriptEditor = MissionScriptEditor or class(EditorPart)
+MissionScriptEditor.CLASS = "MissionScriptElement"
 function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
 	self._menu = self:GetPart("static")._holder
@@ -24,7 +25,10 @@ function MissionScriptEditor:create_element()
 	local cam = managers.viewport:get_current_camera()
 	self._element = {}
 	self._element.values = {}
-	self._element.class = "MissionScriptElement"
+	self._element.class = self.CLASS
+	if self.MODULE then
+		self._element.module = self.MODULE
+	end
 	self._element.script = self._parent._current_script
 	self._element.values.position = self._parent:GetSpawnPosition()
 	self._element.values.rotation = Rotation()
