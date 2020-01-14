@@ -22,7 +22,7 @@ end
 
 function MissionScriptEditor:create_element()		
 	local cam = managers.viewport:get_current_camera()
-	self._element = {}	
+	self._element = {}
 	self._element.values = {}
 	self._element.class = "MissionScriptElement"
 	self._element.script = self._parent._current_script
@@ -84,7 +84,7 @@ function MissionScriptEditor:_create_panel()
 	local quick_buttons = self:group("QuickButtons", {align_method = "grid"})
 	local transform = self:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
-	self._class_group = self:group(element) 
+	self._class_group = self:group(element)
 	SE:SetTitle(element)
 	quick_buttons:s_btn("Deselect", ClassClbk(self, "deselect_element"))    
 	quick_buttons:s_btn("Delete", ClassClbk(SE, "delete_selected_dialog"))
@@ -94,7 +94,7 @@ function MissionScriptEditor:_create_panel()
 		quick_buttons:s_btn("Test", ClassClbk(self, "test_element"))
 		quick_buttons:s_btn("StopTesting", ClassClbk(self, "stop_test_element"))
 	end
- 
+
 	self:StringCtrl("editor_name", {group = self._main_group, help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element})
 	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true, offset=0})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {group = self._main_group, data = self._element})

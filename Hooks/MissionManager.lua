@@ -107,10 +107,10 @@ function Mission:_load_mission_file(name, file_dir, data)
 	self._missions = self._missions or {}
 	local file_path = file_dir .. data.file
 	self._missions[name] = self:_serialize_to_script("mission", file_path) 
-	for sname, data in pairs(self._missions[name]) do	
-		data.name = sname
-		data.continent = name
-		self:_add_script(data)
+	for sname, mdata in pairs(self._missions[name]) do	
+		mdata.name = sname
+		mdata.continent = name
+		self:_add_script(mdata)
 	end
 end
 
@@ -118,7 +118,7 @@ function Mission:set_element(element, old_script_name)
 	if not element then
 		return
 	end
-	
+
 	local script_name = element.script
 	local script = self._scripts[script_name] or nil
 	local old_script = self._scripts[old_script_name] or nil
@@ -127,10 +127,10 @@ function Mission:set_element(element, old_script_name)
 
 	if script then
 		local mission_script = self._missions[script._continent][script_name]
-		
+
 		--TODO: Move multiple elements to different scripts without removing links		
 		if old_script and script_name ~= old_script_name then
-			
+
 			local old_continent_name = old_script._continent
 			local continent_name = script._continent
 			local old_mission_script = self._missions[old_continent_name][old_script_name]
@@ -145,7 +145,7 @@ function Mission:set_element(element, old_script_name)
 
 				script._elements[id] = old_script._elements[old_id]
 				old_script._elements[old_id] = nil
-				
+
 				for k, e in pairs(old_mission_script.elements) do
 					if e.id == id then
 						table.remove(old_mission_script.elements, k)
@@ -162,10 +162,10 @@ function Mission:set_element(element, old_script_name)
 				break
 			end
 		end
-	
+
 		local script_element = script._elements[id]
 		script_element._values = _G.deep_clone(element.values)
-	
+
 		if script_element._finalize_values then
 			script_element:_finalize_values(script_element._values)
 		end
@@ -199,7 +199,7 @@ function Mission:add_element(element)
 			if miss[element.script] then
 				script = miss[element.script]
 				script_name = element.script
-				break	
+				break
 			end
 		end
 	else
@@ -478,7 +478,7 @@ function MScript:_create_elements(elements, instance_name)
 end
 
 function MScript:create_element(element, return_unit, instance_name)
-	local class = element.class	
+	local class = element.class
 	if not element.id then
 		element.id = managers.mission:get_new_id(self._continent)
 	end
@@ -509,6 +509,7 @@ function MScript:create_mission_element_unit(element)
 
 	local unit_name = "units/mission_element/element"
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
+
 	--unit:mission_element():set_enabled(enabled, true)
     unit:unit_data().position = element.values.position
    	unit:unit_data().rotation = element.values.rotation

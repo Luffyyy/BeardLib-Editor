@@ -451,10 +451,10 @@ function WorldDef:delete_unit(unit, keep_links)
 	if not unit then
 		return
 	end
-	
+
 	local ud = unit:unit_data()
 	local unit_id = ud.unit_id
-	
+
 	if not unit_id then
 		return
 	end
@@ -463,8 +463,8 @@ function WorldDef:delete_unit(unit, keep_links)
 		managers.editor:Error("Attempted to delete a unit with invalid unit id")
 		return
 	end
-	
-	
+
+
 	local name_id = ud.name_id
 	local continent_name = ud.continent
 	local statics

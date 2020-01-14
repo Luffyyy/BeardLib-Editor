@@ -8,7 +8,7 @@ function MissionEditor:init(parent, menu)
     end
     for _, file in pairs(elements) do
         dofile(BeardLibEditor.ElementsDir .. file)
-    end    
+    end
     self._units = {}
     self._parent = parent
     self._triggers = {}
@@ -78,8 +78,8 @@ function MissionEditor:set_element(element)
             if not self._parent:selected_unit() then
                 self._current_script = nil
 			end
-		else
-			self:alert_missing_element_editor(element.class)	
+        else
+			self:alert_missing_element_editor(element.class)
         end
     end
 end
@@ -111,7 +111,7 @@ function MissionEditor:add_element(name, add_to_selection, old_element, no_selec
         self:alert_missing_element_editor(name)
     end
 end
- 
+
 function MissionEditor:update(t, dt)
     self.super.update(self, t, dt)
     if self._parent:selected_unit() and self._parent:selected_unit().mission_element and self._current_script and self._current_script.update then

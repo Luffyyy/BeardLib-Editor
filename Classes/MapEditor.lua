@@ -339,7 +339,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
         return unit
     end
     local data = {}
-    local t 
+    local t
     if type(old_unit) == "userdata" then
         data = {
             unit_data = deep_clone(old_unit:unit_data()),
