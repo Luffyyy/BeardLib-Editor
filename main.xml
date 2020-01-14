@@ -395,5 +395,10 @@
 	    <value_node value="ElementTerminateAssault"/>
 	    <value_node value="ElementEnvironmentOperator"/>
 	    <value_node value="ElementVehicleBoarding"/>
+	    <value_node value="ElementPrePlanningExecuteGroup"/>
+	    <value_node value="ElementPickupCriminalDeployables"/>
     </MissionElements>
+    <AutoClassElements>
+        <value_node value="ElementPickupCriminalDeployables"/>
+    </AutoClassElements>
 </mod>

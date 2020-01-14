@@ -528,7 +528,7 @@ end
 function MScript:delete_element(element)
 	local id = element.id
 	managers.mission:delete_element_id(self._continent, id)
-	if self._elements[id] then
+	if self._elements[id] and self._elements[id] then
 		self._elements[id]:set_enabled(false)
 		self._elements[id] = nil
 	else
