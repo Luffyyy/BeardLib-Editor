@@ -397,6 +397,7 @@
 	    <value_node value="ElementVehicleBoarding"/>
 	    <value_node value="ElementPrePlanningExecuteGroup"/>
 	    <value_node value="ElementPickupCriminalDeployables"/>
+	    <value_node value="ElementInstigatorOperator"/>
     </MissionElements>
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>

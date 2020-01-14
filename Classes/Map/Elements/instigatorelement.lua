@@ -10,7 +10,7 @@ function EditorInstigator:_build_panel()
 end
 
 EditorInstigatorOperator = EditorInstigatorOperator or class(MissionScriptEditor)
-function EditorInstigatorOperator:create_element(unit)
+function EditorInstigatorOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementInstigatorOperator"
 	self._element.values.elements = {}
