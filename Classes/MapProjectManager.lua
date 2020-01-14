@@ -851,6 +851,8 @@ function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, s
     self._curr_editing:numberbox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0})
     local aitype = table.map_keys(LevelsTweakData.LevelType)
     self._curr_editing:combobox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1)
+    local styles = table.map_keys(tweak_data.scene_poses.player_style)
+    self._curr_editing:combobox("PlayerStyle", up, styles, table.get_key(styles, level.player_style or "generic"), {help = "Set the player style for the map, make sure the packages for the suits are loaded!"})
     self._curr_editing:tickbox("TeamAiOff", up, level.team_ai_off)
     self._curr_editing:tickbox("RetainBags", up, level.repossess_bags)
     self._curr_editing:tickbox("PlayerInvulnerable", up, level.player_invulnerable)
@@ -946,6 +948,7 @@ function Project:set_project_level_data(level, level_in_chain)
     end
     level_in_chain.level_id = level.id
     level.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
+    level.player_style = self:GetItem("PlayerStyle"):SelectedItem()
     level.briefing_dialog = self:GetItem("BriefingDialog"):Value()
     level.ghost_bonus = self:GetItem("GhostBonus"):Value()
     if level.ghost_bonus == 0 then
