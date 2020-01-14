@@ -23,13 +23,14 @@ function LoadLevelMenu:init(data)
 	w = w + tabs:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true), opt).w
 	local search = tabs:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = tabs.w - w, index = 1, control_slice = 0.85, offset = 0})
     local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
-    local half_w = load_options:ItemsWidth() / 2
     local third_w = load_options:ItemsWidth() / 3
-	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true, w = half_w, offset = 0})
-	load_options:tickbox("OneDown", nil, data.one_down, {w = half_w, offset = 0})
+	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true, w = third_w, offset = 0})
+	load_options:numberbox("MissionFilter", nil, nil, {w = third_w, floats = 0, offset = 0, help = "Set a mission filter to be forced on the level, 0 uses the default filter."})
+	load_options:tickbox("OneDown", nil, data.one_down, {w = third_w, offset = 0})
     load_options:tickbox("Safemode", nil, data.safemode, {w = third_w})
     load_options:tickbox("CheckLoadTime", nil, data.load_time, {w = third_w})
 	load_options:tickbox("LogSpawnedUnits", nil, data.log_spawned, {w = third_w})
+
 	self._levels = self:pan("LevelList", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
 	self:load_levels()
 end
@@ -109,7 +110,7 @@ function LoadLevelMenu:do_load_levels()
 			levels:button(id, ClassClbk(self, "load_level"), {text = (level.name_id and loc:text(level.name_id) or "").."/"..id})
 		end
 	end
-	
+
 	for path, instance in pairs(BeardLib.managers.MapFramework._loaded_instances) do
 		local id = instance._config.id
 		levels:button("instances/mods/"..id, ClassClbk(self, "load_level"), {text = path, real_id = id, instance = true})
@@ -177,9 +178,9 @@ function LoadLevelMenu:do_load_narratives()
 	end
 	for narr_id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.hidden and ((narr.custom and custom) or (not narr.custom and vanilla)) then
-            local txt = loc:text(narr.name_id or "heist_"..narr_id:gsub("_prof", ""):gsub("_night", "")) .." / " .. narr_id
+            local txt = loc:text((narr.name_id or ("heist_"..narr_id:gsub("_prof", ""):gsub("_night", ""))) .." / " .. narr_id)
             local texture, rect = nil
-			
+
 			if narr.contract_visuals and narr.contract_visuals.preview_image then
 				local data = narr.contract_visuals.preview_image
 				if data.id then
@@ -193,7 +194,7 @@ function LoadLevelMenu:do_load_narratives()
             if not texture or not DB:has(texture_ids, texture:id()) then
                 texture, rect = nil, nil
             end
-			
+
 			local holder, narrative = create_narr(narr_id, txt, texture, rect)
 
             local has_items
@@ -233,9 +234,10 @@ function LoadLevelMenu:load_level(item)
     local log_on_spawn = self:GetItem("LogSpawnedUnits"):Value()
     local one_down = self:GetItem("OneDown"):Value()
     local difficulty = self:GetItem("Difficulty"):Value()
-
+	local filter = self:GetItem("MissionFilter"):Value()
     local function load()
 		Global.editor_mode = true
+		Global.current_mission_filter = filter == 0 and nil or filter
 		if item.instance then
 			Global.editor_loaded_instance = true
 		end
@@ -256,7 +258,7 @@ function LoadLevelMenu:load_level(item)
         self:start_the_game()    
         BeardLibEditor.Menu:set_enabled(false)
     end
-	
+
     local load_tbl = {{"Yes", load}}
     if item.vanilla then
         BeardLibEditor.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)
@@ -287,8 +289,7 @@ function LoadLevelMenu:start_the_game()
 
 	MenuCallbackHandler._game_started = true
 	local level_id = Global.game_settings.level_id
-	
-	
+
 	local level_name
 	if Global.editor_loaded_instance then
 		level_name = level_id

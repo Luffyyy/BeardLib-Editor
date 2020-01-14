@@ -5,6 +5,7 @@ Hooks:PostHook(GameSetup, "init_finalize", "BeardLibEditorInitFinalize", functio
 			game_state_machine:change_state_by_name("editor")
 		else
 			Global.editor_mode = nil
+			Global.current_mission_filter = nil
 			Global.editor_loaded_instance = nil
 			game_state_machine:change_state_by_name("ingame_waiting_for_players")
 		end

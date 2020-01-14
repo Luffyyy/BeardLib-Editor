@@ -90,4 +90,11 @@ elseif F == "levelstweakdata" then
 			})
 		end
 	end)
+elseif F == "jobmanager" then
+	function JobManager:current_mission_filter()
+		if not self._global.current_job then
+			return
+		end
+		return {Global.current_mission_filter} or self:current_stage_data().mission_filter
+	end
 end
