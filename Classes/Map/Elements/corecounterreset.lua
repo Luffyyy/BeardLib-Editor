@@ -1,8 +1,8 @@
 EditorCounterReset = EditorCounterReset or class(MissionScriptEditor)
 EditorCounterReset.LINK_ELEMENTS = {"elements"}
 function EditorCounterReset:create_element(...)
-	self._element.class = "ElementCounterResest"
 	EditorCounterReset.super.create_element(self, ...)
+	self._element.class = "ElementCounterReset"
 	self._element.values.counter_target = 1
 	self._element.values.elements = {}
 end
