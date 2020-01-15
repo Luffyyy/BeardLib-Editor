@@ -52,13 +52,6 @@ function Options:build_default_menu()
     map:tickbox("DrawPortals", nil, false)
     map:numberbox("InstanceIndexSize", ClassClbk(self, "update_option_value"), self:Val("InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
 
-    local navigation_debug = self:group("NavigationDebug", {text = "Navigation Debug[Toggle what to draw]", offset = groups_opt.offset})
-    local group = navigation_debug:pan("Draw", {align_method = "grid"})
-    self._draw_options = {}
-    local w = group.w / 2
-    for _, opt in pairs({"quads", "doors", "blockers", "vis_graph", "coarse_graph", "nav_links", "covers"}) do
-        self._draw_options[opt] = group:tickbox(opt, ClassClbk(self, "draw_nav_segments"), false, {w = w, items_size = 15, offset = 0})
-    end
     local raycast = self:group("Raycast/Selecting", groups_opt)
     raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
     raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
@@ -156,13 +149,6 @@ function Options:get_value(opt)
     local item = self:GetItem(opt)
     return item and item:Value()
 end
-
-function Options:draw_nav_segments(item)
-    if managers.navigation then
-        managers.navigation:set_debug_draw_state(self._draw_options)
-    end
-end
-
 
 function Options:position_debug()
     BLE:log("Camera Position: %s", tostring(self._parent._camera_pos))
