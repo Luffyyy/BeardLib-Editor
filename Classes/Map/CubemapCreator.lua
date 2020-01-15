@@ -79,17 +79,22 @@ function CubemapCreator:create_projection_light(type)
 		local enabled = light:enable()
 		local resolution = unit:unit_data().projection_lights and unit:unit_data().projection_lights[data.light_name] and unit:unit_data().projection_lights[data.light_name].x
 		resolution = resolution or EditUnitLight.DEFAULT_SHADOW_RESOLUTION
-		table.insert(lights, {
-			name = "",
-			position = light:position(),
-			unit = unit,
-			light = light,
-			enabled = enabled,
-			spot = false,
-			resolution = resolution,
-			output_name = unit:unit_data().unit_id
-		})
-		light:set_enable(false)
+
+		local is_spot = not (string.find(light:properties(), "omni") and true or false)
+
+		if not is_spot then
+			table.insert(lights, {
+				name = "",
+				position = light:position(),
+				unit = unit,
+				light = light,
+				enabled = enabled,
+				spot = false,
+				resolution = resolution,
+				output_name = unit:unit_data().unit_id
+			})
+			light:set_enable(false)
+		end
 	end
 
 	if #lights == 0 then
