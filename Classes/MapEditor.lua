@@ -357,7 +357,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
         local ad = old_unit and old_unit.ai_editor_data
         data = {
             unit_data = {
-                from_name_id = ud.name_id,
+                from_name_id = ud and ud.name_id,
                 unit_id = unit_id or managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
