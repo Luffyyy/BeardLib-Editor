@@ -11,7 +11,7 @@ function MissionScriptEditor:init(element, old_element)
 	else
 		self:create_element()
 		if not self._element.editor_name then
-			self._element.editor_name = self:GetPart("mission"):get_name_id(self._element.class, old_element.from_name_id)
+			self._element.editor_name = self:GetPart("mission"):get_name_id(self._element.class, old_element and old_element.from_name_id or nil)
 		end
 		if old_element then
 			old_element.from_name_id = nil
