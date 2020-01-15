@@ -13,7 +13,7 @@ function Options:init()
 	main:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
 	main:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
 	main:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 100, max = 1600})
-	
+
 	local visual = self:divgroup("Visual")
 	visual:button("ResetVisualOptions", ClassClbk(self, "reset_options", visual))
 	visual:colorbox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"))
@@ -24,7 +24,7 @@ function Options:init()
 	themes:button("Light", ClassClbk(self, "set_theme"))
 	local input = self:divgroup("Input")
 	local function keybind(setting, supports_mouse, text)
-		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse})
+		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse, supports_additional = true})
 	end
 	input:button("ResetInputOptions", ClassClbk(self, "reset_options", input))
 	keybind("TeleportToSelection")

@@ -346,7 +346,8 @@ function WorldDef:set_up_name_id(unit)
 	if ud.name_id ~= "none" then
 		self:insert_name_id(unit)
 	else
-		ud.name_id = self:get_name_id(unit)
+		ud.name_id = self:get_name_id(unit, ud.from_name_id)
+		ud.from_name_id = nil
 	end
 	self:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
 end
@@ -443,7 +444,7 @@ function WorldDef:check_names()
 			names[name] = names[name] + 1
 		end
 	end
-	
+
 	self._all_names = names
 end
 
@@ -555,7 +556,7 @@ end
 
 function WorldDef:create_unit(data, type)		
 	local offset = Vector3()
-	local unit 
+	local unit
 	if type == Idstring("wire") then
 		unit = self:_create_wires_unit(data, offset)
 	elseif type == Idstring("ai") then
@@ -579,7 +580,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 	ud.rotation = unit:rotation()
 	ud.local_pos = data.local_pos or Vector3()
 	ud.local_rot = data.local_rot or Rotation()
-
+	ud.from_name_id = data.from_name_id
 	if not data.brush_unit then
 		data.projection_light = data.projection_light or BLE.Utils:HasAnyProjectionLight(unit)
 		data.lights = data.lights or BLE.Utils:LightData(unit)
@@ -594,7 +595,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		ud.projection_textures = data.projection_textures
 		ud.lights = data.lights
 		ud.triggers = data.triggers
-		ud.editable_gui = data.editable_gui	
+		ud.editable_gui = data.editable_gui
 		ud.ladder = data.ladder
 		ud.zipline = data.zipline
 		ud.hide_on_projection_light = data.hide_on_projection_light
@@ -605,6 +606,7 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 		ud.override_texture = data.override_texture
 		ud.cubemap = data.cubemap
 		ud.material_variation = data.material_variation
+
 
 		local wd = unit:wire_data()
 		if wd then

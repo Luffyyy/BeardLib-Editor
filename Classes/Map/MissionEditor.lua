@@ -34,17 +34,30 @@ function MissionEditor:set_elements_vis(vis)
     end
 end
 
-function MissionEditor:get_name_id(clss)
+function MissionEditor:get_name_id(clss, name)
     local class_name = self:make_class_name(clss)
     self._name_ids[class_name] = self._name_ids[class_name] or {}
     local t = self._name_ids[class_name]
+	if name then
+		local sub_name = name
+		for i = string.len(name), 0, -1 do
+			local sub = string.sub(name, i, string.len(name))
+			sub_name = string.sub(name, 0, i)
+			if tonumber(sub) and tonumber(sub) < 10000 then
+				start_number = tonumber(sub)
+			else
+				break
+			end
+		end
+		name = sub_name
+	else
+        name = class_name .. '_'
+    end
 
-    class_name = class_name .. '_'
 	for i = 1, 10000 do
 		i = (i < 10 and "00" or i < 100 and "0" or "") .. i
-		local name_id = class_name .. i
-        if not t[name_id] then
-            --Saved in MissionManager.
+		local name_id = name .. i
+        if not t[name_id] then --Saved in MissionManager.
 			return name_id
 		end
 	end
@@ -149,6 +162,7 @@ function MissionEditor:add_element(name, add_to_selection, old_element, no_selec
     local clss = self:get_editor_class(name)
     if clss then
         if old_element then
+            old_element.from_name_id = old_element.editor_name
             old_element.editor_name = nil
         end
         local unit = clss:init(nil, old_element)
@@ -168,5 +182,5 @@ function MissionEditor:update(t, dt)
     self.super.update(self, t, dt)
     if self._parent:selected_unit() and self._parent:selected_unit().mission_element and self._current_script and self._current_script.update then
         self._current_script:update(t, dt)
-    end   
+    end
 end

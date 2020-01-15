@@ -347,6 +347,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
             ai_editor_data = old_unit:ai_editor_data() and deep_clone(old_unit:ai_editor_data()),
         }
         t = old_unit:wire_data() and "wire" or old_unit:ai_editor_data() and "ai" or ""
+        data.unit_data.from_name_id = data.unit_data.name_id
         data.unit_data.name_id = nil
 		data.unit_data.unit_id = unit_id or managers.worlddefinition:GetNewUnitID(data.unit_data.continent or self._current_continent, t)
     else
@@ -356,6 +357,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
         local ad = old_unit and old_unit.ai_editor_data
         data = {
             unit_data = {
+                from_name_id = ud.name_id,
                 unit_id = unit_id or managers.worlddefinition:GetNewUnitID(ud and ud.continent or self._current_continent, t),
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
@@ -373,7 +375,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
                 projection_textures = ud and ud.projection_textures,
                 triggers = ud and ud.triggers, 
                 editable_gui = ud and ud.editable_gui,
-                ladder = ud and ud.ladder, 
+                ladder = ud and ud.ladder,
                 zipline = ud and ud.zipline,
                 cubemap = ud and ud.cubemap,
             }
