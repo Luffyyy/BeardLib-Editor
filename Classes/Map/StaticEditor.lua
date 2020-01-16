@@ -1044,16 +1044,14 @@ end
 
 function Static:build_links(id, match, element)
     match = match or Utils.LinkTypes.Unit
-    local warn
     local function create_link(text, id, group, clbk)
-        warn = warn or ""
         group:button(id, clbk, {
             text = text,
             font_size = 16,
             label = "elements"
         })
     end
-    
+
     local links = managers.mission:get_links_paths_new(id, match)
     local links_group = self:GetItem("LinkedBy") or self:group("LinkedBy", {max_height = 200})
     local same_links = {}
@@ -1071,7 +1069,7 @@ function Static:build_links(id, match, element)
             local ids = portal._ids
             if ids and ids[id] then
                 local name = portal:name()
-                create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))               
+                create_link(portal_link_text(name), name, links_group, ClassClbk(portal_layer, "select_portal", name, true))
             end
         end
     end
@@ -1085,15 +1083,16 @@ function Static:build_links(id, match, element)
             for _, tbl in pairs(script) do
                 if tbl.elements then
                     for k, e in pairs(tbl.elements) do
-                        local id = e.id
-                        for _, link in pairs(managers.mission:get_links_paths_new(id, Utils.LinkTypes.Element, {{mission_element_data = element}})) do
+                        local eid = e.id
+                        for _, link in pairs(managers.mission:get_links_paths_new(eid, Utils.LinkTypes.Element, {{mission_element_data = element}})) do
                             local warn
                             if link.location == "on_executed" then
-                                if same_links[id] and link.tbl.delay == 0 then
+                                if same_links[eid] and link.tbl.delay == 0 then
                                     warn = "Warning - link already exists and can cause an endless loop, increase the delay."
                                 end
                             end
-                            create_link(element_link_text(e, link.location, warn), e.id, linking_group, ClassClbk(self._parent, "select_element", e))
+                            same_links[eid] = true
+                            create_link(element_link_text(e, link.location, warn), eid, linking_group, ClassClbk(self._parent, "select_element", e))
                         end
                     end
                 end
@@ -1103,10 +1102,10 @@ function Static:build_links(id, match, element)
         for uid, unit in pairs(managers.worlddefinition._all_units) do
             if alive(unit) then
                 local ud = unit:unit_data()
-                for _, link in pairs(managers.mission:get_links_paths_new(uidid, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
+                for _, link in pairs(managers.mission:get_links_paths_new(ud.unit_id, Utils.LinkTypes.Unit, {{mission_element_data = element}})) do
                     local linking_from = link.location
                     linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
-                    create_link(unit_link_text(ud, linking_from), uid, linking_group, ClassClbk(self, "set_selected_unit", unit))               
+                    create_link(unit_link_text(ud, linking_from), uid, linking_group, ClassClbk(self, "set_selected_unit", unit))
                 end
             end
         end
