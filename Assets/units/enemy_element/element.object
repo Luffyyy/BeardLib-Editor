@@ -1,47 +1,16 @@
 <?xml version="1.0"?>
 <dynamic_object>
-	<diesel materials="units/enemy_element/element" orientation_object="root_point" />
-
+	<diesel materials="core/material_configs/hub_elements" orientation_object="rp_root" />
+	
 	<bodies>
-		<body name="body" enabled="true" template="editor">
-			<object name="Spine1"/>
-			<object name="c_capsule_body" collision_type="capsule"/>
-		</body>
-		<body name="head" enabled="true" template="editor">
-			<object name="Head"/>
-			<object name="c_sphere_head" collision_type="sphere" padding="-8" />
-		</body>
-		<body name="mover_blocker" enabled="true" template="editor">
-			<object name="root_point"/>
-			<object name="c_capsule_mover_blocker" collision_type="capsule"/>
+		<body name="static_body" enabled="true" template="editor">
+		  <object name="c_c" collision_type="box" />
 		</body>
 	</bodies>
+	
 	<graphics>
-		<graphic_group name="character" enabled="true" culling_object="g_body">
-			<lod_object name="lod_body">
-				<object name="g_body" 		enabled="true"  max_distance="2000"  max_draw_lod="0" cpy_material_vars="contour_color, contour_opacity">
-					<material materials="mtr_police_body, mtr_police_head" max_distance="1000" />
-					<material materials="mtr_police_body_lod_1, mtr_police_head_lod_1" max_distance="1500" />
-					<material materials="mtr_police_body_lod_2, mtr_police_head_lod_2" />
-				</object>
-				<object name="g_body_lod1" 	enabled="true" lod="1" >
-					<material materials="mtr_police_body, mtr_police_head" max_distance="0" cpy_material_vars="contour_color, contour_opacity"/>
-					<material materials="mtr_police_body_lod_2, mtr_police_head_lod_2" />
-				</object>
-			</lod_object>
-
-			<lod_object name="lod_head">
-				<object name="g_head" 		enabled="true"  max_distance="2000"  max_draw_lod="0" cpy_material_vars="contour_color, contour_opacity">
-					<material materials="mtr_police_head" max_distance="1000" />
-					<material materials="mtr_police_head_lod_1" max_distance="1500" />
-					<material materials="mtr_police_head_lod_2" />
-				</object>
-				<object name="g_head_lod1" 	enabled="true" lod="1" >
-					<material materials="mtr_police_head" max_distance="0" cpy_material_vars="contour_color, contour_opacity"/>
-					<material materials="mtr_police_head_lod_2" />
-				</object>
-			</lod_object>			
+		<graphic_group name="grp_grp" enabled="true" culling_object="co_co">
+			<object name="g_g" enabled="true" />
 		</graphic_group>
 	</graphics>
-
 </dynamic_object>

@@ -159,54 +159,28 @@
         </options>
     </Options>    
     <AddFiles directory="Assets">
-        <material_config path="core/material_configs/hub_elements" force="true"/>
-        <png path="textures/editor_logo" force="true"/>
-        <png path="textures/editor_icons_df" force="true"/>
-        <unit path="units/mission_element/element" force="true"/>
-        <object path="units/mission_element/element" force="true"/>
-        <model path="units/mission_element/element" force="true"/>
-        <cooked_physics path="units/mission_element/element" force="true"/>
-        <unit path="core/units/nav_surface/nav_surface" force="true"/>
-        <object path="core/units/nav_surface/nav_surface" force="true"/>
-        <unit path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <object path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <model path="units/dev_tools/level_tools/ai_coverpoint" force="true"/>
-        <unit path="core/units/environment_area/environment_area" force="true"/>
-        <object path="core/units/environment_area/environment_area" force="true"/>
-        <model path="core/units/environment_area/environment_area" force="true"/>
-        <cooked_physics path="core/units/environment_area/environment_area" force="true"/>
-        <unit path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
-        <object path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
-        <model path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
-        <cooked_physics path="core/units/dome_occ_shape/dome_occ_shape" force="true"/>
-        <unit path="core/units/effect/effect" force="true"/>
-        <object path="core/units/effect/effect" force="true"/>
-        <model path="core/units/effect/effect" force="true"/>
-        <cooked_physics path="core/units/effect/effect" force="true"/>
-        <unit path="core/units/sound_environment/sound_environment" force="true"/>
-        <object path="core/units/sound_environment/sound_environment" force="true"/>
-        <model path="core/units/sound_environment/sound_environment" force="true"/>
-        <cooked_physics path="core/units/sound_environment/sound_environment" force="true"/>
-        <unit path="core/units/sound_emitter/sound_emitter" force="true"/>
-        <object path="core/units/sound_emitter/sound_emitter" force="true"/>
-        <model path="core/units/sound_emitter/sound_emitter" force="true"/>
-        <cooked_physics path="core/units/sound_emitter/sound_emitter" force="true"/>
-        <unit path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
-        <object path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
-        <model path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
-        <cooked_physics path="core/units/sound_area_emitter/sound_area_emitter" force="true"/>
-        <unit path="core/units/portal_shape/portal_shape" force="true"/>
-        <object path="core/units/portal_shape/portal_shape" force="true"/>
-        <model path="core/units/portal_shape/portal_shape" force="true"/>
-        <cooked_physics path="core/units/portal_shape/portal_shape" force="true"/>
-        <unit path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
-        <object path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
-        <model path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
-        <cooked_physics path="core/units/cubemap_gizmo/cubemap_gizmo" force="true"/>
-		<unit path="core/units/patrol_point/patrol_point" force="true"/>
-        <object path="core/units/patrol_point/patrol_point" force="true"/>
-        <model path="core/units/patrol_point/patrol_point" force="true"/>
-        <cooked_physics path="core/units/patrol_point/patrol_point" force="true"/>
+        <material_config path="core/material_configs/hub_elements"/>
+        <png path="textures/editor_logo"/>
+        <png path="textures/editor_icons_df"/>
+
+        <unit_obj path="units/mission_element/element"/>
+        <unit_obj path="units/civilian_element/element"/>
+        <unit_obj path="units/player_element/element"/>
+        <unit_obj path="units/enemy_element/element"/>
+        <unit_obj path="units/dev_tools/level_tools/ai_coverpoint"/>
+
+        <unit_obj path="core/units/environment_area/environment_area"/>
+        <unit_obj path="core/units/dome_occ_shape/dome_occ_shape"/>
+        <unit_obj path="core/units/effect/effect"/>
+        <unit_obj path="core/units/sound_environment/sound_environment"/>
+        <unit_obj path="core/units/sound_emitter/sound_emitter"/>
+        <unit_obj path="core/units/sound_area_emitter/sound_area_emitter"/>
+        <unit_obj path="core/units/portal_shape/portal_shape"/>
+        <unit_obj path="core/units/cubemap_gizmo/cubemap_gizmo"/>
+        <unit_obj path="core/units/patrol_point/patrol_point"/>
+
+        <unit path="core/units/nav_surface/nav_surface"/>
+        <object path="core/units/nav_surface/nav_surface"/>
     </AddFiles>
     <MissionElements>
         <!--Custom Elements-->
@@ -220,7 +194,7 @@
         <value_node value="ElementOverrideInstigator"/>
 	    <value_node value="ElementXAudio"/>
         <value_node value="ElementXAudioOperator"/>
-	<value_node value="ElementBLCustomAchievement"/>
+	    <value_node value="ElementBLCustomAchievement"/>
         
         <!--Normal-->
         <value_node value="ElementSideJobAward"/>

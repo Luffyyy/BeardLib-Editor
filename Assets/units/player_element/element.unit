@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<unit name="support_unit" type="ai" slot="10">
+  <object file="units/player_element/element" />
+  <movers />
+  <dependencies />
+  <extensions>
+    <extension name="unit_data" class="ScriptUnitData" />
+    <extension name="mission_element" class="MissionElementUnit" />
+  </extensions>
+  <sounds>
+    <default_soundsource />
+  </sounds>
+</unit>
