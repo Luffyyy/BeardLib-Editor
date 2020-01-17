@@ -45,8 +45,14 @@ function MissionScriptEditor:work()
     self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
-    end
-    self._unit = self:GetPart("mission"):get_element_unit(self._element.id)
+	end
+	self:do_links()
+	self:AlignItems()
+end
+
+function MissionScriptEditor:do_links()
+	self._links = managers.mission:get_links_paths_new(id, match)
+
 	self:get_on_executed_units()
 	local executors = managers.mission:get_executors(self._element)
 	self._executors_units = {}
@@ -56,14 +62,14 @@ function MissionScriptEditor:work()
 			table.insert(self._executors_units, unit)
 		end
 	end
+
 	local temp = clone(self._links)
 	self._links = {}
-	for _, element in pairs(self._links) do
+	for _, element in pairs(temp) do
 		if not executors[element.id] then
 			table.insert(self._links, element)
 		end
 	end
-	self:AlignItems()
 end
 
 function MissionScriptEditor:get_on_executed_units()
@@ -179,7 +185,16 @@ function MissionScriptEditor:update(t, dt)
 		return
 	end
 
-	self:draw_links()
+	if self.update_selected then
+		self:update_selected(t, dt)
+	end
+end
+
+function MissionScriptEditor:draw_links()
+	if not alive(self._unit) then
+		return
+	end
+	self:draw_link_on_executed()
 	for _, draw in pairs(self._draw_units) do
 		for id, unit in pairs(draw.units) do
 			if not alive(unit) then
@@ -200,20 +215,10 @@ function MissionScriptEditor:update(t, dt)
 		end
 	end
 
-	if self.update_selected then
-		self:update_selected(t, dt)
-	end
-end
-
-function MissionScriptEditor:draw_links()
-	if not alive(self._unit) then
-		return
-	end
-	self:draw_link_on_executed()
-	for _, unit in pairs(self._executors_units) do
-		self:draw_link_exec(unit, self._unit)
-	end
-	self:draw_elements(self._links, true)
+	--for _, unit in pairs(self._executors_units) do
+	--	self:draw_link_exec(unit, self._unit)
+	--end
+	--self:draw_elements(self._links, true)
 	self:draw_elements(self._element.values.orientation_elements)
 	self:draw_elements(self._element.values.rules_elements)
 	self:draw_elements(self._element.values.elements)
@@ -242,17 +247,16 @@ function MissionScriptEditor:draw_elements(elements, is_link)
 	end
 end
 
-function MissionScriptEditor:should_draw_link(unit)
-	local selected_unit = self:selected_unit()
-	return unit == selected_unit or self._unit == selected_unit
+function MissionScriptEditor:should_draw_link(selected_unit, unit)
+	return not selected_unit or unit == selected_unit or self._unit == selected_unit
 end
 
 function MissionScriptEditor:draw_link_on_executed()
     local selected_unit = self:selected_unit()
-    local unit_sel = self._unit == selected_unit
+	local unit_sel = self._unit == selected_unit
     for _, unit in ipairs(self._on_executed_units) do
         if alive(unit) then
-            if unit_sel or unit == selected_unit then
+            if self:should_draw_link(selected_unit, unit) then
             	self:draw_link_exec(self._unit, unit)
             end
         else
@@ -612,7 +616,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 			end
 	 	end
 	end
-	
+
 	BeardLibEditor.SelectDialogValue:Show({
 	    selected_list = selected_list,
 		list = list,
