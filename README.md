@@ -24,16 +24,16 @@ And drop them to your BeardLib-Editor folder in mods.
 Additionally, you **must** extract the game files using [Bundle Modder](https://modworkshop.net/mydownloads.php?action=view_down&did=22724). Currently, the editor cannot fully function without having the game files extracted. If the extract path is different, you can set the correct directory through the options of the editor.
 
 ## FAQ
-    Q: I have issues with the mod, what to do?
-    A: Before opening an issue in https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues please check your BLT 
+* **Q:** I have issues with the mod, what to do?\
+  **A:** Before opening an issue in https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues please check your BLT 
     log(mods/logs and a txt file with a date as a name) and see if there are any conflicting mods. If you do report an issue, 
     please give as much information as possible.
-    Q: How do I make a level?
-    A: Go to the beginner guide if you missed: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor.
-    Q: There isn't a guide for 'X'
-    A: Since I'm more active on actually developing the editor, I cannot focus on making guides. Any help would be appreciated.
-    Q: Why can't I play multiplayer when using the mod?
-    A: The mod disables matchmaking with normal users. You cannot play with players that don't have the editor. This is done to 
+* **Q:** How do I make a level?\
+  **A:** Go to the beginner guide if you missed: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor.
+* **Q:** There isn't a guide for 'X'\
+  **A:** Since I'm more active on actually developing the editor, I cannot focus on making guides. Any help would be appreciated.
+* **Q:** Why can't I play multiplayer when using the mod?\
+  **A:** The mod disables matchmaking with normal users. You cannot play with players that don't have the editor. This is done to 
     prevent playing with different physics settings which can mess up the game of the host/clients. You can either disable the 
     editor or rename supermod.xml (the physics settings fix) to be able to play with others, hopefully in the future there will 
     be a better way to address this.
