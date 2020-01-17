@@ -19,7 +19,7 @@ This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardL
 Then install the mod as any BLT mod, drop to mods folder.
 
 After that download these files https://modworkshop.net/mod/25270
-And drop them to your BeardLib-Editor folder in mods (The last version is 30/11/18).
+And drop them to your BeardLib-Editor folder in mods.
 
 Additionally, you **must** extract the game files using [Bundle Modder](https://modworkshop.net/mydownloads.php?action=view_down&did=22724). Currently, the editor cannot fully function without having the game files extracted. If the extract path is different, you can set the correct directory through the options of the editor.
 
