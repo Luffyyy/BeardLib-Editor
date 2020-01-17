@@ -61,7 +61,7 @@ end
 
 function EditorAreaTrigger:get_shape()
 	if not self._shape then
-		self:create_shapes()
+		EditorAreaTrigger.create_shapes(self)
 	end
 	local st = self._element.values.shape_type
 	return st == "box" and self._shape or st == "cylinder" and self._cylinder_shape or st == "sphere" and self._sphere_shape
