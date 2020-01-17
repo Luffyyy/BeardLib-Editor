@@ -139,8 +139,7 @@ function LoadLevelMenu:do_load_narratives()
 			align_method = "grid",
 			min_h = 250,
 		})
-		
-		local img_size = 100
+
 		local img = holder:Create(texture and "Image" or "Divider", {
 			text = "No preview image",
 			texture = texture,
@@ -235,12 +234,11 @@ function LoadLevelMenu:load_level(item)
     local one_down = self:GetItem("OneDown"):Value()
     local difficulty = self:GetItem("Difficulty"):Value()
 	local filter = self:GetItem("MissionFilter"):Value()
-    local function load()
+
+	local function load()
 		Global.editor_mode = true
 		Global.current_mission_filter = filter == 0 and nil or filter
-		if item.instance then
-			Global.editor_loaded_instance = true
-		end
+		Global.editor_loaded_instance = item.instance and true or false
         Global.editor_safe_mode = safe_mode == true
         Global.check_load_time = check_load == true
         Global.editor_log_on_spawn = log_on_spawn == true
@@ -255,7 +253,7 @@ function LoadLevelMenu:load_level(item)
 		Global.game_settings.difficulty = difficulty_ids[difficulty] or "normal"
 		Global.game_settings.one_down = one_down
         Global.game_settings.world_setting = nil
-        self:start_the_game()    
+        self:start_the_game()
         BeardLibEditor.Menu:set_enabled(false)
     end
 
