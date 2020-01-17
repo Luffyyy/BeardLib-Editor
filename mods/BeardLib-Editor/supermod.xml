@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<mod>
-	<tweak definition="Data/ApplyPhysics.xml" />
-	<native_module platform="mswindows" filename="Tools/blep.dll" />
-</mod>

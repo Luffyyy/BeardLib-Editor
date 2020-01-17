@@ -1,0 +1,9 @@
+<dynamic_object>
+    <diesel orientation_object="rp_ai_attention_obj" />
+	<bodies>
+		<body name="body" enabled="true" template="editor">
+			<object name="rp_ai_attention_obj"/>
+			<object name="c_sphere" collision_type="sphere" />
+		</body>
+	</bodies>
+</dynamic_object>

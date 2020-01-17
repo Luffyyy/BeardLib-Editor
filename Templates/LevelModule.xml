@@ -1,0 +1,32 @@
+<level ai_group_type="america" id="map" max_bags="54">
+	<add directory="assets">
+	</add>
+	<assets>
+		<asset name="ammo_bag"/>
+		<asset name="health_bag"/>
+		<asset name="grenade_crate"/>
+		<asset name="bodybags_bag"/>
+	</assets>
+	<include directory="levels/map">
+		<file file="world.world" type="binary"/>
+		<file file="continents.continents" type="binary"/>
+		<file file="mission.mission" type="binary"/>
+		<file file="nav_manager_data.nav_data" type="binary"/>
+		<file file="world_sounds.world_sounds" type="binary"/>
+		<file file="world_cameras.world_cameras" type="binary"/>
+		<file file="world/world.continent" type="binary"/>
+		<file file="world/world.mission" type="binary"/>
+		<file file="editor_only/editor_only.continent" type="binary"/>
+		<file file="editor_only/editor_only.mission" type="binary"/>
+		<file file="cover_data.cover_data" type="binary"/>
+		<file file="environments/default.environment" type="custom_xml"/>
+	</include>
+	<packages>
+		<value_node value="levels/narratives/elephant/chew/collision/collision"/>
+	</packages>
+	<script_data_mods directory="scriptdata">
+		<mod replacement="objectives.objective" replacement_type="custom_xml" target_ext="objective" target_path="gamedata/objectives">
+			<options merge_mode="add" mode="add"/>
+		</mod>
+	</script_data_mods>
+</level>
