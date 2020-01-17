@@ -3,7 +3,7 @@ function MissionElementUnit:init(unit)
     self._unit = unit
 
     local iconsize = 32
-    local root = self._unit:get_object(Idstring("c_sphere"))
+    local root = self._unit:get_objects_by_type(Idstring("object3d"))[1]
     if root == nil then
         return
     end
