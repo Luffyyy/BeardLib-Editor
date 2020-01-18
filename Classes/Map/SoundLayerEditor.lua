@@ -80,7 +80,7 @@ function SndLayer:reset_selected_units()
 end
 
 function SndLayer:update(t, dt)
-	if self:Val("SoundUnits") then
+	if self:Val("SoundUnits") or (self:Val("SoundUnitsWhileMenu") and self._parent._current_layer == "sound") then
 		local selected_units = self:selected_units()
 		for _, unit in ipairs(self._created_units) do
 			if alive(unit) then
@@ -143,8 +143,16 @@ function SndLayer:emitter_events()
 end
 
 function SndLayer:build_menu()
-	local defaults = self:group("Defaults")
+	local buttons = self:group("Actions")
+	local opt = self:GetPart("opt")
+	buttons:button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
+    buttons:button("SpawnSoundEnvironment", ClassClbk(self._parent, "BeginSpawning", self._environment_unit))
+    buttons:button("SpawnSoundEmitter", ClassClbk(self._parent, "BeginSpawning", self._emitter_unit))
+    buttons:button("SpawnSoundAreaEmitter", ClassClbk(self._parent, "BeginSpawning", self._area_emitter_unit))
+    buttons:tickbox("SoundUnits", ClassClbk(opt, "update_option_value"), self:Val("SoundUnits"), {text = "Draw Sound Units"})
+    buttons:tickbox("SoundUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("SoundUnitsWhileMenu"), {text = "Draw Sound Units When Entering This Menu"})
 
+	local defaults = self:group("Defaults")
 	local environments = managers.sound_environment:environments()
 	self._default_environment = defaults:combobox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()))
 	local events = self:ambience_events()
@@ -156,11 +164,6 @@ function SndLayer:build_menu()
 		enabled = #occ_events > 0
 	})
 	self._ambience_enabled = defaults:tickbox("AmbienceEnabled", ClassClbk(self, "set_ambience_enabled"), managers.sound_environment:ambience_enabled(), {enabled = #events > 0})
-
-	self:button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
-    self:button("SpawnSoundEnvironment", ClassClbk(self._parent, "BeginSpawning", self._environment_unit))
-    self:button("SpawnSoundEmitter", ClassClbk(self._parent, "BeginSpawning", self._emitter_unit))
-    self:button("SpawnSoundAreaEmitter", ClassClbk(self._parent, "BeginSpawning", self._area_emitter_unit))
 end
 
 function SndLayer:build_unit_menu()

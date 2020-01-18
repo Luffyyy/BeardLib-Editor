@@ -205,7 +205,7 @@ function EnvLayer:update(t, dt)
 		end
 	end
 
-	if self:Val("EnvironmentUnits") then
+	if self:Val("EnvironmentUnits") or self:Val("EnvironmentUnitsWhileMenu") and self._parent._current_layer == "environment" then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
 			if alive(unit) then
@@ -257,6 +257,8 @@ end
 
 function EnvLayer:build_menu()
 	local data = self:data()
+	local opt = self:GetPart("opt")
+
 	local environment_values = data.environment_values
 
     local environment_group = self:group("Environment")
@@ -308,6 +310,8 @@ function EnvLayer:build_menu()
 	local utils = self:GetPart("world")
     environment_group:button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit))
     environment_group:button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit))
+    environment_group:tickbox("EnvironmentUnits", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnits"), {text = "Draw"})
+    environment_group:tickbox("EnvironmentUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnitsWhileMenu"), {text = "Draw When Entering This Menu"})
 
 	local dome_occ = self:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)

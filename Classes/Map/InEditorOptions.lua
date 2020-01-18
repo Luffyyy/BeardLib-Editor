@@ -40,8 +40,6 @@ function Options:build_default()
 
     local map = self:group("Map", groups_opt)
     map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})
-    map:tickbox("EnvironmentUnits", ClassClbk(self, "update_option_value"), self:Val("EnvironmentUnits"), {help = "Draw environment units"})
-    map:tickbox("SoundUnits", ClassClbk(self, "update_option_value"), self:Val("SoundUnits"), {help = "Draw sound units"})
     map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"))
     map:tickbox("HighlightOccluders", nil, false)
     map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"))

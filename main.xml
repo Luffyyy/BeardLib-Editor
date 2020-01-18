@@ -145,8 +145,10 @@
                 <option type="number" default_value="0.5" name="EndlessSelectionReset"/>
                 <option type="boolean" default_value="true" name="SelectAndGoToMenu"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
-                <option type="boolean" default_value="true" name="SoundUnits"/>
-                <option type="boolean" default_value="true" name="EnvironmentUnits"/>
+                <option type="boolean" default_value="false" name="SoundUnits"/>
+                <option type="boolean" default_value="true" name="SoundUnitsWhileMenu"/>
+                <option type="boolean" default_value="FALSE" name="EnvironmentUnits"/>
+                <option type="boolean" default_value="true" name="EnvironmentUnitsWhileMenu"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="HighlightInstances"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
