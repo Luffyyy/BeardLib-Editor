@@ -23,12 +23,6 @@ function MissionEditor:init(parent, menu)
     self._name_ids = {}
 end
 
-function MissionEditor:loaded_continents()
-    for _, unit in pairs(self._units) do
-        unit:mission_element().editor_class:do_links()
-    end
-end
-
 function MissionEditor:set_elements_vis(vis)
     local enabled = NotNil(vis, self:Val("ShowElements") and not Global.editor_safe_mode)
     local draw_script = self:Val("DrawOnlyElementsOfCurrentScript")
@@ -95,9 +89,9 @@ end
 
 function MissionEditor:remove_script()
     if self._current_script then
-       -- if self._current_script.destroy then
-        --    self._current_script:destroy()
-        --end
+        if self._current_script.destroy then
+            self._current_script:destroy()
+        end
         self._current_script = nil
     end
 end
@@ -137,16 +131,17 @@ end
 function MissionEditor:set_element(element)
 	self:GetPart("static")._built_multi = false
     if element then
-        local unit = self:get_element_unit(element.id)
-        if alive(unit) then
-            self._current_script = unit:mission_element().editor_class
-            self._current_script:work()
+        local clss = self:get_editor_class(element.class)
+		if clss then
+            local script = clss:new(element)
+			script._element.class = element.class
+			script:work()
+            self._current_script = script
             if not self._parent:selected_unit() then
                 self._current_script = nil
-            end
-            if self._current_script.FAKE then
-                self:alert_missing_element_editor(element.class)
-            end
+			end
+        else
+			self:alert_missing_element_editor(element.class)
         end
     end
 end
@@ -185,23 +180,7 @@ end
 
 function MissionEditor:update(t, dt)
     self.super.update(self, t, dt)
-
-    local cam_pos = managers.editor:camera():position()
-    local lod_draw_distance = math.max(4000, 100000 - #self._units * 140)
-    local selected_unit = self:selected_unit()
-	lod_draw_distance = lod_draw_distance * lod_draw_distance
-    self._only_draw_selected_connections = false
-    for _, unit in pairs(self._units) do
-        if unit:mission_element().element.script == self._parent._current_script then
-            local distance = mvector3.distance_sq(unit:position(), cam_pos)
-            if self._override_lod_draw or self._only_draw_selected_connections and selected_unit == unit or not self._only_draw_selected_connections and distance < lod_draw_distance then
-                unit:mission_element().editor_class:draw_links(t, dt, self._only_draw_selected_connections and selected_unit, all_units)
-            end
-        end
-
-        --unit:mission_element().editor_class:update(t, dt)
-    end    
     if self._parent:selected_unit() and self._parent:selected_unit().mission_element and self._current_script and self._current_script.update then
-       self._current_script:update(t, dt)
+        self._current_script:update(t, dt)
     end
 end
