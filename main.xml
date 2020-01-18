@@ -374,8 +374,8 @@
 	    <value_node value="ElementInstigatorOperator"/>
 	    <value_node value="ElementInstigatorTrigger"/>
 	    <value_node value="ElementHeistTimer"/>
-	    <value_node value="ElementHeistTimerOperator"/>
-	    <value_node value="ElementHeistTimerTrigger"/>
+	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
+	    <value_node value="ElementHeistTimerTrigger"/-->
     </MissionElements>
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>
