@@ -38,6 +38,9 @@ function MissionScriptEditor:create_element()
 end
 
 function MissionScriptEditor:work()
+	self._menu = self:GetPart("static")._holder
+	ItemExt:add_funcs(self)
+
 	self.super.build_default_menu(self)
 	self:_build_panel()
     self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
@@ -87,8 +90,6 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
-	self._menu = self:GetPart("static")._holder
-	ItemExt:add_funcs(self)
 	self:ClearItems()
 
 	local SE = self:GetPart("static")
@@ -521,9 +522,9 @@ function MissionScriptEditor:OpenElementsManageDialog(params)
 end
 
 function MissionScriptEditor:OpenUnitsManageDialog(params)
-	local units = table.map_values(managers.worlddefinition._all_units)
+	local units = World:find_units_quick("disabled", "all")
 	units = table.filter_list(units, function(unit)
-		return not unit:unit_data().instance
+		return unit:unit_data() and not unit:unit_data().instance
 	end)
 	self:OpenManageListDialog(params, units,
 		function(unit)
@@ -655,7 +656,9 @@ function MissionScriptEditor:ItemData(item)
 end
 
 function MissionScriptEditor:Text(text, opt)
-    return ((opt and opt.group) or self._class_group):divider(text, opt)
+	opt = opt or {}
+	opt.text = text
+    return (opt.group or self._class_group):divider(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
