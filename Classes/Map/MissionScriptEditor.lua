@@ -671,7 +671,7 @@ function MissionScriptEditor:ListSelectorOpen(params)
     BeardLibEditor.SelectDialog:Show({
         selected_list = params.selected_list,
         list = params.list,
-        callback = function(list) 
+        callback = params.callback or function(list) 
  			params.data[params.value_name] = #list > 0 and list or nil
         end
     })
