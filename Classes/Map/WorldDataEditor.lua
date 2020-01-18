@@ -110,7 +110,7 @@ function WData:make_tabs(tabs)
     for i, name in pairs(managers) do
         self._tabs:tb_btn(name, ClassClbk(self, "build_menu", name:lower()), {
             enabled = not Global.editor_safe_mode,
-            text = string.capitalize(name),
+            text = name == "ai" and "AI" or string.capitalize(name),
             border_bottom = i == 1
         })
     end
@@ -385,7 +385,7 @@ function WData:remove_script(script, item)
         self:_clear_all_elements_from_script(script, item.parent.continent, true, true)
         mission._missions[item.parent.continent][script] = nil
         mission._scripts[script] = nil
-        self:build_default_menu()  
+        self:build_default_menu()
     end)
 end
 
