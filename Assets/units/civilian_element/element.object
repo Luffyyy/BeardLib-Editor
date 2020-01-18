@@ -10,7 +10,7 @@
 	
 	<graphics>
 		<graphic_group name="grp_grp" enabled="true" culling_object="co_co">
-			<object name="g_g" enabled="true" />
+			<object name="g_g" enabled="true" instance_struct="world_tm" />
 		</graphic_group>
 	</graphics>
 </dynamic_object>
