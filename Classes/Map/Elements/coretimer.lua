@@ -31,7 +31,7 @@ EditorTimerOperator.RANDOMS = {"time"}
 EditorTimerOperator.LINK_ELEMENTS = {"elements"}
 EditorTimerOperator.CLASS = "ElementTimerOperator"
 EditorTimerOperator.MODULE = "CoreElementTimer"
-EditorTimerOperator.ELEMENTS = {"ElementTimer"}
+EditorTimerOperator.ELEMENTS = {"ElementTimer", "ElementHeistTimer"}
 function EditorTimerOperator:create_element()
 	EditorTimerOperator.super.create_element(self)
 	self._element.values.operation = "none"
@@ -51,7 +51,7 @@ EditorTimerTrigger = EditorTimerTrigger or class(MissionScriptEditor)
 EditorTimerTrigger.LINK_ELEMENTS = {"elements"}
 EditorTimerTrigger.CLASS = "ElementTimerTrigger"
 EditorTimerTrigger.MODULE = "CoreElementTimer"
-EditorTimerTrigger.ELEMENTS = {"ElementTimer"}
+EditorTimerTrigger.ELEMENTS = {"ElementTimer", "ElementHeistTimer"}
 
 function EditorTimerTrigger:create_element()
 	EditorTimerTrigger.super.create_element(self)
