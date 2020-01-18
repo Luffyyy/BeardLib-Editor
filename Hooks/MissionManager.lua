@@ -508,6 +508,13 @@ function MScript:create_mission_element_unit(element)
 	element.values.rotation = type(element.values.rotation) ~= "number" and element.values.rotation or Rotation()
 
 	local unit_name = "units/mission_element/element"
+	if element.class == "ElementSpawnCivilian" then
+		unit_name = "units/civilian_element/element"
+	elseif element.class == "ElementSpawnEnemyDummy" then
+		unit_name = "units/enemy_element/element"
+	elseif element.class == "ElementPlayerSpawner" then
+		unit_name = "units/player_element/element"
+	end
 	local unit = World:spawn_unit(Idstring(unit_name), element.values.position, element.values.rotation)
 
 	--unit:mission_element():set_enabled(enabled, true)
