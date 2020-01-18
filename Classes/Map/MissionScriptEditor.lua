@@ -155,7 +155,7 @@ function MissionScriptEditor:update_positions(pos, rot)
 	end
 	SE:SetItemValue("Position", pos)
 	SE:SetItemValue("Rotation", rot)
-    self:update_element(true)  
+    self:update_element(true)
 end
 
 function MissionScriptEditor:add_draw_units(draw)
@@ -229,7 +229,7 @@ function MissionScriptEditor:draw_links()
 end
 
 function MissionScriptEditor:draw_elements(elements, is_link)
-	if not elements then
+	if not elements or self.WEIRD_ELEMENTS_VALUE then
 		return
 	end
 	for k, id in ipairs(elements) do
@@ -396,7 +396,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		not_table = opt.not_table,
 		units = opt.units,
 		single_select = opt.single_select,
-		need_name_id = opt.need_name_id, 
+		need_name_id = opt.need_name_id,
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
 end
@@ -464,7 +464,7 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
 		else
             id = data
 		end
-        if tdata then           
+        if tdata then
 			local add = data.orig_tbl
             if not add then
 				add = clone(tdata.orig)
@@ -520,7 +520,11 @@ end
 function MissionScriptEditor:OpenUnitsManageDialog(params)
 	local units = World:find_units_quick("disabled", "all")
 	units = table.filter_list(units, function(unit)
-		return unit:unit_data() and not unit:unit_data().instance
+		local ud = unit:unit_data()
+		if not ud then
+			return false
+		end
+		return not ud.instance and (not params.check_unit or params.check_unit(unit))
 	end)
 	self:OpenManageListDialog(params, units,
 		function(unit)
@@ -537,7 +541,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 			return string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or "")
 		end,
 		function(unit)
-			return (not params.units or table.contains(params.units,  unit:unit_data().name)) and (not params.check_unit or params.check_unit(unit))
+			return (not params.units or table.contains(params.units, unit:unit_data().name))
 		end
 	)
 end
@@ -581,7 +585,11 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 				object_key = ELEMENT
 				id = object.id
 			elseif is_unit then
-				id = object:unit_data().unit_id
+				if params.need_name_id then
+					id = object:unit_data().name_id
+				else
+					id = object:unit_data().unit_id
+				end
 			else
 				id = object
 				object_key = INSTANCE
@@ -602,9 +610,11 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 						table.insert(selected_list, clone(entry))
 					end
 				end
-			elseif table.contains(current_list, id) then
+			else
+				if table.contains(current_list, id) then
 				table.insert(selected_list, entry)
 			end
+		end
 
 			--Adding all units to be selectable.
 			if check_object(object) then
@@ -621,7 +631,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 			end
 	 	end
 	end
-	
+
 	BeardLibEditor.SelectDialogValue:Show({
 	    selected_list = selected_list,
 		list = list,
