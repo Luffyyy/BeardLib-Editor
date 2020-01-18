@@ -328,7 +328,7 @@ function WData:new_continent()
             editor_groups = {},
             statics = {},
             values = {workviews = {}}
-        }            
+        }
         worlddef._continents[name] = {base_id = worlddef._start_id  * table.size(worlddef._continent_definitions), name = name}
         self._parent:load_continents(worlddef._continent_definitions)
         self:build_default_menu()

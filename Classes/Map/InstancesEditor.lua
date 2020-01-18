@@ -35,7 +35,7 @@ function Instance:set_instance(reset)
             return
         end
     end
-    self._static:build_default_menu()
+    self._static:clear_menu()
 end
 
 function Instance:delete_instance(instance)

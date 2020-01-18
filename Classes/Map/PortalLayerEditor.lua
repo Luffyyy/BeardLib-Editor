@@ -96,7 +96,7 @@ end
 function PortalLayer:build_unit_menu()
 	local S = self:GetPart("static")
 	S._built_multi = false
-	S.super.build_default_menu(S)
+	S:clear_menu()
 	local unit = self:selected_unit()
 	if alive(unit) then
 		S:build_positions_items(true)

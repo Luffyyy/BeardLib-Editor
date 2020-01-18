@@ -961,7 +961,7 @@ end
 function Static:set_multi_selected()
     self._built_multi = true
     self._editors = {}
-	Static.super.build_default_menu(self)
+	self:clear_menu()
     self:build_unit_main_values()
     self:build_positions_items()
 	self:update_positions()
