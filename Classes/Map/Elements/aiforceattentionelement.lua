@@ -28,8 +28,8 @@ end
 
 function EditorAIForceAttention:_build_panel()
 	self:_create_panel()
-	affected_units:BooleanCtrl("ignore_vis_blockers", {help = "Allows the affected units to shoot through vis_blockers"})
-	affected_units:BooleanCtrl("include_all_force_spawns", {help = "Includes all units that don't participate in the group AI"})
+	self:BooleanCtrl("ignore_vis_blockers", {help = "Allows the affected units to shoot through vis_blockers"})
+	self:BooleanCtrl("include_all_force_spawns", {help = "Includes all units that don't participate in the group AI"})
 	self:BuildElementsManage("included_units", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup"})
 	self:BuildElementsManage("excluded_units", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup"})
 	self:BuildElementsManage("att_unit_id", nil, nil, ClassClbk(self, "set_is_spawn"), {single_select = true, not_table = true})
