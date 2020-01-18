@@ -2,8 +2,6 @@ MissionScriptEditor = MissionScriptEditor or class(EditorPart)
 MissionScriptEditor.CLASS = "MissionScriptElement"
 function MissionScriptEditor:init(element, old_element)
 	self:init_basic(managers.editor, "MissionElement")
-	self._menu = self:GetPart("static")._holder
-	ItemExt:add_funcs(self)
 	self._on_executed_units = {}
 	self._draw_units = {}
 	if element then
@@ -89,6 +87,10 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
+	self._menu = self:GetPart("static")._holder
+	ItemExt:add_funcs(self)
+	self:ClearItems()
+
 	local SE = self:GetPart("static")
 	self._main_group = self:group("Main")
 	local quick_buttons = self:group("QuickButtons", {align_method = "grid"})
@@ -100,6 +102,7 @@ function MissionScriptEditor:_create_panel()
 	quick_buttons:s_btn("Delete", ClassClbk(SE, "delete_selected_dialog"))
     quick_buttons:s_btn("CreatePrefab", ClassClbk(SE, "add_selection_to_prefabs"))
 	quick_buttons:s_btn("Execute", ClassClbk(managers.mission, "execute_element", self._element))
+	quick_buttons:s_btn("ReadAboutInWiki", ClassClbk(self, "open_wiki"))
 	if self.test_element then
 		quick_buttons:s_btn("Test", ClassClbk(self, "test_element"))
 		quick_buttons:s_btn("StopTesting", ClassClbk(self, "stop_test_element"))
@@ -135,6 +138,11 @@ function MissionScriptEditor:_create_panel()
 	if self.USES_POINT_ORIENTATION then
 		self:BuildElementsManage("orientation_elements")
 	end
+end
+
+function MissionScriptEditor:open_wiki()
+	local url = "https://wiki.modworkshop.net/books/payday-2/page/mission-elements-%28wip%29#bkmrk-"..self._element.class:gsub("Element", ""):lower()
+	os.execute('start "" "'..url..'"')
 end
 
 function MissionScriptEditor:set_selected_on_executed_element_delay(item)
