@@ -106,13 +106,13 @@ function CheckFileMenu:DoCheckFile(file)
 
     Checker.assets_dir = assets_dir
     Checker.return_on_missing = false
-   
+
     file = Path:Normalize(file):gsub(Path:Normalize(Application:base_path()), "")
 
     local splt = string.split(file:gsub(Checker.assets_dir, ""), "%.")
     local path = splt[1]
     local ext = splt[2]
-    
+
     local errors = Checker:CheckFile(ext, path)
     if errors and  #errors > 0 then
         local color1 = Color(0.6, 0.6, 1)

@@ -2,21 +2,40 @@ BLE.Utils.Export = BLE.Utils.Export or class()
 local EditorUtils = BLE.Utils
 local Utils = EditorUtils.Export
 Utils.return_on_missing = true
+Utils.check_path_before_insert = false
 Utils.pack_extra_info = false
+Utils.pack_extract_path = true
 Utils.assets_dir = nil
+function Utils:init(config)
+    if config.return_on_missing ~= nil then
+        self.return_on_missing = config.return_on_missing
+    end
+    if config.check_path_before_insert ~= nil then
+        self.check_path_before_insert = config.check_path_before_insert
+    end
+    if config.pack_extra_info ~= nil then
+        self.pack_extra_info = config.pack_extra_info
+    end
+    if config.pack_extract_path ~= nil then
+        self.pack_extract_path = config.pack_extract_path
+    end
+    if config.assets_dir ~= nil then
+        self.assets_dir = config.assets_dir
+    end
+end
 
 function Utils:Add(config, ext, path, exclude, extra_info)
 	if exclude and exclude[ext] then
         return
     end
-    table.insert(config, {_meta = ext, path = path, force = true, unload = true, extra_info = self.pack_extra_info and extra_info or nil})
+    table.insert(config, {_meta = ext, path = path, unload = true, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 function Utils:AddForceLoaded(config, ext, path, exclude, extra_info)
 	if exclude and exclude[ext] then
         return
     end
-    table.insert(config, {_meta = ext, path = path, force = true, unload = true, load = true, extra_info = self.pack_extra_info and extra_info or nil})
+    table.insert(config, {_meta = ext, path = path, unload = true, load = true, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 
@@ -45,6 +64,7 @@ function Utils:CheckFile(ext, path)
 end
 
 function Utils:GetDependencies(ext, path, ignore_default, exclude)
+    exclude = exclude or {}
 	if not Utils.Reading[ext] then
 		self:Log("Extension %s does not have a read function!", ext)
 		return
@@ -54,18 +74,23 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
     if not Utils.Reading[ext](self, path, config, exclude) then
         return false
 	end
-    
+
     local dyn = managers.dyn_resource
     local temp = deep_clone(config)
     config = {}
 
     local function add_to_config(file, file_path)
-        file.extract_real_path = file_path
-        table.insert(config, file)
+        if self.pack_extract_path then
+            file.extract_real_path = file_path
+        end
+        if not self.check_path_before_insert or FileIO:Exists(file_path) then
+            table.insert(config, file)
+        end
     end
 
+
     for _, file in pairs(temp) do
-        local file_path = Path:Combine(BLE.ExtractDirectory, file.path.."."..file._meta)
+        local file_path = Path:Combine(self.assets_dir, file.path.."."..file._meta)
         local ext = file._meta
         local file_id, ext_id = file.path:id(), ext:id()
         if DB:has(ext_id, file_id) then --Does the file exist at all?
@@ -73,37 +98,34 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
                 local is_bnk = ext == "bnk"
                 local success
                 if is_bnk then
-                    local possible_bnk_dir = Path:Combine(BLE.ExtractDirectory, file.path..".english.bnk")
+                    local possible_bnk_dir = Path:Combine(self.assets_dir, file.path..".english.bnk")
                     if FileIO:Exists(possible_bnk_dir) then
                         add_to_config(file, possible_bnk_dir)
                         success = true
                     end
                 end
                 if not success then
-
                     if FileIO:Exists(file_path) then
                         add_to_config(file, file_path)
                     else
                         local key = BLEP.swap_endianness(file_id:key())
                         self:Log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead %s", tostring(unit), file_path, tostring(key))
                         if is_bnk then
-                            local possible_bnk_dir = Path:Combine(BLE.ExtractDirectory, key..".english.bnk")
+                            local possible_bnk_dir = Path:Combine(self.assets_dir, key..".english.bnk")
                             if FileIO:Exists(possible_bnk_dir) then
                                 add_to_config(file, possible_bnk_dir)
                                 success = true
-                            end    
+                            end
                         end
                         if not success then
-
-                            local key_file_path = Path:Combine(BLE.ExtractDirectory, key.."."..ext)
+                            local key_file_path = Path:Combine(self.assets_dir, key.."."..ext)
                             if FileIO:Exists(key_file_path) then
                                 self:Log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
                                 add_to_config(file, key_file_path)
-                            else
+                            elseif self.return_on_missing then
                                 self:Log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded. %s", tostring(unit), file_path, key_file_path)
                                 return false
                             end
-
                         end
                     end
 
@@ -178,8 +200,7 @@ function Utils:ReadObject(path, config, exclude, extra_info)
 	local node = EditorUtils:ParseXml("object", path, nil, self.assets_dir)
 	local rom = self.return_on_missing
 
-    
-    if node then    
+    if node then
         self:Add(config, "cooked_physics", path, exclude, {file = file_ext, where = "expected dependencies"})
         self:Add(config, "model", path, exclude, {file = file_ext, where = "expected dependencies"})
 
@@ -219,7 +240,7 @@ function Utils:ReadAnimationStateMachine(path, config, exclude, extra_info)
             end
 		end
 	end
-	
+
     return node ~= nil
 end
 
@@ -290,7 +311,7 @@ function Utils:ReadEffect(path, config, exclude, extra_info)
 	local rom = self.return_on_missing
 
     local file_ext = path..".effect"
-    
+
     if node then
         for eff_child in node:children() do
             local name = eff_child:name()

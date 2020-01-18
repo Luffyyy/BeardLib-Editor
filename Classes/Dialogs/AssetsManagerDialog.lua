@@ -14,7 +14,10 @@ local UNIT = "unit"
 function AssetsManagerDialog:init(params, menu)
     if self.type_name == AssetsManagerDialog.type_name then
         params = params and clone(params) or {}
-	end
+    end
+    self._exporter = BLE.Utils.Export:new({
+        assets_dir = BLE.ExtractDirectory
+    })
 	params.scrollbar = false
     menu = menu or BeardLib.managers.dialog:Menu()
     self._unit_info = menu:Menu(table.merge({
@@ -79,6 +82,7 @@ function AssetsManagerDialog:_Show()
     self._unit_info:button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"))
     self._unit_info:button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false))
     self._unit_info:button("PackageReport", ClassClbk(self, "package_report"))
+    self._unit_info:button("ScanAssetsDirectory", ClassClbk(self, "scan_assets"))
     self._unit_info:divider("UnitInfoTitle", {text = "Unit Inspection"})
     self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
     local actions = self._unit_info:divgroup("Actions")
@@ -334,7 +338,7 @@ function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask)
 	local failed_all = false
 	for ext, assets in pairs(missing_assets) do
 		for asset in pairs(assets) do
-			local cfg = BLE.Utils.Export:GetDependencies(ext, asset, true, exclude)
+			local cfg = self._exporter:GetDependencies(ext, asset, true, exclude)
 			if cfg then
 				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset}, cfg))
 			else
@@ -345,6 +349,23 @@ function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask)
     self:_load_from_extract(config, dontask, failed_all)
 end
 
+function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
+    for _, v in pairs(config_to_merge) do
+        local exists = false
+        for _, tbl in pairs(config) do
+            if type(tbl) == "table" and tbl._meta == v._meta and (tbl.name and tbl.name == v.path or tbl.path and tbl.path == v.path) then
+                exists = true
+                break
+            end
+        end
+        local clean = self:clean_add_asset_tbl(v)
+        if not exists then
+            table.insert(config, clean)
+            if clbk then clbk(clean) end
+        end
+    end
+end
+
 function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
@@ -353,24 +374,12 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
         local level = project:current_level(data)
         level.add = level.add or {}
         local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:read_xml(add_path)
-        add = add or {_meta = "add", directory = "assets"}
-        for k,v in pairs(config) do
-            local exists
-            for _, tbl in pairs(add) do
-				if type(tbl) == "table" and tbl._meta == v._meta and (tbl.name and tbl.name == v.path or tbl.path and tbl.path == v.path) then
-                    exists = true
-                    break
-                end
-            end
-            local clean = self:clean_add_asset_tbl(v)
-            if not exists then
-                table.insert(add, clean)
-                table.insert(to_copy, clean)
-            end
-        end
+        local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
+        self:merge_add_configs(add, config, function(clean)
+            table.insert(to_copy, clean)
+        end)
         local function save()
-            local assets_dir = Path:Combine(mod.ModPath, add.directory or "")
+            local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
             local copy_data = {}
             for _, unit_load in pairs(to_copy) do
                 if type(unit_load) == "table" then
@@ -389,7 +398,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
                             end
 							self._unready_assets[type] = self._unready_assets[type] or {}
                             self._unready_assets[type][name] = true
-                        end        
+                        end
                     end
                 end
             end
@@ -411,7 +420,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
 								assets[asset] = nil
 							end
 						end
-         
+
                         self:reload()
                     end
                 end)
@@ -428,7 +437,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
         else
             save()
         end
-    end  
+    end
 end
 
 function AssetsManagerDialog:find_packages(missing_assets, clbk)
@@ -527,6 +536,47 @@ function AssetsManagerDialog:package_report()
         end
     })
     self:reload()
+end
+
+function AssetsManagerDialog:scan_assets()
+    local project = BLE.MapProject
+    local mod, data = project:get_mod_and_config()
+    if data then
+        local level = project:current_level(data)
+        level.add = level.add or {}
+        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
+        local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
+        local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
+        local scanner = BLE.Utils.Export:new({
+            assets_dir = assets_dir,
+            check_path_before_insert = true,
+            return_on_missing = false,
+            pack_extract_path = false
+        })
+
+        self:merge_add_configs(add, self:scan_dir(scanner, scanner.assets_dir))
+        project:save_xml(add_path, add)
+    end
+end
+
+function AssetsManagerDialog:scan_dir(scanner, path, big_path, addxml)
+    big_path = big_path or path
+    addxml = addxml or {}
+    for _, file in pairs(FileIO:GetFiles(path)) do
+		if file:ends(".unit") then
+			local file_path = Path:Normalize(Path:Combine(path:gsub(big_path, ""), file))
+			local splt = file_path:split("%.")
+			local add = scanner:GetDependencies(splt[2], splt[1])
+			add._meta = "add"
+			add.path = splt[1]
+			add.type = "unit"
+			table.insert(addxml, add)
+        end
+    end
+    for _, folder in pairs(FileIO:GetFolders(path)) do
+        self:scan_dir(scanner, Path:Combine(path, folder), big_path, addxml)
+    end
+    return addxml
 end
 
 function AssetsManagerDialog:_make_package_report(package)
