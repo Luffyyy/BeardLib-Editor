@@ -159,8 +159,7 @@ function Static:set_units()
     self._set_elements = {}
 end
 
-function Static:build_default_menu()
-    Static.super.build_default_menu(self)
+function Static:build_default()
     self._editors = {}
     self:set_title("Selection")
     self:divider("No selection >_<", {border_left = false})
@@ -962,7 +961,7 @@ end
 function Static:set_multi_selected()
     self._built_multi = true
     self._editors = {}
-	self:ClearItems()
+	Static.super.build_default_menu(self)
     self:build_unit_main_values()
     self:build_positions_items()
 	self:update_positions()

@@ -37,8 +37,7 @@ function EnvEditor:load_included_environments()
     end
 end
 
-function EnvEditor:build_default_menu()
-    self.super.build_default_menu(self)
+function EnvEditor:build_default()
     if not managers.viewport:first_active_viewport() then
         return
     end

@@ -6,8 +6,7 @@ function Options:init(parent, menu)
 end
 
 --TODO: cleanup
-function Options:build_default_menu()
-    self.super.build_default_menu(self)
+function Options:build_default()
     local groups_opt = {offset = {8, 4}}
 
     local main = self:group("Editor", groups_opt)

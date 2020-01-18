@@ -53,7 +53,15 @@ end
 function Part:make_collapse_all_button()
     local title = self._menu:GetItem("Title")
     if title then
-        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, {161, 158, 50, 50}, {offset = 0})
+        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all, {offset = 0})
+        self._help = title:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {offset = 0, visible = false})
+    end
+end
+
+function Part:show_help(clbk)
+    if self._help then
+        self._help:SetVisible(true)
+        self._help:SetCallback(clbk)
     end
 end
 
@@ -119,7 +127,17 @@ function Part:enabled() return self._enabled end
 function Part:value(v) return assert_value(ClassClbk(BLE.Options, "GetValue"), 'Map/' .. v, "Value") end
 function Part:part(n) return assert_value(ClassClbk(BLE.Utils, "GetPart"), n, "Part") end
 function Part:layer(l) return assert_value(ClassClbk(BLE.Utils, "GetLayer"), l, "Layer") end
-function Part:build_default_menu() self:ClearItems() end
+function Part:clear_menu()
+    if self._help then
+        self._help:SetVisible(false)
+    end
+    self:ClearItems()
+end
+function Part:build_default_menu()
+    self:clear_menu()
+    self:build_default()
+end
+function Part:build_default() end
 function Part:set_title(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
 function Part:get_title() return self._menu:GetItem("Title"):Text() end
 function Part:enable()

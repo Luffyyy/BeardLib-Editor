@@ -11,9 +11,9 @@ function Instance:init(parent, menu)
 end
 
 function Instance:build_editor_menu()
-    Instance.super.build_default_menu(self)
+    self._static:clear_menu()
     self._editors = {}
-    local other = self:group("Main")    
+    local other = self:group("Main")
     self._static:build_positions_items(true, true)
     self._static:SetTitle("Instance Selection")
     other:textbox("Name", ClassClbk(self, "set_data"), nil, {help = "the name of the instance(make sure it's unique!)"})

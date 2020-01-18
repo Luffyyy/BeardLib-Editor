@@ -116,9 +116,7 @@ function WData:make_tabs(tabs)
     end
 end
 
-function WData:build_default_menu()
-    self.super.build_default_menu(self)
-
+function WData:build_default()
     self.layers = self.layers or {
         environment = EnvironmentLayerEditor:new(self), 
         sound = SoundLayerEditor:new(self), 
