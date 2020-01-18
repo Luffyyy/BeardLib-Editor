@@ -166,15 +166,14 @@ function WData:build_default()
 
     local load = self:divgroup("Load", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self:divgroup("LoadFromExtract", {enabled = has_extract, align_method = "grid"})
+
+    local spawn_help = "Load and spawn. This list selector will close itself after selecting a unit and will let you begin spawning the unit when it's fully loaded!"
+    load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext, spawn = true}), {text = "Spawn Unit("..load_unit..")", help = spawn_help})
+    load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = extract_clbk, ext = ext, spawn = true}), {text = "Spawn Unit("..load_unit_fe..")", help = spawn_help})
+
     for _, ext in pairs(BLE.UsableAssets) do
-        local text
-        if ext == "unit" then
-            text = "Unit("..load_unit..")"
-        end
+        local text = ext:capitalize()
         load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
-        if ext == "unit" then
-            text = "Unit("..load_unit_fe..")"
-        end
         load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
     end
 
@@ -187,8 +186,8 @@ function WData:build_default()
     self:build_continents()
 end
 
-function WData:LoadFromExtract(ext, asset)
-    self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}) 
+function WData:LoadFromExtract(ext, asset, clbk)
+    self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}, clbk)
 end
 
 function WData:button_pos(near, item)
@@ -933,7 +932,7 @@ function WData:OpenSpawnUnitDialog(params)
                 end
 			end
 	    end
-	}) 
+	})
 end
 
 function WData:OpenLoadDialog(params)
@@ -944,12 +943,31 @@ function WData:OpenLoadDialog(params)
             table.insert(units, unit)
         end
     end
+    local do_spawn = ext == "unit" and params.spawn
 	BLE.ListDialog:Show({
 	    list = units,
 		force = true,
 		not_loaded = true,
-	    callback = params.on_click or function(asset)
-            self._assets_manager:find_package(asset, ext, true)
+        callback = function(asset)
+            if do_spawn then
+                self:CloseDialog()
+            end
+            local function start_spawning()
+                if do_spawn then
+                    if PackageManager:has(Idstring("unit"), asset:id()) then
+                        self:BeginSpawning(asset)
+                    end
+                end
+            end
+            if do_spawn and PackageManager:has(Idstring("unit"), asset:id()) then
+                start_spawning()
+            else
+                if params.on_click then
+                    params.on_click(asset, start_spawning)
+                else
+                    self._assets_manager:find_package(asset, ext, true, start_spawning)
+                end
+            end
 	    end
 	})
 end

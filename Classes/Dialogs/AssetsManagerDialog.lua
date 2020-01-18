@@ -87,7 +87,7 @@ function AssetsManagerDialog:_Show()
     self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
     local actions = self._unit_info:divgroup("Actions")
     actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, enabled = false})
-    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
+    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false, nil), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
 
     actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, enabled = false})
     actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, enabled = false})
@@ -218,7 +218,7 @@ function AssetsManagerDialog:load_all_from_extract_dialog()
    self:load_from_extract_dialog(self._missing_assets)
 end
 
-function AssetsManagerDialog:load_from_extract_dialog(assets)
+function AssetsManagerDialog:load_from_extract_dialog(assets, clbk)
 	if not assets and not self._tbl._selected then
 		return
 	end
@@ -226,6 +226,7 @@ function AssetsManagerDialog:load_from_extract_dialog(assets)
         force = true,
         message = self.ImportHelp,
         assets_manager = self,
+        done_clbk = clbk,
         assets = assets or {[self._tbl._selected.asset_type] = {[self._tbl._selected.name] = true}}
     })
 end
@@ -238,7 +239,7 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
             local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.package_size)
             table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
 		end
-		
+
         table.sort(items, function(a,b)
             if a.custom then
                 return true
@@ -332,7 +333,7 @@ function AssetsManagerDialog:clean_add_xml()
     project:save_xml(add_path, new_add)
 end
 
-function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask)
+function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask, clbk)
     missing_assets = missing_assets or self._missing_assets
     local config = {}
 	local failed_all = false
@@ -343,10 +344,10 @@ function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask)
 				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset}, cfg))
 			else
 				failed_all = true
-			end	
+			end
 		end
-	end
-    self:_load_from_extract(config, dontask, failed_all)
+    end
+    self:_load_from_extract(config, dontask, failed_all, clbk)
 end
 
 function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
@@ -366,7 +367,7 @@ function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
     end
 end
 
-function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
+function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all, clbk)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     local to_copy = {}
@@ -409,7 +410,7 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
                         CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, true)
                         if failed_all then
                             BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
-                        else
+                        elseif not clbk then
                             BLE.Utils:Notify("Info", "Copied assets successfully")
 						end
 						for type, assets in pairs(self._unready_assets) do
@@ -422,12 +423,20 @@ function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all)
 						end
 
                         self:reload()
+
+                        if clbk then
+                            clbk()
+                        end
                     end
                 end)
 			elseif failed_all then
                 BLE.Utils:Notify("Info", "No assets to copy, failed to export an asset or more.")
-			else
-                BLE.Utils:Notify("Info", "No assets to copy")
+            else
+                if clbk then
+                    clbk()
+                else
+                    BLE.Utils:Notify("Info", "No assets to copy")
+                end
             end
         end
         if not dontask then

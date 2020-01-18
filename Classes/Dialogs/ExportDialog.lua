@@ -11,7 +11,9 @@ function ExportDialog:_Show(params)
 
     local semi_opt = {help = "Semi optional asset, some units don't need it and some do, better keep it on."}
     local opt = {help = "Optional asset, the game can load it by itself."}
-    
+
+    self._clbk = params.done_clbk
+
     self:divider("Include:")
     self:tickbox("NetworkUnits", nil, true)
     self:tickbox("Animations", nil, true, semi_opt)
@@ -30,7 +32,7 @@ function ExportDialog:hide(success)
             model = not self:GetItem("Models"):Value(),
             cooked_physics = not self:GetItem("CookedPhysics"):Value(),
             network_unit = not self:GetItem("NetworkUnits"):Value()
-        }, true)
+        }, true, self._clbk)
     end
     return ExportDialog.super.hide(self, success)
 end

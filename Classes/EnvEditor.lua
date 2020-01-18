@@ -47,7 +47,7 @@ function EnvEditor:build_default()
         self:load_included_environments()
         included:GetToolbar():tb_btn("IncludeEnvironment", ClassClbk(self, "include_current_dialog"), {text = "Include current", offset = 0})
     end
-		
+
     local quick = self:divgroup("Quick actions")
     quick:button("EffectEditor", ClassClbk(self, "open_effect_editor"))
     quick:button("Browse", ClassClbk(self, "open_environment_dialog"))
