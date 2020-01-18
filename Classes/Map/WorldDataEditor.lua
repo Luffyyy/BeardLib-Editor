@@ -483,7 +483,7 @@ function WData:select_all_units_from_script(script, item)
 end
 
 function WData:build_menu(name, item)
-    self.super.build_default_menu(self)
+    self:clear_menu()
     self._current_layer = name
     local layer = self.layers[name]
     for _, tab in pairs(self._tabs:Items()) do
