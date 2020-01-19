@@ -79,17 +79,17 @@ function EnvEditor:build_default()
     local ambient = self:group("Ambient")
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:colorbox("ambient_color", nil, nil, {text = "Color", ret_vec = true}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_color_scale", nil, 1, {text = "Color scale", step = 0.1, min = 0, max = 10}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_scale", nil, 1, {text = "Scale", step = 0.1, min = 0, max = 10}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_scale", nil, 1, {text = "Scale", step = 0.1, min = 0, max = 1}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_falloff_scale", nil, 1, {text = "Falloff scale", step = 0.1, min = 0, max = 10}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("effect_light_scale", nil, 1, {text = "Effect lighting scale", step = 0.1, min = 0, max = 10}))
-    
+
     -- BLOOM
     local bloom = self:group("Bloom")
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", bloom:slider("bloom_threshold", nil, 1, {text = "Threshold", min = 0, max = 1, floats = 2}))
     self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", bloom:slider("bloom_intensity", nil, 1, {text = "Intensity", min = 0, max = 10, floats = 2}))
     self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", bloom:slider("bloom_blur_size", nil, 1, {text = "Blur size", min = 1, max = 4, floats = 0}))
     self:add_post_processors_param("bloom_combine_post_processor", "bloom_combine", "bloom_lense", bloom:slider("lense_intensity", nil, 1, {text = "Lense intensity", min = 0, max = 1, floats = 2}))
-    
+
     -- SKY
 	local sky = self:group("Sky")
     self:add_underlay_param("sky", sky:colorbox("color0", nil, nil, {text = "Color top", ret_vec = true}))
