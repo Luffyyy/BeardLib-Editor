@@ -21,6 +21,12 @@
 		<class file="AboutMenu.lua"/>
 		<class file="MissionElementUnit.lua"/>
 		<class file="MapProjectManager.lua"/>
+        <classes directory="Project">
+            <class file="ProjectEditor.lua"/>
+            <class file="ProjectModuleEditor.lua"/>
+            <class file="ProjectLevelEditor.lua"/>
+            <class file="ProjectNarrativeEditor.lua"/>
+        </classes>
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="FileWatcher.lua"/>
 		<class file="MapEditor.lua"/>

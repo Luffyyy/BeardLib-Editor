@@ -47,10 +47,10 @@ function EditorMenu:make_page(name, clbk, opt)
         items_size = 20,
         visible = false,
         position = "RightBottom",
-        w = self._main_menu._panel:w() - 250,
+        h = self._main_menu._panel:h() - 30,
     }, opt or {}))
     self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
-    self:button(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
+    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end
@@ -64,16 +64,13 @@ function EditorMenu:create_items(menu)
         border_color = BeardLibEditor.Options:GetValue("AccentColor"),
         visible = true,
         items_size = 24,
-        w = 200,
-        h = self._main_menu._panel:h(),
-        position = "Left",
+        align_method = "grid",
+        h = 30
 	})
-	ItemExt:add_funcs(self, self._tabs)   
-    local div = self:divider("title", {text = "BeardLib-Editor", items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
-
+	ItemExt:add_funcs(self, self._tabs)
     local s = self._tabs.items_size - 2
-    div:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
-        highlight_color = false, w = s, h = s
+    self:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
+        highlight_color = false, w = s, h = s, position = "Right"
     })
 end
 
@@ -110,7 +107,7 @@ end
 
 function EditorMenu:select_page(page)
     for name, m in pairs(self._menus) do
-        self._tabs:GetItem(name):SetBorder({left = false})
+        self._tabs:GetItem(name):SetBorder({bottom = false})
         m:SetVisible(false)
     end 
     if not page or self._current_page == page then
@@ -118,6 +115,6 @@ function EditorMenu:select_page(page)
         return
     end
     self._current_page = page
-    self._tabs:GetItem(page):SetBorder({left = true})
+    self._tabs:GetItem(page):SetBorder({bottom = true})
     self._menus[page]:SetVisible(true)
 end

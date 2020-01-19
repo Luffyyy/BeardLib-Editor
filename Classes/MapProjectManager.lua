@@ -26,20 +26,17 @@ function Project:init()
     btns:button("CloneExistingHeist", ClassClbk(self, "select_narr_as_project"), opt)
     btns:button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
 
-    self._curr_editing = self:divgroup("CurrEditing", {
-        private = {size = 24},
-        border_left = false,
-        auto_height = false, h = self._menu:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2
-    })
     self:set_edit_title()
 end
 
 function Project:Load(data)
-
+    if data then
+        self:_select_project(data.selected_mod)
+    end
 end
 
 function Project:Destroy()
-    return {}
+    return {selected_mod = self._current_mod}
 end
 
 function Project:ReadConfig(file)
@@ -111,7 +108,7 @@ function Project:current_level_path()
 end
 
 function Project:set_edit_title(title)
-    self:GetItem("CurrEditing"):SetText("Currently Editing: ".. (title or "None"))
+   -- self:GetItem("CurrEditing"):SetText("Currently Editing: ".. (title or "None"))
 end
 
 function Project:get_projects_list()
@@ -659,7 +656,12 @@ function Project:set_crimenet_videos_dialog()
     })
 end
 
-function Project:edit_main_xml(data, save_clbk)
+function Project:edit_main_xml(data)
+    self:reset_menu()
+    self._project = ProjectEditor:new(self._menu, data)
+end
+
+function Project:_edit_main_xml(data, save_clbk)
     self:reset_menu()
     self:set_edit_title(tostring(data.name))
     local narr = XML:GetNode(data, "narrative")
@@ -777,7 +779,7 @@ function Project:edit_main_xml(data, save_clbk)
 
     local diff_settings_opt = {w = diff_settings_holder:ItemsWidth() / (#self._diffs + 1) - 2, offset = {2, 6}, size = 18}
     local diff_settings_texts = diff_settings_holder:divgroup("Setting", diff_settings_opt)
-    
+
     diff_settings_opt.border_left = false 
 
     local div_texts_opt = {size_by_text = true, offset = {0, diff_settings_texts.offset[2]}}
@@ -1008,8 +1010,9 @@ function Project:set_project_level_data(level, level_in_chain)
 end
 
 function Project:reset_menu()
-    self._curr_editing:ClearItems()
-    self:set_edit_title()
+    if self._project then
+        self._project:destroy()
+    end
 end
 
 function Project:disable()

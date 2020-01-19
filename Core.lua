@@ -19,7 +19,9 @@ function BLE:Init()
 	self.ClassDirectory =  Path:CombineDir(self.ModPath, "Classes")
 	self.DataDirectory = Path:CombineDir(self.ModPath, "Data")
 	self.DialogsDirectory = Path:CombineDir(self.ClassDirectory, "Dialogs")
-	self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
+    self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
+    self.ProjectClassesDir = Path:CombineDir(self.ClassDirectory, "Project")
+
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
@@ -48,6 +50,7 @@ end
 function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
+    self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 
     self.Dialog:Destroy()
@@ -130,6 +133,7 @@ function BLE:InitManagers(data)
     self.EditorOptions = EditorOptionsMenu:new(data.options)
     self.AboutMenu = AboutMenu:new(data.about)
     self.Menu:Load(data.menu)
+    self.MapProject:Load(data.project)
 
     if BLE.CreateDev then
         BLE:CreateDev(data.dev)
