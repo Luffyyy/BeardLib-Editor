@@ -168,8 +168,8 @@ function WData:build_default()
     local load_extract = self:divgroup("LoadFromExtract", {enabled = has_extract, align_method = "grid"})
 
     local spawn_help = "Load and spawn. This list selector will close itself after selecting a unit and will let you begin spawning the unit when it's fully loaded!"
-    load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext, spawn = true}), {text = "Spawn Unit("..load_unit..")", help = spawn_help})
-    load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = extract_clbk, ext = ext, spawn = true}), {text = "Spawn Unit("..load_unit_fe..")", help = spawn_help})
+    load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = "unit", spawn = true}), {text = "Spawn Unit("..load_unit..")", help = spawn_help})
+    load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = extract_clbk, ext = "unit", spawn = true}), {text = "Spawn Unit("..load_unit_fe..")", help = spawn_help})
 
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()
