@@ -11,6 +11,7 @@ function Project:init()
     self._add_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
     self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
     self._level_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
+    self._instance_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "InstanceModule.xml"))
 
     self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})
     ItemExt:add_funcs(self)
@@ -24,6 +25,7 @@ function Project:init()
     btns:button("NewProject", ClassClbk(self, "new_project_dialog", ""), opt)
     btns:button("CloneExistingHeist", ClassClbk(self, "select_narr_as_project"), opt)
     btns:button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
+
     self._curr_editing = self:divgroup("CurrEditing", {
         private = {size = 24},
         border_left = false,
@@ -33,7 +35,7 @@ function Project:init()
 end
 
 function Project:Load(data)
-    
+
 end
 
 function Project:Destroy()
@@ -372,6 +374,7 @@ end
 
 function Project:reload_mod(name)
     BeardLib.managers.MapFramework._loaded_mods[name] = nil
+    BeardLib.managers.MapFramework._loaded_instances = nil
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
     BLE.LoadLevel:load_levels()
@@ -452,11 +455,22 @@ end
 function Project:new_level_dialog(name, clbk, no_callback)
     BLE.InputDialog:Show({
         title = "Enter a name for the level",
-        yes = "Create level",
+        yes = "Create",
         text = name or "",
         no_callback = no_callback,
         check_value = ClassClbk(self, "check_level_name"),
         callback = type(clbk) == "function" and clbk or ClassClbk(self, "create_new_level")
+    })
+end
+
+function Project:new_instance_dialog(name, clbk, no_callback)
+    BLE.InputDialog:Show({
+        title = "Enter a name for the instance",
+        yes = "Create",
+        text = name or "",
+        no_callback = no_callback,
+        check_value = function(name) return self:check_level_name(name, true) end,
+        callback = type(clbk) == "function" and clbk or ClassClbk(self, "create_new_instance")
     })
 end
 
@@ -525,6 +539,24 @@ function Project:create_new_level(name)
     self:do_reload_mod(t.name, t.name, true)
 end
 
+function Project:create_new_instance(name)
+    local t = self._current_data
+    if not t then
+        BLE:log("[ERROR] Project needed to create levels!")
+        return
+    end
+	local level = deep_clone(self._instance_module_template)
+	XML:InsertNode(t, level)
+    level.id = name
+    local proj_path = Path:Combine(BeardLib.config.maps_dir, t.name)
+    local level_path = Path:Combine("instances", level.id)
+    level.include.directory = level_path
+	FileIO:WriteScriptData(Path:Combine(proj_path, "main.xml"), t, "custom_xml")
+	FileIO:MakeDir(Path:Combine(proj_path, level_path))
+    FileIO:CopyToAsync(Path:Combine(self._templates_directory, "Instance"), Path:Combine(proj_path, level_path))
+    self:do_reload_mod(t.name, t.name, true)
+end
+
 function Project:create_new_narrative(name)
     local data = deep_clone(self._main_xml_template)
     local narr = XML:GetNode(data, "narrative")
@@ -535,15 +567,24 @@ function Project:create_new_narrative(name)
     FileIO:MakeDir(Path:Combine(proj_path, "assets"))
     FileIO:MakeDir(Path:Combine(proj_path, "levels"))
     FileIO:WriteTo(Path:Combine(proj_path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))  
-    return data 
+    return data
 end
 
-function Project:check_level_name(name)
+function Project:check_level_name(name, is_instance)
     --Windows is not case sensitive.
-    for k in pairs(tweak_data.levels) do
-        if string.lower(k) == name:lower() then
-            EU:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", k))
-            return false
+    if is_instance then
+        for k in pairs(BeardLib.managers.MapFramework._loaded_instances) do
+            if string.lower(k) == name:lower() then
+                EU:Notify("Error", string.format("An instance with the id %s already exists! Please use a unique id", k))
+                return false
+            end
+        end
+    else
+        for k in pairs(tweak_data.levels) do
+            if string.lower(k) == name:lower() then
+                EU:Notify("Error", string.format("A level with the id %s already exists! Please use a unique id", k))
+                return false
+            end
         end
     end
     if name == "" then
@@ -659,6 +700,8 @@ function Project:edit_main_xml(data, save_clbk)
     local chain = self._curr_editing:divgroup("Chain", divgroup_opt)
     chain:button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"))
     chain:button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""))
+    chain:button("CreateInstance", ClassClbk(self, "new_instance_dialog", ""))
+    chain:button("CloneLevel", ClassClbk(self, "new_level_dialog", ""))
     local levels_group = chain:divgroup("Levels", {last_y_offset = 6})
     local function get_level(level_id)
         for _, v in pairs(levels) do
