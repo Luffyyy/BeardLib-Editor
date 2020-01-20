@@ -10,43 +10,56 @@ function ProjectEditor:init(parent, data)
 
     local btns = parent:GetItem("QuickActions")
     local menu = parent:divgroup("CurrEditing", {
-        private = {size = 24},
+        text = "Currently Editing: "..data.name,
+        h = parent:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2,
         w = 350,
         position = "Left",
-        text = "Currently Editing: "..data.name,
         border_left = false,
-        auto_height = false, h = parent:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2
+        auto_height = false,
+        private = {size = 24}
     })
     self._left_menu = menu
     menu:textbox("ProjectName", up, data.name)
-
-    --List the instances
-    local modules = menu:divgroup("Modules")
-    for _, mod in pairs(data) do
-        local meta = type(mod) == "table" and mod._meta
-        if meta and ProjectEditor.EDITORS[meta] then
-            modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = string.capitalize(meta)..": "..mod.id})
-        end
-    end
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
         text = "Current Module: None",
         w = parent:ItemsWidth() - 350,
+        h = menu:Height(),
+        auto_height = false,
         border_left = false,
         position = "Right"
     })
-
     ItemExt:add_funcs(self)
+    self._modules = self._left_menu:divgroup("Modules")
+
+    self:build_modules()
+end
+
+---List the modules
+function ProjectEditor:build_modules()
+    local modules = self._modules
+    modules:ClearItems()
+    for _, mod in pairs(self._data) do
+        local meta = type(mod) == "table" and mod._meta
+        if meta and ProjectEditor.EDITORS[meta] then
+            local text = string.capitalize(meta)
+            if ProjectEditor.EDITORS[meta].HAS_ID then
+                text = text .. ": "..mod.id
+            end
+            local btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
+            if meta == "narrative" then
+                self:open_module(mod, btn)
+            end
+        end
+    end
 end
 
 --- Opens a module to edit.
 function ProjectEditor:open_module(data, item)
     self:close_previous_module()
+    item:SetBorder({left = true})
     self._current_module = ProjectEditor.EDITORS[data._meta]:new(self, data)
-    for _, itm in pairs(item:Parent():Items()) do
-        itm:SetBorder({left = itm == item})
-    end
 end
 
 --- The callback function for all items for this menu.
@@ -65,6 +78,16 @@ function ProjectEditor:close_previous_module()
         self._current_module:destroy()
         self._current_module = nil
     end
+    for _, itm in pairs(self._left_menu:GetItem("Modules"):Items()) do
+        itm:SetBorder({left = false})
+    end
+    self._menu:ClearItems()
+end
+
+function ProjectEditor:delete_module(data)
+    table.delete_value(self._data, data)
+    self:close_previous_module()
+    self:build_modules()
 end
 
 --- Destroy function, destroys the menu.

@@ -6,7 +6,7 @@ local Project = MapProjectManager
 local CXML = "custom_xml"
 
 function Project:init()
-    self._diffs = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish", "Death Sentence"}       
+    self._diffs = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish", "Death Sentence"}
     self._templates_directory = Path:Combine(BLE.ModPath, "Templates")
     self._add_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
     self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
@@ -626,24 +626,6 @@ function Project:new_project_clbk(data, name)
     EU:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", ClassClbk(self, "new_level_dialog", "")}})
 end
 
-function Project:add_exisiting_level_dialog()
-    local levels = {}
-    for k, level in pairs(tweak_data.levels) do
-        if type(level) == "table" and not level.custom and level.world_name and not string.begins(level.world_name, "wip/") then
-            table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
-        end
-    end
-    BLE.ListDialog:Show({
-        list = levels,
-        callback = function(seleciton)
-            local chain = XML:GetNode(self._current_data, "narrative").chain
-            table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
-            BLE.ListDialog:hide()
-            self:_select_project(self._current_mod, true)
-        end
-    })
-end
-
 function Project:set_crimenet_videos_dialog()
     local t = self._current_data
     local narr = XML:GetNode(self._current_data, "narrative")
@@ -959,7 +941,7 @@ function Project:group_level(narr, level_in_chain)
     local chain = {}
     for i, v in ipairs(narr.chain) do
         if v ~= level_in_chain then
-            table.insert(chain, {name = v.level_id or "Day "..tostring(i).."[Grouped]", value = v})
+            table.insert(chain, {name = v.level_id or ("Day "..tostring(i).."[Grouped]"), value = v})
         end
     end
     BLE.ListDialog:Show({

@@ -3,7 +3,7 @@
 ProjectLevelEditor = ProjectLevelEditor or class(ProjectModuleEditor)
 ProjectEditor.EDITORS.level = ProjectLevelEditor
 
---- @param parent ProjectEditor
+--- @param menu Menu
 --- @param data table
 function ProjectLevelEditor:build_menu(menu, data)
     menu:textbox("LevelName", up, data.id)

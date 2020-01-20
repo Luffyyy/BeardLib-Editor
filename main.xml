@@ -26,6 +26,8 @@
             <class file="ProjectModuleEditor.lua"/>
             <class file="ProjectLevelEditor.lua"/>
             <class file="ProjectNarrativeEditor.lua"/>
+            <class file="ProjectLocalizationEditor.lua"/>
+            <class file="ProjectUpdatesEditor.lua"/>
         </classes>
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="FileWatcher.lua"/>

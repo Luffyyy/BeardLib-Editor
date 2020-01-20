@@ -1,6 +1,7 @@
 ---Parent class for module editors.
 ---@class ProjectModuleEditor
 ProjectModuleEditor = ProjectModuleEditor or class()
+ProjectModuleEditor.HAS_ID = true
 
 --- @param parent ProjectEditor
 --- @param data table
@@ -9,6 +10,9 @@ function ProjectModuleEditor:init(parent, data)
     self._parent = parent
     self._menu = parent._menu:pan("Module")
     ItemExt:add_funcs(self)
+
+    self:small_button("Delete", ClassClbk(self._parent, "delete_module", self._data))
+    self:small_button("Close", ClassClbk(self._parent, "close_previous_module"))
 
     self:build_menu(self._menu, data)
 end
@@ -25,4 +29,13 @@ end
 --- Destroy function, destroys the menu.
 function ProjectModuleEditor:destroy()
     self._menu:Destroy()
+end
+
+--- Creates a small side button.
+function ProjectModuleEditor:small_button(name, clbk)
+    self._menu:Parent():GetToolbar():tb_btn(name, clbk, {
+        min_width = 100,
+        text_offset = {8, 2},
+        border_bottom = true,
+    })
 end
