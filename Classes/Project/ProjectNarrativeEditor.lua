@@ -12,7 +12,7 @@ local DIFFS = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish"
 function ProjectNarrativeEditor:build_menu(menu, data)
     local up = ClassClbk(self, "set_data_callback")
 
-    self._current_id = data.id
+    data.orig_id = data.orig_id or data.id
     menu:textbox("NarrativeID", up, data.id)
 
     local divgroup_opt = {border_position_below_title = true, private = {size = 22}}
@@ -32,8 +32,8 @@ function ProjectNarrativeEditor:build_menu(menu, data)
     chain:button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""))
     chain:button("CreateInstance", ClassClbk(self, "new_instance_dialog", ""))
     chain:button("CloneLevel", ClassClbk(self, "new_level_dialog", ""))
-    self._levels = chain:divgroup("Levels", {last_y_offset = 6})
-    self:build_levels(data, self._levels)
+    self._levels = chain:divgroup("Levels")
+    self:build_levels(data)
 
     self._contract_costs = {}
     self._experience_multipliers = {}
@@ -79,7 +79,9 @@ function ProjectNarrativeEditor:build_menu(menu, data)
 end
 
 ---Builds buttons for all levels in the chain
-function ProjectNarrativeEditor:build_levels(data, levels_group)
+function ProjectNarrativeEditor:build_levels()
+    local levels_group = self._levels
+    local data = self._data
     levels_group:ClearItems()
     local function build_level_ctrls(level_in_chain, chain_group, btn, level)
         local narr_chain = chain_group or data.chain
@@ -88,11 +90,11 @@ function ProjectNarrativeEditor:build_levels(data, levels_group)
         local tx = "textures/editor_icons_df"
         local toolbar = btn
         if level_in_chain.level_id then
-            btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_level_dialog", level and level or level_in_chain.level_id), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
+            btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_chain_level_dialog", level_in_chain), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
             if chain_group then
-                btn:tb_imgbtn("Ungroup", ClassClbk(self, "ungroup_level", narr, level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {highlight_color = Color.red})
+                btn:tb_imgbtn("Ungroup", ClassClbk(self, "ungroup_level", level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {help = "Group level", highlight_color = Color.red})
             else
-                btn:tb_imgbtn("Group", ClassClbk(self, "group_level", narr, level_in_chain), tx, EU.EditorIcons["plus"], {highlight_color = Color.red})
+                btn:tb_imgbtn("Group", ClassClbk(self, "group_level", level_in_chain), tx, EU.EditorIcons["plus"], {help = "Ungroup level", highlight_color = Color.red})
             end
         else
             toolbar = btn:GetToolbar()
@@ -102,8 +104,8 @@ function ProjectNarrativeEditor:build_levels(data, levels_group)
     end
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
-        --local level = get_level(level_id)
-        local btn = (group or levels_group):button(level_id, level and ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk), {
+        local mod = self._parent:get_module(level_id, "level")
+        local btn = (group or levels_group):button(level_id, mod and ClassClbk(self._parent, "open_module", mod), {
             text = level_id
         })
         return btn, level
@@ -128,6 +130,87 @@ function ProjectNarrativeEditor:build_levels(data, levels_group)
     end
 end
 
+--- Deletes a level from a chain
+--- @param level_in_chain table
+function ProjectNarrativeEditor:delete_chain_level_dialog(level_in_chain)
+    EU:YesNoQuestion("Delete level from chain?", function()
+        local success
+        for k, v in ipairs(self._data.chain) do
+            if success then
+                break
+            end
+            if v == level_in_chain then
+                table.remove(chain, k)
+                break
+            else
+                for i, level in pairs(v) do
+                    if level == level_in_chain then
+                        table.remove(v, i)
+                        success = true
+                        break
+                    end
+                end
+            end
+        end
+    end)
+end
+
+--- Removes a level from a group
+--- @param level_in_chain table
+--- @param chain_group table
+function ProjectNarrativeEditor:ungroup_level(level_in_chain, chain_group)
+    table.delete_value(chain_group, level_in_chain)
+    if #chain_group == 1 then
+        narr.chain[table.get_key(self._data.chain, chain_group)] = chain_group[1]
+    end
+    table.insert(self._data.chain, level_in_chain)
+end
+
+--- Opens a dialog to choose levels to group with.
+--- @param level_in_chain table
+function ProjectNarrativeEditor:group_level(level_in_chain)
+    local chain = {}
+    local data = self._data
+    for i, v in ipairs(data.chain) do
+        if v ~= level_in_chain then
+            table.insert(chain, {name = v.level_id or ("Day "..tostring(i).."[Grouped]"), value = v})
+        end
+    end
+    BLE.ListDialog:Show({
+        list = chain,
+        callback = function(selection)
+            table.delete_value(data.chain, level_in_chain)
+            local key = table.get_key(data.chain, selection.value)
+            local chain_group = selection.value
+            if chain_group.level_id then
+                data.chain[key] = {chain_group}
+            end
+            table.insert(data.chain[key], level_in_chain)
+            BLE.ListDialog:hide()
+            self:build_levels()
+        end
+    })
+end
+
+---Opens a dialog of all levels in the game to add to the level chain.
+function ProjectNarrativeEditor:add_exisiting_level_dialog()
+    local levels = {}
+    for k, level in pairs(tweak_data.levels) do
+        if type(level) == "table" and level.world_name and not string.begins(level.world_name, "wip/") then
+            table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
+        end
+    end
+    BLE.ListDialog:Show({
+        list = levels,
+        callback = function(seleciton)
+            local chain = self._data.chain
+            table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
+            BLE.ListDialog:hide()
+            self:build_levels(self._data)
+        end
+    })
+end
+
 --- The callback function for all items for this menu.
 function ProjectNarrativeEditor:set_data_callback()
     local data = self._data
@@ -135,13 +218,20 @@ function ProjectNarrativeEditor:set_data_callback()
     local name_item = self:GetItem("NarrativeID")
     local new_name = name_item:Value()
     local title = "Narrative ID"
-    if self._current_id ~= new_name then
-        if new_name == "" or tweak_data.narrative.jobs[new_name] then
+    if data.id ~= new_name then
+        local exists = false
+        for _, mod in pairs(self._parent:get_modules("narrative")) do
+            if mod.id == new_name then
+                exists = true
+            end
+        end
+        if exists or new_name == "" or (data.orig_id ~= new_name and tweak_data.narrative.jobs[new_name]) then
             title = title .. "[Invalid]"
         else
             data.id = new_name
         end
     end
+
     name_item:SetText(title)
 
     for i in pairs(DIFFS) do
@@ -161,23 +251,4 @@ function ProjectNarrativeEditor:set_data_callback()
     data.briefing_event = self:GetItemValue("BriefingEvent")
     data.contact = self:GetItem("Contact"):SelectedItem()
     data.hide_from_crimenet = self:GetItemValue("HideFromCrimenet")
-end
-
----Opens a dialog of all levels in the game to add to the level chain.
-function ProjectNarrativeEditor:add_exisiting_level_dialog()
-    local levels = {}
-    for k, level in pairs(tweak_data.levels) do
-        if type(level) == "table" and level.world_name and not string.begins(level.world_name, "wip/") then
-            table.insert(levels, {name = k .. " / " .. managers.localization:text(level.name_id or k), id = k})
-        end
-    end
-    BLE.ListDialog:Show({
-        list = levels,
-        callback = function(seleciton)
-            local chain = self._data.chain
-            table.insert(chain, {level_id = seleciton.id, type = "d", type_id = "heist_type_assault"})
-            BLE.ListDialog:hide()
-            self:build_levels(self._data, self._levels)
-        end
-    })
 end

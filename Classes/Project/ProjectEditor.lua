@@ -47,7 +47,7 @@ function ProjectEditor:build_modules()
             if ProjectEditor.EDITORS[meta].HAS_ID then
                 text = text .. ": "..mod.id
             end
-            local btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
+            local btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text, module = mod})
             if meta == "narrative" then
                 self:open_module(mod, btn)
             end
@@ -55,10 +55,42 @@ function ProjectEditor:build_modules()
     end
 end
 
+--- Searches a module by ID and meta, used to find levels from a narrative chain at the moment.
+--- @param id string
+--- @param meta string
+--- @return table
+function ProjectEditor:get_module(id, meta)
+    for _, mod in pairs(self._data) do
+        local _meta = type(mod) == "table" and mod._meta
+        if _meta and _meta == meta and mod.id == id then
+            return mod
+        end
+    end
+end
+
+--- Packs all modules into a table
+--- @param meta string
+--- @return table
+function ProjectEditor:get_modules(meta)
+    local list = {}
+    for _, mod in pairs(self._data) do
+        local _meta = type(mod) == "table" and mod._meta
+        if _meta and (not meta or _meta == meta) then
+            table.insert(list, mod)
+        end
+    end
+    return list
+end
+
 --- Opens a module to edit.
-function ProjectEditor:open_module(data, item)
+--- @param data table
+function ProjectEditor:open_module(data)
     self:close_previous_module()
-    item:SetBorder({left = true})
+    for _, item in pairs(self._modules:Items()) do
+        if item.module == data then
+            item:SetBorder({left = true})
+        end
+    end
     self._current_module = ProjectEditor.EDITORS[data._meta]:new(self, data)
 end
 

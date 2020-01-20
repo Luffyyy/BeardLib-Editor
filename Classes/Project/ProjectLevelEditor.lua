@@ -8,7 +8,7 @@ ProjectEditor.EDITORS.level = ProjectLevelEditor
 function ProjectLevelEditor:build_menu(menu, data)
     local up = ClassClbk(self, "set_data_callback")
 
-    self._current_id = data.id
+    data.orig_id = data.orig_id or data.id
     menu:textbox("LevelID", up, data.id)
     menu:textbox("BriefingDialog", up, data.briefing_dialog)
     data.intro_event = type(data.intro_event) == "table" and data.intro_event[1] or data.intro_event
@@ -74,16 +74,38 @@ function ProjectLevelEditor:set_data_callback()
     local name_item = self:GetItem("LevelID")
     local new_name = name_item:Value()
     local title = "Level ID"
-    if self._current_id ~= new_name then
-        if new_name == "" or tweak_data.levels[new_name] then
+    if data.id ~= new_name then
+        local exists = false
+        for _, mod in pairs(self._parent:get_modules("level")) do
+            if mod.id == new_name then
+                exists = true
+            end
+        end
+        if exists or new_name == "" or (data.orig_id ~= new_name and tweak_data.levels[new_name]) then
             title = title .. "[Invalid]"
         else
+            for _, mod in pairs(self._parent:get_modules()) do
+                if mod._meta == "narrative" then
+                    if mod.chain then
+                        for _, level in ipairs(mod.chain) do
+                            if level.level_id == data.id then
+                                level.level_id = new_name
+                                break
+                            else
+                                for i, inner_level in pairs(level) do
+                                    if inner_level.level_id == data.id then
+                                        inner_level.level_id = new_name
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
             data.id = new_name
         end
     end
     name_item:SetText(title)
-
-    --TODO: Save data in narrative chains, if the module is in one.
 
     data.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
     data.player_style = self:GetItem("PlayerStyle"):SelectedItem()

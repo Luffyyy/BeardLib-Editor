@@ -826,38 +826,6 @@ function Project:set_chain_index(narr_chain, chain_tbl, index)
     self._refresh_func()
 end
 
-function Project:ungroup_level(narr, level_in_chain, chain_group)
-    table.delete_value(chain_group, level_in_chain)
-    if #chain_group == 1 then
-        narr.chain[table.get_key(narr.chain, chain_group)] = chain_group[1]
-    end
-    table.insert(narr.chain, level_in_chain)
-    self._refresh_func()
-end
-
-function Project:group_level(narr, level_in_chain)
-    local chain = {}
-    for i, v in ipairs(narr.chain) do
-        if v ~= level_in_chain then
-            table.insert(chain, {name = v.level_id or ("Day "..tostring(i).."[Grouped]"), value = v})
-        end
-    end
-    BLE.ListDialog:Show({
-        list = chain,
-        callback = function(selection)
-            table.delete_value(narr.chain, level_in_chain)
-            local key = table.get_key(narr.chain, selection.value)
-            local chain_group = selection.value
-            if chain_group.level_id then
-                narr.chain[key] = {chain_group}
-            end
-            table.insert(narr.chain[key], level_in_chain)
-            BLE.ListDialog:hide()
-            self._refresh_func()
-        end
-    })
-end
-
 function Project:reset_menu()
     if self._project then
         self._project:destroy()
