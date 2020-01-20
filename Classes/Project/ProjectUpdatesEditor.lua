@@ -37,4 +37,7 @@ function ProjectUpdatesModule:set_data_callback(item)
     data.id = menu:GetItemValue("id")
     data.version = menu:GetItemValue("version")
     data.is_standalone = menu:GetItemValue("Downloadable")
+    if data.is_standalone == true then
+        data.is_standalone = nil
+    end
 end

@@ -10,13 +10,12 @@ local DIFFS = {"Normal", "Hard", "Very Hard", "Overkill", "Mayhem", "Death Wish"
 --- @param menu ProjectEditor
 --- @param data table
 function ProjectNarrativeEditor:build_menu(menu, data)
-    menu:textbox("NarrName", up, data.id)
+    local up = ClassClbk(self, "set_data_callback")
 
-    local narr = XML:GetNode(data, "narrative")
-    local levels = XML:GetNodes(data, "level")
+    self._current_id = data.id
+    menu:textbox("NarrativeID", up, data.id)
 
     local divgroup_opt = {border_position_below_title = true, private = {size = 22}}
-    local up = ClassClbk(self, "set_data_callback")
     local contacts = table.map_keys(tweak_data.narrative.contacts)
     menu:combobox("Contact", up, contacts, table.get_key(contacts, data.contact or "custom"))
     menu:textbox("BriefingEvent", up, data.briefing_event)
@@ -132,7 +131,36 @@ end
 --- The callback function for all items for this menu.
 function ProjectNarrativeEditor:set_data_callback()
     local data = self._data
-    data.name = self:GetItemValue("NarrName")
+
+    local name_item = self:GetItem("NarrativeID")
+    local new_name = name_item:Value()
+    local title = "Narrative ID"
+    if self._current_id ~= new_name then
+        if new_name == "" or tweak_data.narrative.jobs[new_name] then
+            title = title .. "[Invalid]"
+        else
+            data.id = new_name
+        end
+    end
+    name_item:SetText(title)
+
+    for i in pairs(DIFFS) do
+        data.contract_cost[i] = self._contract_costs[i]:Value()
+        data.experience_mul[i] = self._experience_multipliers[i]:Value()
+        data.max_mission_xp[i] = self._max_mission_xps[i]:Value()
+        data.min_mission_xp[i] = self._min_mission_xps[i]:Value()
+        data.payout[i] = self._payouts[i]:Value()
+    end
+
+    data.crimenet_callouts = data.crimenet_callouts or {}
+    data.debrief_event = data.debrief_event or {}
+    local callouts = self:GetItemValue("CrimenetCallouts")
+    local events = self:GetItemValue("DebriefEvent")
+    data.crimenet_callouts = callouts:match(",") and string.split(callouts, ",") or {callouts}
+    data.debrief_event = events:match(",") and string.split(events, ",") or {events}
+    data.briefing_event = self:GetItemValue("BriefingEvent")
+    data.contact = self:GetItem("Contact"):SelectedItem()
+    data.hide_from_crimenet = self:GetItemValue("HideFromCrimenet")
 end
 
 ---Opens a dialog of all levels in the game to add to the level chain.

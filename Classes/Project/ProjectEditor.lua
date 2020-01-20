@@ -23,7 +23,7 @@ function ProjectEditor:init(parent, data)
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
-        text = "Current Module: None",
+        text = "Module Properties",
         w = parent:ItemsWidth() - 350,
         h = menu:Height(),
         auto_height = false,

@@ -809,114 +809,12 @@ function Project:delete_project(mod, item)
     end)
 end
 
-function Project:set_project_data(item)
-    local t = self._current_data  
-    local narr = XML:GetNode(t, "narrative")
-    local mod_assets = XML:GetNode(t, "AssetUpdates")
-    local old_name = t.orig_id or t.name
-    t.name = self:GetItem("ProjectName"):Value()
-    local title = tostring(t.name)
-    narr.id = self:GetItem("ProjectName"):Value()
-    if old_name ~= t.name then
-        if t.name == "" or tweak_data.narrative.jobs[t.name] then
-            t.name = old_name
-            narr.id = old_name
-            title = tostring(t.name).."[Warning: current project name already exists or name is empty, not saving name]"
-        else
-            t.orig_id = t.orig_id or old_name
-        end        
-    end
-    for i in pairs(self._diffs) do
-        narr.contract_cost[i] = self._contract_costs[i]:Value()
-        narr.experience_mul[i] = self._experience_multipliers[i]:Value()
-        narr.max_mission_xp[i] = self._max_mission_xps[i]:Value()
-        narr.min_mission_xp[i] = self._min_mission_xps[i]:Value()
-        narr.payout[i] = self._payouts[i]:Value()
-    end
-    narr.crimenet_callouts = narr.crimenet_callouts or {}
-    narr.debrief_event = narr.debrief_event or {}
-    local callouts = self:GetItem("CrimenetCallouts"):Value()
-    local events = self:GetItem("DebriefEvent"):Value()
-    narr.crimenet_callouts = callouts:match(",") and string.split(callouts, ",") or {callouts}
-    narr.debrief_event = events:match(",") and string.split(events, ",") or {events}
-    narr.briefing_event = self:GetItem("BriefingEvent"):Value()
-    narr.contact = self:GetItem("Contact"):SelectedItem()
-    narr.hide_from_crimenet = self:GetItem("HideFromCrimenet"):Value()
-	if mod_assets then
-		mod_assets.id = self:GetItem("DownloadId"):Value()
-		mod_assets.version = self:GetItem("Version"):Value()
-		mod_assets.is_standalone = self:GetItem("Downloadable"):Value()
-		if mod_assets.is_standalone == true then
-			mod_assets.is_standalone = nil
-		end
-	end
-    self:set_edit_title(title)
-end
-
 function Project:small_button(name, clbk)
     self._curr_editing:GetToolbar():tb_btn(name, clbk, {
         min_width = 100,
         text_offset = {8, 2},
         border_bottom = true,
     })
-end
-
-function Project:edit_main_xml_level(data, level, level_in_chain, chain_group, save_clbk)
-	self._curr_editing:ClearItems()
-    local up = ClassClbk(self, "set_project_level_data", level, level_in_chain)
-    self._curr_editing:textbox("LevelId", up, level.id)    
-    self._curr_editing:textbox("BriefingDialog", up, level.briefing_dialog)
-    level.intro_event = type(level.intro_event) == "table" and level.intro_event[1] or level.intro_event
-    level.outro_event = type(level.outro_event) == "table" and level.outro_event or {level.outro_event}
-
-    self._curr_editing:textbox("IntroEvent", up, level.intro_event)
-    self._curr_editing:textbox("OutroEvent", up, table.concat(level.outro_event, ","))
-    if level.ghost_bonus == 0 then
-        level.ghost_bonus = nil
-    end
-    self._curr_editing:numberbox("GhostBonus", up, level.ghost_bonus or 0, {max = 1, min = 0, step = 0.1})
-    self._curr_editing:numberbox("MaxBags", up, level.max_bags, {max = 999, min = 0, floats = 0})
-    local aitype = table.map_keys(LevelsTweakData.LevelType)
-    self._curr_editing:combobox("AiGroupType", up, aitype, table.get_key(aitype, level.ai_group_type) or 1)
-    local styles = table.map_keys(tweak_data.scene_poses.player_style)
-    self._curr_editing:combobox("PlayerStyle", up, styles, table.get_key(styles, level.player_style or "generic"), {help = "Set the player style for the map, make sure the packages for the suits are loaded!"})
-    self._curr_editing:tickbox("TeamAiOff", up, level.team_ai_off)
-    self._curr_editing:tickbox("RetainBags", up, level.repossess_bags)
-    self._curr_editing:tickbox("PlayerInvulnerable", up, level.player_invulnerable)
-    self._curr_editing:button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog", level))
-
-    self:small_button("Back", ClassClbk(self, "edit_main_xml", data, save_clbk))
-    self:set_edit_title(tostring(data.name) .. ":" .. tostring(level.id))
-    self._refresh_func = ClassClbk(self, "edit_main_xml_level", data, level, level_in_chain, chain_group, save_clbk)
-end
-
-function Project:set_mission_assets_dialog(level)
-	local selected_assets = {}
-	level.assets = level.assets or {_meta = "assets"}
-    for _, asset in pairs(level.assets) do
-        if type(asset) == "table" and asset._meta == "asset" then
-            table.insert(selected_assets, {name = asset.name, value = asset.exclude == true})
-        end
-    end
-    local assets = {}
-	for _, asset in pairs(table.map_keys(tweak_data.assets)) do
-		if asset.stages ~= "all" then
-			table.insert(assets, {name = asset, value = false})
-		end
-    end
-	BLE.SelectDialogValue:Show({
-		selected_list = selected_assets,
-		list = assets,
-		values_name = "Exclude",
-        values_list_width = 100,
-		callback = function(list)
-            local new_assets = {}
-            for _, asset in pairs(list) do
-                table.insert(new_assets, {_meta = "asset", name = asset.name, exclude = asset.value == true and true or nil})
-            end
-            level.assets = new_assets
-        end
-	})
 end
 
 function Project:set_chain_index(narr_chain, chain_tbl, index)
@@ -960,37 +858,6 @@ function Project:group_level(narr, level_in_chain)
     })
 end
 
-function Project:set_project_level_data(level, level_in_chain)
-	local t = self._current_data
-    local old_name = level.orig_id or level.id
-    level.id = self:GetItem("LevelId"):Value()
-    local title = tostring(t.name) .. ":" .. tostring(level.id)
-    if old_name ~= level.id then
-        if level.id == "" and tweak_data.levels[level.id] then
-            level.id = old_name
-            title = tostring(t.name) .. ":" .. tostring(level.id).."[Warning: current level id already exists or id is empty, not saving Id]"
-        else
-            level.orig_id = level.orig_id or old_name
-        end
-    end
-    level_in_chain.level_id = level.id
-    level.ai_group_type = self:GetItem("AiGroupType"):SelectedItem()
-    level.player_style = self:GetItem("PlayerStyle"):SelectedItem()
-    level.briefing_dialog = self:GetItem("BriefingDialog"):Value()
-    level.ghost_bonus = self:GetItem("GhostBonus"):Value()
-    if level.ghost_bonus == 0 then
-        level.ghost_bonus = nil
-    end
-    level.max_bags = self:GetItem("MaxBags"):Value()
-    level.team_ai_off = self:GetItem("TeamAiOff"):Value()
-    level.intro_event = self:GetItem("IntroEvent"):Value()
-    level.repossess_bags = self:GetItem("RetainBags"):Value()
-    level.player_invulnerable = self:GetItem("PlayerInvulnerable"):Value()
-    local outro = self:GetItem("OutroEvent"):Value()
-    level.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
-    self:set_edit_title(title)
-end
-
 function Project:reset_menu()
     if self._project then
         self._project:destroy()
@@ -1002,12 +869,4 @@ function Project:disable()
     self._current_mod = nil
     self._refresh_func = nil
     self:reset_menu()
-end
-
-function Project:button_pos(near, item)
-	if alive(near) then
-		item:Panel():set_righttop(near:Panel():left(), 0)
-	else
-		item:SetPositionByString("RightTop")
-	end
 end
