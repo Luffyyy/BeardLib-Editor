@@ -194,6 +194,19 @@ function ProjectNarrativeEditor:group_level(level_in_chain)
     })
 end
 
+--- Sets the index of a level in a narrative chain
+--- @param chain table
+--- @param level_in_chain table
+--- @param index number
+function ProjectNarrativeEditor:set_chain_index(chain, level_in_chain, index)
+    local key = table.get_key(chain, level_in_chain)
+
+    table.remove(chain, tonumber(key))
+    table.insert(chain, tonumber(index), level_in_chain)
+
+    self:build_levels()
+end
+
 ---Opens a dialog of all levels in the game to add to the level chain.
 function ProjectNarrativeEditor:add_exisiting_level_dialog()
     local levels = {}
@@ -210,6 +223,17 @@ function ProjectNarrativeEditor:add_exisiting_level_dialog()
             BLE.ListDialog:hide()
             self:build_levels(self._data)
         end
+    })
+end
+
+--- Open a dialog to select crimenet videos for the narrative
+function ProjectNarrativeEditor:set_crimenet_videos_dialog()
+    BLE.SelectDialog:Show({
+        selected_list = self._data.crimenet_videos,
+        list = EU:GetEntries({type = "movie", check = function(entry)
+            return entry:match("movies/")
+        end}),
+        callback = function(list) self._data.crimenet_videos = list end
     })
 end
 
