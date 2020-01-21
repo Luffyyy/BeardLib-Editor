@@ -377,21 +377,6 @@ function Project:reload_mod(name)
     BLE.LoadLevel:load_levels()
 end
 
-function Project:do_reload_mod(old_name, name, save_prev)
-    local mod = self._current_mod
-    if mod._modules then
-        for _, module in pairs(mod._modules) do
-            module.Registered = false
-        end
-    end
-    self:reload_mod(old_name)
-    if BeardLib.managers.MapFramework._loaded_mods[name] then
-        self:_select_project(BeardLib.managers.MapFramework._loaded_mods[name], save_prev)
-    else
-        BLE:log("[Warning] Something went wrong while trying reload the project")
-    end
-end
-
 function Project:save_current_project(mod)
     local t = self._current_data
     local id = t.orig_id or t.name
@@ -426,16 +411,16 @@ function Project:save_current_project(mod)
     end
 end
 
-function Project:_select_project(mod, save_prev)
-    if save_prev then
-        local save = self:GetItem("Save")
-        if save then
-            save:RunCallback()
-        end
-    end
+function Project:_select_project(mod)
     self._current_mod = mod
     BLE.ListDialog:hide()
-    self:edit_main_xml(self:get_clean_config(mod, true), ClassClbk(self, "save_current_project", mod))
+
+    if self._project then
+        --TODO: Do you want to save the previous project?
+    end
+
+    self:reset_menu()
+    self._project = ProjectEditor:new(self._menu, mod)
 end
 
 function Project:new_project_dialog(name, clbk, no_callback)
@@ -626,23 +611,6 @@ function Project:new_project_clbk(data, name)
     EU:QuickDialog({title = "New Project", message = "Do you want to create a new level for the project?"}, {{"Yes", ClassClbk(self, "new_level_dialog", "")}})
 end
 
-function Project:set_crimenet_videos_dialog()
-    local t = self._current_data
-    local narr = XML:GetNode(self._current_data, "narrative")
-    BLE.SelectDialog:Show({
-        selected_list = narr.crimenet_videos,
-        list = EU:GetEntries({type = "movie", check = function(entry)
-            return entry:match("movies/")
-        end}),
-        callback = function(list) narr.crimenet_videos = list end
-    })
-end
-
-function Project:edit_main_xml(data)
-    self:reset_menu()
-    self._project = ProjectEditor:new(self._menu, data)
-end
-
 function Project:_edit_main_xml(data, save_clbk)
     self:reset_menu()
     self:set_edit_title(tostring(data.name))
@@ -815,15 +783,6 @@ function Project:small_button(name, clbk)
         text_offset = {8, 2},
         border_bottom = true,
     })
-end
-
-function Project:set_chain_index(narr_chain, chain_tbl, index)
-    local key = table.get_key(narr_chain, chain_tbl)
-
-    table.remove(narr_chain, tonumber(key))
-    table.insert(narr_chain, tonumber(index), chain_tbl)
-
-    self._refresh_func()
 end
 
 function Project:reset_menu()

@@ -3,9 +3,14 @@
 ProjectEditor = ProjectEditor or class()
 ProjectEditor.EDITORS = {}
 
+local XML = BeardLib.Utils.XML
+local CXML = "custom_xml"
+
 --- @param parent Menu
 --- @param data table
-function ProjectEditor:init(parent, data)
+function ProjectEditor:init(parent, mod)
+    local data = BLE.MapProject:get_clean_config(mod, true)
+    self._mod = mod
     self._data = data
 
     local btns = parent:GetItem("QuickActions")
@@ -19,7 +24,11 @@ function ProjectEditor:init(parent, data)
         private = {size = 24}
     })
     self._left_menu = menu
-    menu:textbox("ProjectName", up, data.name)
+
+    data.orig_id = data.orig_id or data.name
+
+    local up = ClassClbk(self, "set_data_callback")
+    menu:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}})
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
@@ -33,6 +42,7 @@ function ProjectEditor:init(parent, data)
     ItemExt:add_funcs(self)
     self._modules = self._left_menu:divgroup("Modules")
 
+    self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
     self:build_modules()
 end
 
@@ -97,11 +107,73 @@ end
 --- The callback function for all items for this menu.
 function ProjectEditor:set_data_callback()
     local data = self._data
-    data.name = self:GetItemValue("ProjectName")
-end
---- Saves the project data.
-function ProjectEditor:save_data()
 
+    local name_item = self._left_menu:GetItem("ProjectName")
+    local new_name = name_item:Value()
+    local title = "Project Name"
+    if data.id ~= new_name then
+        if new_name == "" or (data.orig_id ~= new_name and BeardLib.managers.MapFramework._loaded_mods[new_name]) then
+            title = title .. "[!]"
+        else
+            data.name = new_name
+        end
+    end
+    name_item:SetText(title)
+end
+
+--- Saves the project data.
+function ProjectEditor:save_data_callback()
+    local data = self._data
+    --TODO: Deal with deletion.
+    local id = data.orig_id or data.name
+    local map_path = Path:Combine(BeardLib.config.maps_dir, id)
+    for _, level in pairs(XML:GetNodes(data, "level")) do
+        local level_id = level.id
+        local orig_id = level.orig_id or level_id
+        if orig_id ~= level_id then -- Level ID has been changed, let's delete the old ID to let the new ID replace it and move the folder.
+            local include_dir = Path:Combine("levels", level_id)
+            level.include.directory = include_dir
+            if level.add.file then
+                level.add.file = Path:Combine(include_dir, "add.xml")
+            end
+            FileIO:MoveTo(Path:Combine(map_path, "levels", orig_id), Path:Combine(map_path, include_dir))
+            tweak_data.levels[orig_id] = nil
+            table.delete(tweak_data.levels._level_index, orig_id)
+        end
+        level.orig_id = nil
+    end
+    for _, narr in pairs(XML:GetNodes(data, "narrative")) do
+        local orig_id = narr.orig_id or narr.id -- Narrative ID has been changed, let's delete the old ID.
+        if orig_id ~= narr.id then
+            tweak_data.narrative.jobs[orig_id] = nil
+            table.delete(tweak_data.narrative._jobs_index, orig_id)
+        end
+        narr.orig_id = nil
+    end
+
+    data.orig_id = nil
+
+    FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true)) -- Update main.xml
+
+    if id ~= data.name then -- Project name has been changed, let's move the map folder.
+        FileIO:MoveTo(map_path, Path:Combine(BeardLib.config.maps_dir, data.name))
+    end
+
+    self:reload_mod(id, data.name)
+end
+
+--- Reloads the mod by loading it again after it was saved.
+--- @param old_name string
+--- @param new_name string
+function ProjectEditor:reload_mod(old_name, new_name)
+    local mod = self._mod
+    if mod._modules then
+        for _, module in pairs(mod._modules) do
+            module.Registered = false
+        end
+    end
+    BLE.MapProject:reload_mod(old_name)
+    BLE.MapProject:_select_project(BeardLib.managers.MapFramework._loaded_mods[new_name])
 end
 
 --- Closes the previous module, if open.
