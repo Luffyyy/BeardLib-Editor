@@ -134,8 +134,9 @@ end
 --- @param level_in_chain table
 function ProjectNarrativeEditor:delete_chain_level_dialog(level_in_chain)
     EU:YesNoQuestion("Delete level from chain?", function()
+        local chain = self._data.chain
         local success
-        for k, v in ipairs(self._data.chain) do
+        for k, v in ipairs(chain) do
             if success then
                 break
             end
@@ -152,6 +153,7 @@ function ProjectNarrativeEditor:delete_chain_level_dialog(level_in_chain)
                 end
             end
         end
+        self:build_levels()
     end)
 end
 

@@ -84,18 +84,16 @@ function ProjectLevelEditor:set_data_callback()
         if exists or new_name == "" or (data.orig_id ~= new_name and tweak_data.levels[new_name]) then
             title = title .. "[Invalid]"
         else
-            for _, mod in pairs(self._parent:get_modules()) do
-                if mod._meta == "narrative" then
-                    if mod.chain then
-                        for _, level in ipairs(mod.chain) do
-                            if level.level_id == data.id then
-                                level.level_id = new_name
-                                break
-                            else
-                                for i, inner_level in pairs(level) do
-                                    if inner_level.level_id == data.id then
-                                        inner_level.level_id = new_name
-                                    end
+            for _, mod in pairs(self._parent:get_modules("narrative")) do
+                if mod.chain then
+                    for _, level in ipairs(mod.chain) do
+                        if level.level_id == data.id then
+                            level.level_id = new_name
+                            break
+                        else
+                            for i, inner_level in pairs(level) do
+                                if inner_level.level_id == data.id then
+                                    inner_level.level_id = new_name
                                 end
                             end
                         end
