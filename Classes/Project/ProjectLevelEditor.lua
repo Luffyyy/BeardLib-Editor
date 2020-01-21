@@ -122,3 +122,23 @@ function ProjectLevelEditor:set_data_callback()
     local outro = self:GetItem("OutroEvent"):Value()
     data.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
 end
+
+function ProjectLevelEditor:delete()
+    local id = self._data.id
+    for _, mod in pairs(self._parent:get_modules("narrative")) do
+        if mod.chain then
+            for _, level in ipairs(mod.chain) do
+                if level.level_id == id then
+                    table.delete_value(mod.chain, level)
+                    break
+                else
+                    for i, inner_level in pairs(level) do
+                        if inner_level.level_id == id then
+                            table.delete_value(level, inner_level)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end

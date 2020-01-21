@@ -11,7 +11,7 @@ function ProjectModuleEditor:init(parent, data)
     self._menu = parent._menu:pan("Module")
     ItemExt:add_funcs(self)
 
-    self:small_button("Delete", ClassClbk(self._parent, "delete_module", self._data))
+    self:small_button("Delete", ClassClbk(self, "_delete"))
     self:small_button("Close", ClassClbk(self._parent, "close_previous_module"))
 
     self:build_menu(self._menu, data)
@@ -29,6 +29,17 @@ end
 --- Destroy function, destroys the menu.
 function ProjectModuleEditor:destroy()
     self._menu:Destroy()
+end
+
+--- Callback function for the delete button
+function ProjectModuleEditor:_delete()
+    self:delete()
+    self._parent:delete_module(self._data)
+end
+
+--- Delete function for any class inherting this to replace and do its things if needed.
+function ProjectModuleEditor:delete()
+    
 end
 
 --- Creates a small side button.
