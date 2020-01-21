@@ -9,7 +9,7 @@ function ProjectLevelEditor:build_menu(menu, data)
     local up = ClassClbk(self, "set_data_callback")
 
     data.orig_id = data.orig_id or data.id
-    menu:textbox("LevelID", up, data.id)
+    menu:textbox("LevelID", up, data.id, {forbidden_chars = {':','*','?','"','<','>','|'}})
     menu:textbox("BriefingDialog", up, data.briefing_dialog)
     data.intro_event = type(data.intro_event) == "table" and data.intro_event[1] or data.intro_event
     data.outro_event = type(data.outro_event) == "table" and data.outro_event or {data.outro_event}
