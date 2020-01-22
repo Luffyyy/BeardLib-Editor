@@ -78,6 +78,16 @@ function ProjectNarrativeEditor:build_menu(menu, data)
     end
 end
 
+function ProjectNarrativeEditor:create(create_data)
+    local template = FileIO:ReadScriptData(Path:Combine(self._templates_directory, "NarrativeModule.xml"), "custom_xml", true)
+    if create_data.clone then
+        --TODO: clone code
+    else
+        template.id = create_data.id
+    end
+    return template
+end
+
 ---Builds buttons for all levels in the chain
 function ProjectNarrativeEditor:build_levels()
     local levels_group = self._levels

@@ -5,9 +5,17 @@ ProjectModuleEditor.HAS_ID = true
 
 --- @param parent ProjectEditor
 --- @param data table
-function ProjectModuleEditor:init(parent, data)
-    self._data = data
+function ProjectModuleEditor:init(parent, data, create_data)
     self._parent = parent
+
+    if not data and create_data then
+        data = self:create(create_data)
+        if not data then
+            return
+        end
+        parent:add_module(data)
+    end
+    self._data = data
     self._menu = parent._menu:pan("Module")
     ItemExt:add_funcs(self)
 
@@ -15,6 +23,11 @@ function ProjectModuleEditor:init(parent, data)
     self:small_button("Close", ClassClbk(self._parent, "close_previous_module"))
 
     self:build_menu(self._menu, data)
+end
+
+--- Creates the module based on create_data which contains information about the module that should be created.
+--- @param create_data table
+function ProjectModuleEditor:create(create_data)
 end
 
 --- Builds the menu of the module

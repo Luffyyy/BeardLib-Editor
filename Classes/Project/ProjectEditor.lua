@@ -79,6 +79,13 @@ function ProjectEditor:get_module(id, meta)
     end
 end
 
+--- Inserts a module into the data, forces a save.
+--- @param data table
+function ProjectEditor:add_module(data)
+    XML:InsertNode(self._data, data)
+    self:save_data_callback()
+end
+
 --- Packs all modules into a table
 --- @param meta string
 --- @return table

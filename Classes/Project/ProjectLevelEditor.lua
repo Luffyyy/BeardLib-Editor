@@ -36,6 +36,16 @@ function ProjectLevelEditor:build_menu(menu, data)
     end
 end
 
+function ProjectLevelEditor:create(create_data)
+    local template = FileIO:ReadScriptData(Path:Combine(self._templates_directory, "LevelModule.xml"), "custom_xml", true)
+    if create_data.clone then
+        --TODO: clone code
+    else
+        template.id = create_data.id
+    end
+    return template
+end
+
 --- Opens a dialog for editing the mission assets of a level
 function ProjectLevelEditor:set_mission_assets_dialog()
     local data = self._data

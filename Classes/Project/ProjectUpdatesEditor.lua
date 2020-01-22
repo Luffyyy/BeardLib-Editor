@@ -9,12 +9,6 @@ local XML = BeardLib.Utils.XML
 --- @param menu Menu
 --- @param data table
 function ProjectUpdatesModule:build_menu(menu, data)
-    --[[local mod_assets = XML:GetNode(data, "AssetUpdates") TODO: use for creation
-    if not mod_assets then
-        mod_assets = {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop", use_local_dir = true}
-        data.AssetUpdates = mod_assets
-    end]]
-
     if data.provider == "lastbullet" then
         data.provider = "modworkshop"
     end
@@ -27,6 +21,10 @@ function ProjectUpdatesModule:build_menu(menu, data)
         text = "Downloadable From CrimeNet",
         help = "Can the level be downloaded by clients connecting? this can only work if the level has no extra dependencies"
     })
+end
+
+function ProjectNarrativeEditor:create(create_data)
+    return {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop"}
 end
 
 --- The callback function for all items for this menu.
