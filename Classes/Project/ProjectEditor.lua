@@ -7,11 +7,12 @@ local XML = BeardLib.Utils.XML
 local CXML = "custom_xml"
 
 --- @param parent Menu
---- @param data table
+--- @param mod ModCore
 function ProjectEditor:init(parent, mod)
     local data = BLE.MapProject:get_clean_config(mod, true)
     self._mod = mod
     self._data = data
+    self._to_delete = {}
 
     local btns = parent:GetItem("QuickActions")
     local menu = parent:divgroup("CurrEditing", {
@@ -59,7 +60,7 @@ function ProjectEditor:build_modules()
             end
             local btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text, module = mod})
             if meta == "narrative" then
-                self:open_module(mod, btn)
+                self:open_module(mod)
             end
         end
     end
@@ -121,12 +122,24 @@ function ProjectEditor:set_data_callback()
     name_item:SetText(title)
 end
 
+function ProjectEditor:get_dir()
+    return Path:Combine(BeardLib.config.maps_dir, self._data.orig_id or self._data.name)
+end
+
 --- Saves the project data.
 function ProjectEditor:save_data_callback()
     local data = self._data
-    --TODO: Deal with deletion.
+
     local id = data.orig_id or data.name
-    local map_path = Path:Combine(BeardLib.config.maps_dir, id)
+    local map_path = self:get_dir()
+
+    for _, delete in pairs(self._to_delete) do
+        if delete._meta == "level" then
+            FileIO:Delete(Path:Combine(map_path, "levels", delete.orig_id or delete.id))
+        end
+    end
+    self._to_delete = {}
+
     for _, level in pairs(XML:GetNodes(data, "level")) do
         local level_id = level.id
         local orig_id = level.orig_id or level_id
@@ -189,6 +202,7 @@ function ProjectEditor:close_previous_module()
 end
 
 function ProjectEditor:delete_module(data)
+    table.insert(self._to_delete, data)
     table.delete_value(self._data, data)
     self:close_previous_module()
     self:build_modules()
