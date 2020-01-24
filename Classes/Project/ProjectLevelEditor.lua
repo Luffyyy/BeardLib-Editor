@@ -37,13 +37,48 @@ function ProjectLevelEditor:build_menu(menu, data)
 end
 
 function ProjectLevelEditor:create(create_data)
-    local template = FileIO:ReadScriptData(Path:Combine(self._templates_directory, "LevelModule.xml"), "custom_xml", true)
-    if create_data.clone then
-        --TODO: clone code
-    else
-        template.id = create_data.id
-    end
-    return template
+    BLE.InputDialog:Show({
+        title = "Enter a name for the level",
+        yes = "Create",
+        text = name or "",
+        no_callback = no_callback,
+        check_value = function(name)
+            local warn
+            for k in pairs(tweak_data.levels) do
+                if string.lower(k) == name:lower() then
+                    warn = string.format("A level with the id %s already exists! Please use a unique id", k)
+                end
+            end
+            if name == "" then
+                warn = string.format("Id cannot be empty!", name)
+            elseif string.begins(name, " ") then
+                warn = "Invalid ID!"
+            end
+            if warn then
+                EU:Notify("Error", warn)
+            end
+            return warn == nil
+        end,
+        callback = function(name)
+            local template = FileIO:ReadScriptData(Path:Combine(BLE.MapProject._templates_directory, "LevelModule.xml"), "custom_xml", true)
+            template.id = name
+            local proj_path = self._parent:get_dir()
+            local level_path = Path:Combine("levels", template.id)
+            template.include.directory = level_path
+
+            if create_data.clone then
+                --TODO: clone code
+            else
+                if create_data.narrative then
+                    table.insert(create_data.narrative, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
+                end
+
+                FileIO:MakeDir(Path:Combine(proj_path, level_path))
+                FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Level"), Path:Combine(proj_path, level_path))
+            end
+            self:finalize_creation(template)
+        end
+    })
 end
 
 --- Opens a dialog for editing the mission assets of a level

@@ -88,6 +88,41 @@ function ProjectNarrativeEditor:create(create_data)
     return template
 end
 
+function ProjectNarrativeEditor:create(create_data)
+    BLE.InputDialog:Show({
+        title = "Enter a name for the narrative",
+        yes = "Create",
+        text = name or "",
+        no_callback = no_callback,
+        check_value = function(name)
+            local warn
+            for k in pairs(tweak_data.narrative.jobs) do
+                if string.lower(k) == name:lower() then
+                    warn = string.format("A narrative with the id %s already exists! Please use a unique id", k)
+                end
+            end
+            if name == "" then
+                warn = string.format("Id cannot be empty!", name)
+            elseif string.begins(name, " ") then
+                warn = "Invalid ID!"
+            end
+            if warn then
+                EU:Notify("Error", warn)
+            end
+            return warn == nil
+        end,
+        callback = function(name)
+            local template = FileIO:ReadScriptData(Path:Combine(BLE.MapProject._templates_directory, "NarrativeModule.xml"), "custom_xml", true)
+            template.id = name
+            if create_data.clone then
+                local proj_path = self._parent:get_dir()
+                --TODO: clone code
+            end
+            self:finalize_creation(template)
+        end
+    })
+end
+
 ---Builds buttons for all levels in the chain
 function ProjectNarrativeEditor:build_levels()
     local levels_group = self._levels

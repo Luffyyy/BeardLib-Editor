@@ -43,6 +43,7 @@ function ProjectEditor:init(parent, mod)
     ItemExt:add_funcs(self)
     self._modules = self._left_menu:divgroup("Modules")
 
+    self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
     self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
     self:build_modules()
 end
@@ -208,11 +209,27 @@ function ProjectEditor:close_previous_module()
     self._menu:ClearItems()
 end
 
+---Deletes a module from the data.
+--- @param data table
 function ProjectEditor:delete_module(data)
     table.insert(self._to_delete, data)
     table.delete_value(self._data, data)
     self:close_previous_module()
     self:build_modules()
+end
+
+function ProjectEditor:open_create_dialog()
+    local opts = {}
+    for name, editor in pairs(self.EDITORS) do
+        table.insert(opts, {name = name, editor = editor})
+    end
+    BLE.ListDialog:Show({
+        list = opts,
+        callback = function(selection)
+            selection.editor:new(self)
+            BLE.ListDialog:hide()
+        end
+    })
 end
 
 --- Destroy function, destroys the menu.

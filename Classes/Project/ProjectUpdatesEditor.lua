@@ -23,7 +23,7 @@ function ProjectUpdatesModule:build_menu(menu, data)
     })
 end
 
-function ProjectNarrativeEditor:create(create_data)
+function ProjectUpdatesModule:create()
     return {_meta = "AssetUpdates", id = -1, version = 1, provider = "modworkshop"}
 end
 
