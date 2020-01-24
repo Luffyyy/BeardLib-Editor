@@ -12,8 +12,8 @@ function Project:init()
     self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
     self._level_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._narr_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "NarrativeModule.xml"))
-
     self._instance_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "InstanceModule.xml"))
+
     self._packages_to_unload = {}
 
     self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})

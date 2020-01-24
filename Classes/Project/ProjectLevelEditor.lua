@@ -1,6 +1,7 @@
 ---Editor for BeardLib level module.
 ---@class ProjectLevelEditor : ProjectModuleEditor
 ProjectLevelEditor = ProjectLevelEditor or class(ProjectModuleEditor)
+ProjectLevelEditor.LEVELS_DIR = "levels"
 ProjectEditor.EDITORS.level = ProjectLevelEditor
 ProjectEditor.ACTIONS["CloneSingleLevel"] = function(parent)
     local levels = {}
@@ -92,7 +93,7 @@ function ProjectLevelEditor:create(create_data)
                 template = deep_clone(BLE.MapProject._level_module_template)
                 template.id = name
                 local proj_path = self._parent:get_dir()
-                local level_path = Path:Combine("levels", template.id)
+                local level_path = Path:Combine(LEVELS_DIR, template.id)
                 template.include.directory = level_path
 
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
@@ -110,25 +111,28 @@ function ProjectLevelEditor:create(create_data)
     })
 end
 
-function ProjectLevelEditor:clone_level(create_data)
-    PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
-
-    local clone_id = create_data.clone_id
-    local level = clone(tweak_data.levels[clone_id])
+function ProjectLevelEditor:pre_clone_level(create_data)
     local name = create_data.name
-    local packages = type(level.package) == "string" and {level.package} or level.package or {}
-    local level_dir = "levels/"..level.world_name .. "/"
-
-    --Merge module stuff into the cloned level tweakdata entry
+    local level = clone(tweak_data.levels[create_data.clone_id])
     table.merge(level, {
         _meta = "level",
         assets = {},
         id = name,
         add = {directory = "assets"},
-        include = {directory = Path:Combine("levels", name)},
-        packages = packages,
+        include = {directory = Path:Combine(self.LEVELS_DIR, name)},
+        packages = type(level.package) == "string" and {level.package} or level.package or {},
         script_data_mods = deep_clone(BLE.MapProject._level_module_template).script_data_mods
     })
+    return level, "levels/"..level.world_name .. "/"
+end
+
+function ProjectLevelEditor:clone_level(create_data)
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
+
+    --Merge module stuff into the cloned level tweakdata entry
+    local level, level_dir = self:pre_clone_level(create_data)
+    local clone_id = create_data.clone_id
+    local name = create_data.name
 
     --Clone preplanning
     local preplanning = tweak_data.preplanning.locations[id]
@@ -137,8 +141,8 @@ function ProjectLevelEditor:clone_level(create_data)
     end
 
     local function extra_package(p)
-        if not table.contains(packages, p) then
-            table.insert(packages, p)
+        if not table.contains(level.packages, p) then
+            table.insert(level.packages, p)
         end
     end
 
@@ -172,8 +176,7 @@ function ProjectLevelEditor:clone_level(create_data)
         end
     end
 
-
-    local custom_level_dir = Path:Combine(self._parent:get_dir(), "levels", name)
+    local custom_level_dir = Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, name)
 
     --This local function is used to extract the files of the map by reading the scriptdata.
     --To actually have it work we ofc need to load the packages first or else the game will go into shit.
@@ -182,19 +185,18 @@ function ProjectLevelEditor:clone_level(create_data)
         typ = typ or name
         local data
         local typeid = typ:id()
-        local nameid = name:id()
         local inpath = Path:Combine(path, name)
         if PackageManager:has(typeid, inpath:id()) then
             data = PackageManager:script_data(typeid, inpath:id())
             if data_func then
                 data_func(data)
             end
-            local infolder = path:gsub(level_dir, "")                
+            local infolder = path:gsub(level_dir, "")
             local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name.."."..typ
             FileIO:WriteScriptData(Path:Combine(custom_level_dir, file), data, "binary")
             table.insert(level.include, {_meta = "file", file = file, type = "binary"})
         else
-            BLE:log("[add_existing_level_to_project][extra_file] File is unloaded %s", inpath)
+            BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s", inpath)
         end
         if PackageManager:package_exists(inpath) then
             extra_package(inpath)
@@ -204,13 +206,12 @@ function ProjectLevelEditor:clone_level(create_data)
 
     --Here we go through possible files of the map to extract them.
     extra_package(level_dir.."world")
-    for _, p in pairs(packages) do
+    for _, p in pairs(level.packages) do
         BLE.MapProject:load_temp_package(p.."_init")
         BLE.MapProject:load_temp_package(p)
     end
 
     extra_file("world", nil, nil, function(data) data.brush = nil end)
-    local continents_data = extra_file("continents")
     extra_file("mission")
     extra_file("nav_manager_data", "nav_data")
     extra_file("cover_data")
@@ -225,8 +226,8 @@ function ProjectLevelEditor:clone_level(create_data)
     local file_path
     local add = {_meta = "add", directory = "assets"}
     for k, v  in pairs(Global.DBPaths[texture]) do
-        if v and k:sub(1, #cube_lights_dir) == inpath then 
-            file_path = Path:Combine("levels/mods", name, string.sub(k, #path))
+        if v and k:sub(1, #cube_lights_dir) == inpath then
+            file_path = Path:Combine(self.LEVELS_DIR.."/mods", name, string.sub(k, #path))
             FileIO:WriteTo(Path:Combine(BeardLib.config.maps_dir, data.name, "assets", file_path) .. "." .. typ , DB:open(texture, k):read())
             table.insert(add, {_meta = "texture", path = file_path})
         end
@@ -235,6 +236,7 @@ function ProjectLevelEditor:clone_level(create_data)
     --Write to the add.xml of the level
     FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, CXML)
 
+    local continents_data = extra_file("continents")
     for c in pairs(continents_data) do
         local c_path = Path:Combine(level_dir, c)
         BLE.MapProject:load_temp_package(Path:Combine(c_path, c).."_init")
