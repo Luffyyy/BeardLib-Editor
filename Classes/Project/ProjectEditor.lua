@@ -2,6 +2,7 @@
 ---@class ProjectEditor
 ProjectEditor = ProjectEditor or class()
 ProjectEditor.EDITORS = {}
+ProjectEditor.ACTIONS = {}
 
 local XML = BeardLib.Utils.XML
 local CXML = "custom_xml"
@@ -44,6 +45,11 @@ function ProjectEditor:init(parent, mod)
     self._modules = self._left_menu:divgroup("Modules")
 
     self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
+
+    local actions = self._left_menu:divgroup("Actions")
+    for id, action in pairs(self.ACTIONS) do
+        actions:button(id, SimpleClbk(action, self))
+    end
     self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
     self:build_modules()
 end
@@ -80,11 +86,14 @@ function ProjectEditor:get_module(id, meta)
     end
 end
 
---- Inserts a module into the data, forces a save.
+--- Inserts a module into the data, forces a save.(if no_reload is not equals to true)
 --- @param data table
-function ProjectEditor:add_module(data)
+--- @param no_reload boolean
+function ProjectEditor:add_module(data, no_reload)
     XML:InsertNode(self._data, data)
-    self:save_data_callback()
+    if not no_reload then
+        self:save_data_callback()
+    end
 end
 
 --- Packs all modules into a table

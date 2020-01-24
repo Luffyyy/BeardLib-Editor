@@ -28,8 +28,8 @@ end
 
 --- For cases where the creation isn't straightforward and requires additional dialogs for example.
 --- @param data table
-function ProjectModuleEditor:finalize_creation(data)
-    self._parent:add_module(data)
+function ProjectModuleEditor:finalize_creation(data, no_reload)
+    self._parent:add_module(data, no_reload)
 end
 
 --- Creates the module based on create_data which contains information about the module that should be created.

@@ -11,7 +11,10 @@ function Project:init()
     self._add_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
     self._main_xml_template = self:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
     self._level_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
+    self._narr_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "NarrativeModule.xml"))
+
     self._instance_module_template = self:ReadConfig(Path:Combine(self._templates_directory, "InstanceModule.xml"))
+    self._packages_to_unload = {}
 
     self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})
     ItemExt:add_funcs(self)
@@ -262,8 +265,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             self:load_temp_package(p)
         end
 
-        local world_data = extra_file("world", nil, nil, function(data) data.brush = nil end)
-        local continents_data = extra_file("continents")
+        extra_file("world", nil, nil, function(data) data.brush = nil end)
         extra_file("mission")
         extra_file("nav_manager_data", "nav_data")
         extra_file("cover_data")
@@ -272,6 +274,7 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
 
         extra_cube_lights()
 
+        local continents_data = extra_file("continents")
         for c in pairs(continents_data) do
             local c_path = Path:Combine(level_dir, c)
             self:load_temp_package(Path:Combine(c_path, c).."_init")
@@ -279,10 +282,10 @@ function Project:add_existing_level_to_project(data, narr, level_in_chain, narr_
             extra_file(c, "mission", c_path)
         end
 
-        level.world_name = nil      
+        level.world_name = nil
         level.name_id = nil
-        level.briefing_id = nil 
-        level.package = nil 
+        level.briefing_id = nil
+        level.package = nil
         level_in_chain.level_id = name
 
         if done_clbk then
@@ -298,6 +301,11 @@ function Project:existing_narr_new_project_clbk_finish(data, narr)
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
     BLE.LoadLevel:load_levels()
+    self:unload_temp_packages()
+end
+
+--- Unloads all packages that were lodaed and inserted into self._packages_to_unload.
+function Project:unload_temp_packages()
     for _, p in pairs(self._packages_to_unload) do
         if PackageManager:loaded(p) then
             DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
@@ -306,6 +314,7 @@ function Project:existing_narr_new_project_clbk_finish(data, narr)
             end)
         end
     end
+    self._packages_to_unload = {}
 end
 
 function Project:existing_narr_new_project_clbk(selection, t, name)

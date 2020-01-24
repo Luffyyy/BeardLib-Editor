@@ -2,6 +2,22 @@
 ---@class ProjectNarrativeEditor : ProjectModuleEditor
 ProjectNarrativeEditor = ProjectNarrativeEditor or class(ProjectModuleEditor)
 ProjectEditor.EDITORS.narrative = ProjectNarrativeEditor
+ProjectEditor.ACTIONS["CloneHeist"] = function(parent)
+    local levels = {}
+    for id, narr in pairs(tweak_data.narrative.jobs) do
+        if not narr.custom and not narr.hidden then
+            --dunno why the name_id is nil for some of them..
+            table.insert(levels, {name = id.." / " .. managers.localization:text((narr.name_id or ("heist_"..id)):gsub("_prof", ""):gsub("_night", "")), id = id})
+        end
+    end
+    BLE.ListDialog:Show({
+        list = levels,
+        callback = function(selection)
+            BLE.ListDialog:hide()
+            ProjectNarrativeEditor:new(parent, nil, {clone_id = selection.id})
+        end
+    })
+end
 
 local EU = BLE.Utils
 local XML = BeardLib.Utils.XML
@@ -79,21 +95,10 @@ function ProjectNarrativeEditor:build_menu(menu, data)
 end
 
 function ProjectNarrativeEditor:create(create_data)
-    local template = FileIO:ReadScriptData(Path:Combine(self._templates_directory, "NarrativeModule.xml"), "custom_xml", true)
-    if create_data.clone then
-        --TODO: clone code
-    else
-        template.id = create_data.id
-    end
-    return template
-end
-
-function ProjectNarrativeEditor:create(create_data)
     BLE.InputDialog:Show({
         title = "Enter a name for the narrative",
         yes = "Create",
         text = name or "",
-        no_callback = no_callback,
         check_value = function(name)
             local warn
             for k in pairs(tweak_data.narrative.jobs) do
@@ -107,18 +112,66 @@ function ProjectNarrativeEditor:create(create_data)
                 warn = "Invalid ID!"
             end
             if warn then
-                EU:Notify("Error", warn)
+                BLE.Utils:Notify("Error", warn)
             end
             return warn == nil
         end,
         callback = function(name)
-            local template = FileIO:ReadScriptData(Path:Combine(BLE.MapProject._templates_directory, "NarrativeModule.xml"), "custom_xml", true)
+            local template
+            template = deep_clone(BLE.MapProject._narr_module_template)
             template.id = name
-            if create_data.clone then
-                local proj_path = self._parent:get_dir()
-                --TODO: clone code
+
+            if create_data.clone_id then
+                table.merge(template, tweak_data.narrative.jobs[create_data.clone_id])
+                local cv = template.contract_visuals
+                template.max_mission_xp = cv and cv.max_mission_xp or template.max_mission_xp
+                template.min_mission_xp = cv and cv.min_mission_xp or template.min_mission_xp
+                template.contract_visuals = nil
+                template.name_id = nil
+                template.briefing_id = nil
+                template.package = nil --packages should only be in levels.
+
+                local already_cloned = {}
+
+                local function clone_level(chain_level, last)
+                    local id = chain_level.level_id
+
+                    --If we already cloned it then just update the ID, if it's last then finalize creation.
+                    if already_cloned[id] then
+                        chain_level[id].level_id = already_cloned[id].level_id
+                        if last then
+                            self:finalize_creation(template)
+                        end
+                        return
+                    end
+                    --We try to clone each level, final_callback will call regardless if the user decided to cancel the input dialog or not. So the last one should at least call.
+                    --We disable reloading so we can clone all levels without issues. Plus only reload it once after we're done entirely.
+                    ProjectLevelEditor:new(self._parent, nil, {clone_id = id, chain_level = chain_level, no_reload = true, final_callback = last and function(success)
+                        if success then
+                            already_cloned[id] = chain_level
+                        end
+                        self:finalize_creation(template)
+                    end})
+                end
+                if #template.chain > 0 then
+                    for i, level_in_chain in pairs(template.chain) do
+                        local last = i == #template.chain
+                        if type(level_in_chain) == "table" then
+                            if #level_in_chain > 0 then
+                                for ii, inner_level in pairs(level_in_chain) do
+                                    clone_level(inner_level, last and ii == #level_in_chain)
+                                end
+                            else
+                                clone_level(level_in_chain, last)
+                            end
+                        end
+                    end
+                else
+                    self:finalize_creation(template)
+                end
+            else
+                self:finalize_creation(template)
             end
-            self:finalize_creation(template)
         end
     })
 end

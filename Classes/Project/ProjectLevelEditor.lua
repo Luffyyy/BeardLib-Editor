@@ -2,6 +2,23 @@
 ---@class ProjectLevelEditor : ProjectModuleEditor
 ProjectLevelEditor = ProjectLevelEditor or class(ProjectModuleEditor)
 ProjectEditor.EDITORS.level = ProjectLevelEditor
+ProjectEditor.ACTIONS["CloneSingleLevel"] = function(parent)
+    local levels = {}
+    for _, id in pairs(tweak_data.levels._level_index) do
+		local level = tweak_data.levels[id]
+		if level and not level.custom then
+            --dunno why the name_id is nil for some of them..
+            table.insert(levels, {name = (level.name_id and managers.localization:text(level.name_id) or "").." / "..id, id = id})
+        end
+    end
+    BLE.ListDialog:Show({
+        list = levels,
+        callback = function(selection)
+            BLE.ListDialog:hide()
+            ProjectLevelEditor:new(parent, nil, {clone_id = selection.id})
+        end
+    })
+end
 
 --- @param menu Menu
 --- @param data table
@@ -41,7 +58,6 @@ function ProjectLevelEditor:create(create_data)
         title = "Enter a name for the level",
         yes = "Create",
         text = name or "",
-        no_callback = no_callback,
         check_value = function(name)
             local warn
             for k in pairs(tweak_data.levels) do
@@ -55,13 +71,21 @@ function ProjectLevelEditor:create(create_data)
                 warn = "Invalid ID!"
             end
             if warn then
-                EU:Notify("Error", warn)
+                BLE.Utils:Notify("Error", warn)
             end
             return warn == nil
         end,
+        no_callback = function()
+            if create_data.final_callback then
+                create_data.final_callback(false)
+            end
+        end,
         callback = function(name)
             local template
-            if create_data.clone then
+            if create_data.chain_level then
+                create_data.chain_level.level_id = name
+            end
+            if create_data.clone_id then
                 create_data.name = name
                 template = self:clone_level(create_data)
             else
@@ -78,12 +102,17 @@ function ProjectLevelEditor:create(create_data)
             if create_data.narrative then
                 table.insert(create_data.narrative, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
             end
-            self:finalize_creation(template)
+            self:finalize_creation(template, create_data.no_reload)
+            if create_data.final_callback then
+                create_data.final_callback(true)
+            end
         end
     })
 end
 
 function ProjectLevelEditor:clone_level(create_data)
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), nil)
+
     local clone_id = create_data.clone_id
     local level = clone(tweak_data.levels[clone_id])
     local name = create_data.name
@@ -176,8 +205,8 @@ function ProjectLevelEditor:clone_level(create_data)
     --Here we go through possible files of the map to extract them.
     extra_package(level_dir.."world")
     for _, p in pairs(packages) do
-        self:load_temp_package(p.."_init")
-        self:load_temp_package(p)
+        BLE.MapProject:load_temp_package(p.."_init")
+        BLE.MapProject:load_temp_package(p)
     end
 
     extra_file("world", nil, nil, function(data) data.brush = nil end)
@@ -208,7 +237,7 @@ function ProjectLevelEditor:clone_level(create_data)
 
     for c in pairs(continents_data) do
         local c_path = Path:Combine(level_dir, c)
-        self:load_temp_package(Path:Combine(c_path, c).."_init")
+        BLE.MapProject:load_temp_package(Path:Combine(c_path, c).."_init")
         extra_file(c, "continent", c_path)
         extra_file(c, "mission", c_path)
     end
@@ -219,6 +248,8 @@ function ProjectLevelEditor:clone_level(create_data)
     level.briefing_id = nil
     level.package = nil
 
+    PackageManager:set_resource_loaded_clbk(Idstring("unit"), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
+    BLE.MapProject:unload_temp_packages()
     return level
 end
 
