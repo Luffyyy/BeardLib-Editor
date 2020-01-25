@@ -340,6 +340,25 @@ function ProjectLevelEditor:set_data_callback()
     data.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
 end
 
+function ProjectLevelEditor:save()
+    local level = self._data
+    local level_id = level.id
+    local orig_id = level.orig_id or level_id
+    local dir = self._parent:get_dir()
+
+    if orig_id ~= level_id then -- Level ID has been changed, let's delete the old ID to let the new ID replace it and move the folder.
+        local include_dir = Path:Combine("levels", level_id)
+        level.include.directory = include_dir
+        if level.add.file then
+            level.add.file = Path:Combine(include_dir, "add.xml")
+        end
+        FileIO:MoveTo(Path:Combine(dir, "levels", orig_id), Path:Combine(dir, include_dir))
+        tweak_data.levels[orig_id] = nil
+        table.delete(tweak_data.levels._level_index, orig_id)
+    end
+    level.orig_id = nil
+end
+
 function ProjectLevelEditor:delete()
     local id = self._data.id
     for _, mod in pairs(self._parent:get_modules("narrative")) do
@@ -357,5 +376,9 @@ function ProjectLevelEditor:delete()
                 end
             end
         end
+    end
+    local path = Path:CombineDir(self._parent:get_dir(), "levels", self._data.orig_id or id)
+    if FileIO:Exists(path) then
+        FileIO:Delete(path)
     end
 end

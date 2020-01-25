@@ -1,4 +1,6 @@
 ---Editor for BeardLib projects. Only usable for map related projects at the moment.
+---In the future we may expand to others. The code here shouldn't focus too hard on specific modules.
+---That's why some buttons like "Actions" are affected by other classes.
 ---@class ProjectEditor
 ProjectEditor = ProjectEditor or class()
 ProjectEditor.EDITORS = {}
@@ -13,7 +15,6 @@ function ProjectEditor:init(parent, mod)
     local data = BLE.MapProject:get_clean_config(mod, true)
     self._mod = mod
     self._data = data
-    self._to_delete = {}
 
     local btns = parent:GetItem("QuickActions")
     local menu = parent:divgroup("CurrEditing", {
@@ -42,7 +43,7 @@ function ProjectEditor:init(parent, mod)
         position = "Right"
     })
     ItemExt:add_funcs(self)
-    self._modules = self._left_menu:divgroup("Modules")
+    self._modules_list = self._left_menu:divgroup("Modules")
 
     self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
 
@@ -50,25 +51,32 @@ function ProjectEditor:init(parent, mod)
     for id, action in pairs(self.ACTIONS) do
         actions:button(id, SimpleClbk(action, self))
     end
+
+    self._modules = {}
+    for _, modl in pairs(self._data) do
+        local meta = type(modl) == "table" and modl._meta
+        if meta and ProjectEditor.EDITORS[meta] then
+            table.insert(self._modules, ProjectEditor.EDITORS[meta]:new(self, modl))
+        end
+    end
+
     self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
     self:build_modules()
 end
 
 ---List the modules
 function ProjectEditor:build_modules()
-    local modules = self._modules
+    local modules = self._modules_list
     modules:ClearItems()
-    for _, mod in pairs(self._data) do
-        local meta = type(mod) == "table" and mod._meta
-        if meta and ProjectEditor.EDITORS[meta] then
-            local text = string.capitalize(meta)
-            if ProjectEditor.EDITORS[meta].HAS_ID then
-                text = text .. ": "..mod.id
-            end
-            local btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text, module = mod})
-            if meta == "narrative" then
-                self:open_module(mod)
-            end
+    for _, mod in pairs(self._modules) do
+        local meta = mod._data._meta
+        local text = string.capitalize(meta)
+        if ProjectEditor.EDITORS[meta].HAS_ID then
+            text = text .. ": "..mod._data.id
+        end
+        mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
+        if meta == "narrative" then
+            self:open_module(mod)
         end
     end
 end
@@ -112,14 +120,18 @@ end
 
 --- Opens a module to edit.
 --- @param data table
-function ProjectEditor:open_module(data)
+function ProjectEditor:open_module(editor)
     self:close_previous_module()
-    for _, item in pairs(self._modules:Items()) do
-        if item.module == data then
-            item:SetBorder({left = true})
-        end
+
+    if alive(editor._btn) then
+        editor._btn:SetBorder({left = true})
     end
-    self._current_module = ProjectEditor.EDITORS[data._meta]:new(self, data)
+
+    self:small_button("Delete", ClassClbk(self, "delete_current_module"))
+    self:small_button("Close", ClassClbk(self, "close_previous_module"))
+
+    self._current_module = editor
+    editor:do_build_menu()
 end
 
 --- The callback function for all items for this menu.
@@ -147,46 +159,18 @@ end
 function ProjectEditor:save_data_callback()
     local data = self._data
 
+    for _, mod in pairs(self._modules) do
+        mod:save_data()
+    end
+
     local id = data.orig_id or data.name
-    local map_path = self:get_dir()
-
-    for _, delete in pairs(self._to_delete) do
-        if delete._meta == "level" then
-            FileIO:Delete(Path:Combine(map_path, "levels", delete.orig_id or delete.id))
-        end
-    end
-    self._to_delete = {}
-
-    for _, level in pairs(XML:GetNodes(data, "level")) do
-        local level_id = level.id
-        local orig_id = level.orig_id or level_id
-        if orig_id ~= level_id then -- Level ID has been changed, let's delete the old ID to let the new ID replace it and move the folder.
-            local include_dir = Path:Combine("levels", level_id)
-            level.include.directory = include_dir
-            if level.add.file then
-                level.add.file = Path:Combine(include_dir, "add.xml")
-            end
-            FileIO:MoveTo(Path:Combine(map_path, "levels", orig_id), Path:Combine(map_path, include_dir))
-            tweak_data.levels[orig_id] = nil
-            table.delete(tweak_data.levels._level_index, orig_id)
-        end
-        level.orig_id = nil
-    end
-    for _, narr in pairs(XML:GetNodes(data, "narrative")) do
-        local orig_id = narr.orig_id or narr.id -- Narrative ID has been changed, let's delete the old ID.
-        if orig_id ~= narr.id then
-            tweak_data.narrative.jobs[orig_id] = nil
-            table.delete(tweak_data.narrative._jobs_index, orig_id)
-        end
-        narr.orig_id = nil
-    end
-
+    local dir = self:get_dir()
     data.orig_id = nil
 
-    FileIO:WriteTo(Path:Combine(map_path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true)) -- Update main.xml
+    FileIO:WriteTo(Path:Combine(dir, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true)) -- Update main.xml
 
     if id ~= data.name then -- Project name has been changed, let's move the map folder.
-        FileIO:MoveTo(map_path, Path:Combine(BeardLib.config.maps_dir, data.name))
+        FileIO:MoveTo(dir, Path:CombineDir(BeardLib.config.maps_dir, data.name))
     end
 
     self:reload_mod(id, data.name)
@@ -209,7 +193,7 @@ end
 --- Closes the previous module, if open.
 function ProjectEditor:close_previous_module()
     if self._current_module then
-        self._current_module:destroy()
+        self._current_module:destroy_menu()
         self._current_module = nil
     end
     for _, itm in pairs(self._left_menu:GetItem("Modules"):Items()) do
@@ -220,11 +204,10 @@ end
 
 ---Deletes a module from the data.
 --- @param data table
-function ProjectEditor:delete_module(data)
-    table.insert(self._to_delete, data)
-    table.delete_value(self._data, data)
-    self:close_previous_module()
-    self:build_modules()
+function ProjectEditor:delete_module(mod)
+    table.delete_value(self._data, mod._data)
+    table.delete_value(self._modules, mod)
+    self:save_data_callback()
 end
 
 function ProjectEditor:open_create_dialog()
@@ -245,4 +228,22 @@ end
 function ProjectEditor:destroy()
     self._left_menu:Destroy()
     self._menu:Destroy()
+end
+
+--- Deletes current open module
+function ProjectEditor:delete_current_module()
+    if not self._current_module then
+        return
+    end
+    self._current_module:delete()
+    self:delete_module(self._current_module)
+end
+
+--- Creates a small side button.
+function ProjectEditor:small_button(name, clbk)
+    self._menu:GetToolbar():tb_btn(name, clbk, {
+        min_width = 100,
+        text_offset = {8, 2},
+        border_bottom = true,
+    })
 end

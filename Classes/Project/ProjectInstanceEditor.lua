@@ -111,4 +111,25 @@ function ProjectInstanceEditor:set_data_callback()
 end
 
 function ProjectInstanceEditor:delete()
+    local id = self._data.id
+    for _, mod in pairs(self._parent:get_modules("narrative")) do
+        if mod.chain then
+            for _, level in ipairs(mod.chain) do
+                if level.level_id == id then
+                    table.delete_value(mod.chain, level)
+                    break
+                else
+                    for i, inner_level in pairs(level) do
+                        if inner_level.level_id == id then
+                            table.delete_value(level, inner_level)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    local path = Path:CombineDir(map_path, self.LEVELS_DIR, self._data.orig_id or id)
+    if FileIO:Exists(path) then
+        FileIO:Delete(path)
+    end
 end

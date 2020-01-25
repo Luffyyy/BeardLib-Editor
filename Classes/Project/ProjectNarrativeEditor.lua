@@ -376,3 +376,13 @@ function ProjectNarrativeEditor:set_data_callback()
     data.contact = self:GetItem("Contact"):SelectedItem()
     data.hide_from_crimenet = self:GetItemValue("HideFromCrimenet")
 end
+
+function ProjectNarrativeEditor:save()
+    local narr = self._data
+    local orig_id = narr.orig_id or narr.id -- Narrative ID has been changed, let's delete the old ID.
+    if orig_id ~= narr.id then
+        tweak_data.narrative.jobs[orig_id] = nil
+        table.delete(tweak_data.narrative._jobs_index, orig_id)
+    end
+    narr.orig_id = nil
+end

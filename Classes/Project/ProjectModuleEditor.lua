@@ -16,14 +16,15 @@ function ProjectModuleEditor:init(parent, data, create_data)
         self:finalize_creation(data)
         return
     end
+
     self._data = data
-    self._menu = parent._menu:pan("Module")
+
+    self._menu = parent._menu
     ItemExt:add_funcs(self)
+end
 
-    self:small_button("Delete", ClassClbk(self, "_delete"))
-    self:small_button("Close", ClassClbk(self._parent, "close_previous_module"))
-
-    self:build_menu(self._menu, data)
+function ProjectModuleEditor:do_build_menu()
+    self:build_menu(self._menu, self._data)
 end
 
 --- For cases where the creation isn't straightforward and requires additional dialogs for example.
@@ -46,27 +47,14 @@ function ProjectModuleEditor:build_menu(menu, data) end
 function ProjectModuleEditor:set_data_callback()
 end
 
---- Destroy function, destroys the menu.
-function ProjectModuleEditor:destroy()
-    self._menu:Destroy()
+--- Save function for the data. This deals with things like filesystem and what not. Called from ProjectEditor.
+function ProjectModuleEditor:save_data()
 end
 
---- Callback function for the delete button
-function ProjectModuleEditor:_delete()
-    self:delete()
-    self._parent:delete_module(self._data)
+--- Destroy function.
+function ProjectModuleEditor:destroy_menu()
 end
 
 --- Delete function for any class inherting this to replace and do its things if needed.
 function ProjectModuleEditor:delete()
-    
-end
-
---- Creates a small side button.
-function ProjectModuleEditor:small_button(name, clbk)
-    self._menu:Parent():GetToolbar():tb_btn(name, clbk, {
-        min_width = 100,
-        text_offset = {8, 2},
-        border_bottom = true,
-    })
 end
