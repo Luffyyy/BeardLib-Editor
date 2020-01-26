@@ -2,7 +2,7 @@
 ---@class ProjectNarrativeEditor : ProjectModuleEditor
 ProjectNarrativeEditor = ProjectNarrativeEditor or class(ProjectModuleEditor)
 ProjectEditor.EDITORS.narrative = ProjectNarrativeEditor
-ProjectEditor.ACTIONS["CloneHeist"] = function(parent)
+ProjectEditor.ACTIONS["CloneHeist"] = function(parent, create_data)
     local levels = {}
     for id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.custom and not narr.hidden then
@@ -14,7 +14,7 @@ ProjectEditor.ACTIONS["CloneHeist"] = function(parent)
         list = levels,
         callback = function(selection)
             BLE.ListDialog:hide()
-            ProjectNarrativeEditor:new(parent, nil, {clone_id = selection.id})
+            ProjectNarrativeEditor:new(parent, nil, table.merge({clone_id = selection.id}, create_data))
         end
     })
 end
@@ -45,9 +45,12 @@ function ProjectNarrativeEditor:build_menu(menu, data)
 
     local chain = menu:divgroup("Chain", divgroup_opt)
     chain:button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"))
-    chain:button("AddNewLevel", ClassClbk(self, "new_level_dialog", ""))
-    chain:button("CreateInstance", ClassClbk(self, "new_instance_dialog", ""))
-    chain:button("CloneLevel", ClassClbk(self, "new_level_dialog", ""))
+    chain:button("AddNewLevel", function()
+        ProjectEditor.EDITORS.level:new(self._parent, nil, {chain = data.chain})
+    end)
+    chain:button("CloneLevel", function()
+        ProjectEditor.ACTIONS["CloneSingleLevel"](self._parent, {chain = data.chain})
+    end)
     self._levels = chain:divgroup("Levels")
     self:build_levels(data)
 
@@ -98,7 +101,7 @@ function ProjectNarrativeEditor:create(create_data)
     BLE.InputDialog:Show({
         title = "Enter a name for the narrative",
         yes = "Create",
-        text = name or "",
+        text = create_data.name or "",
         check_value = function(name)
             local warn
             for k in pairs(tweak_data.narrative.jobs) do
@@ -115,6 +118,11 @@ function ProjectNarrativeEditor:create(create_data)
                 BLE.Utils:Notify("Error", warn)
             end
             return warn == nil
+        end,
+        no_callback = function()
+            if create_data.final_callback then
+                create_data.final_callback(false)
+            end
         end,
         callback = function(name)
             local template
@@ -140,7 +148,7 @@ function ProjectNarrativeEditor:create(create_data)
                     if already_cloned[id] then
                         chain_level[id].level_id = already_cloned[id].level_id
                         if last then
-                            self:finalize_creation(template)
+                            self:finalize_creation(template, create_data)
                         end
                         return
                     end
@@ -150,7 +158,7 @@ function ProjectNarrativeEditor:create(create_data)
                         if success then
                             already_cloned[id] = chain_level
                         end
-                        self:finalize_creation(template)
+                        self:finalize_creation(template, create_data)
                     end})
                 end
                 if #template.chain > 0 then
@@ -167,10 +175,10 @@ function ProjectNarrativeEditor:create(create_data)
                         end
                     end
                 else
-                    self:finalize_creation(template)
+                    self:finalize_creation(template, create_data)
                 end
             else
-                self:finalize_creation(template)
+                self:finalize_creation(template, create_data)
             end
         end
     })

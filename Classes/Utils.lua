@@ -582,6 +582,10 @@ function Utils:QuickDialog(opt, items)
     QuickDialog(table.merge({dialog = BLE.Dialog, no = "No"}, opt), items)
 end
 
+function Utils:ReadConfig(file)
+    return FileIO:ReadScriptData(file, "custom_xml", true)
+end
+
 FakeObject = FakeObject or class()
 function FakeObject:init(o, unit_data)
     self._fake = true

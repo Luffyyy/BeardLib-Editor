@@ -3,7 +3,7 @@
 ProjectLevelEditor = ProjectLevelEditor or class(ProjectModuleEditor)
 ProjectLevelEditor.LEVELS_DIR = "levels"
 ProjectEditor.EDITORS.level = ProjectLevelEditor
-ProjectEditor.ACTIONS["CloneSingleLevel"] = function(parent)
+ProjectEditor.ACTIONS["CloneSingleLevel"] = function(parent, create_data)
     local levels = {}
     for _, id in pairs(tweak_data.levels._level_index) do
 		local level = tweak_data.levels[id]
@@ -16,7 +16,7 @@ ProjectEditor.ACTIONS["CloneSingleLevel"] = function(parent)
         list = levels,
         callback = function(selection)
             BLE.ListDialog:hide()
-            ProjectLevelEditor:new(parent, nil, {clone_id = selection.id})
+            ProjectLevelEditor:new(parent, nil, table.merge({clone_id = selection.id}, create_data))
         end
     })
 end
@@ -58,7 +58,7 @@ function ProjectLevelEditor:create(create_data)
     BLE.InputDialog:Show({
         title = "Enter a name for the level",
         yes = "Create",
-        text = name or "",
+        text = create_data.name or "",
         check_value = function(name)
             local warn
             for k in pairs(tweak_data.levels) do
@@ -93,20 +93,17 @@ function ProjectLevelEditor:create(create_data)
                 template = deep_clone(BLE.MapProject._level_module_template)
                 template.id = name
                 local proj_path = self._parent:get_dir()
-                local level_path = Path:Combine(LEVELS_DIR, template.id)
+                local level_path = Path:Combine(self.LEVELS_DIR, template.id)
                 template.include.directory = level_path
 
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Level"), Path:Combine(proj_path, level_path))
             end
             --If we need to insert this into a chain of a narrative
-            if create_data.narrative then
-                table.insert(create_data.narrative, {level_id = level.id, type = "d", type_id = "heist_type_assault"})
+            if create_data.chain then
+                table.insert(create_data.chain, {level_id = template.id, type = "d", type_id = "heist_type_assault"})
             end
-            self:finalize_creation(template, create_data.no_reload)
-            if create_data.final_callback then
-                create_data.final_callback(true)
-            end
+            self:finalize_creation(template, create_data)
         end
     })
 end

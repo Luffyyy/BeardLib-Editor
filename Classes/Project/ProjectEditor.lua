@@ -16,14 +16,11 @@ function ProjectEditor:init(parent, mod)
     self._mod = mod
     self._data = data
 
-    local btns = parent:GetItem("QuickActions")
-    local menu = parent:divgroup("CurrEditing", {
-        text = "Currently Editing: "..data.name,
-        h = parent:ItemsHeight() - btns:OuterHeight() - btns:OffsetY() * 2,
+    BLE.MapProject:set_edit_title(data.name)
+    local menu = parent:pan("CurrEditing", {
         w = 350,
         position = "Left",
         border_left = false,
-        auto_height = false,
         private = {size = 24}
     })
     self._left_menu = menu
@@ -38,7 +35,6 @@ function ProjectEditor:init(parent, mod)
         text = "Module Properties",
         w = parent:ItemsWidth() - 350,
         h = menu:Height(),
-        auto_height = false,
         border_left = false,
         position = "Right"
     })
@@ -49,7 +45,9 @@ function ProjectEditor:init(parent, mod)
 
     local actions = self._left_menu:divgroup("Actions")
     for id, action in pairs(self.ACTIONS) do
-        actions:button(id, SimpleClbk(action, self))
+        actions:button(id, function()
+            action(self)
+        end)
     end
 
     self._modules = {}
@@ -61,7 +59,11 @@ function ProjectEditor:init(parent, mod)
     end
 
     self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
+    self._left_menu:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
     self:build_modules()
+    if #self._modules > 0 then
+        self:open_module(self._modules[#self._modules])
+    end
 end
 
 ---List the modules
@@ -75,9 +77,6 @@ function ProjectEditor:build_modules()
             text = text .. ": "..mod._data.id
         end
         mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
-        if meta == "narrative" then
-            self:open_module(mod)
-        end
     end
 end
 
@@ -180,14 +179,11 @@ end
 --- @param old_name string
 --- @param new_name string
 function ProjectEditor:reload_mod(old_name, new_name)
-    local mod = self._mod
-    if mod._modules then
-        for _, module in pairs(mod._modules) do
-            module.Registered = false
-        end
-    end
+    old_name = old_name or data.orig_id
+    new_name = new_name or data.orig_id
+
     BLE.MapProject:reload_mod(old_name)
-    BLE.MapProject:_select_project(BeardLib.managers.MapFramework._loaded_mods[new_name])
+    BLE.MapProject:select_project(BeardLib.managers.MapFramework._loaded_mods[new_name])
 end
 
 --- Closes the previous module, if open.
@@ -203,7 +199,7 @@ function ProjectEditor:close_previous_module()
 end
 
 ---Deletes a module from the data.
---- @param data table
+--- @param mod table
 function ProjectEditor:delete_module(mod)
     table.delete_value(self._data, mod._data)
     table.delete_value(self._modules, mod)

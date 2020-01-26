@@ -8,12 +8,14 @@ ProjectModuleEditor.HAS_ID = true
 function ProjectModuleEditor:init(parent, data, create_data)
     self._parent = parent
 
+    create_data = create_data or {}
+
     if not data then
-        data = self:create(create_data or {})
+        data = self:create(create_data)
         if not data then
             return
         end
-        self:finalize_creation(data)
+        self:finalize_creation(data, create_data)
         return
     end
 
@@ -29,8 +31,12 @@ end
 
 --- For cases where the creation isn't straightforward and requires additional dialogs for example.
 --- @param data table
-function ProjectModuleEditor:finalize_creation(data, no_reload)
-    self._parent:add_module(data, no_reload)
+function ProjectModuleEditor:finalize_creation(data, create_data)
+    self._data = data
+    self._parent:add_module(data, create_data.no_reload)
+    if create_data.final_callback then
+        create_data.final_callback(true, data)
+    end
 end
 
 --- Creates the module based on create_data which contains information about the module that should be created.
