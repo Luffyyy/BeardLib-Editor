@@ -143,7 +143,9 @@ function BLE:InitManagers(data)
         local prefabs = FileIO:GetFiles(self.PrefabsDirectory)
         if prefabs then
             for _, prefab in pairs(prefabs) do
-                self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptData(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+                if prefab:ends(".prefab") then
+                    self.Prefabs[Path:GetFileNameWithoutExtension(prefab)] = FileIO:ReadScriptData(Path:Combine(self.PrefabsDirectory, prefab), "binary")
+                end
             end
         end
         --Packages that are always loaded

@@ -6,6 +6,6 @@ function EditorPlayerStyle:create_element()
 end
 function EditorPlayerStyle:_build_panel()
 	self:_create_panel()
-	self:ComboCtrl("style", {"_scrubs"}, {help = "Select a style from the combobox"})
+	self:ComboCtrl("style", table.map_keys(tweak_data.scene_poses.player_style), {help = "Select a style from the combobox"})
 	self:Text("Change player style.")
 end
