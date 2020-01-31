@@ -252,10 +252,11 @@ end
 --- Selects a project to edit in the ProjectEditor
 --- @param mod ModCore
 function MapProjectManager:select_project(mod)
+    self:close_current_project()
+
     self._current_mod = mod
     BLE.ListDialog:hide()
 
-    self:close_current_project()
     self._project = ProjectEditor:new(self._editing, mod)
 end
 

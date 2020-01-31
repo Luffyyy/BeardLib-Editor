@@ -385,7 +385,7 @@ function ProjectNarrativeEditor:set_data_callback()
     data.hide_from_crimenet = self:GetItemValue("HideFromCrimenet")
 end
 
-function ProjectNarrativeEditor:save()
+function ProjectNarrativeEditor:save_data()
     local narr = self._data
     local orig_id = narr.orig_id or narr.id -- Narrative ID has been changed, let's delete the old ID.
     if orig_id ~= narr.id then
