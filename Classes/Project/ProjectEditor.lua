@@ -34,7 +34,9 @@ function ProjectEditor:init(parent, mod)
         private = {size = 24},
         text = "Module Properties",
         w = parent:ItemsWidth() - 350,
-        h = menu:Height(),
+        h = parent:ItemsHeight(),
+        auto_height = false,
+        scrollbar = true,
         border_left = false,
         position = "Right"
     })

@@ -10,9 +10,42 @@ local XML = BeardLib.Utils.XML
 --- @param data table
 function ProjectLocalization:build_menu(menu, data)
     self._deleted = {}
-    self._current_lang = FileIO:ReadScriptData(Path:Combine(self._parent:get_dir(), "loc/english.txt"), "json")
-    self:button("Add", ClassClbk(self, "insert_string_item", "", ""))
-    self._strings_panel = self:pan("Strings")
+    self._languages = {}
+    self._languages_to_save = {}
+    for _, tbl in ipairs(data) do
+        if tbl._meta == "localization" or tbl._meta == "loc" then
+            table.insert(self._languages, tbl.file)
+        end
+    end
+    self._dir = data.directory or "loc"
+    if #self._languages == 0 and data.default then
+        table.insert(self._languages, data.default)
+    end
+    if #self._languages == 0 then
+        data = self:create()
+        table.insert(self._languages, data.default)
+    end
+
+    local actions = self:pan("Actions", {align_method = "grid"})
+    local default = data.default or self._languages[1]
+    actions:combobox("Language", ClassClbk(self, "open_lang_clbk"), self._languages, table.get_key(self._languages, default))
+    local opt = {w = actions:ItemsWidth() / 3 - actions:OffsetX() * 2, text_align = "center"}
+    actions:button("AddString", ClassClbk(self, "insert_string_item", "", ""), opt)
+    actions:button("AddLanguage", nil, opt)
+    actions:button("RemoveLanguage", nil, opt)
+    self._strings_panel = self:pan("Strings", {max_height = self._menu:ItemsHeight() - actions:OuterHeight() - self._menu:OffsetY() - 10})
+    self:open_lang(default)
+end
+
+function ProjectLocalization:open_lang_clbk(item)
+    self:open_lang(item:SelectedItem())
+end
+
+function ProjectLocalization:open_lang(file)
+    local path = Path:Combine(self._parent:get_dir(), self._dir, file)
+    self._current_lang = self._languages_to_save[file] or (FileIO:Exists(path) and FileIO:ReadScriptData(path, "json") or {})
+    self._languages_to_save[file] = self._current_lang
+    self._strings_panel:ClearItems()
     for key, str in pairs(self._current_lang) do
         self:insert_string_item(key, str)
     end
@@ -28,7 +61,10 @@ function ProjectLocalization:insert_string_item(key, str)
 end
 
 function ProjectLocalization:create()
-    FileIO:WriteTo(Path:Combine(self._parent:get_dir(), "loc/english.txt"), "{\n}")
+    local path = Path:Combine(self._parent:get_dir(), "loc/english.txt")
+    if not FileIO:Exists(path) then
+        FileIO:WriteTo(path, "{\n}")
+    end
     return {_meta = "Localization", default = "english.txt", directory = "loc"}
 end
 
@@ -39,9 +75,16 @@ function ProjectLocalization:set_loc_id(item)
     local orig_id = item.parent.orig_id
     local new_id = item:Value()
     local val = lang[orig_id]
-    lang[orig_id] = nil
-    lang[new_id] = val
-    item.parent.orig_id = new_id
+    if new_id ~= orig_id and lang[new_id] then
+        item:SetText("Key[!]")
+        item:SetHelp("The key already exists! The localization ID will not be saved.")
+    else
+        item:SetText("Key")
+        item:SetHelp()
+        lang[orig_id] = nil
+        lang[new_id] = val
+        item.parent.orig_id = new_id
+    end
 end
 
 --- Sets localization value of the localization string. Callback to the items.
@@ -67,11 +110,8 @@ function ProjectLocalization:remove_loc(item)
     parent:GetItem("String"):SetEnabled(not parent:GetItem("String"):Enabled())
 end
 
---- The callback function for all items for this menu.
-function ProjectLocalization:set_data_callback(item)
-    local data = self._data
-end
-
 function ProjectLocalization:save_data()
-    FileIO:WriteScriptData(Path:Combine(self._parent:get_dir(), "loc/english.txt"), self._current_lang, "json")
+    for file, data in pairs(self._languages_to_save) do
+        FileIO:WriteScriptData(Path:Combine(self._parent:get_dir(), self._dir, file), data, "json")
+    end
 end
