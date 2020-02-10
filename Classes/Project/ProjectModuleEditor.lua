@@ -23,7 +23,10 @@ function ProjectModuleEditor:init(parent, data, create_data)
 
     self._menu = parent._menu
     ItemExt:add_funcs(self)
+    self:Init(self._data)
 end
+
+function ProjectModuleEditor:Init() end
 
 function ProjectModuleEditor:do_build_menu()
     self:build_menu(self._menu, self._data)
