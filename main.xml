@@ -232,8 +232,10 @@
         <value_node value="ElementGlobalEventTrigger"/>
         <value_node value="ElementInstanceInput"/>
         <value_node value="ElementInstanceInputEvent"/>
+        <value_node value="ElementRandomInstanceInputEvent"/>
         <value_node value="ElementInstanceOutput"/>
         <value_node value="ElementInstanceOutputEvent"/>
+	<value_node value="ElementRandomInstanceOutputEvent"/>
         <value_node value="ElementInstancePoint"/>
         <value_node value="ElementInstanceSetParams"/>
         <value_node value="ElementShape"/>
