@@ -300,7 +300,12 @@ function EditorSpecialObjective:_build_panel()
 	local none = {"none"}
 	self:ComboCtrl("ai_group", table.list_add(none, ElementSpecialObjective._AI_GROUPS), {help = "Select an ai group."})
     self:ComboCtrl("so_action", table.list_add(none, CopActionAct._act_redirects.SO, CopActionAct._act_redirects.script, self._AI_SO_types), {help = "Select a action that the unit should start with."})
-    self:StringCtrl("patrol_path", {help = "Patrol path to follow."})
+    local path_names = {}
+    for k,_ in pairs(managers.ai_data:all_patrol_paths()) do
+        path_names[#path_names + 1] = k
+    end
+    table.sort(path_names)
+    self:ComboCtrl("patrol_path", table.list_add(none, path_names), {help = "Patrol path to follow."})
 	self:ComboCtrl("path_style", table.list_add(none, ElementSpecialObjective._PATHING_STYLES), {help = "Specifies how the patrol path should be used."})
 	self:ComboCtrl("path_haste", table.list_add(none, ElementSpecialObjective._HASTES), {help = "Select path haste to use."})
 	self:ComboCtrl("path_stance", table.list_add(none, ElementSpecialObjective._STANCES), {help = "Select path stance to use."})
