@@ -6,6 +6,7 @@ end
 function EditZipLine:build_menu(units)
 	local zipline_options = self:group("Zipline")
 	self._epos = zipline_options:Vector3("EndPosition", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():end_pos(), {step = self:Val("GridSize")})
+	self._length = zipline_options:button("Length: ?", function() self:_update_length(units[1]) end, {help="Recalculate this readout\n(for instance, after moving the start of the zipline)"})
 	zipline_options:button("ResetPositionEnd", ClassClbk(self, "use_pos"))
 	zipline_options:button("UseCameraPosForPositionEnd", ClassClbk(self, "use_camera_pos"))
 	zipline_options:button("UseCameraPosForLinePositionEnd", ClassClbk(self, "use_camera_pos_for_line"))
@@ -13,6 +14,8 @@ function EditZipLine:build_menu(units)
 	self._slack = zipline_options:numberbox("Slack [cm]", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():slack(), {floats = 0, min = 0, help = "Value to define slack of the zipline in cm"})
  	self._type = zipline_options:combobox("Type", ClassClbk(self, "set_unit_data_parent"), ZipLine.TYPES, table.get_key(ZipLine.TYPES, units[1]:zipline():usage_type()))
 	self._ai_ignore_bag = zipline_options:tickbox("AIIgnoreBag", ClassClbk(self, "set_unit_data_parent"), units[1]:zipline():ai_ignores_bag(), {text = "AI Ignore Bag"})
+
+	self:_update_length(units[1])
 end
 
 function EditZipLine:set_unit_data()
@@ -23,6 +26,9 @@ function EditZipLine:set_unit_data()
 		unit:zipline():set_usage_type(self._type:SelectedItem())
 		unit:zipline():set_ai_ignores_bag(self._ai_ignore_bag:Value())
 		unit:zipline():set_end_pos(self._epos:Value())
+		if self._length then
+			self:_update_length(self:selected_unit())
+		end
 	end
 end
 
@@ -38,6 +44,7 @@ function EditZipLine:update_end_pos()
 	self._epos:SetValue(self:selected_unit():zipline():end_pos())
 	self:set_unit_data_parent()
 end
+
 function EditZipLine:use_pos()
 	local unit = self:selected_unit()
 	if alive(unit) then
@@ -61,4 +68,14 @@ function EditZipLine:update_positions()
 	if alive(unit) then
 		unit:zipline():set_start_pos(unit:position())
 	end
+end
+
+function EditZipLine:_update_length(unit)
+	local sp = unit:zipline():start_pos()
+	local ep = unit:zipline():end_pos()
+	local xl = sp.x - ep.x
+	local yl = sp.y - ep.y
+	local zl = sp.z - ep.z
+	local len = string.format("Length: %2.1f", math.sqrt(xl^2 + yl^2 + zl^2))
+	self._length:SetText(len)
 end
