@@ -383,4 +383,36 @@
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>
     </AutoClassElements>
+    <script_data_types>
+        <value_node value="sequence_manager"/>
+        <value_node value="environment"/>
+        <value_node value="menu"/>
+        <value_node value="continent"/>
+        <value_node value="continents"/>
+        <value_node value="mission"/>
+        <value_node value="nav_data"/>
+        <value_node value="cover_data"/>
+        <value_node value="world"/>
+        <value_node value="world_cameras"/>
+        <value_node value="prefhud"/>
+        <value_node value="objective"/>
+        <value_node value="credits"/>
+        <value_node value="hint"/>
+        <value_node value="comment"/>
+        <value_node value="dialog"/>
+        <value_node value="dialog_index"/>
+        <value_node value="timeline"/>
+        <value_node value="action_message"/>
+        <value_node value="achievment"/>
+        <value_node value="controller_settings"/>
+        <value_node value="network_settings"/>
+        <value_node value="physics_settings"/>
+    </script_data_types>
+    <script_data_formats>
+        <value_node value="json"/>
+        <value_node value="xml"/>
+        <value_node value="generic_xml"/>
+        <value_node value="custom_xml"/>
+        <value_node value="binary"/>
+    </script_data_formats>
 </mod>

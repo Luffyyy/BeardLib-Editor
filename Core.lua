@@ -33,6 +33,9 @@ function BLE:Init()
         LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
     end)
     Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", ClassClbk(BLE, "InitManagers"))
+
+    self._config = FileIO:ReadConfig(self.ModPath.."main.xml", self)
+	self.config = self._config
 end
 
 function BLE:RunningFix()
@@ -238,7 +241,7 @@ function BLE:LoadHashlist()
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
         local id = pkg.id
         self.DBPackages[id] = self.DBPackages[id] or {}
-        for _, type in pairs(table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
+        for _, type in pairs(table.list_add(clone(BLE.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
             self.DBPackages[id][type] = self.DBPackages[id][type] or {}
         end
         self:ReadCustomPackageConfig(id, pkg.config, pkg.dir)
@@ -272,7 +275,7 @@ end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
 function BLE:GeneratePackageData()
-    local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
+    local types = table.list_add(clone(BLE.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
     local file = io.open(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
     local paths = {}
