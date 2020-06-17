@@ -1,4 +1,4 @@
-EditorMenu = EditorMenu or class() 
+EditorMenu = EditorMenu or class()
 function EditorMenu:init(load)
     self._menus = {}
     local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
@@ -34,6 +34,8 @@ function EditorMenu:Load(data)
         if data.opened then
             self:set_enabled(true)
         end
+    else
+        self:select_page("Projects")
     end
 end
 
