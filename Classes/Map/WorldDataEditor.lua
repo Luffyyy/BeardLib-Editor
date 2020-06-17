@@ -509,7 +509,7 @@ function WData:build_wires_layer_menu()
         existing_wires:button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)))
     end
     local loaded_wires = self:group("Spawn")
-    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager:get_level_packages()})) do
+    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager and self._assets_manager:get_level_packages() or {}})) do
         loaded_wires:button(wire, function() self:BeginSpawning(wire) end)
     end
 end
