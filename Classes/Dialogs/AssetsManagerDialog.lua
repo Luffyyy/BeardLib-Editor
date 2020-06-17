@@ -680,14 +680,14 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 
             local add_xmls = {}
             project:for_each_level(data, function(level)
-                level.add = level.add or {}   
+                level.add = level.add or {}
                 local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
                 local add = project:read_xml(add_path)
                 if add.directory == current_add.directory then --Although unlikely, count for cases where the other level has the assets in a different location.
                     table.insert(add_xmls, add)
                 end
             end)
-            
+
 			if current_add then
 				local function delete_asset(deleting_node, deleting_asset)
 					deleting_asset = deleting_asset or deleting_node

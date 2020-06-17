@@ -6,8 +6,8 @@ function CheckFileMenu:init(data)
     local EMenu = BeardLibEditor.Menu
     self._menu = EMenu:make_page("Check file", nil, {scrollbar = false, align_method = "centered_grid"})
     ItemExt:add_funcs(self, self._menu)
-    self:lbl("Having trouble finding out why a unit or other file isn't loading properly? You can check it here!", {size_by_text = true})
-    self:textbox("FilePath", ClassClbk(self, "FixPath"), self._last_dir, {text = false, w = 650, control_slice = 1, border_size = 4, offset = {0, 4}})
+    self:lbl("Having trouble finding out why a unit or other file isn't loading properly? You can check it here!", {text_align = "center"})
+    self:textbox("Path", ClassClbk(self, "FixPath"), self._last_dir, {text = false, w = 650, border_size = 4})
     self:small_button("BrowseFile", ClassClbk(self, "OpneFileBrowser"))
     self:small_button("BrowseDirectory", ClassClbk(self, "OpneFileBrowser", true))
     self:small_button("Check", ClassClbk(self, "CheckFile"))
@@ -36,7 +36,7 @@ end
 function CheckFileMenu:CheckFile()
     self._holder:ClearItems()
 
-    local path = self:GetItem("FilePath"):Value()
+    local path = self:GetItem("Path"):Value()
     local folder = FileIO:DirectoryExists(path)
     if not folder then
         if not FileIO:FileExists(path) then
@@ -170,7 +170,7 @@ function CheckFileMenu:OpneFileBrowser(folder_browser)
         extensions = table.map_keys(BLE.Utils.Export.Reading),
         folder_browser = folder_browser,
         file_click = function(path)
-            self:GetItem("FilePath"):SetValue(Path:Normalize(path):gsub(base_path, ""))
+            self:GetItem("Path"):SetValue(Path:Normalize(path):gsub(base_path, ""))
             self._last_dir = BLE.FBD._current_dir
             BLE.FBD:Hide()
         end
@@ -178,5 +178,5 @@ function CheckFileMenu:OpneFileBrowser(folder_browser)
 end
 
 function CheckFileMenu:Destroy()
-    return {last_dir = self._last_dir, last_path = self:GetItem("FilePath"):Value()}
+    return {last_dir = self._last_dir, last_path = self:GetItem("Path"):Value()}
 end

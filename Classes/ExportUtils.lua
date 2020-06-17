@@ -7,6 +7,7 @@ Utils.pack_extra_info = false
 Utils.pack_extract_path = true
 Utils.assets_dir = nil
 function Utils:init(config)
+    config = config or {}
     if config.return_on_missing ~= nil then
         self.return_on_missing = config.return_on_missing
     end

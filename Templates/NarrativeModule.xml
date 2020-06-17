@@ -1,0 +1,55 @@
+<narrative contact="custom" id="map">
+    <chain>
+    </chain>
+    <contract_cost>
+        <value_node value="4000"/>
+        <value_node value="8000"/>
+        <value_node value="20000"/>
+        <value_node value="40000"/>
+        <value_node value="100000"/>
+        <value_node value="100000"/>
+        <value_node value="100000"/>
+    </contract_cost>
+    <crimenet_callouts>
+        <value_node value="nothing"/>
+    </crimenet_callouts>
+    <crimenet_videos>
+        <value_node value="cn_branchbank2"/>
+    </crimenet_videos>
+    <experience_mul>
+        <value_node value="1"/>
+        <value_node value="1"/>
+        <value_node value="1"/>
+        <value_node value="1"/>
+        <value_node value="3"/>
+        <value_node value="3"/>
+        <value_node value="3"/>
+    </experience_mul>
+    <max_mission_xp>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+        <value_node value="8000"/>
+    </max_mission_xp>
+    <min_mission_xp>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+        <value_node value="2000"/>
+    </min_mission_xp>
+    <payout>
+        <value_node value="6000"/>
+        <value_node value="12000"/>
+        <value_node value="30000"/>
+        <value_node value="50000"/>
+        <value_node value="60000"/>
+        <value_node value="60000"/>
+        <value_node value="60000"/>
+    </payout>
+</narrative>

@@ -156,7 +156,7 @@ function ItemExt:notebook(name, o)
 end
 
 function ItemExt:popup(name, o)
-	return self:PopupMenu(table.merge({size_by_text = true, name = name, text = string.pretty2(name)}, o))
+	return self:PopupMenu(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:toolbar(name, o)

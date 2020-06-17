@@ -1,0 +1,3 @@
+<table name="map">
+	<Localization default="english.txt" directory="loc"/>
+</table>
