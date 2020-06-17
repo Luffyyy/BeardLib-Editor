@@ -87,7 +87,7 @@ function AssetsManagerDialog:_Show()
     self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
     local actions = self._unit_info:divgroup("Actions")
     actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, enabled = false})
-    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false, nil), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
+    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false, false), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
 
     actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, enabled = false})
     actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, enabled = false})
@@ -232,7 +232,7 @@ function AssetsManagerDialog:load_from_extract_dialog(assets, clbk)
 end
 
 function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
-    function find_package()
+    local function find_package()
 		local items = {}
 
         for _, pkg in pairs(BLE.Utils:GetPackages(path or self._tbl._selected.name, typ or self._tbl._selected.asset_type, true)) do
@@ -263,7 +263,7 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
                 end
                 BLE.ListDialog:hide()
             end
-        })        
+        })
     end
     if not dontask then
         BLE.Utils:YesNoQuestion("This will search for packages that contain this asset, it's recommended to choose the smallest one so your level will load faster", function()
