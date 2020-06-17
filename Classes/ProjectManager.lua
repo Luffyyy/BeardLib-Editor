@@ -2,9 +2,9 @@ local XML = BeardLib.Utils.XML
 local CXML = "custom_xml"
 --- This class at the moment is used for maps only. However, hopefully in the future will expand to other places.
 
-MapProjectManager = MapProjectManager or class()
+ProjectManager = ProjectManager or class()
 
-function MapProjectManager:init()
+function ProjectManager:init()
     self._templates_directory = Path:Combine(BLE.ModPath, "Templates")
     self._add_xml_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
     self._main_xml_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
@@ -18,7 +18,6 @@ function MapProjectManager:init()
 
     ItemExt:add_funcs(self)
 
-    local opt = {w = 150, text_align = "center", border_bottom = true}
     self._editing = self:divgroup("CurrEditing", {
         text = "Select a Project To Edit",
         h = self._menu:ItemsHeight() - self._menu:OffsetY() * 2,
@@ -28,31 +27,38 @@ function MapProjectManager:init()
     })
 
     local tb = self._editing:GetToolbar()
-    local more = tb:popup("...", opt)
-    more:button("CloneMapAsProject", ClassClbk(self, "create_new_cloned_map"), opt)
-    tb:button("EditExistingProject", ClassClbk(self, "select_project_dialog"), opt)
-    tb:button("NewProject", ClassClbk(self, "create_new_map_dialog", false), opt)
+    tb.inherit_values = {
+        text_align = "center",
+        size_by_text = false,
+        w = 100,
+        border_bottom = true
+    }
+    local new = tb:popup("New...")
+    tb:button("Edit", ClassClbk(self, "select_project_dialog"))
+    new:button("Map", ClassClbk(self, "create_new_map_dialog", false), {help = "A map with an inital level"})
+    new:button("ClonedMap", ClassClbk(self, "create_new_cloned_map"), {help = "Clones an existing vanilla map"})
+    new:button("EmptyMap", ClassClbk(self, "create_new_map_dialog", ClassClbk(self, "create_new_project")), {help = "A map with only the project structure"})
 
     self:set_edit_title()
 end
 
 --- Load function for the class. Used for code refreshing.
 --- @param data table
-function MapProjectManager:Load(data)
+function ProjectManager:Load(data)
     if data and data.selected_mod then
         self:select_project(data.selected_mod)
     end
 end
 
 --- Destroy function for the class. Used for code refreshing.
-function MapProjectManager:Destroy()
+function ProjectManager:Destroy()
     return {selected_mod = self._current_mod}
 end
 
 --- Let's you run a function on each level & instance in the project.
 --- @param data table
 --- @param func function
-function MapProjectManager:for_each_level(data, func)
+function ProjectManager:for_each_level(data, func)
     for _, level in pairs(XML:GetNodes(data, "level")) do
         func(level)
     end
@@ -63,8 +69,8 @@ end
 
 --- Returns the current loaded level's data.
 --- @param data table
---- @return table
-function MapProjectManager:current_level(data)
+--- @return table, nil
+function ProjectManager:current_level(data)
     for _, level in pairs(XML:GetNodes(data, Global.editor_loaded_instance and "instance" or "level")) do
         if level.id == Global.current_level_id then
             return level
@@ -77,7 +83,7 @@ end
 --- @param data table
 --- @param id string
 --- @return table
-function MapProjectManager:get_level_by_id(data, id)
+function ProjectManager:get_level_by_id(data, id)
     for _, level in pairs(XML:GetNodes(data, "level")) do
         if level.id == id then
             return level
@@ -92,20 +98,20 @@ end
 
 --- Returns current loaded level's mod.
 --- @return ModCore
-function MapProjectManager:current_mod()
+function ProjectManager:current_mod()
     return BeardLib.current_level and BeardLib.current_level._mod
 end
 
 --- Returns the directory of the current level module's include.
 --- @return string
-function MapProjectManager:maps_path()
+function ProjectManager:maps_path()
     return BeardLib.current_level._config.include.directory
 end
 
 --- Saves the main.xml of the current loaded level.
 --- @param data table
 --- @param no_reload boolean
-function MapProjectManager:save_main_xml(data, no_reload)
+function ProjectManager:save_main_xml(data, no_reload)
     self:save_xml("main.xml", data)
     if not no_reload then
         self:reload_mod(data.name)
@@ -115,7 +121,7 @@ end
 --- Saves an XML file stored in the project.
 --- @param file string
 --- @param data table
-function MapProjectManager:save_xml(file, data)
+function ProjectManager:save_xml(file, data)
     local mod = self:current_mod()
     FileIO:WriteScriptData(mod:GetRealFilePath(Path:Combine(mod.ModPath, file)), data, CXML)
 end
@@ -123,28 +129,28 @@ end
 --- Reads and returns table data of an XML file stored in the project.
 --- @param file string
 --- @return table
-function MapProjectManager:read_xml(file)
+function ProjectManager:read_xml(file)
     local mod = self:current_mod()
-    return FileIO:ReadScriptData(mod:current_mod():GetRealFilePath(Path:Combine(mod.ModPath, file)), CXML, true)
+    return FileIO:ReadScriptData(mod:GetRealFilePath(Path:Combine(mod.ModPath, file)), CXML, true)
 end
 
 --- Returns the full path of the current project.
 --- @return string
-function MapProjectManager:current_path()
+function ProjectManager:current_path()
     local mod = self:current_mod()
     return mod and mod.ModPath
 end
 
 --- Returns the full path of the current level.
 --- @return string
-function MapProjectManager:current_level_path()
+function ProjectManager:current_level_path()
     local path = self:current_path()
     return path and Path:Combine(path, self:maps_path())
 end
 
 --- Returns a list of all MapFramework projects.
 --- @return table
-function MapProjectManager:get_projects_list()
+function ProjectManager:get_projects_list()
     local list = {}
     for _, mod in pairs(BeardLib.managers.MapFramework._loaded_mods) do
         table.insert(list, {name = mod._clean_config.name, mod = mod})
@@ -153,9 +159,9 @@ function MapProjectManager:get_projects_list()
 end
 
 --- Returns the current mod and main.xml config of it.
---- @return ModCore
---- @return table
-function MapProjectManager:get_mod_and_config()
+--- @return ModCore, nil
+--- @return table, nil
+function ProjectManager:get_mod_and_config()
     local mod = self:current_mod()
     if mod then
         return mod, self:get_clean_config(mod)
@@ -169,7 +175,7 @@ local ignore_modules = {["GlobalValue"] = true}
 --- @param mod ModCore
 --- @param do_clone boolean
 --- @return table
-function MapProjectManager:get_clean_config(mod, do_clone)
+function ProjectManager:get_clean_config(mod, do_clone)
     mod = mod or self:current_mod()
     if not mod then
         return
@@ -188,7 +194,7 @@ end
 
 --- Loads a package temporarily.
 --- @param p string
-function MapProjectManager:load_temp_package(p)
+function ProjectManager:load_temp_package(p)
     if not PackageManager:loaded(p) and PackageManager:package_exists(p) then
         PackageManager:load(p)
         table.insert(self._packages_to_unload, p)
@@ -196,7 +202,7 @@ function MapProjectManager:load_temp_package(p)
 end
 
 --- Unloads all packages that were lodaed and inserted into self._packages_to_unload.
-function MapProjectManager:unload_temp_packages()
+function ProjectManager:unload_temp_packages()
     for _, p in pairs(self._packages_to_unload) do
         if PackageManager:loaded(p) then
             DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
@@ -209,7 +215,7 @@ function MapProjectManager:unload_temp_packages()
 end
 
 --- Opens a dialog to select a project to edit.
-function MapProjectManager:select_project_dialog()
+function ProjectManager:select_project_dialog()
     BLE.ListDialog:Show({
         list = self:get_projects_list(),
         callback = function(selection)
@@ -220,7 +226,7 @@ end
 
 --- Sets the current editing title.
 --- @param title string
-function MapProjectManager:set_edit_title(title)
+function ProjectManager:set_edit_title(title)
     if title then
         self._editing:SetText("Currently Editing: ".. (title or "None"))
     else
@@ -230,7 +236,7 @@ end
 
 --- Reloads a mod by unloading it and letting BeardLib load it again.
 --- @param mod_name string
-function MapProjectManager:reload_mod(mod_name)
+function ProjectManager:reload_mod(mod_name)
     local mod = BeardLib.managers.MapFramework._loaded_mods[mod_name]
     if mod._modules then
         for _, module in pairs(mod._modules) do
@@ -243,7 +249,7 @@ function MapProjectManager:reload_mod(mod_name)
 end
 
 --- Loads BeardLib mods again (MapFramework).
-function MapProjectManager:load_mods()
+function ProjectManager:load_mods()
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
     BLE.LoadLevel:load_levels()
@@ -251,7 +257,7 @@ end
 
 --- Selects a project to edit in the ProjectEditor
 --- @param mod ModCore
-function MapProjectManager:select_project(mod)
+function ProjectManager:select_project(mod)
     self:close_current_project()
 
     self._current_mod = mod
@@ -260,9 +266,11 @@ function MapProjectManager:select_project(mod)
     self._project = ProjectEditor:new(self._editing, mod)
 end
 
-function MapProjectManager:create_new_map_dialog(clbk)
+--- Opens up a dialog prompting the user to enter a name for the map. Then callback clbk or the default map creation function.
+--- @param clbk function
+function ProjectManager:create_new_map_dialog(clbk)
     BLE.InputDialog:Show({
-        title = "Enter a name for the project",
+        title = "Enter a name for the map project",
         yes = "Create",
         text = name or "",
         check_value = function(name)
@@ -286,9 +294,22 @@ function MapProjectManager:create_new_map_dialog(clbk)
     })
 end
 
+--- Creates a new clean project (Currently focuses on MapFramework will be changed hopefully)
+--- @param name string
+function ProjectManager:create_new_project(name)
+    local data = {name = name}
+    local path = Path:Combine(BeardLib.config.maps_dir, name)
+    FileIO:MakeDir(path)
+    FileIO:MakeDir(Path:Combine(path, "assets"))
+    FileIO:MakeDir(Path:Combine(path, "levels"))
+    FileIO:WriteTo(Path:Combine(path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))
+    self:load_mods()
+    self:select_project(BeardLib.managers.MapFramework._loaded_mods[name])
+end
+
 --- Creates a new clean map project (without asking the user to make a level and narrative)
 --- @param name string
-function MapProjectManager:create_new_map_clean(name)
+function ProjectManager:create_new_map_clean(name)
     local data = deep_clone(self._main_xml_template)
     data.name = name
     local path = Path:Combine(BeardLib.config.maps_dir, name)
@@ -302,7 +323,7 @@ end
 
 --- Creates a new map project
 --- @param name string
-function MapProjectManager:create_new_map(name)
+function ProjectManager:create_new_map(name)
     self:create_new_map_clean(name)
     ProjectNarrativeEditor:new(self._project, nil, {name = name, no_reload = true, final_callback = function(success, data)
         if success then
@@ -316,8 +337,7 @@ function MapProjectManager:create_new_map(name)
 end
 
 --- Creates a new map project by cloning
---- @param name string
-function MapProjectManager:create_new_cloned_map()
+function ProjectManager:create_new_cloned_map()
     local levels = {}
     for id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.custom and not narr.hidden then
@@ -338,7 +358,7 @@ function MapProjectManager:create_new_cloned_map()
 end
 
 --- Closes currently opened project
-function MapProjectManager:close_current_project()
+function ProjectManager:close_current_project()
     if self._project then
         self._project:destroy()
     end
@@ -347,7 +367,9 @@ function MapProjectManager:close_current_project()
     self._current_mod = nil
 end
 
-function MapProjectManager:delete_project(mod, item)
+--- Deletes a project based on the given mod
+--- @param mod ModCore
+function ProjectManager:delete_project(mod)
     BLE.Utils:YesNoQuestion("This will delete the project and its files completely. This cannot be undone!", function()
         BLE.Utils:YesNoQuestion("Are you 100% sure?", function()
             FileIO:Delete(Path:Combine("Maps", self._current_data.name))

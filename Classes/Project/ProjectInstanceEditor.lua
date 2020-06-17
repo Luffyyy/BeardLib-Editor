@@ -70,7 +70,7 @@ function ProjectInstanceEditor:create(create_data)
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Instance"), Path:Combine(proj_path, level_path))
             end
-            self:finalize_creation(template, create_data.no_reload)
+            self:finalize_creation(template, create_data)
             if create_data.final_callback then
                 create_data.final_callback(true)
             end
@@ -128,7 +128,7 @@ function ProjectInstanceEditor:delete()
             end
         end
     end
-    local path = Path:CombineDir(map_path, self.LEVELS_DIR, self._data.orig_id or id)
+    local path = Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, self._data.orig_id or id)
     if FileIO:Exists(path) then
         FileIO:Delete(path)
     end

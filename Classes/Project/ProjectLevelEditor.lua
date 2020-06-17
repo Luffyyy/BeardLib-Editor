@@ -374,7 +374,7 @@ function ProjectLevelEditor:delete()
             end
         end
     end
-    local path = Path:CombineDir(self._parent:get_dir(), "levels", self._data.orig_id or id)
+    local path = Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, self._data.orig_id or id)
     if FileIO:Exists(path) then
         FileIO:Delete(path)
     end

@@ -61,6 +61,7 @@ function ProjectEditor:init(parent, mod)
     end
 
     self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
+    self._left_menu:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
     self._left_menu:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
     self:build_modules()
     if #self._modules > 0 then
@@ -203,9 +204,11 @@ end
 ---Deletes a module from the data.
 --- @param mod table
 function ProjectEditor:delete_module(mod)
-    table.delete_value(self._data, mod._data)
-    table.delete_value(self._modules, mod)
-    self:save_data_callback()
+    BLE.Utils:YesNoQuestion("This will delete the module. Any data related to that module will be lost and cannot retrieved.", function()
+        table.delete_value(self._data, mod._data)
+        table.delete_value(self._modules, mod)
+        self:save_data_callback()
+    end)
 end
 
 function ProjectEditor:open_create_dialog()
@@ -237,11 +240,16 @@ function ProjectEditor:delete_current_module()
     self:delete_module(self._current_module)
 end
 
---- Creates a small side button.
+--- Creates a small side button
 function ProjectEditor:small_button(name, clbk)
     self._menu:GetToolbar():tb_btn(name, clbk, {
         min_width = 100,
         text_offset = {8, 2},
         border_bottom = true,
     })
+end
+
+--- Opens current project in the file explorer
+function ProjectEditor:open_in_file_explorer()
+    Application:shell_explore_to_folder(string.gsub(self._mod.ModPath, "/", "\\"))
 end

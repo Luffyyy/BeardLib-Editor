@@ -5,7 +5,7 @@
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"
 		auto_image_color="true"
-		min_lib_ver="3.38"
+		min_lib_ver="4.0"
 		core_class="Core.lua"
 	>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="BeardLib-Editor package data" folder_name="Data" install_directory="$ModPath$"/>
@@ -20,7 +20,7 @@
 		<class file="CheckFileMenu.lua"/>
 		<class file="AboutMenu.lua"/>
 		<class file="MissionElementUnit.lua"/>
-		<class file="MapProjectManager.lua"/>
+		<class file="ProjectManager.lua"/>
         <classes directory="Project">
             <class file="ProjectEditor.lua"/>
             <class file="ProjectModuleEditor.lua"/>
