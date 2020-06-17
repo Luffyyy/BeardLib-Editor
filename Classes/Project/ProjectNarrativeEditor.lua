@@ -211,9 +211,8 @@ function ProjectNarrativeEditor:build_levels()
     local function build_level_button(level_in_chain, chain_group, group)
         local level_id = level_in_chain.level_id
         local mod = self._parent:get_module(level_id, "level")
-        local btn = (group or levels_group):button(level_id, mod and ClassClbk(self._parent, "open_module", mod), {
-            text = level_id
-        })
+        local parent = (group or levels_group)
+        local btn = parent:button(level_id, mod and ClassClbk(self._parent, "open_module", mod), {text = level_id, divider_type = mod == nil})
         return btn, level
     end
     for i, v in ipairs(data.chain) do

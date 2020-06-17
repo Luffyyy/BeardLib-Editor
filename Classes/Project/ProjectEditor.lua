@@ -88,9 +88,9 @@ end
 --- @param meta string
 --- @return table
 function ProjectEditor:get_module(id, meta)
-    for _, mod in pairs(self._data) do
-        local _meta = type(mod) == "table" and mod._meta
-        if _meta and _meta == meta and mod.id == id then
+    for _, mod in pairs(self._modules) do
+        local data = mod._data
+        if data._meta == meta and data.id == id then
             return mod
         end
     end
