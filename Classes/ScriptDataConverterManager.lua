@@ -134,7 +134,7 @@ function SConverter:RefreshFilesAndFolders()
             if self.assets and not PackageManager:has(extension:id(), (self.current_script_path .. file_parts[1]):id()) then
                 enabled = false
             end
-            if table.contains(BeardLib.config.script_data_types, extension) or table.contains(BeardLib.config.script_data_formats, extension) then
+            if table.contains(BLE._config.script_data_types, extension) or table.contains(BLE._config.script_data_formats, extension) then
                 filesgroup:button(file, ClassClbk(self, "FileClick"), {text = file, base_path = self.current_script_path .. file, enabled = enabled})
             end
         end
@@ -146,7 +146,7 @@ end
 function SConverter:CreateScriptDataFileOption()
     self:ClearItems()
 	self:MainItems()
-	
+
     local up_level = string.split(self.current_script_path, "/")
     if #up_level > 0 then
         table.remove(up_level, #up_level)

@@ -372,3 +372,110 @@ function EditorInstanceParams:_build_panel()
 		self:_build_var_panel(data)
 	end
 end
+--MiamiCenter - adding missing elements;
+EditorRandomInstance = EditorRandomInstance or class(MissionScriptEditor)
+EditorRandomInstance.SAVE_UNIT_POSITION = false
+EditorRandomInstance.SAVE_UNIT_ROTATION = false
+EditorRandomInstance.LINK_ELEMENTS = {
+	"instances"
+}
+EditorRandomInstance._type = "input"
+
+EditorRandomInstanceInputEvent = EditorRandomInstanceInputEvent or class(EditorRandomInstance)
+EditorRandomInstanceInputEvent._type = "input"
+EditorRandomInstanceOutputEvent = EditorRandomInstanceOutputEvent or class(EditorRandomInstance)
+EditorRandomInstanceOutputEvent._type = "output"
+
+function EditorRandomInstance:_draw_instance_link(instance_name)
+	local instance = managers.world_instance:get_instance_data_by_name(instance_name)
+	if type(instance) ~= "table" then
+		return false
+	end
+
+	if self._type == "input" then
+		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
+	else
+		Application:draw_arrow(instance.position, self._unit:position(), r, g, b, 0.2)
+	end
+	return true
+end
+
+function EditorRandomInstance:_get_events(instance_name)
+	if self._type == "input" then
+		return managers.world_instance:get_mission_inputs_by_name(instance_name)
+	else
+		return managers.world_instance:get_mission_outputs_by_name(instance_name)
+	end
+end
+
+function EditorRandomInstanceOutputEvent:create_element()
+	self.super.create_element(self)
+	self._element.class = "ElementRandomInstanceOutputEvent"
+	
+	self._element.values.amount = 1
+	self._element.values.amount_random = 0
+	self._element.values.instances = {}
+	self._element.values.unique_instance = false
+end
+
+function EditorRandomInstanceOutputEvent:_build_panel(panel, panel_sizer)
+	self:_create_panel()
+
+	self:NumberCtrl("amount", {floats = 0, min = 1, help = "Specifies the amount of instances to be executed, Use 'Amount' only to specify an exact amount of instances to execute. Use 'Amount Random' to add a random amount to 'Amount' ('Amount' + random('Amount Random').", "Amount"})
+	self:NumberCtrl("amount_random", {floats = 0, min = 0, help = "Add a random amount to amount", "Random Ammount"})
+	self:BooleanCtrl("unique_instance", {help = "Always pick an instance that hasn't been selected yet until all instances have been selected, Pick Unique Instances", "Unique Instance?"})
+    self:BuildInstancesManage("instances", {values_name = "Event", value_key = "event", default_value = "none", key = "instance", orig = {instance = "", event = "none"}, combo_items_func = function(name)
+        return self:_get_events(name)
+    end})
+	
+	EditorRandomInstanceOutputEvent.super._build_panel(self)
+end
+
+function EditorRandomInstanceOutputEvent:update(t, dt, instance_name)
+	if not alive(self._unit) then
+		return
+	end
+	local r, g, b = self._unit:mission_element()._color:unpack()
+	for i, data in pairs(self._element.values.instances) do
+		if not EditorRandomInstance._draw_instance_link(data.instance) then
+			table.remove(self._element.values.instances, i)
+		end
+	end
+	EditorRandomInstanceOutputEvent.super.update(self, t, dt)
+end
+
+function EditorRandomInstanceInputEvent:create_element()
+	self.super.create_element(self)
+	self._element.class = "ElementRandomInstanceInputEvent"
+	
+	self._element.values.amount = 1
+	self._element.values.amount_random = 0
+	self._element.values.instances = {}
+	self._element.values.unique_instance = false
+end
+
+function EditorRandomInstanceInputEvent:_build_panel(panel, panel_sizer)
+	self:_create_panel()
+
+	self:NumberCtrl("amount", {floats = 0, min = 1, help = "Specifies the amount of instances to be executed, Use 'Amount' only to specify an exact amount of instances to execute. Use 'Amount Random' to add a random amount to 'Amount' ('Amount' + random('Amount Random').", "Amount"})
+	self:NumberCtrl("amount_random", {floats = 0, min = 0, help = "Add a random amount to amount", "Random Ammount"})
+	self:BooleanCtrl("unique_instance", {help = "Always pick an instance that hasn't been selected yet until all instances have been selected, Pick Unique Instances", "Unique Instance?"})
+    self:BuildInstancesManage("instances", {values_name = "Event", value_key = "event", default_value = "none", key = "instance", orig = {instance = "", event = "none"}, combo_items_func = function(name)
+        return self:_get_events(name)
+    end})
+	
+	EditorRandomInstanceInputEvent.super._build_panel(self)
+end
+
+function EditorRandomInstanceInputEvent:update(t, dt, instance_name)
+	if not alive(self._unit) then
+		return
+	end
+	local r, g, b = self._unit:mission_element()._color:unpack()
+	for i, data in pairs(self._element.values.instances) do
+		if not EditorRandomInstance._draw_instance_link(data.instance) then
+			table.remove(self._element.values.instances, i)
+		end
+	end
+	EditorRandomInstanceInputEvent.super.update(self, t, dt)
+end

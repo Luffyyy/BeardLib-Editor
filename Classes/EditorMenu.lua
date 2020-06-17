@@ -1,4 +1,4 @@
-EditorMenu = EditorMenu or class() 
+EditorMenu = EditorMenu or class()
 function EditorMenu:init(load)
     self._menus = {}
     local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
@@ -9,6 +9,8 @@ function EditorMenu:init(load)
         auto_foreground = true,
         accent_color = accent_color,
         highlight_color = accent_color,
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        border_color = BeardLibEditor.Options:GetValue("AccentColor"),
 		create_items = ClassClbk(self, "create_items"),
 	})
     MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
@@ -32,6 +34,8 @@ function EditorMenu:Load(data)
         if data.opened then
             self:set_enabled(true)
         end
+    else
+        self:select_page("Projects")
     end
 end
 
@@ -41,39 +45,40 @@ function EditorMenu:Destroy()
 end
 
 function EditorMenu:make_page(name, clbk, opt)
-    self._menus[name] = self._menus[name] or self._main_menu:Menu(table.merge({
+    local index = opt and opt.index or nil
+    if opt then
+        opt.index = nil
+    end
+    self._menus[name] = self._menus[name] or self._menu:Menu(table.merge({
         name = name,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         items_size = 20,
         visible = false,
-        position = "RightBottom",
-        w = self._main_menu._panel:w() - 250,
+        private = {offset = {16, 4}},
+        h = self._main_menu._panel:h() - 60,
     }, opt or {}))
     self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
-    self:button(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
+    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end
 
 function EditorMenu:create_items(menu)
-	self._main_menu = menu
-	self._tabs = menu:Menu({
-		name = "tabs",
-        scrollbar = false,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        border_color = BeardLibEditor.Options:GetValue("AccentColor"),
-        visible = true,
-        items_size = 24,
-        w = 200,
-        h = self._main_menu._panel:h(),
-        position = "Left",
+    self._main_menu = menu
+    self._menu = self._main_menu:Holder({
+        name = "Holder"
+    })
+	self._tabs = self._menu:Holder({
+        name = "tabs",
+        size = 24,
+        index = 1,
+        private = {offset = {16, 2}},
+        align_method = "grid",
+        h = 30
 	})
-	ItemExt:add_funcs(self, self._tabs)   
-    local div = self:divider("title", {text = "BeardLib-Editor", items_size = 24, offset = 0, background_color = self._tabs.highlight_color})
-
+	ItemExt:add_funcs(self, self._tabs)
     local s = self._tabs.items_size - 2
-    div:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
-        highlight_color = false, w = s, h = s
+    self:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
+        highlight_color = false, w = s, h = s, position = "Right"
     })
 end
 
@@ -110,7 +115,7 @@ end
 
 function EditorMenu:select_page(page)
     for name, m in pairs(self._menus) do
-        self._tabs:GetItem(name):SetBorder({left = false})
+        self._tabs:GetItem(name):SetBorder({bottom = false})
         m:SetVisible(false)
     end 
     if not page or self._current_page == page then
@@ -118,6 +123,6 @@ function EditorMenu:select_page(page)
         return
     end
     self._current_page = page
-    self._tabs:GetItem(page):SetBorder({left = true})
+    self._tabs:GetItem(page):SetBorder({bottom = true})
     self._menus[page]:SetVisible(true)
 end

@@ -5,7 +5,7 @@
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"
 		auto_image_color="true"
-		min_lib_ver="3.38"
+		min_lib_ver="4.0"
 		core_class="Core.lua"
 	>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="BeardLib-Editor package data" folder_name="Data" install_directory="$ModPath$"/>
@@ -14,13 +14,22 @@
 		<class file="ExportUtils.lua"/>
 		<class file="MenuUIExt.lua"/>
 		<class file="EditorMenu.lua"/>
-		<class file="EditorPart.lua"/>		
-		<class file="DevClass.lua"/>		
+		<class file="EditorPart.lua"/>
+		<class file="DevClass.lua"/>
 		<class file="EditorOptionsMenu.lua"/>
 		<class file="CheckFileMenu.lua"/>
 		<class file="AboutMenu.lua"/>
 		<class file="MissionElementUnit.lua"/>
-		<class file="MapProjectManager.lua"/>
+		<class file="ProjectManager.lua"/>
+        <classes directory="Project">
+            <class file="ProjectEditor.lua"/>
+            <class file="ProjectModuleEditor.lua"/>
+            <class file="ProjectLevelEditor.lua"/>
+            <class file="ProjectInstanceEditor.lua"/>
+            <class file="ProjectNarrativeEditor.lua"/>
+            <class file="ProjectLocalizationEditor.lua"/>
+            <class file="ProjectUpdatesEditor.lua"/>
+        </classes>
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="FileWatcher.lua"/>
 		<class file="MapEditor.lua"/>
@@ -41,7 +50,7 @@
 		<classes directory="Map">
 			<class file="EditUnit.lua"/>
 			<class file="MissionEditor.lua"/>
-			<class file="StaticEditor.lua"/>        
+			<class file="StaticEditor.lua"/>
 			<class file="EditWire.lua"/>
 			<class file="EditMeshVariation.lua"/>
 			<class file="InEditorOptions.lua"/>
@@ -232,8 +241,10 @@
         <value_node value="ElementGlobalEventTrigger"/>
         <value_node value="ElementInstanceInput"/>
         <value_node value="ElementInstanceInputEvent"/>
+        <value_node value="ElementRandomInstanceInputEvent"/>
         <value_node value="ElementInstanceOutput"/>
         <value_node value="ElementInstanceOutputEvent"/>
+	<value_node value="ElementRandomInstanceOutputEvent"/>
         <value_node value="ElementInstancePoint"/>
         <value_node value="ElementInstanceSetParams"/>
         <value_node value="ElementShape"/>
@@ -381,4 +392,36 @@
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>
     </AutoClassElements>
+	<script_data_types>
+		<value_node value="sequence_manager"/>
+		<value_node value="environment"/>
+		<value_node value="menu"/>
+		<value_node value="continent"/>
+		<value_node value="continents"/>
+		<value_node value="mission"/>
+		<value_node value="nav_data"/>
+		<value_node value="cover_data"/>
+		<value_node value="world"/>
+		<value_node value="world_cameras"/>
+		<value_node value="prefhud"/>
+		<value_node value="objective"/>
+		<value_node value="credits"/>
+		<value_node value="hint"/>
+		<value_node value="comment"/>
+		<value_node value="dialog"/>
+		<value_node value="dialog_index"/>
+		<value_node value="timeline"/>
+		<value_node value="action_message"/>
+		<value_node value="achievment"/>
+		<value_node value="controller_settings"/>
+		<value_node value="network_settings"/>
+		<value_node value="physics_settings"/>
+	</script_data_types>
+    <script_data_formats>
+        <value_node value="json"/>
+        <value_node value="xml"/>
+        <value_node value="generic_xml"/>
+        <value_node value="custom_xml"/>
+        <value_node value="binary"/>
+    </script_data_formats>
 </mod>

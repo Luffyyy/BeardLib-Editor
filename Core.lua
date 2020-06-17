@@ -19,7 +19,9 @@ function BLE:Init()
 	self.ClassDirectory =  Path:CombineDir(self.ModPath, "Classes")
 	self.DataDirectory = Path:CombineDir(self.ModPath, "Data")
 	self.DialogsDirectory = Path:CombineDir(self.ClassDirectory, "Dialogs")
-	self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
+    self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
+    self.ProjectClassesDir = Path:CombineDir(self.ClassDirectory, "Project")
+
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
 	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
@@ -48,6 +50,7 @@ end
 function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
+    self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 
     self.Dialog:Destroy()
@@ -125,11 +128,12 @@ function BLE:InitManagers(data)
     self.Menu = EditorMenu:new()
     self.ScriptDataConverter = ScriptDataConverterManager:new(data.script_data)
     self.CheckFileMenu = CheckFileMenu:new(data.check_file)
-    self.MapProject = MapProjectManager:new(data.project)
+    self.MapProject = ProjectManager:new(data.project)
     self.LoadLevel = LoadLevelMenu:new(data.load)
     self.EditorOptions = EditorOptionsMenu:new(data.options)
     self.AboutMenu = AboutMenu:new(data.about)
     self.Menu:Load(data.menu)
+    self.MapProject:Load(data.project)
 
     if BLE.CreateDev then
         BLE:CreateDev(data.dev)
@@ -238,7 +242,7 @@ function BLE:LoadHashlist()
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
         local id = pkg.id
         self.DBPackages[id] = self.DBPackages[id] or {}
-        for _, type in pairs(table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
+        for _, type in pairs(table.list_add(clone(self._config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
             self.DBPackages[id][type] = self.DBPackages[id][type] or {}
         end
         self:ReadCustomPackageConfig(id, pkg.config, pkg.dir)
@@ -272,7 +276,7 @@ end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor
 function BLE:GeneratePackageData()
-    local types = table.list_add(clone(BeardLib.config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
+    local types = table.list_add(clone(self._config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})
     local file = io.open(self.ModPath .. "packages.txt", "r")
     local packages_paths = {}
     local paths = {}

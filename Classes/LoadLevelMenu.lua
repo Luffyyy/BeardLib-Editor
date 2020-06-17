@@ -14,15 +14,15 @@ local difficulty_loc = {
 function LoadLevelMenu:init(data)
 	data = data or {}
 	local menu = BeardLibEditor.Menu
-	self._menu = menu:make_page("Levels", nil, {scrollbar = false})
+	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2})
 	ItemExt:add_funcs(self)
-	local tabs = self:pan("Tabs", {align_method = "grid", offset = 0, auto_height = true})
-	local opt = {size_by_text = true, offset = 0}
-	local w = tabs:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla, opt).w
-	w = w + tabs:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true), opt).w
-	w = w + tabs:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true), opt).w
-	local search = tabs:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = tabs.w - w, index = 1, control_slice = 0.85, offset = 0})
-    local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
+	local filters = self:holder("Filters", {align_method = "grid", inherit_values = {size_by_text = true, offset = 0}})
+	local w = filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla).w
+	w = w + filters:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true)).w
+	w = w + filters:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true)).w
+	filters:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = filters:ItemsWidth() - w, index = 1, control_slice = 0.85, offset = 0})
+
+	local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
     local third_w = load_options:ItemsWidth() / 3
 	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true, w = third_w, offset = 0})
 	load_options:numberbox("MissionFilter", nil, nil, {w = third_w, floats = 0, offset = 0, help = "Set a mission filter to be forced on the level, 0 uses the default filter."})
@@ -36,12 +36,12 @@ function LoadLevelMenu:init(data)
 end
 
 function LoadLevelMenu:Destroy()
-	local tabs = self:GetItem("Tabs")
+	local filters = self:GetItem("Filters")
 	local load_options = self:GetItem("LoadOptions")
 	return {
-		vanilla = tabs:GetItemValue("Vanilla"),
-		custom = tabs:GetItemValue("Custom"),
-		narratives = tabs:GetItemValue("Narratives"),
+		vanilla = filters:GetItemValue("Vanilla"),
+		custom = filters:GetItemValue("Custom"),
+		narratives = filters:GetItemValue("Narratives"),
 		difficulty = load_options:GetItemValue("Difficulty"),
 		one_down = load_options:GetItemValue("OneDown"),
 		safemode = load_options:GetItemValue("Safemode"),
@@ -146,7 +146,7 @@ function LoadLevelMenu:do_load_narratives()
 			texture_rect = rect,
 			background_color = levels.highlight_color or nil,
 			text_align = "center",
-			text_vertical = "bottom",
+			text_vertical = "center",
 			offset_y = 6,
 			w = img_w,
 			h = img_h
