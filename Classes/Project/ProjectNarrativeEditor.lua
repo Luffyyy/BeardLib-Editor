@@ -140,7 +140,7 @@ function ProjectNarrativeEditor:create(create_data)
                 template.package = nil --packages should only be in levels.
 
                 local already_cloned = {}
-
+                local taken_names = {}
                 local function clone_level(chain_level, last)
                     local id = chain_level.level_id
 
@@ -154,7 +154,7 @@ function ProjectNarrativeEditor:create(create_data)
                     end
                     --We try to clone each level, final_callback will call regardless if the user decided to cancel the input dialog or not. So the last one should at least call.
                     --We disable reloading so we can clone all levels without issues. Plus only reload it once after we're done entirely.
-                    ProjectLevelEditor:new(self._parent, nil, {clone_id = id, chain_level = chain_level, no_reload = true, final_callback = last and function(success)
+                    ProjectLevelEditor:new(self._parent, nil, {clone_id = id, chain_level = chain_level, taken_names = taken_names, no_reload = true, final_callback = last and function(success)
                         if success then
                             already_cloned[id] = chain_level
                         end

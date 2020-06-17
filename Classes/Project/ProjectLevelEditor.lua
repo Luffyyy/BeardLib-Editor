@@ -61,9 +61,9 @@ function ProjectLevelEditor:create(create_data)
         text = create_data.name or "",
         check_value = function(name)
             local warn
-            for k in pairs(tweak_data.levels) do
-                if string.lower(k) == name:lower() then
-                    warn = string.format("A level with the id %s already exists! Please use a unique id", k)
+            for _, id in pairs(table.list_add(table.map_keys(tweak_data.levels), create_data.taken_names or {})) do
+                if string.lower(id) == name:lower() then
+                    warn = string.format("A level with the id %s already exists! Please use a unique id", id)
                 end
             end
             if name == "" then
@@ -82,6 +82,9 @@ function ProjectLevelEditor:create(create_data)
             end
         end,
         callback = function(name)
+            if create_data.taken_names then
+                table.insert(create_data.taken_names, name)
+            end
             local template
             if create_data.chain_level then
                 create_data.chain_level.level_id = name
