@@ -228,7 +228,7 @@ end
 --- @param title string
 function ProjectManager:set_edit_title(title)
     if title then
-        self._editing:SetText("Currently Editing: ".. (title or "None"))
+        self._editing:SetText("Currently editing: ".. (title or "None"))
     else
         self._editing:SetText("Select a project to edit")
     end
