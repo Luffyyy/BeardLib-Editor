@@ -14,7 +14,7 @@ function ProjectManager:init()
 
     self._packages_to_unload = {}
 
-    self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid"})
+    self._menu = BLE.Menu:make_page("Projects", nil, {align_method = "centered_grid", index = 1, scrollbar = false})
 
     ItemExt:add_funcs(self)
 

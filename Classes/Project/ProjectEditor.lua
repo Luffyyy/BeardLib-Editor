@@ -38,7 +38,7 @@ function ProjectEditor:init(parent, mod)
         auto_height = false,
         scrollbar = true,
         border_left = false,
-        position = "Right"
+        position = "RightOffset-X"
     })
     ItemExt:add_funcs(self)
     self._modules_list = self._left_menu:divgroup("Modules")

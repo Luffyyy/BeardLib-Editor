@@ -9,6 +9,8 @@ function EditorMenu:init(load)
         auto_foreground = true,
         accent_color = accent_color,
         highlight_color = accent_color,
+        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        border_color = BeardLibEditor.Options:GetValue("AccentColor"),
 		create_items = ClassClbk(self, "create_items"),
 	})
     MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
@@ -41,29 +43,33 @@ function EditorMenu:Destroy()
 end
 
 function EditorMenu:make_page(name, clbk, opt)
-    self._menus[name] = self._menus[name] or self._main_menu:Menu(table.merge({
+    local index = opt and opt.index or nil
+    if opt then
+        opt.index = nil
+    end
+    self._menus[name] = self._menus[name] or self._menu:Menu(table.merge({
         name = name,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         items_size = 20,
         visible = false,
-        position = "RightBottom",
-        h = self._main_menu._panel:h() - 30,
+        private = {offset = {16, 4}},
+        h = self._main_menu._panel:h() - 60,
     }, opt or {}))
     self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
-    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {offset = 4, highlight_color = self._menus[name].highlight_color})
+    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
 end
 
 function EditorMenu:create_items(menu)
-	self._main_menu = menu
-	self._tabs = menu:Menu({
-		name = "tabs",
-        scrollbar = false,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        border_color = BeardLibEditor.Options:GetValue("AccentColor"),
-        visible = true,
-        items_size = 24,
+    self._main_menu = menu
+    self._menu = self._main_menu:Holder({
+        name = "Holder"
+    })
+	self._tabs = self._menu:Holder({
+        name = "tabs",
+        size = 24,
+        index = 1,
+        private = {offset = {16, 2}},
         align_method = "grid",
         h = 30
 	})
