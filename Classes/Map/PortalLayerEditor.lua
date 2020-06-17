@@ -72,7 +72,7 @@ function PortalLayer:is_my_unit(unit)
 	return false
 end
 
-function PortalLayer:delete_unit(unit)
+function PortalLayer:unit_deleted(unit)
 	local ud = unit:unit_data()
 	table.delete(self._created_units, unit)
 	if ud then
@@ -133,7 +133,7 @@ function PortalLayer:update(t, dt)
         if alive(unit) then
             unit:set_enabled(unit:unit_data().portal == portal)
         else
-            table.remove(self._created_units, unit)
+            table.delete(self._created_units, unit)
             break
         end
     end
@@ -143,7 +143,7 @@ function PortalLayer:select_shape(item)
     if self._selected_portal then
         for i=1, #self._selected_portal._shapes do
             self._menu:GetItem("shape_" .. tostring(i)):SetBorder({left = false})
-        end        
+        end
         self._selected_shape = item and self._selected_portal._shapes[tonumber(item.id)] 
     end
     if self._selected_shape and self:selected_unit() ~= self._selected_shape:unit() then
