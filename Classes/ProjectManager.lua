@@ -7,7 +7,7 @@ ProjectManager = ProjectManager or class()
 function ProjectManager:init()
     self._templates_directory = Path:Combine(BLE.ModPath, "Templates")
     self._add_xml_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "Level/add.xml"))
-    self._main_xml_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "Project/main.xml"))
+    self._main_xml_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "EmptyProject.xml"))
     self._level_module_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "LevelModule.xml"))
     self._narr_module_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "NarrativeModule.xml"))
     self._instance_module_template = BLE.Utils:ReadConfig(Path:Combine(self._templates_directory, "InstanceModule.xml"))
@@ -19,7 +19,7 @@ function ProjectManager:init()
     ItemExt:add_funcs(self)
 
     self._editing = self:divgroup("CurrEditing", {
-        text = "Select a Project To Edit",
+        text = "Select a project to edit",
         h = self._menu:ItemsHeight() - self._menu:OffsetY() * 2,
         auto_height = false,
         border_left = false,
@@ -37,7 +37,7 @@ function ProjectManager:init()
     tb:button("Edit", ClassClbk(self, "select_project_dialog"))
     new:button("Map", ClassClbk(self, "create_new_map_dialog", false), {help = "A map with an inital level"})
     new:button("ClonedMap", ClassClbk(self, "create_new_cloned_map"), {help = "Clones an existing vanilla map"})
-    new:button("EmptyMap", ClassClbk(self, "create_new_map_dialog", ClassClbk(self, "create_new_project")), {help = "A map with only the project structure"})
+    new:button("EmptyMap", ClassClbk(self, "create_new_map_dialog", ClassClbk(self, "create_new_map_clean")), {help = "A map with only the project structure"})
 
     self:set_edit_title()
 end
@@ -230,7 +230,7 @@ function ProjectManager:set_edit_title(title)
     if title then
         self._editing:SetText("Currently Editing: ".. (title or "None"))
     else
-        self._editing:SetText("Select a Project To Edit")
+        self._editing:SetText("Select a project to edit")
     end
 end
 
@@ -294,27 +294,17 @@ function ProjectManager:create_new_map_dialog(clbk)
     })
 end
 
---- Creates a new clean project (Currently focuses on MapFramework will be changed hopefully)
---- @param name string
-function ProjectManager:create_new_project(name)
-    local data = {name = name}
-    local path = Path:Combine(BeardLib.config.maps_dir, name)
-    FileIO:MakeDir(path)
-    FileIO:MakeDir(Path:Combine(path, "assets"))
-    FileIO:MakeDir(Path:Combine(path, "levels"))
-    FileIO:WriteTo(Path:Combine(path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))
-    self:load_mods()
-    self:select_project(BeardLib.managers.MapFramework._loaded_mods[name])
-end
-
 --- Creates a new clean map project (without asking the user to make a level and narrative)
 --- @param name string
 function ProjectManager:create_new_map_clean(name)
     local data = deep_clone(self._main_xml_template)
     data.name = name
     local path = Path:Combine(BeardLib.config.maps_dir, name)
-    FileIO:CopyDirTo(Path:Combine(self._templates_directory, "Project"), path)
+    FileIO:MakeDir(path)
     FileIO:MakeDir(Path:Combine(path, "assets"))
+    local loc_dir = Path:Combine(path, "loc")
+    FileIO:MakeDir(loc_dir)
+    FileIO:WriteTo(Path:Combine(loc_dir, "english.txt"), "{\n}")
     FileIO:MakeDir(Path:Combine(path, "levels"))
     FileIO:WriteTo(Path:Combine(path, "main.xml"), FileIO:ConvertToScriptData(data, CXML, true))
     self:load_mods()

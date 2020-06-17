@@ -173,8 +173,18 @@ function ProjectLevelEditor:clone_level(create_data)
         end
     end
 
-    local custom_level_dir = Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, name)
+    local dir = self._parent:get_dir()
+    local custom_level_dir = Path:Combine(dir, self.LEVELS_DIR, name)
 
+    --Create scriptdata mod for the objectives if it doesn't exist already.
+    local scriptdata_dir = Path:Combine(dir, "scriptdata")
+    if not FileIO:Exists(scriptdata_dir) then
+        FileIO:MakeDir(scriptdata_dir)
+        local file_path = Path:Combine(scriptdata_dir, "objectives.objective")
+        if not FileIO:Exists(file_path) then
+            FileIO:WriteTo(file_path, "<table></table>")
+        end
+    end
     --This local function is used to extract the files of the map by reading the scriptdata.
     --To actually have it work we ofc need to load the packages first or else the game will go into shit.
     local function extra_file(name, typ, path, data_func)
