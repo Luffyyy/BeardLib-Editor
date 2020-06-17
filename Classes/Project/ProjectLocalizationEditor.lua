@@ -31,12 +31,12 @@ end
 function ProjectLocalization:build_menu(menu, data)
     local actions = self:pan("Actions", {align_method = "grid"})
     local langs = table.map_keys(self._languages)
-    local lang = actions:combobox("Language", ClassClbk(self, "open_lang_clbk"), langs, 1)
-    local opt = {w = actions:ItemsWidth() / 4 - actions:OffsetX() * 2, text_align = "center"}
-    actions:button("AddString", ClassClbk(self, "insert_string_item", "", ""), opt)
-    actions:button("AddLanguage", ClassClbk(self, "add_lang"), opt)
-    actions:button("RemoveLanguage", ClassClbk(self, "remove_lang"), opt)
-    actions:button("MakeDefault", ClassClbk(self, "make_lang_default"), opt)
+    local lang = actions:combobox("Language", ClassClbk(self, "open_lang_clbk"), langs)
+    actions.inherit_values = {w = actions:ItemsWidth() / 4 - actions:OffsetX() * 2, text_align = "center"}
+    actions:button("AddString", ClassClbk(self, "insert_string_item", "", ""), {enabled = false})
+    actions:button("AddLanguage", ClassClbk(self, "add_lang"))
+    actions:button("RemoveLanguage", ClassClbk(self, "remove_lang"))
+    actions:button("MakeDefault", ClassClbk(self, "make_lang_default"))
     self._strings_panel = self:pan("Strings", {max_height = self._menu:ItemsHeight() - actions:OuterHeight() - self._menu:OffsetY() - 10})
     lang:SetSelectedItem(table.get_key(self._languages, data.default) or langs[1], true)
 end
@@ -97,8 +97,11 @@ end
 function ProjectLocalization:open_lang(file)
     if not file then
         BLE:log("No language file for %s", tostring(file))
+        self:GetItem("AddString"):SetEnabled(false)
         return
     end
+    self:GetItem("AddString"):SetEnabled(true)
+
     local path = Path:Combine(self._parent:get_dir(), self._dir, file)
     self._current_lang = self._languages_to_save[file] or (FileIO:Exists(path) and FileIO:ReadScriptData(path, "json") or {})
     self._current_lang_name = file
