@@ -415,4 +415,11 @@
 		<value_node value="network_settings"/>
 		<value_node value="physics_settings"/>
 	</script_data_types>
+    <script_data_formats>
+        <value_node value="json"/>
+        <value_node value="xml"/>
+        <value_node value="generic_xml"/>
+        <value_node value="custom_xml"/>
+        <value_node value="binary"/>
+    </script_data_formats>
 </mod>
