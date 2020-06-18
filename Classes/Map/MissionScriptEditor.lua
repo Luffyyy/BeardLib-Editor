@@ -600,7 +600,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 				id = object
 				object_key = INSTANCE
 			end
-			local entry = {name = name_func(object), [object_key] = object}
+			local entry = {name = name_func(object), [object_key] = object, _index = 1}
 
 			--Adding units which are selected.
 			if tdata then
@@ -618,6 +618,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 					end
 				end
 			elseif table.contains(current_list, id) then
+				entry._index = table.get_key(current_list, id)
 				table.insert(selected_list, entry)
 			end
 
