@@ -457,3 +457,6 @@ for n, item in pairs(C) do
 		end
 	end
 end
+
+local Toggle = C.Toggle
+Toggle.set_value = Toggle.SetValue

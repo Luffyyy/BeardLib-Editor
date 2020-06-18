@@ -35,6 +35,7 @@ function MissionScriptEditor:create_element()
 	self._element.values.base_delay = 0
 	self._element.values.trigger_times = 0
 	self._element.values.on_executed = {}
+	self._hed = self._element.values
 end
 
 function MissionScriptEditor:work()
@@ -188,7 +189,7 @@ function MissionScriptEditor:update(t, dt)
 		return
 	end
 
-	self:draw_links()
+	self:draw_links(t, dt, self:selected_unit(), self:selected_units())
 	for _, draw in pairs(self._draw_units) do
 		for id, unit in pairs(draw.units) do
 			if not alive(unit) then
@@ -214,7 +215,7 @@ function MissionScriptEditor:update(t, dt)
 	end
 end
 
-function MissionScriptEditor:draw_links()
+function MissionScriptEditor:draw_links(t, dt, selected_unit, selected_units)
 	if not alive(self._unit) then
 		return
 	end
@@ -235,8 +236,8 @@ function MissionScriptEditor:draw_elements(elements, is_link)
 	for k, id in ipairs(elements) do
 		local unit = self:GetPart("mission"):get_element_unit(id)
 		if alive(unit) then
-			if self:should_draw_link(selected_unit, unit) then
-				local r, g, b = unit:mission_element()._color:unpack()
+			if self:_should_draw_link(selected_unit, unit) then
+				local r, g, b = unit:mission_element():get_link_color()
 				self:draw_link({
 					from_unit = is_link and self._unit or unit,
 					to_unit = is_link and unit or self._unit,
@@ -251,7 +252,7 @@ function MissionScriptEditor:draw_elements(elements, is_link)
 	end
 end
 
-function MissionScriptEditor:should_draw_link(unit)
+function MissionScriptEditor:_should_draw_link(unit)
 	local selected_unit = self:selected_unit()
 	return unit == selected_unit or self._unit == selected_unit
 end
@@ -422,7 +423,8 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 		single_select = opt.single_select,
 		not_table = opt.not_table,
 		table_data = table_data,
-		classes = classes
+		classes = classes,
+		nil_on_empty = opt.nil_on_empty
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list"}, opt))
 end
 
@@ -485,6 +487,10 @@ function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)
 		else
             table.insert(self._element.values[params.value_name], id)
         end
+	end
+
+	if params.nil_on_empty and table.size(self._element.values[params.value_name]) == 0 then
+		self._element.values[params.value_name] = nil
 	end
 
     if params.update_clbk then

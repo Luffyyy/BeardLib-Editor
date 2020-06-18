@@ -63,6 +63,10 @@ function MissionElementUnit:update_text(t, dt)
 	end
 end
 
+function MissionElementUnit:get_link_color()
+    return self._color:unpack()
+end
+
 function MissionElementUnit:set_enabled(enabled, save)
     if save then
         self._enabled = enabled
