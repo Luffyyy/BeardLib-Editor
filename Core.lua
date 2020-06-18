@@ -395,7 +395,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                 path = Path:Normalize(path)
                 local dir = Path:Combine(directory, path)
 
-                if CustomPackageManager.UNIT_SHORTCUTS[typ] then
+                if BeardLibPackageManager.UNIT_SHORTCUTS[typ] then
                     if FileIO:Exists(dir..".unit") and FileIO:Exists(dir..".model") and FileIO:Exists(dir..".object") then
                         self.DBPaths.unit[path] = true
                         self.DBPaths.model[path] = true
