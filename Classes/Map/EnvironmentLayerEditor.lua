@@ -23,8 +23,6 @@ function EnvLayer:init(parent)
 	}
 	self._cubemap_units = {}
 	self._created_units = {}
-	self._wind_speed = 6
-	self._wind_speed_variation = 1
 	self._environment_area_unit = "core/units/environment_area/environment_area"
 	self._effect_unit = "core/units/effect/effect"
 	self._dome_occ_shape_unit = "core/units/dome_occ_shape/dome_occ_shape"
@@ -321,11 +319,12 @@ function EnvLayer:build_menu()
     dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
 
 	local wind = self:group("Wind")
-    self._draw_wind = wind:tickbox("Draw", nil, false)
-    wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), 0, {min = 0, max = 360, floats = 0})
-    wind:slider("WindVariation", ClassClbk(self, "update_wind_variation"), 0, {min = 0, max = 180, floats = 0})
-    wind:slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), 0, {min = -90, max = 90, floats = 0})
-    wind:slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), 0, {min = -90, max = 90, floats = 0})
+	self._draw_wind = wind:tickbox("Draw", nil, false)
+	local wind_vals = data.wind
+    wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), wind_vals.angle, {min = -360, max = 360, floats = 0})
+    wind:slider("WindVariation", ClassClbk(self, "update_wind_variation"), self._wind_dir_var, {min = 0, max = 180, floats = 0})
+    wind:slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), wind_vals.tilt, {min = -90, max = 90, floats = 0})
+    wind:slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), self._wind_tilt_var, {min = -90, max = 90, floats = 0})
     wind:slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0})
     self._wind_text = self:divider("Beaufort/WindDesc")
     self:update_wind_speed_labels()
