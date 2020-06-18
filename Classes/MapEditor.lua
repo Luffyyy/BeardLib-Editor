@@ -936,7 +936,7 @@ function Editor:_set_fixed_resolution(size)
 end
 
 function Editor:disable_all_post_effects(no_keep_state)
-    for id, pe in pairs(self._post_effects) do
+    for _, pe in pairs(self._post_effects) do
         pe.off()
 
         if not no_keep_state then
@@ -946,7 +946,7 @@ function Editor:disable_all_post_effects(no_keep_state)
 end
 
 function Editor:enable_all_post_effects()
-    for id, pe in pairs(self._post_effects) do
+    for _, pe in pairs(self._post_effects) do
         pe.on()
 
         pe.enable = true
@@ -954,7 +954,7 @@ function Editor:enable_all_post_effects()
 end
 
 function Editor:update_post_effects()
-    for id, pe in pairs(self._post_effects) do
+    for _, pe in pairs(self._post_effects) do
         if pe.enable then
             pe.on()
         else
