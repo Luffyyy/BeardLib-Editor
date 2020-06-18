@@ -163,7 +163,7 @@ end
 function Editor:_init_post_effects()
 	self._post_effects = {
 		POSTFX_bloom = {
-			enable = false,
+			enable = true,
 			on = function()
 				self._vp:vp():set_post_processor_effect("World", Idstring("hdr_post_processor"), Idstring("default"))
 				self._vp:vp():set_post_processor_effect("World", Idstring("bloom_combine_post_processor"), Idstring("bloom_combine"))
@@ -175,26 +175,24 @@ function Editor:_init_post_effects()
 			end
 		},
 		POSTFX_ssao = {
-			enable = false,
+			enable = true,
 			on = function ()
-				managers.environment_controller:set_ao_setting("ssao_low", self._vp:vp())
+				managers.environment_controller:set_ao_setting(managers.user:get_setting("video_ao"), self._vp:vp())
 			end,
 			off = function ()
 				managers.environment_controller:set_ao_setting("off", self._vp:vp())
 			end
 		},
 		POSTFX_aa = {
-			enable = false,
+			enable = true,
 			on = function ()
-				managers.environment_controller:set_aa_setting("smaa_x1", self._vp:vp())
+				managers.environment_controller:set_aa_setting(managers.user:get_setting("video_aa"), self._vp:vp())
 			end,
 			off = function ()
 				managers.environment_controller:set_aa_setting("off", self._vp:vp())
 			end
 		}
 	}
-
-	self:disable_all_post_effects()
 end
 
 function Editor:update_grid_size(value)
