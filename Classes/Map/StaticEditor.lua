@@ -54,7 +54,7 @@ function Static:mouse_pressed(button, x, y)
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
                     self:StorePreviousPosRot()
-                    self._parent._move_widget:add_move_widget_axis(ray.body:name():s())      
+                    self._parent._move_widget:add_move_widget_axis(ray.body:name():s())
                     self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
                     self._parent._using_move_widget = true
                 end
@@ -141,7 +141,7 @@ function Static:set_units()
     for key, unit in pairs(self._set_units) do
         if alive(unit) then
             local ud = unit:unit_data()
-            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)        
+            managers.worlddefinition:set_unit(ud.unit_id, unit, ud.continent, ud.continent)
         end
     end
     for _, me in pairs(self._set_elements) do
@@ -258,7 +258,7 @@ end
 
 function Static:build_unit_main_values()
     local name = self:unit_value("name")
-    local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})    
+    local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})
     if not self._built_multi then
         main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, offset=0})
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
@@ -549,7 +549,7 @@ function Static:set_unit_group(old_id, new_id, old_continent, new_continent)
 			if type(group) == "table" and group.units then
 				if group.reference == old_id then
 					group.reference = new_id
-	
+
 					local continents = managers.worlddefinition._continent_definitions
 					table.delete(continents[old_continent].editor_groups, group)
 					continents[new_continent].editor_groups = continents[new_continent].editor_groups or {}
@@ -558,7 +558,7 @@ function Static:set_unit_group(old_id, new_id, old_continent, new_continent)
 				for i, unit_id in pairs(group.units) do
 					if unit_id == old_id then
 						group.units[i] = new_id
-						return	
+						return
 					end
 				end
 				return
@@ -603,10 +603,10 @@ function Static:remove_group(item, group)
     group = group or self._selected_group
     if group then
         table.delete(managers.worlddefinition._continent_definitions[group.continent].editor_groups, group)
-	    if self._selected_group then 
+	    if self._selected_group then
             self._selected_group = nil
             self:build_group_options()
-        end     
+        end
     end
     self:part("world"):refresh()
 end
@@ -664,7 +664,7 @@ function Static:get_groups_from_unit(unit)
     if not continent or not continent.editor_groups then return {} end
     local groups = {}
     for _, editor_group in pairs(continent.editor_groups) do
-        if editor_group.name then   -- temp bandaid for nil groups  
+        if editor_group.name then   -- temp bandaid for nil groups
             for _, unit_id in pairs(editor_group.units) do
                 if unit_id == unit:unit_data().unit_id then
                     table.insert(groups, editor_group)
@@ -675,7 +675,7 @@ function Static:get_groups_from_unit(unit)
     return groups
 end
 
-function Static:select_group(editor_group) 
+function Static:select_group(editor_group)
     self:reset_selected_units()
     self._selected_group = editor_group
     self:build_positions_items(false)
@@ -687,7 +687,7 @@ end
 
 function Static:toggle_group_visibility(editor_group)
     if editor_group.visible == nil then editor_group.visible = false end
-    
+
     editor_group.visible = not editor_group.visible
     for _, unit_id in pairs(editor_group.units) do
         local unit = managers.worlddefinition:get_unit(unit_id)
@@ -796,7 +796,7 @@ function Static:check_unit_ok(unit)
     end
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:GetPart("opt")._wanted_elements
-    if mission_element then    
+    if mission_element then
         return BeardLibEditor.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
     else
         return unit:visible()
@@ -832,7 +832,7 @@ function Static:set_selected_unit(unit, add, skip_menu)
                     fake_unit = u
                     break
                 end
-            end 
+            end
             unit = fake_unit or FakeObject:new(instance)
             units[1] = unit
         end
@@ -937,7 +937,7 @@ function Static:selection_to_menu()
         else
             self:set_unit()
         end
-    end 
+    end
     self:GetPart("world"):set_selected_unit()
     self:recalc_all_locals()
 end
@@ -953,7 +953,7 @@ function Static:select_unit(mouse2)
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
-                self:set_selected_unit(ray.unit, mouse2) 
+                self:set_selected_unit(ray.unit, mouse2)
             end
         end
     end
@@ -1133,7 +1133,7 @@ function Static:addremove_unit_portal(item)
         end
         Utils:Notify("Success", string.format("Added/Removed %d units to selected portal", count))
     else
-        Utils:Notify("Error", "No portal selected")  
+        Utils:Notify("Error", "No portal selected")
     end
 end
 
@@ -1157,7 +1157,7 @@ function Static:delete_selected_dialog(item)
     if not self:selected_unit() or self._grabbed_unit then
         return
     end
-    Utils:YesNoQuestion("This will delete the selection", ClassClbk(self, "delete_selected")) 
+    Utils:YesNoQuestion("This will delete the selection", ClassClbk(self, "delete_selected"))
 end
 
 function Static:update(t, dt)
@@ -1231,8 +1231,8 @@ end
 
 function Static:GetCopyData(remove_old_links, keep_location)
     local copy_data = {}
-    local element_type = Utils.LinkTypes.Element    
-    local unit_type = Utils.LinkTypes.Unit    
+    local element_type = Utils.LinkTypes.Element
+    local unit_type = Utils.LinkTypes.Unit
     for _, unit in pairs(self._selected_units) do
         local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
         local copy = {
