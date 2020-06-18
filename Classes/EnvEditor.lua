@@ -49,6 +49,7 @@ function EnvEditor:build_default()
     end
 
     local quick = self:divgroup("Quick actions")
+    quick:tickbox("PostProcessingEffects", ClassClbk(self, "set_post_effects_enabled"), self:Val("PostProcessingEffects"))
     quick:button("EffectEditor", ClassClbk(self, "open_effect_editor"))
     quick:button("Browse", ClassClbk(self, "open_environment_dialog"))
     quick:button("LoadGameDefault", ClassClbk(self, "database_load_env", "core/environments/default"))
@@ -129,6 +130,11 @@ function EnvEditor:build_default()
 
     managers.viewport:first_active_viewport():set_environment_editor_callback(ClassClbk(self, "feed"))
     self._built = true
+end
+
+function EnvEditor:set_post_effects_enabled(item)
+    BLE.Options:SetValue("Map/"..item:Name(), item:Value())
+    managers.editor:update_post_effects()
 end
 
 function EnvEditor:load_shadow_data(block)

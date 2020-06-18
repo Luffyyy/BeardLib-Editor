@@ -953,7 +953,7 @@ end
 
 function Editor:update_post_effects()
     for _, pe in pairs(self._post_effects) do
-        if pe.enable then
+        if pe.enable and BLE.Options:GetValue("Map/PostProcessingEffects") then
             pe.on()
         else
             pe.off()
