@@ -31,6 +31,7 @@ function CubemapCreator:update(t, dt)
 end
 
 function CubemapCreator:create_projection_light(type)
+	managers.editor:disable_all_post_effects(true)
 	local lights = {}
 	local units = {}
 
@@ -117,6 +118,7 @@ function CubemapCreator:create_projection_light(type)
 		saved_environment = saved_environment,
 		lights = true
 	})
+	managers.editor:enable_all_post_effects()
 end
 
 function CubemapCreator:create_cube_map(params)
@@ -193,6 +195,7 @@ function CubemapCreator:create_dome_occlusion(shape, res)
 	}
 
 	self:_create_dome_occlusion(params)
+	managers.editor:enable_all_post_effects()
 end
 
 function CubemapCreator:next_cube()
