@@ -598,7 +598,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 
 			--Adding units which are selected.
 			if tdata then
-				for _, element_v in pairs(current_list) do
+				for i, element_v in pairs(current_list) do
 					if type(element_v) == "table" and element_v[tdata.key] == id then
 						if #tdata.values > 0 then
 							entry.values = {}
@@ -607,14 +607,13 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 							table.insert(entry.values, element_v[value.key] or tdata.orig[value.key] or tdata.default_value)
 						end
 						entry.orig_tbl = element_v
+						entry._index = i
 						table.insert(selected_list, clone(entry))
 					end
 				end
-			else
-				if table.contains(current_list, id) then
+			elseif table.contains(current_list, id) then
 				table.insert(selected_list, entry)
 			end
-		end
 
 			--Adding all units to be selectable.
 			if check_object(object) then
@@ -631,6 +630,13 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 			end
 	 	end
 	end
+
+	table.sort(selected_list, function(a,b)
+		return a._index < b._index
+	end)
+	table.sort(list, function(a,b)
+		return a._index < b._index
+	end)
 
 	BeardLibEditor.SelectDialogValue:Show({
 	    selected_list = selected_list,
