@@ -403,7 +403,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
 
                         local failed
 
-                        for load_type, load in pairs(C.UNIT_SHORTCUTS[typ]) do
+                        for load_type, load in pairs(BeardLibPackageManager.UNIT_SHORTCUTS[typ]) do
                             if FileIO:Exists(dir.."."..load_type) then
                                 self.DBPaths[load_type] = self.DBPaths[load_type] or {}
                                 self.DBPaths[load_type][path] = true
