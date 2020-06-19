@@ -530,7 +530,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		if not ud then
 			return false
 		end
-		return not ud.instance and (not params.check_unit or params.check_unit(unit))
+		return not ud.instance and ud.unit_id ~= 0 and (not params.check_unit or params.check_unit(unit))
 	end)
 	self:OpenManageListDialog(params, units,
 		function(unit)
