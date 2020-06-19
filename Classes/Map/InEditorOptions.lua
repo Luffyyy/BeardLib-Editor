@@ -37,6 +37,7 @@ function Options:build_default()
     camera:slider("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
     camera:slider("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
     camera:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false)
+    camera:numberbox("OrthographicScale", ClassClbk(self._parent, "set_orthographic_scale"), 80)
 
     local map = self:group("Map", groups_opt)
     map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})

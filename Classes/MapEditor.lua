@@ -759,6 +759,7 @@ function Editor:update_camera(t, dt)
     local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
     if self._orthographic then
         self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
+        self.parts.opt:GetItem("OrthographicScale"):SetValue(self._mul)
         self:set_orthographic_screen()
     else
         move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
@@ -887,8 +888,13 @@ function Editor:update_positions()
     end
 end
 
+function Editor:set_orthographic_scale(item)
+    self._mul = item:Value()
+    self:set_orthographic_screen()
+end
+
 function Editor:set_orthographic_screen()
-	local res = Application:screen_resolution()
+    local res = Application:screen_resolution()
 	self._camera_object:set_orthographic_screen( -(res.x/2)*self._mul, (res.x/2)*self._mul, -(res.y/2)*self._mul, (res.y/2)*self._mul )
 end
 
