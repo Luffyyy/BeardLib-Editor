@@ -124,7 +124,8 @@ function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
 function Part:enabled() return self._enabled end
-function Part:value(v) return assert_value(ClassClbk(BLE.Options, "GetValue"), 'Map/' .. v, "Value") end
+function Part:value(n) return BLE.Options:GetValue("Map/" .. n, "Value") end
+function Part:set_value(n, v) return BLE.Options:SetValue("Map/" .. n, v) end
 function Part:part(n) return assert_value(ClassClbk(BLE.Utils, "GetPart"), n, "Part") end
 function Part:layer(l) return assert_value(ClassClbk(BLE.Utils, "GetLayer"), l, "Layer") end
 function Part:clear_menu()

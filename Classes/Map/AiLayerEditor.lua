@@ -106,7 +106,6 @@ end
 function AiEditor:build_menu()
     self:save()
     self:ClearItems()
-    self:alert("WIP section")
     local graphs = self:group("Graphs")
     graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
@@ -139,12 +138,12 @@ function AiEditor:build_menu()
     graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"))
     graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"))
 
-    local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debug [Toggle what to draw]" })
-    local group = navigation_debug:pan("Draw", { align_method = "grid" })
+    local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debugging [Toggle what to draw]" })
+    local group = navigation_debug:pan("Draw", {align_method = "grid"})
 
     self:_build_draw_data(group)
 
-    local ai_settings = self:group("AiSettings")
+    local ai_settings = self:group("AISettings", {text = "AI Settings"})
     ai_settings:combobox("GroupState",
         function(item)
             self:data().ai_settings.group_state = item:SelectedItem()
@@ -152,17 +151,22 @@ function AiEditor:build_menu()
         self._group_states,
         table.get_key(self._group_states, self:data().ai_settings.group_state))
 
-    local other = self:group("Other")
-    other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
-    other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
-
-    local ai_data = self:group("AiData")
+    local ai_data = self:group("AIData", {text = "AI Data"})
+    ai_data:tickbox("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"))
     ai_data:GetToolbar():tb_imgbtn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
         tx, EU.EditorIcons["plus"], {help = "Create new patrol path"}
     )
 
     self:_build_ai_data(ai_data)
+
+    local other = self:group("Other")
+    other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
+end
+
+function AiEditor:set_draw_patrol_paths(item)
+    self:set_value("DrawPatrolPaths", item:Value())
 end
 
 function AiEditor:_build_draw_data(group)
@@ -386,14 +390,16 @@ function AiEditor:update_draw_data(unit)
 end
 
 function AiEditor:update_ai_data()
-    local ai_data = self:GetItem("AiData")
+    local ai_data = self:GetItem("AIData")
     ai_data:ClearItems("patrol_path")
 
     self:_build_ai_data(ai_data)
 end
 
 function AiEditor:update(t, dt)
-    self:_draw(t, dt)
+    if self:Val("DrawPatrolPaths") then
+        self:_draw(t, dt)
+    end
 end
 
 function AiEditor:_draw(t, dt)

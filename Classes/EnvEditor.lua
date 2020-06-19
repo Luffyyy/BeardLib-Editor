@@ -135,7 +135,7 @@ function EnvEditor:build_default()
 end
 
 function EnvEditor:set_post_effects_enabled(item)
-    BLE.Options:SetValue("Map/"..item:Name(), item:Value())
+    self:set_value(item:Name(), item:Value())
     managers.editor:update_post_effects()
 end
 
