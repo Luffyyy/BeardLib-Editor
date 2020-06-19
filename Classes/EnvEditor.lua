@@ -22,17 +22,19 @@ function EnvEditor:load_included_environments()
     local level = BeardLib.current_level
     if included and level then
         included:ClearItems("environment")
+        local has_items = false
         for _, include in ipairs(level._config.include) do
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
+                    has_items = true
                     local env = included:button(include.file, ClassClbk(self, "open_environment", file), {text = include.file, label = "environment"})
                     env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
                 end
             end
         end
-        if #included:Items() == 0 then
-            included:divider("No environments found", {color = false})
+        if not has_items then
+            included:lbl("No environments found", {label = "environment"})
         end
     end
 end

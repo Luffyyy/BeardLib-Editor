@@ -157,9 +157,9 @@ function AiEditor:build_menu()
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 
     local ai_data = self:group("AiData")
-    ai_data:GetToolbar():sq_btn("CreateNew",
+    ai_data:GetToolbar():tb_imgbtn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
-        { text = "+", help = "Create new patrol path" }
+        tx, EU.EditorIcons["plus"], {help = "Create new patrol path"}
     )
 
     self:_build_ai_data(ai_data)
@@ -194,16 +194,18 @@ end
 
 function AiEditor:_build_ai_data(ai_data)
     local patrol_paths = managers.ai_data:all_patrol_paths()
+    local has_items = false
     for name, points in pairs(patrol_paths) do
-        local patrol_path = ai_data:group(name)
+        has_items = true
+        local patrol_path = ai_data:group(name, {label = "patrol_path"})
         patrol_path:GetToolbar():tb_imgbtn("DeletePath", ClassClbk(self, "_delete_patrol_path", name),
             tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
         )
 
-        patrol_path:GetToolbar():sq_btn("CreateNewPoint", function()
+        patrol_path:GetToolbar():tb_imgbtn("CreateNewPoint", function()
             self._parent:BeginSpawning(self._patrol_point_unit)
             self._selected_path = name
-        end, { text = "+", help = "Create new patrol point" })
+        end, tx, EU.EditorIcons["plus"], {help = "Create new patrol point"})
 
         for i, v in ipairs(points.points) do
             local patrol_point = patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
@@ -213,6 +215,9 @@ function AiEditor:_build_ai_data(ai_data)
                 tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
             )
         end
+    end
+    if not has_items then
+        ai_data:lbl("No paths exist", {label = "patrol_path"})
     end
 end
 
@@ -382,7 +387,7 @@ end
 
 function AiEditor:update_ai_data()
     local ai_data = self:GetItem("AiData")
-    ai_data:ClearItems()
+    ai_data:ClearItems("patrol_path")
 
     self:_build_ai_data(ai_data)
 end
