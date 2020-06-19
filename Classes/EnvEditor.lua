@@ -21,18 +21,18 @@ function EnvEditor:load_included_environments()
     local included = self:GetItem("IncludedEnvironments")
     local level = BeardLib.current_level
     if included and level then
-        included:ClearItems()
+        included:ClearItems("environment")
         for _, include in ipairs(level._config.include) do
             if type(include) == "table" and string.ends(include.file, "environment") then
                 local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
                 if FileIO:Exists(file) then
-                    local env = included:button(include.file, ClassClbk(self, "open_environment", file), {text = include.file})
+                    local env = included:button(include.file, ClassClbk(self, "open_environment", file), {text = include.file, label = "environment"})
                     env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
                 end
             end
         end
-        if #included._my_items == 0 then
-            included:divider("Empty.. :(", {color = false})
+        if #included:Items() == 0 then
+            included:divider("No environments found", {color = false})
         end
     end
 end
@@ -45,7 +45,7 @@ function EnvEditor:build_default()
     if BeardLib.current_level then
         local included = self:divgroup("IncludedEnvironments")
         self:load_included_environments()
-        included:GetToolbar():tb_btn("IncludeEnvironment", ClassClbk(self, "include_current_dialog"), {text = "Include current", offset = 0})
+        included:GetToolbar():tb_btn("IncludeCurrent", ClassClbk(self, "include_current_dialog"), {offset = 0})
     end
 
     local quick = self:divgroup("Quick actions")
@@ -182,7 +182,7 @@ function EnvEditor:database_load_env(env_path)
 end
 
 function EnvEditor:load_env(env)
-    if env then
+    if env and env.data then
         for k,v in pairs(env.data) do
             if k == "others" then
                 self:database_load_sky(v)
