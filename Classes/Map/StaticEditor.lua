@@ -249,7 +249,7 @@ function Static:unit_value(value_key, toggle)
 end
 
 function Static:build_unit_editor_menu()
-    Static.super.build_default_menu(self)
+    self:clear_menu()
     self:set_title("Selection")
     self:build_unit_main_values()
     self:build_positions_items()
