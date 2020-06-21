@@ -149,7 +149,7 @@ function Mission:set_element(element, old_script_name)
 				for k, e in pairs(old_mission_script.elements) do
 					if e.id == id then
 						table.remove(old_mission_script.elements, k)
-						table.insert(mission_script, e)
+						table.insert(mission_script.elements, e)
 						break
 					end
 				end

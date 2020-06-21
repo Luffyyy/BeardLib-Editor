@@ -129,7 +129,9 @@ function MissionScriptEditor:_create_panel()
 		table.insert(on_exec.values, {name = "Alternative", key = "alternative"})
 	end
 	self:BuildElementsManage("on_executed", on_exec, nil, ClassClbk(self, "get_on_executed_units"), {
-		group = self._main_group, help = "This list contains elements that this element will execute."
+		group = self._main_group,
+		help = "This list contains elements that this element will execute.",
+		skip_script_check = self.SKIP_SCRIPT_CHECK
 	})
 	if self.USES_POINT_ORIENTATION then
 		self:BuildElementsManage("orientation_elements")
@@ -418,7 +420,8 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 	local group = opt.group
 	opt.group = nil
 	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
-		value_name = value_name, 
+		value_name = value_name,
+		skip_script_check = opt.skip_script_check,
 		update_clbk = update_clbk,
 		single_select = opt.single_select,
 		not_table = opt.not_table,
@@ -501,10 +504,10 @@ end
 
 function MissionScriptEditor:OpenElementsManageDialog(params)
 	local elements = {}
-	for _, script in pairs(managers.mission._missions) do
-        for _, tbl in pairs(script) do
-            if tbl.elements then
-                for _, element in pairs(tbl.elements) do
+	for _, mission in pairs(managers.mission._missions) do
+        for name, script in pairs(mission) do
+            if script.elements and (params.skip_script_check or name == self._element.script) then
+                for _, element in pairs(script.elements) do
                     if element.id ~= self._element.id then
 						table.insert(elements, element)
 					end
