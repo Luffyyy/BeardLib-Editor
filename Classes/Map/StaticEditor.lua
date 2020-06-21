@@ -175,7 +175,8 @@ function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
         quick:s_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
     end
     if not cannot_be_saved then
-        quick:s_btn("AddRemovePortal", ClassClbk(self, "addremove_unit_portal"), {text = "Add To/Remove From Portal", visible = true})
+        quick:s_btn("AddToCurrentPortal", ClassClbk(self, "add_unit_to_portal"))
+        quick:s_btn("RemoveFromCurrentPortal", ClassClbk(self, "remove_unit_from_portal"))
         self:group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
@@ -1121,17 +1122,40 @@ function Static:build_links(id, match, element)
     return links
 end
 
-function Static:addremove_unit_portal(item)
-    local portal = self:layer("portal")
+function Static:remove_unit_from_portal()
+    local portal_layer = self:layer("portal")
     local count = 0
-    if portal and portal:selected_portal() then
+    if portal_layer and portal_layer:selected_portal() then
         for _, unit in pairs(self._selected_units) do
             if unit:unit_data().unit_id then
-                portal:remove_unit_from_portal(unit, true)
+                portal_layer:remove_unit_from_portal(unit)
                 count = count + 1
             end
         end
-        Utils:Notify("Success", string.format("Added/Removed %d units to selected portal", count))
+        if #self:selected_units() == 1 then
+            self:build_links(self:selected_unit():unit_data().unit_id)
+        end
+        Utils:Notify("Success", string.format("Removed %d units to selected portal", count))
+    else
+        Utils:Notify("Error", "No portal selected")
+    end
+end
+
+function Static:add_unit_to_portal()
+    local portal_layer = self:layer("portal")
+    local count = 0
+    if portal_layer and portal_layer:selected_portal() then
+        for _, unit in pairs(self._selected_units) do
+            if unit:unit_data().unit_id then
+                portal_layer:add_unit_to_portal(unit, true)
+                count = count + 1
+            end
+        end
+        if #self:selected_units() == 1 then
+            self:build_links(self:selected_unit():unit_data().unit_id)
+        end
+        portal_layer:load_portal_units()
+        Utils:Notify("Success", string.format("Added %d units to selected portal", count))
     else
         Utils:Notify("Error", "No portal selected")
     end

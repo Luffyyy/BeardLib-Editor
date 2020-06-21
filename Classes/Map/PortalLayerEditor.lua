@@ -81,7 +81,8 @@ function PortalLayer:unit_deleted(unit)
             self:load_portal_shapes()
             self:save()
 		end
-	end
+    end
+    self:remove_unit_from_portal(unit)
 	self:save()
 end
 
@@ -163,7 +164,7 @@ function PortalLayer:load_portal_units()
             local unit = managers.worlddefinition:get_unit(unit_id)
             if unit then
                 local btn = units:button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id)})
-                btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit), nil, {184, 2, 48, 48}, {highlight_color = Color.red, h = 20, w = 20})
+                btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit, btn), nil, {184, 2, 48, 48}, {highlight_color = Color.red, h = 20, w = 20})
             end
         end
     end
@@ -171,7 +172,17 @@ end
 
 function PortalLayer:remove_unit_from_portal(unit, item)
     self._selected_portal:remove_unit_id(unit)
-    item:Parent():Destroy()
+    item = item or self:GetItem(unit:unit_data().unit_id) 
+    if item then
+        item:Destroy()
+    end
+end
+
+function PortalLayer:add_unit_to_portal(unit, no_reload)
+    self._selected_portal:add_unit_id(unit)
+    if not no_reload then
+        self:load_portal_units()
+    end
 end
 
 function PortalLayer:rename_portal(item)
