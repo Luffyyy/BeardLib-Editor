@@ -118,12 +118,10 @@ end
 function PortalLayer:update(t, dt)
     local portal = self._selected_portal
     if portal then
-        local r, g, b = portal._r, portal._g, portal._b
-        self._brush:set_color(Color(0.25, r, g, b))
         for unit_id in pairs(portal._ids) do  
             local unit = managers.worlddefinition:get_unit(unit_id)
             if alive(unit) then
-                self._brush:unit(unit)
+                Application:draw(unit, 1, 0, 0)
             end
         end
         for _, shape in pairs(portal._shapes) do
