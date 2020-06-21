@@ -354,10 +354,10 @@ function WData:add_new_mission_script(cname)
             return
         end
 
-        if cname == "world" and name ~= "default" then
+        if cname == "world" and name ~= "default" and not mission._missions[cname].default then
             BLE.Dialog:Show({
                 title = "WARNING!", 
-                message = "Mission script name for the world continent must always be named 'default'"
+                message = "First mission script name for the world continent must always be named 'default'"
             })
 
             name = "default"
