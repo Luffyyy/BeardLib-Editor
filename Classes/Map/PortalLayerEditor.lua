@@ -324,8 +324,11 @@ function PortalLayer:auto_fill_portal(item)
     local portal = managers.portal:unit_groups()[item.parent.text]
     BeardLibEditor.Utils:YesNoQuestion("This will automatically fill the portal with units", function()
         for _, unit in pairs(managers.worlddefinition._all_units) do
-            if alive(unit) and unit:visible() and not unit:unit_data().only_visible_in_editor and not unit:unit_data().only_exists_in_editor and not portal:unit_in_group(unit) and portal:inside(unit:position()) then
-                portal:add_unit_id(unit)
+            if alive(unit) and unit:visible() then
+                local ud = unit:unit_data()
+                if not ud.instance and not ud.only_visible_in_editor and not ud.only_exists_in_editor and not portal:unit_in_group(unit) and portal:inside(unit:position()) then
+                    portal:add_unit_id(unit)
+                end
             end
         end
         self:load_portal_units()
