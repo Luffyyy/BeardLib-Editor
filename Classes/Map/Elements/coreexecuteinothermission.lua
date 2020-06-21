@@ -1,5 +1,6 @@
 EditorExecuteInOtherMission = EditorExecuteInOtherMission or class(MissionScriptEditor)
-function EditorExecuteInOtherMission:create_elemet(...)
-	EditorExecuteInOtherMission.create_elemet(self, ...)
+EditorExecuteInOtherMission.SKIP_SCRIPT_CHECK = true
+function EditorExecuteInOtherMission:create_element(...)
+	EditorExecuteInOtherMission.super.create_element(self, ...)
 	self._element.class = "ElementExecuteInOtherMission"
 end
