@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+**Describe the crash**
 A clear and concise description of what the crash is.
 
 **To Reproduce**
