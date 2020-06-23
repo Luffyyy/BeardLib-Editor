@@ -169,10 +169,12 @@ function PortalLayer:load_portal_units()
 end
 
 function PortalLayer:remove_unit_from_portal(unit, item)
-    self._selected_portal:remove_unit_id(unit)
-    item = item or self:GetItem(unit:unit_data().unit_id) 
-    if item then
-        item:Destroy()
+    if self._selected_portal then
+        self._selected_portal:remove_unit_id(unit)
+        item = item or self:GetItem(unit:unit_data().unit_id) 
+        if item then
+            item:Destroy()
+        end
     end
 end
 
