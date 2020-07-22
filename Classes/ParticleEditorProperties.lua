@@ -1,3 +1,34 @@
+local function create_text_field(parent, view, prop)
+    return parent:textbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor})
+end
+
+local function create_color_selector(parent, view, prop)
+    return parent:colorbox(prop:name(), function(item)
+        local c = item:Value() * 255
+        prop._value = c.r .. " " .. c.g .. " " .. c.b
+        view:update_view(false)
+    end, math.string_to_vector(prop._value) * 0.00392156862745098, {background_color = prop._bgcolor})
+end
+
+local function create_texture_selector(parent, view, prop)
+    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "texture", {background_color = prop._bgcolor})
+end
+
+local function create_effect_selector(parent, view, prop)
+    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect", {background_color = prop._bgcolor})
+end
+
+local function create_percentage_slider(parent, view, prop)
+    return parent:slider(prop:name(), ClassClbk(prop, "on_commit", view), tonumber(prop._value), {min = 0, max = 1, background_color = prop._bgcolor})
+end
+
+local function create_check(parent, view, prop)
+    return parent:tickbox(prop:name(), function(item)
+		prop._value = item:Value() and "true" or "false"
+		view:update_view(false)
+	end, prop._value == "true", {background_color = prop._bgcolor})
+end
+
 function CoreEffectPropertyContainer:fill_property_container_sheet(window, view, no_border)
 	local property_container = self
 
@@ -250,45 +281,12 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 	return widget
 end
 
-function create_text_field(parent, view, prop)
-    return parent:textbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor})
-end
-
-function create_color_selector(parent, view, prop)
-    return parent:colorbox(prop:name(), function(item)
-        local c = item:Value() * 255
-        prop._value = c.r .. " " .. c.g .. " " .. c.b
-        view:update_view(false)
-    end, math.string_to_vector(prop._value) * 0.00392156862745098, {background_color = prop._bgcolor})
-end
-
-function create_texture_selector(parent, view, prop)
-    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "texture", {background_color = prop._bgcolor})
-end
-
-function create_effect_selector(parent, view, prop)
-    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect", {background_color = prop._bgcolor})
-end
-
-function create_percentage_slider(parent, view, prop)
-    return parent:slider(prop:name(), ClassClbk(prop, "on_commit", view), tonumber(prop._value), {min = 0, max = 1, background_color = prop._bgcolor})
-end
-
-function create_check(parent, view, prop)
-    return parent:tickbox(prop:name(), function(item)
-		prop._value = item:Value() and "true" or "false"
-		view:update_view(false)
-	end, prop._value == "true", {background_color = prop._bgcolor})
-end
-
 function CoreEffectProperty:on_set_variant(widget_view_variant, item)
 	local view = widget_view_variant.view
 	local variant_panel = item.parent:GetItem("VariantPanel")
-	local container = widget_view_variant.container
-	local container_sizer = widget_view_variant.container_sizer
 	self._value = item:SelectedItem()
 	local variant = self._variants[self._value]
-	
+
 	variant_panel:ClearItems()
 	variant:create_widget(variant_panel, view)
 
@@ -307,6 +305,8 @@ function CoreEffectProperty:on_commit(view, item)
 		value = value.x.." "..value.y
 	elseif self._type == "vector3" then
 		value = value.x.." "..value.y.." "..value.z
+	elseif self._type == "value_list" then
+		value = item:SelectedItem()
 	end
 	if self._value ~= value then
 		self._value = value
