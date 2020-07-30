@@ -391,6 +391,7 @@
 	    <value_node value="ElementAreaDespawn"/>
 	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
 	    <value_node value="ElementHeistTimerTrigger"/-->
+	<value_node value="ElementAIGroupType"/>
     </MissionElements>
     <AutoClassElements>
         <value_node value="ElementPickupCriminalDeployables"/>
