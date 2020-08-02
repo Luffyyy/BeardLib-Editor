@@ -10,6 +10,7 @@ function EditorFilter:create_element()
 	self._element.values.difficulty_easy_wish = true
 	self._element.values.difficulty_overkill_290 = true
 	self._element.values.difficulty_sm_wish = true
+	self._element.values.one_down = true
 	self._element.values.player_1 = true
 	self._element.values.player_2 = true
 	self._element.values.player_3 = true
@@ -30,6 +31,7 @@ function EditorFilter:_build_panel()
 	self:BooleanCtrl("difficulty_easy_wish", {text = "Mayhem"})
 	self:BooleanCtrl("difficulty_overkill_290", {text = "Death Wish"})
 	self:BooleanCtrl("difficulty_sm_wish", {text = "Death Sentence"})
+	self:BooleanCtrl("one_down", {text = "One Down"})
 	self:Text("Players")    
 	self:BooleanCtrl("player_1", {text = "One Player"})
 	self:BooleanCtrl("player_2", {text = "Two Players"})
