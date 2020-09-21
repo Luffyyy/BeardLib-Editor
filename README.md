@@ -48,6 +48,16 @@ developer.txt enables the console and the code refresher for the editor. And for
 If you're interested, talk with me in discord Luffy#1946 and I'll give you permissions to push commits.
 Pull requests are appreciated too!
 
+## Generating the data files
+If the hashlist/game gets updated you can update the data files yourself by doing the following:
+
+1. Get DieselBundleViewer (1.1.1 and up)
+2. Install the PackageOutputter script from https://github.com/Luffyyy/DieselBundleViewer-Scripts
+3. Open DieselBundleViewer and open the BLB file from PAYDAY 2's assets directory.
+4. Once the load is complete, run the script from File > Scripts > Package Hashlist Outputter
+5. This should create a file named packages.txt.
+6. Drop the file to BeardLib Editor's root directory and run the following command in lua: BeardLibEditor:GeneratePackageData() the editor will do the rest.
+
 ## Plugins source
 https://github.com/Luffyyy/BeardLib-Editor-SBLT-Plugin
 
