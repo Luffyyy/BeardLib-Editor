@@ -437,7 +437,7 @@ function EditorRandomInstanceOutputEvent:update(t, dt, instance_name)
 	end
 	local r, g, b = self._unit:mission_element()._color:unpack()
 	for i, data in pairs(self._element.values.instances) do
-		if not EditorRandomInstance._draw_instance_link(data.instance) then
+		if not self:_draw_instance_link(data.instance) then
 			table.remove(self._element.values.instances, i)
 		end
 	end
@@ -473,7 +473,7 @@ function EditorRandomInstanceInputEvent:update(t, dt, instance_name)
 	end
 	local r, g, b = self._unit:mission_element()._color:unpack()
 	for i, data in pairs(self._element.values.instances) do
-		if not EditorRandomInstance._draw_instance_link(data.instance) then
+		if not self:_draw_instance_link(data.instance) then
 			table.remove(self._element.values.instances, i)
 		end
 	end
