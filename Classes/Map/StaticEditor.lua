@@ -319,12 +319,14 @@ function Static:start_grabbing()
         return
     end
     local unit = self:selected_unit()
-    self._grabbed_unit_original_pos = unit:position()
-    self._grabbed_unit = unit
-    self._original_title = self:get_title()
-    self:set_title("Press: LMB to place, RMB to cancel")
-    self:GetPart("menu"):set_tabs_enabled(false)
-    self:GetItem("Transform"):SetEnabled(false)
+    if unit ~= nil then --MiamiCenter
+       self._grabbed_unit_original_pos = unit:position()
+       self._grabbed_unit = unit
+       self._original_title = self:get_title()
+       self:set_title("Press: LMB to place, RMB to cancel")
+       self:GetPart("menu"):set_tabs_enabled(false)
+       self:GetItem("Transform"):SetEnabled(false)
+   end
 end
 
 function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
