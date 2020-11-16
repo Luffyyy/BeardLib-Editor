@@ -19,5 +19,5 @@ end
 
 function EditorActivateScript:_build_panel()
 	self:_create_panel()
-	self:ComboCtrl("script", self:scripts(), {default = "none"})
+	self:ComboCtrl("activate_script", table.map_keys(self:scripts()), {default = "none"}) --MiamiCenter fix.
 end
