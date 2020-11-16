@@ -164,7 +164,7 @@ function EditorAreaDespawn:draw_links(t, dt, selected_unit, all_units)
 end
 
 function EditorAreaDespawn:set_element_data(data)
-	if data.ctrlr == self._slots_presets_list.ctrlr then
+	if self._slots_presets_list.ctrlr ~= nil and data.ctrlr == self._slots_presets_list.ctrlr then --MiamiCenter
 		local slot_mask = managers.slot:get_mask(data.ctrlr:get_value())
 		local slots = {}
 
