@@ -61,7 +61,7 @@
 			<class file="WorldDataEditor.lua"/>
 			<class file="EditUnitEditableGui.lua"/>
 			<class file="EditLadder.lua"/>
-			<class file="EditZipLine.lua"/>
+			<class file="EditZipline.lua"/>
 			<class file="EditUnitLight.lua"/>
 			<class file="MissionScriptEditor.lua"/>
 			<class file="LayerEditor.lua"/>
