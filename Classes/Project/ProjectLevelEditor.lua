@@ -244,7 +244,7 @@ function ProjectLevelEditor:clone_level(create_data)
     end
 
     --Write to the add.xml of the level
-    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, CXML)
+    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
 
     local continents_data = extra_file("continents")
     for c in pairs(continents_data) do
