@@ -56,7 +56,7 @@ If the hashlist/game gets updated you can update the data files yourself by doin
 3. Open DieselBundleViewer and open the BLB file from PAYDAY 2's assets directory.
 4. Once the load is complete, run the script from File > Scripts > Package Hashlist Outputter
 5. This should create a file named packages.txt.
-6. Drop the file to BeardLib Editor's root directory and run the following command in lua: BeardLibEditor:GeneratePackageData() the editor will do the rest.
+6. Drop the file to BeardLib Editor's root directory and run the game. The editor will do the rest.
 
 ## Plugins source
 https://github.com/Luffyyy/BeardLib-Editor-SBLT-Plugin

@@ -35,6 +35,12 @@ function BLE:Init()
         LocalizationManager:add_localized_strings({BeardLibEditorMenu = "BeardLibEditor Menu"})
     end)
     Hooks:Add("MenuManagerPopulateCustomMenus", "BeardLibEditorInitManagers", ClassClbk(BLE, "InitManagers"))
+
+    local packages_file = Path:Combine(self.ModPath, "packages.txt")
+    if FileIO:Exists(packages_file) then
+        BeardLibEditor:GeneratePackageData()
+        FileIO:Delete(packages_file)
+    end
 end
 
 function BLE:RunningFix()
