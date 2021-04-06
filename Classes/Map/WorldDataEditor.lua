@@ -647,6 +647,10 @@ function WData:mouse_pressed(button, x, y)
     return false
 end
 
+function WData:get_dummy_unit()
+    return self._dummy_spawn_unit
+end
+
 function WData:update(t, dt)
     self.super.update(self, t, dt)
 
@@ -658,6 +662,9 @@ function WData:update(t, dt)
 
     if alive(self._dummy_spawn_unit) then
         self._dummy_spawn_unit:set_position(self._parent._spawn_position)
+        if self._parent._current_rot then
+            self._dummy_spawn_unit:set_rotation(self._parent._current_rot)
+        end
         Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
     end

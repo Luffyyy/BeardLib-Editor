@@ -45,6 +45,9 @@ function Options:init()
 	keybind("SelectElement")
 	keybind("LoadUnit")
 	keybind("LoadUnitFromExtract")
+	keybind("RotateSpawnDummyYaw")
+	keybind("RotateSpawnDummyPitch")
+	keybind("RotateSpawnDummyRoll")
 
 	self:button("ResetOptions", ClassClbk(self, "reset_options", page))
 end

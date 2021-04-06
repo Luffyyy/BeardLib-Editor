@@ -328,10 +328,19 @@ function Editor:GetSpawnPosition(data)
     return position or (self.parts.world:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
 end
 
+function Editor:GetSpawnRotation(data)
+    local rotation
+    if data then
+        rotation = data.rotation
+    end
+    return rotation or (self.parts.world:is_spawning() and self.parts.world._dummy_spawn_unit:rotation()) or Rotation()
+end
+
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
     if self.parts.world:is_world_unit(unit_path) and unit_path ~= "core/units/patrol_point/patrol_point" then
         local data = type(old_unit) == "userdata" and old_unit:unit_data() or old_unit and old_unit.unit_data or {}
         data.position = self:GetSpawnPosition(data)
+        data.rotation = self:GetSpawnRotation(data)
         local unit = self.parts.world:do_spawn_unit(unit_path, data)
         if alive(unit) and not no_select then self:select_unit(unit, add) end
         return unit
@@ -360,7 +369,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
                 name = unit_path,
                 mesh_variation = ud and ud.mesh_variation,
                 position = self:GetSpawnPosition(ud),
-                rotation = ud and ud.rotation or Rotation(0,0,0),
+                rotation = self:GetSpawnRotation(ud),
                 continent = ud and ud.continent or self._current_continent,
                 material_variation = ud and (ud.material or ud.material_variation),
                 disable_shadows = ud and ud.disable_shadows,
@@ -669,7 +678,9 @@ function Editor:update(t, dt)
         end
     end
     if self:enabled() then
-        self._current_pos = self:current_position() or self._current_pos
+        local pos, rot = self:current_position()
+        self._current_pos = pos or self._current_pos
+        self._current_rot = rot
         if not self.parts.cubemap_creator:creating_cube_map() then
             for n, manager in pairs(self.parts) do
                 if manager.update and manager:enabled() then
@@ -688,12 +699,16 @@ function Editor:update(t, dt)
     end
 end
 
+function Editor:get_dummy_or_grabbed_unit()
+    return self.parts.world:get_dummy_unit() or self.parts.static:get_grabbed_unit()
+end
+
 function Editor:current_position()
     local current_pos, current_rot
     local p1 = self:get_cursor_look_point(0)
     local p2, ray
 
-    local unit = self:selected_unit()
+    local unit = self:get_dummy_or_grabbed_unit()
     local grid_size = self:grid_size()
     
     if self._use_surface_move or ctrl() then
@@ -721,7 +736,7 @@ function Editor:current_position()
                 local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
                 local y = z:cross(x)
                 local rot = Rotation(x, y, z)
-                current_rot = rot * unit:rotation():inverse()
+                current_rot = rot
             end
         end
     else

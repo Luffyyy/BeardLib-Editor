@@ -14,6 +14,10 @@ function Options:build_default()
     local snap_rotation = self:Val("SnapRotation")
     main:numberbox("GridSize", ClassClbk(self, "update_option_value"), grid_size, {max = 10000, min = 0.1, help = "Sets the amount(in centimeters) that the unit will move"})
     main:numberbox("SnapRotation", ClassClbk(self, "update_option_value"), snap_rotation, {max = 360, min = 1, help = "Sets the amount(in degrees) that the unit will rotate"})
+    main:numberbox("RotateSpawnDummy", ClassClbk(self, "update_option_value"), self:Val("RotateSpawnDummy"), {
+        max = 360, min = 1, help = "Sets the amount(in degrees) that the dummy unit will rotate when one of the rotate keybinds are pressed"
+    })
+
     self._parent:update_grid_size(grid_size)
     self._parent:update_snap_rotation(snap_rotation)
     if not BeardLib.current_level then

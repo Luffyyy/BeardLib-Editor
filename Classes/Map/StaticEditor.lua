@@ -23,6 +23,34 @@ function Static:enable()
     local menu = self:GetPart("menu")
     self:bind_opt("ToggleRotationWidget", ClassClbk(menu, "toggle_widget", "rotation"))
     self:bind_opt("ToggleMoveWidget", ClassClbk(menu, "toggle_widget", "move"))
+    self:bind_opt("RotateSpawnDummyYaw", ClassClbk(self, "RotateSpawnDummyYaw"))
+    self:bind_opt("RotateSpawnDummyPitch", ClassClbk(self, "RotateSpawnDummyPitch"))
+    self:bind_opt("RotateSpawnDummyRoll", ClassClbk(self, "RotateSpawnDummyRoll"))
+end
+
+function Static:get_grabbed_unit()
+    return self._grabbed_unit
+end
+
+function Static:RotateSpawnDummyYaw()
+    local unit = self._parent:get_dummy_or_grabbed_unit()
+    if alive(unit) then
+        unit:set_rotation(unit:rotation() * Rotation(self:Val("RotateSpawnDummy"), 0, 0))
+    end
+end
+
+function Static:RotateSpawnDummyPitch()
+    local unit = self._parent:get_dummy_or_grabbed_unit()
+    if alive(unit) then
+        unit:set_rotation(unit:rotation() * Rotation(0, self:Val("RotateSpawnDummy"), 0))
+    end
+end
+
+function Static:RotateSpawnDummyRoll()
+    local unit = self._parent:get_dummy_or_grabbed_unit()
+    if alive(unit) then
+        unit:set_rotation(unit:rotation() * Rotation(0, 0, self:Val("RotateSpawnDummy")))
+    end
 end
 
 function Static:mouse_pressed(button, x, y)
@@ -1203,6 +1231,11 @@ function Static:update(t, dt)
 
     if alive(self._grabbed_unit) then
         self._parent:set_unit_positions(self._parent._spawn_position)
+        if self._parent._current_rot then
+            self._parent:set_unit_rotations(self._parent._current_rot)
+        else
+            self._parent:set_unit_rotations(self._grabbed_unit:rotation())
+        end
         Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
     end
