@@ -54,6 +54,7 @@ function ObjectiveSettingsDialog:hide(success)
         if self._to_update then
             self._to_update.id = self._current.id
             self._to_update.text = self._current.text
+            self._to_update.description = self._current.description
             self._to_update.amount = self._current.amount
         end
     end
