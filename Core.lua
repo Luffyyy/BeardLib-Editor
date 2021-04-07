@@ -251,32 +251,7 @@ function BLE:LoadHashlist()
         for _, type in pairs(table.list_add(clone(self._config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
             self.DBPackages[id][type] = self.DBPackages[id][type] or {}
         end
-        self:ReadCustomPackageConfig(id, pkg.config, pkg.dir)
-    end
-end
-
-function BLE:ReadCustomPackageConfig(id, config, directory)
-    for _, child in pairs(config) do
-        if type(child) == "table" then
-            local typ = child._meta
-            local path = child.path
-
-            if typ == UNIT_LOAD or typ == ADD then
-                self:ReadCustomPackageConfig(id, child, directory)
-            elseif typ and path then
-                path = Path:Normalize(path)
-                local file_path = Path:Combine(directory, path) ..".".. typ
-                if SystemFS:exists(file_path) then
-                    self.DBPackages[id][typ] = self.DBPackages[id][typ] or {}
-                    self.DBPaths[typ] = self.DBPaths[typ] or {}
-
-                    self.DBPackages[id][typ][path] = true
-                    self.DBPaths[typ][path] = true
-                else
-                    self:log("[ERROR][ReadCustomPackageConfig] File does not exist! %s", tostring(file_path))
-                end
-            end
-        end
+        self:LoadCustomAssetsToHashList(pkg.config, pkg.dir, id)
     end
 end
 
@@ -390,13 +365,14 @@ function BLE:GenerateDefaultAssetsData()
     Global.DefaultAssets = self.DefaultAssets
 end
 
-function BLE:LoadCustomAssetsToHashList(add, directory)
-    for _, v in pairs(add) do
-        if type(v) == "table" then
+function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
+    for i, v in pairs(add) do
+        if tonumber(i) and type(v) == "table" then
             local path = v.path
             local typ = v._meta
+            local from_db = NotNil(v.from_db, add,from_db)
             if typ == UNIT_LOAD or typ == ADD then
-                self:LoadCustomAssetsToHashList(v, directory)
+                self:LoadCustomAssetsToHashList(v, directory, package_id)
             else
                 path = Path:Normalize(path)
                 local dir = Path:Combine(directory, path)
@@ -407,12 +383,30 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                         self.DBPaths.model[path] = true
                         self.DBPaths.object[path] = true
 
+                        if package_id then
+                            self.DBPaths[package_id] = self.DBPaths[package_id] or {}
+                            local package = self.DBPackages[package_id]
+                            package.unit = package.unit or {}
+                            package.model = package.model or {}
+                            package.object = package.object or {}
+
+                            package.unit[path] = true
+                            package.model[path] = true
+                            package.object[path] = true
+                        end
+
                         local failed
 
                         for load_type, load in pairs(BeardLibPackageManager.UNIT_SHORTCUTS[typ]) do
                             if FileIO:Exists(dir.."."..load_type) then
                                 self.DBPaths[load_type] = self.DBPaths[load_type] or {}
                                 self.DBPaths[load_type][path] = true
+
+                                if package_id then
+                                    local package = self.DBPackages[package_id]
+                                    package[load_type] = package[load_type] or {}
+                                    package[load_type][path] = true
+                                end
                             else
                                 failed = true
                             end
@@ -420,26 +414,49 @@ function BLE:LoadCustomAssetsToHashList(add, directory)
                                 for _, suffix in pairs(load) do
                                     if FileIO:Exists(path..suffix.."."..load_type) then
                                         self.DBPaths[load_type][path..suffix] = true
+
+                                        if package_id then
+                                            local package = self.DBPackages[package_id]
+                                            package[load_type] = package[load_type] or {}
+                                            package[load_type][path..suffix] = true
+                                        end
                                     else
                                         failed = true
                                     end
                                 end
                             end
                         end
-                        if not failed then
+
+                        if not failed and not package_id then
                             self.Utils.allowed_units[path] = true
                         end
+                    elseif package_id then
+                        self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(package_id), tostring(path), tostring(directory))
+                    else
+                        self:Err("Unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(path), tostring(directory))
                     end
                 elseif CustomPackageManager.TEXTURE_SHORTCUTS[typ] then
                     for _, suffix in pairs(C.TEXTURE_SHORTCUTS[typ]) do
                         self.DBPaths.texture[path..suffix] = true
+                        if package_id then
+                            local package = self.DBPackages[package_id]
+                            package.texture = package.texture or {}
+                            package.texture[path..suffix] = true
+                        end
                     end
                 else
                     local file_path = dir ..".".. typ
-                    if FileIO:Exists(file_path) then
+                    if from_db or FileIO:Exists(file_path) then
                         self.DBPaths[typ] = self.DBPaths[typ] or {}
                         self.DBPaths[typ][path] = true
-                        self.Utils.allowed_units[path] = true
+                        
+                        if package_id then
+                            local package = self.DBPackages[package_id]
+                            package[typ] = package[typ] or {}
+                            package[typ][path] = true
+                        else
+                            self.Utils.allowed_units[path] = true
+                        end
                     end
                 end
             end
