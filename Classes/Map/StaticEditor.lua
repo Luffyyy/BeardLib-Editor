@@ -789,10 +789,9 @@ end
 
 function Static:recalc_locals(unit, reference)
     local pos = unit:position()
-    local ref_pos = reference:position()
-    local ref_rot = reference:rotation()
-    unit:unit_data().local_pos = (pos - ref_pos):rotate_with(ref_rot:inverse())
-	unit:unit_data().local_rot = ref_rot:inverse() * unit:rotation()
+    local ref_rot = reference:rotation():inverse()
+    unit:unit_data().local_pos = (pos - reference:position()):rotate_with(ref_rot)
+	unit:unit_data().local_rot = ref_rot * unit:rotation()
 end
 
 function Static:check_unit_ok(unit)
@@ -849,9 +848,11 @@ function Static:reset_selected_units()
     self._selected_group = nil
 end
 
-function Static:set_selected_unit(unit, add, skip_menu)
+function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
     add = add == true
-    self:recalc_all_locals()
+    if not skip_recalc then
+        self:recalc_all_locals()
+    end
     local units = {unit}
     if alive(unit) then
         local ud = unit:unit_data()
@@ -1435,9 +1436,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             end
 		end
 		--When all units are spawned properly you can select.
-		for _, unit in pairs(units) do
-			self:set_selected_unit(unit, true)
-		end
+        self:set_selected_units(units)
         self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
         self:StorePreviousPosRot()
     end
