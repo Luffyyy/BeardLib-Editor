@@ -164,7 +164,7 @@ function EditorInstanceSetParams:_build_from_params()
     	self._instance_menu:divider("No instance selected", {color = false})
         return
     end
-    local params = managers.world_instance:get_instance_params_by_name(self._element.values.instance)
+    local params = managers.world_instance:get_instance_params_by_name(self._element.values.instance) or {}
     for _, data in ipairs(params) do
         local value_ctrlr
         local name = data.var_name
