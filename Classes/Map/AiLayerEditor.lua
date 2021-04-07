@@ -109,7 +109,7 @@ function AiEditor:build_menu()
     local graphs = self:group("Graphs")
     graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
-    graphs:button("SaveNavigationData", ClassClbk(self, "save_nav_data", false), { enabled = self._parent._parent._has_fix })
+    graphs:button("SaveNavigationData", ClassClbk(self:part("opt"), "save_nav_data", false), { enabled = self._parent._parent._has_fix })
     --[[
         graphs:button(
             "CalculateAll",
