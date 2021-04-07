@@ -48,8 +48,10 @@ function EnvLayer:loaded_continents()
 end
 
 function EnvLayer:unit_spawned(unit)
-	if unit:name() == self._cubemap_unit:id() and not table.contains(self._cubemap_units, unit) then
-		table.insert(self._cubemap_units, unit)
+	if alive(unit) then
+		if unit:name() == self._cubemap_unit:id() and not table.contains(self._cubemap_units, unit) then
+			table.insert(self._cubemap_units, unit)
+		end
 	end
 end
 
