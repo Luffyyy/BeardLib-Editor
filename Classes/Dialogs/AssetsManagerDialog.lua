@@ -75,7 +75,7 @@ function AssetsManagerDialog:_Show()
     utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
 
     self._unit_info:divider("AssetsManagerStatus", {
-        text = "(!) A unit or more are not loaded, you can decide to search for a package that contains(most) of the unloaded units(for leftover units you can repeat this process)",
+        text = "(!) One or more units are missing, you can decide to search for a package that contains(most) of the unloaded units (for leftover units you can repeat this process)",
         visible = false,
         color = false,
     })
@@ -818,6 +818,9 @@ function AssetsManagerDialog:set_unit_selected(item)
         local mod = project:current_mod()
         if self._tbl._data then
             add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
+        end
+        if BLE.Utils.core_units[asset] then
+            load_from = "Core Assets"
         end
         if self._assets[type] and self._assets[type][asset] then
             load_from = (load_from or "") .. "\n".."Map Assets"

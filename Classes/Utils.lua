@@ -143,7 +143,9 @@ function Utils:GetPackageSize(package)
     end
 end
 
-Utils.allowed_units = {
+Utils.allowed_units = {}
+
+Utils.core_units = {
     ["core/units/effect/effect"] = true,
     ["core/units/nav_surface/nav_surface"] = true,
     ["units/dev_tools/level_tools/ai_coverpoint"] = true,
@@ -152,10 +154,11 @@ Utils.allowed_units = {
     ["core/units/sound_emitter/sound_emitter"] = true,
     ["core/units/sound_area_emitter/sound_area_emitter"] = true,
     ["core/units/cubemap_gizmo/cubemap_gizmo"] = true,
+    ["core/units/patrol_point/patrol_point"] = true,
 }
 
 function Utils:IsLoaded(asset, type, packages)
-    if self.allowed_units[asset] then
+    if self.allowed_units[asset] or self.core_units[asset] then
         return true
     end
     for name, package in pairs(packages or BLE.DBPackages) do
