@@ -62,10 +62,11 @@ function AssetsManagerDialog:_Show()
     self._params = nil
     self._assets = {unit = {}}
     self._missing_assets = {unit = {}}
-    local btn = self:button("Close", ClassClbk(self, "hide", true), {position = "Bottom", count_height = true})
-    local group_h = (self._menu:Height() / 2) - 24
+    local group_h = (self._menu:Height() / 2) - 12
+    local btn = self:button("Close", ClassClbk(self, "hide", true))
     local packages = self:divgroup("Packages", {h = group_h - (btn:Height() + 8), auto_height = false, scrollbar = true})
     local units = self:divgroup("Assets", {h = group_h, auto_height = false, auto_align = false, scrollbar = true})
+    btn:SetIndex(4)
     local utoolbar = units:GetToolbar()
     local ptoolbar = packages:GetToolbar()
     ptoolbar:tb_btn("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
