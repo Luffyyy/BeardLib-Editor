@@ -68,6 +68,10 @@ function MissionScriptEditor:work()
 	self:AlignItems()
 end
 
+function MissionScriptEditor:build_instance_links()
+	self:GetPart("static"):build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
+end
+
 function MissionScriptEditor:get_on_executed_units()
     self._on_executed_units = {}
 	for _, u in pairs(self._element.values.on_executed) do

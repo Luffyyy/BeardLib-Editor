@@ -231,7 +231,7 @@ function WorldDef:spawn_quick(return_data, offset)
 	offset = offset or Vector3()
 	if self._needed_to_spawn then
 		for _, values in ipairs(self._needed_to_spawn) do
-			self:_create_statics_unit(values, offset)
+			local unit = self:_create_statics_unit(values, offset)
 			if unit and return_data then
 				table.insert(return_data, unit)
 			end

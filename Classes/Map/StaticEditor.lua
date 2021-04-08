@@ -857,16 +857,18 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
     if alive(unit) then
         local ud = unit:unit_data()
         if ud and ud.instance then
-            local instance = managers.world_instance:get_instance_data_by_name(ud.instance)
-            local fake_unit
-            for _, u in pairs(self:selected_units()) do
-                if u:fake() and u:object().name == ud.instance then
-                    fake_unit = u
-                    break
+            if not unit:fake() then
+                local instance = managers.world_instance:get_instance_data_by_name(ud.instance)
+                local fake_unit
+                for _, u in pairs(self:selected_units()) do
+                    if u:fake() and u:object().name == ud.instance then
+                        fake_unit = u
+                        break
+                    end
                 end
+                unit = fake_unit or FakeObject:new(instance, {instance = true})
+                units[1] = unit
             end
-            unit = fake_unit or FakeObject:new(instance)
-            units[1] = unit
         end
         if add and self._selected_group and ctrl() then
             if not unit:fake() and not not ud.continent and not managers.worlddefinition:is_world_unit(unit) then
@@ -1070,6 +1072,10 @@ local function unit_link_text(ud, link)
     return tostring(ud.name_id) .. "\n" .. tostring(ud.unit_id) .. link
 end
 
+local function instance_link_text(instance_data, link)
+    return tostring(instance_data.name) .. "\n" .. tostring(instance_data.folder) .. link
+end
+
 local function portal_link_text(name)
     return "Inside portal " .. name
 end
@@ -1079,7 +1085,7 @@ function Static:build_links(id, match, element)
     local function create_link(text, id, group, clbk)
         group:button(id, clbk, {
             text = text,
-            font_size = 16,
+            font_size = 14,
             label = "elements"
         })
     end
@@ -1141,6 +1147,16 @@ function Static:build_links(id, match, element)
                 end
             end
         end
+
+        for _, instance in pairs(managers.world_instance:instance_data()) do
+            for _, link in pairs(managers.mission:get_links_paths_new(instance.name, Utils.LinkTypes.Instance, {{mission_element_data = element}})) do
+                local linking_from = link.location
+                linking_from = linking_from and " | " .. string.pretty2(linking_from) or ""
+                local fake_unit = FakeObject:new(instance, {instance = true})
+                create_link(instance_link_text(instance, linking_from), "instance_"..instance.name, linking_group, ClassClbk(self, "set_selected_unit", fake_unit))
+            end
+        end
+
         if #linking_group:Items() == 0 then
             linking_group:Destroy()
         end
@@ -1293,14 +1309,16 @@ function Static:GetCopyData(remove_old_links, keep_location)
     local copy_data = {}
     local element_type = Utils.LinkTypes.Element
     local unit_type = Utils.LinkTypes.Unit
+    local instance_type = Utils.LinkTypes.Instance
     for _, unit in pairs(self._selected_units) do
-        local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or "unsupported"
+        local typ = unit:mission_element() and "element" or not unit:fake() and "unit" or unit:unit_data().instance and "instance" or "unsupported"
         local copy = {
             type = typ,
             mission_element_data = typ == "element" and unit:mission_element().element and deep_clone(unit:mission_element().element) or nil,
             unit_data = typ == "unit" and unit:unit_data() and deep_clone(unit:unit_data()) or nil,
             wire_data = typ == "unit" and unit:wire_data() and deep_clone(unit:wire_data()) or nil,
-            ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil
+            ai_editor_data = typ == "unit" and unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil,
+            instance_data = typ == "instance" and deep_clone(unit._o) or nil
         }
         if typ ~= "unsupported" then
             table.insert(copy_data, copy)
@@ -1312,6 +1330,7 @@ function Static:GetCopyData(remove_old_links, keep_location)
     local unit_id = 0
     local world_unit_id = 0
     local element_id = 0
+    local instance_id = 0
     for _, v in pairs(copy_data) do
         local typ = v.type
 		if typ == "element" then
@@ -1323,20 +1342,33 @@ function Static:GetCopyData(remove_old_links, keep_location)
             end
             v.mission_element_data.id = element_id
             element_id = element_id + 1
-        elseif typ == "unit" and v.unit_data.unit_id then
-			local is_world = v.wire_data or v.ai_editor_data
-			if not keep_location then
-				v.unit_data.continent = nil
-			end
-            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, unit_type, copy_data)) do
-                link.tbl[link.key] = is_world and world_unit_id or unit_id
+        elseif typ == "unit" then
+            if v.unit_data.unit_id then
+                local is_world = v.wire_data or v.ai_editor_data
+                if not keep_location then
+                    v.unit_data.continent = nil
+                end
+                for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, unit_type, copy_data)) do
+                    link.tbl[link.key] = is_world and world_unit_id or unit_id
+                end
+                v.unit_data.unit_id = is_world and world_unit_id or unit_id
+                if is_world then
+                    world_unit_id = world_unit_id + 1
+                else
+                    unit_id = unit_id + 1
+                end
             end
-            v.unit_data.unit_id = is_world and world_unit_id or unit_id
-            if is_world then
-                world_unit_id = world_unit_id + 1
-            else
-                unit_id = unit_id + 1
+        elseif typ == "instance" then
+            if not keep_location then
+                v.instance_data.continent = nil
+                v.instance_data.script = nil
             end
+            for _, link in pairs(managers.mission:get_links_paths_new(v.instance_data.name, instance_type, copy_data)) do
+                link.tbl[link.key] = instance_id
+            end
+
+            v.instance_data._id = instance_id
+            instance_id = instance_id + 1
         end
     end
 	--Remove old links
@@ -1396,6 +1428,9 @@ function Static:SpawnCopyData(copy_data, prefab)
         add = project:get_level_by_id(data, Global.current_level_id).add
     end
 	self:reset_selected_units()
+
+    local instance_names = {}
+
     for _, v in pairs(copy_data) do
         local is_element = v.type == "element"
         local is_unit = v.type == "unit"
@@ -1424,6 +1459,26 @@ function Static:SpawnCopyData(copy_data, prefab)
                     missing_units[unit] = false
                 end
             end
+        elseif v.type == "instance" then
+            local folder = v.instance_data.folder
+            local instance_name = Path:GetFileName(Path:GetDirectory(folder)).."_"
+            local new_final_name
+            local i = instance_names[folder]
+            if not i then
+                local instance_names = managers.world_instance:instance_names()
+                i = 1
+                while(table.contains(instance_names, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
+                    i = i + 1
+                end
+            end
+            new_final_name = instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i
+            instance_names[folder] = i + 1
+
+			for _, link in pairs(managers.mission:get_links_paths_new(v.instance_data._id, Utils.LinkTypes.Instance, copy_data)) do
+                link.tbl[link.key] = new_final_name
+            end
+            v.instance_data.name = new_final_name
+            v.instance_data._id = nil
         end
 	end
     local function all_ok_spawn()
@@ -1431,6 +1486,8 @@ function Static:SpawnCopyData(copy_data, prefab)
         for _, v in pairs(copy_data) do
             if v.type == "element" then
 				table.insert(units, self:GetPart("mission"):add_element(v.mission_element_data.class, nil, v.mission_element_data, true))
+            elseif v.type == "instance" then
+                table.insert(units, self:GetPart("world"):SpawnInstance(v.instance_data.folder, v.instance_data, false))
             elseif v.unit_data then
                 table.insert(units, self._parent:SpawnUnit(v.unit_data.name, v, nil, v.unit_data.unit_id, true))
             end

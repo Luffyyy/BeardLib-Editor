@@ -695,49 +695,72 @@ function WData:OpenSpawnInstanceDialog()
     BLE.ListDialog:Show({
         list = instances,
         force = true,
-        callback = function(item)
-            local continent = managers.worlddefinition._continent_definitions[self._parent._current_continent]
-            if continent then
-                continent.instances = continent.instances or {}
-                local instance_name = Path:GetFileName(Path:GetDirectory(item)).."_"
-                local instance_names = managers.world_instance:instance_names()
-                local i = 1
-                while(table.contains(instance_names, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
-                    i = i + 1
-                end
-                local index_size = self:Val("InstanceIndexSize")
-                instance_name = instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i
-                local instance = {
-                    continent = self._parent._current_continent,
-                    name = instance_name,
-                    folder = item,
-                    position = self._parent:cam_spawn_pos(),
-                    rotation = Rotation(),
-                    script = self._parent._current_script,
-                    index_size = index_size,
-                    start_index = managers.world_instance:get_safe_start_index(index_size, self._parent._current_continent)
-                }
-                table.insert(continent.instances, instance)
-                for _, mission in pairs(managers.mission._missions) do
-                    if mission[instance.script] then
-                        table.insert(mission[instance.script].instances, instance_name)
-                        break
-                    end
-                end
-                managers.world_instance:add_instance_data(instance)
-                managers.worlddefinition:prepare_for_spawn_instance(instance)
-                local instance_data = managers.world_instance:get_instance_data_by_name(instance_name)
-                local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance_name)
-                local script = managers.mission._scripts[instance.script]
-                if not instance_data.mission_placed then
-                    script:create_instance_elements(prepare_mission_data)
-                else
-                    script:_preload_instance_class_elements(prepare_mission_data)
-                end
-            end
+        callback = function(instance)
+            self:SpawnInstance(instance, nil, true)
             BLE.ListDialog:hide()
         end
     })
+end
+
+function WData:SpawnInstance(instance, instance_data, spawn)
+    instance_data = instance_data or {}
+    local continent = managers.worlddefinition._continent_definitions[self._parent._current_continent]
+    if continent then
+        continent.instances = continent.instances or {}
+        local instance_name = instance_data.name
+        if not instance_name then
+            instance_name = Path:GetFileName(Path:GetDirectory(instance)).."_"
+            local instance_names = managers.world_instance:instance_names()
+            local i = 1
+            while(table.contains(instance_names, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
+                i = i + 1
+            end
+            instance_name = instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i
+        end
+
+        local index_size = self:Val("InstanceIndexSize")
+
+        if not managers.mission:script(instance_data.script) then
+            instance_data.script = nil
+        end
+
+        instance_data.start_index = nil
+
+        local instance = table.merge({
+            continent = self._parent._current_continent,
+            name = instance_name,
+            folder = instance,
+            position = self._parent:cam_spawn_pos(),
+            rotation = Rotation(),
+            script = self._parent._current_script,
+            index_size = index_size,
+            start_index = managers.world_instance:get_safe_start_index(index_size, self._parent._current_continent)
+        }, instance_data)
+        table.insert(continent.instances, instance)
+        for _, mission in pairs(managers.mission._missions) do
+            if mission[instance.script] then
+                table.insert(mission[instance.script].instances, instance_name)
+                break
+            end
+        end
+        managers.world_instance:add_instance_data(instance)
+        local units = managers.worlddefinition:prepare_for_spawn_instance(instance)
+        local data = managers.world_instance:get_instance_data_by_name(instance_name)
+        local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance_name)
+        local script = managers.mission._scripts[instance.script]
+        if not data.mission_placed then
+            script:create_instance_elements(prepare_mission_data)
+        else
+            script:_preload_instance_class_elements(prepare_mission_data)
+        end
+
+        local unit = FakeObject:new(data, {instance = true})
+        if spawn then
+            self:GetPart("static"):set_selected_unit(unit)
+        end
+        return unit
+    end
+
 end
 
 function WData:OpenSpawnElementDialog()

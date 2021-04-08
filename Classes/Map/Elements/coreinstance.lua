@@ -1,6 +1,7 @@
 EditorInstanceInput = EditorInstanceInput or class(MissionScriptEditor)
 EditorInstanceInput.SAVE_UNIT_POSITION = false
 EditorInstanceInput.SAVE_UNIT_ROTATION = false
+
 function EditorInstanceInput:create_element()
 	EditorInstanceInput.super.create_element(self)
 	self._element.class = "ElementInstanceInput"
@@ -76,6 +77,7 @@ function EditorInstanceInputEvent:_build_panel()
     self:BuildInstancesManage("event_list", {values_name = "Event", value_key = "event", default_value = "none", key = "instance", orig = {instance = "", event = "none"}, combo_items_func = function(name)
 		return self:_get_events(name)
     end})
+	self:build_instance_links()
 end
 
 EditorInstanceOutputEvent = EditorInstanceOutputEvent or class(EditorInstanceInputEvent)
@@ -120,6 +122,7 @@ function EditorInstancePoint:_build_panel()
 		end
 	end
 	self:ComboCtrl("instance", names)
+	self:build_instance_links()
 end
 
 EditorInstanceSetParams = EditorInstanceSetParams or class(MissionScriptEditor)
@@ -131,6 +134,9 @@ function EditorInstanceSetParams:create_element()
 end
 
 function EditorInstanceSetParams:update(t, dt)
+	if not alive(self._unit) then
+		return
+	end
 	if self._element.values.instance then
 		if not EditorInstanceInputEvent._draw_instance_link(self, self._element.values.instance) then
 			self._element.values.instance = nil
@@ -214,6 +220,7 @@ function EditorInstanceSetParams:_build_panel()
 	self:BooleanCtrl("apply_on_execute")
 	self._instance_menu = self:divgroup("Instance Params")
 	self:_build_from_params()
+	self:build_instance_links()
 end
 
 function EditorInstanceSetParams:set_element_data(item, ...)
@@ -428,6 +435,8 @@ function EditorRandomInstanceOutputEvent:_build_panel(panel, panel_sizer)
         return self:_get_events(name)
     end})
 	
+	self:build_instance_links()
+
 	EditorRandomInstanceOutputEvent.super._build_panel(self)
 end
 
@@ -463,6 +472,8 @@ function EditorRandomInstanceInputEvent:_build_panel(panel, panel_sizer)
     self:BuildInstancesManage("instances", {values_name = "Event", value_key = "event", default_value = "none", key = "instance", orig = {instance = "", event = "none"}, combo_items_func = function(name)
         return self:_get_events(name)
     end})
+
+	self:build_instance_links()
 	
 	EditorRandomInstanceInputEvent.super._build_panel(self)
 end

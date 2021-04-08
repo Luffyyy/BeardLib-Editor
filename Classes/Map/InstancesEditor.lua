@@ -81,6 +81,7 @@ function Instance:set_menu_unit(unit)
     self:GetItem("MissionPlaced"):SetValue(instance.mission_placed)
     self:GetItem("Continent"):SetSelectedItem(instance.continent)
     self:GetItem("Script"):SetSelectedItem(instance.script)
+    self._static:build_links(instance.name, BLE.Utils.LinkTypes.Instance)
     self._static:update_positions()
 end
 
@@ -92,7 +93,7 @@ function Instance:update_positions()
             for _, unit in pairs(World:find_units_quick("all")) do
                 local ud = unit:unit_data()
                 if ud and ud.instance == instance_name then
-                    BeardLibEditor.Utils:SetPosition(unit, instance.position + ud.local_pos:rotate_with(instance.rotation), instance.rotation * ud.local_rot, ud)
+                    BLE.Utils:SetPosition(unit, instance.position + ud.local_pos:rotate_with(instance.rotation), instance.rotation * ud.local_rot, ud)
                 end
             end        
         end
