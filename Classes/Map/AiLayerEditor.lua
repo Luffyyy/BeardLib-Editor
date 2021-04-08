@@ -260,7 +260,7 @@ function AiEditor:build_unit_menu()
                 }
             )
             ai:divider("LocOfLocation", {
-                text = "Text = " .. managers.localization:text("location_unknown")
+                text = "Text: " .. managers.localization:text(self:selected_unit():ai_editor_data().location_id or "location_unknown")
             })
             ai:numberbox("SuspicionMultiplier", ClassClbk(self, "set_unit_data"),
                 unit:ai_editor_data().suspicion_multiplier, {
