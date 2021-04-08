@@ -144,7 +144,7 @@ function MultiSelectListDialog:MakeListItems(params)
     local i = 0
     for indx, v in pairs(self._list) do
         local t = type(v) == "table" and v.name or v
-        if self:SearchCheck(t) or self:SearchCheck(v.create_group) then
+        if self:SearchCheck(t) or (v.create_group and self:SearchCheck(v.create_group)) then
             i = i + 1
             if limit and i >= self._max_items then
                 break
