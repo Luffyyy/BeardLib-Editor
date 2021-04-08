@@ -429,8 +429,20 @@ function Editor:set_camera(pos, rot)
     end
 end
 
+function Editor:partially_disable()
+    self._partially_disabled = true
+    self._menu:Disable()
+end
+
+function Editor:enable()
+    self:set_enabled(true)
+end
+
 function Editor:set_enabled(enabled)
     enabled = NotNil(enabled, self._enabled)
+    if enabled then
+        self._partially_disabled = false
+    end
     self._editor_menu:SetVisible(enabled and not self._particle_editor_active)
     self._enabled = enabled
     if enabled then
@@ -667,7 +679,7 @@ function Editor:update(t, dt)
     if self._safemode then
         return
     end
-    if BeardLib.Utils.Input:Triggered(self._toggle_trigger) then
+    if BeardLib.Utils.Input:Triggered(self._toggle_trigger) and not self._partially_disabled then
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
@@ -681,7 +693,7 @@ function Editor:update(t, dt)
         local pos, rot = self:current_position()
         self._current_pos = pos or self._current_pos
         self._current_rot = rot
-        if not self.parts.cubemap_creator:creating_cube_map() then
+        if not self.parts.cubemap_creator:creating_cube_map() and not self._partially_disabled then
             for n, manager in pairs(self.parts) do
                 if manager.update and manager:enabled() then
                     manager:update(t, dt)

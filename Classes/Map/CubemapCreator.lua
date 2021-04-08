@@ -27,7 +27,6 @@ function CubemapCreator:update(t, dt)
 	elseif self._params and self._params.dome_occ then
 		self:_tick_generate_dome_occlusion(t, dt)
 	end
-
 end
 
 function CubemapCreator:create_projection_light(type)
@@ -118,7 +117,6 @@ function CubemapCreator:create_projection_light(type)
 		saved_environment = saved_environment,
 		lights = true
 	})
-	managers.editor:enable_all_post_effects()
 end
 
 function CubemapCreator:create_cube_map(params)
@@ -148,7 +146,8 @@ function CubemapCreator:create_cube_map(params)
 	self._camera:set_aspect_ratio(1)
 	self._camera:set_width_multiplier(1)
 
-	self._parent._menu:Toggle()
+	managers.mouse_pointer:disable()
+	self._parent:partially_disable()
 
 	self._saved_hidden_object = {}
 	self._saved_hidden_units = {}
@@ -195,7 +194,6 @@ function CubemapCreator:create_dome_occlusion(shape, res)
 	}
 
 	self:_create_dome_occlusion(params)
-	managers.editor:enable_all_post_effects()
 end
 
 function CubemapCreator:next_cube()
@@ -371,7 +369,8 @@ function CubemapCreator:_create_dome_occlusion(params)
 	self._camera:set_aspect_ratio(1)
 	self._camera:set_width_multiplier(1)
 
-	self._parent._menu:Toggle()
+	managers.mouse_pointer:disable()
+	self._parent:partially_disable()
 
 	self._saved_hidden_object = {}
 	self._saved_hidden_units = {}
@@ -443,19 +442,18 @@ end
 
 function CubemapCreator:_tick_generate_dome_occlusion(t, dt)
     if self._params and self._params.dome_occ then
-		if self._params.step == 0 then
-			self._params.dome_occ.wait_frames = self._params.dome_occ.wait_frames - 1
+		self._params.dome_occ.wait_frames = self._params.dome_occ.wait_frames - 1
 
-			if self._params.dome_occ.wait_frames > 0 then
-				return
-			end
-
-			self:generate_dome_occlusion(self._temp_path)
+		if self._params.dome_occ.wait_frames > 0 then
+			return
 		end
-        self._params.step = self._params.step + 1
-
+		self._params.step = self._params.step + 1
+		if self._params.step == 1 then
+			self:generate_dome_occlusion(self._temp_path)
+			self._params.dome_occ.wait_frames = 10 -- Let the file generate so python doesn't fail
+		end
         if self._params.step == 2 then
-            self:_generate_cubemap("dome_occ")
+			self:_generate_cubemap("dome_occ")
         elseif self._params.step == 3 then
             self:dome_occlusion_done()
         end
@@ -484,6 +482,7 @@ function CubemapCreator:cube_map_done()
 		self._saved_all_lights = nil
 	end
 
+	managers.editor:enable_all_post_effects()
 	if self._cubemap_params.lights then
 		managers.editor:update_post_effects()
 		self:viewport():vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
@@ -507,8 +506,7 @@ function CubemapCreator:cube_map_done()
 	end
 
 	if self._saved_camera then
-        self._camera:set_position(self._saved_camera.pos)
-        self._camera:set_rotation(self._saved_camera.rot)
+        self._parent:set_camera(self._saved_camera.pos, self._saved_camera.rot)
 		self._parent:set_camera_fov(self._saved_camera.fov)
 		self._camera:set_aspect_ratio(self._saved_camera.aspect_ratio)
 		self._camera:set_near_range(self._saved_camera.near_range)
@@ -521,7 +519,8 @@ function CubemapCreator:cube_map_done()
 	self:viewport():set_width_mul_enabled(true)
 	self:viewport():pop_ref_fov()
 
-	self._parent._menu:Toggle()
+	managers.mouse_pointer:enable()
+	self._parent:enable()
 
 	self._params = nil
 end
@@ -537,6 +536,7 @@ function CubemapCreator:dome_occlusion_done()
 		managers.viewport:set_default_environment(self._params.saved_environment, nil, nil)
 	end
 
+	managers.editor:enable_all_post_effects()
 	managers.editor:update_post_effects()
 	self:viewport():vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 	self:viewport():vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
@@ -551,8 +551,7 @@ function CubemapCreator:dome_occlusion_done()
 	end
 
 	if self._saved_camera then
-        self._camera:set_position(self._saved_camera.pos)
-        self._camera:set_rotation(self._saved_camera.rot)
+        self._parent:set_camera(self._saved_camera.pos, self._saved_camera.rot)
 		self._parent:set_camera_fov(self._saved_camera.fov)
 		self._camera:set_aspect_ratio(self._saved_camera.aspect_ratio)
 		self._camera:set_near_range(self._saved_camera.near_range)
@@ -565,8 +564,14 @@ function CubemapCreator:dome_occlusion_done()
 	self:viewport():set_width_mul_enabled(true)
 	self:viewport():pop_ref_fov()
 
-	self._parent._menu:Toggle()
+	managers.mouse_pointer:enable()
+	self._parent:enable()
 
+	if self._notify_success then
+		self:notify_success(self._notify_success)
+		self._notify_success = nil
+	end
+	
 	self._params = nil
 end
 
@@ -604,7 +609,7 @@ function CubemapCreator:_generate_cubemap(file)
 		self:_move_output(self._params.output_name)
 		
 		if self._params.dome_occ or #self._cubes_que < 1 then
-			self:notify_success(file)
+			self._notify_success = file
 		end
 	else
 		self._error_when_done = true
@@ -632,6 +637,13 @@ function CubemapCreator:_move_output(output_path)
 	if FileIO:Exists(final_path) then
 		FileIO:Delete(final_path)
 	end
+
+	-- Delete temp tga
+	local tga_path = Path:Combine(self._params.source_path, self._params.output_name..".tga")
+	if FileIO:Exists(tga_path) then
+		FileIO:Delete(tga_path)
+	end
+
 	FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
 	FileIO:MoveTo(self._params.source_path .. output, final_path)
 
