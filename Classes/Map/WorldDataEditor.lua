@@ -776,6 +776,7 @@ function WData:OpenSelectUnitDialog(params)
         if ud and ud.name and not ud.instance then
             if unit:enabled() or (ud.name_id and ud.continent) then
                 table.insert(units, {
+                    create_group = ud.name,
                     name = tostring(unit:unit_data().name_id) .. " [" .. (ud.environment_unit and "environment" or ud.sound_unit and "sound" or tostring(ud.unit_id)) .."]",
                     unit = unit,
                     color = not unit:enabled() and Color.grey,
