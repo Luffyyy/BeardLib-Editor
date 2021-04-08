@@ -350,7 +350,7 @@ function ProjectLevelEditor:set_data_callback()
     data.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
 end
 
-function ProjectLevelEditor:save()
+function ProjectLevelEditor:save_data()
     local level = self._data
     local level_id = level.id
     local orig_id = level.orig_id or level_id
