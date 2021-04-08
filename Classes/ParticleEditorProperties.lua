@@ -263,7 +263,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 				load_keys()
 			end, presets, nil)
 		end
-		widget:tickbox("Loop", function(item) self._looping = tostring(item:Value()) end, self._looping == "true")
+		widget:tickbox("Loop", function(item) self._looping = item:Value() end, self._looping == "true")
 
 		keys_pan = widget:pan("Keys")
 		load_keys()
