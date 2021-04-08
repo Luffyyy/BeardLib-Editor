@@ -161,6 +161,8 @@ function CubemapCreator:create_cube_map(params)
 			element_unit:set_enabled(false)
         end
     end
+
+	managers.portal:set_enabled(false) -- Avoid the portal manager fucking up the generation
 	for _, unit in pairs(World:find_units_quick("all")) do
 		local ud = unit:unit_data()
 		if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor or ud.hide_on_projection_light) then
@@ -384,6 +386,8 @@ function CubemapCreator:_create_dome_occlusion(params)
 			element_unit:set_enabled(false)
         end
     end
+
+	managers.portal:set_enabled(false)
 	for _, unit in pairs(World:find_units_quick("all")) do
 		local ud = unit:unit_data()
 		if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor or ud.hide_on_projection_light) then
@@ -497,6 +501,8 @@ function CubemapCreator:cube_map_done()
 		unit:set_visible(true)
 	end
 
+	managers.portal:set_enabled(true)
+
 	for _, element_unit in pairs(self._saved_hidden_elements) do
 		element_unit:set_enabled(true)
 	end
@@ -545,6 +551,8 @@ function CubemapCreator:dome_occlusion_done()
 	for _, obj in ipairs(self._saved_hidden_object) do
 		obj:set_visibility(true)
 	end
+
+	managers.portal:set_enabled(true)
 
 	for _, unit in ipairs(self._saved_hidden_units) do
 		unit:set_visible(true)

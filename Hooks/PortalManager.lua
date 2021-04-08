@@ -97,3 +97,15 @@ function PortalManager:check_positions()
 
 	return self._check_positions
 end
+
+function PortalManager:set_enabled(enabled)
+	self._enabled = enabled
+end
+
+local orig_render = PortalManager.render
+function PortalManager:render(...)
+	if self._enabled == false then
+		return
+	end
+	orig_render(self, ...)
+end
