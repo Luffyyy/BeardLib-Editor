@@ -138,17 +138,18 @@ end
 
 function MultiSelectListDialog:MakeListItems(params)
     self._list_menu:ClearItems("list_items")
+    params = params or self._params
     local case = self._case_sensitive
     local limit = self._limit
     local groups = {}
     local i = 0
     for indx, v in pairs(self._list) do
         local t = type(v) == "table" and v.name or v
-        if self:SearchCheck(t) or (v.create_group and self:SearchCheck(v.create_group)) then
-            i = i + 1
-            if limit and i >= self._max_items then
-                break
-            end
+        if limit and i > self._max_items then
+            break
+        end
+        if (params.search_check and params.search_check(t, self._filter, v)) or self:SearchCheck(t) or (v.create_group and self:SearchCheck(v.create_group)) then
+            i = i + 1 
             local menu = self._list_menu
             if type(v) == "table" and v.create_group then 
                 menu = groups[v.create_group] or self._list_menu:Group({

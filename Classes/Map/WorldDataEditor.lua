@@ -811,6 +811,19 @@ function WData:OpenSelectUnitDialog(params)
         list = units,
         force = true,
         no_callback = ClassClbk(self, "CloseDialog"),
+        search_check = function(item, filters, data)
+            local unit_type = data.unit:type()
+            for _, str in pairs(filters) do
+                local type = str:match("type%%:%% (%w+)")
+                if type then
+                    type = Idstring(type)
+                    if unit_type == type then
+                        return true
+                    end
+                end
+            end
+            return false
+        end,
         callback = params.on_click or function(item)
             held_ctrl = ctrl()
             self._parent:select_unit(item.unit, held_ctrl)
