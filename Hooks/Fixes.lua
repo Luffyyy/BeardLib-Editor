@@ -97,4 +97,19 @@ elseif F == "jobmanager" then
 		end
 		return {Global.current_mission_filter} or self:current_stage_data().mission_filter
 	end
+elseif F == "coreelementinstance" then
+	core:module("CoreElementInstance")
+	core:import("CoreMissionScriptElement")
+
+	function ElementInstancePoint:_create()
+		local instance_name = self._values.instance
+		if instance_name then
+			for _, unit in pairs(World:find_units_quick("all")) do
+                local ud = unit:unit_data()
+                if ud and ud.instance == instance_name then
+                    _G.BLE.Utils:SetPosition(unit, self._values.position + ud.local_pos:rotate_with(self._values.rotation), self._values.rotation * ud.local_rot, ud)
+                end
+            end
+		end
+	end	
 end
