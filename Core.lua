@@ -251,7 +251,7 @@ function BLE:LoadHashlist()
         for _, type in pairs(table.list_add(clone(self._config.script_data_types), {"unit", "texture", "movie", "effect", "scene"})) do
             self.DBPackages[id][type] = self.DBPackages[id][type] or {}
         end
-        self:LoadCustomAssetsToHashList(pkg.config, pkg.dir, id)
+        self:LoadCustomAssetsToHashList(BeardLib.Utils.XML:Clean(pkg.configs), pkg.dir, id)
     end
 end
 
@@ -366,8 +366,8 @@ function BLE:GenerateDefaultAssetsData()
 end
 
 function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
-    for i, v in pairs(add) do
-        if tonumber(i) and type(v) == "table" then
+    for _, v in pairs(add) do
+        if type(v) == "table" then
             local path = v.path
             local typ = v._meta
             local from_db = NotNil(v.from_db, add,from_db)
