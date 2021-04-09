@@ -947,7 +947,7 @@ function WData:OpenSpawnUnitDialog(params)
 
 	params = params or {}
     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
-	BLE.ListDialog:Show({
+	BLE.MSLD:Show({
 	    list = BLE.Utils:GetUnits({
 			not_loaded = params.not_loaded,
 			packages = pkgs,
