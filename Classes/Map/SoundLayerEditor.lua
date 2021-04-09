@@ -153,7 +153,7 @@ function SndLayer:build_menu()
     buttons:tickbox("SoundUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("SoundUnitsWhileMenu"), {text = "Draw Sound Units When Entering This Menu"})
 
 	local defaults = self:group("Defaults")
-	local environments = managers.sound_environment:environments()
+	local environments = managers.sound_environment:_environment_effects()
 	self._default_environment = defaults:combobox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()))
 	local events = self:ambience_events()
 	self._default_ambience = defaults:combobox("Ambience", ClassClbk(self, "select_default_ambience"), events, table.get_key(events, managers.sound_environment:default_ambience()), {
