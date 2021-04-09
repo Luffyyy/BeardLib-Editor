@@ -858,7 +858,7 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
         local ud = unit:unit_data()
         if ud and ud.instance then
             if not unit:fake() then
-                local instance = managers.world_instance:get_instance_data_by_name(ud.instance)
+                local instance = ud.instance_data or managers.world_instance:get_instance_data_by_name(ud.instance)
                 local fake_unit
                 for _, u in pairs(self:selected_units()) do
                     if u:fake() and u:object().name == ud.instance then

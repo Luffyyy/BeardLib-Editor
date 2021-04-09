@@ -669,6 +669,7 @@ function WorldDef:assign_unit_data(unit, data)
 	end
 
 	unit:unit_data().instance = data.instance
+	unit:unit_data().instance_data = managers.world_instance:get_instance_data_by_name(data.instance)
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)
 	if unit:unit_data().helper_type and unit:unit_data().helper_type ~= "none" then
