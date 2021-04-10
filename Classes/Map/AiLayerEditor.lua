@@ -678,9 +678,19 @@ function AiEditor:build_nav_segments()
             end
         end
 
+        local editor_ids = {}
+        local duplicate_id_unit
         for _, unit in pairs(nav_surfaces) do
             local ray = World:raycast(unit:position() + Vector3(0, 0, 50), unit:position() - Vector3(0, 0, 150), nil, managers.slot:get_mask("all"))
             if ray and ray.position then
+                local editor_id = unit:editor_id()
+                if table.contains(editor_ids, editor_id) then
+                    duplicate_id_unit = unit
+                    break
+                end
+
+                table.insert(editor_ids, editor_id)
+
                 table.insert(settings, {
                     position = unit:position(),
                     id = unit:editor_id(),
@@ -690,10 +700,7 @@ function AiEditor:build_nav_segments()
             end
         end
 
-        if #settings > 0 then
-            managers.navigation:clear()
-            managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
-        else
+        if #settings < 1 then
             if #nav_surfaces > 0 then
                 BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
             else
@@ -704,8 +711,25 @@ function AiEditor:build_nav_segments()
                     W:build_menu("ai")
                 end
             end
+
             self:reenable_disabled_units()
+            return
         end
+
+        if duplicate_id_unit then
+            local unit_id = duplicate_id_unit:unit_data().name_id
+            local editor_id = duplicate_id_unit:editor_id()
+
+            local unit_full_name = unit_id .. " [" .. editor_id .. "]"
+            BLE.Utils:Notify("Error!", "Found a nav surface unit with a duplicate ID: " .. tostring(unit_full_name) .. "\nPlease delete it before proceeding")
+            
+            self:reenable_disabled_units()
+            return
+        end
+
+        managers.navigation:clear()
+        managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
+
     end)
 end
 
