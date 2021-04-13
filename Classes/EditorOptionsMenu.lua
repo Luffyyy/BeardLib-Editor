@@ -83,9 +83,11 @@ function Options:reset_options(menu)
 		else
 			local opt = BLE.Options:GetOption(item.name)
 			if opt then
-				local value = opt.default_value
-				self:set(item.name, value)
-				item:SetValue(value)
+				local value = BLE.Options:GetOptionDefaultValue(opt)
+				if value then
+					self:set(item.name, value)
+					item:SetValue(value)
+				end
 			end
 		end
 	end
