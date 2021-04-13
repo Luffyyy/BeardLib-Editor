@@ -16,6 +16,8 @@ function ProjectEditor:init(parent, mod)
     self._mod = mod
     self._data = data
 
+    self._loaded_in_editor = mod == BLE.MapProject:current_mod()
+
     BLE.MapProject:set_edit_title(data.name)
     local menu = parent:pan("CurrEditing", {
         w = 350,
@@ -28,7 +30,10 @@ function ProjectEditor:init(parent, mod)
     data.orig_id = data.orig_id or data.name
 
     local up = ClassClbk(self, "set_data_callback")
-    menu:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}})
+    if self._loaded_in_editor then
+        menu:divider("Attention: we detected that this project is currently loaded. To avoid breaking the project/map, some options are disabled.")
+    end
+    menu:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
@@ -129,11 +134,11 @@ function ProjectEditor:open_module(editor)
         editor._btn:SetBorder({left = true})
     end
 
-    self:small_button("Delete", ClassClbk(self, "delete_current_module"))
-    self:small_button("Close", ClassClbk(self, "close_previous_module"))
-
     self._current_module = editor
     editor:do_build_menu()
+
+    self:small_button("Delete", ClassClbk(self, "delete_current_module"), {enabled = editor._deletable})
+    self:small_button("Close", ClassClbk(self, "close_previous_module"))
 end
 
 --- The callback function for all items for this menu.
@@ -241,15 +246,20 @@ function ProjectEditor:delete_current_module()
 end
 
 --- Creates a small side button
-function ProjectEditor:small_button(name, clbk)
-    self._menu:GetToolbar():tb_btn(name, clbk, {
+function ProjectEditor:small_button(name, clbk, opt)
+    self._menu:GetToolbar():tb_btn(name, clbk, table.merge({
         min_width = 100,
         text_offset = {8, 2},
         border_bottom = true,
-    })
+    }, opt))
 end
 
 --- Opens current project in the file explorer
 function ProjectEditor:open_in_file_explorer()
     Application:shell_explore_to_folder(string.gsub(self._mod.ModPath, "/", "\\"))
+end
+
+--- Returns whether this project is loaded in the editor to avoid causing issues
+function ProjectEditor:loaded_in_editor()
+    return self._loaded_in_editor
 end

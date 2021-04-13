@@ -188,6 +188,7 @@ end
 function ProjectNarrativeEditor:build_levels()
     local levels_group = self._levels
     local data = self._data
+    local current_id = (BeardLib.current_level and BeardLib.current_level._config.id or nil)
     levels_group:ClearItems()
     local function build_level_ctrls(level_in_chain, chain_group, btn, level)
         local narr_chain = chain_group or data.chain
@@ -196,7 +197,12 @@ function ProjectNarrativeEditor:build_levels()
         local tx = "textures/editor_icons_df"
         local toolbar = btn
         if level_in_chain.level_id then
-            btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_chain_level_dialog", level_in_chain), tx, EU.EditorIcons["cross"], {highlight_color = Color.red})
+            local is_current = current_id == level_in_chain.level_id
+            if is_current then
+                self._deletable = false
+                self._menu:GetItem("NarrativeID"):SetEnabled(false)
+            end
+            btn:tb_imgbtn(level_in_chain.level_id, ClassClbk(self, "delete_chain_level_dialog", level_in_chain), tx, EU.EditorIcons["cross"], {highlight_color = Color.red, enabled = not is_current})
             if chain_group then
                 btn:tb_imgbtn("Ungroup", ClassClbk(self, "ungroup_level", level_in_chain, chain_group), tx, EU.EditorIcons["minus"], {help = "Group level", highlight_color = Color.red})
             else
