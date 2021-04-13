@@ -12,6 +12,7 @@ function Editor:init(data)
     self._particle_editor_active = false
     self._mapeditor = {}
     self.parts = {}
+    self._triggers = {}
     self._safemode = Global.editor_safe_mode
 
     self._current_script = "default"
@@ -44,7 +45,7 @@ function Editor:init(data)
         ["@ID0602a12dbeee9c14@"] = "yz",
     }
 
-    self._toggle_trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(BLE.Options:GetValue("Input/ToggleMapEditor")))
+    self._toggle_trigger = BeardLib.Utils.Input:GetTriggerData(tostring(BLE.Options:GetValue("Input/ToggleMapEditor")))
     local normal = not self._safemode
     self._menu = MenuUI:new({
         layer = 100,
@@ -679,7 +680,7 @@ function Editor:update(t, dt)
     if self._safemode then
         return
     end
-    if BeardLib.Utils.Input:Triggered(self._toggle_trigger) and not self._partially_disabled then
+    if BeardLib.Utils.Input:IsTriggered(self._toggle_trigger) and not self._partially_disabled then
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
@@ -699,6 +700,16 @@ function Editor:update(t, dt)
                     manager:update(t, dt)
                 end
             end
+            
+            -- Check binds
+            local allowed = not BeardLib.managers.dialog:DialogOpened()
+            local not_focused = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Typing())
+            for _, trigger in pairs(self._triggers) do
+                if not_focused and (allowed or trigger.in_dialogs) and BeardLib.Utils.Input:IsTriggered(trigger, nil) then
+                    trigger.clbk()
+                    break
+                end
+            end
 
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
@@ -707,6 +718,34 @@ function Editor:update(t, dt)
             self:draw_ruler(t, dt)
         else
             self.parts.cubemap_creator:update(t, dt)
+        end
+    end
+end
+
+function Editor:bind(opt, clbk, in_dialogs)
+    local key
+    if opt:match("Input") then
+        key = BLE.Options:GetValue(opt)
+    else
+        key = opt
+    end
+    if key then
+        local trigger = BeardLib.Utils.Input:GetTriggerData(tostring(key), clbk)
+        trigger.in_dialogs = in_dialogs
+        trigger.opt = opt
+        table.insert(self._triggers, trigger)
+        table.sort(self._triggers, function(a,b)
+            return #a.keys > #b.keys
+        end)
+        return trigger
+    end
+end
+
+function Editor:unbind(opt)
+    for i, trigger in pairs(self._triggers) do
+        if trigger.opt == opt then
+            table.remove(self._triggers, i)
+            return
         end
     end
 end

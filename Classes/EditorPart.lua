@@ -77,29 +77,14 @@ function Part:collapse_all(menu)
 end
 
 function Part:bind(opt, clbk, in_dialogs)
-    local key
-    if opt:match("Input") then
-        key = BLE.Options:GetValue(opt)
-    else
-        key = opt
-    end
-    if key then
-        local trigger = BeardLib.Utils.Input:TriggerDataFromString(tostring(key), clbk)
-        trigger.in_dialogs = in_dialogs
+    local trigger = self._parent:bind(opt, clbk, in_dialogs)
+    if trigger then
         table.insert(self._triggers, trigger)
     end
 end
 
 function Part:update()
-    local allowed = not BeardLib.managers.dialog:DialogOpened()
-    local not_focused = not (self._parent._menu:Focused() or BeardLib.managers.dialog:Menu():Typing())
-    if self._triggers then
-        for _, trigger in pairs(self._triggers) do
-            if not_focused and (allowed or trigger.in_dialogs) and BeardLib.Utils.Input:Triggered(trigger) then
-                trigger.clbk()
-            end
-        end
-    end
+
 end
 
 function Part:init_basic(parent, name)
@@ -146,6 +131,9 @@ function Part:enable()
 end
 function Part:disable()
     self._enabled = false
+    for _, trigger in pairs(self._triggers) do
+        self._parent:unbind(trigger.opt)
+    end
     self._triggers = {}
 end
 
