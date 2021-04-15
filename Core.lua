@@ -370,7 +370,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
         if type(v) == "table" then
             local path = v.path
             local typ = v._meta
-            local from_db = NotNil(v.from_db, add,from_db)
+            local from_db = NotNil(v.from_db, add.from_db)
             if typ == UNIT_LOAD or typ == ADD then
                 self:LoadCustomAssetsToHashList(v, directory, package_id)
             else
