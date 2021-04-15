@@ -94,7 +94,7 @@ function Options:reset_options(menu)
 end
 
 function Options:set_clbk(item)
-	self:set(item.name, item:Value())
+	self:set(item.name, item:Value() or "")
 	if item.name == "LevelsColumns" then
 		BLE.LoadLevel:load_levels()
 	end
