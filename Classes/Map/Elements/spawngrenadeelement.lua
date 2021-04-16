@@ -7,7 +7,7 @@ function EditorSpawnGrenade:create_element()
 	self._element.values.strength = 1
 end
 
-function EditorSpawnGrenade:update(d, dt)
+function EditorSpawnGrenade:update(t, dt)
 	local kb = Input:keyboard()
 	local speed = 60 * dt
 	if kb:down(Idstring("left")) then

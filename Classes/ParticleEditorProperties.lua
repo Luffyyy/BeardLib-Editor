@@ -85,8 +85,7 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		local combo = widget:combobox(name, ClassClbk(self, "on_set_variant", {
 			update = true,
 			container = widget,
-			view = view,
-			container_sizer = sizer
+			view = view
 		}))
 
         combo.help = self._help
@@ -102,7 +101,6 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			container = widget,
 			view = view,
 			variant_panel = variant_panel,
-			container_sizer = sizer
 		}, combo)
 	elseif self._type == "compound" then
 		widget = parent:pan(name, {background_color = self._bgcolor})

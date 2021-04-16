@@ -7,7 +7,7 @@ function EditorPhysicsPush:create_element()
 	self._element.values.physicspush_mass = 100
 end
 
-function EditorPhysicsPush:update()
+function EditorPhysicsPush:update(t, dt)
 	Application:draw_sphere(self._element.values.position, self._element.values.physicspush_range, 0, 1, 0)
 	EditorPhysicsPush.super.update(self, t, dt)
 end

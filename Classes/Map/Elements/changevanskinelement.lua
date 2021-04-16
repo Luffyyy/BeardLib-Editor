@@ -20,7 +20,7 @@ function EditorChangeVanSkin:can_select_unit(unit)
 	return unit and unit.damage and unit:damage() and unit:damage():has_sequence(default_sequence)
 end
 
-function EditorChangeVanSkin:update()
+function EditorChangeVanSkin:update(t, dt)
 	for _, id in pairs(self._element.values.unit_ids) do
 		local unit = managers.worlddefinition:get_unit(id)
 		if alive(unit) then

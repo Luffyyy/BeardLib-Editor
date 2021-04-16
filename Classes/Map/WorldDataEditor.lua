@@ -282,7 +282,7 @@ function WData:get_all_units_from_continent(continent)
 end
 
 function WData:clear_all_units_from_continent(continent, no_refresh, no_dialog)
-    function delete_all()
+    local function delete_all()
         local worlddef = managers.worlddefinition
         for _, static in pairs(self:get_all_units_from_continent(continent)) do
             worlddef:delete_unit(static)
@@ -421,7 +421,7 @@ function WData:clear_all_elements_from_script(script, item)
 end
 
 function WData:_clear_all_elements_from_script(script, continent, no_refresh, no_dialog)
-    function delete_all()
+    local function delete_all()
         local mission = managers.mission
         for _, element in pairs(mission._missions[continent][script].elements) do
             for _, unit in pairs(World:find_units_quick("all")) do
@@ -726,7 +726,6 @@ function WData:SpawnInstance(instance, instance_data, spawn)
         end
 
         instance_data.start_index = nil
-
         local instance = table.merge({
             continent = self._parent._current_continent,
             name = instance_name,
@@ -846,12 +845,16 @@ end
 
 function WData:OpenSelectInstanceDialog(params)
 	params = params or {}
+    local held_ctrl
 	BLE.MSLD:Show({
 	    list = managers.world_instance:instance_names(),
         force = true,
 	    callback = params.on_click or function(name)
+            held_ctrl = ctrl()
 	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))
-	    	self:CloseDialog()
+            if not held_ctrl then
+                self:CloseDialog()
+            end
         end,
         select_multi_clbk = function(items)
             self:part("static"):reset_selected_units()
@@ -859,7 +862,7 @@ function WData:OpenSelectInstanceDialog(params)
                 self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)), true)
                 if not held_ctrl then
                     self:CloseDialog()
-                end  
+                end
             end
         end
 	})

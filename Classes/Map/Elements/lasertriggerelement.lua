@@ -47,7 +47,7 @@ function EditorLaserTrigger:create_element(...)
 	self._element.values.connections = {}
 end
 
-function EditorLaserTrigger:update(...)
+function EditorLaserTrigger:update(t, dt, ...)
 	if Input:keyboard():pressed(Idstring("tab")) then
 		self:GetItem("EditPoints"):SetValue(not self._editing, true)
 	end

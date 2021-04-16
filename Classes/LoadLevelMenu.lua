@@ -178,7 +178,7 @@ function LoadLevelMenu:do_load_narratives()
 	for narr_id, narr in pairs(tweak_data.narrative.jobs) do
         if not narr.hidden and ((narr.custom and custom) or (not narr.custom and vanilla)) then
             local txt = loc:text((narr.name_id or ("heist_"..narr_id:gsub("_prof", ""):gsub("_night", ""))) .." / " .. narr_id)
-            local texture, rect = nil
+            local texture, rect = nil, nil
 
 			if narr.contract_visuals and narr.contract_visuals.preview_image then
 				local data = narr.contract_visuals.preview_image

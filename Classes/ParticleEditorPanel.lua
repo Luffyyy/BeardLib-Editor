@@ -1,3 +1,13 @@
+local stack_members = {
+	initializer = {},
+	simulator = {},
+	visualizer = {}
+}
+local stack_member_names = {
+	initializer = {},
+	simulator = {},
+	visualizer = {}
+}
 
 function CoreParticleEditorPanel:create_panel(parent)
 	self._stacklist_boxes = {}
@@ -104,7 +114,8 @@ function CoreParticleEditorPanel:update_status_box()
 end
 
 function CoreParticleEditorPanel:create_graph_view(parent)
-	self._graph_view_dialog = EWS:Dialog(parent, "Stacks And Channels Overview", "", Vector3(-1, -1, 0), Vector3(500, 400, 0), "CAPTION,RESIZE_BORDER")
+	-- If anyone could code this, that'd be pretty poggers ♥
+	--[[self._graph_view_dialog = EWS:Dialog(parent, "Stacks And Channels Overview", "", Vector3(-1, -1, 0), Vector3(500, 400, 0), "CAPTION,RESIZE_BORDER")
 	self._graph = EWS:Graph()
 	local gv = EWS:GraphView(self._graph_view_dialog, "", self._graph)
 
@@ -119,7 +130,7 @@ function CoreParticleEditorPanel:create_graph_view(parent)
 
 	if self._editor._view_menu:is_checked("SHOW_STACK_OVERVIEW") then
 		self:show_stack_overview(true)
-	end
+	end]]
 end
 
 function CoreParticleEditorPanel:create_atom_panel(parent)

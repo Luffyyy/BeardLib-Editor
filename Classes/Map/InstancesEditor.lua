@@ -2,7 +2,7 @@ InstancesEditor = InstancesEditor or class(EditorPart)
 local Instance = InstancesEditor
 
 function Instance:init(parent, menu)
-    self:init_basic(parent, name)
+    self:init_basic(parent, "InstancesEditor")
     self._stashed_instance_units = {}
     self._units = {}
     self._triggers = {}
@@ -257,7 +257,7 @@ function Instance:set_data(item)
                     if mission[instance.script] then
                         table.insert(mission[instance.script].instances, instance.name)
                         local script = managers.mission._scripts[instance.script]
-                        local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance_name)
+                        local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance.name)
                         if not instance.mission_placed then
                             script:create_instance_elements(prepare_mission_data)
                         else

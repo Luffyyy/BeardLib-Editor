@@ -114,7 +114,7 @@ function Utils:FilterList(a,b)
     end
     local i = 0
     for _, item in pairs(menu:Items()) do
-        local _end = i == max_items
+        local _end = i == AssetsManagerDialog.MAX_ITEMS
         if type_name(item) == "Button" and (not label or item.label == label) then
             if _end then
                 item:SetVisible(false, true, true)
@@ -490,7 +490,7 @@ function Utils:GetEntries(params)
     for entry in pairs(BLE.DBPaths[params.type]) do
         if (not params.loaded or IsLoaded(entry)) and (not params.check or params.check(entry)) then
             if not params.match or string.find(entry, params.match) ~= nil then
-                table.insert(entries, filenames and Path:GetFileName(entry) or entry)
+                table.insert(entries, params.filenames and Path:GetFileName(entry) or entry)
             end
         end
     end

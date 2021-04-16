@@ -6,7 +6,7 @@ function EditorUnitDamage:create_element(...)
 	self._element.values.damage_types = ""
 end
 
-function EditorUnitDamage:update()
+function EditorUnitDamage:update(t, dt)
 	for _, id in pairs(self._element.values.unit_ids) do
 		local unit = managers.worlddefinition:get_unit(id)
 		if alive(unit) then

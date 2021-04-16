@@ -239,6 +239,7 @@ function MissionScriptEditor:draw_elements(elements, is_link)
 	if not elements or self.WEIRD_ELEMENTS_VALUE then
 		return
 	end
+	local selected_unit = self:selected_unit()
 	for k, id in ipairs(elements) do
 		local unit = self:GetPart("mission"):get_element_unit(id)
 		if alive(unit) then
@@ -362,7 +363,7 @@ function MissionScriptEditor:set_element_data(item)
 		return
 	end
 	local old_script = self._element.script
-	function set_element_data()
+	local function set_element_data()
 		local data = self:ItemData(item)
 		data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
 		data[item.name] = tonumber(data[item.name]) or data[item.name]
@@ -446,7 +447,7 @@ function MissionScriptEditor:add_selected_units(value_name, clbk)
     end
 end
 
-function MissionScriptEditor:remove_selected_units(value_name)
+function MissionScriptEditor:remove_selected_units(value_name, clbk)
 	for k, unit in pairs(self:GetPart("static")._selected_units) do
 		if unit:unit_data() then
 			table.delete(self._element.values[value_name], unit:unit_data().unit_id)
@@ -454,7 +455,7 @@ function MissionScriptEditor:remove_selected_units(value_name)
 	end
     if clbk then
         clbk()
-    end   
+    end
 end
 
 function MissionScriptEditor:ManageElementIdsClbk(params, final_selected_list)

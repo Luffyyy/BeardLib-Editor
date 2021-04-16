@@ -17,7 +17,7 @@ function EditorObjective:update_sub_objectives()
 	local sub_objectives = table.list_add({"none"}, managers.objectives:sub_objectives_by_name(self._element.values.objective))
 	self._element.values.sub_objective = "none"
 	self._sub_objective:SetItems(sub_objectives)
-	self._sub_objective:SetValue(table.get_key(sub_objective ,self._element.values.sub_objective))
+	self._sub_objective:SetValue(table.get_key(sub_objectives ,self._element.values.sub_objective))
 end
 
 function EditorObjective:set_element_data(params, ...)

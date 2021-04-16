@@ -32,7 +32,7 @@ function ProjectInstanceEditor:create(create_data)
     BLE.InputDialog:Show({
         title = "Enter a name for the instance",
         yes = "Create",
-        text = name or "",
+        text = "",
         check_value = function(name)
             local warn
 

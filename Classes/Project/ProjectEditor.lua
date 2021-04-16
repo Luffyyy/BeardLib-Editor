@@ -126,7 +126,6 @@ function ProjectEditor:get_modules(meta)
 end
 
 --- Opens a module to edit.
---- @param data table
 function ProjectEditor:open_module(editor)
     self:close_previous_module()
 
@@ -187,8 +186,8 @@ end
 --- @param old_name string
 --- @param new_name string
 function ProjectEditor:reload_mod(old_name, new_name)
-    old_name = old_name or data.orig_id
-    new_name = new_name or data.orig_id
+    old_name = old_name or self._data.orig_id
+    new_name = new_name or self._data.orig_id
 
     BLE.MapProject:reload_mod(old_name)
     BLE.MapProject:select_project(BeardLib.managers.MapFramework._loaded_mods[new_name])

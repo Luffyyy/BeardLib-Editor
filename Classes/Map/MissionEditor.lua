@@ -38,6 +38,7 @@ function MissionEditor:get_name_id(clss, name)
     local class_name = self:make_class_name(clss)
     self._name_ids[class_name] = self._name_ids[class_name] or {}
     local t = self._name_ids[class_name]
+    local start_number = 1
 	if name then
 		local sub_name = name
 		for i = string.len(name), 0, -1 do
@@ -54,7 +55,7 @@ function MissionEditor:get_name_id(clss, name)
         name = class_name .. '_'
     end
 
-	for i = 1, 10000 do
+	for i = start_number, 10000 do
 		i = (i < 10 and "00" or i < 100 and "0" or "") .. i
 		local name_id = name .. i
         if not t[name_id] then --Saved in MissionManager.

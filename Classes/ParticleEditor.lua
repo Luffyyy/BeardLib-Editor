@@ -8,7 +8,7 @@ require("core/lib/utils/dev/tools/particle_editor/CoreParticleEditorVisualizers"
 require("core/lib/utils/dev/tools/particle_editor/CoreParticleEditorPanel")
 
 
-function collect_members(cls, m)
+local function collect_members(cls, m)
 	for funcname, funcobj in pairs(cls) do
 		if funcname:find("create_") then
 			local fn = funcname:gsub("create_", "")
@@ -17,7 +17,7 @@ function collect_members(cls, m)
 	end
 end
 
-function collect_member_names(members, member_names)
+local function collect_member_names(members, member_names)
 	for k, v in pairs(members) do
 		local vi = v()
 
@@ -32,12 +32,12 @@ function collect_member_names(members, member_names)
 	end)
 end
 
-stack_members = {
+local stack_members = {
 	initializer = {},
 	simulator = {},
 	visualizer = {}
 }
-stack_member_names = {
+local stack_member_names = {
 	initializer = {},
 	simulator = {},
 	visualizer = {}
@@ -57,7 +57,6 @@ function ParticleEditor:init(editor, menu)
 	self._triggers = {}
 
 	self._menu = menu:Menu({
-		visible = false,
 		auto_foreground = true,
 		align_method = "grid",
 		background_color = BLE.Options:GetValue("BackgroundColor"),
@@ -358,7 +357,7 @@ function ParticleEditor:on_close_effect()
 	if effect then
 		self._effects_notebook:RemovePageWithItem(effect:panel())
 		effect:close()
-		table.delete(self._effects, curi)
+		table.delete(self._effects, effect)
 	end
 
 	self:remove_gizmo()

@@ -10,6 +10,7 @@ end
 function EditorCharacterDamage:draw_links()
 	EditorCharacterDamage.super.draw_links(self)
 	local selected_unit = self:selected_unit()
+	local all_units = World:find_units_quick("all")
 	for _, id in ipairs(self._element.values.elements) do
 		local unit = all_units[id]
 		local draw = not selected_unit or unit == selected_unit or self._unit == selected_unit

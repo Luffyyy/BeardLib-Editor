@@ -7,7 +7,7 @@ function EditorLoadDelayed:create_element(...)
 	self._element.values.unit_ids = {}
 end
 
-function EditorLoadDelayed:update()
+function EditorLoadDelayed:update(t, dt)
 	for _, id in pairs(self._element.values.unit_ids) do
 		local unit = managers.worlddefinition:get_unit(id)
 		if alive(unit) then

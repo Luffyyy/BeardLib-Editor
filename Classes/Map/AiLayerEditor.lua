@@ -289,6 +289,7 @@ function AiEditor:set_selected_unit()
 end
 
 function AiEditor:set_unit_pos()
+    local S = self:GetPart("static")
     local unit = self:selected_unit()
     if unit then
         unit:set_position(S:GetItemValue("Position"))
@@ -737,7 +738,7 @@ function AiEditor:reenable_disabled_units()
     for _, unit in pairs(self._disabled_units) do
         if alive(unit) then
             unit:set_enabled(true)
-            if unit:in_slot(persons) then
+            if unit:in_slot(managers.slot:get_mask("persons")) then
                 for _, extension in pairs(unit:extensions()) do
                     unit:set_extension_update_enabled(extension:id(), true)
                 end

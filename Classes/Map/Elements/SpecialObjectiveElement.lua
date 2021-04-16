@@ -248,7 +248,7 @@ function EditorSpecialObjective:stop_test_element()
     end
 
     if self._start_test_t then
-        log('Stop test time', Application:time() - self._start_test_t or 0)
+        log('Stop test time', Application:time() - (self._start_test_t or 0))
 
         self._start_test_t = nil
     end

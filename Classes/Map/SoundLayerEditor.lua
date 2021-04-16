@@ -201,6 +201,8 @@ function SndLayer:build_unit_menu()
             sound_emitter:textbox("Name", ClassClbk(self, "set_unit_name_id"), unit:unit_data().name_id or "")
 
 			local events = self:emitter_events{}
+			local default_emitter_path = managers.sound_environment:game_default_emitter_path()
+
 			self._emitter_events_combobox = sound_emitter:combobox("Events", ClassClbk(self, "select_emitter_event"), events, table.get_key(events, default_emitter_path and managers.sound_environment:emitter_events(default_emitter_path)[1]))
 			self:set_sound_emitter_parameters()
 		end

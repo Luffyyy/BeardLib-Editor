@@ -7,7 +7,7 @@ Hooks:PostHook(GameStateMachine, "init", "BeardLibEditorGameStateInit", function
 	local ingame_lobby
 	local ingame_lobby_func
 	for name in pairs(self._transitions) do
-		state = self._states[name] 
+		local state = self._states[name] 
 		if name == "ingame_lobby_menu" then
 			ingame_lobby = state
 			ingame_lobby_func = state.default_transition

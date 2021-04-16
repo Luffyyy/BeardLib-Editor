@@ -43,6 +43,8 @@ function EditorInstanceInputEvent:_draw_instance_link(instance_name)
 		return false
 	end
 
+	local r, g, b = self:get_link_color()
+
 	if self._type == "input" then
 		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
 	else
@@ -55,7 +57,6 @@ function EditorInstanceInputEvent:update(t, dt, instance_name)
 	if not alive(self._unit) then
 		return
 	end
-	local r, g, b = self._unit:mission_element()._color:unpack()
 	for i, data in pairs(self._element.values.event_list) do
 		if not self:_draw_instance_link(data.instance) then
 			table.remove(self._element.values.event_list, i)
@@ -399,6 +400,8 @@ function EditorRandomInstance:_draw_instance_link(instance_name)
 		return false
 	end
 
+	local r, g, b = self:get_link_color()
+
 	if self._type == "input" then
 		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
 	else
@@ -418,7 +421,7 @@ end
 function EditorRandomInstanceOutputEvent:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementRandomInstanceOutputEvent"
-	
+
 	self._element.values.amount = 1
 	self._element.values.amount_random = 0
 	self._element.values.instances = {}

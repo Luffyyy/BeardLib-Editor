@@ -40,7 +40,7 @@ function EditorLootBag:stop_test_element()
     self._test_units = {}
 end
 
-function EditorLootBag:update(d, dt)
+function EditorLootBag:update(t, dt)
 	local kb = Input:keyboard()
 	local speed = 60 * dt
 	self._element.values.spawn_dir = self._element.values.spawn_dir or Vector3()

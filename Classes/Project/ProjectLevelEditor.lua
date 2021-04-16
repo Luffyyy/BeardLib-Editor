@@ -137,7 +137,7 @@ function ProjectLevelEditor:clone_level(create_data)
     local name = create_data.name
 
     --Clone preplanning
-    local preplanning = tweak_data.preplanning.locations[id]
+    local preplanning = tweak_data.preplanning.locations[clone_id]
     if preplanning then
         level.preplanning = deep_clone(preplanning)
     end

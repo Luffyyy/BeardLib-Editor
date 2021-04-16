@@ -611,7 +611,7 @@ function AssetsManagerDialog:_make_package_report(package)
             pos = pos + Vector3(bsr, 0, 0)
 
             
-            if math.mod(i, prow) == 0 then
+            if math.fmod(i, prow) == 0 then
                 c_rad = bsr * 2
 
                 max_rad = 0

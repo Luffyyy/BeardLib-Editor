@@ -629,12 +629,6 @@ function WorldDef:make_unit(data, offset)
 	if not name then
 		return nil
 	end
-	if not is_editor and not Network:is_server() then
-		local network_sync = PackageManager:unit_data(name:id()):network_sync()
-		if network_sync ~= "none" and network_sync ~= "client" then
-			return
-		end
-	end
 	local unit
 	if not Global.editor_safe_mode then
 		if Global.editor_log_on_spawn then
@@ -866,12 +860,5 @@ if Unit then
 			return unit_datas[self:key()]
 		end
 		return data
-	end
-
-	function Unit:force_add_unit_data(...)
-		if self:unit_data() then
-			return
-		end
-		unit_data[self:key()] = unit_data[self:key()] or {}
 	end
 end

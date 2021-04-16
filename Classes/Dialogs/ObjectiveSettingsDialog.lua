@@ -30,7 +30,7 @@ function ObjectiveSettingsDialog:SetName(item)
         self:divider("NameWarning", {text = "Warning: Objective name cannot be empty, name will not be saved.", index = 2})
     else
         for _, o in ipairs(self._objectives) do
-            if o ~= objective and o.id == name then
+            if o ~= self._current and o.id == name then
                 self:divider("NameWarning", {text = "Warning: Objective name already exists, name will not be saved.", index = 2})
                 return
             end

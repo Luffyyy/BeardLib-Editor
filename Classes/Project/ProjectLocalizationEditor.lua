@@ -55,7 +55,7 @@ function ProjectLocalization:add_lang()
             local warn
 
             if FileIO:Exists(Path:Combine(self._parent:get_dir(), self._dir, name..".txt")) then
-                warn = string.format("A file with the name %s already exists! Please use a unique name", k)
+                warn = string.format("A file with the name %s already exists! Please use a unique name", name)
             elseif name == "" then
                 warn = string.format("Id cannot be empty!", name)
             elseif string.begins(name, " ") then

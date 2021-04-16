@@ -272,7 +272,7 @@ function ProjectManager:create_new_map_dialog(clbk)
     BLE.InputDialog:Show({
         title = "Enter a name for the map project",
         yes = "Create",
-        text = name or "",
+        text = "",
         check_value = function(name)
             local warn
             for k in pairs(BeardLib.managers.MapFramework._loaded_mods) do

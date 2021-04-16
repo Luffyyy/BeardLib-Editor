@@ -436,7 +436,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                         self:Err("Unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(path), tostring(directory))
                     end
                 elseif CustomPackageManager.TEXTURE_SHORTCUTS[typ] then
-                    for _, suffix in pairs(C.TEXTURE_SHORTCUTS[typ]) do
+                    for _, suffix in pairs(CustomPackageManager.TEXTURE_SHORTCUTS[typ]) do
                         self.DBPaths.texture[path..suffix] = true
                         if package_id then
                             local package = self.DBPackages[package_id]

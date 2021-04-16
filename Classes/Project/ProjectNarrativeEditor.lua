@@ -219,7 +219,7 @@ function ProjectNarrativeEditor:build_levels()
         local mod = self._parent:get_module(level_id, "level")
         local parent = (group or levels_group)
         local btn = parent:button(level_id, mod and ClassClbk(self._parent, "open_module", mod), {text = level_id, divider_type = mod == nil})
-        return btn, level
+        return btn, level_id
     end
     for i, v in ipairs(data.chain) do
         if type(v) == "table" then
@@ -274,7 +274,7 @@ end
 function ProjectNarrativeEditor:ungroup_level(level_in_chain, chain_group)
     table.delete_value(chain_group, level_in_chain)
     if #chain_group == 1 then
-        narr.chain[table.get_key(self._data.chain, chain_group)] = chain_group[1]
+        self._data.chain[table.get_key(self._data.chain, chain_group)] = chain_group[1]
     end
     table.insert(self._data.chain, level_in_chain)
 end
