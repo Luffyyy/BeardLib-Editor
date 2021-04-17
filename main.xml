@@ -98,6 +98,7 @@
     	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     	<hook source_file="lib/tweak_data/levelstweakdata" file="Fixes.lua"/>
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
+        <hook source_file="lib/managers/menu/menucomponentmanager" file="LoadLastLevelButton.lua"/>
     </Hooks>
     <Options build_menu="false" auto_load="true">
         <options>                
@@ -109,7 +110,8 @@
 			<option type="number" min="100" max="1600" default_value="320" name="MapEditorPanelWidth"/>
 			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
-            
+            <option name="LastLoaded" type="table"/>
+
             <option_group name="Input">
                 <option type="string" default_value="1" name="SpawnUnit"/>
                 <option type="string" default_value="2" name="SpawnElement"/>
