@@ -255,6 +255,13 @@ function LoadLevelMenu:load_level(item)
         Global.game_settings.world_setting = nil
         self:start_the_game()
         BeardLibEditor.Menu:set_enabled(false)
+		--Saving the last loaded heist to file for the restart button
+		local lastloaded = {name = item.name, narr_id = item.narr_id, instance = item.instance or nil, real_id = item.real_id or nil, vanilla = item.vanilla}
+		local file = io.open(SavePath .. "BeardLibEditor_LastLoaded.txt", "w+")
+		if file then
+			file:write(json.encode(lastloaded))
+			file:close()
+		end
     end
 
     local load_tbl = {{"Yes", load}}
