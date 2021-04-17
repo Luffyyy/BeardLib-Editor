@@ -6,6 +6,8 @@ local function assert_value(getter, value, message)
 end
 
 EditorPart = EditorPart or class()
+EditorPart._triggers = {}
+
 local Part = EditorPart
 function Part:init(parent, menu, name, opt, mopt)
     self:init_basic(parent, name)
@@ -95,7 +97,6 @@ function Part:init_basic(parent, name)
     self._brush:set_font(Idstring("fonts/font_large_mf"), 16)
     self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
 
-    self._triggers = {}
     self._axis_controls = {"x", "y", "z", "yaw", "pitch", "roll"}
     self._shape_controls = {"width", "height", "depth", "radius"}
 end
