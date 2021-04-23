@@ -5,7 +5,6 @@
 	"blt_version" : 2.0,
 	"undisablable" : true,
 	"image" : "Assets/textures/editor_logo.png",
-	"contact" : "https://twitter.com/LuffyDaFloffi",
 	"hooks" : [
         {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"},
         {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorpanel", "script_path" : "Classes/ParticleEditorPanel.lua"},
