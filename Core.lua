@@ -97,6 +97,8 @@ function BLE:InitManagers(data)
         self:LoadHashlist()
     end
 
+    Hooks:PostHook(MenuComponentManager, "resolution_changed", "reload_to_fix_res", ClassClbk(BLE, "MapEditorCodeReload"))
+
     self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
     self.ListDialog = ListDialog:new(self._dialogs_opt)

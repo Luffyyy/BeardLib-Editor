@@ -642,7 +642,7 @@ function Utils:GetLayer(name)
 end
 
 function Utils:GetConvertedResolution()
-    return {width = managers.gui_data:full_1280_size().width, height = managers.gui_data:full_1280_size().height}
+    return {width = managers.gui_data:full_scaled_size().width, height = managers.gui_data:full_scaled_size().height}
 end
 
 DummyItem = DummyItem or class()
