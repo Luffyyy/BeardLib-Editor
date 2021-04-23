@@ -43,7 +43,7 @@ function EditorInstanceInputEvent:_draw_instance_link(instance_name)
 		return false
 	end
 
-	local r, g, b = self:get_link_color()
+	local r, g, b = self:mission_element():get_link_color()
 
 	if self._type == "input" then
 		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
@@ -400,7 +400,7 @@ function EditorRandomInstance:_draw_instance_link(instance_name)
 		return false
 	end
 
-	local r, g, b = self:get_link_color()
+	local r, g, b = self:mission_element():get_link_color()
 
 	if self._type == "input" then
 		Application:draw_arrow(self._unit:position(), instance.position, r, g, b, 0.2)
