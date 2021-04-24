@@ -7,12 +7,6 @@ BLE.Updaters = {}
 BLE.DBPaths = {}
 BLE.Prefabs = {}
 
-function BLE:PreModuleInit()
-    if not FileIO:Exists(Path:Combine(self.ModPath, "Data", "Paths.bin")) then
-        self:ModError("Data files are missing. Go to BeardLib's mods manager and download it there. Or, download it manually from Modworkshop")
-    end
-end
-
 function BLE:Init()
 	self.AssetsDirectory =  Path:CombineDir(self.ModPath, "Assets")
 	self.HooksDirectory =  Path:CombineDir(self.ModPath, "Hooks")
@@ -226,7 +220,28 @@ function BLE:LoadCustomAssets()
     end
 end
 
+function BLE:AskToDownloadData()
+    BLE.Utils:QuickDialog({title = "Info", message = "BeardLib-Editor requires permission to download data files, without them, the editor cannot work. Download?"}, {
+        {"Yes", function()
+            BeardLib.Menus.Mods:SetEnabled(true)
+            BeardLib.Menus.Mods:ForceDownload(self.AssetUpdates, function()
+                self:LoadHashlist()
+            end)
+        end}
+    })
+end
+
 function BLE:LoadHashlist()
+    if not FileIO:Exists(Path:Combine(self.ModPath, "Data", "Paths.bin")) then
+        self._disabled = true
+        Hooks:Add("MenuManagerOnOpenMenu", "BeardLibShowErrors", function(_, menu)
+            if menu == "menu_main" and not LuaNetworking:IsMultiplayer() then
+                self:AskToDownloadData()
+            end
+        end)
+        return
+    end
+
     local t = os.clock()
     self:log("Loading DBPaths")
     if Global.DBPaths and Global.DBPackages and Global.WorldSounds then
@@ -256,6 +271,7 @@ function BLE:LoadHashlist()
         end
         self:LoadCustomAssetsToHashList(BeardLib.Utils.XML:Clean(deep_clone(pkg.config)), pkg.dir, id)
     end
+    self._disabled = false
 end
 
 --Converts a list of packages - assets of packages to premade tables to be used in the editor

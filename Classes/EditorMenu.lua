@@ -92,6 +92,10 @@ function EditorMenu:hide()
 end
 
 function EditorMenu:set_enabled(enabled)
+    if BLE._disabled then
+        BLE:AskToDownloadData()
+        return
+    end
     local in_editor = managers.editor and game_state_machine:current_state_name() == "editor"
     local opened = BeardLib.managers.dialog:DialogOpened(self)
     if enabled then

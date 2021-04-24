@@ -43,7 +43,7 @@ function BLTNotificationsGui:mouse_pressed(button, x, y)
     if not self._enabled or button ~= Idstring("0") then
         return
     end
-    if BLE then
+    if BLE and not BLE._disabled then
         if alive(self._beardlib_editor_startlast) and self._beardlib_editor_startlast:inside(x,y) then
             local data = BLE.Options:GetValue("LastLoaded")
             if data and data.name then
