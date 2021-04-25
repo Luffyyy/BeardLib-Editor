@@ -224,7 +224,7 @@ function BLE:AskToDownloadData()
     BLE.Utils:QuickDialog({title = "Info", message = "BeardLib-Editor requires permission to download data files, without them, the editor cannot work. Download?"}, {
         {"Yes", function()
             BeardLib.Menus.Mods:SetEnabled(true)
-            BeardLib.Menus.Mods:ForceDownload(self.AssetUpdates, function()
+            BeardLib.Menus.Mods:ForceDownload(self.DataFilesUpdate, function()
                 self:LoadHashlist()
             end)
         end}

@@ -8,7 +8,8 @@
 		min_lib_ver="4.4"
 		core_class="Core.lua"
 	>
-    <AssetUpdates id="25270" provider="modworkshop" custom_name="BeardLib-Editor package data" folder_name="Data" install_directory="$ModPath$"/>
+    <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor" dont_delete="true"/>
+    <AssetUpdates id="25270" provider="modworkshop" custom_name="Data Files" folder_name="Data" install_directory="$ModPath$" name="DataFilesUpdate"/>
     <Classes directory="Classes">
 		<class file="Utils.lua"/>
 		<class file="ExportUtils.lua"/>
