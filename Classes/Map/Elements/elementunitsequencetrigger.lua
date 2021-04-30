@@ -18,7 +18,7 @@ function EditorUnitSequenceTrigger:_build_panel()
 	self:BuildUnitsManage("sequence_list", {
 		key = "unit_id", values_name = "Sequence", value_key = "sequence", orig = {unit_id = 0, sequence = ""}, combo_items_func = function(name, value)
 			local unit_name = value.unit:name() or ""
-			local sequences = table.merge({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
+			local sequences = table.list_union({"interact", "complete", "load"}, managers.sequence:get_editable_state_sequence_list(unit_name), managers.sequence:get_triggable_sequence_list(unit_name))
 			return sequences
 		end 
 	}, self._draw.update_units)
