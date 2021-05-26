@@ -524,6 +524,7 @@ function MScript:create_mission_element_unit(element)
     unit:unit_data().local_rot = Rotation()
 	unit:mission_element().element = element
 	unit:mission_element():update_text()
+	unit:mission_element():update_icon()
 	if managers.editor then
 		local mission = Utils:GetPart("mission")
 		mission:set_name_id(element.class, element.editor_name)

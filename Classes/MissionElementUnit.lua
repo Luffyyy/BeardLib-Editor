@@ -2,7 +2,7 @@ MissionElementUnit = MissionElementUnit or class()
 function MissionElementUnit:init(unit)
     self._unit = unit
 
-    local iconsize = 32
+    local iconsize = EditorPart:Val("ElementsSize") or 32
     local root = self._unit:get_objects_by_type(Idstring("object3d"))[1]
     if root == nil then
         return
@@ -63,6 +63,28 @@ function MissionElementUnit:update_text(t, dt)
 	end
 end
 
+function MissionElementUnit:update_icon()
+    if not EditorPart:Val("UniqueElementIcons") then
+        return
+    end
+
+    if self.element and self._icon and alive(self._icon) then
+        local texture, texture_rect = BLE.Utils:GetElementIcon(tostring(self.element.class):gsub("Element", ""))
+        if texture and texture_rect then
+            self._icon:set_image(texture, unpack(texture_rect))
+            self._icon_outline = self._icon_outline or self._ws:panel():bitmap({
+                texture = texture,
+                texture_rect = texture_rect,
+                render_template = "OverlayVertexColorTextured",
+                color = Color.black,
+                rotation = 360,
+                layer = -1,
+            }) 
+            self._icon_outline:set_size(self._icon:w() * 1.1, self._icon:h() * 1.1)
+            self._icon_outline:set_center(self._icon:center())
+        end
+    end
+end
 function MissionElementUnit:get_link_color()
     return self._color:unpack()
 end
@@ -85,11 +107,19 @@ function MissionElementUnit:visible()
 end
 
 function MissionElementUnit:select()
-    self._icon:set_texture_rect(261, 44, 64, 64)
+    if self._icon_outline then
+        self._icon_outline:set_color(self._color*2)
+    else
+        self._icon:set_texture_rect(261, 44, 64, 64)
+    end
 end
 
 function MissionElementUnit:unselect()
-    self._icon:set_texture_rect(399, 44, 64, 64)
+    if self._icon_outline then
+        self._icon_outline:set_color(Color.black)
+    else
+        self._icon:set_texture_rect(399, 44, 64, 64)
+    end
 end
 
 function MissionElementUnit:set_color(color)

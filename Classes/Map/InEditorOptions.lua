@@ -69,8 +69,10 @@ function Options:build_default()
     raycast:numberbox("RaycastDistance", nil, 200000)
 
     local mission = self:group("Mission", groups_opt)
+	mission:tickbox("UniqueElementIcons", ClassClbk(self, "update_option_value"), self:Val("UniqueElementIcons"))
     mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Val("RandomizedElementsColor"))
     mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
+    mission:slider("ElementsSize", ClassClbk(self, "update_option_value"), self:Val("ElementsSize"), {max = 64, min = 16, floats = 0})
 
     --Can't find a place for these
     local fixes = self:group("Fixes", groups_opt)
