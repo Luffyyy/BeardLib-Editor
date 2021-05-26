@@ -157,6 +157,8 @@
                 <option type="boolean" default_value="false" name="AutoSave"/>
                 <option type="number" default_value="5" name="AutoSaveMinutes"/>
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
+                <option type="boolean" default_value="true" name="UniqueElementIcons"/>
+                <option type="number" default_value="32" name="ElementsSize" min="16" max="64" step="1"/>
                 <option type="boolean" default_value="true" name="RemoveOldLinks"/>
                 <option type="boolean" default_value="false" name="EndlessSelection"/>
                 <option type="number" default_value="0.5" name="EndlessSelectionReset"/>
@@ -182,6 +184,7 @@
         <material_config path="core/material_configs/hub_elements"/>
         <png path="textures/editor_logo"/>
         <png path="textures/editor_icons_df"/>
+        <png path="textures/element_icons_df"/>
 
         <unit_obj path="units/mission_element/element"/>
         <unit_obj path="units/civilian_element/element"/>
