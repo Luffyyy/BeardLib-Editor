@@ -353,6 +353,7 @@ function MissionScriptEditor:update_element(position_only, old_script)
 		unit:set_rotation(self._element.values.rotation)
 	end
 	if not position_only then
+		self:get_on_executed_units()
 		managers.mission:set_element(self._element, old_script)
 		self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
 	end
@@ -756,4 +757,27 @@ function MissionScriptEditor:Alert(text, color, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
 	return (opt.group or self._menu):alert(text, color)
+end
+
+-- TODO: maybe add linking to other stuff like units with sequence elements
+-- TODO: Allow hot key to be changed
+function MissionScriptEditor:link_selection(unit)
+	if alive(unit) and unit:mission_element() then
+		local on_executed = self._element.values.on_executed
+		local element = unit:mission_element().element
+
+		--Is unit already linked? Unlink.
+		for i, u in pairs(self._element.values.on_executed) do
+			if u.id == element.id then
+				table.remove(on_executed, i)
+				self:update_element()
+				return
+			end
+		end
+
+		-- No? Add it!
+		table.insert(on_executed, {id = element.id, delay = 0})
+
+		self:update_element()
+	end
 end

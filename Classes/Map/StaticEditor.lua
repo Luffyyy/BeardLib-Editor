@@ -987,6 +987,16 @@ function Static:select_unit(mouse2)
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
+                if not mouse2 and ctrl() then
+                    local selected_unit = self:selected_unit()
+                    if alive(selected_unit) and selected_unit:mission_element() then
+                        local script = self:GetPart("mission")._current_script
+                        if script then
+                            script:link_selection(ray.unit)
+                            return
+                        end
+                    end
+                end
                 self:set_selected_unit(ray.unit, mouse2)
             end
         end
