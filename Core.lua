@@ -91,7 +91,9 @@ function BLE:InitManagers(data)
         self:LoadHashlist()
     end
 
-    Hooks:PostHook(MenuComponentManager, "resolution_changed", "reload_to_fix_res", ClassClbk(BLE, "MapEditorCodeReload"))
+    Hooks:PostHook(MenuCallbackHandler, "change_resolution", "reload_to_fix_res", function()
+        BeardLib:AddDelayedCall("FixEditorResolution", 0.5, ClassClbk(BLE, "MapEditorCodeReload"), true)
+    end)
 
     self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
