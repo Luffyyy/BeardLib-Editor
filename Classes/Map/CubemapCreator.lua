@@ -1,3 +1,18 @@
+local function encase_quotemarks(str)
+	return string.format("\"%s\"", str)
+end
+
+local function get_screen_size()
+	local res = Application:screen_resolution()
+	local diff = res.x - res.y
+	local x1 = diff / 2
+	local y1 = 0
+	local x2 = res.x - diff / 2
+	local y2 = res.y
+
+	return x1, y1, x2, y2
+end
+
 CubemapCreator = CubemapCreator or class(EditorPart)
 
 function CubemapCreator:init(parent, menu, cam)
@@ -12,10 +27,14 @@ end
 
 function CubemapCreator:_init_paths()
 	-- need to encase it in ""
-	self._gen_path = string.format("\"%s\"", Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.exe"))
+	self._gen_path = encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.exe"))
+	self._tool_path_template = function(tool_path)
+		return encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", tool_path))
+	end
 	self._cubelights_path = "levels/mods/" .. Global.current_level_id .. "/cube_lights"
 	self._cubemaps_path = "levels/mods/" .. Global.current_level_id .. "/cubemaps"
-	self._temp_path = BLE.ModPath .. "Tools/" .. "temp/"
+	self._tools_path = BLE.ModPath .. "Tools/"
+	self._temp_path = self._tools_path .. "temp/"
 	FileIO:MakeDir(self._temp_path)
 end
 
@@ -320,13 +339,13 @@ function CubemapCreator:_create_cube_map()
         self._camera:set_rotation(Rotation(Vector3(0, 0, -1), Vector3(0, -1, 0)))
         self._wait_frames = 50
 	elseif self._cube_counter == 7 then
-		self:_generate_cubemap(self._params.light and "light" or "reflect")
+		self:_generate_cubemap(self._params.light and "cubemap_light" or "cubemap_reflection")
 		self:_cubemap_done()
 
 		return true
 	end
 
-	local x1, y1, x2, y2 = self:_get_screen_size()
+	local x1, y1, x2, y2 = get_screen_size()
 
 	local path = self._params.source_path
 	Application:screenshot(path .. self._names[self._cube_counter], x1, y1, x2, y2)
@@ -439,7 +458,7 @@ function CubemapCreator:_create_dome_occlusion(params)
 end
 
 function CubemapCreator:generate_dome_occlusion(path)
-	local x1, y1, x2, y2 = self:_get_screen_size()
+	local x1, y1, x2, y2 = get_screen_size()
 
 	Application:screenshot(path .. self._params.output_name .. ".tga", x1, y1, x2, y2)
 end
@@ -457,7 +476,7 @@ function CubemapCreator:_tick_generate_dome_occlusion(t, dt)
 			self._params.dome_occ.wait_frames = 10 -- Let the file generate so python doesn't fail
 		end
         if self._params.step == 2 then
-			self:_generate_cubemap("dome_occ")
+			self:_generate_cubemap("spotmapgen")
         elseif self._params.step == 3 then
             self:dome_occlusion_done()
         end
@@ -596,22 +615,27 @@ function CubemapCreator:_cubemap_done()
 end
 
 function CubemapCreator:_generate_cubemap(file)
-	local exe_path = string.format('%s %s -i ', self._gen_path, file)
+	-- TODO: allow using the old generation script because
+	-- the ovk one is slow as shit
+	local exe_path = encase_quotemarks(
+		Path:Combine(Application:base_path(), BLE.ModPath, "Tools", file .. ".bat")
+	) .. " "
 
 	local input_path
 	if not self._params.dome_occ then
 		for i, _ in pairs(self._names) do
 			-- absolute paths have to have "" around them because of spaces in the base_path
-			input_path = string.format("\"%s\" ", Path:Combine(Application:base_path(), self._temp_path, self._name_ordered[i]))
+			input_path = encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, self._name_ordered[i])) .. " "
 			exe_path = exe_path .. input_path
 		end
 	else
-		input_path = string.format("\"%s\" ", Path:Combine(Application:base_path(), self._temp_path, self._params.output_name))
+		input_path = encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, self._params.output_name .. ".tga")) .. " "
 		exe_path = exe_path .. input_path
 	end
 
-	exe_path = exe_path .. string.format("-o %s%s", self._params.output_name, self._params.dome_occ and ".tga" or ".dds")
-	exe_path = string.format("\"%s\"", exe_path)
+	local filename = self._params.output_name .. (self._params.dome_occ and ".tga" or ".dds")
+	exe_path = exe_path .. encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, filename)) .. " "
+	exe_path = encase_quotemarks(exe_path)
 	if os.execute(exe_path) == 0 then 
 		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, self._params.output_name .. ".texture")))
 		self:_move_output(self._params.output_name)
@@ -635,7 +659,7 @@ end
 function CubemapCreator:_move_output(output_path)
 	local output = self._params.output_name .. ".texture"
 	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
-	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output )
+	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output)
 	if self._names then
 		for i=1, 6 do
 			FileIO:Delete(self._params.source_path .. self._names[i])
@@ -646,14 +670,10 @@ function CubemapCreator:_move_output(output_path)
 		FileIO:Delete(final_path)
 	end
 
-	-- Delete temp tga
-	local tga_path = Path:Combine(self._params.source_path, self._params.output_name..".tga")
-	if FileIO:Exists(tga_path) then
-		FileIO:Delete(tga_path)
-	end
+	local ext = self._params.dome_occ and ".tga" or ".dds"
 
 	FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
-	FileIO:MoveTo(self._params.source_path .. output, final_path)
+	FileIO:MoveTo(self._params.source_path .. self._params.output_name .. ext, final_path)
 
 	-- Updating Add.xml
 	local file_path = Path:Combine(self._params.output_path, tostring(self._params.output_name))
@@ -671,21 +691,10 @@ function CubemapCreator:_move_output(output_path)
 end
 
 function CubemapCreator:notify_success(type)
-	type = type == "light" and "Cubelight(s)" or "Cubemap(s)"
+	type = type == "cubemap_light" and "Cubelight(s)" or "Cubemap(s)"
 	BLE.Utils:Notify("Info", type .. " successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
 end
 
 function CubemapCreator:viewport()
 	return self._parent._vp
-end
-
-function CubemapCreator:_get_screen_size()
-	local res = Application:screen_resolution()
-	local diff = res.x - res.y
-	local x1 = diff / 2
-	local y1 = 0
-	local x2 = res.x - diff / 2
-	local y2 = res.y
-
-	return x1, y1, x2, y2
 end
