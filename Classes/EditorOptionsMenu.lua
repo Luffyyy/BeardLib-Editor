@@ -9,6 +9,7 @@ function Options:init()
 	main:textbox("ExtractDirectory", ClassClbk(self, "set_clbk"), O:GetValue("ExtractDirectory"), {
 		help = "The extract directory will be used to load units from extract and be able to edit lights"
 	})
+	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
 	main:slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
 	main:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
 	main:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
@@ -50,6 +51,28 @@ function Options:init()
 	keybind("RotateSpawnDummyRoll")
 
 	self:button("ResetOptions", ClassClbk(self, "reset_options", page))
+end
+
+function Options:show_disable_physics_fix_dialog()
+	BLE.Utils:YesNoQuestion([[
+Since the editor requires an edit to the physics settings of the game, and such edit can lead to crashing other players (or cause unwanted bugs), the editor also disables online play.
+
+This option will disable this physics fix and enable online play.
+
+Do note however, the editor will not work properly without said fixes. So once you're done playing and wish to continue using the editor, please turn on this option.
+
+NOTE:
+Changing this option will close the game, start it again afterwards for the changes to be applied.
+]]
+, function()
+		local file = "mods/saves/BLEDisablePhysicsFix"
+		if FileIO:Exists(file) then
+			FileIO:Delete(file)
+		else
+			FileIO:WriteTo(file, "", "w")
+		end
+		setup:quit()
+	end)
 end
 
 function Options:Load(data)

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<tweak name="settings/physics_settings" extension="physics_settings">
+<tweak control-key="editor-fix-physics" name="settings/physics_settings" extension="physics_settings">
 	<search>
 		<physics_settings/>
 		<body_templates/>
