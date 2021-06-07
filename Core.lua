@@ -18,7 +18,7 @@ function BLE:Init()
 
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
-	self.HasFix = XAudio and FileIO:Exists(self.ModPath.."supermod.xml") --current way of knowing if it's a superblt user and the fix is running.
+    self.HasFix = not FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and FileIO:Exists(self.ModPath.."supermod.xml")
 	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
     self.UsableAssets = {"unit", "effect", "environment", "scene"}
 
