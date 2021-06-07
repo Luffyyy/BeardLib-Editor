@@ -438,7 +438,8 @@ ItemExt.GetItemValue = Item.GetItemValue
 ItemExt.SetItemValue = Item.SetItemValue
 ItemExt.RemoveItem = Item.RemoveItem
 
-
+--- @deprecated
+--- This shouldn't be really used anymore, this is extremely bad practice and causes a lot of issues for the lua server.
 function ItemExt:add_funcs(clss, menu)
 	menu = menu or clss._menu
 	for n, func in pairs(ItemExt) do
