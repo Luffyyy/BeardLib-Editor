@@ -19,7 +19,17 @@ function ProjectModuleEditor:init(parent, data, create_data)
         return
     end
 
+    self._meta = data._meta
+
+    if data.file ~= nil then
+        local mod = self._parent._mod
+        self._file_path = mod:GetRealFilePath(Path:Combine(mod.ModPath, data.file))
+        self._file_type = data.file_type or "custom_xml"
+        data = FileIO:ReadScriptData(self._file_path, self._file_type, true)
+    end
+
     self._data = data
+    self._original_data = data
 
     self._menu = parent._menu
     ItemExt:add_funcs(self)
@@ -36,6 +46,7 @@ end
 --- @param data table
 function ProjectModuleEditor:finalize_creation(data, create_data)
     self._data = data
+    self._original_data = data
     self._parent:add_module(data, create_data.no_reload)
     if create_data.final_callback then
         create_data.final_callback(true, data)
@@ -58,6 +69,12 @@ end
 
 --- Save function for the data. This deals with things like filesystem and what not. Called from ProjectEditor.
 function ProjectModuleEditor:save_data()
+    if self._file_path then
+        -- Saves the module separately, useful for packages/add files
+        FileIO:WriteScriptData(self._file_path, self._data, self._file_type, true)
+    else
+        return self._data
+    end
 end
 
 --- Destroy function.
