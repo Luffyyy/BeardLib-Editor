@@ -3,15 +3,15 @@
 ---That's why some buttons like "Actions" are affected by other classes.
 ---@class ProjectEditor
 ProjectEditor = ProjectEditor or class()
-ProjectEditor.EDITORS = {}
-ProjectEditor.ACTIONS = {}
+ProjectEditor.EDITORS = ProjectEditor.EDITORS or {}
+ProjectEditor.ACTIONS = ProjectEditor.ACTIONS or {}
 
 local XML = BeardLib.Utils.XML
 local CXML = "custom_xml"
 
 --- @param parent Menu
 --- @param mod ModCore
-function ProjectEditor:init(parent, mod)
+function ProjectEditor:init(parent, mod, previous_project_data)
     local data = BLE.MapProject:get_clean_config(mod, true)
     self._mod = mod
     self._data = data
@@ -69,7 +69,9 @@ function ProjectEditor:init(parent, mod)
     self._left_menu:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
     self._left_menu:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
     self:build_modules()
-    if #self._modules > 0 then
+    if previous_project_data and previous_project_data._current_module_index and self._modules[previous_project_data._current_module_index] then
+        self:open_module(self._modules[previous_project_data._current_module_index])
+    elseif #self._modules > 0 then
         self:open_module(self._modules[#self._modules])
     end
 end
@@ -79,7 +81,7 @@ function ProjectEditor:build_modules()
     local modules = self._modules_list
     modules:ClearItems()
     for _, mod in pairs(self._modules) do
-        local meta = mod._data._meta
+        local meta = mod._meta
         local text = string.capitalize(meta)
         if ProjectEditor.EDITORS[meta].HAS_ID then
             text = text .. ": "..mod._data.id
@@ -134,6 +136,7 @@ function ProjectEditor:open_module(editor)
     end
 
     self._current_module = editor
+    self._current_module_index = table.get_key(self._modules, editor)
     editor:do_build_menu()
 
     self:small_button("Delete", ClassClbk(self, "delete_current_module"), {enabled = editor._deletable})
@@ -164,9 +167,12 @@ end
 --- Saves the project data.
 function ProjectEditor:save_data_callback()
     local data = self._data
-
     for _, mod in pairs(self._modules) do
-        mod:save_data()
+        local new_data = mod:save_data()
+        if new_data and new_data ~= mod._original_data then
+            self._data[table.get_key(self._data, mod._original_data)] = new_data
+            mod._original_data = new_data
+        end
     end
 
     local id = data.orig_id or data.name
@@ -261,4 +267,9 @@ end
 --- Returns whether this project is loaded in the editor to avoid causing issues
 function ProjectEditor:loaded_in_editor()
     return self._loaded_in_editor
+end
+
+--- Returns the data of the project (main.xml)
+function ProjectEditor:data()
+    return self._data
 end

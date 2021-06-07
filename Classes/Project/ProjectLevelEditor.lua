@@ -369,6 +369,7 @@ function ProjectLevelEditor:save_data()
         table.delete(tweak_data.levels._level_index, orig_id)
     end
     level.orig_id = nil
+    return ProjectLevelEditor.super.save_data(self)
 end
 
 function ProjectLevelEditor:delete()

@@ -398,4 +398,5 @@ function ProjectNarrativeEditor:save_data()
         table.delete(tweak_data.narrative._jobs_index, orig_id)
     end
     narr.orig_id = nil
+    return ProjectNarrativeEditor.super.save_data(self)
 end

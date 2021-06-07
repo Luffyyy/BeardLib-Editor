@@ -192,4 +192,5 @@ function ProjectLocalization:save_data()
 
     self._languages_to_save = {}
     self._languages_to_delete = {}
+    return ProjectLocalization.super.save_data(self)
 end
