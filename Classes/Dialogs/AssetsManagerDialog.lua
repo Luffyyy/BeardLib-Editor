@@ -476,7 +476,7 @@ function AssetsManagerDialog:find_packages(missing_assets, clbk)
         local size = BLE.Utils:GetPackageSize(name)
         if size then
             table.insert(items, {
-                name = string.format("%s has %s/%s of the missing assets(%.2fmb)", name, #package, missing_amount, size),
+                name = string.format("%s has %s/%s of the missing assets(%.3fmb)", name, #package, missing_amount, size),
                 package = name,
                 package_size = size,
                 amount = #package,
