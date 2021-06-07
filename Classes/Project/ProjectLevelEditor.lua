@@ -51,9 +51,36 @@ function ProjectLevelEditor:build_menu(menu, data)
     menu:tickbox("PlayerInvulnerable", up, data.player_invulnerable)
     menu:button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog"))
 
+
+    local loading = menu:holder("LoadingBg", {align_method = "grid"})
+    loading:button("SelectLoadingTexture", ClassClbk(self, "SelectLoadingTextureDialog"), {
+        size_by_text = true, offset = 0
+    })
     if data.ghost_bonus == 0 then
         data.ghost_bonus = nil
     end
+end
+
+function ProjectLevelEditor:SelectLoadingTextureDialog()
+    local base_path = Path:Normalize(Application:base_path())
+
+    BLE.FBD:Show({
+        where = base_path, 
+        extensions = {"texture", "dds", "png", "tga"},
+        file_click = function(path)
+            -- TODO: deal with cases when you rename the level
+            local ext = Path:GetFileExtension(path)
+            local path_in_assets = "guis/textures/loading/job_"..self._data.id.."."..ext
+            local project = BLE.MapProject
+            FileIO:CopyFileTo(path, Path:Combine(project:current_path(), "assets", path_in_assets))
+            project:save_main_xml(self._parent:data(), false, {
+                {_meta = ext, path = path_in_assets}
+            })
+            self._data.load_screen = path_in_assets
+            self._parent:save()
+            BLE.FBD:Hide()
+        end
+    })
 end
 
 function ProjectLevelEditor:create(create_data)
@@ -99,8 +126,6 @@ function ProjectLevelEditor:create(create_data)
                 template.id = name
                 local proj_path = self._parent:get_dir()
                 local level_path = Path:Combine(self.LEVELS_DIR, template.id)
-                template.include.directory = level_path
-
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Level"), Path:Combine(proj_path, level_path))
             end
@@ -120,8 +145,6 @@ function ProjectLevelEditor:pre_clone_level(create_data)
         _meta = "level",
         assets = {},
         id = name,
-        add = {directory = "assets"},
-        include = {directory = Path:Combine(self.LEVELS_DIR, name)},
         packages = type(level.package) == "string" and {level.package} or level.package or {},
         script_data_mods = deep_clone(BLE.MapProject._level_module_template).script_data_mods
     })
@@ -190,25 +213,31 @@ function ProjectLevelEditor:clone_level(create_data)
             FileIO:WriteTo(file_path, "<table></table>")
         end
     end
+
+    local local_add = {_meta = "add"}
     --This local function is used to extract the files of the map by reading the scriptdata.
     --To actually have it work we ofc need to load the packages first or else the game will go into shit.
     local function extra_file(name, typ, path, data_func)
         path = path or level_dir
         typ = typ or name
         local data
-        local typeid = typ:id()
         local inpath = Path:Combine(path, name)
-        if PackageManager:has(typeid, inpath:id()) then
-            data = PackageManager:script_data(typeid, inpath:id())
-            if data_func then
-                data_func(data)
+        if blt.asset_db.has_file(inpath, typ) then
+            local success = pcall(function()
+                data = BLE.Utils:ParseXml(typ, inpath, true)
+                if data_func then
+                    data_func(data)
+                end
+                local infolder = path:gsub(level_dir, "")
+                local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name
+                FileIO:WriteScriptData(Path:Combine(custom_level_dir, file.."."..typ), data, "binary")
+                table.insert(local_add, {_meta = typ, path = file, script_data_type = "binary"})
+            end)
+            if not success then
+                BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Read error)", inpath.."."..typ)
             end
-            local infolder = path:gsub(level_dir, "")
-            local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name.."."..typ
-            FileIO:WriteScriptData(Path:Combine(custom_level_dir, file), data, "binary")
-            table.insert(level.include, {_meta = "file", file = file, type = "binary"})
         else
-            BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s", inpath)
+            BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Might not exist)", inpath.."."..typ)
         end
         if PackageManager:package_exists(inpath) then
             extra_package(inpath)
@@ -218,10 +247,6 @@ function ProjectLevelEditor:clone_level(create_data)
 
     --Here we go through possible files of the map to extract them.
     extra_package(level_dir.."world")
-    for _, p in pairs(level.packages) do
-        BLE.MapProject:load_temp_package(p.."_init")
-        BLE.MapProject:load_temp_package(p)
-    end
 
     extra_file("world", nil, nil, function(data) data.brush = nil end)
     extra_file("mission")
@@ -237,24 +262,25 @@ function ProjectLevelEditor:clone_level(create_data)
     local texture = "texture"
     local file_path
     local add = {_meta = "add", directory = "assets"}
-    for k, v  in pairs(Global.DBPaths[texture]) do
-        if v and k:sub(1, #cube_lights_dir) == inpath then
-            file_path = Path:Combine(self.LEVELS_DIR.."/mods", name, string.sub(k, #path))
-            FileIO:WriteTo(Path:Combine(BeardLib.config.maps_dir, data.name, "assets", file_path) .. "." .. typ , DB:open(texture, k):read())
-            table.insert(add, {_meta = "texture", path = file_path})
+    for k, v in pairs(Global.DBPaths[texture]) do
+        if v and k:sub(1, #cube_lights_dir) == v then
+            if blt.asset_db.has_file(v, "texture") then
+                FileIO:WriteTo(Path:Combine(custom_level_dir, "cube_lights", k..".texture"), blt.asset_db.read_file(k, texture):read())
+                table.insert(local_add, {_meta = "texture", path = file_path})
+            end
         end
     end
-
-    --Write to the add.xml of the level
-    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
 
     local continents_data = extra_file("continents")
     for c in pairs(continents_data) do
         local c_path = Path:Combine(level_dir, c)
-        BLE.MapProject:load_temp_package(Path:Combine(c_path, c).."_init")
         extra_file(c, "continent", c_path)
         extra_file(c, "mission", c_path)
     end
+
+    --Write to the add.xml of the level
+    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
+    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add_local.xml"), local_add, "custom_xml")
 
     --Removing stuff that the module doesn't require/use.
     level.world_name = nil
@@ -263,7 +289,6 @@ function ProjectLevelEditor:clone_level(create_data)
     level.package = nil
 
     PackageManager:set_resource_loaded_clbk(Idstring("unit"), ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
-    BLE.MapProject:unload_temp_packages()
     return level
 end
 
@@ -359,12 +384,7 @@ function ProjectLevelEditor:save_data()
     local dir = self._parent:get_dir()
 
     if orig_id ~= level_id then -- Level ID has been changed, let's delete the old ID to let the new ID replace it and move the folder.
-        local include_dir = Path:Combine("levels", level_id)
-        level.include.directory = include_dir
-        if level.add.file then
-            level.add.file = Path:Combine(include_dir, "add.xml")
-        end
-        FileIO:MoveTo(Path:Combine(dir, "levels", orig_id), Path:Combine(dir, include_dir))
+        FileIO:MoveTo(Path:Combine(dir, "levels", orig_id), Path:Combine(dir, "levels", level_id))
         tweak_data.levels[orig_id] = nil
         table.delete(tweak_data.levels._level_index, orig_id)
     end

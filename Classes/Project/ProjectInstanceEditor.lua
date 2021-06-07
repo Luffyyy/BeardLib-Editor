@@ -65,8 +65,6 @@ function ProjectInstanceEditor:create(create_data)
                 template.id = name
                 local proj_path = self._parent:get_dir()
                 local level_path = Path:Combine(self.LEVELS_DIR, template.id)
-                template.include.directory = level_path
-
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Instance"), Path:Combine(proj_path, level_path))
             end
@@ -82,7 +80,6 @@ function ProjectInstanceEditor:pre_clone_level(create_data)
     local name = create_data.name
     local level = deep_clone(BLE.MapProject._instance_module_template)
     level.id = name
-    level.include.directory = Path:Combine(self.LEVELS_DIR, name)
     return level, create_data.clone_path:gsub("world", "")
 end
 

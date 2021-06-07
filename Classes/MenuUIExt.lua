@@ -2,7 +2,7 @@
 --snek
 
 local C = BeardLib.Items
- 
+
 local Item = C.Item
 local Slider = C.Slider
 
@@ -128,6 +128,10 @@ end
 function ItemExt:divider(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = color, offset = {8, 4}}, o))
+end
+
+function ItemExt:img(name, o)
+	return self:Image(table.merge({name = name, text = name}, o))
 end
 
 function ItemExt:separator(o)

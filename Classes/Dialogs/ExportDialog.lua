@@ -14,6 +14,9 @@ function ExportDialog:_Show(params)
 
     self._clbk = params.done_clbk
 
+    self:tickbox("IncludeFilesInProject", nil, false, {
+        help = "Should the assets exported be included in the project? This is useful if you need to edit the assets"
+    })
     self:divider("Include:")
     self:tickbox("NetworkUnits", nil, true)
     self:tickbox("Animations", nil, true, semi_opt)
@@ -32,7 +35,7 @@ function ExportDialog:hide(success)
             model = not self:GetItem("Models"):Value(),
             cooked_physics = not self:GetItem("CookedPhysics"):Value(),
             network_unit = not self:GetItem("NetworkUnits"):Value()
-        }, true, self._clbk)
+        }, self:GetItem("IncludeFilesInProject"):Value(), true, self._clbk)
     end
     return ExportDialog.super.hide(self, success)
 end

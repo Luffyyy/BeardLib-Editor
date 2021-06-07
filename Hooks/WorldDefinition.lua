@@ -22,6 +22,9 @@ function WorldDef:init(params, ...)
 	self._all_names = {}
 	self._statics = {}
 
+	self._werent_loaded = {}
+	self._failed_to_load = {}
+
 	WorldDef.super.init(self, params, ...)
 	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
 	self:create("ai")
@@ -621,6 +624,8 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 	self:set_up_name_id(unit)
 end
 
+local unit_ids = Idstring("unit")
+
 function WorldDef:make_unit(data, offset)
 	local name = data.name
 	if table.has(self._replace_names, name) then
@@ -638,7 +643,19 @@ function WorldDef:make_unit(data, offset)
 		if MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 		else
-			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)		
+			local failed = false
+			if not PackageManager:has(unit_ids, Idstring(name)) then
+				if blt.asset_db.has_file(name, "unit") then
+					table.insert(self._werent_loaded, name)
+					managers.editor.parts.world:QuickLoadFromExtract("unit", name)
+				else
+					failed = true
+					table.insert(self._failed_to_load, name)
+				end
+			end
+			if not failed then
+				unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+			end
 		end
 	end
 	local not_allowed = {
@@ -836,6 +853,24 @@ function WorldDef:prepare_for_spawn_instance(instance)
 	if self._init_done then
 		self:spawn_quick()
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
+		self:report_stuff()
+	end
+end
+
+function WorldDef:report_stuff()
+	if #self._werent_loaded > 0 then
+		local str = "The following units were not loaded:\n"..table.concat(self._werent_loaded, "\n")
+		str = str .. "\nIn order to ensure smooth editing with as little crashes as possible, we loaded the units for you."
+		str = str .. "\nThe units will appear in the assets manager."
+		BLE.Utils:Notify("Heads up", str)
+		self._werent_loaded = {}
+	end
+	if #self._failed_to_load > 0 then
+		local str = "The following units were not loaded:\n"..table.concat(self._failed_to_load, "\n")
+		str = str .. "\nUnfortunately, these files are not part of the game and so we could not automatically load them."
+		str = str .. "\nYou should load these units properly before continuing to work on this map."
+		BLE.Utils:Notify("WARNING", str)
+		self._failed_to_load = {}
 	end
 end
 

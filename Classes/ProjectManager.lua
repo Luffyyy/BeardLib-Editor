@@ -46,13 +46,13 @@ end
 --- @param data table
 function ProjectManager:Load(data)
     if data and data.selected_mod then
-        self:select_project(data.selected_mod)
+        self:select_project(data.selected_mod, data.project_data)
     end
 end
 
 --- Destroy function for the class. Used for code refreshing.
 function ProjectManager:Destroy()
-    return {selected_mod = self._current_mod}
+    return {selected_mod = self._current_mod, project_data = self._project}
 end
 
 --- Let's you run a function on each level & instance in the project.
@@ -65,18 +65,6 @@ function ProjectManager:for_each_level(data, func)
     for _, level in pairs(XML:GetNodes(data, "instance")) do
         func(level)
     end
-end
-
---- Returns the current loaded level's data.
---- @param data table
---- @return table, nil
-function ProjectManager:current_level(data)
-    for _, level in pairs(XML:GetNodes(data, Global.editor_loaded_instance and "instance" or "level")) do
-        if level.id == Global.current_level_id then
-            return level
-        end
-    end
-    return nil
 end
 
 --- Goes through data and searches for a level using the level ID.
@@ -96,6 +84,20 @@ function ProjectManager:get_level_by_id(data, id)
     end
 end
 
+--- Returns the module class of a level using its ID
+function ProjectManager:get_level_module(mod, id)
+    for _, module in pairs(mod._modules) do
+        if module._meta == "level" and module.id == id then
+            return module
+        end
+    end
+end
+
+--- Returns the current loaded level's module.
+function ProjectManager:current_level()
+    return BeardLib.current_level
+end
+
 --- Returns current loaded level's mod.
 --- @return ModCore
 function ProjectManager:current_mod()
@@ -105,17 +107,44 @@ end
 --- Returns the directory of the current level module's include.
 --- @return string
 function ProjectManager:maps_path()
-    return BeardLib.current_level._config.include.directory
+    return BeardLib.current_level._level_dir
 end
 
 --- Saves the main.xml of the current loaded level.
 --- @param data table
 --- @param no_reload boolean
-function ProjectManager:save_main_xml(data, no_reload)
+function ProjectManager:save_main_xml(data, no_reload, addfiles_include)
+    if addfiles_include then
+        data.AddFiles = data.AddFiles or {}
+        local new_add = {_meta = "AddFiles"}
+        local temp = table.list_add(data.AddFiles, addfiles_include)
+        for i, child in pairs(temp) do
+            if type(child) == "table" and child.path then
+                local exists
+                for _, _child in ipairs(new_add) do
+                    if type(child) == "table" and child.path == _child.path and child._meta == _child._meta then
+                        exists = true
+                        break
+                    end
+                end
+                if not exists then
+                    table.insert(new_add, child)
+                end
+            end
+        end
+        data.AddFiles = new_add
+    end
     self:save_xml("main.xml", data)
     if not no_reload then
         self:reload_mod(data.name)
     end
+end
+
+--- Returns whether or not the project has a file
+--- @param file string
+function ProjectManager:has_file(file)
+    local mod = self:current_mod()
+    return FileIO:Exists(mod:GetRealFilePath(Path:Combine(mod.ModPath, file)))
 end
 
 --- Saves an XML file stored in the project.
@@ -129,9 +158,9 @@ end
 --- Reads and returns table data of an XML file stored in the project.
 --- @param file string
 --- @return table
-function ProjectManager:read_xml(file)
+function ProjectManager:read_xml(file, clean)
     local mod = self:current_mod()
-    return FileIO:ReadScriptData(mod:GetRealFilePath(Path:Combine(mod.ModPath, file)), CXML, true)
+    return FileIO:ReadScriptData(mod:GetRealFilePath(Path:Combine(mod.ModPath, file)), CXML, NotNil(clean, true))
 end
 
 --- Returns the full path of the current project.
@@ -257,13 +286,13 @@ end
 
 --- Selects a project to edit in the ProjectEditor
 --- @param mod ModCore
-function ProjectManager:select_project(mod)
+function ProjectManager:select_project(mod, previous_project_data)
     self:close_current_project()
 
     self._current_mod = mod
     BLE.ListDialog:hide()
 
-    self._project = ProjectEditor:new(self._editing, mod)
+    self._project = ProjectEditor:new(self._editing, mod, previous_project_data)
 end
 
 --- Opens up a dialog prompting the user to enter a name for the map. Then callback clbk or the default map creation function.

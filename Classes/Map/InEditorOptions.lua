@@ -220,12 +220,12 @@ function Options:save()
     local xml = save_in_binary and "binary" or "generic_xml"
     local cusxml = save_in_binary and "binary" or "custom_xml"
     local include = {
-        {_meta = "file", file = "world.world", type = xml},
-        {_meta = "file", file = "continents.continents", type = cusxml},
-        {_meta = "file", file = "mission.mission", type = cusxml},
-        {_meta = "file", file = "nav_manager_data.nav_data", type = xml},
-        {_meta = "file", file = "world_sounds.world_sounds", type = xml},
-        {_meta = "file", file = "world_cameras.world_cameras", type = cusxml}
+        {_meta = "world", path = "world", script_data_type = xml},
+        {_meta = "continents", path = "continents", script_data_type = cusxml},
+        {_meta = "mission", path = "mission", script_data_type = cusxml},
+        {_meta = "nav_data", path = "nav_manager_data", script_data_type = xml},
+        {_meta = "world_sounds", path = "world_sounds", script_data_type = xml},
+        {_meta = "world_cameras", path = "world_cameras", script_data_type = cusxml}
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()
@@ -264,8 +264,8 @@ function Options:save()
             local dir = Path:Combine(map_path, name)
             local continent_file = name .. ".continent"
             local mission_file = name .. ".mission"
-            table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
-            table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
+            table.insert(include, {_meta = "continent", path = name.."/"..name, script_data_type = cusxml})
+            table.insert(include, {_meta = "mission", path = name.."/"..name, script_data_type = xml})
             self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
             self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
             missions[name] = {file = Path:Combine(name, name)}
@@ -294,7 +294,7 @@ function Options:save()
 		if bg then
 			play_value(bg, "alpha", 0, {wait = 0.5, stop = false})
         end
-        self:save_main_xml(include)
+        self:save_local_add_xml(include)
         self._saving = false
         self:toggle_autosaving()
     end
@@ -324,27 +324,29 @@ function Options:toggle_autosaving()
     end
 end
 
-function Options:save_main_xml(include)
+function Options:save_local_add_xml(include)
     local project = BLE.MapProject
-    local mod, data = project:get_mod_and_config()
-    if data then
-        local level = project:get_level_by_id(data, Global.current_level_id)
-        local temp = include and table.list_add(include, clone(level.include)) or level.include
-        level.include = {directory = level.include.directory}
-        for i, include_data in ipairs(temp) do
-            if type(include_data) == "table" and include_data.file and FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+    local level = BeardLib.current_level
+    if level then
+        local add = project:read_xml(level._local_add_path, false)
+        local temp = include and table.list_add(include, clone(add)) or add
+        local level_dir = project:current_level_path()
+        local new_add = {_meta = "add"}
+        for i, child in pairs(temp) do
+            if type(child) == "table" and child.path and FileIO:Exists(Path:Combine(level_dir, child.path.."."..child._meta)) then
                 local exists
-                for _, inc_data in ipairs(level.include) do
-                    if type(inc_data) == "table" and inc_data.file == include_data.file then
+                for _, _child in ipairs(new_add) do
+                    if type(child) == "table" and child.path == _child.path and child._meta == _child._meta then
                         exists = true
+                        break
                     end
                 end
                 if not exists then
-                    table.insert(level.include, include_data)
+                    table.insert(new_add, child)
                 end
             end
         end
-        project:save_main_xml(data)
+        project:save_xml(level._local_add_path, new_add)
     end
 end
 
@@ -364,7 +366,7 @@ function Options:save_nav_data(include)
     local save_in_binary = self:Val("SaveMapFilesInBinary")
     local typ = save_in_binary and "binary" or "generic_xml"
     if save_data then
-        table.insert(include, {_meta = "file", file = "nav_manager_data.nav_data", type = typ})
+        table.insert(include, {_meta = "nav_data", path = "nav_manager_data", script_data_type = typ})
         --This sucks
         self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
@@ -372,7 +374,7 @@ function Options:save_nav_data(include)
         return
     end
     if not had_include then
-        self:save_main_xml(include)
+        self:save_local_add_xml(include)
 	    managers.game_play_central:restart_the_game()
     end
 end
@@ -395,10 +397,10 @@ function Options:save_cover_data(include)
         table.insert(covers.rotations, math.round(rot:yaw()))
     end
     local typ = self:Val("SaveMapFilesInBinary") and "binary" or "custom_xml"
-    table.insert(include, {_meta = "file", file = "cover_data.cover_data", type = typ})
+    table.insert(include, {_meta = "cover_data", path = "cover_data", script_data_type = typ})
     self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, typ))
     if not had_include then
-        self:save_main_xml(include)
+        self:save_local_add_xml(include)
     end
 end
 

@@ -198,16 +198,7 @@ function EditorSpecialObjective:test_element()
     spawn_unit_name = spawn_unit_name or 'units/payday2/characters/ene_swat_1/ene_swat_1'
 
     if not PackageManager:has(Idstring("unit"), spawn_unit_name:id()) then
-        local world = self:GetPart("world")
-
-        BeardLibEditor.Utils:QuickDialog({title = "An error appears!", message = "This element requires this following unit to be loaded: "..tostring(spawn_unit_name)}, {
-            {"Load it through a package", function()
-                world._assets_manager:find_package(spawn_unit_name, "unit", true)
-            end},
-            FileIO:Exists(BLE.ExtractDirectory) and {"Load it through extract", function()
-                world:LoadFromExtract("unit", spawn_unit_name)
-            end} or nil
-        })
+        self:GetPart("world"):QuickLoadFromExtract("unit", spawn_unit_name)
         return
     end
     local enemy = safe_spawn_unit(spawn_unit_name:id(), self._unit:position(), self._unit:rotation())
@@ -264,7 +255,7 @@ function EditorSpecialObjective:apply_preset(item)
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({})
 		elseif selection == "select all" then
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(NavigationManager.ACCESS_FLAGS)
-		end 	
+		end
 	end)
 end
 

@@ -229,8 +229,8 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
     end
 end
 
-function Utils:ParseXml(typ, path, scriptdata, assets_dir)
-	local file = Path:Combine(assets_dir or BLE.ExtractDirectory, path.."."..typ)
+function Utils:ParseXmlFromAssets(typ, path, scriptdata, assets_dir)
+	local file = Path:Combine(assets_dir, path.."."..typ)
 	local load = function(path)
 		if scriptdata then
 			return FileIO:ReadScriptData(path, "binary")
@@ -240,14 +240,20 @@ function Utils:ParseXml(typ, path, scriptdata, assets_dir)
 	end
     if FileIO:Exists(file) then
         return load(file)
-	else
-        --This is confusing..
-        local key_file = Path:Combine(assets_dir or BLE.ExtractDirectory, BLEP.swap_endianness(path:key()).."."..typ)
-		if FileIO:Exists(key_file) then
-			return load(key_file)
-		else
-			return nil
+    else
+        return nil
+    end
+end
+
+function Utils:ParseXml(typ, path, scriptdata, assets_dir)
+    if blt.asset_db.has_file(path, typ) then
+        if scriptdata then
+            return FileIO:ConvertScriptData(blt.asset_db.read_file(path, typ), "binary")
+        else
+            return Node.from_xml(blt.asset_db.read_file(path, typ))
         end
+    else
+        return nil
     end
 end
 
@@ -292,8 +298,6 @@ function Utils:GetPackageSize(package)
     end
 end
 
-Utils.allowed_units = {}
-
 Utils.core_units = {
     ["core/units/effect/effect"] = true,
     ["core/units/nav_surface/nav_surface"] = true,
@@ -307,7 +311,7 @@ Utils.core_units = {
 }
 
 function Utils:IsLoaded(asset, type, packages)
-    if self.allowed_units[asset] or self.core_units[asset] then
+    if self.core_units[asset] then
         return true
     end
     for name, package in pairs(packages or BLE.DBPackages) do
@@ -686,7 +690,7 @@ function Utils:GetUnits(params)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_types or not table.contains(not_types, unit_type))
-		local unit_loaded = params.not_loaded or self.allowed_units[unit]
+		local unit_loaded = params.not_loaded or BLE.DBPackages.map_assts.unit[unit]
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true

@@ -473,6 +473,7 @@ function Editor:set_enabled(enabled)
         Global.check_load_time = nil
     end
     self:update_post_effects()
+    managers.worlddefinition:report_stuff()
 end
 
 function Editor:set_unit_positions(pos)

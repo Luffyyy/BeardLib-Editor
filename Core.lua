@@ -105,7 +105,6 @@ function BLE:InitManagers(data)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
     self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)    
 
-
     if Global.editor_mode then
         if not self._vp then
             self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
@@ -175,10 +174,11 @@ function BLE:InitManagers(data)
         for i, difficulty in ipairs(tweak_data.difficulties) do
             table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
         end
-        for path, _ in pairs(self.Utils.allowed_units) do
+        for path, _ in pairs(self.Utils.core_units) do
             Global.DBPaths.unit[path] = true
         end
         self:LoadCustomAssets()
+        self:ConvertIncludeToLocalAdd()
     end
 end
 
@@ -189,36 +189,40 @@ function BLE:LoadCustomAssets()
         if data.AddFiles then
             local config = data.AddFiles
             local directory = config.full_directory or Path:Combine(mod.ModPath, config.directory)
-            self:LoadCustomAssetsToHashList(config, directory)
+            self:LoadCustomAssetsToHashList(config, directory, "map_assts")
         end
-        local level = project:get_level_by_id(data, Global.current_level_id)
+        local level = BeardLib.current_level
         if level then
             self:log("Loading Custom Assets to Hashlist")
-            level.add = level.add or {}
-            local add_path = Path:Combine(level.include.directory, "add.xml")
-            if not FileIO:Exists(Path:Combine(mod.ModPath, add_path)) then
-                local add = table.merge({directory = "assets"}, deep_clone(level.add)) --TODO just copy the xml template
-                project:save_xml(add_path, add)
+            if not project:has_file(level._add_path) then
+                local add = table.merge({directory = "assets"}, deep_clone(level.add or {}))
+                project:save_xml(level._add_path, add)
             end
-            level.add = {file = add_path}
-            project:save_main_xml(data, true)
-            local add = project:read_xml(level.add.file)
+            local add = project:read_xml(level._add_path)
             if add then
                 local directory = add.full_directory or Path:Combine(mod.ModPath, add.directory)
-                self:LoadCustomAssetsToHashList(add, directory)
-            end
-            for i, include_data in ipairs(level.include) do
-                if include_data.file then
-                    local file_split = string.split(include_data.file, "[.]")
-                    local typ = file_split[2]
-                    local path = Path:Combine("levels/mods/", level.id, file_split[1])
-                    if FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
-                        self.DBPaths[typ] = self.DBPaths[typ] or {}
-                        self.DBPaths[typ][path] = true
-                    end
-                end
+                self:LoadCustomAssetsToHashList(add, directory, "map_assts")
             end
         end
+    end
+end
+
+function BLE:ConvertIncludeToLocalAdd()
+    local project = self.MapProject
+    local mod, data = project:get_mod_and_config()
+    if data and data.include then
+        local local_add = {_meta = "add"}
+        for _, include in pairs(data.include) do
+            table.insert(local_add, {
+                _meta = Path:GetExtension(include.file),
+                path = Path:GetFileNameWithoutExtension(include.file),
+                script_data_type = include.type
+            })
+        end
+        data.include = nil
+        data.add = nil
+        project:save_main_xml(data)
+        project:save_xml(BeardLib.current_level._local_add_path, local_add)
     end
 end
 
@@ -449,7 +453,9 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                         end
 
                         if not failed and not package_id then
-                            self.Utils.allowed_units[path] = true
+                            self.DBPackages.map_assts = self.DBPackages.map_assts or {}
+                            self.DBPackages.map_assts.unit = self.DBPackages.map_assts.unit or {}
+                            self.DBPackages.map_assts.unit[path] = true
                         end
                     elseif package_id then
                         self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(package_id), tostring(path), tostring(directory))
@@ -470,13 +476,12 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                     if from_db or FileIO:Exists(file_path) then
                         self.DBPaths[typ] = self.DBPaths[typ] or {}
                         self.DBPaths[typ][path] = true
-                        
+
                         if package_id then
+                            self.DBPackages[package_id] = self.DBPackages[package_id] or {}
                             local package = self.DBPackages[package_id]
                             package[typ] = package[typ] or {}
                             package[typ][path] = true
-                        else
-                            self.Utils.allowed_units[path] = true
                         end
                     end
                 end

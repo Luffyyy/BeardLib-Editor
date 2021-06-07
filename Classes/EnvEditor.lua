@@ -20,15 +20,19 @@ end
 function EnvEditor:load_included_environments()
     local included = self:GetItem("IncludedEnvironments")
     local level = BeardLib.current_level
+    local project = BLE.MapProject
+
     if included and level then
         included:ClearItems("environment")
         local has_items = false
-        for _, include in ipairs(level._config.include) do
-            if type(include) == "table" and string.ends(include.file, "environment") then
-                local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
+        local add = project:read_xml(level._local_add_path)
+        for _, child in ipairs(add) do
+            if type(child) == "table" and child._meta == "environment" then
+                local file_name = child.path..".environment"
+                local file = Path:Combine(level._level_dir, file_name)
                 if FileIO:Exists(file) then
                     has_items = true
-                    local env = included:button(include.file, ClassClbk(self, "open_environment", file), {text = include.file, label = "environment"})
+                    local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
                     env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
                 end
             end
@@ -466,9 +470,8 @@ function EnvEditor:open_default_custom_environment()
     local data = self:GetPart("world"):data()
     local environment = data.environment.environment_values.environment
     local level = BeardLib.current_level
-    local map_dbpath = Path:Combine("levels/mods/", level._config.id)
-    if string.begins(environment, map_dbpath) then
-        local file_path = string.gsub(environment, map_dbpath, Path:Combine(level._mod.ModPath, level._config.include.directory)) .. ".environment"
+    if string.begins(environment, level._inner_dir) then
+        local file_path = string.gsub(environment, level._inner_dir, level._level_dir) .. ".environment"
         if FileIO:Exists(file_path) then
             self:open_environment(file_path)
         else
@@ -481,10 +484,10 @@ function EnvEditor:uninclude_environment_dialog(item)
     BLE.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
         local pname = item.parent.name
-        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
-        self:GetPart("opt"):save_main_xml()
+        FileIO:Delete(Path:Combine(level._level_dir, pname))
+        self:GetPart("opt"):save_local_add_xml()
         local env = pname:gsub(".environment", "")
-        Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
+        Global.DBPaths.environment[Path:Combine(level._inner_dir, env)] = nil
         BLE:LoadCustomAssets()
         self:load_included_environments()
     end)
@@ -492,7 +495,7 @@ end
 
 function EnvEditor:include_current_dialog(name)
     local level = BeardLib.current_level
-    local env_dir = Path:Combine(level._mod.ModPath, level._config.include.directory, "environments")
+    local env_dir = Path:Combine(level._level_dir, "environments")
     BLE.InputDialog:Show({
         title = "Environment name:",
         text = type(name) == "string" and name or self._last_custom and Path:GetFileNameWithoutExtension(self._last_custom) or "",
@@ -511,7 +514,7 @@ function EnvEditor:include_current_dialog(name)
         end,
         callback = function(name)
             self:write_to_disk(Path:Combine(env_dir, name..".environment"))
-            self:GetPart("opt"):save_main_xml({{_meta = "file", file = Path:Combine("environments", name..".environment"), type = "custom_xml"}})
+            self:GetPart("opt"):save_local_add_xml({{_meta = "environment", path = Path:Combine("environments", name), script_data_type = "custom_xml"}})
             BLE.MapProject:reload_mod(level._mod.Name)
             BLE:LoadCustomAssets()
             self:load_included_environments()
