@@ -25,14 +25,14 @@ end
 
 function WData:enable()
     WData.super.enable(self)
-    self:bind_opt("SpawnUnit", ClassClbk(self, "OpenSpawnUnitDialog"))
+    self:bind_opt("SpawnUnitLoaded", ClassClbk(self, "OpenSpawnUnitDialog"))
     self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
     self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
     if BeardLib.current_level then
         self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
     end
-    self:bind_opt("LoadUnitFromExtract", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}))
+    self:bind_opt("SpawnUnit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}))
 end
 
 function WData:loaded_continents(continents, current_continent)
@@ -148,30 +148,26 @@ function WData:build_default()
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
     local load_unit = BLE.Options:GetValue("Input/LoadUnit")
-    local load_unit_fe = BLE.Options:GetValue("Input/LoadUnitFromDatabase")
-    spawn:s_btn("Unit", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Unit ("..spawn_unit..")"})
+    local load_unit_fe = BLE.Options:GetValue("Input/SpawnUnitLoaded")
+    spawn:s_btn("Unit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit("..spawn_unit..")"})
     spawn:s_btn("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
     spawn:s_btn("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
     spawn:s_btn("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
 
-    local spawn_test = self:divgroup("Test", {align_method = "grid"})
-    spawn_test:s_btn("Unit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}), {
-        text = "Spawn Any Unit("..load_unit_fe..")",
-        help = [[This feature puts the new SuperBLT features up to a test, any unit you click on this list, if not loaded, will be added automatically to your add.xml, 
-this should be fairly fast - surely faster than copying the files to your project.]]
-    })
+    local spawn_help_pkg = "Spawn a unit with a package"
+    local spawn_help_db = "Same as regular spawning, just with extra configurability."
+    spawn:separator()
+    spawn:s_btn("UnitLoaded", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Loaded Unit("..load_unit_fe..")", help = "A filtered list with only units that are currently loaded"})
+    spawn:s_btn("SpawnAndLoadFromPackages", ClassClbk(self, "OpenLoadDialog", {ext = "unit", spawn = true}), {text = "Unit from Packages("..load_unit..")", help = spawn_help_pkg})
+    spawn:s_btn("SpawnAndLoadFromDBDialog", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit+", help = spawn_help_db})
 
     local select = self:divgroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog"), {text = "Unit("..select_unit..")"})
     select:s_btn("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
     select:s_btn("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
-    local load = self:divgroup("Load", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
+    local load = self:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self:divgroup("LoadFromDatabase", {align_method = "grid"})
-
-    local spawn_help = "Load and spawn. This list selector will close itself after selecting a unit and will let you begin spawning the unit when it's fully loaded!"
-    load:s_btn("SpawnAndLoadFromPackages", ClassClbk(self, "OpenLoadDialog", {ext = "unit", spawn = true}), {text = "Spawn Unit("..load_unit..")", help = spawn_help})
-    load_extract:s_btn("SpawnAndLoadFromDBDialog", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Spawn Unit", help = spawn_help})
 
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()

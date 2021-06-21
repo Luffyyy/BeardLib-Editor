@@ -137,7 +137,7 @@ end
 function ItemExt:separator(o)
 	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Divider(table.merge({
-		name = "div", text = "", h = 2, size_by_text = false, border_bottom = true, border_color = self.foreground:with_alpha(0.5)
+		name = "div", text = o and o.text or "", h = (not o or not o.text) and 2 or nil, size_by_text = false, border_bottom = true, border_color = self.foreground:with_alpha(0.1)
 	}, o))
 end
 

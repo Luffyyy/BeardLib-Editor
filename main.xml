@@ -119,7 +119,7 @@
                 <option type="string" default_value="3" name="SelectUnit"/>
                 <option type="string" default_value="4" name="SelectElement"/>
                 <option type="string" default_value="5" name="LoadUnit"/>
-                <option type="string" default_value="6" name="LoadUnitFromDatabase"/>
+                <option type="string" default_value="6" name="SpawnUnitLoaded"/>
 
                 <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
