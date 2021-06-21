@@ -51,19 +51,17 @@ function Options:init()
 end
 
 function Options:show_disable_physics_fix_dialog()
-	BLE.Utils:YesNoQuestion([[
+	local file = "mods/saves/BLEDisablePhysicsFix"
+	local disabled = FileIO:Exists(file)
+	BLE.Utils:YesNoQuestion(string.format([[
 Since the editor requires an edit to the physics settings of the game, and such edit can lead to crashing other players (or cause unwanted bugs), the editor also disables online play.
-
-This option will disable this physics fix and enable online play.
 
 Do note however, the editor will not work properly without said fixes. So once you're done playing and wish to continue using the editor, please turn on this option.
 
-NOTE:
-Changing this option will close the game, start it again afterwards for the changes to be applied.
-]]
+Clicking 'Yes' will %s the physics settings fix and close the game. After opening the game again, online play will be %s.
+]], disabled and "enable" or "disable", disabled and "disabled" or "enabled")
 , function()
-		local file = "mods/saves/BLEDisablePhysicsFix"
-		if FileIO:Exists(file) then
+		if disabled then
 			FileIO:Delete(file)
 		else
 			FileIO:WriteTo(file, "", "w")
