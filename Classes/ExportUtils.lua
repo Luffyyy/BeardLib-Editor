@@ -131,7 +131,10 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
             local is_bnk = ext == "bnk"
             local success
             if is_bnk then
-                local possible_bnk_dir = Path:Combine(self.assets_dir or '', file.path..".english.bnk")
+                local possible_bnk_dir = Path:Combine(file.path..".english.bnk")
+                if self.assets_dir then
+                    possible_bnk_dir = Path:Combine(self.assets_dir, possible_bnk_dir)
+                end
                 local exists, from = self:AssetExists(ext, file.path, "english")
                 if exists then
                     add_to_config(file, possible_bnk_dir, from)
@@ -306,7 +309,14 @@ function Utils:ReadSequenceManager(path, config, exclude, extra_info)
 	if tbl and tbl.unit then
 		for _, sequence in ipairs(tbl.unit) do
 			if type(sequence) == "table" and sequence._meta == "sequence" and sequence.spawn_unit then
-				self:ReadUnit(sequence.spawn_unit.name:gsub("'", ""), config, exclude, {file = path..".sequence_manager", where = "unit node/sequence node/spawn unit value"})
+                local unit = sequence.spawn_unit.name:gsub("'", "")
+                if unit:begins(" ") then
+                    unit = unit:sub(2)
+                end
+                if unit:ends(" ") then
+                    unit = unit:sub(1, unit:len()-1)
+                end
+				self:ReadUnit(unit, config, exclude, {file = path..".sequence_manager", where = "unit node/sequence node/spawn unit value"})
 			end
 		end
 	end
