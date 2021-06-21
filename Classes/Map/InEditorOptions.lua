@@ -161,7 +161,7 @@ end
 
 function Options:update(t, dt)
     Options.super.update(self, t, dt)
-    
+
     if self._auto_save and t >= self._auto_save then
         self:save()
     end
@@ -202,10 +202,30 @@ function Options:map_world_path()
     return map_path
 end
 
-function Options:save()
+function Options:save(force_backup)
     if self._saving then
         return
     end
+
+    if BeardLib.current_level._config.include then
+        BLE.Utils:YesNoQuestion([[
+In order to handle files better and not clutter the main.xml, the level module will now have the include section in a separate file.
+
+This file (LEVEL/add_local.xml) looks very similar to add.xml. 
+And essentially will be used to load things that load from the level itself and not from the assets folder that is shared with all levels. 
+
+This allows us to declutter the main.xml when loading things such as cube lights.
+
+The editor will now use this format and any old map will need to be converted. Clicking 'Yes' will backup your map into 'Maps/backups' and then convert it.
+            ]]
+            , function()
+                BeardLib.current_level._config.include = nil
+
+                self:save(true)
+            end)
+        return
+    end
+
     self:GetPart("static"):set_units()
     local panel = self:GetPart("menu"):GetItem("save").panel
     local bg = alive(panel) and panel:child("bg_save") or panel:rect({
@@ -302,7 +322,7 @@ function Options:save()
 		bg:set_alpha(0)
 		play_value(bg, "alpha", 1)
 	end
-    if FileIO:Exists(path) and self:Val("BackupMaps") then
+    if FileIO:Exists(path) and self:Val("BackupMaps") or force_backup then
         local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
         local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
