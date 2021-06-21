@@ -19,7 +19,6 @@ function BLE:Init()
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
     self.HasFix = not FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and FileIO:Exists(self.ModPath.."supermod.xml")
-	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
     self.UsableAssets = {"unit", "effect", "environment", "scene"}
 
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
@@ -334,41 +333,33 @@ end
 --Gets all emitters and occasionals from extracted .world_sounds
 function BLE:GenerateSoundData()
     local sounds = {}
-    local function get_sounds(path)
-        for _, file in pairs(FileIO:GetFiles(path)) do
-            if string.ends(file, ".world_sounds") then
-                local data = FileIO:ReadScriptData(Path:Combine(path, file), "binary")
-                if not table.contains(sounds, data.default_ambience) then
-                    table.insert(sounds, data.default_ambience)
-                end
-                if not table.contains(sounds, data.default_occasional) then
-                    table.insert(sounds, data.default_occasional)
-                end
-                for _, v in pairs(data.sound_area_emitters) do
-                    if not table.contains(sounds, v.emitter_event) then
-                        table.insert(sounds, v.emitter_event)
-                    end
-                end
-                for _, v in pairs(data.sound_emitters) do
-                    if not table.contains(sounds, v.emitter_event) then
-                        table.insert(sounds, v.emitter_event)
-                    end
-                end
-                for _, v in pairs(data.sound_environments) do
-                    if not table.contains(sounds, v.ambience_event) then
-                        table.insert(sounds, v.ambience_event)
-                    end
-                    if not table.contains(sounds, v.occasional_event) then
-                        table.insert(sounds, v.occasional_event)
-                    end
-                end
+    for _, file in pairs(self.DBPaths.world_sounds) do
+        local data = self.Utils:ParseXml("world_sounds", file, true)
+        if not table.contains(sounds, data.default_ambience) then
+            table.insert(sounds, data.default_ambience)
+        end
+        if not table.contains(sounds, data.default_occasional) then
+            table.insert(sounds, data.default_occasional)
+        end
+        for _, v in pairs(data.sound_area_emitters) do
+            if not table.contains(sounds, v.emitter_event) then
+                table.insert(sounds, v.emitter_event)
             end
         end
-        for _, folder in pairs(FileIO:GetFolders(path)) do
-            get_sounds(Path:Combine(path, folder))
+        for _, v in pairs(data.sound_emitters) do
+            if not table.contains(sounds, v.emitter_event) then
+                table.insert(sounds, v.emitter_event)
+            end
+        end
+        for _, v in pairs(data.sound_environments) do
+            if not table.contains(sounds, v.ambience_event) then
+                table.insert(sounds, v.ambience_event)
+            end
+            if not table.contains(sounds, v.occasional_event) then
+                table.insert(sounds, v.occasional_event)
+            end
         end
     end
-    get_sounds(self.ExtractDirectory)
     FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
     self.WorldSounds = sounds
     Global.WorldSounds = sounds

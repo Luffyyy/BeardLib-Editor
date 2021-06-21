@@ -245,7 +245,7 @@ function Utils:ParseXmlFromAssets(typ, path, scriptdata, assets_dir)
     end
 end
 
-function Utils:ParseXml(typ, path, scriptdata, assets_dir)
+function Utils:ParseXml(typ, path, scriptdata)
     if blt.asset_db.has_file(path, typ) then
         if scriptdata then
             return FileIO:ConvertScriptData(blt.asset_db.read_file(path, typ), "binary")
