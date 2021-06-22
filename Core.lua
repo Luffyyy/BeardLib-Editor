@@ -187,7 +187,7 @@ function BLE:LoadCustomAssets()
         if data.AddFiles then
             local config = data.AddFiles
             local directory = config.full_directory or Path:Combine(mod.ModPath, config.directory)
-            self:LoadCustomAssetsToHashList(config, directory, "map_assts")
+            self:LoadCustomAssetsToHashList(config, directory, "map_assets")
         end
         local level = BeardLib.current_level
         if level then
@@ -199,7 +199,7 @@ function BLE:LoadCustomAssets()
             local add = project:read_xml(level._add_path)
             if add then
                 local directory = add.full_directory or Path:Combine(mod.ModPath, add.directory)
-                self:LoadCustomAssetsToHashList(add, directory, "map_assts")
+                self:LoadCustomAssetsToHashList(add, directory, "map_assets")
             end
         end
     end
@@ -443,9 +443,9 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                         end
 
                         if not failed and not package_id then
-                            self.DBPackages.map_assts = self.DBPackages.map_assts or {}
-                            self.DBPackages.map_assts.unit = self.DBPackages.map_assts.unit or {}
-                            self.DBPackages.map_assts.unit[path] = true
+                            self.DBPackages.map_assets = self.DBPackages.map_assets or {}
+                            self.DBPackages.map_assets.unit = self.DBPackages.map_assets.unit or {}
+                            self.DBPackages.map_assets.unit[path] = true
                         end
                     elseif package_id then
                         self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(package_id), tostring(path), tostring(directory))
