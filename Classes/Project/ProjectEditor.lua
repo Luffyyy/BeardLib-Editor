@@ -103,6 +103,18 @@ function ProjectEditor:get_module(id, meta)
     end
 end
 
+--- Searches a module meta, used to find levels from a narrative chain at the moment.
+--- @param meta string
+--- @return table
+function ProjectEditor:get_module_by_meta(meta)
+    for _, mod in pairs(self._modules) do
+        local data = mod._data
+        if data._meta == meta then
+            return mod
+        end
+    end
+end
+
 --- Inserts a module into the data, forces a save.(if no_reload is not equals to true)
 --- @param data table
 --- @param no_reload boolean

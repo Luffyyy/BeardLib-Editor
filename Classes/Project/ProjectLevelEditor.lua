@@ -51,33 +51,32 @@ function ProjectLevelEditor:build_menu(menu, data)
     menu:tickbox("PlayerInvulnerable", up, data.player_invulnerable)
     menu:button("ManageMissionAssets", ClassClbk(self, "set_mission_assets_dialog"))
 
-
-    local loading = menu:holder("LoadingBg", {align_method = "grid"})
-    loading:button("SelectLoadingTexture", ClassClbk(self, "SelectLoadingTextureDialog"), {
-        size_by_text = true, offset = 0
+    local icon_group = menu:divgroup("LoadingTexture", {border_position_below_title = true, private = {size = 22}})
+    icon_group:button("SelectLoadingTextureFromDisk", ClassClbk(self, "SelectLoadingTextureFromDisk"))
+    icon_group:pathbox("LoadingTexture", up, data.load_screen, "texture", {text = "Loading Texture Path"})
+    icon_group:divider("TextureHelp", {
+        text = "If no texture is defined, the texture is automatically loaded from the level folder (loading.png or loading.texture)"
+        ..". Use the button on top to easily select the texture from disk."
     })
+
     if data.ghost_bonus == 0 then
         data.ghost_bonus = nil
     end
 end
 
-function ProjectLevelEditor:SelectLoadingTextureDialog()
+function ProjectLevelEditor:SelectLoadingTextureFromDisk()
     local base_path = Path:Normalize(Application:base_path())
 
     BLE.FBD:Show({
-        where = base_path, 
-        extensions = {"texture", "dds", "png", "tga"},
+        where = base_path,
+        extensions = {"texture", "png"},
         file_click = function(path)
-            -- TODO: deal with cases when you rename the level
-            local ext = Path:GetFileExtension(path)
-            local path_in_assets = "guis/textures/loading/job_"..self._data.id.."."..ext
-            local project = BLE.MapProject
-            FileIO:CopyFileTo(path, Path:Combine(project:current_path(), "assets", path_in_assets))
-            project:save_main_xml(self._parent:data(), false, {
-                {_meta = ext, path = path_in_assets}
-            })
-            self._data.load_screen = path_in_assets
-            self._parent:save()
+            local loading = Path:Combine(self:get_dir(), "loading")
+            FileIO:Delete(loading..".png")
+            FileIO:Delete(loading..".texture")
+            FileIO:CopyFile(path, loading..'.'..Path:GetFileExtension(path))
+            self._data.load_screen = nil
+            self._parent:save_data_callback()
             BLE.FBD:Hide()
         end
     })
@@ -312,7 +311,6 @@ function ProjectLevelEditor:set_mission_assets_dialog()
 		selected_list = selected_assets,
 		list = assets,
 		values_name = "Exclude",
-        values_list_width = 100,
 		callback = function(list)
             local new_assets = {}
             for _, asset in pairs(list) do
@@ -373,6 +371,10 @@ function ProjectLevelEditor:set_data_callback()
     data.intro_event = self:GetItem("IntroEvent"):Value()
     data.repossess_bags = self:GetItem("RetainBags"):Value()
     data.player_invulnerable = self:GetItem("PlayerInvulnerable"):Value()
+    data.load_screen = self:GetItem("LoadingTexture"):Value()
+    if data.load_screen == "" then
+        data.load_screen = nil
+    end
     local outro = self:GetItem("OutroEvent"):Value()
     data.outro_event = outro:match(",") and string.split(outro, ",") or {outro}
 end
@@ -390,6 +392,10 @@ function ProjectLevelEditor:save_data()
     end
     level.orig_id = nil
     return ProjectLevelEditor.super.save_data(self)
+end
+
+function ProjectLevelEditor:get_dir()
+    return Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, self._data.orig_id or self._data.id)
 end
 
 function ProjectLevelEditor:delete()
@@ -410,7 +416,7 @@ function ProjectLevelEditor:delete()
             end
         end
     end
-    local path = Path:Combine(self._parent:get_dir(), self.LEVELS_DIR, self._data.orig_id or id)
+    local path = self:get_dir()
     if FileIO:Exists(path) then
         FileIO:Delete(path)
     end
