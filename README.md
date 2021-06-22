@@ -1,54 +1,48 @@
 # BeardLib-Editor
 
-BeardLib-Editor is a mod that uses the amazing library called BeardLib to allow editor-like features!
-
-## Editor? For what?
-Currently there's an editor for maps, environment and effects.
-
-## Level Editor?
-Yep! You can create new levels from scratch using BeardLib-Editor.
-Don't know how to? Read the guide here: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor
-Help would be really appreciated in the wiki!
-
-## Report a bug/Request a feature
-https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
+BeardLib-Editor is a tool that allows you to edit and create things like maps & environments.
 
 ## Installation
-This mod has two dependencies, [SuperBLT](https://superblt.znix.xyz) and [BeardLib](https://github.com/simon-wh/PAYDAY-2-BeardLib). Without them the editor will not run. Make sure you have both fully updated. **We ask you to download the GitHub version of BeardLib since the editor uses the latest features of BeardLib that may not be in the public/MWS version. The link we provided is the repo of BeardLib.**
+1. Install [SuperBLT](https://superblt.znix.xyz)
+2. Install [BeardLib](https://modworkshop.net/mod/14924)
+3. After downloading the editor by clicking `Code` -> `Download ZIP`, unzip the contents of the ZIP file in the mods folder of the game.
+4. Launch the game and click `Yes` on the dialog that pops up. These files are required.
 
-Then install the mod as any BLT mod, drop to mods folder.
+If you install the dev branch, make sure you have the latest BeardLib commit https://github.com/simon-wh/PAYDAY-2-BeardLib it's possible that branch uses unreleased features not found in the public (MWS) version.
 
-After that download these files https://modworkshop.net/mod/25270
-And drop them to your BeardLib-Editor folder in mods.
+## Matchmaking
+Matchmaking is **disabled** by default due to having to edit the physics settings of the game.
+Playing with people with said edit can cause issues if not everyone has the said fix. 
 
-Additionally, you **must** extract the game files using [Diesel Bundle Viewer](https://modworkshop.net/mod/27741). Currently, the editor cannot fully function without having the game files extracted. If the extract path is different, you can set the correct directory through the options of the editor.
+In order to enable matchmaking, you must disable the physics fix through the editor's options menu. Do note that without that fix, the editor will not work properly.
 
-## FAQ
-* **Q:** I have issues with the mod, what to do?\
-  **A:** Before opening an issue in https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues please check your BLT 
-    log(mods/logs and a txt file with a date as a name) and see if there are any conflicting mods. If you do report an issue, 
-    please give as much information as possible.
-* **Q:** How do I make a level?\
-  **A:** Go to the beginner guide if you missed: https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor.
-* **Q:** There isn't a guide for 'X'\
-  **A:** Since I'm more active on actually developing the editor, I cannot focus on making guides. Any help would be appreciated.
-* **Q:** Why can't I play multiplayer when using the mod?\
-  **A:** The mod disables matchmaking with normal users. You cannot play with players that don't have the editor. This is done to 
-    prevent playing with different physics settings which can mess up the game of the host/clients. You can either disable the 
-    editor or rename supermod.xml (the physics settings fix) to be able to play with others, hopefully in the future there will 
-    be a better way to address this.
+## Guides
+https://www.youtube.com/playlist?list=PLRSASA7UrjTsX1WWG6kStRTK51DKSEDPn
+https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor
+
+## Report a Bug/Request a Feature
+https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
+
+## Ask a Question
+Payday 2 Maps Discord Server - https://discord.gg/fn62qaq \
+Painday 2 (maker of the video tutorials) Discord Server - https://discord.gg/RNBUnrN7 \
+ModWorkshop Discord Server - https://discord.gg/Eear4JW \
+GitHub Discussion - https://github.com/Luffyyy/BeardLib-Editor/discussions
 
 ## Help Needed
 We're looking for developers that will work together on the editor. 
 
-Working on the editor is essentially taking the real editor code (Found in the decompiled lua scripts here https://github.com/ontrigger/pd2-luajit-decompile just search "editor" using some text editor like VSCode/Atom) and making it run in the public version of the game. Instead of EWS (Framwork for creating window GUI) we use a menu UI code from BeardLib called MenuUI (Documentation: https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI) You might want to look at the editor's code and how it works. The editor uses its own class to simplify the menu builiding found here https://github.com/Luffyyy/BeardLib-Editor/blob/master/Classes/MenuUIExt.lua 
-Make sure you have developer.txt and you run blt.forcepcalls(true) these are important for developing the editor.
-developer.txt enables the console and the code refresher for the editor. And forcepcalls makes it so you won't crash for each small error (potentially slowing down development)
+Your best friend in all of this is knowing how to look for the pieces of code that correspond to parts of the editor. Be it in the decompiled files of the game or the editor's code.
 
-If you're interested, talk with me in discord Luffy#1946 and I'll give you permissions to push commits.
-Pull requests are appreciated too!
+Make sure you are using a good code editor like VSCode. This will allow you to quickly search the code and the decompiled code of the game https://github.com/mwSora/payday-2-luajit.
 
-## Generating the data files
+Make sure you have an empty file called developer.txt in the mods folder (turns on the console) and run the following command: blt.forcepcalls(true) - this let's you not crash the moment you hit a random error. 
+
+The editor is equipped with a code refresher, editing any file will refresh parts of the editor.
+
+The real editor uses what is called in the decompiled code 'EWS' (really just search). Unfortunately we don't have access to this kind of GUI and porting it is easier said than done. Instead of that we use https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI and have a class that simplfies the process of creation a little https://github.com/Luffyyy/BeardLib-Editor/blob/master/Classes/MenuUIExt.lua 
+
+## Generating the Data Files
 If the hashlist/game gets updated you can update the data files yourself by doing the following:
 
 1. Get DieselBundleViewer (1.1.1 and up)
@@ -58,7 +52,5 @@ If the hashlist/game gets updated you can update the data files yourself by doin
 5. This should create a file named packages.txt.
 6. Drop the file to BeardLib Editor's root directory and run the game. The editor will do the rest.
 
-## Plugins source
-https://github.com/Luffyyy/BeardLib-Editor-SBLT-Plugin
-
+## Plugin Source
 https://github.com/Luffyyy/LuaFileSystem-SBLT
