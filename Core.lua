@@ -2,7 +2,6 @@ local UNIT_LOAD = "unit_load"
 local ADD = "add"
 
 BLE = BeardLibEditor
-BLE.DBEntries = {}
 BLE.Updaters = {}
 BLE.DBPaths = {}
 BLE.Prefabs = {}
