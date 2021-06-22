@@ -272,8 +272,7 @@ function ProjectManager:reload_mod(mod_name)
             module.Registered = false
         end
     end
-    BeardLib.managers.MapFramework._loaded_mods[mod_name] = nil
-    BeardLib.managers.MapFramework._loaded_instances = nil
+    BeardLib.managers.MapFramework:RemoveMod(mod_name)
     self:load_mods()
 end
 
