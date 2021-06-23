@@ -24,6 +24,9 @@ function Part:init(parent, menu, name, opt, mopt)
         visible = false,
         private = {offset = 0},
         position = function(item)
+            if BLE.Options:GetValue("GUIOnRight") then
+                item:SetPositionByString("Right")
+            end
             item:Panel():set_world_bottom(item:Panel():parent():world_bottom() + 1)
         end,
         w = BLE.Options:GetValue("MapEditorPanelWidth"),
