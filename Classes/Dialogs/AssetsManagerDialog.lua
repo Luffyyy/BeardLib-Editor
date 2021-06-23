@@ -581,6 +581,7 @@ function AssetsManagerDialog:scan_assets()
         local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
         local scanner = BLE.Utils.Export:new({
             assets_dir = assets_dir,
+            fallback_to_db_assets = true,
             check_path_before_insert = true,
             return_on_missing = false,
             pack_extract_path = false
@@ -599,10 +600,12 @@ function AssetsManagerDialog:scan_dir(scanner, path, big_path, addxml)
 			local file_path = Path:Normalize(Path:Combine(path:gsub(big_path, ""), file))
 			local splt = file_path:split("%.")
 			local add = scanner:GetDependencies(splt[2], splt[1])
-			add._meta = "add"
-			add.path = splt[1]
-			add.type = "unit"
-			table.insert(addxml, add)
+            if add then
+                add._meta = "add"
+                add.path = splt[1]
+                add.type = "unit"
+                table.insert(addxml, add)
+            end
         end
     end
     for _, folder in pairs(FileIO:GetFolders(path)) do
