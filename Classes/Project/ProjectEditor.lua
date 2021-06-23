@@ -46,7 +46,7 @@ function ProjectEditor:init(parent, mod, previous_project_data)
         position = "RightOffset-X"
     })
     ItemExt:add_funcs(self)
-    self._modules_list = self._left_menu:divgroup("Modules")
+    self._modules_list = self._left_menu:divgroup("Modules", {max_height = 400})
 
     self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
 
