@@ -752,7 +752,7 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 					end
                 end
             end
-            project:save_xml(current_level._local_add_path, current_add)
+            project:save_xml(current_level._add_path, current_add)
             FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, current_add.directory))
             if no_dialog ~= false then
                 self:reload()
