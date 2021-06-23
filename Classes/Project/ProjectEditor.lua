@@ -83,8 +83,8 @@ function ProjectEditor:build_modules()
     for _, mod in pairs(self._modules) do
         local meta = mod._meta
         local text = string.capitalize(meta)
-        if ProjectEditor.EDITORS[meta].HAS_ID then
-            text = text .. ": "..mod._data.id
+        if ProjectEditor.EDITORS[meta].HAS_ID and mod._main_xml_data.id then
+            text = text .. ": "..mod._main_xml_data.id
         end
         mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
     end

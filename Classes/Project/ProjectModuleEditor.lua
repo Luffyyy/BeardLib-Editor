@@ -21,13 +21,15 @@ function ProjectModuleEditor:init(parent, data, create_data)
 
     self._meta = data._meta
 
+    self._main_xml_data = data
+
     if data.file ~= nil then
         local mod = self._parent._mod
         self._file_path = mod:GetRealFilePath(Path:Combine(mod.ModPath, data.file))
         self._file_type = data.file_type or "custom_xml"
         data = FileIO:ReadScriptData(self._file_path, self._file_type, true)
     end
-
+    
     self._data = data
     self._original_data = data
 
