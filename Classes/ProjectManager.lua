@@ -230,19 +230,6 @@ function ProjectManager:load_temp_package(p)
     end
 end
 
---- Unloads all packages that were lodaed and inserted into self._packages_to_unload.
-function ProjectManager:unload_temp_packages()
-    for _, p in pairs(self._packages_to_unload) do
-        if PackageManager:loaded(p) then
-            DelayedCalls:Add("UnloadPKG"..tostring(p), 0.01, function()
-                BLE:log("Unloading temp package " .. tostring(p))
-                PackageManager:unload(p)
-            end)
-        end
-    end
-    self._packages_to_unload = {}
-end
-
 --- Opens a dialog to select a project to edit.
 function ProjectManager:select_project_dialog()
     BLE.ListDialog:Show({
