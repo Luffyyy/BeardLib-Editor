@@ -374,7 +374,7 @@ function MissionScriptEditor:set_element_data(item)
 		self:update_element(false, old_script)
 	end
 	if item.name == "script" and item:SelectedItem() ~= old_script then
-		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a diffeent mission script, the id will be changed and all links will be removed!", function()
+		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a different mission script, the id will be changed and all links will be removed!", function()
 			set_element_data()
 			self:GetPart("mission"):set_elements_vis()
 			self:GetItem("ID"):SetText("ID "..self._element.id)
