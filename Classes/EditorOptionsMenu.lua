@@ -94,8 +94,8 @@ function Options:set_theme(item)
 		self:set_item_value("AccentColor", Color('4272d9'))
 		self:set_item_value("BackgroundColor", Color(0.6, 0.2, 0.2, 0.2))
 	else
-		self:set_item_value("AccentColor", Color(0.40, 0.38, 1))
-		self:set_item_value("BackgroundColor", Color(0.64, 0.70, 0.70, 0.70))
+		self:set_item_value("AccentColor", Color('4272d9'))
+		self:set_item_value("BackgroundColor", Color(0.6, 0.62, 0.62, 0.62))
 	end
     BLE.Utils:Notify("Theme has been set, please restart")
 end
