@@ -26,6 +26,7 @@ function MissionElementUnit:init(unit)
         Color("2c2c2c"),
         Color("5fc16f"),
     }
+
     self._color = EditorPart:Val("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Val("ElementsColor")
     local texture, rect = "textures/editor_icons_df", {399, 44, 64, 64}
     local size = iconsize / 4
@@ -70,6 +71,7 @@ function MissionElementUnit:update_icon()
 
     if self.element and self._icon and alive(self._icon) then
         local texture, texture_rect = BLE.Utils:GetElementIcon(tostring(self.element.class):gsub("Element", ""))
+
         if texture and texture_rect then
             self._icon:set_image(texture, unpack(texture_rect))
             self._icon_outline = self._icon_outline or self._ws:panel():bitmap({
@@ -82,6 +84,11 @@ function MissionElementUnit:update_icon()
             }) 
             self._icon_outline:set_size(self._icon:w() * 1.1, self._icon:h() * 1.1)
             self._icon_outline:set_center(self._icon:center())
+
+            local editor_color = self.element.editor_color
+            if editor_color and editor_color:len() > 0 then
+                self:set_color(Color:from_hex(self.element.editor_color))
+            end
         end
     end
 end
@@ -123,6 +130,7 @@ function MissionElementUnit:unselect()
 end
 
 function MissionElementUnit:set_color(color)
+    self._color = color
 	self._icon:set_color(color)
 	self._text:set_color(color)
 end

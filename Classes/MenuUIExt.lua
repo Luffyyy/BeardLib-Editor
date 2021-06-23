@@ -205,7 +205,7 @@ function ItemExt:colorbox(name, callback, value, o)
 		name = name,
 		text = string.pretty2(name),
 		on_callback = callback,
-		value = value or Color.white
+		value = value
 	}, o))
 	if o and o.ret_vec then
 		function item:Value()
