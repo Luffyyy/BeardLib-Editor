@@ -208,10 +208,11 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
 
         --If you try setting a position through the textbox or even just calling this function the collisions will fail to update for some units.
         --So we added a delayedcall for it, this engine..
-        DelayedCalls:Remove(unit_key)
-        DelayedCalls:Add(unit_key, 0.01, function()
-            self:UpdateCollisionsAndVisuals(unit)
-        end)
+        if not BeardLib._delayed_calls[unit_key] then
+            BeardLib:AddDelayedCall(unit_key, 0.01, function()
+                self:UpdateCollisionsAndVisuals(unit)
+            end, true)
+        end
 
 		if ud then
 			ud.position = position
