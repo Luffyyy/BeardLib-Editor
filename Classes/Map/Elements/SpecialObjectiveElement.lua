@@ -199,7 +199,6 @@ function EditorSpecialObjective:test_element()
 
     if not PackageManager:has(Idstring("unit"), spawn_unit_name:id()) then
         self:GetPart("world"):QuickLoadFromExtract("unit", spawn_unit_name)
-        return
     end
     local enemy = safe_spawn_unit(spawn_unit_name:id(), self._unit:position(), self._unit:rotation())
 

@@ -4,10 +4,7 @@ function EditorInteraction:init(...)
 	local unit = "units/dev_tools/mission_elements/point_interaction/interaction_dummy"
 	local assets = self:GetPart("world")._assets_manager
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
-		BeardLibEditor.Utils:QuickDialog({title = "An error appears!", message = "This element requires the interaction dummy unit to be loaded or else it won't work!"}, {{"Load it", function()
-            assets:find_package(unit, "unit", true)
-		end}})
-		return
+		self:GetPart("world"):QuickLoadFromExtract("unit", unit)
 	end
 	return EditorInteraction.super.init(self, ...)
 end
