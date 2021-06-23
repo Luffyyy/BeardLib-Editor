@@ -238,7 +238,7 @@ The editor will now use this format and any old map will need to be converted. C
 		halign = "grow",
 		valign = "grow",
     })
-    local h = bg and bg:parent():h()
+    local w = bg and bg:parent():w()
     self._saving = true
     local save_in_binary = self:Val("SaveMapFilesInBinary")
     local xml = save_in_binary and "binary" or "generic_xml"
@@ -311,10 +311,6 @@ The editor will now use this format and any old map will need to be converted. C
         self:save_cover_data(include)
         self:save_nav_data(include)
 
-		if bg then
-			play_value(bg, "alpha", 0, {wait = 0.5, stop = false})
-        end
-
         if old_include then
             -- This should get filtered by the save XML function, if there are any copies of the same file.
             for _, file in pairs(old_include) do
@@ -327,10 +323,18 @@ The editor will now use this format and any old map will need to be converted. C
         self:save_local_add_xml(include)
         self._saving = false
         self:toggle_autosaving()
+
+        if bg then
+            play_value(bg, "w", w, {time = 0.25})
+			play_value(bg, "alpha", 0, {wait = 0.5, stop = false})
+        end
     end
 	if bg then
-		bg:set_alpha(0)
-		play_value(bg, "alpha", 1)
+		bg:set_w(0)
+		bg:set_alpha(1)
+		bg:set_h(100)
+		bg:set_bottom(bg:parent():bottom())
+		play_value(bg, "w", w, {time = 15})
 	end
     if FileIO:Exists(path) and self:Val("BackupMaps") or force_backup then
         local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
