@@ -202,7 +202,7 @@ function Options:map_world_path()
     return map_path
 end
 
-function Options:save(force_backup)
+function Options:save(force_backup, old_include)
     if self._saving then
         return
     end
@@ -219,9 +219,13 @@ This allows us to declutter the main.xml when loading things such as cube lights
 The editor will now use this format and any old map will need to be converted. Clicking 'Yes' will backup your map into 'Maps/backups' and then convert it.
             ]]
             , function()
+                local project = BLE.MapProject
                 BeardLib.current_level._config.include = nil
-
-                self:save(true)
+                local _, data = project:get_mod_and_config()
+                local level = project:get_current_level_node(data)
+                self:save(true, level.include)
+                level.include = nil
+                project:save_main_xml(data)
             end)
         return
     end
@@ -251,7 +255,7 @@ The editor will now use this format and any old map will need to be converted. C
     local path = self:map_path()
 	local function save()
         local map_path = self:map_world_path()
-    
+
         local world_data = deep_clone(worlddef._world_data)
         if BeardLib.current_level then
             local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
@@ -278,7 +282,7 @@ The editor will now use this format and any old map will need to be converted. C
                 end
             end
         end
-        
+
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
             local dir = Path:Combine(map_path, name)
@@ -306,14 +310,20 @@ The editor will now use this format and any old map will need to be converted. C
 
         self:save_cover_data(include)
         self:save_nav_data(include)
-        for _, folder in pairs(FileIO:GetFolders(map_path)) do
-            if folder ~= "environments" and not worlddef._continent_definitions[folder] then
-                FileIO:Delete(Path:Combine(map_path, folder))
-            end
-        end
+
 		if bg then
 			play_value(bg, "alpha", 0, {wait = 0.5, stop = false})
         end
+
+        if old_include then
+            -- This should get filtered by the save XML function, if there are any copies of the same file.
+            for _, file in pairs(old_include) do
+                if type(file) == "table" and file.file then
+                    table.insert(include, {path = Path:GetFilePathNoExt(file.file), _meta = Path:GetFileExtension(file.file), script_data_type = file.type})
+                end
+            end
+        end
+
         self:save_local_add_xml(include)
         self._saving = false
         self:toggle_autosaving()
@@ -378,7 +388,7 @@ function Options:SaveData(path, file_name, data)
     FileIO:WriteTo(Path:Combine(path, file_name), data)
 end
 
-function Options:save_nav_data(include)    
+function Options:save_nav_data(include)
     local path = self:map_world_path()
     local had_include = not not include
     include = include or {}

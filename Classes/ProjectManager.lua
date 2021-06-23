@@ -84,6 +84,13 @@ function ProjectManager:get_level_by_id(data, id)
     end
 end
 
+--- Goes through data and return the current level.
+--- @param data table
+--- @return table
+function ProjectManager:get_current_level_node(data)
+    return self:get_level_by_id(data, Global.current_level_id)
+end
+
 --- Returns the module class of a level using its ID
 function ProjectManager:get_level_module(mod, id)
     for _, module in pairs(mod._modules) do
