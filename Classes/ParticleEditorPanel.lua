@@ -350,7 +350,6 @@ function CoreParticleEditorPanel:reload_effect_definition()
             entry.ref_c = 1 --Forces it to unload if for some reason it's loaded twice
             dyn:unload(effect_ids, unique_ids, dyn.DYN_RESOURCES_PACKAGE, false)
         end
-        DelayedCalls:Remove("ReloadEffectSomething")
         DelayedCalls:Add("ReloadEffectSomething", 0.1, function()
 			DB:create_entry(effect_ids, unique_ids, "tmpeffect")
             managers.dyn_resource:load(effect_ids, unique_ids, managers.dyn_resource.DYN_RESOURCES_PACKAGE)
