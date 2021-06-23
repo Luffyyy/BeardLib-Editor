@@ -27,7 +27,7 @@ function ProjectAddFilesModule:build_menu(menu, data)
     })
     buttons:s_btn("AddFolder", ClassClbk(self, "add_folder_dialog"))
     buttons:s_btn("AddFolderWithDependencies", ClassClbk(self, "add_folder_dialog", true))
-    menu:divgroup("Files")
+    menu:divgroup("Files", {auto_align = false})
     self:load_files()
 end
 
@@ -42,6 +42,7 @@ function ProjectAddFilesModule:load_files()
             list_file:tb_imgbtn("Delete", ClassClbk(self, "remove_file", file), "textures/editor_icons_df", BLE.Utils.EditorIcons["cross"], {highlight_color = Color.red})
         end
     end
+    list:AlignItems(true)
 end
 
 function ProjectAddFilesModule:add_folder_dialog(search_deps)
