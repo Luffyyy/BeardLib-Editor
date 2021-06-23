@@ -18,6 +18,7 @@ function UpperMenu:init(parent, menu)
         background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
         accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
         w = w,
+        position = BLE.Options:GetValue("GUIOnRight") and "Right" or nil,
         h = 300 / #self._tabs - 4,
         auto_foreground = true,
         offset = 0,

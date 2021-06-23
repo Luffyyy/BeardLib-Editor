@@ -19,6 +19,7 @@ function Options:init()
 	visual:button("ResetVisualOptions", ClassClbk(self, "reset_options", visual))
 	visual:colorbox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"))
 	visual:colorbox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"))
+	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
 
 	local themes = visual:divgroup("Themes", {last_y_offset = 0})
 	themes:button("Dark", ClassClbk(self, "set_theme"), {text = "Dark[Default]"})
@@ -117,7 +118,7 @@ function Options:reset_options(menu)
 end
 
 function Options:set_clbk(item)
-	self:set(item.name, item:Value() or "")
+	self:set(item.name, NotNil(item:Value(), ""))
 	if item.name == "LevelsColumns" then
 		BLE.LoadLevel:load_levels()
 	end
