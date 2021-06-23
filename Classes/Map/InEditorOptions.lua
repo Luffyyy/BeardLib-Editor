@@ -86,6 +86,9 @@ function Options:build_default()
     end
 
     local other = self:group("Other", groups_opt)
+    other:button("General Options", function()
+        BLE.Menu:set_enabled(true)
+    end)
     other:button("TeleportPlayer", ClassClbk(self, "drop_player"))
     other:button("LogPosition", ClassClbk(self, "position_debug"))
     if BeardLib.current_level then
