@@ -663,6 +663,7 @@ function CubemapCreator:_generate_spot_projection() -- Not implemented yet
 end
 
 function CubemapCreator:_move_output(output_path)
+	local output_temp = self._params.output_name .. (self._params.dome_occ and ".tga" or ".dds")
 	local output = self._params.output_name .. ".texture"
 	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
 	local final_path = Path:Combine(self._params.output_path, output)
@@ -676,10 +677,8 @@ function CubemapCreator:_move_output(output_path)
 		FileIO:Delete(final_path)
 	end
 
-	local ext = self._params.dome_occ and ".tga" or ".dds"
-
 	FileIO:MakeDir(self._params.output_path)
-	FileIO:MoveTo(self._params.source_path .. output, final_path)
+	FileIO:MoveTo(self._params.source_path .. output_temp, final_path)
 
 	local project = BLE.MapProject
 	local level_path = project:current_level_path()
