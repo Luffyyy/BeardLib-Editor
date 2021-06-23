@@ -560,9 +560,23 @@ end
 
 function Utils:EditableGuiData(unit)
     local t
+
+	--If this counts as a number and has no space at the end, insert a space so it won't be converted from 01 to 1.
+	--Then handle removing said space in BeardLib.
+
     if unit:editable_gui() then
+        local text = unit:editable_gui():text()
+        local space_fix = nil
+        if tonumber(text) and text:begins("0") then
+            space_fix = true
+            if not text:ends(" ") then
+                text = text .. " "
+            end
+        end
+
         t = {
-            text = unit:editable_gui():text(),
+            space_fix = space_fix,
+            text = text,
             font_color = unit:editable_gui():font_color(),
             font_size = unit:editable_gui():font_size(),
             font = unit:editable_gui():font(),
