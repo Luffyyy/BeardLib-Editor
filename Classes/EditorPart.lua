@@ -44,7 +44,9 @@ function Part:init(parent, menu, name, opt, mopt)
             offset = 0,
             inherit_values = {offset = {6, 4}},
         }, opt.tabs_opt))
-        opt.make_tabs(self._tabs)
+        if type(opt.make_tabs) == "function" then
+            opt.make_tabs(self._tabs)
+        end
         title_h = title_h + self._tabs:OuterHeight()
     end
 

@@ -105,6 +105,8 @@ function Editor:post_init(menu)
     m.mission = MissionEditor:new(self, self._editor_menu)
     m.static = StaticEditor:new(self, self._editor_menu)
     m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.select = SelectMenu:new(self, self._editor_menu)
+    m.spawn = SpawnMenu:new(self, self._editor_menu)
     m.env = EnvEditor:new(self, self._editor_menu)
     m.instances = InstancesEditor:new(self, self._editor_menu)
     m.undo_handler = UndoUnitHandler:new(self, self._editor_menu)
@@ -276,7 +278,7 @@ function Editor:mouse_pressed(button, x, y)
     if self._editor_menu:ChildrenMouseFocused() then
         return
     end
-    if self.parts.world:mouse_pressed(button, x, y) then
+    if self.parts.spawn:mouse_pressed(button, x, y) then
         return
     end
     if self.parts.mission:mouse_pressed(button, x, y) then
@@ -326,7 +328,7 @@ function Editor:GetSpawnPosition(data)
     if data then
         position = data.position
     end
-    return position or (self.parts.world:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
+    return position or (self.parts.spawn:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
 end
 
 function Editor:GetSpawnRotation(data)
@@ -334,7 +336,7 @@ function Editor:GetSpawnRotation(data)
     if data then
         rotation = data.rotation
     end
-    return rotation or (self.parts.world:is_spawning() and self.parts.world._dummy_spawn_unit:rotation()) or Rotation()
+    return rotation or (self.parts.spawn:is_spawning() and self.parts.spawn._dummy_spawn_unit:rotation()) or Rotation()
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
@@ -752,7 +754,7 @@ function Editor:unbind(opt)
 end
 
 function Editor:get_dummy_or_grabbed_unit()
-    return self.parts.world:get_dummy_unit() or self.parts.static:get_grabbed_unit()
+    return self.parts.spawn:get_dummy_unit() or self.parts.static:get_grabbed_unit()
 end
 
 function Editor:current_position()
@@ -900,7 +902,7 @@ function Editor:draw_marker(t, dt)
         local selected_units = self:selected_units()
         for _, ray in pairs(rays) do
             local unit = ray.unit
-            if ray and unit ~= self.parts.world._dummy_spawn_unit then
+            if ray and unit ~= self.parts.spawn._dummy_spawn_unit then
                 if not self.parts.static._grabbed_unit or not table.contains(selected_units, unit) then
                     pos = ray.position
                     break

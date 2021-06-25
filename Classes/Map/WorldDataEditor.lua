@@ -149,6 +149,8 @@ function WData:build_default()
     local select_element = BLE.Options:GetValue("Input/SelectElement")
     local load_unit = BLE.Options:GetValue("Input/LoadUnit")
     local load_unit_fe = BLE.Options:GetValue("Input/SpawnUnitLoaded")
+
+
     spawn:s_btn("Unit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit("..spawn_unit..")"})
     spawn:s_btn("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
     spawn:s_btn("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
@@ -625,45 +627,6 @@ function WData:remove_dummy_unit()
     end
 end
 
-function WData:is_spawning()
-    return self._currently_spawning_element or self._currently_spawning
-end
-
-function WData:mouse_pressed(button, x, y)
-    if not self:enabled() then
-        return
-    end
-
-    if button == Idstring("0") then
-        if self._currently_spawning_element then
-            self._do_switch = true
-            self._parent:add_element(self._currently_spawning_element)
-            return true
-        elseif self._currently_spawning then
-            self._do_switch = true
-            local unit = self._parent:SpawnUnit(self._currently_spawning)
-            self:GetPart("undo_handler"):SaveUnitValues({unit}, "spawn")
-            return true
-        end
-    elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element) then
-        self:remove_dummy_unit()
-        self._currently_spawning = nil
-        self._currently_spawning_element = nil
-        self:SetTitle()
-        self:GetPart("menu"):set_tabs_enabled(true)
-        if self._do_switch and self:Val("SelectAndGoToMenu") then
-            self:GetPart("static"):Switch()
-            self._do_switch = false
-        end
-        return true
-    end
-    return false
-end
-
-function WData:get_dummy_unit()
-    return self._dummy_spawn_unit
-end
-
 function WData:update(t, dt)
     self.super.update(self, t, dt)
 
@@ -671,15 +634,6 @@ function WData:update(t, dt)
         if editor.update then
             editor:update(t, dt)
         end
-    end
-
-    if alive(self._dummy_spawn_unit) then
-        self._dummy_spawn_unit:set_position(self._parent._spawn_position)
-        if self._parent._current_rot then
-            self._dummy_spawn_unit:set_rotation(self._parent._current_rot)
-        end
-        Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
-        Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
     end
 end
 

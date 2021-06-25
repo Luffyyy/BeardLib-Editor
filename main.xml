@@ -73,6 +73,9 @@
 			<class file="AiLayerEditor.lua"/>
 			<class file="UndoUnitHandler.lua"/>
 			<class file="CubemapCreator.lua"/>
+			<class file="SearchList.lua"/>
+			<class file="SpawnMenu.lua"/>
+			<class file="SelectMenu.lua"/>
 		</classes>
     </Classes>
     <Hooks directory="Hooks">

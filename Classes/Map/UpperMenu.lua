@@ -5,12 +5,14 @@ function UpperMenu:init(parent, menu)
     local normal = not Global.editor_safe_mode
     self._tabs = {
         {name = "world", rect = {135, 271, 115, 115}},
+        {name = "spawn", rect = {256, 262, 115, 115}, enabled = normal},
+        {name = "select", rect = {256, 262, 115, 115}, enabled = normal},
         {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
         {name = "env", rect = {15, 267, 115, 115}},
         {name = "opt", rect = {385, 385, 115, 115}},
         {name = "save", rect = {260, 385, 115, 115}, callback = ClassClbk(self, "save"), enabled = normal},
-        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
-        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
+        --{name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
+        --{name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
@@ -92,19 +94,19 @@ end
 
 function UpperMenu:toggle_widget(name, item)
     if ctrl() then return end
-    item = item or self:GetItem(name.."_widget_toggle")
-    local menu = item.parent
-    if not item.enabled then return end
+   -- item = item or self:GetItem(name.."_widget_toggle")
+    --local menu = item.parent
+    --if not item.enabled then return end
 
-    self._parent["toggle_"..name.."_widget"](self._parent)
+    --self._parent["toggle_"..name.."_widget"](self._parent)
     self._parent:use_widgets(self._parent:selected_unit() ~= nil)
     self:update_toggle(item)
 end
 
 function UpperMenu:update_toggle(item)
-    local name = item.name:gsub("_widget_toggle", "")
-    item.enabled_alpha = self._parent[name.."_widget_enabled"](self._parent) and 1 or 0.5
-    item:SetEnabled(item.enabled)
+    --local name = item.name:gsub("_widget_toggle", "")
+    --item.enabled_alpha = self._parent[name.."_widget_enabled"](self._parent) and 1 or 0.5
+    --item:SetEnabled(item.enabled)
 end
 
 function UpperMenu:Switch(manager, no_anim)
