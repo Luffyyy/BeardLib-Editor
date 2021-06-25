@@ -29,7 +29,7 @@ function EnvEditor:load_included_environments()
         for _, child in ipairs(add) do
             if type(child) == "table" and child._meta == "environment" then
                 local file_name = child.path..".environment"
-                local file = Path:Combine(level._level_dir, file_name)
+                local file = Path:Combine(project:current_level_path(), file_name)
                 if FileIO:Exists(file) then
                     has_items = true
                     local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
@@ -495,7 +495,8 @@ end
 
 function EnvEditor:include_current_dialog(name)
     local level = BeardLib.current_level
-    local env_dir = Path:Combine(level._level_dir, "environments")
+    local project = BLE.MapProject
+    local env_dir = Path:Combine(project:current_level_path(), "environments")
     BLE.InputDialog:Show({
         title = "Environment name:",
         text = type(name) == "string" and name or self._last_custom and Path:GetFileNameWithoutExtension(self._last_custom) or "",
