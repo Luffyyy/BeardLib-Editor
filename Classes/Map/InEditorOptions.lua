@@ -94,7 +94,7 @@ function Options:build_default()
     if BeardLib.current_level then
         other:button("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
     end
-    other:button("OpenWorldInExplorer", ClassClbk(self, "open_in_explorer", true))
+    other:button("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
     other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false)
 
     self:toggle_autosaving()
