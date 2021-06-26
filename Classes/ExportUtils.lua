@@ -398,8 +398,12 @@ end
 function Utils:ReadEnvironment(path, config, exclude, extra_info)
 	self:Add(config, "environment", path, exclude, extra_info)
 	local tbl = self:ParseXml("environment", path, true)
-	if tbl and tbl.data and tbl.data.others and tbl.data.others.underlay then
-		self:ReadScene(tbl.data.others.underlay, exclude, {file = path..".environment", where = "others node/underlay value"})
+	if tbl and tbl.data and tbl.data.others then
+        for _, param in pairs(tbl.data.others) do
+            if param.key == "underlay" then
+                self:ReadScene(param.value, config, exclude, {file = path..".environment", where = "others node/underlay value"})
+            end
+        end
 	end
 	return tbl ~= nil
 end
