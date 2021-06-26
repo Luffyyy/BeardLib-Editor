@@ -34,7 +34,7 @@ function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
 		on_callback = callback,
 		highlight_color = self:GetForeground():with_alpha(0.25),
 		auto_foreground = false,
-		size = self:H(),
+		size = self:H()*0.8,
 		offset = 2,
 		img_offset = 4,
 		texture = texture or BLE.Utils.EditorIcons.texture,
@@ -151,7 +151,7 @@ end
 
 function ItemExt:group(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
-	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name)}, o))
+	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name), private = {size = 20, background_color = color:with_alpha(0.15)}}, o))
 end
 
 function ItemExt:notebook(name, o)
@@ -183,6 +183,10 @@ function ItemExt:divgroup(name, o)
 	return self:DivGroup(table.merge({
 		name = name,
 		color = color,
+		private = {
+			size = 20,
+			background_color = color:with_alpha(0.2),
+		},
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
@@ -310,13 +314,13 @@ function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
 end
 
 function ItemExt:Vector3(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Vector3", align_method = "centered_grid", color = false}, o))
+	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, background_color = false, value_type = "Vector3", align_method = "centered_grid", color = false}, o))
 	o = {}
 	value = value or Vector3()
 	local vector2 = p.vector2
 	local TB = p:GetToolbar()
-	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
-	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
+	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -357,12 +361,12 @@ function ItemExt:Vector3(name, clbk, value, o)
 end
 
 function ItemExt:Rotation(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Rotation", align_method = "centered_grid", color = false}, o))
+	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, background_color = false, value_type = "Rotation", align_method = "centered_grid", color = false}, o))
 	o = {}
 	value = value or Rotation()
 	local TB = p:GetToolbar()
-	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
-	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
+	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
 	local controls = {"yaw", "pitch", "roll"}
 	local items = {}
 	for i, control in pairs(controls) do

@@ -51,7 +51,7 @@ function EnvEditor:build_default()
     if BeardLib.current_level then
         local included = self:divgroup("IncludedEnvironments")
         self:load_included_environments()
-        included:GetToolbar():tb_btn("IncludeCurrent", ClassClbk(self, "include_current_dialog"), {offset = 0})
+        included:GetToolbar():tb_btn("IncludeCurrent", ClassClbk(self, "include_current_dialog"), {offset = 4})
     end
 
     local quick = self:divgroup("Quick actions")
