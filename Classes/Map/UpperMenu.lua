@@ -22,7 +22,7 @@ function UpperMenu:init(parent, menu)
         h = 300 / #self._tabs - 4,
         auto_foreground = true,
         offset = 0,
-        align_method = "grid",
+        align_method = "centered_grid",
         scrollbar = false,
         visible = true,
     })
@@ -61,8 +61,8 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         w = 300 / #self._tabs,
         h = self._menu:H(),
         icon_w = s - 12,
-        icon_h = s - 12,      
-    })    
+        icon_h = s - 12,
+    })
 end
 
 function UpperMenu:select_tab(clbk, item)
