@@ -4,15 +4,15 @@ function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
     self._tabs = {
-        {name = "world", rect = {135, 271, 115, 115}},
-        {name = "spawn", rect = {256, 262, 115, 115}, enabled = normal},
-        {name = "select", rect = {256, 262, 115, 115}, enabled = normal},
-        {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
-        {name = "env", rect = {15, 267, 115, 115}},
-        {name = "opt", rect = {385, 385, 115, 115}},
-        {name = "save", rect = {260, 385, 115, 115}, callback = ClassClbk(self, "save"), enabled = normal},
-        --{name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
-        --{name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
+        {name = "world", rect = {0, 448, 64, 64}},
+        {name = "spawn", rect = {64, 448, 64, 64}, enabled = normal},
+        {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
+        {name = "static", rect = {192, 448, 64, 64}, enabled = normal},
+        {name = "env", rect = {256, 448, 64, 64}},
+        {name = "opt", rect = {320, 448, 64, 64}},
+        {name = "save", rect = {384, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
+        --{name = "move_widget_toggle", rect = {64, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
+        --{name = "rotation_widget_toggle", rect = {0, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
