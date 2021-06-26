@@ -2,15 +2,15 @@ SearchList = SearchList or class(EditorPart)
 
 function SearchList:init(parent)
     self._menu = parent._holder:pan("Tab", {visible = false, auto_height = false, offset = {0, 8}, h = parent._holder:ItemsHeight() - 16, scrollbar = false})
-    self._options = self._menu:group("Options", {offset = {0, 8}})
+    self._options = self._menu:group("Options", {private = {offset = 0}})
     self._options:textbox("Search", ClassClbk(self, "do_search"), nil, {control_slice = 0.75})
 
     self._parent = parent
-    self._pages = self._menu:pan("Pages", {align_method = "centered_grid"})
+    self._pages = self._menu:pan("Pages", {align_method = "centered_grid", visible = not self.HIDE_PAGINATION})
 
     self._page = 1
 
-    self._list = self._menu:pan("Units", {inherit_values = {size = 14}, offset = {0, 8}, auto_align = false, auto_height = false, h = self._menu:ItemsHeight() - 120})
+    self._list = self._menu:pan("Units", {inherit_values = {size = 14}, offset = {0, 8}, auto_align = false, auto_height = false, h = self._menu:ItemsHeight() - (self.HIDE_PAGINATION and 75 or 120)})
     self:do_search()
 end
 
@@ -33,7 +33,6 @@ function SearchList:do_search(item)
 end
 
 function SearchList:do_search_list()
-    log('..')
 end
 
 function SearchList:on_click_item()
@@ -59,12 +58,9 @@ function SearchList:do_show()
 
     self._list:ClearItems()
 
-    local i = 0
-
-    for name in pairs(self._filtered) do
-        i = i + 1
+    for i, v in pairs(self._filtered) do
         if i > perapge * (page-1) and i < perapge * (page + 1) then -- Is it in the page's range?
-            self._list:button(name:gsub("units/", ""), ClassClbk(self, "on_click_item", name), {border_left = true, offset = {1, 4},
+            self._list:button(self:friendly_item_name(v), ClassClbk(self, "on_click_item", v), {border_left = true, offset = {1, 4},
                 items = {
                     {
                         text = "Add To Favorites",
@@ -80,6 +76,10 @@ function SearchList:do_show()
     self._list:AlignItems()
 end
 
+function SearchList:friendly_item_name(full_name)
+    return type(full_name) == "table" and full_name.name or full_name
+end
+
 function SearchList:set_page(page)
     self._page = page
     self:do_show()
@@ -90,19 +90,18 @@ UnitSpawnList = UnitSpawnList or class(SearchList)
 function UnitSpawnList:do_search_list()
     for unit in pairs(BLE.DBPaths.unit) do
         if not unit:match("wpn_") and not unit:match("msk_") then
-            if not self._search or self._search:len() == 0 or unit:match(self._search) then
-                self._filtered[unit] = true
+            if not self._search or self._search:len() == 0 or unit:lower():match(self._search:lower()) then
+                table.insert(self._filtered, {name = unit:gsub("units/", ""), unit = unit})
             end
         end
     end
-    log(table.size(self._filtered))
 end
 
-function UnitSpawnList:on_click_item(name)
-    if PackageManager:has(Idstring("unit"), name:id()) then
-        self._parent:begin_spawning(name)
+function UnitSpawnList:on_click_item(item)
+    if PackageManager:has(Idstring("unit"), item.unit:id()) then
+        self._parent:begin_spawning(item.unit)
     else
-        self:load_from_db(name)
+        self:load_from_db(item.unit)
     end
 end
 
@@ -122,7 +121,48 @@ function UnitSpawnList:load_from_db(unit)
     }, false, true, ClassClbk(self._parent, "begin_spawning", unit))
 end
 
-
 ElementSpawnList = ElementSpawnList or class(SearchList)
+ElementSpawnList.HIDE_PAGINATION = true
+function ElementSpawnList:do_search_list()
+    self._filtered = {}
+    for _, element in pairs(BLE._config.MissionElements) do
+        local name = element:gsub("Element", "")
+        if not self._search or self._search:len() == 0 or element:lower():match(self._search:lower()) then
+            table.insert(self._filtered, {name = name, element = element})
+        end
+    end
+    table.sort(self._filtered, function(a,b) return b.name > a.name end)
+end
+
+function ElementSpawnList:on_click_item(item)
+    self._parent:begin_spawning_element(item.element)
+end
+
 PrefabSpawnList = PrefabSpawnList or class(SearchList)
+function PrefabSpawnList:on_click_item(item)
+    self:GetPart("static"):SpawnPrefab(item.prefab)
+end
+
+function PrefabSpawnList:do_search_list()
+    self._filtered = {}
+    for name, prefab in pairs(BLE.Prefabs) do
+        if not self._search or self._search:len() == 0 or name:lower():match(self._search:lower()) then
+            table.insert(self._filtered, {name = name, prefab = prefab})
+        end
+    end
+end
+
 InstanceSpawnList = InstanceSpawnList or class(SearchList)
+
+function InstanceSpawnList:on_click_item(item)
+    self._parent:SpawnInstance(item.instance, nil, true)
+end
+
+function InstanceSpawnList:do_search_list()
+    self._filtered = {}
+    for _, path in pairs(table.merge(BLE.Utils:GetEntries({type = "world"}), table.map_keys(BeardLib.managers.MapFramework._loaded_instances))) do
+        if path:match("levels/instances") and (not self._search or self._search:len() == 0 or path:lower():match(self._search:lower())) then
+            table.insert(self._filtered, {name = path:gsub("levels/instances/", ""), instance = path})
+        end
+    end
+end

@@ -25,14 +25,11 @@ end
 
 function WData:enable()
     WData.super.enable(self)
-    self:bind_opt("SpawnUnitLoaded", ClassClbk(self, "OpenSpawnUnitDialog"))
-    self:bind_opt("SpawnElement", ClassClbk(self, "OpenSpawnElementDialog"))
     self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
     self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
     if BeardLib.current_level then
         self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
     end
-    self:bind_opt("SpawnUnit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}))
 end
 
 function WData:loaded_continents(continents, current_continent)
@@ -141,24 +138,15 @@ function WData:build_default()
         self:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
 
-    local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, align_method = "grid"})
+    local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, visible = false, align_method = "grid"})
 
-    local spawn_unit = BLE.Options:GetValue("Input/SpawnUnit")
-    local spawn_element = BLE.Options:GetValue("Input/SpawnElement")
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
     local load_unit = BLE.Options:GetValue("Input/LoadUnit")
     local load_unit_fe = BLE.Options:GetValue("Input/SpawnUnitLoaded")
 
-
-    spawn:s_btn("Unit", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "QuickLoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit("..spawn_unit..")"})
-    spawn:s_btn("Element", ClassClbk(self, "OpenSpawnElementDialog"), {text = "Element("..spawn_element..")"})
-    spawn:s_btn("Instance", ClassClbk(self, "OpenSpawnInstanceDialog"))
-    spawn:s_btn("Prefab", ClassClbk(self, "OpenSpawnPrefabDialog"))
-
     local spawn_help_pkg = "Spawn a unit with a package"
     local spawn_help_db = "Same as regular spawning, just with extra configurability."
-    spawn:separator()
     spawn:s_btn("UnitLoaded", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Loaded Unit("..load_unit_fe..")", help = "A filtered list with only units that are currently loaded"})
     spawn:s_btn("SpawnAndLoadFromPackages", ClassClbk(self, "OpenLoadDialog", {ext = "unit", spawn = true}), {text = "Unit from Packages("..load_unit..")", help = spawn_help_pkg})
     spawn:s_btn("SpawnAndLoadFromDBDialog", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit+", help = spawn_help_db})
@@ -205,14 +193,6 @@ function WData:QuickLoadFromExtract(ext, asset, clbk)
     }, false, true, clbk)
 end
 
-function WData:button_pos(near, item)
-	if alive(near) then
-		item:Panel():set_righttop(near:Panel():left(), 0)
-	else
-		item:SetPositionByString("RightTop")
-	end
-end
-
 --Continents
 function WData:build_continents()
     local tx = "textures/editor_icons_df"
@@ -227,7 +207,7 @@ function WData:build_continents()
 
         toolbar:tb_imgbtn("NewContinent", ClassClbk(self, "new_continent"), tx, icons.plus, {help = "Add continent"})
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
-            local continent = continents:group(name, {text = name})
+            local continent = continents:group(name, {text = name, divider_type = table.size(managers.mission._missions[name]) == 0})
             local ctoolbar = continent:GetToolbar()
             ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), tx, {97, 1, 30, 30}, {highlight_color = Color.red, help = "Remove Continent"})
             ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {0, 0, 32, 32}, {highlight_color = Color.red, help = "Delete all Units"})
@@ -529,6 +509,7 @@ function WData:build_wires_layer_menu()
     end
 end
 
+--TODO: maybe reimplement this
 function WData:build_groups_layer_menu()
     local tx  = "textures/editor_icons_df"
 
@@ -577,21 +558,6 @@ function WData:build_groups_layer_menu()
     end
 end
 
---[[function WData:build_ai_layer_menu()    
-    local states = {
-        "empty",
-        "airport",
-        "besiege",
-        "street",
-        "zombie_apocalypse"
-    }
-    self:combobox("GroupState", function(item)
-        self:data().ai_settings.ai_settings.group_state = item:SelectedItem()
-    end, states, table.get_key(states, self:data().ai_settings.ai_settings.group_state))
-    self:button("SpawnNavSurface", ClassClbk(self, "BeginSpawning", "core/units/nav_surface/nav_surface"))
-    self:button("SpawnCoverPoint", ClassClbk(self, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
-end]]
-
 function WData:reset()
     for _, editor in pairs(self.layers) do
         if editor.reset then
@@ -635,122 +601,6 @@ function WData:update(t, dt)
             editor:update(t, dt)
         end
     end
-end
-
-function WData:OpenSpawnPrefabDialog()
-    local prefabs = {}
-    for name, prefab in pairs(BLE.Prefabs) do
-        table.insert(prefabs, {name = name, prefab = prefab})
-    end
-    BLE.ListDialog:Show({
-        list = prefabs,
-        force = true,
-        callback = function(item)
-            self:GetPart("static"):SpawnPrefab(item.prefab)
-            BLE.ListDialog:hide()
-        end
-    }) 
-end
-
-function WData:OpenSpawnInstanceDialog()
-    local instances = table.map_keys(BeardLib.managers.MapFramework._loaded_instances)
-    for _, path in pairs(BLE.Utils:GetEntries({type = "world"})) do
-        if path:match("levels/instances") then
-            table.insert(instances, path)
-        end
-    end
-    BLE.ListDialog:Show({
-        list = instances,
-        force = true,
-        callback = function(instance)
-            self:SpawnInstance(instance, nil, true)
-            BLE.ListDialog:hide()
-        end
-    })
-end
-
-function WData:SpawnInstance(instance, instance_data, spawn)
-    instance_data = instance_data or {}
-    local continent = managers.worlddefinition._continent_definitions[self._parent._current_continent]
-    if continent then
-        continent.instances = continent.instances or {}
-        local instance_name = instance_data.name
-        if not instance_name then
-            instance_name = Path:GetFileName(Path:GetDirectory(instance)).."_"
-            local instance_names = managers.world_instance:instance_names()
-            local i = 1
-            while(table.contains(instance_names, instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i)) do
-                i = i + 1
-            end
-            instance_name = instance_name .. (i < 10 and "00" or i < 100 and "0" or "") .. i
-        end
-
-        local module_data = BeardLib.managers.MapFramework._loaded_instances[instance]
-        local index_size = module_data and module_data._config.index_size or self:Val("InstanceIndexSize")
-
-        if not managers.mission:script(instance_data.script) then
-            instance_data.script = nil
-        end
-
-        instance_data.start_index = nil
-        local instance = table.merge({
-            continent = self._parent._current_continent,
-            name = instance_name,
-            folder = instance,
-            position = self._parent:cam_spawn_pos(),
-            rotation = Rotation(),
-            script = self._parent._current_script,
-            index_size = index_size,
-            start_index = managers.world_instance:get_safe_start_index(index_size, self._parent._current_continent)
-        }, instance_data)
-        table.insert(continent.instances, instance)
-        for _, mission in pairs(managers.mission._missions) do
-            if mission[instance.script] then
-                table.insert(mission[instance.script].instances, instance_name)
-                break
-            end
-        end
-        managers.world_instance:add_instance_data(instance)
-        local units = managers.worlddefinition:prepare_for_spawn_instance(instance)
-        local data = managers.world_instance:get_instance_data_by_name(instance_name)
-        local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance_name)
-        local script = managers.mission._scripts[instance.script]
-        if not data.mission_placed then
-            script:create_instance_elements(prepare_mission_data)
-        else
-            script:_preload_instance_class_elements(prepare_mission_data)
-        end
-
-        local unit = FakeObject:new(data, {instance = true})
-        if spawn then
-            self:GetPart("static"):set_selected_unit(unit)
-        end
-        return unit
-    end
-
-end
-
-function WData:OpenSpawnElementDialog()
-    if not self:CanOpenDialog("SpawnElement") then
-        return
-    end
-
-    local held_ctrl
-    local elements = {}
-    for _, element in pairs(BLE._config.MissionElements) do
-        local name = element:gsub("Element", "")
-        table.insert(elements, {name = name, element = element})
-    end
-    table.sort(elements, function(a,b) return b.name > a.name end)
-	BLE.ListDialog:Show({
-	    list = elements,
-        force = true,
-        no_callback = ClassClbk(self, "CloseDialog"),
-        callback = function(item)
-            self:BeginSpawningElements(item.element)
-            self:CloseDialog()
-	    end
-	}) 
 end
 
 function WData:OpenSelectUnitDialog(params)
@@ -877,22 +727,6 @@ function WData:OpenSelectElementDialog(params)
             end
         end
 	})
-end
-
-function WData:BeginSpawningElements(element)
-    self._currently_spawning_element = element
-    self:BeginSpawning()
-end
-
-function WData:BeginSpawning(unit)
-    self:Switch()
-    self._currently_spawning = unit
-    self:remove_dummy_unit()
-    if self._parent._spawn_position then
-        self._dummy_spawn_unit = World:spawn_unit(Idstring(unit or "units/mission_element/element"), self._parent._spawn_position)
-    end
-    self:GetPart("menu"):set_tabs_enabled(false)
-    self:SetTitle("Press: LMB to spawn, RMB to cancel")
 end
 
 function WData:CloseDialog()
