@@ -229,23 +229,23 @@ function WData:build_continents()
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = continents:group(name, {text = name})
             local ctoolbar = continent:GetToolbar()
-            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), tx, {184, 2, 48, 48}, {highlight_color = Color.red, help = "Remove Continent"})
-            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {7, 2, 48, 48}, {highlight_color = Color.red, help = "Delete all Units"})
-            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), tx, {385, 385, 115, 115}, {help = "Continent Settings"})
-            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {122, 1, 48, 48}, {help = "Select All"})
+            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), tx, {97, 1, 30, 30}, {highlight_color = Color.red, help = "Remove Continent"})
+            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {0, 0, 32, 32}, {highlight_color = Color.red, help = "Delete all Units"})
+            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), tx, {320, 448, 64, 64}, {help = "Continent Settings"})
+            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {64, 0, 32, 32}, {help = "Select All"})
             ctoolbar:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), tx, icons.plus, {help = "Add mission script"})
             ctoolbar:tb_imgbtn("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
                 item:SetEnabled(item.enabled)
-            end, tx, {155, 95, 64, 64}, {help = "Toggle Visibility"})
+            end, tx, {96, 56, 48, 48}, {help = "Toggle Visibility"})
 
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = continent:divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, text = sname, offset = {8, 4}})
-                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {184, 2, 48, 48}, {highlight_color = Color.red, help = "Remove Script"})
-                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {7, 2, 48, 48}, {highlight_color = Color.red, help = "Delete all Elements"})
-                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), tx, {66, 1, 48, 48}, {help = "Rename Script"})
-                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {122, 1, 48, 48}, {help = "Select All"})
+                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {97, 1, 30, 30}, {highlight_color = Color.red, help = "Remove Script"})
+                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {0, 0, 32, 32}, {highlight_color = Color.red, help = "Delete all Elements"})
+                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), tx, {32, 0, 32, 32}, {help = "Rename Script"})
+                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {64, 0, 32, 32}, {help = "Select All"})
             end
         end
     end
