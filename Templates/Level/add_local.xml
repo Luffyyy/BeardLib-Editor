@@ -10,4 +10,5 @@
 	<continent path="world/world" script_data_type="binary"/>
 	<mission path="world/world" script_data_type="binary"/>
 	<cover_data path="cover_data" script_data_type="binary"/>
+	<environment path="environments/default" script_data_type="custom_xml"/>
 </table>
