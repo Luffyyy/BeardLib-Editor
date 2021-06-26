@@ -26,7 +26,7 @@ function EnvEditor:load_included_environments()
         included:ClearItems("environment")
         local has_items = false
         local add = project:read_xml(level._local_add_path)
-        for _, child in ipairs(add) do
+        for _, child in pairs(add) do
             if type(child) == "table" and child._meta == "environment" then
                 local file_name = child.path..".environment"
                 local file = Path:Combine(project:current_level_path(), file_name)
@@ -483,8 +483,9 @@ end
 function EnvEditor:uninclude_environment_dialog(item)
     BLE.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
+        local project = BLE.MapProject
         local pname = item.parent.name
-        FileIO:Delete(Path:Combine(level._level_dir, pname))
+        FileIO:Delete(Path:Combine(project:current_level_path(), pname))
         self:GetPart("opt"):save_local_add_xml()
         local env = pname:gsub(".environment", "")
         Global.DBPaths.environment[Path:Combine(level._inner_dir, env)] = nil
