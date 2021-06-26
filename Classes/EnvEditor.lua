@@ -33,7 +33,7 @@ function EnvEditor:load_included_environments()
                 if FileIO:Exists(file) then
                     has_items = true
                     local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
-                    env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
+                    env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red, offset = 0})
                 end
             end
         end
