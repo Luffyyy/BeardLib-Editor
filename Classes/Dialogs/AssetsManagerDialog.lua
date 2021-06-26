@@ -82,15 +82,13 @@ function AssetsManagerDialog:_Show()
     self._unit_info:button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false))
     self._unit_info:button("PackageReport", ClassClbk(self, "package_report"))
     self._unit_info:button("ScanAssetsDirectory", ClassClbk(self, "scan_assets"))
-    self._unit_info:divider("UnitInfoTitle", {text = "Unit Inspection"})
-    self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
+    self._inspect = self._unit_info:divgroup("UnitInfoTitle", {text = "Unit Inspection"})
     local actions = self._unit_info:divgroup("Actions")
-    actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, enabled = false})
-    actions:button("LoadFromDatabase", ClassClbk(self, "load_from_extract_dialog", false, false), {offset = 0, enabled = false})
+    actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, visible = false})
+    actions:button("LoadFromDatabase", ClassClbk(self, "load_from_extract_dialog", false, false), {offset = 0, visible = false})
 
-    actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, enabled = false})
-    actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, enabled = false})
-    actions:button("UnloadAsset", ClassClbk(self, "unload_asset", false, false), {offset = 0, enabled = false})
+    actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false, false), {offset = 0, visible = false})
+    actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false, false), {offset = 0, visible = false})
 
     self:reload()
 end
@@ -112,7 +110,7 @@ function AssetsManagerDialog:load_assets()
 					local name = node.path or node.name
 					if type and name then
 						self._assets[type] = self._assets[type] or {}
-						self._assets[type][name] = true
+						self._assets[type][name] = node
 					end
 				end
             end
@@ -135,7 +133,7 @@ function AssetsManagerDialog:show_assets()
     local project = BLE.MapProject
     local mod = project:current_mod()
     if self._tbl._data then
-        add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
+        add = self._current_level.add
     end
     local panic
 	local new_asset = function(asset, type, times)
@@ -155,7 +153,7 @@ function AssetsManagerDialog:show_assets()
         local color = not ready and Color.cyan or not loaded and Color.red or (unused and Color.yellow) or nil
         units:button(asset, ClassClbk(self, "set_unit_selected"), {
 			asset_type = type,
-            text = asset.."."..type.."("..(ready and times or "Copying")..")",
+            text = asset.."."..type..(type == "unit" and "("..(ready and times or "Copying")..")" or ""),
 			label = "assets",
 			disabled_alpha = 0.8,
 			index = (not loaded or unused) and 1 or nil,
@@ -189,7 +187,9 @@ function AssetsManagerDialog:show_packages()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     self._tbl._data = data
-    self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
+
+    local level = project:get_current_level_node(self._tbl._data)
+    self._current_level = level
 
     local packages = self:GetItem("Packages", true)
     if not packages then
@@ -197,7 +197,6 @@ function AssetsManagerDialog:show_packages()
     end
     packages:ClearItems("packages")
     if self._tbl._data then
-        local level = project:get_level_by_id(self._tbl._data, Global.current_level_id)
         if level.packages then
             for i, package in pairs(level.packages) do
                 local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
@@ -205,7 +204,7 @@ function AssetsManagerDialog:show_packages()
                 if size or custom then
                     local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.3fmb)", package, size)
                     local pkg = packages:divider(package, {text = text, label = "packages"})
-                    pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, {184, 2, 48, 48})
+                    pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, BLE.Utils.EditorIcons.cross)
                 end
             end
         end
@@ -655,19 +654,21 @@ function AssetsManagerDialog:remove_unit_from_map(remove_asset, name, type)
 	type = type or self._tbl._selected.asset_type
 
     local remove = function()
-        for k, unit in pairs(managers.worlddefinition._all_units) do
-            local ud = alive(unit) and unit:unit_data()
-            if ud and not ud.instance and ud.name == name then
-                managers.editor:DeleteUnit(unit)
+        if type == "unit" then
+            for k, unit in pairs(managers.worlddefinition._all_units) do
+                local ud = alive(unit) and unit:unit_data()
+                if ud and not ud.instance and ud.name == name then
+                    managers.editor:DeleteUnit(unit)
+                end
             end
-        end
-        managers.worlddefinition._all_names[name] = nil
-        local continents = managers.worlddefinition._continent_definitions
-        for cname, continent in pairs(continents) do
-            if continent.statics then
-                for i, static in pairs(continent.statics) do
-                    if static.unit_data and static.unit_data.name == name then
-                        table.remove(continent.statics, i)
+            managers.worlddefinition._all_names[name] = nil
+            local continents = managers.worlddefinition._continent_definitions
+            for cname, continent in pairs(continents) do
+                if continent.statics then
+                    for i, static in pairs(continent.statics) do
+                        if static.unit_data and static.unit_data.name == name then
+                            table.remove(continent.statics, i)
+                        end
                     end
                 end
             end
@@ -774,7 +775,7 @@ function AssetsManagerDialog:check_data()
         local project = BLE.MapProject
         local mod, data = project:get_mod_and_config()
         self._tbl._data = data
-        self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
+        self._current_level = BLE.MapProject:get_current_level_node(self._tbl._data)
     end
 end
 
@@ -811,17 +812,17 @@ function AssetsManagerDialog:set_unit_selected(item)
             item:SetBorder({left = true})
         end
     end
-    local loaded_from_package
     local unused
 	local asset
 	local type
+    local file
+    local from_db
+    self._inspect:ClearItems()
     if self._tbl._selected then
 		asset = self._tbl._selected.name
 		type = self._tbl._selected.asset_type
-        local project = BLE.MapProject
         local load_from
         for _, pkg in pairs(self:get_packages_of_asset(asset, type, true)) do
-            loaded_from_package = true
             load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
@@ -830,39 +831,39 @@ function AssetsManagerDialog:set_unit_selected(item)
             local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.3fmb)", name, pkg.package_size)
             load_from = load_from.."\n"..pkg_s
         end
-        local add
-        local project = BLE.MapProject
-        local mod = project:current_mod()
-        if self._tbl._data then
-            add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
-        end
         if BLE.Utils.core_units[asset] then
             load_from = "Core Assets"
         end
-        if self._assets[type] and self._assets[type][asset] then
-            load_from = (load_from or "") .. "\n".."Map Assets"
+        file = self._assets[type] and self._assets[type][asset] or nil
+        from_db = file and file.from_db or false
+        if file then
+            load_from = (load_from or "") .. "\n"..(file.from_db and "Database" or "Map Assets")
             if type == UNIT and not managers.worlddefinition._all_names[asset] then
-                load_from = load_from .. "\n" .. "| Warning: Unused!"
                 unused = true
             end
         end
-        self._unit_info:GetItem("UnitInfo"):SetText("| Asset:\n"..BLE.Utils:ShortPath(asset.."."..type, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the asset using one of the methods below"))
+        self._inspect:divider("Asset: ".. tostring(BLE.Utils:ShortPath(asset.."."..type, 2)))
+        self._inspect:divider("LoadedFrom", {text = "Loaded From: "..(load_from or "Unloaded, please load the asset using one of the methods below")})
+        if unused then
+            self._inspect:divider("Warning: Unused!")
+        end
     else
-        self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
+        self._inspect:divider("NoAsset", {text = "No Asset Selected."})
     end
-    self._unit_info:GetItem("FindPackage"):SetEnabled(asset ~= nil)
-    self._unit_info:GetItem("LoadFromDatabase"):SetEnabled(asset ~= nil)
-    self._unit_info:GetItem("RemoveAndUnloadAsset"):SetEnabled(not unused and asset ~= nil)
-    self._unit_info:GetItem("Remove"):SetEnabled(not unused and asset ~= nil)
-    self._unit_info:GetItem("UnloadAsset"):SetEnabled((unused or loaded_from_package) and asset and type and self._assets[type] and self._assets[type][asset])
+    local has_in_db = asset and DB:has(type:id(), asset:id()) or false
+    self._unit_info:GetItem("FindPackage"):SetVisible(has_in_db)
+    self._unit_info:GetItem("LoadFromDatabase"):SetVisible(not from_db and has_in_db)
+    self._unit_info:GetItem("RemoveAndUnloadAsset"):SetVisible(unused or type ~= "unit" and asset ~= nil)
+    self._unit_info:GetItem("Remove"):SetVisible(not unused and asset ~= nil and type == "unit")
     self._unit_info:AlignItems(true)
 end
 
 function AssetsManagerDialog:add_package(package)
     self:check_data()
     local project = BLE.MapProject
-    local level_packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
-    table.insert(level_packages, package)
+    local level = self._current_level
+    level.packages = level.packages or {}
+    table.insert(level.packages, package)
     PackageManager:set_resource_loaded_clbk(Idstring(UNIT), nil)
     if PackageManager:package_exists(package.."_init") and not PackageManager:loaded(package.."_init") then
         PackageManager:load(package.."_init")
@@ -890,13 +891,13 @@ function AssetsManagerDialog:all_ok_dialog()
             end}})
         else
             BLE.Dialog:Show(opt)
-        end        
+        end
     end
 end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
-    local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id).packages
+    local level_packages = self._current_level.packages
     for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
             table.insert(packages, {package = name, name = name})
@@ -918,7 +919,7 @@ end
 function AssetsManagerDialog:remove_package(package, item)
     BLE.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
         local project = BLE.MapProject
-        local packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
+        local packages = self._current_level.packages
         for i, pkg in ipairs(packages) do
             if pkg == package then
                 table.remove(packages, i)

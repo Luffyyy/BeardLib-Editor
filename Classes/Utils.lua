@@ -276,7 +276,7 @@ function Utils:FilterList(a,b)
                 item:SetVisible(false, true, true)
             else
                 local search_val = search:Value():escape_special()
-                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, true, true)
+                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, false, true)
                 i = i + 1
             end
         end
