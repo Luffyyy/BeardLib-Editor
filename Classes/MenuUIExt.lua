@@ -222,7 +222,7 @@ end
 
 function ItemExt:alert(text, color)
 	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, border_color = color or Color.yellow, border_lock_height = false})
-	div:tb_imgbtn("Alert", nil, nil, {343, 132, 72, 72}, {divider_type = true, offset = 0, w = 24, h = 24})
+	div:tb_imgbtn("Alert", nil, nil, {304, 0, 48, 48}, {divider_type = true, offset = 0, w = 24, h = 24})
 	return div
 end
 
@@ -300,6 +300,18 @@ function ItemExt:PasteAxis(item)
 	end
 end
 
+function ItemExt:RoundAxis(item)
+	local menu = item.parent.parent
+	local value = menu:Value()
+	if type_name(value) == "Vector3" then
+		local vect = mvector3.copy(value)
+		mvector3.set_static(vect, math.round(vect.x), math.round(vect.y), math.round(vect.z))
+		menu:SetValue(vect, true)
+	elseif type_name(value) == "Rotation" then
+		local rot = Rotation(math.round(value:yaw()), math.round(value:pitch()), math.round(value:roll()))
+		menu:SetValue(rot, true)
+	end
+end
 function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
 	o = o or {}
 	if o.use_gridsnap_step then
@@ -321,6 +333,7 @@ function ItemExt:Vector3(name, clbk, value, o)
 	local TB = p:GetToolbar()
 	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
 	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
+	TB:sq_btn("r", ClassClbk(self, "RoundAxis"), {offset = 6})
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -367,6 +380,7 @@ function ItemExt:Rotation(name, clbk, value, o)
 	local TB = p:GetToolbar()
 	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
 	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
+	TB:sq_btn("r", ClassClbk(self, "RoundAxis"), {offset = 6})
 	local controls = {"yaw", "pitch", "roll"}
 	local items = {}
 	for i, control in pairs(controls) do

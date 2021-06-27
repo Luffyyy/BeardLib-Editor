@@ -20,12 +20,14 @@ function Static:enable()
     self:bind_opt("CopyUnit", ClassClbk(self, "CopySelection"))
     self:bind_opt("PasteUnit", ClassClbk(self, "Paste"))
     self:bind_opt("TeleportToSelection", ClassClbk(self, "KeyFPressed"))
-    local menu = self:GetPart("menu")
-    self:bind_opt("ToggleRotationWidget", ClassClbk(menu, "toggle_widget", "rotation"))
-    self:bind_opt("ToggleMoveWidget", ClassClbk(menu, "toggle_widget", "move"))
+    local quick = self:GetPart("quick")
+    self:bind_opt("ToggleRotationWidget", ClassClbk(quick, "toggle_widget", "rotation"))
+    self:bind_opt("ToggleMoveWidget", ClassClbk(quick, "toggle_widget", "move"))
+    self:bind_opt("ToggleTransformOrientation", ClassClbk(self._parent, "toggle_local_move"))
     self:bind_opt("RotateSpawnDummyYaw", ClassClbk(self, "RotateSpawnDummyYaw"))
     self:bind_opt("RotateSpawnDummyPitch", ClassClbk(self, "RotateSpawnDummyPitch"))
     self:bind_opt("RotateSpawnDummyRoll", ClassClbk(self, "RotateSpawnDummyRoll"))
+    self:bind_opt("SettleUnits", ClassClbk(self, "SettleUnits"))
 end
 
 function Static:get_grabbed_unit()
@@ -51,6 +53,24 @@ function Static:RotateSpawnDummyRoll()
     if alive(unit) then
         unit:set_rotation(unit:rotation() * Rotation(0, 0, self:Val("RotateSpawnDummy")))
     end
+end
+
+function Static:SettleUnits()
+    self:StorePreviousPosRot()
+    local selected_units = self:selected_units()
+    for i, unit in pairs(selected_units) do
+        if alive(unit) then
+            local from = unit:position()
+            local to = from - Vector3(0, 0, 2000)
+            local ray = World:raycast("ray", from, to, "slot_mask", self._parent._editor_all, "ignore_unit", selected_units)
+            if ray and ray.body then
+                local pos = ray.position
+                local rot = unit:rotation()
+                BLE.Utils:SetPosition(unit, pos, rot)
+            end
+        end
+    end
+    self:recalc_all_locals()
 end
 
 function Static:mouse_pressed(button, x, y)
@@ -81,9 +101,10 @@ function Static:mouse_pressed(button, x, y)
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
+                    local rot = self._parent:use_local_move() and unit:rotation() or Rotation()
                     self:StorePreviousPosRot()
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())
-                    self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
+                    self._parent._move_widget:set_move_widget_offset(unit, rot)
                     self._parent._using_move_widget = true
                 end
             end
@@ -129,7 +150,6 @@ function Static:finish_grabbing()
     transform:SetEnabled(true)
 end
 
-function Static:update_grid_size() self:set_unit() end
 function Static:deselect_unit(item) self:set_unit(true) end
 function Static:mouse_released(button, x, y)
     if not self:enabled() then

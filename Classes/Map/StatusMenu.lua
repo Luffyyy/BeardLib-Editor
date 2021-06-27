@@ -5,7 +5,7 @@ function StatusMenu:init(parent, menu)
         auto_foreground = true,
         scrollbar = false,
         visible = false,
-        position = "RightTop",
+        position = BLE.Options:GetValue("GUIOnRight") and "LeftTop" or "RightTop",
         w = 200,
         h = 100
     })
@@ -13,6 +13,8 @@ function StatusMenu:init(parent, menu)
 end
 
 function StatusMenu:SetVisible(visible)
+    local quick = BLE.Utils:GetPart("quick")
+    self._menu:SetPosition(self._menu:Position()[1], quick:enabled() and quick._menu:Bottom() or 0)
     self._menu:SetVisible(visible)
 end
 

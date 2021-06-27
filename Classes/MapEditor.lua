@@ -31,6 +31,7 @@ function Editor:init(data)
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+    self._use_local_move = true
     self:_init_post_effects()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
@@ -104,6 +105,7 @@ function Editor:post_init(menu)
     m.world = WorldDataEditor:new(self, self._editor_menu)
     m.mission = MissionEditor:new(self, self._editor_menu)
     m.static = StaticEditor:new(self, self._editor_menu)
+    m.quick = QuickAccess:new(self, self._editor_menu)
     m.opt = InEditorOptions:new(self, self._editor_menu)
     m.select = SelectMenu:new(self, self._editor_menu)
     m.spawn = SpawnMenu:new(self, self._editor_menu)
@@ -130,7 +132,7 @@ function Editor:post_init(menu)
 
     menu.mouse_move = ClassClbk(m.static, "mouse_moved")
     if self._has_fix then
-        m.menu:toggle_widget("move")
+        m.quick:toggle_widget("move")
     end
 end
 
@@ -573,7 +575,19 @@ end
 
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
-function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
+function Editor:set_use_quick_access(value) self.parts.quick:SetVisible(value) end
+function Editor:toggle_local_move() 
+    self._use_local_move = not self._use_local_move
+    self.parts.quick:update_local_move(self._use_local_move)
+end
+function Editor:update_snap_rotation(value) 
+    self._snap_rotation = tonumber(value) 
+    for _, manager in pairs(self.parts) do
+        if manager.update_snap_rotation then
+            manager:update_snap_rotation()
+        end
+    end
+end
 function Editor:destroy()
     local scroll_y_tbl = {}
     for name, manager in pairs(self.parts) do
@@ -616,6 +630,7 @@ function Editor:grid_size() return ctrl() and 1 or self._grid_size end
 function Editor:camera_rotation() return self._camera_object:rotation() end
 function Editor:camera_position() return self._camera_object:position() end
 function Editor:snap_rotation() return ctrl() and 1 or self._snap_rotation end
+function Editor:use_local_move() return self._use_local_move end
 function Editor:get_cursor_look_point(dist) return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist)) end
 function Editor:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
 function Editor:screen_to_world(pos, dist) return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist)) end
@@ -860,7 +875,8 @@ function Editor:update_widgets(t, dt)
             widget_pos = self:screen_to_world(widget_pos, 1000)
             local widget_rot = self:widget_rot()
             if self._using_move_widget and self._move_widget:enabled() then
-                local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                local move_rot = self._use_local_move and widget_rot or Rotation()
+                local result_pos = self._move_widget:calculate(self:widget_unit(), move_rot, widget_pos, widget_screen_pos)
                 if self._last_pos ~= result_pos then
                     self:set_unit_positions(result_pos)
                     self:update_positions()
@@ -880,7 +896,8 @@ function Editor:update_widgets(t, dt)
                     self:set_unit_positions(self._last_pos)
                     self._last_pos = nil
                 end
-                BLE.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
+                local move_rot = self._use_local_move and widget_rot or Rotation()
+                BLE.Utils:SetPosition(self._move_widget._widget, widget_pos, move_rot)
                 self._move_widget:update(t, dt)
             end
             if self._rotate_widget:enabled() then
@@ -916,10 +933,9 @@ end
 function Editor:draw_grid(t, dt)
 
 	local rot = Rotation(0, 0, 0)
-	if alive(self:selected_unit()) and self:local_rot() then
+	if alive(self:selected_unit()) and self:local_rot() and self._use_local_move then
 		rot = self:selected_unit():rotation()
     end
-
     if self._using_move_widget and self._move_widget:enabled() and self:widget_unit() then
         for i = -12, 12, 1 do
             local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()

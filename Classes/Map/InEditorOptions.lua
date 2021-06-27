@@ -32,6 +32,7 @@ function Options:build_default()
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Val("KeepMouseActiveWhileFlying"))
+    main:tickbox("QuickAccessToolbar", ClassClbk(self, "update_option_value"), self:Val("QuickAccessToolbar"))
 
     local camera = self:group("Camera", groups_opt)
     local cam_speed = self:Val("CameraSpeed")
@@ -135,12 +136,14 @@ function Options:update_option_value(item)
                 unit:set_visible(value)
             end
         end
+        self:GetPart("quick"):UpdateToggle(name, value)
     elseif name == "GridSize" then
         self._parent:update_grid_size(value)
     elseif name == "SnapRotation" then
         self._parent:update_snap_rotation(value)
     elseif name == "DrawOnlyElementsOfCurrentScript" or name == "ShowElements" then
         self:GetPart("mission"):set_elements_vis()
+        self:GetPart("quick"):UpdateToggle(name, value)
     elseif name == "AutoSave" or name == "AutoSaveMinutes" then
         self:toggle_autosaving()
     elseif name == "CameraFOV" then
@@ -149,6 +152,8 @@ function Options:update_option_value(item)
         self._parent:set_camera_far_range(value)
     elseif name == "SurfaceMove" then
         self._parent:set_use_surface_move(value)
+    elseif name == "QuickAccessToolbar" then
+        self._parent:set_use_quick_access(value)
     end
 end
 
