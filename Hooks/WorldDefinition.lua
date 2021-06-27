@@ -346,7 +346,7 @@ end
 
 function WorldDef:set_up_name_id(unit)
 	local ud = unit:unit_data()
-	if ud.name_id ~= "none" then
+	if ud.name_id and ud.name_id ~= "none" then
 		self:insert_name_id(unit)
 	else
 		ud.name_id = self:get_name_id(unit, ud.from_name_id)
