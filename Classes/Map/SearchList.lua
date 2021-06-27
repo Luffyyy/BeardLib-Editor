@@ -85,6 +85,8 @@ function SearchList:set_page(page)
     self:do_show()
 end
 
+------------------------------------- Units -------------------------------------------
+
 UnitSpawnList = UnitSpawnList or class(SearchList)
 
 function UnitSpawnList:do_search_list()
@@ -121,6 +123,8 @@ function UnitSpawnList:load_from_db(unit)
     }, false, true, ClassClbk(self._parent, "begin_spawning", unit))
 end
 
+------------------------------------- Elements -------------------------------------------
+
 ElementSpawnList = ElementSpawnList or class(SearchList)
 ElementSpawnList.HIDE_PAGINATION = true
 function ElementSpawnList:do_search_list()
@@ -138,6 +142,8 @@ function ElementSpawnList:on_click_item(item)
     self._parent:begin_spawning_element(item.element)
 end
 
+------------------------------------- Prefabs -------------------------------------------
+
 PrefabSpawnList = PrefabSpawnList or class(SearchList)
 function PrefabSpawnList:on_click_item(item)
     self:GetPart("static"):SpawnPrefab(item.prefab)
@@ -151,6 +157,8 @@ function PrefabSpawnList:do_search_list()
         end
     end
 end
+
+------------------------------------- Instances -------------------------------------------
 
 InstanceSpawnList = InstanceSpawnList or class(SearchList)
 
