@@ -58,6 +58,7 @@
 			<class file="InEditorOptions.lua"/>
 			<class file="UpperMenu.lua"/>
 			<class file="StatusMenu.lua"/>
+            <class file="QuickAccess.lua"/>
 			<class file="EditorConsole.lua"/>
 			<class file="InstancesEditor.lua"/>
 			<class file="WorldDataEditor.lua"/>
@@ -110,10 +111,12 @@
             <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
             <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
+            <option type="Color" default_value="Color(0, 0.2, 0.2, 0.2)" name="ToolbarColor"/>
 			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
 			<option type="number" min="100" max="1600" default_value="320" name="MapEditorPanelWidth"/>
 			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
+            <option type="number" min="18" max="38" default_value="28" name="QuickAccessToolbarSize"/>
             <option name="LastLoaded" type="table"/>
             <option name="GUIOnRight" type="bool" value="false"/>
 
@@ -144,6 +147,8 @@
 				<option type="string" default_value="f" name="RotateSpawnDummyYaw"/>
 				<option type="string" default_value="g" name="RotateSpawnDummyPitch"/>
 				<option type="string" default_value="h" name="RotateSpawnDummyRoll"/>
+                <option type="string" default_value="end" name="SettleUnits"/>
+                <option type="string" default_value="left ctrl+t" name="ToggleTransformOrientation"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
@@ -154,6 +159,7 @@
                 <option type="number" default_value="90" name="SnapRotation" min="1" max="360" step="1"/>
                 <option type="number" default_value="90" name="RotateSpawnDummy" min="1" max="360" step="1"/>
                 <option type="number" default_value="250" name="InstanceIndexSize" min="1" max="100000" step="1"/>
+                <option type="boolean" default_value="true" name="QuickAccessToolbar"/>
                 <option type="boolean" default_value="true" name="DrawOnlyElementsOfCurrentScript"/>
                 <option type="boolean" default_value="true" name="SelectInstances"/>
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
