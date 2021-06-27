@@ -28,7 +28,7 @@ function MissionElementUnit:init(unit)
     }
 
     self._color = EditorPart:Val("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Val("ElementsColor")
-    local texture, rect = "textures/editor_icons_df", {399, 44, 64, 64}
+    local texture, rect = "textures/editor_icons_df", {225, 1, 62, 62}
     local size = iconsize / 4
     local font_size = iconsize / 8
     self._icon = self._ws:panel():bitmap({
@@ -117,7 +117,7 @@ function MissionElementUnit:select()
     if self._icon_outline then
         self._icon_outline:set_color(self._color*2)
     else
-        self._icon:set_texture_rect(261, 44, 64, 64)
+        self._icon:set_texture_rect(161, 1, 62, 62)
     end
 end
 
@@ -125,7 +125,7 @@ function MissionElementUnit:unselect()
     if self._icon_outline then
         self._icon_outline:set_color(Color.black)
     else
-        self._icon:set_texture_rect(399, 44, 64, 64)
+        self._icon:set_texture_rect(225, 1, 62, 62)
     end
 end
 
