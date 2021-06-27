@@ -890,7 +890,7 @@ if Unit then
 	local unit_datas = {}
 	local orig = Unit.unit_data
 	function Unit:unit_data(...)
-		local data = orig(self, ...)
+		local data = alive(self) and orig(self, ...) or nil
 		if not data and unit_datas[self:key()] then
 			return unit_datas[self:key()]
 		end

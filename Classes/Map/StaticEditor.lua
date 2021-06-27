@@ -620,8 +620,10 @@ end
 
 function Static:StorePreviousPosRot()
 	for _, unit in pairs(self._selected_units) do
-		unit:unit_data()._prev_pos = unit:position()
-		unit:unit_data()._prev_rot = unit:rotation()
+        if alive(unit) then
+            unit:unit_data()._prev_pos = unit:position()
+            unit:unit_data()._prev_rot = unit:rotation()
+        end
 	end
 end
 
@@ -963,7 +965,7 @@ function Static:selection_to_menu()
     local unit = self:selected_unit()
     self._parent:use_widgets(unit and alive(unit) and unit:enabled())
     for _, check_unit in pairs(self:selected_units()) do
-        if check_unit:mission_element() then
+        if alive(check_unit) and check_unit:mission_element() then
             check_unit:mission_element():select()
         end
     end

@@ -215,7 +215,7 @@ function Options:save(force_backup, old_include)
         return
     end
 
-    if BeardLib.current_level._config.include then
+    if BeardLib.current_level and BeardLib.current_level._config.include then
         BLE.Utils:YesNoQuestion([[
 In order to handle files better and not clutter the main.xml, the level module will now have the include section in a separate file.
 
