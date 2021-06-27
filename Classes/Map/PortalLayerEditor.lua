@@ -162,7 +162,7 @@ function PortalLayer:load_portal_units()
             local unit = managers.worlddefinition:get_unit(unit_id)
             if unit then
                 local btn = units:button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id)})
-                btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit, btn), nil, {184, 2, 48, 48}, {highlight_color = Color.red, h = 20, w = 20})
+                btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit, btn), nil, {0, 0, 32, 32}, {highlight_color = Color.red, h = 20, w = 20})
             end
         end
     end
@@ -297,7 +297,7 @@ function PortalLayer:load_portal_shapes()
         for i=1, #self._selected_portal._shapes do
             local btn = group:button("shape_" .. tostring(i), ClassClbk(self, "select_shape"))
             btn.id = i
-            btn:tb_imgbtn("Remove", ClassClbk(self, "remove_shape"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
+            btn:tb_imgbtn("Remove", ClassClbk(self, "remove_shape"), nil, {0, 0, 32, 32}, {highlight_color = Color.red})
         end
     end
 end
@@ -315,9 +315,9 @@ function PortalLayer:load_portals()
         portals:button("NewPortal", ClassClbk(self, "add_portal"))
         for name, portal in pairs(managers.portal:unit_groups()) do
             local prtl = portals:button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {text = portal._name})
-            prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, {184, 2, 48, 48}, {highlight_color = Color.red})
-            prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, {66, 1, 48, 48})
-            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, {122, 1, 48, 48})
+            prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, {0, 0, 32, 32}, {highlight_color = Color.red})
+            prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, {33, 1, 30, 30})
+            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, {64, 0, 32, 32})
         end
     end   
 end
