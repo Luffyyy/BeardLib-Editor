@@ -1,4 +1,5 @@
 LayerEditor = LayerEditor or class(EditorPart)
+LayerEditor._created_units = {}
 
 function LayerEditor:loaded_continents()
     self:destroy_units_temp()

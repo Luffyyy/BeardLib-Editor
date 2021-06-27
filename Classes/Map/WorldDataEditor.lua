@@ -100,7 +100,7 @@ function WData:update_positions()
 end
 
 function WData:make_tabs(tabs)
-    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai"}
+    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai", "brush"}
     self._current_layer = "main"
     for i, name in pairs(managers) do
         self._tabs:tb_btn(name, ClassClbk(self, "build_menu", name:lower()), {
@@ -117,6 +117,7 @@ function WData:build_default()
         sound = SoundLayerEditor:new(self), 
         portal = PortalLayerEditor:new(self),
         ai = AiLayerEditor:new(self),
+        brush = BrushLayerEditor:new(self),
     }
 
     if not BeardLib.current_level then
@@ -825,4 +826,27 @@ end
 
 function WData:refresh()
     self:build_menu(self._current_layer)
+end
+function WData:mouse_busy()
+    for _, layer in pairs(self.layers) do
+        if layer.mouse_busy and layer:mouse_busy(b, x, y) then
+            return true
+        end
+    end
+end
+
+function WData:mouse_pressed(b, x, y)
+    for _, layer in pairs(self.layers) do
+        if layer.mouse_pressed and layer:mouse_pressed(b, x, y) then
+            return true
+        end
+    end
+end
+
+function WData:mouse_released(b, x, y)
+    for _, layer in pairs(self.layers) do
+        if layer.mouse_released and layer:mouse_released(b, x, y) then
+            return true
+        end
+    end
 end

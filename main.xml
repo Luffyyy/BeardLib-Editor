@@ -72,6 +72,7 @@
 			<class file="PortalLayerEditor.lua"/>
 			<class file="SoundLayerEditor.lua"/>
 			<class file="AiLayerEditor.lua"/>
+			<class file="BrushLayerEditor.lua"/>
 			<class file="UndoUnitHandler.lua"/>
 			<class file="CubemapCreator.lua"/>
 			<class file="SearchList.lua"/>

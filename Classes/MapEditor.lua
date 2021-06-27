@@ -266,13 +266,26 @@ function Editor:use_widgets(use)
     self._rotate_widget:set_enabled(use)
 end
 
+function Editor:mouse_busy()
+    for _, manager in pairs(self.parts) do
+        if manager.mouse_busy and manager:mouse_busy() then
+            return true
+        end
+    end
+    return false
+end
+
 function Editor:mouse_moved(x, y)
     self.parts.static:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
     self:OnWidgetReleased()
-    self.parts.static:mouse_released(button, x, y)    
+    for _, part in pairs(self.parts) do
+        if part.mouse_released then
+            part:mouse_released(button, x, y)
+        end
+    end
     self:reset_widget_values()
 end
 
@@ -280,13 +293,13 @@ function Editor:mouse_pressed(button, x, y)
     if self._editor_menu:ChildrenMouseFocused() then
         return
     end
-    if self.parts.spawn:mouse_pressed(button, x, y) then
-        return
+    for _, part in pairs(self.parts) do
+        if part.mouse_pressed then
+            if part:mouse_pressed(button, x, y) then
+                break
+            end
+        end
     end
-    if self.parts.mission:mouse_pressed(button, x, y) then
-        return
-    end
-    self.parts.static:mouse_pressed(button, x, y)
 end
 
 function Editor:select_unit(unit, add, switch)
@@ -616,6 +629,7 @@ function Editor:destroy()
 end
 function Editor:add_element(element, item) self.parts.mission:add_element(element) end
 function Editor:Log(...) self.parts.console:Log(...) end
+function Editor:output(...) self:Log(...) end
 function Editor:Error(...) self.parts.console:Error(...) end
 
 --Return functions
@@ -666,16 +680,28 @@ function Editor:screen_pos(pos)
 	return Vector3(self._screen_borders.width * (pos.x + 1) / 2, self._screen_borders.height * (pos.y + 1) / 2, 0)
 end
 
-function Editor:select_unit_by_raycast(slot, clbk)
+function Editor:select_unit_by_raycast(slot, ray_type, from, to)
+    local distance = self.parts.opt:get_value("RaycastDistance")
+    local rays = World:raycast_all("ray", from or self:get_cursor_look_point(0), to or self:get_cursor_look_point(distance), "ray_type", ray_type or "body editor walk", "slot_mask", slot)
+    if #rays > 0 then
+        for _, r in pairs(rays) do
+            return r
+        end
+    else
+        return false
+    end
+end
+
+function Editor:select_units_by_raycast(slot, clbk)
     local first = true
     local ignore = self.parts.opt:get_value("IgnoreFirstRaycast")
     local distance = self.parts.opt:get_value("RaycastDistance")
     local select_all = self.parts.opt:get_value("SelectAllRaycast")
-    local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(distance), "ray_type", "body editor walk", "slot_mask", slot)
+    local rays = World:raycast_all("ray", from or self:get_cursor_look_point(0), to or self:get_cursor_look_point(distance), "ray_type", ray_type or "body editor walk", "slot_mask", slot)
     local ret_rays = {}
     if #rays > 0 then
         for _, r in pairs(rays) do
-            if clbk(r.unit) then
+            if not clbk or clbk(r.unit) then
                 if not ignore or not first then
                     table.insert(ret_rays, r)
                     if not select_all then

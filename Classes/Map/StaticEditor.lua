@@ -74,7 +74,7 @@ function Static:SettleUnits()
 end
 
 function Static:mouse_pressed(button, x, y)
-    if not self:enabled() then
+    if not self:enabled() or managers.editor:mouse_busy() then
         return
     end
     if button == Idstring("2") then
@@ -999,7 +999,7 @@ end
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
 function Static:select_unit(mouse2)
-    local rays = self._parent:select_unit_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
+    local rays = self._parent:select_units_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
     self:recalc_all_locals()
     if rays then
         for _, ray in pairs(rays) do
