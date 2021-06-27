@@ -22,7 +22,7 @@ function SearchList:on_click_item(name)
 end
 
 function SearchList:do_search(item)
-    item = item or self._options:GetItem("Search")
+    item = self._options:GetItem("Search")
     BeardLib:AddDelayedCall("BLEDoSearchList"..tostring(self), self._filtered == nil and 0 or 0.2, function()
         self._search = item:Value()
         self._filtered = {}
@@ -89,11 +89,39 @@ end
 
 UnitSpawnList = UnitSpawnList or class(SearchList)
 
+function UnitSpawnList:init(parent)
+    UnitSpawnList.super.init(self, parent)
+
+    self._options:tickbox("ShowLoadedUnitsOnly", ClassClbk(self, "do_search"), false, {help = "Filters the list to show only units that are loaded."})
+    self._options:tickbox("LoadWithPackages", nil, false, {
+        help = "Opens a dialog to pick a package in order to load the unit instead of loading it from the database"
+    })
+end
+
+local unit_ids = Idstring("unit")
+local blacklist = {
+    "/wpn_",
+    "/msk_",
+    "/npc_",
+    "/npc_",
+    "/ene_",
+    "/brushes"
+}
 function UnitSpawnList:do_search_list()
+    local loaded_only = self._options:GetItemValue("ShowLoadedUnitsOnly")
     for unit in pairs(BLE.DBPaths.unit) do
-        if not unit:match("wpn_") and not unit:match("msk_") then
-            if not self._search or self._search:len() == 0 or unit:lower():match(self._search:lower()) then
-                table.insert(self._filtered, {name = unit:gsub("units/", ""), unit = unit})
+        local blacklisted = false
+        for _, bad in pairs(blacklist) do
+            if unit:match(bad) then
+                blacklisted = true
+                break
+            end
+        end
+        if not blacklisted then
+            if not loaded_only or PackageManager:has(unit_ids, unit:id()) then
+                if not self._search or self._search:len() == 0 or unit:lower():match(self._search:lower()) then
+                    table.insert(self._filtered, {name = unit:gsub("units/", ""), unit = unit})
+                end
             end
         end
     end
@@ -103,11 +131,11 @@ function UnitSpawnList:on_click_item(item)
     if PackageManager:has(Idstring("unit"), item.unit:id()) then
         self._parent:begin_spawning(item.unit)
     else
-        self:load_from_db(item.unit)
+        self:do_load(item.unit)
     end
 end
 
-function UnitSpawnList:load_from_db(unit)
+function UnitSpawnList:do_load(unit)
     local world = self:GetPart("world")
     local pkgs = world._assets_manager and world._assets_manager:get_level_packages()
 
@@ -116,11 +144,16 @@ function UnitSpawnList:load_from_db(unit)
         return
     end
 
-    world._assets_manager:load_from_extract({unit = {[unit] = true}}, {
-        texture = true,
-        model = true,
-        cooked_physics = true
-    }, false, true, ClassClbk(self._parent, "begin_spawning", unit))
+    local start_spawning = ClassClbk(self._parent, "begin_spawning", unit)
+    if self._options:GetItemValue("LoadWithPackages") then
+        world._assets_manager:find_package(unit, "unit", true, start_spawning)
+    else
+        world._assets_manager:load_from_extract({unit = {[unit] = true}}, {
+            texture = true,
+            model = true,
+            cooked_physics = true
+        }, false, true, start_spawning)
+    end
 end
 
 ------------------------------------- Elements -------------------------------------------
