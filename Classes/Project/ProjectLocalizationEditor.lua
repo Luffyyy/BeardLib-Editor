@@ -121,7 +121,7 @@ function ProjectLocalization:insert_string_item(key, str)
     local opt = {w = keypan:ItemsWidth() / 2 - 15, control_slice = 0.85, offset = 0}
     keypan:textbox("Key", ClassClbk(self, "set_loc_id"), key, opt)
     keypan:textbox("String", ClassClbk(self, "set_loc_value"), str, opt)
-    keypan:tb_imgbtn("Remove", ClassClbk(self, "remove_loc"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, position = "RightTopOffset-y", size = 25})
+    keypan:tb_imgbtn("Remove", ClassClbk(self, "remove_loc"), nil, {97, 1, 30, 30}, {highlight_color = Color.red, position = "RightTopOffset-y", size = 25})
 end
 
 function ProjectLocalization:create()
