@@ -2,9 +2,9 @@ EditorInteraction = EditorInteraction or class(MissionScriptEditor)
 EditorInteraction.ON_EXECUTED_ALTERNATIVES = {"interacted", "interupt", "start"}
 function EditorInteraction:init(...)
 	local unit = "units/dev_tools/mission_elements/point_interaction/interaction_dummy"
-	local assets = self:GetPart("world")._assets_manager
+	local assets = self:GetPart("assets")
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
-		self:GetPart("world"):QuickLoadFromExtract("unit", unit)
+		self:GetPart("assets"):quick_load_from_db("unit", unit)
 	end
 	return EditorInteraction.super.init(self, ...)
 end

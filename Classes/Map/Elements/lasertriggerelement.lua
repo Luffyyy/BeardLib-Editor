@@ -7,9 +7,9 @@ EditorLaserTrigger.COLORS = {red = {1,0,0}, green = {0, 1, 0}, blue = {0, 0, 1}}
 EditorLaserTrigger.ON_EXECUTED_ALTERNATIVES = {"enter", "leave", "empty", "while_inside"}
 function EditorLaserTrigger:init(...)
 	local unit = "units/payday2/props/gen_prop_lazer_blaster_dome/gen_prop_lazer_blaster_dome"
-	local assets = self:GetPart("world")._assets_manager
+	local assets = self:GetPart("assets")
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
-		self:GetPart("world"):QuickLoadFromExtract("unit", unit)
+		self:GetPart("assets"):quick_load_from_db("unit", unit)
 	end
 	self:destroy()
 	self._dummy_unit = World:spawn_unit(Idstring(unit), Vector3(), Rotation())

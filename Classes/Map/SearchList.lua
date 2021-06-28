@@ -136,23 +136,18 @@ function UnitSpawnList:on_click_item(item)
 end
 
 function UnitSpawnList:do_load(unit)
-    local world = self:GetPart("world")
-    local pkgs = world._assets_manager and world._assets_manager:get_level_packages()
+    local assets = self:GetPart("assets")
 
-    if BLE.Utils:IsLoaded(unit, "unit", pkgs) then
+    if assets:is_asset_loaded("unit", unit) then
         self:begin_spawning(unit)
         return
     end
 
     local start_spawning = ClassClbk(self._parent, "begin_spawning", unit)
     if self._options:GetItemValue("LoadWithPackages") then
-        world._assets_manager:find_package(unit, "unit", true, start_spawning)
+        assets:find_package(unit, "unit", true, start_spawning)
     else
-        world._assets_manager:load_from_extract({unit = {[unit] = true}}, {
-            texture = true,
-            model = true,
-            cooked_physics = true
-        }, false, true, start_spawning)
+        assets:quick_load_from_db("unit", unit, start_spawning)
     end
 end
 

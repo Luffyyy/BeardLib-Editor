@@ -647,7 +647,7 @@ function WorldDef:make_unit(data, offset)
 			if not PackageManager:has(unit_ids, Idstring(name)) then
 				if blt.asset_db.has_file(name, "unit") then
 					table.insert(self._werent_loaded, name)
-					managers.editor.parts.world:QuickLoadFromExtract("unit", name)
+					managers.editor.parts.assets:quick_load_from_db("unit", unit)
 				else
 					failed = true
 					table.insert(self._failed_to_load, name)

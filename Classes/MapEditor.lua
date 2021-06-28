@@ -96,17 +96,18 @@ end
 --Who doesn't like a short code :P
 function Editor:m() return self.parts end
 
-function Editor:post_init(menu)    
+function Editor:post_init(menu)
 	self._editor_menu = menu:Menu({label = "editor_menu", align_method = "none", visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
     local m = self.parts
     m.console = EditorConsole:new(self, self._editor_menu)
     m.menu = UpperMenu:new(self, self._editor_menu)
     m.status = StatusMenu:new(self, self._editor_menu)
-    m.world = WorldDataEditor:new(self, self._editor_menu)
+    m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.assets = AssetsManagerDialog:new(BLE._dialogs_opt)
+    m.world = WorldDataEditor:new(self, self._editor_menu, self._data and self._data.managers_data or nil)
     m.mission = MissionEditor:new(self, self._editor_menu)
     m.static = StaticEditor:new(self, self._editor_menu)
     m.quick = QuickAccess:new(self, self._editor_menu)
-    m.opt = InEditorOptions:new(self, self._editor_menu)
     m.select = SelectMenu:new(self, self._editor_menu)
     m.spawn = SpawnMenu:new(self, self._editor_menu)
     m.env = EnvEditor:new(self, self._editor_menu)

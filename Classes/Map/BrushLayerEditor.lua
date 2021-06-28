@@ -754,8 +754,7 @@ function BrushHeader:get_spawn_dist()
 end
 
 function BrushHeader:spawn_brush(position, rotation)
-	local world = managers.editor.parts.world
-    local pkgs = world._assets_manager and world._assets_manager:get_level_packages()
+	local assets = self:GetPart("assets")
 
 	position = position + rotation:z() * self:get_spawn_dist()
 
@@ -764,14 +763,10 @@ function BrushHeader:spawn_brush(position, rotation)
 		table.insert(self._units, safe_spawn_unit(Idstring(self._name), position, rotation))
 	end
 
-	if BLE.Utils:IsLoaded(self._name, "unit", pkgs) then
+	if assets:is_asset_loaded("unit", self._name) then
 		start_spawning()
 	else
-		world._assets_manager:load_from_extract({unit = {[self._name] = true}}, {
-			texture = true,
-			model = true,
-			cooked_physics = true
-		}, false, true, start_spawning)
+		assets:quick_load_from_db("unit", self._name, start_spawning)
 	end
 
 	return position

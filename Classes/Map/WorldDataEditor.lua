@@ -113,7 +113,7 @@ end
 
 function WData:build_default()
     self.layers = self.layers or {
-        environment = EnvironmentLayerEditor:new(self), 
+        environment = EnvironmentLayerEditor:new(self),
         sound = SoundLayerEditor:new(self), 
         portal = PortalLayerEditor:new(self),
         ai = AiLayerEditor:new(self),
@@ -167,31 +167,12 @@ function WData:build_default()
     end
 
     local mng = self:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
-    mng:s_btn("Assets", self._assets_manager and ClassClbk(self._assets_manager, "Show") or nil)
+    mng:s_btn("Assets", ClassClbk(self:GetPart("assets"), "Show") or nil)
     mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
     self:reset()
-
     self:build_continents()
-end
 
-function WData:LoadFromExtract(ext, asset, clbk)
-    self._assets_manager:load_from_extract_dialog({[ext] = {[asset] = true}}, clbk)
-end
-
-function WData:QuickLoadFromExtract(ext, asset, clbk)
-    local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
-
-    if BLE.Utils:IsLoaded(asset, ext, pkgs) then
-        clbk()
-        return
-    end
-
-    self._assets_manager:load_from_extract({[ext] = {[asset] = true}}, {
-        texture = true,
-        model = true,
-        cooked_physics = true
-    }, false, true, clbk)
 end
 
 --Continents
@@ -474,7 +455,7 @@ function WData:select_all_units_from_script(script, item)
     if not pressed_ctrl then
         static._selected_units = selected_units
     end
-    static:set_selected_unit()    
+    static:set_selected_unit()
 end
 
 function WData:build_menu(name, item)
@@ -505,7 +486,8 @@ function WData:build_wires_layer_menu()
         existing_wires:button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)))
     end
     local loaded_wires = self:group("Spawn")
-    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = self._assets_manager and self._assets_manager:get_level_packages() or {}})) do
+    local assets = self:GetPart("assets")
+    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = assets:get_level_packages() or {}})) do
         loaded_wires:button(wire, function() self:BeginSpawning(wire) end)
     end
 end
@@ -746,44 +728,44 @@ function WData:CanOpenDialog(name)
     return true
 end
 
-function WData:OpenSpawnUnitDialog(params)
-    if not self:CanOpenDialog("SpawnUnit") then
-        return
-    end
+-- function WData:OpenSpawnUnitDialog(params)
+--     if not self:CanOpenDialog("SpawnUnit") then
+--         return
+--     end
 
-	params = params or {}
-    local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
-	BLE.MSLD:Show({
-	    list = BLE.Utils:GetUnits({
-			not_loaded = params.not_loaded,
-			packages = pkgs,
-			slot = params.slot,
-			type = params.type,
-			not_types = {Idstring("being"), Idstring("brush"), Idstring("wpn"), Idstring("item")},
-			not_in_slot = "brushes"
-		}),
-        force = true,
-        no_callback = ClassClbk(self, "CloseDialog"),
-        callback = function(unit)
-            self:CloseDialog()
-	    	if type(params.on_click) == "function" then
-	    		params.on_click(unit)
-	    	else
-                if not self._assets_manager or self._assets_manager:is_asset_loaded(unit, "unit") or not params.not_loaded then
-                    if PackageManager:has(Idstring("unit"), unit:id()) then
-                        self:BeginSpawning(unit)
-                    else
-                        BLE.Utils:Notify("Error", "Cannot spawn the unit")
-                    end
-                else
-                    BLE.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
-                        self._assets_manager:find_package(unit, "unit", true)
-                    end}})
-                end
-			end
-	    end
-	})
-end
+-- 	params = params or {}
+--     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
+-- 	BLE.MSLD:Show({
+-- 	    list = BLE.Utils:GetUnits({
+-- 			not_loaded = params.not_loaded,
+-- 			packages = pkgs,
+-- 			slot = params.slot,
+-- 			type = params.type,
+-- 			not_types = {Idstring("being"), Idstring("brush"), Idstring("wpn"), Idstring("item")},
+-- 			not_in_slot = "brushes"
+-- 		}),
+--         force = true,
+--         no_callback = ClassClbk(self, "CloseDialog"),
+--         callback = function(unit)
+--             self:CloseDialog()
+-- 	    	if type(params.on_click) == "function" then
+-- 	    		params.on_click(unit)
+-- 	    	else
+--                 if not self._assets_manager or self._assets_manager:is_asset_loaded("unit", unit) or not params.not_loaded then
+--                     if PackageManager:has(Idstring("unit"), unit:id()) then
+--                         self:BeginSpawning(unit)
+--                     else
+--                         BLE.Utils:Notify("Error", "Cannot spawn the unit")
+--                     end
+--                 else
+--                     BLE.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
+--                         self._assets_manager:find_package(unit, "unit", true)
+--                     end}})
+--                 end
+-- 			end
+-- 	    end
+-- 	})
+-- end
 
 function WData:OpenLoadDialog(params)
     local units = {}
@@ -817,7 +799,8 @@ function WData:OpenLoadDialog(params)
                 if params.on_click then
                     params.on_click(asset, start_spawning)
                 else
-                    self._assets_manager:find_package(asset, ext, true, start_spawning)
+                    local assets = self:GetPart("assets")
+                    assets:find_package(asset, ext, true, start_spawning)
                 end
             end
 	    end

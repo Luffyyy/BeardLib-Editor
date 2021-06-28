@@ -1452,7 +1452,7 @@ function Static:SpawnCopyData(copy_data, prefab)
     local project = BeardLibEditor.MapProject
     local missing_units = {}
     local missing
-    local assets = self:GetPart("world")._assets_manager
+    local assets = self:GetPart("assets")
     local mod, data = project:get_mod_and_config()
     local unit_ids = Idstring("unit")
     local add
@@ -1483,7 +1483,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             local unit = v.unit_data.name
             if missing_units[unit] == nil then
                 local is_preview_not_loaded = (not assets and not PackageManager:has(unit_ids, unit:id()))
-                local not_loaded = not assets and assets:is_asset_loaded(unit, "unit")
+                local not_loaded = not assets and assets:is_asset_loaded("unit", unit)
                 if is_preview_not_loaded or not_loaded then
                     missing_units[unit] = true
                     missing = true

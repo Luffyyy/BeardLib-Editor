@@ -79,7 +79,7 @@ end
 local unit_ids = Idstring("unit")
 function EditorSpawnEnemyDummy:set_element_data(item, ...)
 	if item.name == "enemy" then
-		local assets = self:GetPart("world")._assets_manager
+		local assets = self:GetPart("assets")
 		local unit = item:Value()
 		local spawn_ids = unit:id()
 		if not DB:has(unit_ids, spawn_ids) then

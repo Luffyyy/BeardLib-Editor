@@ -85,7 +85,7 @@ function AssetsManagerDialog:_Show()
     self._inspect = self._unit_info:divgroup("UnitInfoTitle", {text = "Unit Inspection"})
     local actions = self._unit_info:divgroup("Actions")
     actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, visible = false})
-    actions:button("LoadFromDatabase", ClassClbk(self, "load_from_extract_dialog", false, false), {offset = 0, visible = false})
+    actions:button("LoadFromDatabase", ClassClbk(self, "load_from_db_dialog", false, false), {offset = 0, visible = false})
 
     actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false, false), {offset = 0, visible = false})
     actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false, false), {offset = 0, visible = false})
@@ -138,7 +138,7 @@ function AssetsManagerDialog:show_assets()
     local panic
 	local new_asset = function(asset, type, times)
 		local ready = self:asset_ready(type, asset)
-        local loaded = self:is_asset_loaded(asset, type)
+        local loaded = self:is_asset_loaded(type, asset)
         if not loaded then
             if add then
                 loaded = self._assets[type] and self._assets[type][asset] ~= nil
@@ -212,10 +212,10 @@ function AssetsManagerDialog:show_packages()
 end
 
 function AssetsManagerDialog:load_all_from_extract_dialog()
-   self:load_from_extract_dialog(self._missing_assets)
+   self:load_from_db_dialog(self._missing_assets)
 end
 
-function AssetsManagerDialog:load_from_extract_dialog(assets, clbk)
+function AssetsManagerDialog:load_from_db_dialog(assets, clbk)
 	if not assets and not self._tbl._selected then
 		return
 	end
@@ -328,7 +328,11 @@ function AssetsManagerDialog:clean_add_xml()
     project:save_xml(level._add_path, new_add)
 end
 
-function AssetsManagerDialog:load_from_extract(missing_assets, exclude, inc_in_proj, dontask, clbk)
+function AssetsManagerDialog:quick_load_from_db(ext, asset, clbk)
+    self:load_from_db({[ext] = {[asset] = true}}, nil, false, true, clbk)
+end
+
+function AssetsManagerDialog:load_from_db(missing_assets, exclude, inc_in_proj, dontask, clbk)
     missing_assets = missing_assets or self._missing_assets
     local config = {}
 	local failed_all = false
@@ -342,7 +346,7 @@ function AssetsManagerDialog:load_from_extract(missing_assets, exclude, inc_in_p
 			end
 		end
     end
-    self:_load_from_extract(config, inc_in_proj, dontask, failed_all, clbk)
+    self:_load_from_db(config, inc_in_proj, dontask, failed_all, clbk)
 end
 
 function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
@@ -362,7 +366,7 @@ function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
     end
 end
 
-function AssetsManagerDialog:_load_from_extract(config, inc_in_proj, dontask, failed_all, clbk)
+function AssetsManagerDialog:_load_from_db(config, inc_in_proj, dontask, failed_all, clbk)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     local to_copy = {}
@@ -788,7 +792,7 @@ function AssetsManagerDialog:get_level_packages()
     return packages
 end
 
-function AssetsManagerDialog:is_asset_loaded(asset, type)
+function AssetsManagerDialog:is_asset_loaded(type, asset)
     return BLE.Utils:IsLoaded(asset, type, self:get_level_packages())
 end
 

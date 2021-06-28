@@ -28,7 +28,7 @@ end
 
 function ExportDialog:hide(success)
     if success then
-        self._assets_manager:load_from_extract(self._assets, {
+        self._assets_manager:load_from_db(self._assets, {
             animation = not self:GetItem("Animations"):Value(),
             bnk = not self:GetItem("SoundBanks"):Value(),
             texture = not self:GetItem("Textures"):Value(),
