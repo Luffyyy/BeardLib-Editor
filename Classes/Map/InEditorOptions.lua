@@ -256,7 +256,7 @@ The editor will now use this format and any old map will need to be converted. C
         {_meta = "nav_data", path = "nav_manager_data", script_data_type = xml},
         {_meta = "world_sounds", path = "world_sounds", script_data_type = xml},
         {_meta = "world_cameras", path = "world_cameras", script_data_type = cusxml},
-        {_meta = "massunit", path = "massunit", reload = "true"},
+        {_meta = "massunit", path = "massunit", reload = true},
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()

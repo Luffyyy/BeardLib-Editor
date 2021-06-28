@@ -102,6 +102,10 @@ function BrushLayerEditor:save()
 	FileIO:WriteTo(temp_massunit, json.encode(massunit), "w")
 
 	os.execute('start /min '..Path:Combine(tools_path, "MassunitMaker.exe"))
+
+	BeardLib:AddDelayedCall("SaveMassunitProperly", 1, function()
+		self:GetPart("opt"):save_local_add_xml({{_meta = "massunit", path = "massunit", reload = true}})
+	end)
 end
 
 function BrushLayerEditor:reposition_all()
