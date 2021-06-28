@@ -264,7 +264,7 @@ function ProjectLevelEditor:clone_level(create_data)
     for k, v in pairs(Global.DBPaths[texture]) do
         if v and k:sub(1, #cube_lights_dir) == v then
             if blt.asset_db.has_file(v, "texture") then
-                FileIO:WriteTo(Path:Combine(custom_level_dir, "cube_lights", k..".texture"), blt.asset_db.read_file(k, texture):read())
+                FileIO:WriteTo(Path:Combine(custom_level_dir, "cube_lights", k..".texture"), blt.asset_db.read_file(k, texture))
                 table.insert(local_add, {_meta = "texture", path = file_path})
             end
         end
