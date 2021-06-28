@@ -139,18 +139,8 @@ function WData:build_default()
         self:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
 
-    local spawn = self:divgroup("Spawn", {enabled = not Global.editor_safe_mode, visible = false, align_method = "grid"})
-
     local select_unit = BLE.Options:GetValue("Input/SelectUnit")
     local select_element = BLE.Options:GetValue("Input/SelectElement")
-    local load_unit = BLE.Options:GetValue("Input/LoadUnit")
-    local load_unit_fe = BLE.Options:GetValue("Input/SpawnUnitLoaded")
-
-    local spawn_help_pkg = "Spawn a unit with a package"
-    local spawn_help_db = "Same as regular spawning, just with extra configurability."
-    spawn:s_btn("UnitLoaded", ClassClbk(self, "OpenSpawnUnitDialog"), {text = "Loaded Unit("..load_unit_fe..")", help = "A filtered list with only units that are currently loaded"})
-    spawn:s_btn("SpawnAndLoadFromPackages", ClassClbk(self, "OpenLoadDialog", {ext = "unit", spawn = true}), {text = "Unit from Packages("..load_unit..")", help = spawn_help_pkg})
-    spawn:s_btn("SpawnAndLoadFromDBDialog", ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", "unit"), ext = "unit", spawn = true}), {text = "Unit+", help = spawn_help_db})
 
     local select = self:divgroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
     select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog"), {text = "Unit("..select_unit..")"})
@@ -160,10 +150,11 @@ function WData:build_default()
     local load = self:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self:divgroup("LoadFromDatabase", {align_method = "grid"})
 
+    local assets = self:GetPart("assets")
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()
         load:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {ext = ext}), {text = text})
-        load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(self, "LoadFromExtract", ext), ext = ext}), {text = text})
+        load_extract:s_btn(ext, ClassClbk(self, "OpenLoadDialog", {on_click = ClassClbk(assets, "quick_load_from_db"), ext = ext}), {text = text})
     end
 
     local mng = self:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
