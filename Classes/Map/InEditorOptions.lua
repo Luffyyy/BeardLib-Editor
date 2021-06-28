@@ -75,17 +75,6 @@ function Options:build_default()
     mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
     mission:slider("ElementsSize", ClassClbk(self, "update_option_value"), self:Val("ElementsSize"), {max = 64, min = 16, floats = 0})
 
-    --Can't find a place for these
-    local fixes = self:group("Fixes", groups_opt)
-    fixes:button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
-        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
-    })
-
-    local world = self:GetPart("world")
-    if world._assets_manager then
-        fixes:button("Clean add.xml", ClassClbk(world._assets_manager, "clean_add_xml"), {help = "This removes unused files from the add.xml and cleans duplicates"})
-    end
-
     local other = self:group("Other", groups_opt)
     other:button("General Options", function()
         BLE.Menu:set_enabled(true)
@@ -450,13 +439,6 @@ end
 
 function Options:open_in_explorer(world_path)
     Application:shell_explore_to_folder(string.gsub(world_path == true and self:map_world_path() or self:map_path(), "/", "\\"))
-end
-
-function Options:remove_brush_layer()
-    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
-        self:part("world"):data().brush = nil
-        MassUnitManager:delete_all_units()
-    end)
 end
 
 function Options:toggle_surfacemove(item)
