@@ -60,8 +60,8 @@ end
 function Part:make_collapse_all_button()
     local title = self._menu:GetItem("Title")
     if title then
-        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all, {offset = 0})
-        self._help = title:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {offset = 0, visible = false})
+        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all, {offset = 2})
+        self._help = title:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {visible = false})
     end
 end
 

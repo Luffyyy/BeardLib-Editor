@@ -151,7 +151,7 @@ end
 
 function ItemExt:group(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
-	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name), private = {size = 20, background_color = color:with_alpha(0.15)}}, o))
+	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name), private = {size = 20, offset = 6, background_color = color:with_alpha(0.15)}}, o))
 end
 
 function ItemExt:notebook(name, o)
@@ -185,6 +185,7 @@ function ItemExt:divgroup(name, o)
 		color = color,
 		private = {
 			size = 20,
+			offset = 6,
 			background_color = color:with_alpha(0.2),
 		},
 		text = string.pretty2(name),
