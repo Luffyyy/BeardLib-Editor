@@ -41,8 +41,63 @@ function BrushLayerEditor:init(parent)
 	--self:load_brushes()
 end
 
-function BrushLayerEditor:save(save_params)
-    --MassUnitManager:save(path) will be called from an external program that will generate the massunit
+function BrushLayerEditor:save()
+	local level_path = BLE.MapProject:current_level_path()
+	local massunit = {path = Path:Combine(Application:base_path(), level_path, "massunit.massunit"), units = {}}
+
+	-- Add anything that was already in the massunit manager
+	for _, unit_name in ipairs(MassUnitManager:list()) do
+		local rotations = MassUnitManager:unit_rotations(unit_name)
+		local positions = MassUnitManager:unit_positions(unit_name)
+
+		local clean_positions = {}
+		local clean_rotations = {}
+		for _, pos in pairs(positions) do
+			table.insert(clean_positions, {pos.x, pos.y, pos.z})
+		end
+		for _, rot in pairs(rotations) do
+			table.insert(clean_rotations, math.rot_to_quat(rot))
+		end
+		table.insert(massunit.units, {
+				path = unit_name:key(),
+				positions = clean_positions,
+				rotations = clean_rotations
+			}
+		)
+	end
+
+	-- Save brushes spawned by the editor in this session
+	for _, header in pairs(self._brush_types) do
+		header:check_alive_units()
+
+		local clean_positions = {}
+		local clean_rotations = {}
+		for _, unit in pairs(header._units) do
+			local pos = unit:position()
+			local rot = unit:rotation()
+
+			table.insert(clean_positions, {pos.x, pos.y, pos.z})
+			table.insert(clean_rotations, math.rot_to_quat(rot))
+		end
+
+		table.insert(massunit.units, {
+				path = header._name:key(),
+				positions = clean_positions,
+				rotations = clean_rotations
+			}
+		)
+	end
+
+	local tools_path = Path:Combine(BLE.ModPath, "Tools")
+	local temp_massunit = Path:Combine(tools_path, "Temp/massunit.json")
+	FileIO:WriteTo(temp_massunit, json.encode(massunit), "w")
+
+	os.execute('start /min '..Path:Combine(tools_path, "MassunitMaker.exe"))
+
+	BeardLib:AddDelayedCall("SaveMassunitWait", 1, function()
+		self._parent:data().brush = {file = "massunit"}
+		self:GetPart("opt"):save()
+	end)
 end
 
 function BrushLayerEditor:reposition_all()
@@ -139,8 +194,19 @@ end
 function BrushLayerEditor:_on_amount_updated()
 	local brush_stats, total = self:get_brush_stats()
 
-	self._debug_units_total:SetText("Total Units: " .. total.amount)
-	self._debug_units_unique:SetText("Unique Units: " .. total.unique)
+	local total_amount = total.amount
+	local unique = 0
+	for _, header in pairs(self._brush_types) do
+		header:check_alive_units()
+		local unit_count = #header._units
+		if unit_count > 0 then
+			unique = unique + 1
+			total_amount = total_amount + #header._units
+		end
+	end
+
+	self._debug_units_total:SetText("Total Units: " .. total_amount)
+	self._debug_units_unique:SetText("Unique Units: " .. total.unique + unique)
 
 	if self._debug_list and self._debug_list:visible() then
 		self._debug_list:fill_unit_list()
@@ -389,6 +455,7 @@ function BrushLayerEditor:build_menu()
 
     local actions = self._panel:group("Actions")
 
+    actions:button("Save", ClassClbk(self, "save"))
     actions:button("RepositionAll", ClassClbk(self, "reposition_all"))
     actions:button("ClearSelected", ClassClbk(self, "clear_unit"), {help = "This will clear all selected brushes"})
     actions:button("ClearAll", ClassClbk(self, "clear_all"), {help = "This will clear all brushes"})
@@ -645,6 +712,17 @@ BrushHeader = BrushHeader or class()
 function BrushHeader:init()
 	self._name = ""
 	self._distance = 0
+	self._units = {}
+end
+
+function BrushHeader:check_alive_units()
+	local new_units = {}
+	for _, unit in pairs(self._units) do
+		if alive(unit) then
+			table.insert(new_units, unit)
+		end
+	end
+	self._units = new_units
 end
 
 function BrushHeader:set_name(name)
@@ -665,7 +743,6 @@ function BrushHeader:setup_brush_distance()
 			for data in node:children() do
 				if data:name() == "brush" then
 					self._distance = tonumber(data:parameter("distance"))
-					log("SET DISTANCE", tostring(self._distance))
 				end
 			end
 		end
@@ -684,7 +761,7 @@ function BrushHeader:spawn_brush(position, rotation)
 
 	local function start_spawning()
 		-- Massunit spawn function DOES NOT work properly. Glitches easily.
-		safe_spawn_unit(Idstring(self._name), position, rotation)
+		table.insert(self._units, safe_spawn_unit(Idstring(self._name), position, rotation))
 	end
 
 	if BLE.Utils:IsLoaded(self._name, "unit", pkgs) then
