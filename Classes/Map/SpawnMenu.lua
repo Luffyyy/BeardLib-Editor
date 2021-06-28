@@ -41,7 +41,6 @@ function SpawnMenu:begin_spawning(unit)
     if self._parent._spawn_position then
         self._dummy_spawn_unit = World:spawn_unit(unit:id(), self._parent._spawn_position)
     end
-    self:GetPart("menu"):set_tabs_enabled(false)
     self:SetTitle("Press: LMB to spawn, RMB to cancel")
 end
 
