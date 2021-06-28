@@ -143,11 +143,11 @@ function UnitSpawnList:do_load(unit)
         return
     end
 
-    local start_spawning = ClassClbk(self._parent, "begin_spawning", unit)
+    local begin_spawning = ClassClbk(self._parent, "begin_spawning", unit)
     if self._options:GetItemValue("LoadWithPackages") then
-        assets:find_package(unit, "unit", true, start_spawning)
+        assets:find_package(unit, "unit", true, begin_spawning)
     else
-        assets:quick_load_from_db("unit", unit, start_spawning)
+        assets:quick_load_from_db("unit", unit, begin_spawning)
     end
 end
 

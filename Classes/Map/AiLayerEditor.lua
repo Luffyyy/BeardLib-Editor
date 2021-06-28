@@ -107,7 +107,8 @@ function AiEditor:build_menu()
     self:save()
     self:ClearItems()
     local graphs = self:group("Graphs")
-    graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
+    local spawn = self:GetPart("spawn")
+    graphs:button("SpawnNavSurface", ClassClbk(spawn, "begin_spawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
     graphs:button("SaveNavigationData", ClassClbk(self:part("opt"), "save_nav_data", false), { enabled = self._parent._parent._has_fix })
     --[[
@@ -161,7 +162,7 @@ function AiEditor:build_menu()
     self:_build_ai_data(ai_data)
 
     local other = self:group("Other")
-    other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    other:button("SpawnCoverPoint", ClassClbk(self:part("spawn"), "begin_spawning", "units/dev_tools/level_tools/ai_coverpoint"))
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 end
 
