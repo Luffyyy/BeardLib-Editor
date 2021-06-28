@@ -319,7 +319,7 @@ function AssetsManagerDialog:clean_add_xml()
                 end
             end
             if not exists then
-                if not v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. (v.type or v._meta)) then
+                if v.from_db or v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. (v.type or v._meta)) then
                     table.insert(new_add, self:clean_add_asset_tbl(v))
                 end
             end
