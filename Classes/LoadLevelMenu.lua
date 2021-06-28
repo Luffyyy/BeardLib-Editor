@@ -13,7 +13,7 @@ local difficulty_loc = {
 
 function LoadLevelMenu:init(data)
 	data = data or {}
-	local menu = BeardLibEditor.Menu
+	local menu = BLE.Menu
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2})
 	ItemExt:add_funcs(self)
 	local filters = self:holder("Filters", {align_method = "grid", inherit_values = {size_by_text = true, offset = 0}})
@@ -99,7 +99,7 @@ end
 function LoadLevelMenu:do_load_levels()
 	local vanilla = self:GetItem("Vanilla"):Value()
 	local custom = self:GetItem("Custom"):Value()
-    local columns = BeardLibEditor.Options:GetValue("LevelsColumns")
+    local columns = BLE.Options:GetValue("LevelsColumns")
     local levels = self:GetItem("LevelList")
     local loc = managers.localization
 	levels:ClearItems()
@@ -122,7 +122,7 @@ end
 function LoadLevelMenu:do_load_narratives()
 	local vanilla = self:GetItem("Vanilla"):Value()
 	local custom = self:GetItem("Custom"):Value()
-    local columns = BeardLibEditor.Options:GetValue("LevelsColumns")
+    local columns = BLE.Options:GetValue("LevelsColumns")
     local levels = self:GetItem("LevelList")
     levels:ClearItems()
     local loc = managers.localization
@@ -254,7 +254,7 @@ function LoadLevelMenu:load_level(item)
 		Global.game_settings.one_down = one_down
         Global.game_settings.world_setting = nil
         self:start_the_game()
-        BeardLibEditor.Menu:set_enabled(false)
+        BLE.Menu:set_enabled(false)
 
 	--Saving the last loaded heist to file for the restart button
 	BLE.Options:SetValue("LastLoaded", {name = item.name, narr_id = item.narr_id, instance = item.instance or nil, real_id = item.real_id or nil, vanilla = item.vanilla})
@@ -262,11 +262,11 @@ function LoadLevelMenu:load_level(item)
 
     local load_tbl = {{"Yes", load}}
     if item.vanilla then
-        BeardLibEditor.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)
+        BLE.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)
     elseif safe_mode then
-        BeardLibEditor.Utils:QuickDialog({title = "Test level '" .. tostring(level_id).."'?", message = "Safemode is used to access the assets manager when the units fail to load by not spawning them"}, load_tbl)        
+        BLE.Utils:QuickDialog({title = "Test level '" .. tostring(level_id).."'?", message = "Safemode is used to access the assets manager when the units fail to load by not spawning them"}, load_tbl)        
     else
-        BeardLibEditor.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "This will load the level in the editor and will allow you to edit it"}, load_tbl)
+        BLE.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "This will load the level in the editor and will allow you to edit it"}, load_tbl)
     end
 end
 

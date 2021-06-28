@@ -464,7 +464,7 @@ function Static:open_addremove_group_dialog(remove)
                     self:part("world"):refresh()
                 end
             end
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
         end
     })
 end
@@ -666,7 +666,7 @@ end
 
 function Static:add_group(item)
     local unit = self:selected_unit()
-    BeardLibEditor.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
+    BLE.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
         local continent = managers.worlddefinition:get_continent_of_static(unit)
         local exists
         for _, group in pairs(continent.editor_groups) do
@@ -761,15 +761,15 @@ end
 function Static:add_selection_to_prefabs(item, prefab_name)
     local remove_old_links
     local name_id = self._selected_units[1]:unit_data().name_id
-    BeardLibEditor.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
+    BLE.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
-    		BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
+    		BLE.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
     			self:add_selection_to_prefabs(item, prefab_name)
     		end})
     		return
     	end
-        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
-        FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+        BLE.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
+        FileIO:WriteScriptData(Path:Combine(BLE.PrefabsDirectory, prefab_name..".prefab"), BLE.Prefabs[prefab_name], "binary")
     end, create_items = function(input_menu)
         remove_old_links = input_menu:tickbox("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements"})
     end})
@@ -849,7 +849,7 @@ function Static:check_unit_ok(unit)
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:GetPart("opt")._wanted_elements
     if mission_element then
-        return BeardLibEditor.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
+        return BLE.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
     else
         return unit:visible()
     end
@@ -1289,7 +1289,7 @@ function Static:update(t, dt)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
     end
 
-    local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
+    local color = BLE.Options:GetValue("AccentColor"):with_alpha(1)
     self._pen:set(color)
     local draw_bodies = self:Val("DrawBodies")
     if managers.viewport:get_current_camera() then
@@ -1449,7 +1449,7 @@ end
 
 function Static:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
-    local project = BeardLibEditor.MapProject
+    local project = BLE.MapProject
     local missing_units = {}
     local missing
     local assets = self:GetPart("assets")

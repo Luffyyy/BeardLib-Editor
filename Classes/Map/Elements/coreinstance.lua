@@ -157,7 +157,7 @@ function EditorInstanceSetParams:_check_change_instance(new_instance)
 		self._element.values.instance = new_instance
 		return
 	end
-	BeardLibEditor.Utils:YesNoQuestion("This will change the instance from " .. self._element.values.instance .. " to " .. new_instance .. "and will reset the params", function()
+	BLE.Utils:YesNoQuestion("This will change the instance from " .. self._element.values.instance .. " to " .. new_instance .. "and will reset the params", function()
 		self._element.values.params = {}
 		self._element.values.instance = new_instance
 		self:_build_from_params()

@@ -1,7 +1,7 @@
 EditorMenu = EditorMenu or class()
 function EditorMenu:init(load)
     self._menus = {}
-    local accent_color = BeardLibEditor.Options:GetValue("AccentColor")
+    local accent_color = BLE.Options:GetValue("AccentColor")
 	self._main_menu = MenuUI:new({
         name = "Editor",
         layer = 1500,
@@ -9,8 +9,8 @@ function EditorMenu:init(load)
         auto_foreground = true,
         accent_color = accent_color,
         highlight_color = accent_color,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        border_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
+        border_color = BLE.Options:GetValue("AccentColor"),
 		create_items = ClassClbk(self, "create_items"),
 	})
     MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)

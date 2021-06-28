@@ -17,8 +17,8 @@ function UpperMenu:init(parent, menu)
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
         name = "upper_menu",
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
+        accent_color = BLE.Options:GetValue("AccentColor"),
         w = w,
         position = BLE.Options:GetValue("GUIOnRight") and "Right" or nil,
         h = 300 / #self._tabs - 4,
@@ -71,7 +71,7 @@ function UpperMenu:select_tab(clbk, item)
     if clbk then
         clbk(item)
     else
-        self:Switch(BeardLibEditor.Utils:GetPart(item.name))
+        self:Switch(BLE.Utils:GetPart(item.name))
     end
 end
 
@@ -136,5 +136,5 @@ end
 
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
-    BeardLibEditor.Utils:GetPart("opt"):save()
+    BLE.Utils:GetPart("opt"):save()
 end

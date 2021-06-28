@@ -74,5 +74,5 @@ function EditorFeedback:_build_panel()
 end
 
 function EditorFeedback:_effect_options()
-	return BeardLibEditor.Utils:GetEntries({type = "effect", loaded = true})
+	return BLE.Utils:GetEntries({type = "effect", loaded = true})
 end

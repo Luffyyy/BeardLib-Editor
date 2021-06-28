@@ -1,6 +1,6 @@
 <mod 
 		name="BeardLib-Editor"
-		global_key="BeardLibEditor"
+		global_key="BLE"
 		ignore_errors="true"
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"

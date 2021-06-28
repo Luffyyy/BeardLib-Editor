@@ -50,7 +50,7 @@ function Instance:delete_instance(instance)
                     end
                 end
             end
-            managers.mission:delete_links(instance.name, BeardLibEditor.Utils.LinkTypes.Instance)
+            managers.mission:delete_links(instance.name, BLE.Utils.LinkTypes.Instance)
             for i, ins in pairs(instances) do
                 if ins.name == instance.name then
                     for _, unit in pairs(World:find_units_quick("all")) do
@@ -275,7 +275,7 @@ function Instance:set_data(item)
             end
         end
     else
-        BeardLibEditor:log("[Error] This is not a valid instance")
+        BLE:log("[Error] This is not a valid instance")
     end
     self:AlignItems()
 end

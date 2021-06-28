@@ -186,19 +186,19 @@ function PortalLayer:add_unit_to_portal(unit, no_reload)
 end
 
 function PortalLayer:rename_portal(item)
-    BeardLibEditor.InputDialog:Show({title = "Rename portal to", text = item.parent.text, callback = function(name)
+    BLE.InputDialog:Show({title = "Rename portal to", text = item.parent.text, callback = function(name)
         if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
                 self:rename_portal(item)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:rename_portal(item)
             end})
             return
         elseif managers.portal:unit_groups()[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
                 self:add_portal(name)
             end})
             return
@@ -210,7 +210,7 @@ function PortalLayer:rename_portal(item)
 end
 
 function PortalLayer:remove_portal(item)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the portal", function()
+    BLE.Utils:YesNoQuestion("This will remove the portal", function()
         managers.portal:remove_unit_group(item.parent.text)
         self:load_portals()
         self:save()   
@@ -218,7 +218,7 @@ function PortalLayer:remove_portal(item)
 end
 
 function PortalLayer:remove_shape(item)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the portal shape", function()
+    BLE.Utils:YesNoQuestion("This will remove the portal shape", function()
         if self._selected_shape == self._selected_portal._shapes[tonumber(item.parent.id)] then
             self._selected_shape = nil
         end
@@ -229,19 +229,19 @@ function PortalLayer:remove_shape(item)
 end
 
 function PortalLayer:add_portal(name)
-    BeardLibEditor.InputDialog:Show({title = "Portal name", text = type(name) == "string" and name or "group", callback = function(name)
+    BLE.InputDialog:Show({title = "Portal name", text = type(name) == "string" and name or "group", callback = function(name)
         if name == "" then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Portal name cannot be empty!", callback = function()
                 self:add_portal(name)
             end})
             return
         elseif string.begins(name, " ") then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
                 self:add_portal(name)
             end})
             return
         elseif managers.portal:unit_groups()[name] then
-            BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
+            BLE.Dialog:Show({title = "ERROR!", message = "Portal with that name already exists!", callback = function()
                 self:add_portal(name)
             end})
             return
@@ -324,7 +324,7 @@ end
 
 function PortalLayer:auto_fill_portal(item)
     local portal = managers.portal:unit_groups()[item.parent.text]
-    BeardLibEditor.Utils:YesNoQuestion("This will automatically fill the portal with units", function()
+    BLE.Utils:YesNoQuestion("This will automatically fill the portal with units", function()
         for _, unit in pairs(managers.worlddefinition._all_units) do
             if alive(unit) and unit:visible() then
                 local ud = unit:unit_data()

@@ -86,7 +86,7 @@ function EditorSpawnEnemyDummy:set_element_data(item, ...)
 			return
 		end
 		if not PackageManager:has(unit_ids, spawn_ids) and assets then
-			BeardLibEditor.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
+			BLE.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
 				assets:find_package(unit, "unit", true, ClassClbk(self, "set_element_data", item))
 			end}})
 			return

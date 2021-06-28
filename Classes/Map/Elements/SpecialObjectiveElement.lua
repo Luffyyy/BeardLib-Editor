@@ -249,7 +249,7 @@ end
 
 function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()
-	BeardLibEditor.Utils:YesNoQuestion("This will apply the access flag preset " .. (selection or ""), function()
+	BLE.Utils:YesNoQuestion("This will apply the access flag preset " .. (selection or ""), function()
 		if selection == "clear all" then
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({})
 		elseif selection == "select all" then
@@ -259,7 +259,7 @@ function EditorSpecialObjective:apply_preset(item)
 end
 
 function EditorSpecialObjective:manage_flags()
-    BeardLibEditor.SelectDialog:Show({
+    BLE.SelectDialog:Show({
         selected_list = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access),
         list = NavigationManager.ACCESS_FLAGS,
         callback = function(list) self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(list) end

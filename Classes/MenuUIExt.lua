@@ -234,7 +234,7 @@ function ItemExt:info(text, color)
 end
 
 local function check_slot(slot, unit)
-	return BeardLibEditor.Utils:InSlot(unit, slot) and not unit:match("husk")
+	return BLE.Utils:InSlot(unit, slot) and not unit:match("husk")
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
@@ -255,19 +255,19 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o2.on_callback = nil
 	o2.on_callback = p.btn_callback
 	local btn = p:button("select_button", function()
-		local list = p.custom_list or BeardLibEditor.Utils:GetEntries({
+		local list = p.custom_list or BLE.Utils:GetEntries({
 			type = typ, loaded = NotNil(o.loaded, typ ~= "texture"), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
 		end
-		BeardLibEditor.ListDialog:Show({
+		BLE.ListDialog:Show({
 			list = list,
 			sort = o.sort_func == nil,
 			callback = function(path) 
 				p:SetValue(path, true)
 				if not o.not_close then
-					BeardLibEditor.ListDialog:Hide()
+					BLE.ListDialog:Hide()
 				end
 			end
 		})

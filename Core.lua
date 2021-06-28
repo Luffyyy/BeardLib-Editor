@@ -1,7 +1,6 @@
 local UNIT_LOAD = "unit_load"
 local ADD = "add"
 
-BLE = BeardLibEditor
 BLE.Updaters = {}
 BLE.DBPaths = {}
 BLE.Prefabs = {}
@@ -30,7 +29,7 @@ function BLE:Init()
 
     local packages_file = Path:Combine(self.ModPath, "packages.txt")
     if FileIO:Exists(packages_file) then
-        BeardLibEditor:GeneratePackageData()
+        self:GeneratePackageData()
         FileIO:Delete(packages_file)
     end
 end

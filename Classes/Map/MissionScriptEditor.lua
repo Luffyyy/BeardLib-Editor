@@ -44,7 +44,7 @@ function MissionScriptEditor:work()
 
 	self.super.build_default_menu(self)
 	self:_build_panel()
-    self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+    self._links = self:GetPart("static"):build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
@@ -366,7 +366,7 @@ function MissionScriptEditor:update_element(position_only, old_script)
 	if not position_only then
 		self:get_on_executed_units()
 		managers.mission:set_element(self._element, old_script)
-		self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+		self:GetPart("static"):build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
 	end
 end
 
@@ -385,7 +385,7 @@ function MissionScriptEditor:set_element_data(item)
 		self:update_element(false, old_script)
 	end
 	if item.name == "script" and item:SelectedItem() ~= old_script then
-		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a different mission script, the id will be changed and all links will be removed!", function()
+		BLE.Utils:YesNoQuestion("This will move the element to a different mission script, the id will be changed and all links will be removed!", function()
 			set_element_data()
 			self:GetPart("mission"):set_elements_vis()
 			self:GetItem("ID"):SetText("ID "..self._element.id)
@@ -665,7 +665,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 		return a._index < b._index
 	end)
 
-	BeardLibEditor.SelectDialogValue:Show({
+	BLE.SelectDialogValue:Show({
 	    selected_list = selected_list,
 		list = list,
 		entry_values = tdata and tdata.values,
@@ -701,7 +701,7 @@ function MissionScriptEditor:Text(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
-    BeardLibEditor.SelectDialog:Show({
+    BLE.SelectDialog:Show({
         selected_list = params.selected_list,
         list = params.list,
         callback = params.callback or function(list) 
@@ -745,7 +745,7 @@ end
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	opt.check = function(unit)
-		return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
+		return (not check_slot or BLE.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
 	end
 	opt.not_close = true
     return (opt.group or self._menu):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)

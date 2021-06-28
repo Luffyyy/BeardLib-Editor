@@ -1,4 +1,4 @@
-local BLE = BeardLibEditor
+local BLE = BLE
 local BeardLib = BeardLib
 local Utils = BLE.Utils
 local unit_ids = Idstring("unit")

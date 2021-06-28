@@ -3,7 +3,7 @@ function CheckFileMenu:init(data)
     data = data or {}
     self:Load(data)
 
-    local EMenu = BeardLibEditor.Menu
+    local EMenu = BLE.Menu
     self._menu = EMenu:make_page("Check file", nil, {scrollbar = false, align_method = "centered_grid"})
     ItemExt:add_funcs(self, self._menu)
     self:lbl("Having trouble finding out why a unit or other file isn't loading properly? You can check it here!", {text_align = "center"})
