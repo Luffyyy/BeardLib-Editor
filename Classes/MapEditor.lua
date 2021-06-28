@@ -50,7 +50,7 @@ function Editor:init(data)
     local normal = not self._safemode
     self._menu = MenuUI:new({
         layer = 100,
-        scroll_speed = 100,
+        scroll_speed = BLE.Options:GetValue("Scrollspeed"),
         allow_full_input = true,
         background_color = Color.transparent,
         accent_color = BLE.Options:GetValue("AccentColor"),
