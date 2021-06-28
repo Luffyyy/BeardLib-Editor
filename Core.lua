@@ -252,11 +252,13 @@ function BLE:LoadHashlist()
         self.DBPackages = clone(Global.DBPackages)
         self.WorldSounds = Global.WorldSounds
         self.DefaultAssets = Global.DefaultAssets
+        self.Brushes = Global.Brushes
         self:log("DBPaths already loaded")
 	else
         self.DBPaths = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
         self.DBPackages = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "PackagesPaths.bin"), "binary")
         self.WorldSounds = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
+        self.Brushes = string.split(FileIO:ReadFrom(Path:Combine(self.DataDirectory, "Brushes.txt"), "r"), "\n")
         self.DefaultAssets = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
@@ -264,6 +266,7 @@ function BLE:LoadHashlist()
         Global.DBPackages = self.DBPackages
         Global.WorldSounds = self.WorldSounds
         Global.DefaultAssets = self.DefaultAssets
+        Global.Brushes = self.Brushes
     end
     local script_data_types = clone(self._config.script_data_types)
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
@@ -326,6 +329,45 @@ function BLE:GeneratePackageData()
     FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "PackagesPaths.bin"), packages_paths, "binary")
     Global.DBPaths = nil
     self:LoadHashlist()
+end
+
+function BLE:GenerateBrushData()
+    --Contains units that do not follow the pattern. To reduce the time it takes to search these units.
+    local brush_units = {
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_3",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_2",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_01",
+        "units/pd2_dlc_holly/mansion/vegetation/lxa_vegetation_bush_small/lxa_vegetation_bush_small_a",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_11",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_02",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_mix_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_7",
+        "units/world/props/nick/nick_speedrun",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_green_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_6",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_brown_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_4",
+        "units/pd2_dlc_jerry/terrain/jry_rock_03",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_5",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_1",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_08",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_06",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_05"
+    }
+    for unit in pairs(BLE.DBPaths.unit) do
+        if unit:match("brush") and blt.asset_db.has_file(unit, "unit") then
+            local read = blt.asset_db.read_file(unit, "unit")
+            if read then
+                if read:match('type="brush" slot="29"') then
+                    table.insert(brush_units, unit)
+                end
+                read = nil
+            end
+        end
+    end
+    FileIO:WriteTo(Path:Combine(BLE.DataDirectory, "Brushes.txt"), table.concat(brush_units, "\n"), "w")
+    self.Brushes = brush_units
+    Global.Brushes = brush_units
 end
 
 --Gets all emitters and occasionals from extracted .world_sounds

@@ -29,13 +29,8 @@ function BrushLayerEditor:init(parent)
 	self._place_slot_mask = managers.slot:get_mask("brush_placeable")
 	self._brush_slot_mask = managers.slot:get_mask("brushes")
 	self._unit_brushes = {}
-	self._brush_units = {}
+	self._brush_units = clone(BLE.Brushes)
 	self._selected_unit_names = {}
-	for unit in pairs(BLE.DBPaths.unit) do
-		if unit:match("brush") then
-			table.insert(self._brush_units, unit)
-		end
-	end
 	self._brushed_path = "core/temp/editor_temp/brushes"
 
 	--self:load_brushes()
