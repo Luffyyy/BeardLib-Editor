@@ -743,7 +743,7 @@ function BrushHeader:get_spawn_dist()
 end
 
 function BrushHeader:spawn_brush(position, rotation)
-	local assets = self:GetPart("assets")
+	local assets = managers.editor.parts.assets
 
 	position = position + rotation:z() * self:get_spawn_dist()
 
