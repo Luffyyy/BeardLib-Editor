@@ -42,8 +42,17 @@ function BrushLayerEditor:init(parent)
 end
 
 function BrushLayerEditor:save()
+	if not self._needs_saving then
+		return
+	else
+		self._needs_saving = false
+	end
+
+	self._parent:data().brush = self._parent:data().brush or {file = "massunit"}
+	local file = self._parent:data().brush.file
+
 	local level_path = BLE.MapProject:current_level_path()
-	local massunit = {path = Path:Combine(Application:base_path(), level_path, "massunit.massunit"), units = {}}
+	local massunit = {path = Path:Combine(Application:base_path(), level_path, file..".massunit"), units = {}}
 
 	-- Add anything that was already in the massunit manager
 	for _, unit_name in ipairs(MassUnitManager:list()) do
@@ -93,80 +102,56 @@ function BrushLayerEditor:save()
 	FileIO:WriteTo(temp_massunit, json.encode(massunit), "w")
 
 	os.execute('start /min '..Path:Combine(tools_path, "MassunitMaker.exe"))
-
-	BeardLib:AddDelayedCall("SaveMassunitWait", 1, function()
-		self._parent:data().brush = {file = "massunit"}
-		self:GetPart("opt"):save()
-	end)
 end
 
 function BrushLayerEditor:reposition_all()
 	managers.editor:output("Reposition all brushes:")
 
-	for name, unit in pairs(self._unit_map) do
-		local unit = safe_spawn_unit(name, Vector3(0, 0, 20000), Rotation(Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)))
+	for _, name in pairs(self._brush_units) do
+		local name_ids = name:id()
+		local nudged_units = 0
+		local positions = MassUnitManager:unit_positions(name_ids)
 
-		if unit then
-			local dynamic_unit = false
-			local index = 0
+		if #positions > 0 then
+			local rotations = MassUnitManager:unit_rotations(name_ids)
 
-			while index < unit:num_bodies() and not dynamic_unit do
-				if unit:body_by_index(index):dynamic() then
-					dynamic_unit = true
-				end
+			MassUnitManager:delete_units(name_ids)
 
-				index = index + 1
-			end
+			for counter = 1, #positions do
+				local rot = rotations[counter]
+				local pos = positions[counter]
+				local from = pos + rot:z() * 50
+				local to = pos - rot:z() * 110
+				local ray_type = self._brush_on_editor_bodies and "body editor" or "body"
+				local ray = managers.editor:select_unit_by_raycast(self._place_slot_mask, ray_type, from, to)
 
-			World:delete_unit(unit)
+				if ray then
+					local brush_header = self:add_brush_header(name)
+					local correct_pos = brush_header:spawn_brush(ray.position, rotations[counter])
+					self._amount_dirty = true
+					local nudge_length = (ray.position - correct_pos):length()
 
-			if dynamic_unit then
-				managers.editor:output(" * Skipped unit type " .. name .. " it seems to be dynamic")
-			else
-				local nudged_units = 0
-				local positions = MassUnitManager:unit_positions(name)
-
-				if #positions > 0 then
-					local rotations = MassUnitManager:unit_rotations(name)
-
-					MassUnitManager:delete_units(name)
-
-					for counter = 1, #positions do
-						local rot = rotations[counter]
-						local pos = positions[counter]
-						local from = pos + rot:z() * 50
-						local to = pos - rot:z() * 110
-						local ray_type = self._brush_on_editor_bodies and "body editor" or "body"
-						local ray = managers.editor:select_unit_by_raycast(self._place_slot_mask, ray_type, from, to)
-
-						if ray then
-							local brush_header = self:add_brush_header(name)
-							local correct_pos = brush_header:spawn_brush(ray.position, rotations[counter])
-							self._amount_dirty = true
-							local nudge_length = (ray.position - correct_pos):length()
-
-							if nudge_length > 0.05 then
-								nudged_units = nudged_units + 1
-							end
-						else
-							--Application:error(" * Lost one of type", name, "- it was too alone at:", pos)
-							managers.editor:output(" * Lost one of type " .. name .. " - it was too alone at: " .. pos)
-						end
+					if nudge_length > 0.05 then
+						nudged_units = nudged_units + 1
 					end
-				end
-
-				if nudged_units > 0 then
-					managers.editor:output(" * Nudged " .. nudged_units .. " units of type " .. name)
+				else
+					managers.editor:output(" * Lost one of type " .. name_ids .. " - it was too alone at: " .. pos)
 				end
 			end
 		end
+
+		if nudged_units > 0 then
+			managers.editor:output(" * Nudged " .. nudged_units .. " units of type " .. name_ids)
+		end
+		self._amount_dirty = true
 	end
 end
 
 function BrushLayerEditor:clear_all()
     BLE.Utils:YesNoQuestion("This will delete all brushes in this level, are you sure?", function()
+		MassUnitManager:delete_all_units()
         for _, name in ipairs(self._brush_names) do
-            MassUnitManager:delete_all_units()
+
         end
 
         self._amount_dirty = true
@@ -265,6 +250,7 @@ function BrushLayerEditor:update(time, rel_time)
 
 	if self._amount_dirty then
 		self._amount_dirty = nil
+		self._needs_saving = true
 
 		self:_on_amount_updated()
 	end
@@ -435,9 +421,17 @@ function BrushLayerEditor:create_brush(ray)
 end
 
 function BrushLayerEditor:build_menu()
-	self._panel = self._menu:pan("BrushLayer")
+	self:GetPart("opt"):add_save_callback("save_massunit", ClassClbk(self, "save"))
 
-    local controls = self._panel:group("Controls")
+	self._panel = self._menu:pan("BrushLayer", {h = self._menu:ItemsHeight(), private = {offset = 0}, scrollbar = false, auto_height = false})
+
+	local h = self._panel:ItemsHeight() - 24
+	local icons = BLE.Utils.EditorIcons
+    local controls = self._panel:group("Main", {align_method = "grid", auto_height = false, h = h/3})
+
+    controls:s_btn("RepositionAll", ClassClbk(self, "reposition_all"))
+    controls:s_btn("ClearSelected", ClassClbk(self, "clear_unit"), {help = "This will clear all selected brushes"})
+    controls:s_btn("ClearAll", ClassClbk(self, "clear_all"), {help = "This will clear all brushes"})
 
     local up = ClassClbk(self, "update_item")
     controls:slider("random_roll", up, self._random_roll, {min = 0, max = 360, text = "Random Roll [deg]"})
@@ -448,28 +442,21 @@ function BrushLayerEditor:build_menu()
     controls:slider("angle_override", up, self._angle_override, {min = 0, max = 360, text = "Angle [deg]"})
     controls:slider("offset", up, self._offset, {min = -30, max = 1000, text = "Offset [cm]]"})
 
-    controls:tickbox("erase_with_pressure", up, self._erase_with_pressure, {text = "Use Pressure when Erasing"})
-    controls:tickbox("erase_with_units", up, self._erase_with_units, {text = "Erase with selected units"})
-    controls:tickbox("overide_surface_normal", up, self._overide_surface_normal, {text = "Override surface normal rotation"})
-    controls:tickbox("brush_on_editor_bodies", up, self._brush_on_editor_bodies, {text = "Brush on editor bodies"})
+    controls:tickbox("erase_with_pressure", up, self._erase_with_pressure, {text = "Pressure Erase", size_by_text = true})
+    controls:tickbox("erase_with_units", up, self._erase_with_units, {text = "Erase with Selected Units", size_by_text = true})
+    controls:tickbox("overide_surface_normal", up, self._overide_surface_normal, {text = "Override Surface Normal Rotation", size_by_text = true})
+    controls:tickbox("brush_on_editor_bodies", up, self._brush_on_editor_bodies, {text = "Brush on Editor Bodies", size_by_text = true})
+    controls:tickbox("Visible", ClassClbk(self, "set_visibility"), self._visible, {size_by_text = true})
 
-    local actions = self._panel:group("Actions")
+	local debug = controls:group("Debug", {align_method = "grid", closed = true})
 
-    actions:button("Save", ClassClbk(self, "save"))
-    actions:button("RepositionAll", ClassClbk(self, "reposition_all"))
-    actions:button("ClearSelected", ClassClbk(self, "clear_unit"), {help = "This will clear all selected brushes"})
-    actions:button("ClearAll", ClassClbk(self, "clear_all"), {help = "This will clear all brushes"})
-    actions:tickbox("Visible", ClassClbk(self, "set_visibility"), self._visible)
+    debug:tickbox("debug_draw_unit_orientation", up, self._debug_draw_unit_orientation, {text = "Draw unit orientations"})
+    --debug:s_btn("OpenDebugList", ClassClbk(self, "_on_gui_open_debug_list"), {enabled = false})
 
-    local debug = self._panel:group("Debug")
+	self._debug_units_total = debug:lbl("Total Units:", {size_by_text = true})
+	self._debug_units_unique = debug:lbl("Unique Units:", {size_by_text = true})
 
-    debug:tickbox("debug_draw_unit_orientation", up, self._debug_draw_unit_orientation, {text = "Draw unit orientations", size_by_text = true})
-    debug:s_btn("OpenDebugList", ClassClbk(self, "_on_gui_open_debug_list"), {enabled = false})
-
-	self._debug_units_total = debug:lbl("Total Units:")
-	self._debug_units_unique = debug:lbl("Unique Units:")
-
-    self._unit_list = self._panel:group("Units", {max_height = 400, auto_align = false})
+    self._unit_list = self._panel:group("Units", {h = h / 3, auto_height = false, auto_align = false})
 	for i, name in pairs(self._brush_units) do
 		if i < 100 then
 			self._unit_list:button(name, ClassClbk(self, "select_unit"), {text = name:gsub("units/", "")})
@@ -477,9 +464,12 @@ function BrushLayerEditor:build_menu()
 	end
 	self._unit_list:AlignItems()
 
-    local brushes = self._panel:group("Brushes")
-    brushes:button("CreateBrush", ClassClbk(self, "show_create_brush"))
-    brushes:button("RemoveBrush", ClassClbk(self, "remove_brush"))
+    local brushes = self._panel:group("Brushes", {h = h / 3, auto_height = false, align_method = "grid"})
+	local brushes_tb = brushes:GetToolbar()
+
+	brushes_tb:tb_imgbtn("Remove", ClassClbk(self, "remove_brush"), nil, icons.cross, {highlight_color = Color.red, help = "Remove brush"})
+	brushes_tb:tb_imgbtn("AddScript", ClassClbk(self, "show_create_brush"), nil, icons.plus, {help = "Add Brush"})
+
     self._brush_list = brushes:pan("BrushList")
 	for name, _ in pairs(self._unit_brushes) do
         self._brush_list:button(name, ClassClbk(self, "select_brush"), {text = name})
@@ -594,7 +584,6 @@ function BrushLayerEditor:select_brush(item)
 
 	self._brush_names = {}
     self._selected_brush = item.name
-	PrintT(self._unit_brushes, 3)
 
 	for _, name in ipairs(self._unit_brushes[item.name]) do
 		table.insert(self._brush_names, name)

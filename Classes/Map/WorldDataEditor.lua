@@ -1,10 +1,12 @@
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
-function WData:init(parent, menu) 
+function WData:init(parent, menu, managers_data)
     if BeardLib.current_level then
         self._continent_settings = ContinentSettingsDialog:new(BLE._dialogs_opt)
-        self._assets_manager = AssetsManagerDialog:new(BLE._dialogs_opt)
         self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
+    end
+    if managers_data and managers_data.current_layer then
+        self._current_layer = managers_data.current_layer
     end
     self._opened = {}
     WData.super.init(self, parent, menu, "World", {make_tabs = ClassClbk(self, "make_tabs")})
@@ -12,15 +14,15 @@ end
 
 function WData:data() return managers.worlddefinition and managers.worlddefinition._world_data end
 
-function WData:destroy()
+function WData:destroy(managers_data)
     if self._continent_settings then
         self._continent_settings:Destroy()
-        self._assets_manager:Destroy()
         self._objectives_manager:Destroy()
     end
     for _, layer in pairs(self.layers) do
         layer:destroy()
     end
+    managers_data.current_layer = self._current_layer
 end
 
 function WData:enable()
@@ -101,10 +103,11 @@ end
 
 function WData:make_tabs(tabs)
     local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai", "brush"}
-    self._current_layer = "main"
+    self._current_layer = self._current_layer or "main"
     for i, name in pairs(managers) do
         self._tabs:tb_btn(name, ClassClbk(self, "build_menu", name:lower()), {
             enabled = not Global.editor_safe_mode,
+            size = 16,
             text = name == "ai" and "AI" or string.capitalize(name),
             border_bottom = i == 1
         })
@@ -164,6 +167,10 @@ function WData:build_default()
     self:reset()
     self:build_continents()
 
+    -- if self._current_layer then
+    --     local tab = self._tabs:GetItem(self._current_layer)
+    --     tab:RunCallback()
+    -- end
 end
 
 --Continents

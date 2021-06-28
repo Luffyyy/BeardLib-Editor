@@ -3,6 +3,7 @@ local Options = InEditorOptions
 function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")    
     self._wanted_elements = {}
+    self._save_callbacks = {}
 end
 
 --TODO: cleanup
@@ -199,6 +200,10 @@ function Options:map_world_path()
     return map_path
 end
 
+function Options:add_save_callback(id, func)
+    self._save_callbacks[id] = func
+end
+
 function Options:save(force_backup, old_include)
     if self._saving then
         return
@@ -225,6 +230,10 @@ The editor will now use this format and any old map will need to be converted. C
                 project:save_main_xml(data)
             end)
         return
+    end
+
+    for _, clbk in pairs(self._save_callbacks) do
+        clbk()
     end
 
     self:GetPart("static"):set_units()

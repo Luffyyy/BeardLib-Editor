@@ -1,6 +1,7 @@
 local BLE = BeardLibEditor
 local BeardLib = BeardLib
 local Utils = BLE.Utils
+local unit_ids = Idstring("unit")
 
 core:module("CoreWorldDefinition")
 
@@ -228,6 +229,24 @@ function WorldDefinition:create(layer, offset)
 	end
 
 	return return_data
+end
+
+
+function WorldDef:_create_massunit(data, offset)
+	local path = self:world_dir() .. data.file
+
+	local units = MassUnitManager:list()
+	for _, unit in pairs(units) do
+		if not PackageManager:has(unit_ids, Idstring(unit)) then
+			managers.editor.parts.assets:quick_load_from_db("unit", unit)
+		end
+	end
+
+	MassUnitManager:delete_all_units()
+
+	if PackageManager:has(Idstring("massunit"), path:id()) then
+		MassUnitManager:load(path:id(), offset, Rotation(), self._massunit_replace_names)
+	end
 end
 
 function WorldDef:spawn_quick(return_data, offset)
@@ -623,8 +642,6 @@ function WorldDef:_setup_editor_unit_data(unit, data)
 
 	self:set_up_name_id(unit)
 end
-
-local unit_ids = Idstring("unit")
 
 function WorldDef:make_unit(data, offset)
 	local name = data.name
