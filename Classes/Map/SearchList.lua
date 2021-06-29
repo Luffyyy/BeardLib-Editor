@@ -1,19 +1,21 @@
 SearchList = SearchList or class(EditorPart)
 
 function SearchList:init(parent)
-    self._menu = parent._holder:pan("Tab", {visible = false, auto_height = false, offset = {0, 8}, h = parent._holder:ItemsHeight() - 16, scrollbar = false})
-    self._options = self._menu:group("Options", {private = {offset = 0}})
+    self._menu = parent._holder:pan("Tab", {visible = false, auto_height = false, stretch_to_bottom = true, scrollbar = false})
+
+    local h = self._menu:ItemsHeight(1)
+    self._options = self._menu:group("Options")
     self._options:textbox("Search", ClassClbk(self, "do_search"), nil, {control_slice = 0.75})
 
     self._parent = parent
-    self._pages = self._menu:pan("Pages", {align_method = "centered_grid", visible = not self.HIDE_PAGINATION})
+    self._pages = self._menu:holder("Pages", {align_method = "centered_grid", h = 32, inherit_values = {offset = 2}, visible = not self.HIDE_PAGINATION})
 
     self._fav = BLE.Options:GetValue("Map/FavoriteItems")
     self._fav.spawn_menu = self._fav.spawn_menu or {}
 
     self._page = 1
 
-    self._list = self._menu:pan("Units", {inherit_values = {size = 14}, offset = {0, 8}, auto_align = false, auto_height = false, h = self._menu:ItemsHeight() - (self.HIDE_PAGINATION and 75 or 120)})
+    self._list = self._menu:pan("Units", {inherit_values = {size = 14}, auto_align = false, auto_height = false, stretch_to_bottom = true})
     self:do_search()
 end
 

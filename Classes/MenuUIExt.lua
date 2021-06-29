@@ -32,7 +32,6 @@ function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
-		highlight_color = self:GetForeground():with_alpha(0.25),
 		auto_foreground = false,
 		size = self:H()*0.8,
 		offset = 2,
@@ -49,18 +48,20 @@ function ItemExt:tb_btn(name, callback, o)
 		on_callback = callback,
 		size_by_text = true,
 		offset = 2,
-		highlight_color = self:GetForeground():with_alpha(0.25),
-	--	auto_foreground = false,
-		foreground_highlight = false,
 		text_align = "center",
 		text_vertical = "center",
 	}, o))
 end
 
 function ItemExt:s_btn(name, callback, o)
-	o = o or {}
-	o.offset = self.offset
-	return self:tb_btn(name, callback, o)
+	return self:Button(table.merge({
+		name = name,
+		text = string.pretty2(name),
+		on_callback = callback,
+		size_by_text = true,
+		text_align = "center",
+		text_vertical = "center",
+	}, o))
 end
 
 function ItemExt:sq_btn(name, callback, o)    
@@ -114,7 +115,7 @@ function ItemExt:keybind(...)
 end
 
 function ItemExt:pan(name, o)
-	return self:Menu(table.merge({name = name, auto_height = true}, o))
+	return self:Menu(table.merge({name = name, auto_height = true, offset = 6}, o))
 end
 
 function ItemExt:lbl(name, o)
@@ -141,17 +142,16 @@ function ItemExt:separator(o)
 	}, o))
 end
 
-function ItemExt:s_group(name, o)
-	o = o or {}
-	o.inherit_values = o.inherit_values or {}
-	o.inherit_values.offset = o.offset or self.inherit_values and self.inherit_values.offset or self.offset
-	o.offset = {1, o.inherit_values.offset[2]}
-	return self:group(name, o)
-end
-
 function ItemExt:group(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
-	return self:Group(table.merge({color = color, name = name, text = string.pretty2(name), private = {size = 20, offset = 6, background_color = color:with_alpha(0.15)}}, o))
+	return self:Group(table.merge({
+		color = color,
+		name = string.pretty2(name),
+		inherit_values = {
+            highlight_color = BLE.Options:GetValue("ItemsHighlight"),
+		},
+		private = {size = BLE.Options:GetValue("MapEditorFontSize") * 1.2, offset = 6, background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)}}
+	, o))
 end
 
 function ItemExt:notebook(name, o)
@@ -163,11 +163,6 @@ function ItemExt:popup(name, o)
 	return self:PopupMenu(table.merge({name = name, text = string.pretty2(name)}, o))
 end
 
-function ItemExt:toolbar(name, o)
-	name = name or "ToolBar"
-	return self:ToolBar(table.merge({name = name, inherit_values = {offset = 0}}, o))
-end
-
 function ItemExt:tholder(name, o, text_o)
 	local holder = self:holder(name, o)
 	holder:ulbl(name, text_o or o and o.text_o or nil)
@@ -175,7 +170,7 @@ function ItemExt:tholder(name, o, text_o)
 end
 
 function ItemExt:holder(name, o)
-	return self:Holder(table.merge({name = name, text = string.pretty2(name)}, o))
+	return self:Holder(table.merge({name = name, text = string.pretty2(name), offset = 6}, o))
 end
 
 function ItemExt:divgroup(name, o)
@@ -184,10 +179,19 @@ function ItemExt:divgroup(name, o)
 		name = name,
 		color = color,
 		private = {
-			size = 20,
+			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
 			offset = 6,
 			background_color = color:with_alpha(0.2),
 		},
+		text = string.pretty2(name),
+		auto_height = true,
+		background_visible = false
+	}, o))
+end
+
+function ItemExt:simple_divgroup(name, o)
+	return self:DivGroup(table.merge({
+		name = name,
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
@@ -327,7 +331,7 @@ function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
 end
 
 function ItemExt:Vector3(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, background_color = false, value_type = "Vector3", align_method = "centered_grid", color = false}, o))
+	local p = self:simple_divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Vector3", align_method = "centered_grid"}, o))
 	o = {}
 	value = value or Vector3()
 	local vector2 = p.vector2
@@ -375,7 +379,7 @@ function ItemExt:Vector3(name, clbk, value, o)
 end
 
 function ItemExt:Rotation(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, background_color = false, value_type = "Rotation", align_method = "centered_grid", color = false}, o))
+	local p = self:simple_divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Rotation", align_method = "centered_grid"}, o))
 	o = {}
 	value = value or Rotation()
 	local TB = p:GetToolbar()

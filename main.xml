@@ -111,10 +111,13 @@
         <options>                
             <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
-            <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
+            <option type="Color" default_value="Color('99333333')" name="BackgroundColor"/>
+            <option type="Color" default_value="Color('f21e1e1e')" name="ContextMenusBackgroundColor"/>
+            <option type="Color" default_value="Color('99282828')" name="BoxesBackgroundColor"/>
+            <option type="Color" default_value="Color('993c3c3c')" name="ItemsHighlight"/>
             <option type="Color" default_value="Color(0, 0.2, 0.2, 0.2)" name="ToolbarColor"/>
 			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
-			<option type="number" min="100" max="1600" default_value="320" name="MapEditorPanelWidth"/>
+			<option type="number" min="100" max="1600" default_value="350" name="MapEditorPanelWidth"/>
 			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
             <option type="number" min="18" max="38" default_value="28" name="QuickAccessToolbarSize"/>

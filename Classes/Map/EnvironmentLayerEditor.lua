@@ -328,9 +328,9 @@ function EnvLayer:build_menu()
     wind:slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), wind_vals.tilt, {min = -90, max = 90, floats = 0})
     wind:slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), self._wind_tilt_var, {min = -90, max = 90, floats = 0})
     wind:slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0})
-    self._wind_text = self:divider("Beaufort/WindDesc")
-    self:update_wind_speed_labels()
     wind:slider("SpeedVariation", ClassClbk(self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0})
+    self._wind_text = wind:divider("Beaufort/WindDesc")
+    self:update_wind_speed_labels()
 end
 
 function EnvLayer:build_unit_menu()
