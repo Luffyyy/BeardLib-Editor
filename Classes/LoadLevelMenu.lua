@@ -152,7 +152,7 @@ function LoadLevelMenu:do_load_narratives()
 			h = img_h
 		})
 
-		w = w or holder:ItemsWidth() - img:OuterWidth() - holder:OffsetX()
+		w = w or holder:ItemsWidth() - img:OuterWidth() - holder:OffsetX() * 2
 
 		local narrative = holder:tholder(txt, {
 			foreground = levels.accent_color,
