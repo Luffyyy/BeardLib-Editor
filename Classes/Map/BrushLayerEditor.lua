@@ -66,10 +66,15 @@ function BrushLayerEditor:save()
 			table.insert(clean_rotations, math.rot_to_quat(rot))
 		end
 
-		local unit_key = unit_name:key()
-		table.insert(data.brush.preload_units, unit_key)
+		local unhashed = BLE.Utils:Unhash(unit_name, "unit")
+		if unhashed then
+			table.insert(data.brush.preload_units, unhashed)
+		else
+			table.insert(data.brush.preload_units, unit_name)
+		end
+
 		table.insert(massunit.units, {
-			path = unit_key,
+			path = unit_name:key(),
 			positions = clean_positions,
 			rotations = clean_rotations
 		})
@@ -89,10 +94,9 @@ function BrushLayerEditor:save()
 			table.insert(clean_rotations, math.rot_to_quat(rot))
 		end
 
-		local unit_key = header._name:key()
-		table.insert(data.brush.preload_units, unit_key)
+		table.insert(data.brush.preload_units, header._name)
 		table.insert(massunit.units, {
-			path = unit_key,
+			path = header._name:key(),
 			positions = clean_positions,
 			rotations = clean_rotations
 		})

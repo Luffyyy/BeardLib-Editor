@@ -235,10 +235,17 @@ end
 function WorldDef:_create_massunit(data, offset)
 	local path = self:world_dir() .. data.file
 
-	local units = MassUnitManager:list()
-	for _, unit in pairs(units) do
-		if not PackageManager:has(unit_ids, Idstring(unit)) then
-			managers.editor.parts.assets:quick_load_from_db("unit", unit)
+	if data and data.preload_units then
+        for _, unit in pairs(data.preload_units) do
+			if not PackageManager:has(unit_ids, unit:id()) then
+				local unhashed = type(unit) == "string" and unit or BLE.Utils:Unhash(unit ,"unit")
+				if unhashed then
+					managers.editor.parts.assets:quick_load_from_db("unit", unhashed)
+					table.insert(self._werent_loaded, unhashed)
+				else
+					table.insert(self._werent_loaded, unit:key())
+				end
+			end
 		end
 	end
 
@@ -666,7 +673,7 @@ function WorldDef:make_unit(data, offset)
 			if not PackageManager:has(unit_ids, Idstring(name)) then
 				if blt.asset_db.has_file(name, "unit") then
 					table.insert(self._werent_loaded, name)
-					managers.editor.parts.assets:quick_load_from_db("unit", unit)
+					managers.editor.parts.assets:quick_load_from_db("unit", name)
 				else
 					failed = true
 					table.insert(self._failed_to_load, name)
