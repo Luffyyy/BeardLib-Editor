@@ -3,15 +3,11 @@ SearchList = SearchList or class(EditorPart)
 function SearchList:init(parent)
     self._menu = parent._holder:pan("Tab", {visible = false, auto_height = false, stretch_to_bottom = true, scrollbar = false})
 
-    local h = self._menu:ItemsHeight(1)
     self._options = self._menu:group("Options")
     self._options:textbox("Search", ClassClbk(self, "do_search"), nil, {control_slice = 0.75})
 
     self._parent = parent
     self._pages = self._menu:holder("Pages", {align_method = "centered_grid", h = 32, inherit_values = {offset = 2}, visible = not self.HIDE_PAGINATION})
-
-    self._fav = BLE.Options:GetValue("Map/FavoriteItems")
-    self._fav.spawn_menu = self._fav.spawn_menu or {}
 
     self._page = 1
 
@@ -40,11 +36,7 @@ function SearchList:do_search(no_reset_page)
 end
 
 function SearchList:insert_item_to_filtered_list(item)
-    if self._fav.spawn_menu[self:item_id(item)] then
-        table.insert(self._filtered, 1, item)
-    else
-        table.insert(self._filtered, item)
-    end
+    table.insert(self._filtered, item)
 end
 
 function SearchList:do_search_list()
@@ -79,42 +71,21 @@ function SearchList:do_show()
         self._pages:button(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page, h = h, w = 28, text_align = "center"})
     end
 
-    self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= pages)
+    self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= pages and pages > 1)
 
     self._list:ClearItems()
 
     for i, v in pairs(self._filtered) do
         if i > perapge * (page-1) and i < perapge * (page + 1) then -- Is it in the page's range?
-            local favbtn
-            local favorited = false
-            local id = self:item_id(v)
-            if self._fav.spawn_menu[id] then
-                favorited = true
-                favbtn = {
-                    text = "Remove from Favorites",
-                    on_callback = function()
-                        self._fav.spawn_menu[id] = nil
-                        self:do_search(true)
-                        BLE.Options:SetValue("Map/FavoriteItems", self._fav)
-                        BLE.Options:Save()
-                    end
-                }
-            else
-                favbtn = {
-                    text = "Add To Favorites",
-                    on_callback = function()
-                        self._fav.spawn_menu[id] = true
-                        self:do_search(true)
-                        BLE.Options:SetValue("Map/FavoriteItems", self._fav)
-                        BLE.Options:Save()
-                    end
-                }
-            end
-            self._list:button(self:friendly_item_name(v), ClassClbk(self, "on_click_item", v), {border_left = true, border_color = favorited and Color.green or nil, offset = {1, 4}, items = {favbtn}})
+            self:create_list_item(v)
         end
     end
 
     self._list:AlignItems()
+end
+
+function SearchList:create_list_item(item)
+    self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {border_left = true, offset = {1, 4}})
 end
 
 function SearchList:friendly_item_name(item)
@@ -125,14 +96,65 @@ function SearchList:item_id(item)
     return type(item) == "table" and item.id or item
 end
 
+function SearchList:check_search(check)
+    return not self._search or self._search:len() == 0 or check:lower():match(self._search:lower())
+end
+
 function SearchList:set_page(page)
     self._page = page
     self:do_show()
 end
 
+------------------------------------- Spawning -------------------------------------------
+
+SpawnSearchList = SpawnSearchList or class(SearchList)
+function SpawnSearchList:init(parent)
+    SpawnSearchList.super.init(self, parent)
+    self._fav = BLE.Options:GetValue("Map/FavoriteItems")
+    self._fav.spawn_menu = self._fav.spawn_menu or {}
+end
+
+function SpawnSearchList:create_list_item(item)
+    local favbtn
+    local favorited = false
+    local id = self:item_id(v)
+    if self._fav.spawn_menu[id] then
+        favorited = true
+        favbtn = {
+            text = "Remove from Favorites",
+            on_callback = function()
+                self._fav.spawn_menu[id] = nil
+                self:do_search(true)
+                BLE.Options:SetValue("Map/FavoriteItems", self._fav)
+                BLE.Options:Save()
+            end
+        }
+    else
+        favbtn = {
+            text = "Add To Favorites",
+            on_callback = function()
+                self._fav.spawn_menu[id] = true
+                self:do_search(true)
+                BLE.Options:SetValue("Map/FavoriteItems", self._fav)
+                BLE.Options:Save()
+            end
+        }
+    end
+
+    self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {border_left = true, border_color = favorited and Color.green or nil, offset = {1, 4}, items = {favbtn}})
+end
+
+function SpawnSearchList:insert_item_to_filtered_list(item)
+    if self._fav.spawn_menu[self:item_id(item)] then
+        table.insert(self._filtered, 1, item)
+    else
+        table.insert(self._filtered, item)
+    end
+    table.insert(self._filtered, item)
+end
 ------------------------------------- Units -------------------------------------------
 
-UnitSpawnList = UnitSpawnList or class(SearchList)
+UnitSpawnList = UnitSpawnList or class(SpawnSearchList)
 
 function UnitSpawnList:init(parent)
     UnitSpawnList.super.init(self, parent)
@@ -164,7 +186,7 @@ function UnitSpawnList:do_search_list()
         end
         if not blacklisted then
             if not loaded_only or PackageManager:has(unit_ids, unit:id()) then
-                if not self._search or self._search:len() == 0 or unit:lower():match(self._search:lower()) then
+                if self:check_search(unit) then
                     self:insert_item_to_filtered_list({name = unit:gsub("units/", ""), id = unit})
                 end
             end
@@ -196,15 +218,87 @@ function UnitSpawnList:do_load(unit)
     end
 end
 
+
+UnitSelectList = UnitSelectList or class(SearchList)
+function UnitSelectList:do_search_list()
+    for _, unit in pairs(World:find_units_quick("disabled", "all")) do
+        local ud = unit:unit_data()
+        if ud and ud.name and not ud.instance then
+            if unit:enabled() or (ud.name_id and ud.continent) then
+                if self:check_search(ud.name) then
+                    self:insert_item_to_filtered_list({name = ud.name_id, id = unit})
+                end
+            end
+        end
+    end
+end
+
+function UnitSelectList:on_click_item(item)
+    managers.editor:select_unit(item.id, ctrl())
+end
+
+function UnitSelectList:create_list_item(item)
+    local unit = item.id
+    local selected_units = self:GetPart("static"):selected_units()
+    self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {
+        border_left = true,
+        border_color = table.contains(selected_units, unit) and Color.green or (not unit:enabled() and Color(0.5, 0.5, 0.5)) or nil,
+        offset = {1, 4}
+    })
+end
+
+ElementSelectList = ElementSelectList or class(SearchList)
+
+function ElementSelectList:do_search_list()
+    for _, script in pairs(managers.mission._missions) do
+        for _, tbl in pairs(script) do
+            if tbl.elements then
+                for _, element in pairs(tbl.elements) do
+                    local name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]"
+                    if self:check_search(name) then
+                        self:insert_item_to_filtered_list({name = name, id = element})
+                    end
+                end
+            end
+        end
+    end
+end
+
+function ElementSelectList:on_click_item(item)
+    managers.editor:select_element(item.id, true)
+end
+
+function UnitSelectList:create_list_item(item)
+    self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {
+        border_left = true,
+        offset = {1, 4}
+    })
+end
+
+
+InstanceSelectList = InstanceSelectList or class(SearchList)
+
+function InstanceSelectList:do_search_list()
+    for _, name in pairs(managers.world_instance:instance_names()) do
+        if self:check_search(name) then
+            self:insert_item_to_filtered_list({name = name})
+        end
+    end
+end
+
+function InstanceSelectList:on_click_item(item)
+    managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.name)), ctrl())
+end
+
 ------------------------------------- Elements -------------------------------------------
 
-ElementSpawnList = ElementSpawnList or class(SearchList)
+ElementSpawnList = ElementSpawnList or class(SpawnSearchList)
 ElementSpawnList.HIDE_PAGINATION = true
 function ElementSpawnList:do_search_list()
     self._filtered = {}
     for _, element in pairs(BLE._config.MissionElements) do
         local name = element:gsub("Element", "")
-        if not self._search or self._search:len() == 0 or element:lower():match(self._search:lower()) then
+        if self:check_search(element) then
             self:insert_item_to_filtered_list({name = name, id = element})
         end
     end
@@ -229,7 +323,7 @@ end
 
 ------------------------------------- Prefabs -------------------------------------------
 
-PrefabSpawnList = PrefabSpawnList or class(SearchList)
+PrefabSpawnList = PrefabSpawnList or class(SpawnSearchList)
 function PrefabSpawnList:on_click_item(item)
     self:GetPart("static"):SpawnPrefab(item.id)
 end
@@ -237,7 +331,7 @@ end
 function PrefabSpawnList:do_search_list()
     self._filtered = {}
     for name, prefab in pairs(BLE.Prefabs) do
-        if not self._search or self._search:len() == 0 or name:lower():match(self._search:lower()) then
+        if self:check_search(name) then
             self:insert_item_to_filtered_list({name = name, id = prefab})
         end
     end
@@ -245,7 +339,7 @@ end
 
 ------------------------------------- Instances -------------------------------------------
 
-InstanceSpawnList = InstanceSpawnList or class(SearchList)
+InstanceSpawnList = InstanceSpawnList or class(SpawnSearchList)
 
 function InstanceSpawnList:on_click_item(item)
     self._parent:SpawnInstance(item.id, nil, true)
@@ -254,7 +348,7 @@ end
 function InstanceSpawnList:do_search_list()
     self._filtered = {}
     for _, path in pairs(table.merge(BLE.Utils:GetEntries({type = "world"}), table.map_keys(BeardLib.managers.MapFramework._loaded_instances))) do
-        if path:match("levels/instances") and (not self._search or self._search:len() == 0 or path:lower():match(self._search:lower())) then
+        if path:match("levels/instances") and self:check_search(path) then
             self:insert_item_to_filtered_list({name = path:gsub("levels/instances/", ""), id = path})
         end
     end

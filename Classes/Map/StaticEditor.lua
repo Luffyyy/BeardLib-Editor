@@ -972,7 +972,7 @@ function Static:selection_to_menu()
 
     if #self._selected_units > 1 then
         self:set_multi_selected()
-        if self:Val("SelectAndGoToMenu") then
+        if self:Val("SelectAndGoToMenu") and not ctrl() then
             self:Switch()
         end
     else
@@ -987,7 +987,7 @@ function Static:selection_to_menu()
             else
                 self:set_unit()
             end
-            if self:Val("SelectAndGoToMenu") then
+            if self:Val("SelectAndGoToMenu") and not ctrl() then
                 self:Switch()
             end
         else

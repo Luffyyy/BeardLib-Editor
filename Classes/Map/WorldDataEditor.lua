@@ -27,8 +27,6 @@ end
 
 function WData:enable()
     WData.super.enable(self)
-    self:bind_opt("SelectUnit", ClassClbk(self, "OpenSelectUnitDialog"))
-    self:bind_opt("SelectElement", ClassClbk(self, "OpenSelectElementDialog"))
     if BeardLib.current_level then
         self:bind_opt("LoadUnit", ClassClbk(self, "OpenLoadDialog", {ext = "unit"}))
     end
@@ -141,14 +139,6 @@ function WData:build_default()
     if not self._parent._has_fix then
         self:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
-
-    local select_unit = BLE.Options:GetValue("Input/SelectUnit")
-    local select_element = BLE.Options:GetValue("Input/SelectElement")
-
-    local select = self:divgroup("Select", {enabled = not Global.editor_safe_mode, align_method = "grid"})
-    select:s_btn("Unit", ClassClbk(self, "OpenSelectUnitDialog"), {text = "Unit("..select_unit..")"})
-    select:s_btn("Element", ClassClbk(self, "OpenSelectElementDialog"), {text = "Element("..select_element..")"})
-    select:s_btn("Instance", ClassClbk(self, "OpenSelectInstanceDialog", {}))
 
     local load = self:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self:divgroup("LoadFromDatabase", {align_method = "grid"})
@@ -625,75 +615,6 @@ function WData:OpenSelectUnitDialog(params)
             end
         end
     })
-end
-
-function WData:OpenSelectInstanceDialog(params)
-	params = params or {}
-    local held_ctrl
-	BLE.MSLD:Show({
-	    list = managers.world_instance:instance_names(),
-        force = true,
-	    callback = params.on_click or function(name)
-            held_ctrl = ctrl()
-	    	self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)))
-            if not held_ctrl then
-                self:CloseDialog()
-            end
-        end,
-        select_multi_clbk = function(items)
-            self:part("static"):reset_selected_units()
-            for _, name in pairs(items) do
-                self._parent:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(name)), true)
-                if not held_ctrl then
-                    self:CloseDialog()
-                end
-            end
-        end
-	})
-end
-
-function WData:OpenSelectElementDialog(params)
-    if not self:CanOpenDialog("SelectElement") then
-        return
-    end
-
-    params = params or {}
-	local elements = {}
-    local held_ctrl
-    for _, script in pairs(managers.mission._missions) do
-        for _, tbl in pairs(script) do
-            if tbl.elements then
-                for _, element in pairs(tbl.elements) do
-                	table.insert(elements, {
-                        create_group = string.pretty2(element.class:gsub("Element", "")),
-                		name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]",
-                		element = element,
-                	})
-                end
-            end
-        end
-    end
-	BLE.MSLD:Show({
-	    list = elements,
-        force = true,
-        no_callback = ClassClbk(self, "CloseDialog"),
-	    callback = params.on_click or function(item)
-            held_ctrl = ctrl()
-            self._parent:select_element(item.element, held_ctrl)
-            if not held_ctrl then
-                self:CloseDialog()
-            end
-	    end,
-        select_multi_clbk = function(items)
-            self:part("static"):reset_selected_units()
-            for _, item in pairs(items) do
-                self._parent:select_element(item.element, true)
-                if not held_ctrl then
-                    self:CloseDialog()
-                end
-            end
-        end
-	})
 end
 
 function WData:CloseDialog()

@@ -1,6 +1,6 @@
 SpawnMenu = SpawnMenu or class(EditorPart)
 function SpawnMenu:init(parent, menu)
-    self.super.init(self, parent, menu, "Spawn Menu", {make_tabs = ClassClbk(self, "make_tabs"), scrollbar = false})
+    self.super.init(self, parent, menu, "Spawn Menu", {make_tabs = true, scrollbar = false})
     self._tabs:s_btn("Unit", ClassClbk(self, "open_tab"), {border_bottom = true})
     self._tabs:s_btn("Element", ClassClbk(self, "open_tab"))
     self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"))
@@ -12,10 +12,6 @@ function SpawnMenu:init(parent, menu)
         Prefab = PrefabSpawnList:new(self),
     }
     self._tab_classes.Unit:set_visible(true)
-end
-
-function SpawnMenu:make_tabs()
-    
 end
 
 function SpawnMenu:open_tab(item)
