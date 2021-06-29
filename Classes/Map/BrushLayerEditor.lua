@@ -443,13 +443,13 @@ function BrushLayerEditor:build_menu()
     controls:s_btn("ClearAll", ClassClbk(self, "clear_all"), {help = "This will clear all brushes"})
 
     local up = ClassClbk(self, "update_item")
-    controls:slider("random_roll", up, self._random_roll, {min = 0, max = 360, text = "Random Roll [deg]"})
-    controls:slider("brush_size", up, self._brush_size, {min = 1, max = 1000, text = "Radius [cm]"})
+    controls:numberbox("random_roll", up, self._random_roll, {min = 0, max = 360, text = "Random Roll [deg]"})
+    self._radius_ctrl = controls:numberbox("brush_size", up, self._brush_size, {min = 1, max = 1000, text = "Radius [cm]"})
+    controls:numberbox("brush_height", up, self._brush_height, {min = 0, max = 1000, text = "Height [cm]"})
+    controls:numberbox("angle_override", up, self._angle_override, {min = 0, max = 360, text = "Angle [deg]"})
+    controls:numberbox("offset", up, self._offset, {min = -30, max = 1000, text = "Offset [cm]]"})
     controls:slider("brush_density", up, self._brush_density, {min = 0, max = 30, text = "Density [/m^2]"})
     controls:slider("brush_pressure", up, self._brush_pressure, {min = 1, max = 20, text = "Pressure"})
-    controls:slider("brush_height", up, self._brush_height, {min = 0, max = 1000, text = "Height [cm]"})
-    controls:slider("angle_override", up, self._angle_override, {min = 0, max = 360, text = "Angle [deg]"})
-    controls:slider("offset", up, self._offset, {min = -30, max = 1000, text = "Offset [cm]]"})
 
     controls:tickbox("erase_with_pressure", up, self._erase_with_pressure, {text = "Pressure Erase", size_by_text = true})
     controls:tickbox("erase_with_units", up, self._erase_with_units, {text = "Erase with Selected Units", size_by_text = true})
@@ -677,8 +677,10 @@ function BrushLayerEditor:mouse_pressed(b, x, y)
         self:erase_units()
 	elseif b == Idstring("mouse wheel up") then
 		self._brush_size = math.clamp(self._brush_size+10, 1, 1000)
+		self._radius_ctrl:SetValue(self._brush_size)
 	elseif b == Idstring("mouse wheel down") then
 		self._brush_size = math.clamp(self._brush_size-10, 1, 1000)
+		self._radius_ctrl:SetValue(self._brush_size)
     end
 	return true
 end
