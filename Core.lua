@@ -546,10 +546,10 @@ end
 function BLE:SetLoadingText(text)
     if alive(Global.LoadingText) then
         local project = BeardLib.current_level and BeardLib.current_level._mod
-        local typ = Global.editor_loaded_instance and "Instance level " or "Level "
+        local typ = Global.editor_loaded_instance and "Instance " or "Level "
         local s = typ.. tostring(Global.current_level_id)
         if project then
-            s = typ.."in project " .. tostring(project.Name) .. ":" .. tostring(Global.current_level_id)
+            s = typ.. tostring(project.Name) .. ":" .. tostring(Global.current_level_id)
         end
 
         if Global.editor_safe_mode then
