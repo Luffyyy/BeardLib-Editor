@@ -117,7 +117,7 @@ end
 function SpawnSearchList:create_list_item(item)
     local favbtn
     local favorited = false
-    local id = self:item_id(v)
+    local id = self:item_id(item)
     if self._fav.spawn_menu[id] then
         favorited = true
         favbtn = {
@@ -150,7 +150,6 @@ function SpawnSearchList:insert_item_to_filtered_list(item)
     else
         table.insert(self._filtered, item)
     end
-    table.insert(self._filtered, item)
 end
 ------------------------------------- Units -------------------------------------------
 
@@ -268,7 +267,7 @@ function ElementSelectList:on_click_item(item)
     managers.editor:select_element(item.id, true)
 end
 
-function UnitSelectList:create_list_item(item)
+function ElementSelectList:create_list_item(item)
     self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {
         border_left = true,
         offset = {1, 4}
