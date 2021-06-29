@@ -67,6 +67,7 @@ function SearchList:do_show()
     local popt = {w = h, h = h, offset = 2, img_offset = 6}
 
     local back = self._pages:tb_imgbtn("Backwards", ClassClbk(self, "set_page", self._page-1), nil, icons.arrow_left, popt)
+    back:SetEnabled(self._page ~= 1)
 
     for i, page_num in pairs(pagination) do
         if page_num == 1 or page_num == pages then
@@ -78,8 +79,7 @@ function SearchList:do_show()
         self._pages:button(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page, h = h, w = 28, text_align = "center"})
     end
 
-    back:SetEnabled(self._page ~= 1)
-    self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= self._pages)
+    self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= pages)
 
     self._list:ClearItems()
 
