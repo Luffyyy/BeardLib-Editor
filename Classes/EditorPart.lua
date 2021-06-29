@@ -64,7 +64,7 @@ function Part:init(parent, menu, name, opt, mopt)
             full_bg_color = boxes_color,
         },
         stretch_to_bottom = true,
-        scroll_width = 6
+        scroll_width = 4
     }, opt))
     ItemExt:add_funcs(self, self._holder)
     self:build_default_menu()
