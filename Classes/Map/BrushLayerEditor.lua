@@ -668,7 +668,7 @@ function BrushLayerEditor:mouse_busy()
 end
 
 function BrushLayerEditor:mouse_pressed(b, x, y)
-	if not self._visible then
+	if not self:active() then
 		return
 	end
     if b == Idstring("0") then
