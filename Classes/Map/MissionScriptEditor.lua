@@ -94,7 +94,7 @@ function MissionScriptEditor:_create_panel()
 	local SE = self:GetPart("static")
 	SE:show_help(ClassClbk(self, "open_wiki"))
 	self._main_group = self:group("Main")
-	local quick_buttons = self:group("QuickButtons", {align_method = "grid"})
+	local quick_buttons = self:group("QuickActions", {align_method = "grid"})
 	local transform = self:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
 	self._class_group = self:group(element)

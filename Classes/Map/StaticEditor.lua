@@ -216,7 +216,7 @@ end
 
 function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
 	self:set_title("Selection")
-    local quick = self:group("QuickButtons", {align_method = "grid"})
+    local quick = self:group("QuickActions", {align_method = "grid"})
     quick:s_btn("Deselect", ClassClbk(self, "deselect_unit"))
     quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
     if not cannot_be_prefab then
