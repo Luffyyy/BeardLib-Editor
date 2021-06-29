@@ -5,23 +5,25 @@ function QuickAccess:init(parent, menu)
     local normal = not Global.editor_safe_mode
     local size = BLE.Options:GetValue("QuickAccessToolbarSize")
     local align_method = BLE.Options:GetValue("GUIOnRight") and "grid" or "grid_from_right"
-
-    local mopt = {}
+    
     self._menu = menu:Menu({
         name = "Toolbar",
         auto_foreground = true,
         scrollbar = false,
         visible = self:value("QuickAccessToolbar"),
+        position = BLE.Options:GetValue("GUIOnRight") and "TopLeft" or "TopRight",
+        align_method = align_method,
+        w = (size + 1) * 5,
         private = {offset = 0}
     })
 
     self._values = {
-        {name = "SnapRotation", rect = {416, 16, 32, 32}, w = 2, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
+        {name = "SnapRotation", rect = {416, 18, 32, 32}, w = 2, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
         {name = "GridSize", rect = {466, 18, 28, 28}, w = 3, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
     }
 
     self._toggles = {
-        {name = "IgnoreFirstRaycast", rect = {451, 115, 42, 42}, help = "Draw editor units"},
+        {name = "IgnoreFirstRaycast", rect = {451, 115, 42, 42}, help = "Ignore First Raycast"},
         {name = "ShowElements", rect = {464, 64, 32, 32}, help = "Show Elements"},
         {name = "EditorUnits", rect = {416, 64, 32, 32}, help = "Draw editor units"},
         {name = "rotation_widget_toggle", rect = {0, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "rotation"), help = "Toggle Rotation Widget", enabled = normal and self._parent._has_fix},
@@ -36,7 +38,8 @@ function QuickAccess:init(parent, menu)
         {name = "LocalTransform", rect = {390, 118, 36, 36}, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
 
-    local opt = {size = size, h = size, align_method = align_method}
+    local opt = {size = size, h = size, offset = 3, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = align_method}
+
     self:build_values(self._menu:holder("Values", opt))
     self:build_toggles(self._menu:holder("Toggles", opt))
     self:build_buttons(self._menu:holder("Buttons", opt))
@@ -61,8 +64,8 @@ function QuickAccess:NumberBox(parent, name, params)
         align_method = "grid_from_right"
     })
 
-    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarColor")})
-    local icon = holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarColor")})
+    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
+    local icon = holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
 
 	local line = holder:Panel():rect({
         color = self._menu.accent_color,
@@ -95,7 +98,7 @@ function QuickAccess:Toggle(parent, params, tx)
         enabled = params.enabled,
         disabled_alpha = 0.2,
         enabled_color = 1,
-        background_color = BLE.Options:GetValue("ToolbarColor")
+        background_color = BLE.Options:GetValue("ToolbarButtonsColor")
     })
 
     local line = parent:Panel():rect({
@@ -108,7 +111,7 @@ function QuickAccess:Toggle(parent, params, tx)
         visible = false
     })
     line:set_left(item:X())
-    line:set_top(item:Bottom())
+    line:set_bottom(item:Bottom())
     item.toggle_line = line
 
     return item
@@ -123,7 +126,7 @@ function QuickAccess:build_buttons(parent)
             help = button.help, 
             enabled = button.enabled,
             disabled_alpha = 0.2,
-            background_color = BLE.Options:GetValue("ToolbarColor")
+            background_color = BLE.Options:GetValue("ToolbarButtonsColor")
         })
     end
 end
