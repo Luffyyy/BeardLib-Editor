@@ -61,15 +61,25 @@ function SearchList:do_show()
     local page = self._page
     local pagination = BeardLib.Utils:MakePagination(page, pages, 2)
 
+    local h = self._pages:ItemsHeight(1)
+    local icons = BLE.Utils.EditorIcons
+
+    local popt = {w = h, h = h, offset = 2, img_offset = 6}
+
+    local back = self._pages:tb_imgbtn("Backwards", ClassClbk(self, "set_page", self._page-1), nil, icons.arrow_left, popt)
+
     for i, page_num in pairs(pagination) do
         if page_num == 1 or page_num == pages then
             local next_or_prev = pagination[i - 1] or pagination[i + 1]
             if next_or_prev and math.abs(next_or_prev-page_num) > 1 then
-                self._pages:lbl("...", {size_by_text = true, index = page_num == 1 and 2 or nil})
+                self._pages:lbl("...", {index = page_num == 1 and 2 or nil, w = 28, h = h, text_align = "center"})
             end
         end
-        self._pages:s_btn(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page})
+        self._pages:button(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page, h = h, w = 28, text_align = "center"})
     end
+
+    back:SetEnabled(self._page ~= 1)
+    self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= self._pages)
 
     self._list:ClearItems()
 
