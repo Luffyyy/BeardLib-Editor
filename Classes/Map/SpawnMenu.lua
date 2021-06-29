@@ -33,15 +33,20 @@ function SpawnMenu:begin_spawning_element(element)
 end
 
 function SpawnMenu:begin_spawning(unit)
-    if not PackageManager:has(Idstring("unit"), unit:id()) then
-        return
+    local begin_spawning = function()
+        self._currently_spawning = unit
+        self:remove_dummy_unit()
+        if self._parent._spawn_position then
+            self._dummy_spawn_unit = World:spawn_unit(unit:id(), self._parent._spawn_position)
+        end
+        self:SetTitle("Press: LMB to spawn, RMB to cancel") 
     end
-    self._currently_spawning = unit
-    self:remove_dummy_unit()
-    if self._parent._spawn_position then
-        self._dummy_spawn_unit = World:spawn_unit(unit:id(), self._parent._spawn_position)
+    if PackageManager:has(Idstring("unit"), unit:id()) then
+        begin_spawning()
+    else
+        local assets = self:GetPart("assets")
+        assets:quick_load_from_db("unit", unit, begin_spawning)
     end
-    self:SetTitle("Press: LMB to spawn, RMB to cancel")
 end
 
 function SpawnMenu:get_dummy_unit()
