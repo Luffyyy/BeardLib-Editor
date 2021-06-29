@@ -147,10 +147,11 @@ function ItemExt:group(name, o)
 	return self:Group(table.merge({
 		color = color,
 		name = string.pretty2(name),
+		offset = 6,
 		inherit_values = {
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
 		},
-		private = {size = BLE.Options:GetValue("MapEditorFontSize") * 1.2, offset = 6, background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)}}
+		private = {size = BLE.Options:GetValue("MapEditorFontSize") * 1.2, background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)}}
 	, o))
 end
 
@@ -178,9 +179,9 @@ function ItemExt:divgroup(name, o)
 	return self:DivGroup(table.merge({
 		name = name,
 		color = color,
+		offset = 6,
 		private = {
 			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
-			offset = 6,
 			background_color = color:with_alpha(0.2),
 		},
 		text = string.pretty2(name),
