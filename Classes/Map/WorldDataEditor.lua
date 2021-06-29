@@ -102,7 +102,7 @@ function WData:update_positions()
 end
 
 function WData:make_tabs(tabs)
-    local managers = {"main", "environment", "sound", "wires", "portal", "groups", "ai", "brush"}
+    local managers = {"main", "environment", "sound", "portal", "groups", "ai", "brush"}
     self._current_layer = self._current_layer or "main"
     for i, name in pairs(managers) do
         self._tabs:tb_btn(name, ClassClbk(self, "build_menu", name:lower()), {
@@ -474,20 +474,6 @@ end
 
 function WData:build_main_layer_menu()
     self:build_default_menu()
-end
-
-function WData:build_wires_layer_menu()
-    local existing_wires = self:group("Existing")
-    managers.worlddefinition._world_data.wires = managers.worlddefinition._world_data.wires or {}
-    for _, wire in pairs(managers.worlddefinition._world_data.wires) do
-        local ud = wire.unit_data
-        existing_wires:button(ud.name_id, ClassClbk(self._parent, "select_unit", managers.worlddefinition:get_unit(ud.unit_id)))
-    end
-    local loaded_wires = self:group("Spawn")
-    local assets = self:GetPart("assets")
-    for _, wire in pairs(BLE.Utils:GetUnits({type = "wire", packages = assets:get_level_packages() or {}})) do
-        loaded_wires:button(wire, function() self:BeginSpawning(wire) end)
-    end
 end
 
 --TODO: maybe reimplement this
