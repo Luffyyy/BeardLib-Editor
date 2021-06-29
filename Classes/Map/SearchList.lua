@@ -7,7 +7,7 @@ function SearchList:init(parent)
     self._options:textbox("Search", ClassClbk(self, "do_search"), nil, {control_slice = 0.75})
 
     self._parent = parent
-    self._pages = self._menu:holder("Pages", {align_method = "centered_grid", h = 32, inherit_values = {offset = 2}, visible = not self.HIDE_PAGINATION})
+    self._pages = self._menu:holder("Pages", {align_method = "centered_grid", h = 32, size = self._menu.size * 0.9, inherit_values = {offset = 2}, visible = not self.HIDE_PAGINATION})
 
     self._page = 1
 
@@ -68,7 +68,7 @@ function SearchList:do_show()
                 self._pages:lbl("...", {index = page_num == 1 and 3 or nil, w = 28, h = h, text_align = "center"})
             end
         end
-        self._pages:button(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page, h = h, w = 28, text_align = "center"})
+        self._pages:button(page_num, ClassClbk(self, "set_page", page_num), {border_bottom = page_num == page, h = h, w = 32, text_align = "center"})
     end
 
     self._pages:tb_imgbtn("Forward", ClassClbk(self, "set_page", self._page+1), nil, icons.arrow_right, popt):SetEnabled(self._page ~= pages and pages > 1)
