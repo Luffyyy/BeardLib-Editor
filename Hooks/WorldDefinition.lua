@@ -242,6 +242,8 @@ function WorldDef:_create_massunit(data, offset)
 		end
 	end
 
+	self:preload_massunit_units(data)
+
 	MassUnitManager:delete_all_units()
 
 	if PackageManager:has(Idstring("massunit"), path:id()) then

@@ -43,8 +43,11 @@ function BrushLayerEditor:save()
 		self._needs_saving = false
 	end
 
-	self._parent:data().brush = self._parent:data().brush or {file = "massunit"}
-	local file = self._parent:data().brush.file
+	local data = self._parent:data()
+	data.brush = data.brush or {file = "massunit"}
+	data.brush.preload_units = {}
+
+	local file = data.brush.file
 
 	local level_path = BLE.MapProject:current_level_path()
 	local massunit = {path = Path:Combine(Application:base_path(), level_path, file..".massunit"), units = {}}
@@ -62,12 +65,14 @@ function BrushLayerEditor:save()
 		for _, rot in pairs(rotations) do
 			table.insert(clean_rotations, math.rot_to_quat(rot))
 		end
+
+		local unit_key = unit_name:key()
+		table.insert(data.brush.preload_units, unit_key)
 		table.insert(massunit.units, {
-				path = unit_name:key(),
-				positions = clean_positions,
-				rotations = clean_rotations
-			}
-		)
+			path = unit_key,
+			positions = clean_positions,
+			rotations = clean_rotations
+		})
 	end
 
 	-- Save brushes spawned by the editor in this session
@@ -84,12 +89,13 @@ function BrushLayerEditor:save()
 			table.insert(clean_rotations, math.rot_to_quat(rot))
 		end
 
+		local unit_key = header._name:key()
+		table.insert(data.brush.preload_units, unit_key)
 		table.insert(massunit.units, {
-				path = header._name:key(),
-				positions = clean_positions,
-				rotations = clean_rotations
-			}
-		)
+			path = unit_key,
+			positions = clean_positions,
+			rotations = clean_rotations
+		})
 	end
 
 	local tools_path = Path:Combine(BLE.ModPath, "Tools")
