@@ -1,13 +1,45 @@
-local stack_members = {
+
+function collect_members(cls, m)
+	for funcname, funcobj in pairs(cls) do
+		if funcname:find("create_") then
+			local fn = funcname:gsub("create_", "")
+			m[fn] = funcobj
+		end
+	end
+end
+
+function collect_member_names(members, member_names)
+	for k, v in pairs(members) do
+		local vi = v()
+
+		table.insert(member_names, {
+			ui_name = vi:ui_name(),
+			key = k
+		})
+	end
+
+	table.sort(member_names, function (a, b)
+		return a.ui_name < b.ui_name
+	end)
+end
+
+stack_members = {
 	initializer = {},
 	simulator = {},
 	visualizer = {}
 }
-local stack_member_names = {
+stack_member_names = {
 	initializer = {},
 	simulator = {},
 	visualizer = {}
 }
+
+collect_members(CoreParticleEditorInitializers, stack_members.initializer)
+collect_members(CoreParticleEditorSimulators, stack_members.simulator)
+collect_members(CoreParticleEditorVisualizers, stack_members.visualizer)
+collect_member_names(stack_members.initializer, stack_member_names.initializer)
+collect_member_names(stack_members.simulator, stack_member_names.simulator)
+collect_member_names(stack_members.visualizer, stack_member_names.visualizer)
 
 function CoreParticleEditorPanel:create_panel(parent)
 	self._stacklist_boxes = {}
@@ -170,11 +202,10 @@ function CoreParticleEditorPanel:create_atom_panel(parent)
 	return panel
 end
 
-
 function CoreParticleEditorPanel:create_stack_panel(parent, stacktype)
 	local panel = parent:pan(stacktype, {align_method = "grid_from_right", auto_height = false, h = 435})
 	self._stacklist_boxes[stacktype] = panel:pan("list")
-	local stack_member_combo = panel:ComboBox({text = " ", control_slice = 1})
+	local stack_member_combo = panel:ComboBox({text = "Member", control_slice = 0.8})
 	local member_names = stack_member_names[stacktype]
 	local last = nil
 
