@@ -179,23 +179,23 @@ function WData:build_continents()
         for name, data in pairs(managers.worlddefinition._continent_definitions) do
             local continent = continents:group(name, {text = name, divider_type = table.size(managers.mission._missions[name]) == 0})
             local ctoolbar = continent:GetToolbar()
-            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), tx, {97, 1, 30, 30}, {highlight_color = Color.red, help = "Remove Continent"})
-            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), tx, {0, 0, 32, 32}, {highlight_color = Color.red, help = "Delete all Units"})
-            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), tx, {320, 448, 64, 64}, {help = "Continent Settings"})
-            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), tx, {64, 0, 32, 32}, {help = "Select All"})
-            ctoolbar:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), tx, icons.plus, {help = "Add mission script"})
+            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove Continent"})
+            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Units"})
+            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), nil, icons.settings_gear, {help = "Continent Settings"})
+            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), nil, icons.select, {help = "Select All"})
+            ctoolbar:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), nil, icons.plus, {help = "Add mission script"})
             ctoolbar:tb_imgbtn("SetVisible", function(item) 
                 local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
                 item.enabled_alpha = alpha
                 item:SetEnabled(item.enabled)
-            end, tx, {96, 56, 48, 48}, {help = "Toggle Visibility"})
+            end, tx, icons.eye, {help = "Toggle Visibility"})
 
             for sname, data in pairs(managers.mission._missions[name]) do
                 local script = continent:divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, text = sname, offset = {8, 4}})
-                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), tx, {97, 1, 30, 30}, {highlight_color = Color.red, help = "Remove Script"})
-                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), tx, {0, 0, 32, 32}, {highlight_color = Color.red, help = "Delete all Elements"})
-                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), tx, {32, 0, 32, 32}, {help = "Rename Script"})
-                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), tx, {64, 0, 32, 32}, {help = "Select All"})
+                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), nil, icons.cross, {highlight_color = Color.red, help = "Remove Script"})
+                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Elements"})
+                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
+                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select All"})
             end
         end
     end
@@ -466,41 +466,42 @@ function WData:build_main_layer_menu()
     self:build_default_menu()
 end
 
---TODO: maybe reimplement this
 function WData:build_groups_layer_menu()
     local tx  = "textures/editor_icons_df"
 
     local groups = self:pan("Groups", {offset = 2, auto_align = false})
     local continents = managers.worlddefinition._continent_definitions
+    local icons = BLE.Utils.EditorIcons
+
     for _, continent in pairs(self._parent._continents) do
         if continents[continent].editor_groups then
             for _, editor_group in pairs(continents[continent].editor_groups) do
                 if editor_group.units then
-                    local group = groups:group(editor_group.name, {text = editor_group.name, auto_align = false, closed = true})
-                    local toolbar = group:GetToolbar()
+                    local group = groups:group(editor_group.name, {text = editor_group.name, auto_align = false, max_height = 400, inherit_values = {size = self._menu.size * 0.8}, closed = true})
+                    local toolbar = group:GetToolbar({auto_align = false})
                     toolbar:tb_imgbtn("Remove", function() 
                         BLE.Utils:YesNoQuestion("This will delete the group", function()
                             self:GetPart("static"):remove_group(nil, editor_group)
                             self:build_menu("groups")
                         end)
-                    end, tx, {184, 2, 48, 48}, {highlight_color = Color.red})
-                    toolbar:tb_imgbtn("Rename", function() 
+                    end, nil, icons.cross, {highlight_color = Color.red})
+                    toolbar:tb_imgbtn("Rename", function()
                         BLE.InputDialog:Show({title = "Group Name", text = group.name, callback = function(name)
                             self:GetPart("static"):set_group_name(nil, editor_group, name)
                             self:build_menu("groups")
                         end})
-                    end, tx, {66, 1, 48, 48})
-                    toolbar:tb_imgbtn("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), tx, {122, 1, 48, 48})
+                    end, nil, icons.pen)
+                    toolbar:tb_imgbtn("SelectGroup", ClassClbk(self:GetPart("static"), "select_group", editor_group), nil, icons.select)
                     toolbar:tb_imgbtn("SetVisible", function(item) 
                         self:GetPart("static"):toggle_group_visibility(editor_group) 
                         item.enabled_alpha = editor_group.visible and 1 or 0.5
                         item:SetEnabled(item.enabled)
-                    end, tx, {155, 95, 64, 64}, {enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1})
+                    end, nil, icons.eye, {enabled_alpha = editor_group.visible ~= nil and (editor_group.visible and 1 or 0.5) or 1})
 
                     for _, unit_id in pairs(editor_group.units) do
                         local unit = managers.worlddefinition:get_unit(unit_id)
                         if alive(unit) then
-                            group:button(tostring(unit_id), ClassClbk(self._parent, "select_unit", unit), {text = unit:editor_id() .. "/" .. tostring(unit_id)})
+                            group:button(tostring(unit_id), ClassClbk(self._parent, "select_unit", unit), {text = unit:unit_data().name_id  .. "(" .. tostring(unit_id) .. ")"})
                         end
                     end
                 end
