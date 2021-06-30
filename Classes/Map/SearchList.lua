@@ -11,7 +11,7 @@ function SearchList:init(parent)
 
     self._page = 1
 
-    self._list = self._menu:pan("Units", {inherit_values = {size = 14}, auto_align = false, auto_height = false, stretch_to_bottom = true})
+    self._list = self._menu:pan("Units", {inherit_values = {size = self._menu.size * 0.8}, auto_align = false, auto_height = false, stretch_to_bottom = true})
     self:do_search()
 end
 
