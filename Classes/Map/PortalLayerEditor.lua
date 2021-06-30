@@ -87,9 +87,13 @@ function PortalLayer:unit_deleted(unit)
 end
 
 function PortalLayer:build_menu()
-    self:group("Portals")
-    self:group("Shapes")
-    self:group("Units")
+    local h = self._menu:ItemsHeight(4)
+    local portals = self._menu:group("Portals", {h = h, auto_height = false})
+    portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
+    local shapes = self._menu:group("Shapes", {h = h, auto_height = false})
+    shapes:GetToolbar():tb_imgbtn("NewShape", ClassClbk(self, "add_shape"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Shape"})
+
+    self._menu:group("Units", {stretch_to_bottom = true, auto_height = false})
     self:load_portals()
     self:save()
 end
@@ -268,8 +272,8 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
         self._parent:build_menu("portal")
     end
     self._selected_shape = nil
-    self._menu:GetItem("Shapes"):ClearItems()
-    self._menu:GetItem("Units"):ClearItems()
+    self._menu:GetItem("Shapes"):ClearItems("Shapes")
+    self._menu:GetItem("Units"):ClearItems("Units")
     if self._selected_portal then
         self._menu:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
@@ -292,10 +296,9 @@ end
 function PortalLayer:load_portal_shapes()
     local group = self._menu:GetItem("Shapes")
     if group then
-        group:ClearItems()
-        group:button("NewShape", ClassClbk(self, "add_shape"), {label = "Shapes"})
+        group:ClearItems("Shapes")
         for i=1, #self._selected_portal._shapes do
-            local btn = group:button("shape_" .. tostring(i), ClassClbk(self, "select_shape"))
+            local btn = group:button("shape_" .. tostring(i), ClassClbk(self, "select_shape"), {label = "Shapes"})
             btn.id = i
             btn:tb_imgbtn("Remove", ClassClbk(self, "remove_shape"), nil, {0, 0, 32, 32}, {highlight_color = Color.red})
         end
@@ -311,10 +314,9 @@ end
 function PortalLayer:load_portals()
     local portals = self:GetItem("Portals")
     if portals then
-        portals:ClearItems()
-        portals:button("NewPortal", ClassClbk(self, "add_portal"))
+        portals:ClearItems("portals")
         for name, portal in pairs(managers.portal:unit_groups()) do
-            local prtl = portals:button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {text = portal._name})
+            local prtl = portals:button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {text = portal._name, label = "portals"})
             prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, {0, 0, 32, 32}, {highlight_color = Color.red})
             prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, {33, 1, 30, 30})
             prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, {64, 0, 32, 32})
