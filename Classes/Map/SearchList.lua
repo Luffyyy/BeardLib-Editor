@@ -194,7 +194,7 @@ function UnitSpawnList:do_search_list()
 end
 
 function UnitSpawnList:on_click_item(item)
-    if PackageManager:has(Idstring("unit"), item.unit:id()) then
+    if PackageManager:has(Idstring("unit"), item.id:id()) then
         self._parent:begin_spawning(item.id)
     else
         self:do_load(item.id)
