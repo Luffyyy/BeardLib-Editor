@@ -36,7 +36,7 @@ function MainLayerEditor:build_menu()
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()
         load:s_btn(ext, ClassClbk(self, "open_load_dialog", {ext = ext}), {text = text})
-        load_extract:s_btn(ext, ClassClbk(self, "open_load_dialog", {on_click = ClassClbk(assets, "quick_load_from_db"), ext = ext}), {text = text})
+        load_extract:s_btn(ext, ClassClbk(self, "open_load_dialog", {on_click = ClassClbk(assets, "quick_load_from_db", ext), ext = ext}), {text = text})
     end
 
     local mng = self._holder:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
@@ -392,33 +392,19 @@ function MainLayerEditor:open_load_dialog(params)
             table.insert(units, unit)
         end
     end
-    local do_spawn = ext == "unit" and params.spawn
 	BLE.ListDialog:Show({
 	    list = units,
 		force = true,
 		not_loaded = true,
         callback = function(asset)
-            if do_spawn then
+            if not ctrl() then
                 self:CloseDialog()
             end
-            local function start_spawning()
-                if do_spawn then
-                    if PackageManager:has(Idstring("unit"), asset:id()) then
-                        self:BeginSpawning(asset)
-                    else
-                        log("Package does not have the unit.")
-                    end
-                end
-            end
-            if do_spawn and PackageManager:has(Idstring("unit"), asset:id()) then
-                start_spawning()
+            if params.on_click then
+                params.on_click(asset)
             else
-                if params.on_click then
-                    params.on_click(asset, start_spawning)
-                else
-                    local assets = self:GetPart("assets")
-                    assets:find_package(asset, ext, true, start_spawning)
-                end
+                local assets = self:GetPart("assets")
+                assets:find_package(asset, ext, true)
             end
 	    end
 	})
