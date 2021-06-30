@@ -165,6 +165,7 @@ function ProjectLevelEditor:clone_level(create_data)
     end
 
     local function extra_package(p)
+        level.packages = level.packages or {}
         if not table.contains(level.packages, p) then
             table.insert(level.packages, p)
         end
