@@ -1,9 +1,7 @@
 SoundLayerEditor = SoundLayerEditor or class(EnvironmentLayerEditor)
 local SndLayer = SoundLayerEditor
 function SndLayer:init(parent)
-	self:init_basic(parent, "SoundLayerEditor")
-	self._menu = parent._holder
-	ItemExt:add_funcs(self)
+	EnvironmentLayerEditor.super.init(self, parent, "SoundLayerEditor")
 	self._created_units = {}
 	self._environment_unit = "core/units/sound_environment/sound_environment"
 	self._emitter_unit = "core/units/sound_emitter/sound_emitter"
@@ -143,7 +141,7 @@ function SndLayer:emitter_events()
 end
 
 function SndLayer:build_menu()
-	local buttons = self:group("Actions")
+	local buttons = self._holder:group("Actions")
 	local opt = self:GetPart("opt")
 	local spawn = self:GetPart("spawn")
 	buttons:button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
@@ -153,7 +151,7 @@ function SndLayer:build_menu()
     buttons:tickbox("SoundUnits", ClassClbk(opt, "update_option_value"), self:Val("SoundUnits"), {text = "Draw Sound Units"})
     buttons:tickbox("SoundUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("SoundUnitsWhileMenu"), {text = "Draw Sound Units When Entering This Menu"})
 
-	local defaults = self:group("Defaults")
+	local defaults = self._holder:group("Defaults")
 	local environments = managers.sound_environment:_environment_effects()
 	self._default_environment = defaults:combobox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()))
 	local events = self:ambience_events()

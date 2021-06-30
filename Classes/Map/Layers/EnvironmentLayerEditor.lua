@@ -3,9 +3,7 @@ local sky_rot_key = Idstring("sky_orientation/rotation"):key()
 local DEFAULT_CUBEMAP_RESOLUTION = 512
 local EnvLayer = EnvironmentLayerEditor
 function EnvLayer:init(parent)
-	self:init_basic(parent, "EnvironmentLayerEditor")
-	self._menu = parent._holder
-	ItemExt:add_funcs(self)
+	EnvLayer.super.init(self, parent, "EnvironmentLayerEditor")
 	self._wind_speeds = {
 	 	{speed = 0, beaufort = 0, description = "Calm"},
 		{speed = 0.3, beaufort = 1, description = "Light air"},
@@ -261,9 +259,9 @@ function EnvLayer:build_menu()
 
 	local environment_values = data.environment_values
 
-    local environment_group = self:group("Environment")
+    local environment_group = self._holder:group("Environment")
 	environment_group:pathbox("Environment", ClassClbk(self, "change_environment"), environment_values.environment, "environment", {not_close = true})
-    local sky = self:group("Sky")
+    local sky = self._holder:group("Sky")
     sky:slider("SkyRotation", ClassClbk(self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360})
     local colors = {
         "color_off",
@@ -313,14 +311,14 @@ function EnvLayer:build_menu()
     environment_group:tickbox("EnvironmentUnits", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnits"), {text = "Draw"})
     environment_group:tickbox("EnvironmentUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnitsWhileMenu"), {text = "Draw When Entering This Menu"})
 
-	local dome_occ = self:group("DomeOcclusion", {visible = true}) 
+	local dome_occ = self._holder:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
     dome_occ:button("SpawnDomeOcclusion", ClassClbk(spawn, "begin_spawning", self._dome_occ_shape_unit))	
 	dome_occ:button("Generate", ClassClbk(self, "generate_dome_occ", "all"))
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
     dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
 
-	local wind = self:group("Wind")
+	local wind = self._holder:group("Wind")
 	self._draw_wind = wind:tickbox("Draw", nil, false)
 	local wind_vals = data.wind
     wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), wind_vals.angle, {min = -360, max = 360, floats = 0})

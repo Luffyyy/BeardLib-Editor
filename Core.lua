@@ -47,6 +47,7 @@ end
 function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
+    self:Dofiles(Path:Combine(self.MapClassesDir, "Layers"))
     self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 

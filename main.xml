@@ -49,6 +49,16 @@
 			<class file="MultiSelectListDialog.lua"/>
 		</classes>
 
+		<classes directory="Map/Layers">
+			<class file="LayerEditor.lua"/>
+			<class file="BrushLayerEditor.lua"/>
+			<class file="PortalLayerEditor.lua"/>
+			<class file="EnvironmentLayerEditor.lua"/>
+			<class file="SoundLayerEditor.lua"/>
+			<class file="AiLayerEditor.lua"/>
+			<class file="MainLayerEditor.lua"/>
+        </classes>
+
 		<classes directory="Map">
 			<class file="EditUnit.lua"/>
 			<class file="MissionEditor.lua"/>
@@ -67,18 +77,13 @@
 			<class file="EditZipline.lua"/>
 			<class file="EditUnitLight.lua"/>
 			<class file="MissionScriptEditor.lua"/>
-			<class file="LayerEditor.lua"/>
-			<class file="EnvironmentLayerEditor.lua"/>
-			<class file="PortalLayerEditor.lua"/>
-			<class file="SoundLayerEditor.lua"/>
-			<class file="AiLayerEditor.lua"/>
-			<class file="BrushLayerEditor.lua"/>
 			<class file="UndoUnitHandler.lua"/>
 			<class file="CubemapCreator.lua"/>
 			<class file="SearchList.lua"/>
 			<class file="SpawnMenu.lua"/>
 			<class file="SelectMenu.lua"/>
 		</classes>
+
     </Classes>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>

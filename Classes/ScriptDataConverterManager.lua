@@ -100,7 +100,7 @@ function SConverter:MainItems()
 end
 
 function SConverter:RefreshFilesAndFolders()
-    self:ClearItems()
+    self._menu:ClearItems()
     self:MainItems()
 	
     if not self.assets then
@@ -144,7 +144,7 @@ function SConverter:RefreshFilesAndFolders()
 end
 
 function SConverter:CreateScriptDataFileOption()
-    self:ClearItems()
+    self._menu:ClearItems()
 	self:MainItems()
 
     local up_level = string.split(self.current_script_path, "/")
@@ -175,7 +175,7 @@ function SConverter:CreateScriptDataFileOption()
 end
 
 function SConverter:CreateRootItems()
-    self:ClearItems()
+    self._menu:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
         self:button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
@@ -218,7 +218,7 @@ function SConverter:OpenFolderInExplorer(item)
 end
 
 function SConverter:BackToShortcuts(item)
-    self:ClearItems()
+    self._menu:ClearItems()
     self.assets = false
     self.current_script_path = ""
     self:CreateRootItems()

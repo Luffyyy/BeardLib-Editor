@@ -70,7 +70,7 @@ end
 function EditorConsole:Log(msg, ...) self:PrintMessage("info_log", msg, ...) end 
 function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission_log", msg, ...) end
 function EditorConsole:Error(msg, ...) self:PrintMessage("error_log", msg, ...) end
-function EditorConsole:Clear() self:ClearItems() end
+function EditorConsole:Clear() self._menu:ClearItems() end
 
 
 function EditorConsole:disable()

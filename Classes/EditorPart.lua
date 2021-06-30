@@ -136,7 +136,7 @@ function Part:clear_menu()
     if self._help then
         self._help:SetVisible(false)
     end
-    self:ClearItems()
+    self._holder:ClearItems()
 end
 function Part:build_default_menu()
     self:clear_menu()

@@ -66,7 +66,7 @@ end
 function EditorVehicleBoarding:_populate_seats_list()
 	local vehicle = self:vehicle_unit()
 
-	self._seat_group:clear_items()
+	self._seat_group:ClearItems()
 	self._seat_group:set_enabled(vehicle ~= nil)
 
 	if not vehicle then

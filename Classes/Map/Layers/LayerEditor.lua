@@ -1,5 +1,14 @@
 LayerEditor = LayerEditor or class(EditorPart)
 LayerEditor._created_units = {}
+function LayerEditor:init(parent, name, opt)
+    self:init_basic(parent, name)
+    self._holder = parent._holder:holder(name.."Tab", table.merge({visible = false}, opt))
+    self._parent = parent
+end
+
+function LayerEditor:set_visible(visible)
+    self._holder:SetVisible(visible)
+end
 
 function LayerEditor:loaded_continents()
     self:destroy_units_temp()
@@ -20,4 +29,9 @@ end
 
 function LayerEditor:destroy()
     self:destroy_units_temp()
+end
+
+
+function LayerEditor:active()
+	return self._holder:Visible()
 end

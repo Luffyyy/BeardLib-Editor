@@ -1,9 +1,7 @@
 PortalLayerEditor = PortalLayerEditor or class(LayerEditor)
 local PortalLayer = PortalLayerEditor
 function PortalLayer:init(parent)
-	self:init_basic(parent, "PortalLayerEditor")
-	self._menu = parent._holder
-	ItemExt:add_funcs(self)
+	PortalLayer.super.init(self, parent, "PortalLayerEditor", {private = {offset = 0, h = parent._holder:ItemsHeight()-16}})
 	self._created_units = {}
 	self._portal_shape_unit = "core/units/portal_shape/portal_shape"
 end
@@ -87,13 +85,14 @@ function PortalLayer:unit_deleted(unit)
 end
 
 function PortalLayer:build_menu()
-    local h = self._menu:ItemsHeight(4)
-    local portals = self._menu:group("Portals", {h = h, auto_height = false})
+
+    local h = self._holder:ItemsHeight(4)
+    local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
-    local shapes = self._menu:group("Shapes", {h = h, auto_height = false})
+    local shapes = self._holder:group("Shapes", {h = h, auto_height = false})
     shapes:GetToolbar():tb_imgbtn("NewShape", ClassClbk(self, "add_shape"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Shape"})
 
-    self._menu:group("Units", {stretch_to_bottom = true, auto_height = false})
+    self._holder:group("Units", {stretch_to_bottom = true, auto_height = false})
     self:load_portals()
     self:save()
 end
@@ -112,7 +111,7 @@ function PortalLayer:build_unit_menu()
 		end
         for i, shape in pairs(self._selected_portal._shapes) do
             if shape == unit:unit_data().shape then
-                self:GetItem("shape_"..tostring(i)):RunCallback()
+                self._holder:GetItem("shape_"..tostring(i)):RunCallback()
                 break
             end
         end
@@ -145,7 +144,7 @@ end
 function PortalLayer:select_shape(item)
     if self._selected_portal then
         for i=1, #self._selected_portal._shapes do
-            self._menu:GetItem("shape_" .. tostring(i)):SetBorder({left = false})
+            self._holder:GetItem("shape_" .. tostring(i)):SetBorder({left = false})
         end
         self._selected_shape = item and self._selected_portal._shapes[tonumber(item.id)] 
     end
@@ -159,7 +158,7 @@ function PortalLayer:select_shape(item)
 end
 
 function PortalLayer:load_portal_units()
-    local units = self._menu:GetItem("Units")
+    local units = self._holder:GetItem("Units")
     units:ClearItems()
     if self._selected_portal then
         for unit_id, _ in pairs(self._selected_portal._ids) do
@@ -175,7 +174,7 @@ end
 function PortalLayer:remove_unit_from_portal(unit, item)
     if self._selected_portal then
         self._selected_portal:remove_unit_id(unit)
-        item = item or self:GetItem(unit:unit_data().unit_id) 
+        item = item or self._holder:GetItem(unit:unit_data().unit_id) 
         if item then
             item:Destroy()
         end
@@ -272,15 +271,15 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
         self._parent:build_menu("portal")
     end
     self._selected_shape = nil
-    self._menu:GetItem("Shapes"):ClearItems("Shapes")
-    self._menu:GetItem("Units"):ClearItems("Units")
+    self._holder:GetItem("Shapes"):ClearItems("Shapes")
+    self._holder:GetItem("Units"):ClearItems("Units")
     if self._selected_portal then
-        self._menu:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
+        self._holder:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
     if self._selected_portal and self._selected_portal._name == name and nounselect ~= true then
         self._selected_portal = nil
     else
-        self._menu:GetItem("portal_"..name):SetBorder({left = true})
+        self._holder:GetItem("portal_"..name):SetBorder({left = true})
         self._selected_portal = managers.portal:unit_groups()[name]
         self:load_portal_shapes()
         self:load_portal_units()
@@ -294,7 +293,7 @@ function PortalLayer:clbk_select_portal(item)
 end
 
 function PortalLayer:load_portal_shapes()
-    local group = self._menu:GetItem("Shapes")
+    local group = self._holder:GetItem("Shapes")
     if group then
         group:ClearItems("Shapes")
         for i=1, #self._selected_portal._shapes do
@@ -312,7 +311,7 @@ function PortalLayer:add_shape()
 end
 
 function PortalLayer:load_portals()
-    local portals = self:GetItem("Portals")
+    local portals = self._holder:GetItem("Portals")
     if portals then
         portals:ClearItems("portals")
         for name, portal in pairs(managers.portal:unit_groups()) do

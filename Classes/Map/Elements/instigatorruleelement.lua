@@ -24,7 +24,7 @@ function EditorInstigatorRule:_build_panel()
 end
 
 function EditorInstigatorRule:_update_rules_panel()
-	self:ClearItems("rules")
+	self:clear_menu("rules")
 	local t = self._element.values
 	local instigator = t.instigator
 	t.rules[instigator] = t.rules[instigator] or {}

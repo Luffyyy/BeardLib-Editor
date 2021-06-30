@@ -219,7 +219,7 @@ function EditorInstanceSetParams:_build_panel()
 
 	self:ComboCtrl("instance", names)
 	self:BooleanCtrl("apply_on_execute")
-	self._instance_menu = self:divgroup("Instance Params")
+	self._instance_menu = self._holder:divgroup("Instance Params")
 	self:_build_from_params()
 	self:build_instance_links()
 end

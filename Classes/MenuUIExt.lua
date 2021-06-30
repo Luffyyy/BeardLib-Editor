@@ -22,7 +22,6 @@ ItemExt.get_value = Item.Value
 ItemExt.set_value = Item.SetValue
 ItemExt.set_enabled = Item.SetEnabled
 ItemExt.set_visible = Item.SetVisible
-ItemExt.clear_items = Item.ClearItems
 
 function ItemExt:getmenu()
 	return self
@@ -460,7 +459,6 @@ end
 
 
 ItemExt.GetItem = Item.GetItem
-ItemExt.ClearItems = Item.ClearItems
 ItemExt.AlignItems = Item.AlignItems
 ItemExt.GetItemValue = Item.GetItemValue
 ItemExt.SetItemValue = Item.SetItemValue

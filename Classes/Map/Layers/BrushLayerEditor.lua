@@ -1,10 +1,7 @@
 BrushLayerEditor = BrushLayerEditor or class(LayerEditor)
 
 function BrushLayerEditor:init(parent)
-    self:init_basic(parent, "BrushLayerEditorEditor")
-
-	self._parent = parent
-    self._menu = parent._holder
+    BrushLayerEditor.super.init(self, parent, "BrushLayerEditorEditor", {private = {offset = 0, h = parent._holder:ItemsHeight()-16}})
 
 	self._brush_names = {}
 	self._brush_types = {}
@@ -432,11 +429,9 @@ end
 function BrushLayerEditor:build_menu()
 	self:GetPart("opt"):add_save_callback("save_massunit", ClassClbk(self, "save"))
 
-	self._panel = self._menu:holder("BrushLayer", {h = self._menu:ItemsHeight()-16, private = {offset = 0}})
-
-	local h = self._panel:ItemsHeight(3)
+	local h = self._holder:ItemsHeight(3)
 	local icons = BLE.Utils.EditorIcons
-    local controls = self._panel:group("Main", {align_method = "grid", auto_height = false, h = h})
+    local controls = self._holder:group("Main", {align_method = "grid", auto_height = false, h = h})
 
     controls:s_btn("RepositionAll", ClassClbk(self, "reposition_all"))
     controls:s_btn("ClearSelected", ClassClbk(self, "clear_unit"), {help = "This will clear all selected brushes"})
@@ -465,7 +460,7 @@ function BrushLayerEditor:build_menu()
 	self._debug_units_total = debug:lbl("Total Units:", {size_by_text = true})
 	self._debug_units_unique = debug:lbl("Unique Units:", {size_by_text = true})
 
-    self._unit_list = self._panel:group("Units", {h = h, auto_height = false, auto_align = false})
+    self._unit_list = self._holder:group("Units", {h = h, auto_height = false, auto_align = false})
 	for i, name in pairs(self._brush_units) do
 		if i < 100 then
 			self._unit_list:button(name, ClassClbk(self, "select_unit"), {text = name:gsub("units/", "")})
@@ -473,7 +468,7 @@ function BrushLayerEditor:build_menu()
 	end
 	self._unit_list:AlignItems()
 
-    local brushes = self._panel:group("Brushes", {h = h, auto_height = false, align_method = "grid"})
+    local brushes = self._holder:group("Brushes", {h = h, auto_height = false, align_method = "grid"})
 	local brushes_tb = brushes:GetToolbar()
 
 	brushes_tb:tb_imgbtn("Remove", ClassClbk(self, "remove_brush"), nil, icons.cross, {highlight_color = Color.red, help = "Remove brush"})
@@ -660,7 +655,7 @@ function BrushLayerEditor:clear()
 end
 
 function BrushLayerEditor:active()
-	return self._visible and alive(self._panel)
+	return self._visible and self._holder:Visible()
 end
 
 function BrushLayerEditor:mouse_busy()

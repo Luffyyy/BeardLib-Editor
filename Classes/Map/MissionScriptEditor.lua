@@ -39,12 +39,13 @@ function MissionScriptEditor:create_element()
 end
 
 function MissionScriptEditor:work()
-	self._menu = self:GetPart("static")._holder
-	ItemExt:add_funcs(self)
+	local static = self:GetPart("static")
+	self._holder = static._holder
+	ItemExt:add_funcs(self, self._holder)
 
-	self.super.build_default_menu(self)
+	static:clear_menu()
 	self:_build_panel()
-    self._links = self:GetPart("static"):build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
+    self._links = static:build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
@@ -65,7 +66,7 @@ function MissionScriptEditor:work()
 			table.insert(self._links, element)
 		end
 	end
-	self:AlignItems()
+	self._holder:AlignItems()
 end
 
 function MissionScriptEditor:build_instance_links()
@@ -89,15 +90,15 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
-	self:ClearItems()
+	self._holder:ClearItems()
 
 	local SE = self:GetPart("static")
 	SE:show_help(ClassClbk(self, "open_wiki"))
-	self._main_group = self:group("Main")
-	local quick_buttons = self:group("QuickActions", {align_method = "grid"})
-	local transform = self:group("Transform")
+	self._main_group = self._holder:group("Main")
+	local quick_buttons = self._holder:group("QuickActions", {align_method = "grid"})
+	local transform = self._holder:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
-	self._class_group = self:group(element)
+	self._class_group = self._holder:group(element)
 	SE:SetTitle(element)
 	quick_buttons:s_btn("Deselect", ClassClbk(self, "deselect_element"))    
 	quick_buttons:s_btn("Delete", ClassClbk(SE, "delete_selected_dialog"))
@@ -152,7 +153,7 @@ function MissionScriptEditor:open_wiki()
 end
 
 function MissionScriptEditor:set_selected_on_executed_element_delay(item)
-	local value = self._menu:GetItem("OnExecutedList"):Value()
+	local value = self._holder:GetItem("OnExecutedList"):Value()
 	if value then
 		self._element.values.on_executed[value].delay = item:Value()
 		self:update_element()
@@ -400,8 +401,8 @@ end
 
 function MissionScriptEditor:set_element_position(menu)
 	local SE = self:GetPart("static")
-	self._element.values.position = self:GetItem("Position"):Value()
-	self._element.values.rotation = self:GetItem("Rotation"):Value()
+	self._element.values.position = self._holder:GetItem("Position"):Value()
+	self._element.values.rotation = self._holder:GetItem("Rotation"):Value()
 	self:update_element(true)
 end
 
@@ -713,33 +714,33 @@ end
 function MissionScriptEditor:ListSelector(value_name, list, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local data = self:ItemData(opt)
-	return (opt.group or self._menu):button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
+	return (opt.group or self._holder):button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
 end
 
 function MissionScriptEditor:NumberCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):numberbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):numberbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:BooleanCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):tickbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):tickbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ColorCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):colorbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):colorbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:StringCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):textbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):textbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
+	return (opt.group or self._holder):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
 function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
@@ -748,31 +749,31 @@ function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
 		return (not check_slot or BLE.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
 	end
 	opt.not_close = true
-    return (opt.group or self._menu):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
+    return (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
 end
 
 function MissionScriptEditor:Vector3Ctrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+	return (opt.group or self._holder):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:RotationCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+	return (opt.group or self._holder):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:Info(text, color, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-	return (opt.group or self._menu):info(text, color)
+	return (opt.group or self._holder):info(text, color)
 end
 
 function MissionScriptEditor:Alert(text, color, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-	return (opt.group or self._menu):alert(text, color)
+	return (opt.group or self._holder):alert(text, color)
 end
 
 -- TODO: maybe add linking to other stuff like units with sequence elements

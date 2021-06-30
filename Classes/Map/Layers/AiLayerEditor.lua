@@ -5,10 +5,7 @@ local EU = BLE.Utils
 local tx = "textures/editor_icons_df"
 
 function AiEditor:init(parent)
-    self:init_basic(parent, "AiLayerEditor")
-    self._parent = parent
-    self._menu = parent._holder
-    ItemExt:add_funcs(self)
+    AiEditor.super.init(self, parent, "AiLayerEditor")
 
     self._draw_helpers = {
         { name = "quads", needs_unit = true, dont_disable = true },
@@ -105,8 +102,8 @@ end
 
 function AiEditor:build_menu()
     self:save()
-    self:ClearItems()
-    local graphs = self:group("Graphs")
+    self._holder:ClearItems()
+    local graphs = self._holder:group("Graphs")
     local spawn = self:GetPart("spawn")
     graphs:button("SpawnNavSurface", ClassClbk(spawn, "begin_spawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
@@ -144,7 +141,7 @@ function AiEditor:build_menu()
 
     self:_build_draw_data(group)
 
-    local ai_settings = self:group("AISettings", {text = "AI Settings"})
+    local ai_settings = self._holder:group("AISettings", {text = "AI Settings"})
     ai_settings:combobox("GroupState",
         function(item)
             self:data().ai_settings.group_state = item:SelectedItem()
@@ -152,7 +149,7 @@ function AiEditor:build_menu()
         self._group_states,
         table.get_key(self._group_states, self:data().ai_settings.group_state))
 
-    local ai_data = self:group("AIData", {text = "AI Data"})
+    local ai_data = self._holder:group("AIData", {text = "AI Data"})
     ai_data:tickbox("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"))
     ai_data:GetToolbar():tb_imgbtn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
@@ -161,7 +158,7 @@ function AiEditor:build_menu()
 
     self:_build_ai_data(ai_data)
 
-    local other = self:group("Other")
+    local other = self._holder:group("Other")
     other:button("SpawnCoverPoint", ClassClbk(self:part("spawn"), "begin_spawning", "units/dev_tools/level_tools/ai_coverpoint"))
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 end
@@ -392,7 +389,7 @@ function AiEditor:update_draw_data(unit)
 end
 
 function AiEditor:update_ai_data()
-    local ai_data = self:GetItem("AIData")
+    local ai_data = self._holder:GetItem("AIData")
     ai_data:ClearItems("patrol_path")
 
     self:_build_ai_data(ai_data)
