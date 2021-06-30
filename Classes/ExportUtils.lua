@@ -97,7 +97,7 @@ function Utils:ParseXml(ext, path, scriptdata)
 end
 
 function Utils:GetDependencies(ext, path, ignore_default, exclude)
-    exclude = exclude or {texture = true, model = true, cooked_physics = true}
+    exclude = exclude or {texture = true, model = true, cooked_physics = true, animation = true}
 	if not Utils.Reading[ext] then
 		self:Log("Extension %s does not have a read function!", ext)
 		return
