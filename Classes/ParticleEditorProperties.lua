@@ -2,6 +2,14 @@ local function create_text_field(parent, view, prop)
     return parent:textbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor})
 end
 
+local function create_int_field(parent, view, prop)
+    return parent:numberbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor, floats = 0})
+end
+
+local function create_float_field(parent, view, prop)
+    return parent:numberbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, {background_color = prop._bgcolor})
+end
+
 local function create_color_selector(parent, view, prop)
     return parent:colorbox(prop:name(), function(item)
         local c = item:Value() * 255
@@ -132,7 +140,9 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 			if prev then
 				prev:SetBorder({left = false})
 			end
-			item:SetBorder({left = true})
+			if item then
+				item:SetBorder({left = true})
+			end
 			prev = item
 			item.property._bgcolor = self._bgcolor
 			item.property:create_widget(vars.sheet, vars.view)
@@ -267,6 +277,10 @@ function CoreEffectProperty:create_widget(parent, view, no_border)
 		load_keys()
 	elseif self._type == "boolean" then
 		widget = create_check(parent, view, self)
+	elseif self._type == "int" then
+		widget = create_int_field(parent, view, self)
+	elseif self._type == "float" or self._type == "double" then
+		widget = create_float_field(parent, view, self)
 	else
 		widget = create_text_field(parent, view, self)
 	end
