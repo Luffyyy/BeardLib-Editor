@@ -52,7 +52,7 @@ end
 function CoreParticleEditorPanel:create_effect_panel(parent)
 	local panel = parent:pan("effect", {align_method = "centered_grid"})
     self._render_selected_only_check = panel:tickbox("RemderSelectedAtomOnly", ClassClbk(self, "on_set_selected_only"))
-    self._atom_textctrl = panel:textbox("Name", ClassClbk(self, "on_rename_atom"))
+    self._atom_textctrl = panel:textbox("AtomSelector", ClassClbk(self, "on_rename_atom"), nil, {enabled = false})
     self._atom_combo = panel:combobox("AtomSelector", ClassClbk(self, "on_select_atom"))
     local buttons_panel = panel:pan("buttons", {align_method = "grid_from_right"})
 	buttons_panel:tb_btn("Add", ClassClbk(self, "on_add_atom"))
@@ -85,6 +85,16 @@ function CoreParticleEditorPanel:create_effect_panel(parent)
 
     
 	return panel
+end
+
+function CoreParticleEditorPanel:on_rename_atom()
+	if self._effect:find_atom(self._atom_textctrl:get_value()) or #self._effect._atoms == 0 then
+		return
+	end
+
+	self._atom:set_name(self._atom_textctrl:get_value())
+	self:update_atom_combo()
+	self._atom_combo:SetSelectedItem(self._atom_textctrl:get_value(), true)
 end
 
 function CoreParticleEditorPanel:on_add_atom()
@@ -204,6 +214,8 @@ end
 
 function CoreParticleEditorPanel:update_view(clear, undoredo)
 	local n = Node("effect")
+
+	self._atom_textctrl:SetEnabled(self._atom ~= nil)
 
 	self._effect:save(n)
 
