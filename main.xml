@@ -80,6 +80,8 @@
 			<class file="UndoUnitHandler.lua"/>
 			<class file="CubemapCreator.lua"/>
 			<class file="SearchList.lua"/>
+			<class file="SpawnLists.lua"/>
+			<class file="SelectLists.lua"/>
 			<class file="SpawnMenu.lua"/>
 			<class file="SelectMenu.lua"/>
 		</classes>
