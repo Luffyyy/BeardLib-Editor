@@ -107,7 +107,7 @@ function EditorSpecialObjective:update_selected(t, dt)
 end
 
 function EditorSpecialObjective:_highlight_if_outside_the_nav_field(t)
-    if managers.navigation:is_data_ready() then
+    if managers.navigation:is_data_ready() and managers.navigation._quad_field then
         local my_pos = self._unit:position()
         local nav_tracker = managers.navigation._quad_field:create_nav_tracker(my_pos, true)
 
