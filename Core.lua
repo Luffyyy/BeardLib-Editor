@@ -201,6 +201,18 @@ function BLE:LoadCustomAssets()
                 local directory = add.full_directory or Path:Combine(mod.ModPath, add.directory)
                 self:LoadCustomAssetsToHashList(add, directory, "map_assets")
             end
+            local local_add = project:read_xml(level._local_add_path)
+            local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
+            if local_add then
+                for _, file in pairs(local_add) do
+                    local ext = file._meta
+                    if ext == "environment" then
+                        local path = map_dbpath.."/"..file.path
+                        self.DBPaths[ext] = self.DBPaths[ext] or {}
+                        self.DBPaths[ext][path] = true
+                    end
+                end
+            end
         end
     end
 end
