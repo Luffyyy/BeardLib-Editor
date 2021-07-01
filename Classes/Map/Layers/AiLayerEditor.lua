@@ -632,6 +632,8 @@ function AiEditor:do_spawn_unit(unit_path, ud)
     table.insert(self._units, unit)
 
     self:build_menu()
+
+    return unit
 end
 
 function AiEditor:_add_patrol_point(unit)
