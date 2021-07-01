@@ -615,6 +615,9 @@ end
 function BrushLayerEditor:select_unit(item)
 	local name = item.name
 	self._unit_name = name
+	if not ctrl() then
+		self._selected_unit_names = {}
+	end
 	if table.contains(self._selected_unit_names, name) then
 		table.delete(self._selected_unit_names, name)
 	else
