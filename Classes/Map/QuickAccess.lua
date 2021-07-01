@@ -33,7 +33,7 @@ function QuickAccess:init(parent, menu)
     self._buttons = {
         {name = "GeneralOptions", rect = {321, 449, 62, 62}, callback = "open_options", help = "General Options"},
         {name = "Deselect", rect = {99, 3, 26, 26}, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
-        {name = "TeleportPlayer", rect = {368, 16, 32, 32}, callback = "to_selection", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
+        {name = "TeleportPlayer", rect = {368, 16, 32, 32}, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
         {name = "TeleportToSelection", rect = {368, 64, 32, 32}, callback = "to_selection", help = "Teleport Camera To Selection", enabled = normal and self._parent._has_fix},
         {name = "LocalTransform", rect = {390, 118, 36, 36}, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
@@ -65,16 +65,7 @@ function QuickAccess:NumberBox(parent, name, params)
     })
 
     holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
-    local icon = holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
-
-	local line = holder:Panel():rect({
-        color = self._menu.accent_color,
-        layer = 10,
-        w = holder:H(),
-        h = 2
-    })
-    line:set_left(icon:X())
-    line:set_bottom(icon:Bottom())
+    holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
 end
 
 function QuickAccess:build_toggles(parent)
@@ -100,20 +91,6 @@ function QuickAccess:Toggle(parent, params, tx)
         enabled_color = 1,
         background_color = BLE.Options:GetValue("ToolbarButtonsColor")
     })
-
-    local line = parent:Panel():rect({
-        name = params.name.."_line",
-        color = self._menu.accent_color,
-        layer = 10,
-        w = item:W(),
-        h = 2,
-        rotation = 360,
-        visible = false
-    })
-    line:set_left(item:X())
-    line:set_bottom(item:Bottom())
-    item.toggle_line = line
-
     return item
 end
 
@@ -144,7 +121,6 @@ end
 
 function QuickAccess:ToggleOptionValue(name, item)
     local opt = BLE.Utils:GetPart("opt")
-    local line =  item.toggle_line
 
     local op_item = opt:GetItem(name)
     local value = not op_item:Value()
@@ -152,14 +128,14 @@ function QuickAccess:ToggleOptionValue(name, item)
 
     item.img:set_alpha(value and 1 or 0.5)
     item:SetEnabled(item.enabled)
-    line:set_visible(value)
+    item:SetBorder({bottom = value})
 end
 
 function QuickAccess:UpdateToggle(name, val)
     local item = self._menu:GetItem(name)
 
     item.img:set_alpha(val and 1 or 0.5)
-    item.toggle_line:set_visible(self:value(name))
+    item:SetBorder({bottom = val})
 end
 function QuickAccess:UpdateNumberBox(name)
     local inputItem = self._menu:GetItem(name)
@@ -187,7 +163,7 @@ function QuickAccess:update_widget_toggle(item)
     local name = item.name:gsub("_widget_toggle", "")
     local enabled = self._parent[name.."_widget_enabled"](self._parent)
     
-    item.toggle_line:set_visible(enabled)
+    item:SetBorder({bottom = enabled})
     item.img:set_alpha(enabled and 1 or 0.5)
 end
 
