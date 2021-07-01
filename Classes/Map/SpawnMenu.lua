@@ -66,7 +66,7 @@ function SpawnMenu:mouse_pressed(button, x, y)
         elseif self._currently_spawning then
             self._do_switch = true
             local unit = self._parent:SpawnUnit(self._currently_spawning)
-            self:GetPart("select"):get_menu("unit"):on_spawned_unit(unit)
+            self:GetPart("select"):get_menu("unit"):add_object(unit)
             self:GetPart("undo_handler"):SaveUnitValues({unit}, "spawn")
             return true
         end
