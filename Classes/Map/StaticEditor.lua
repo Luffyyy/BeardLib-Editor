@@ -1541,26 +1541,39 @@ function Static:SpawnCopyData(copy_data, prefab)
     end
     if missing then
         if assets then
-            Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
-                local function find_packages()
+            Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {
+                {"Load Units Using DB", function()
                     for unit, is_missing in pairs(missing_units) do
-                        if is_missing then
-                            if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
-                                missing_units[unit] = nil
-                            end
+                        if assets:db_has_asset("unit", unit) then
+                            assets:quick_load_from_db("unit", unit)
                         else
-                            missing_units[unit] = nil
+                            Utils:Notify("Failed", "Unfortunately not all assets can be loaded, therefore this prefab cannot be spawned in this map.")
+                            return
                         end
                     end
-                    if table.size(missing_units) > 0 then
-                        assets:find_packages({unit = missing_units}, find_packages)
-                    else
-                        Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
-                        all_ok_spawn()
+                    all_ok_spawn()
+                end},
+                {"Load Units Using Packages", function()
+                    local function find_packages()
+                        for unit, is_missing in pairs(missing_units) do
+                            if is_missing then
+                                if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                                    missing_units[unit] = nil
+                                end
+                            else
+                                missing_units[unit] = nil
+                            end
+                        end
+                        if table.size(missing_units) > 0 then
+                            assets:find_packages({unit = missing_units}, find_packages)
+                        else
+                            Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
+                            all_ok_spawn()
+                        end
                     end
-                end
-                find_packages()
-            end}})
+                    find_packages()
+                end}
+            })
         else
             Utils:Notify("ERROR!", "Cannot spawn the prefab[Unloaded units]")
         end

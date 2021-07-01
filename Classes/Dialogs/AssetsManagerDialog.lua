@@ -329,6 +329,10 @@ function AssetsManagerDialog:clean_add_xml()
     project:save_xml(level._add_path, new_add)
 end
 
+function AssetsManagerDialog:db_has_asset(ext, asset)
+    return blt.asset_db.has_file(asset, ext)
+end
+
 function AssetsManagerDialog:quick_load_from_db(ext, asset, clbk)
     self:load_from_db({[ext] = {[asset] = true}}, nil, false, true, clbk)
 end
