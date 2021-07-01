@@ -10,9 +10,9 @@ function UpperMenu:init(parent, menu)
         {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
         {name = "env", rect = {256, 448, 64, 64}},
         {name = "opt", rect = {320, 448, 64, 64}},
-        {name = "save", rect = {384, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
         --{name = "move_widget_toggle", rect = {64, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
         --{name = "rotation_widget_toggle", rect = {0, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
+        {name = "save", rect = {383, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
@@ -28,15 +28,7 @@ function UpperMenu:init(parent, menu)
         scrollbar = false,
         visible = true,
     })
-    local s = 300 / #self._tabs
-    self._line = self._menu:Panel():rect({
-        color = self._menu.accent_color,
-        layer = 10,
-        x = -s,
-        y = self._menu:H() - 2,
-        w = s,
-        h = 2,
-    })
+    self._tab_size = self._menu:ItemsWidth(#self._tabs)
     ItemExt:add_funcs(self)
 end
 
@@ -60,7 +52,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         cannot_be_enabled = enabled == false,
         on_callback = ClassClbk(self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
-        w = 300 / #self._tabs,
+        w = self._tab_size,
         h = self._menu:H(),
         icon_w = s - 12,
         icon_h = s - 12,
@@ -119,18 +111,8 @@ function UpperMenu:Switch(manager, no_anim)
     self._parent._current_menu = menu
     self._parent._current_menu_name = item.name
     menu:SetVisible(true)
-    self:move_line_to(item, no_anim)
-end
-
-function UpperMenu:move_line_to(item, no_anim)
-    if not alive(item) then
-        return
-    end
-    if no_anim then
-        self._line:stop()
-        self._line:set_x(item:X())
-    else
-        play_value(self._line, "x", item:X())
+    for _, it in pairs(self._menu:Items()) do
+        it:SetBorder({bottom = it == item})
     end
 end
 
