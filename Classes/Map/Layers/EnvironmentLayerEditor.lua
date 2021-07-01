@@ -76,7 +76,7 @@ end
 function EnvLayer:find_cubemaps()
 	self._cubemap_units = {}
 	for _, unit in pairs(managers.worlddefinition._all_units) do
-        if unit:name() == self._cubemap_unit:id() then
+        if alive(unit) and unit:name() == self._cubemap_unit:id() then
             table.insert(self._cubemap_units, unit)
         end
     end
