@@ -1125,7 +1125,7 @@ function Static:build_links(id, match, element)
     end
 
     local links = managers.mission:get_links_paths_new(id, match)
-    local links_group = self:GetItem("LinkedBy") or self:group("LinkedBy", {max_height = 200})
+    local links_group = self._holder:GetItem("LinkedBy") or self._holder:group("LinkedBy", {max_height = 200})
     local same_links = {}
     links_group:ClearItems()
 
@@ -1147,7 +1147,7 @@ function Static:build_links(id, match, element)
     end
 
     if match == Utils.LinkTypes.Element then
-        local linking_group = self:GetItem("LinkingTo") or self:group("LinkingTo", {max_height = 200})
+        local linking_group = self._holder:GetItem("LinkingTo") or self._holder:group("LinkingTo", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
         end
