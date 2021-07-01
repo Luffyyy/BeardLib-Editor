@@ -308,8 +308,9 @@ end
 
 function Editor:select_unit(unit, add, switch)
     add = NotNil(add, ctrl())
+    switch = NotNil(switch, not add)
     self.parts.static:set_selected_unit(unit, add)
-    if switch then
+    if switch and BLE.Options:GetValue("SelectAndGoToMenu") then
         self.parts.static:Switch()
     end
 end
@@ -324,13 +325,13 @@ function Editor:select_element(element, add, switch)
     end
 end
 
-function Editor:DeleteUnit(unit, keep_links)
+function Editor:DeleteUnit(unit, keep_links, reload_select)
+    local element = nil
     if alive(unit) then
         if unit:mission_element() then
-            managers.mission:delete_element(unit:mission_element().element.id) 
-            if managers.editor then
-                self.parts.mission:remove_element_unit(unit)
-            end
+            element = unit:mission_element().element
+            managers.mission:delete_element(element.id)
+            self.parts.mission:remove_element_unit(unit)
         end
         local ud = unit:unit_data()
 		if ud then
@@ -340,6 +341,13 @@ function Editor:DeleteUnit(unit, keep_links)
         World:delete_unit(unit)
     end
     managers.worlddefinition:check_names()
+    if reload_select then
+        if element then
+            self.parts.select:get_menu("element"):delete_object(element.id)
+        else
+            self.parts.select:get_menu("unit"):delete_object(unit)
+        end
+    end
 end
 
 function Editor:GetSpawnPosition(data)

@@ -6,17 +6,21 @@ function SpawnMenu:init(parent, menu)
     self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"))
     self._tabs:s_btn("Prefab", ClassClbk(self, "open_tab"))
     self._tab_classes = {
-        Unit = UnitSpawnList:new(self),
-        Element = ElementSpawnList:new(self),
-        Instance = InstanceSpawnList:new(self),
-        Prefab = PrefabSpawnList:new(self),
+        unit = UnitSpawnList:new(self),
+        element = ElementSpawnList:new(self),
+        instance = InstanceSpawnList:new(self),
+        prefab = PrefabSpawnList:new(self),
     }
-    self._tab_classes.Unit:set_visible(true)
+    self._tab_classes.unit:set_visible(true)
+end
+
+function SpawnMenu:get_menu(name)
+    return self._tab_classes[name]
 end
 
 function SpawnMenu:open_tab(item)
     for name, tab in pairs(self._tab_classes) do
-        tab:set_visible(name == item.name)
+        tab:set_visible(name == item.name:lower())
     end
     for _, tab in pairs(self._tabs:Items()) do
         tab:SetBorder({bottom = tab == item})
@@ -62,6 +66,7 @@ function SpawnMenu:mouse_pressed(button, x, y)
         elseif self._currently_spawning then
             self._do_switch = true
             local unit = self._parent:SpawnUnit(self._currently_spawning)
+            self:GetPart("select"):get_menu("unit"):on_spawned_unit(unit)
             self:GetPart("undo_handler"):SaveUnitValues({unit}, "spawn")
             return true
         end
@@ -162,6 +167,7 @@ function SpawnMenu:SpawnInstance(instance, instance_data, spawn)
         if spawn then
             self:GetPart("static"):set_selected_unit(unit)
         end
+        self:GetPart("select"):get_menu("instance"):add_object(instance_name)
         return unit
     end
 

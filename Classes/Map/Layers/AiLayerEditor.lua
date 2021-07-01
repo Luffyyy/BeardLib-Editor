@@ -535,6 +535,7 @@ function AiEditor:_clear_graphs()
             managers.editor:DeleteUnit(unit)
         end
     end
+    self:GetPart("select"):reload_menu("unit")
 end
 
 function AiEditor:_clear_selected_nav_segment()
@@ -543,6 +544,7 @@ function AiEditor:_clear_selected_nav_segment()
             managers.editor:DeleteUnit(unit)
         end
     end
+    self:GetPart("select"):reload_menu("unit")
 end
 
 function AiEditor:_draw_nav_segments(item)
@@ -575,6 +577,7 @@ function AiEditor:_delete_patrol_path(path_name)
         for _, unit in ipairs(to_delete) do
             managers.editor:DeleteUnit(unit)
         end
+        self:GetPart("select"):reload_menu("unit")
 
         managers.ai_data:remove_patrol_path(path_name)
         self:update_ai_data()
@@ -587,7 +590,7 @@ end
 
 function AiEditor:_delete_patrol_point(unit)
     EU:YesNoQuestion("Do you want to delete this patrol point?", function()
-        managers.editor:DeleteUnit(unit)
+        managers.editor:DeleteUnit(unit, false, true)
 
         self:update_ai_data()
     end)

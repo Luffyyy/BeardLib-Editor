@@ -173,6 +173,7 @@ function MissionEditor:add_element(name, add_to_selection, old_element, no_selec
 				self:GetPart("static"):set_selected_unit(unit, add_to_selection)
 			end
 		end
+        self:GetPart("select"):get_menu("element"):add_object(unit:mission_element().element)
 		return unit
     else
         self:alert_missing_element_editor(name)

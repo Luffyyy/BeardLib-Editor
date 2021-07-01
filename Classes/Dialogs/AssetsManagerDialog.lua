@@ -663,9 +663,10 @@ function AssetsManagerDialog:remove_unit_from_map(remove_asset, name, type)
             for k, unit in pairs(managers.worlddefinition._all_units) do
                 local ud = alive(unit) and unit:unit_data()
                 if ud and not ud.instance and ud.name == name then
-                    managers.editor:DeleteUnit(unit)
+                    managers.editor:DeleteUnit(unit, false, false)
                 end
             end
+            self:GetPart("select"):reload_menu("unit")
             managers.worlddefinition._all_names[name] = nil
             local continents = managers.worlddefinition._continent_definitions
             for cname, continent in pairs(continents) do
@@ -965,4 +966,8 @@ end
 function AssetsManagerDialog:hide(yes)
     self._unit_info:SetVisible(false)
     return AssetsManagerDialog.super.hide(self, yes)
+end
+
+function AssetsManagerDialog:GetPart(name)
+    return managers.editor.parts[name]
 end

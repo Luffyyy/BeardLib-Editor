@@ -568,6 +568,7 @@ function Static:set_unit_path(unit, path, add)
         ud.name = path
         new_unit = self._parent:SpawnUnit(ud.name, unit, add == true, ud.unit_id)
         self._parent:DeleteUnit(unit, true)
+        self:GetPart("select"):reload_menu("unit")
     end
     return new_unit
 end
@@ -770,6 +771,7 @@ function Static:add_selection_to_prefabs(item, prefab_name)
     	end
         BLE.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
         FileIO:WriteScriptData(Path:Combine(BLE.PrefabsDirectory, prefab_name..".prefab"), BLE.Prefabs[prefab_name], "binary")
+        self:GetPart("spawn"):get_menu("prefab"):reload()
     end, create_items = function(input_menu)
         remove_old_links = input_menu:tickbox("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements"})
     end})
@@ -1242,15 +1244,22 @@ end
 
 function Static:delete_selected(item)
     self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
+    local should_reload = #self._selected_units < 10
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
             if unit:fake() then
                 self:GetPart("instances"):delete_instance()
+                if should_reload then
+                    self:GetPart("select"):get_menu("instance"):reload()
+                end
             else
                 self:delete_unit_group_data(unit)
-                self._parent:DeleteUnit(unit)
+                self._parent:DeleteUnit(unit, false, should_reload)
             end
         end
+    end
+    if not should_reload then
+        self:GetPart("select"):reload_menus()
     end
     self:reset_selected_units()
     self:set_unit()
@@ -1527,6 +1536,7 @@ function Static:SpawnCopyData(copy_data, prefab)
 		--When all units are spawned properly you can select.
         self:set_selected_units(units)
         self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
+        self:GetPart("select"):reload_menu("unit")
         self:StorePreviousPosRot()
     end
     if missing then
