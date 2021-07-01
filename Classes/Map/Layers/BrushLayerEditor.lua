@@ -502,7 +502,7 @@ function BrushLayerEditor:build_menu()
 	self._debug_units_total = debug:lbl("Total Units:", {size_by_text = true})
 	self._debug_units_unique = debug:lbl("Unique Units:", {size_by_text = true})
 
-    self._unit_list = self._holder:divgroup("Units", {h = h*2/3, auto_height = false, auto_align = false})
+    self._unit_list = self._holder:divgroup("Units", {h = h*1/2, auto_height = false, auto_align = false, text = "Brushes"})
 	self._unit_list:GetToolbar():textbox("Search", ClassClbk(self, "search_units"), "", {text = " ", control_slice = 1, w = self._unit_list:ItemsWidth() * 0.75, position = "RightCenteryOffset-x"})
 	self:search_units()
 
