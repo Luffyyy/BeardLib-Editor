@@ -110,18 +110,57 @@ function BrushLayerEditor:save()
 	end)
 end
 
+function BrushLayerEditor:unit_positions(name)
+	local positions = MassUnitManager:unit_positions(name:id())
+	local header = self._brush_types[name]
+	if header then
+		for _, unit in pairs(header._units) do
+			if alive(unit) then
+				table.insert(positions, unit:position())
+			end
+		end
+	end
+	return positions
+end
+
+function BrushLayerEditor:unit_rotations(name)
+	local rotations = MassUnitManager:unit_rotations(name:id())
+	local header = self._brush_types[name]
+	if header then
+		for _, unit in pairs(header._units) do
+			if alive(unit) then
+				table.insert(rotations, unit:rotation())
+			end
+		end
+	end
+	return rotations
+end
+
+function BrushLayerEditor:delete_units(name)
+	MassUnitManager:delete_units(name:id())
+	local header = self._brush_types[name]
+	if header then
+		for _, unit in pairs(header._units) do
+			if alive(unit) then
+				World:delete_unit(unit)
+			end
+		end
+	end
+	self._brush_types[name] = nil
+end
+
 function BrushLayerEditor:reposition_all()
 	managers.editor:output("Reposition all brushes:")
 
 	for _, name in pairs(self._brush_units) do
 		local name_ids = name:id()
 		local nudged_units = 0
-		local positions = MassUnitManager:unit_positions(name_ids)
+		local positions = self:unit_positions(name)
 
 		if #positions > 0 then
-			local rotations = MassUnitManager:unit_rotations(name_ids)
+			local rotations = self:unit_rotations(name)
 
-			MassUnitManager:delete_units(name_ids)
+			self:delete_units(name)
 
 			for counter = 1, #positions do
 				local rot = rotations[counter]
@@ -141,13 +180,13 @@ function BrushLayerEditor:reposition_all()
 						nudged_units = nudged_units + 1
 					end
 				else
-					managers.editor:output(" * Lost one of type " .. name_ids .. " - it was too alone at: " .. pos)
+					managers.editor:output(" * Lost one of type " .. name .. " - it was too alone at: " .. pos)
 				end
 			end
 		end
 
 		if nudged_units > 0 then
-			managers.editor:output(" * Nudged " .. nudged_units .. " units of type " .. name_ids)
+			managers.editor:output(" * Nudged " .. nudged_units .. " units of type " .. name)
 		end
 		self._amount_dirty = true
 	end
@@ -156,10 +195,14 @@ end
 function BrushLayerEditor:clear_all()
     BLE.Utils:YesNoQuestion("This will delete all brushes in this level, are you sure?", function()
 		MassUnitManager:delete_all_units()
-        for _, name in ipairs(self._brush_names) do
-
+        for _, header in pairs(self._brush_types) do
+			for _, unit in pairs(header._units) do
+				if alive(unit) then
+					World:delete_unit(unit)
+				end
+			end
         end
-
+		self._brush_types = {}
         self._amount_dirty = true
     end)
 end
@@ -167,16 +210,8 @@ end
 function BrushLayerEditor:clear_unit()
     BLE.Utils:YesNoQuestion("This will delete all selected brushes in this level, are you sure?", function()
         for _, name in ipairs(self._brush_names) do
-            MassUnitManager:delete_units(Idstring(name))
+            self:delete_units(name)
         end
-
-        self._amount_more_dirty = true
-    end)
-end
-
-function BrushLayerEditor:clear_units_by_name(name)
-    BLE.Utils:YesNoQuestion("This will delete all " .. name .. " brushes in this level, are you sure?", function()
-        MassUnitManager:delete_units(Idstring(name))
 
         self._amount_more_dirty = true
     end)
@@ -468,7 +503,7 @@ function BrushLayerEditor:build_menu()
 	end
 	self._unit_list:AlignItems()
 
-    local brushes = self._holder:group("Brushes", {h = h, auto_height = false, align_method = "grid"})
+    local brushes = self._holder:group("Brushes", {h = h, auto_height = false, align_method = "grid", enabled = false})
 	local brushes_tb = brushes:GetToolbar()
 
 	brushes_tb:tb_imgbtn("Remove", ClassClbk(self, "remove_brush"), nil, icons.cross, {highlight_color = Color.red, help = "Remove brush"})
