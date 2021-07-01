@@ -145,7 +145,8 @@ function ItemExt:group(name, o)
 	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Group(table.merge({
 		color = color,
-		name = string.pretty2(name),
+		name = name,
+		text = string.pretty2(name),
 		offset = 6,
 		inherit_values = {
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
