@@ -1,5 +1,10 @@
 SelectSearchList = SelectSearchList or class(SearchList)
 SelectSearchList.PER_PAGE = 100
+function SelectSearchList:init(parent)
+    SelectSearchList.super.init(self, parent)
+    local tb = self._options:GetToolbar()
+    tb:tb_imgbtn("SelectAll", ClassClbk(self, "select_all_visible"), nil, BLE.Utils.EditorIcons.select)
+end
 
 function SelectSearchList:delete_object(object)
     local delete_item = nil
@@ -20,13 +25,24 @@ function SelectSearchList:delete_object(object)
     end
 end
 
+function SelectSearchList:select_all_visible()
+    self._select_all = true
+    if not ctrl() then
+        self:GetPart("static"):reset_selected_units()
+    end
+    for _, btn in pairs(self._list:Items()) do
+        btn:RunCallback()
+    end
+    self._select_all = nil
+end
+
 ------------------------------------- Units -------------------------------------------
 
 UnitSelectList = UnitSelectList or class(SelectSearchList)
 function UnitSelectList:do_search_list()
     for _, unit in pairs(World:find_units_quick("disabled", "all")) do
         local ud = unit:unit_data()
-        if ud and self:check_search(ud.name, unit) then
+        if ud and self:check_search(ud.name_id, unit) then
             self:insert_item_to_filtered_list({name = ud.name_id, object = unit})
         end
     end
@@ -42,7 +58,7 @@ function UnitSelectList:check_search(check, unit)
 end
 
 function UnitSelectList:on_click_item(item)
-    managers.editor:select_unit(item.object)
+    managers.editor:select_unit(item.object, self._select_all)
 end
 
 function UnitSelectList:add_object(unit)
@@ -73,7 +89,7 @@ function ElementSelectList:do_search_list()
 end
 
 function ElementSelectList:on_click_item(item)
-    managers.editor:select_element(item.element)
+    managers.editor:select_element(item.element, self._select_all)
 end
 
 function ElementSelectList:create_list_item(item)
@@ -105,7 +121,7 @@ function InstanceSelectList:do_search_list()
 end
 
 function InstanceSelectList:on_click_item(item)
-    managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.object)))
+    managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.object)), self._select_all)
 end
 
 function InstanceSelectList:add_object(name)
