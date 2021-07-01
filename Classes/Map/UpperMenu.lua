@@ -10,8 +10,6 @@ function UpperMenu:init(parent, menu)
         {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
         {name = "env", rect = {256, 448, 64, 64}},
         {name = "opt", rect = {320, 448, 64, 64}},
-        --{name = "move_widget_toggle", rect = {64, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
-        --{name = "rotation_widget_toggle", rect = {0, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
         {name = "save", rect = {383, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
@@ -82,23 +80,6 @@ function UpperMenu:set_tabs_enabled(enabled)
             item:SetEnabled(enabled)
         end
     end
-end
-
-function UpperMenu:toggle_widget(name, item)
-    if ctrl() then return end
-   -- item = item or self:GetItem(name.."_widget_toggle")
-    --local menu = item.parent
-    --if not item.enabled then return end
-
-    --self._parent["toggle_"..name.."_widget"](self._parent)
-    self._parent:use_widgets(self._parent:selected_unit() ~= nil)
-    self:update_toggle(item)
-end
-
-function UpperMenu:update_toggle(item)
-    --local name = item.name:gsub("_widget_toggle", "")
-    --item.enabled_alpha = self._parent[name.."_widget_enabled"](self._parent) and 1 or 0.5
-    --item:SetEnabled(item.enabled)
 end
 
 function UpperMenu:Switch(manager, no_anim)
