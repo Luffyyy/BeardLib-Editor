@@ -176,7 +176,6 @@ function BLE:InitManagers(data)
             Global.DBPaths.unit[path] = true
         end
         self:LoadCustomAssets()
-        self:ConvertIncludeToLocalAdd()
     end
 end
 
@@ -214,25 +213,6 @@ function BLE:LoadCustomAssets()
                 end
             end
         end
-    end
-end
-
-function BLE:ConvertIncludeToLocalAdd()
-    local project = self.MapProject
-    local mod, data = project:get_mod_and_config()
-    if data and data.include then
-        local local_add = {_meta = "add"}
-        for _, include in pairs(data.include) do
-            table.insert(local_add, {
-                _meta = Path:GetExtension(include.file),
-                path = Path:GetFileNameWithoutExtension(include.file),
-                script_data_type = include.type
-            })
-        end
-        data.include = nil
-        data.add = nil
-        project:save_main_xml(data)
-        project:save_xml(BeardLib.current_level._local_add_path, local_add)
     end
 end
 
