@@ -364,7 +364,7 @@ function BrushLayerEditor:update(time, rel_time)
 						found = false
 
 						while not found and removed <= #units do
-							if table.contains(self._brush_names, units[removed]:name():s()) then
+							if self:brush_names_contain(units[removed]:name()) then
 								found = true
 							else
 								removed = removed + 1
@@ -384,7 +384,7 @@ function BrushLayerEditor:update(time, rel_time)
 				end
 			else
 				for _, brush in ipairs(units) do
-					if not self._erase_with_units or self._erase_with_units and table.contains(self._brush_names, brush:name():s()) then
+					if not self._erase_with_units or self._erase_with_units and self:brush_names_contain(brush:name()) then
 						World:delete_unit(brush)
 
 						self._amount_dirty = true
@@ -396,6 +396,12 @@ function BrushLayerEditor:update(time, rel_time)
 
 	if self._debug_draw_unit_orientation then
 		self:_draw_unit_orientations()
+	end
+end
+
+function BrushLayerEditor:brush_names_contain(name)
+	for _, unit_name in pairs(self._brush_names) do
+		return unit_name:id() == name
 	end
 end
 
