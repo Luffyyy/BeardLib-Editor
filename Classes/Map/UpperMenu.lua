@@ -26,7 +26,7 @@ function UpperMenu:init(parent, menu)
         scrollbar = false,
         visible = true,
     })
-    self._tab_size = self._menu:ItemsWidth(#self._tabs)
+    self._tab_size = self._menu:ItemsWidth(#self._tabs) / #self._tabs
     ItemExt:add_funcs(self)
 end
 

@@ -86,7 +86,7 @@ end
 
 function PortalLayer:build_menu()
 
-    local h = self._holder:ItemsHeight(4)
+    local h = self._holder:ItemsHeight(4) / 4
     local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
     local shapes = self._holder:group("Shapes", {h = h, auto_height = false})

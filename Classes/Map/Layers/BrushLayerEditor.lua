@@ -1,7 +1,7 @@
 BrushLayerEditor = BrushLayerEditor or class(LayerEditor)
 
 function BrushLayerEditor:init(parent)
-    BrushLayerEditor.super.init(self, parent, "BrushLayerEditorEditor", {private = {offset = 0, h = parent._holder:ItemsHeight()-16}})
+    BrushLayerEditor.super.init(self, parent, "BrushLayerEditorEditor", {private = {h = parent._holder:ItemsHeight(1, 6)}})
 
 	self._brush_names = {}
 	self._brush_types = {}
@@ -464,9 +464,9 @@ end
 function BrushLayerEditor:build_menu()
 	self:GetPart("opt"):add_save_callback("save_massunit", ClassClbk(self, "save"))
 
-	local h = self._holder:ItemsHeight(3)
+	local h = self._holder:ItemsHeight(2)
 	local icons = BLE.Utils.EditorIcons
-    local controls = self._holder:group("Main", {align_method = "grid", auto_height = false, h = h})
+    local controls = self._holder:group("Main", {align_method = "grid", auto_height = false, h = h*1/3})
 
     controls:s_btn("RepositionAll", ClassClbk(self, "reposition_all"))
     controls:s_btn("ClearSelected", ClassClbk(self, "clear_unit"), {help = "This will clear all selected brushes"})
@@ -495,15 +495,11 @@ function BrushLayerEditor:build_menu()
 	self._debug_units_total = debug:lbl("Total Units:", {size_by_text = true})
 	self._debug_units_unique = debug:lbl("Unique Units:", {size_by_text = true})
 
-    self._unit_list = self._holder:group("Units", {h = h, auto_height = false, auto_align = false})
-	for i, name in pairs(self._brush_units) do
-		if i < 100 then
-			self._unit_list:button(name, ClassClbk(self, "select_unit"), {text = name:gsub("units/", "")})
-		end
-	end
-	self._unit_list:AlignItems()
+    self._unit_list = self._holder:divgroup("Units", {h = h*2/3, auto_height = false, auto_align = false})
+	self._unit_list:GetToolbar():textbox("Search", ClassClbk(self, "search_units"), "", {text = " ", control_slice = 1, w = self._unit_list:ItemsWidth() * 0.75, position = "RightCenteryOffset-x"})
+	self:search_units()
 
-    local brushes = self._holder:group("Brushes", {h = h, auto_height = false, align_method = "grid", enabled = false})
+    local brushes = self._holder:group("Brushes", {h = h, auto_height = false, align_method = "grid", visible = false})
 	local brushes_tb = brushes:GetToolbar()
 
 	brushes_tb:tb_imgbtn("Remove", ClassClbk(self, "remove_brush"), nil, icons.cross, {highlight_color = Color.red, help = "Remove brush"})
@@ -513,6 +509,18 @@ function BrushLayerEditor:build_menu()
 	for name, _ in pairs(self._unit_brushes) do
         self._brush_list:button(name, ClassClbk(self, "select_brush"), {text = name})
 	end
+end
+
+function BrushLayerEditor:search_units(item)
+	item = item or self._unit_list:GetItem("Search")
+	local search = item:Value():lower()
+	self._unit_list:ClearItems("units")
+	for _, name in pairs(self._brush_units) do
+		if name:lower():match(search) then
+			self._unit_list:button(name, ClassClbk(self, "select_unit"), {label = "units", text = name:gsub("units/", "")})
+		end
+	end
+	self._unit_list:AlignItems()
 end
 
 function BrushLayerEditor:show_create_brush(data)
