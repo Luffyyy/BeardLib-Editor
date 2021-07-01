@@ -3,7 +3,9 @@ SelectSearchList.PER_PAGE = 100
 function SelectSearchList:init(parent)
     SelectSearchList.super.init(self, parent)
     local tb = self._options:GetToolbar()
-    tb:tb_imgbtn("SelectAll", ClassClbk(self, "select_all_visible"), nil, BLE.Utils.EditorIcons.select, {help = "Select all visible items"})
+    tb:tb_imgbtn("SelectAll", ClassClbk(self, "select_all_visible"), nil, BLE.Utils.EditorIcons.select, {
+        help = "Select all visible items (hold ctrl to select in addition to what you have selected)"
+    })
 end
 
 function SelectSearchList:delete_object(object)
