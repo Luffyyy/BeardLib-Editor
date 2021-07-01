@@ -1,9 +1,6 @@
 WorldDataEditor = WorldDataEditor or class(EditorPart)
 local WData = WorldDataEditor
-function WData:init(parent, menu, managers_data)
-    if managers_data and managers_data.current_layer then
-        self._current_layer = managers_data.current_layer
-    end
+function WData:init(parent, menu)
     self._opened = {}
     WData.super.init(self, parent, menu, "World", {make_tabs = ClassClbk(self, "make_tabs")})
     self.layers = {
@@ -20,11 +17,10 @@ function WData:data()
     return managers.worlddefinition and managers.worlddefinition._world_data
 end
 
-function WData:destroy(managers_data)
+function WData:destroy()
     for _, layer in pairs(self.layers) do
         layer:destroy()
     end
-    managers_data.current_layer = self._current_layer
 end
 
 function WData:loaded_continents(continents, current_continent)
