@@ -907,6 +907,7 @@ end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
+    self._current_level.packages = self._current_level.packages or {}
     local level_packages = self._current_level.packages
     for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
