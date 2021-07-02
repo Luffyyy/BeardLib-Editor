@@ -53,6 +53,7 @@ end
 
 EditorDisableUnit = EditorDisableUnit or class(EditorEnableUnit)
 function EditorDisableUnit:create_element()
-    EditorDisableUnit.super.create_element(self)
+    EditorEnableUnit.super.create_element(self)
     self._element.class = "ElementDisableUnit"
+    self._element.values.unit_ids = {}
 end
