@@ -3,10 +3,11 @@
 BeardLib-Editor is a tool that allows you to edit and create things like maps & environments.
 
 ## Installation
-1. Install [SuperBLT](https://superblt.znix.xyz)
-2. Install [BeardLib](https://modworkshop.net/mod/14924)
-3. After downloading the editor by clicking `Code` -> `Download ZIP`, unzip the contents of the ZIP file in the mods folder of the game.
-4. Launch the game and click `Yes` on the dialog that pops up. These files are required.
+1. (Required to use the massunits tool) https://dotnet.microsoft.com/download/dotnet/5.0/runtime Download the x64 version runtime.
+2. Install [SuperBLT](https://superblt.znix.xyz)
+3. Install [BeardLib](https://modworkshop.net/mod/14924)
+4. After downloading the editor by clicking `Code` -> `Download ZIP`, unzip the contents of the ZIP file in the mods folder of the game.
+5. Launch the game and click `Yes` on the dialog that pops up. These files are required.
 
 If you install the dev branch, make sure you have the latest BeardLib commit https://github.com/simon-wh/PAYDAY-2-BeardLib it's possible that branch uses unreleased features not found in the public (MWS) version.
 
