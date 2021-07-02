@@ -52,6 +52,7 @@ function Editor:init(data)
         layer = 100,
         scroll_speed = BLE.Options:GetValue("Scrollspeed"),
         allow_full_input = true,
+        highlight_image = true,
         highlight_color = BLE.Options:GetValue("ItemsHighlight"),
         background_color = Color.transparent,
         items_size = BLE.Options:GetValue("MapEditorFontSize"),
