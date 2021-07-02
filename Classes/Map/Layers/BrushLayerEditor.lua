@@ -45,9 +45,15 @@ function BrushLayerEditor:save()
 	data.brush.preload_units = {}
 
 	local file = data.brush.file
-
 	local level_path = BLE.MapProject:current_level_path()
-	local massunit = {path = Path:Combine(Application:base_path(), level_path, file..".massunit"), units = {}}
+	local massunit_path = Path:Combine(level_path, file..".massunit")
+
+	-- If the file doesn't exist, create a dummy one before the tool creates the real one to "fool" the saving function into thinking there's a massunit.
+	if not FileIO:Exists(massunit_path) then
+		FileIO:CopyFile(Path:Combine(BLE.MapProject._templates_directory, "Level/massunit.massunit"), massunit_path)
+	end
+
+	local massunit = {path = Path:Combine(Application:base_path(), massunit_path), units = {}}
 
 	-- Add anything that was already in the massunit manager
 	for _, unit_name in ipairs(MassUnitManager:list()) do
@@ -104,10 +110,6 @@ function BrushLayerEditor:save()
 	FileIO:WriteTo(temp_massunit, json.encode(massunit), "w")
 
 	os.execute('start /min '..Path:Combine(tools_path, "MassunitMaker.exe"))
-
-	BeardLib:AddDelayedCall("SaveMassunitProperly", 1, function()
-		self:GetPart("opt"):save_local_add_xml({{_meta = "massunit", path = "massunit", reload = true}})
-	end)
 end
 
 function BrushLayerEditor:unit_positions(name)
