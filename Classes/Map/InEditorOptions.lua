@@ -107,7 +107,9 @@ function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
 function Options:ChangeCameraSpeed(decrease)
     local cam_speed = self:GetItem("CameraSpeed")
-    cam_speed:SetValue(cam_speed:Value() + (decrease == true and -1 or 1), true)
+    local change = ctrl() and 0.1 or 1
+    cam_speed:SetValue(cam_speed:Value() + (decrease == true and -change or change), true)
+    self:GetPart("status"):ShowKeybindMessage("Camera speed changed to: "..cam_speed:Value())
 end
 
 function Options:KeySPressed()
