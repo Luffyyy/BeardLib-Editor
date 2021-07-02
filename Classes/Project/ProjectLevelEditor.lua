@@ -217,30 +217,25 @@ function ProjectLevelEditor:clone_level(create_data)
     local local_add = {_meta = "add"}
     --This local function is used to extract the files of the map by reading the scriptdata.
     --To actually have it work we ofc need to load the packages first or else the game will go into shit.
-    local function extra_file(name, typ, path, data_func)
-        path = path or level_dir
+    local function extra_file(name, typ, not_sd)
         typ = typ or name
         local data
-        local inpath = Path:Combine(path, name)
-        if blt.asset_db.has_file(inpath, typ) then
+        local inner_path = Path:Combine(level_dir, name)
+        if blt.asset_db.has_file(inner_path, typ) then
             local success = pcall(function()
-                data = BLE.Utils:ParseXml(typ, inpath, true)
-                if data_func then
-                    data_func(data)
-                end
-                local infolder = path:gsub(level_dir, "")
-                local file = (infolder:len() > 0 and infolder.."/" or infolder) .. name
-                FileIO:WriteScriptData(Path:Combine(custom_level_dir, file.."."..typ), data, "binary")
-                table.insert(local_add, {_meta = typ, path = file, script_data_type = "binary"})
+                data = blt.asset_db.read_file(inner_path, typ)
+                local levelless_path = inner_path:gsub(level_dir, "")
+                FileIO:WriteTo(Path:Combine(custom_level_dir, levelless_path.."."..typ), data)
+                table.insert(local_add, {_meta = typ, path = levelless_path, script_data_type = not not_sd and "binary" or nil})
             end)
             if not success then
-                BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Read error)", inpath.."."..typ)
+                BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Read error)", inner_path.."."..typ)
             end
         else
-            BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Might not exist)", inpath.."."..typ)
+            BLE:log("[ProjectLevelEditor:pre_clone_level:extra_file] Cannot access file %s (Might not exist)", inner_path.."."..typ)
         end
-        if PackageManager:package_exists(inpath) then
-            extra_package(inpath)
+        if PackageManager:package_exists(inner_path) then
+            extra_package(inner_path)
         end
         return data
     end
@@ -248,7 +243,7 @@ function ProjectLevelEditor:clone_level(create_data)
     --Here we go through possible files of the map to extract them.
     extra_package(level_dir.."world")
 
-    extra_file("world", nil, nil, function(data) data.brush = nil end)
+    extra_file("world")
     extra_file("mission")
     extra_file("nav_manager_data", "nav_data")
     extra_file("cover_data")
@@ -256,30 +251,27 @@ function ProjectLevelEditor:clone_level(create_data)
     extra_file("world_cameras")
     extra_file("world_cameras")
     extra_file("blacklist")
+    extra_file("massunit", nil, true)
 
     --Here we extract the cube lights. There is no need to load any packages as binary files such as textures are easily extractable.
     local cube_lights_dir = Path:Combine(level_dir, "cube_lights")
     local texture = "texture"
-    local file_path
-    local add = {_meta = "add", directory = "assets"}
-    for k, v in pairs(Global.DBPaths[texture]) do
-        if v and k:sub(1, #cube_lights_dir) == v then
-            if blt.asset_db.has_file(v, "texture") then
-                FileIO:WriteTo(Path:Combine(custom_level_dir, "cube_lights", k..".texture"), blt.asset_db.read_file(k, texture))
-                table.insert(local_add, {_meta = "texture", path = file_path})
-            end
+    for n in pairs(Global.DBPaths[texture]) do
+        if n:begins(cube_lights_dir) then
+            extra_file(n:gsub(level_dir, ""), texture, true)
         end
     end
 
-    local continents_data = extra_file("continents")
+    local continents_str = extra_file("continents")
+    local continents_data = FileIO:ConvertScriptData(continents_str, "binary")
     for c in pairs(continents_data) do
-        local c_path = Path:Combine(level_dir, c)
-        extra_file(c, "continent", c_path)
-        extra_file(c, "mission", c_path)
+        local c_path = Path:Combine(c, c)
+        extra_file(c_path, "continent")
+        extra_file(c_path, "mission")
     end
 
     --Write to the add.xml of the level
-    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), add, "custom_xml")
+    FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add.xml"), {_meta = "add", directory = "assets"}, "custom_xml")
     FileIO:WriteScriptData(Path:Combine(custom_level_dir, "add_local.xml"), local_add, "custom_xml")
 
     --Removing stuff that the module doesn't require/use.
