@@ -651,10 +651,6 @@ function BrushLayerEditor:update_item(item)
 	self["_"..item.name] = item:Value()
 end
 
-function BrushLayerEditor:_on_gui_open_debug_list()
-	self._debug_list = _G.BrushLayerEditorDebug:new()
-end
-
 function BrushLayerEditor:get_brush_stats()
 	local brush_stats = {}
 	local total = {
@@ -679,32 +675,6 @@ function BrushLayerEditor:get_brush_stats()
 	end
 
 	return brush_stats, total
-end
-
-function BrushLayerEditor:activate(...)
-	BrushLayerEditor.super.activate(self, ...)
-
-	if self._debug_list then
-		self._debug_list:set_visible(self._was_debug_list_visible)
-
-		self._was_debug_list_visible = nil
-	end
-end
-
-function BrushLayerEditor:deactivate(...)
-	BrushLayerEditor.super.deactivate(self, ...)
-
-	if self._debug_list then
-		self._was_debug_list_visible = self._debug_list:visible()
-
-		self._debug_list:set_visible(false)
-	end
-end
-
-function BrushLayerEditor:clear()
-	MassUnitManager:delete_all_units()
-
-	self._amount_dirty = true
 end
 
 function BrushLayerEditor:active()
@@ -743,14 +713,6 @@ function BrushLayerEditor:mouse_released(b, x, y)
         self:erase_units_release()
     end
 	return true
-end
-
-function BrushLayerEditor:get_help(text)
-	local n = "\n"
-	text = text .. "Spawn brush:   Point and hold down left mouse button" .. n
-	text = text .. "Remove brush:  Point and hold down right mouse button" .. n
-
-	return text
 end
 
 ------------------------------------- Brush Header -------------------------------------------
