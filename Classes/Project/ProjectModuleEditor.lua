@@ -49,8 +49,8 @@ end
 function ProjectModuleEditor:finalize_creation(data, create_data)
     self._data = data
     self._original_data = data
-    self._parent:add_module(data, create_data.no_reload)
-    if create_data.final_callback then
+    self._parent:add_module(data, create_data and create_data.no_reload or nil)
+    if create_data and create_data.final_callback then
         create_data.final_callback(true, data)
     end
 end

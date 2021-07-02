@@ -4,8 +4,6 @@
 ProjectAddFilesModule = ProjectAddFilesModule or class(ProjectModuleEditor)
 ProjectAddFilesModule.HAS_ID = true
 ProjectEditor.EDITORS.AddFiles = ProjectAddFilesModule
-ProjectEditor.EDITORS.Package = ProjectAddFilesModule
-
 
 --- @param menu Menu
 --- @param data table
@@ -197,12 +195,51 @@ function ProjectAddFilesModule:add_file(path, search_deps, no_reload, from_db)
 end
 
 function ProjectAddFilesModule:create()
-    return {_meta = "AddFiles", path = "assets"}
+    return {_meta = "AddFiles", directory = "assets"}
 end
 
 --- The callback function for all items for this menu.
 function ProjectAddFilesModule:set_data_callback(item)
     local data = self._data
-    data.description = self:GetItemValue("Description")
+    data.directory = self:GetItemValue("directory")
+    return data
+end
+
+ProjectPackageModule = ProjectPackageModule or class(ProjectAddFilesModule)
+ProjectEditor.EDITORS.Package = ProjectPackageModule
+function ProjectPackageModule:create()
+    BLE.InputDialog:Show({
+        title = "Enter an ID for the package",
+        yes = "Create",
+        text = "",
+        check_value = function(id)
+            local warn
+            if PackageManager:package_exists(id) then
+                warn = string.format("A package with the id %s already exists! Please use a unique id", id)
+            end
+            if id == "" then
+                warn = string.format("Id cannot be empty!", id)
+            elseif string.begins(id, " ") then
+                warn = "Invalid ID!"
+            end
+            if warn then
+                BLE.Utils:Notify("Error", warn)
+            end
+            return warn == nil
+        end,
+        callback = function(id)
+            self:finalize_creation({_meta = "Package", id = id, directory = "assets"})
+        end
+    })
+end
+
+function ProjectPackageModule:build_menu(menu, data)
+    ProjectPackageModule.super.build_menu(self, menu, data)
+    menu:textbox("Id", ClassClbk(self, "set_data_callback"), data.id, {index = 2})
+end
+
+function ProjectPackageModule:set_data_callback(item)
+    local data = ProjectPackageModule.super.set_data_callback(self, item)
+    data.id = self:GetItemValue("Id")
     return data
 end
