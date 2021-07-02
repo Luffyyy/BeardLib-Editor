@@ -1,4 +1,5 @@
 <level ai_group_type="america" id="map" max_bags="54">
+	<packages/>
 	<assets>
 		<asset name="ammo_bag"/>
 		<asset name="health_bag"/>
