@@ -157,7 +157,7 @@ function ProjectNarrativeEditor:create(create_data)
             template.id = name
 
             if create_data.clone_id then
-                table.merge(template, tweak_data.narrative.jobs[create_data.clone_id])
+                table.merge(template, deep_clone(tweak_data.narrative.jobs[create_data.clone_id]))
                 local cv = template.contract_visuals
                 template.max_mission_xp = cv and cv.max_mission_xp or template.max_mission_xp
                 template.min_mission_xp = cv and cv.min_mission_xp or template.min_mission_xp

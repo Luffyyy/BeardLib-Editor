@@ -139,7 +139,7 @@ end
 
 function ProjectLevelEditor:pre_clone_level(create_data)
     local name = create_data.name
-    local level = clone(tweak_data.levels[create_data.clone_id])
+    local level = deep_clone(tweak_data.levels[create_data.clone_id])
     table.merge(level, {
         _meta = "level",
         assets = {},
