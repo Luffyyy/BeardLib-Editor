@@ -124,6 +124,13 @@ function EnvEditor:build_default()
     self._shadow_params.o2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", shadows:slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, floats = 0,  max = 1000000}))
     self._shadow_params.o3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", shadows:slider("o3", nil, 1, {text = "Blend overlap(3rd & 4th)", min = 0, floats = 0, max = 1000000}))
 
+    local effects = self:group("Effects", {max_height = 220})
+	local all_effects = managers.environment_effects:effects_names()
+	table.sort(all_effects)
+    for _, name in pairs(all_effects) do
+        effects:button(name, ClassClbk(self, "choose_effects"), {text = name, border_left = table.contains(self._environment_effects, name)})
+    end
+
     -- DUMMY SHADOWS
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice0"))
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice1"))
@@ -136,6 +143,17 @@ function EnvEditor:build_default()
 
     managers.viewport:first_active_viewport():set_environment_editor_callback(ClassClbk(self, "feed"))
     self._built = true
+end
+
+function EnvEditor:choose_effects(item)
+    local name = item.name
+    if table.contains(self._environment_effects, name) then
+        table.delete(self._environment_effects, name)
+    else
+        table.insert(self._environment_effects, name)
+    end
+    item:SetBorder({left = table.contains(self._environment_effects, name)})
+    managers.environment_effects:set_active_effects(self._environment_effects)
 end
 
 function EnvEditor:set_post_effects_enabled(item)
@@ -189,6 +207,7 @@ end
 
 function EnvEditor:load_env(env)
     if env and env.data then
+        local had_effects = false
         for k,v in pairs(env.data) do
             if k == "others" then
                 self:database_load_sky(v)
@@ -198,10 +217,18 @@ function EnvEditor:load_env(env)
                 self:database_load_underlay(v)
             elseif k == "environment_effects" then
                 self:database_load_environment_effects(v)
-            end    
+                had_effects = true
+            end
         end
         self:parse_shadow_data()
+        if not had_effects then
+            self._environment_effects = {}
+        end
         self:set_effect_data(self._environment_effects)
+        for _, btn in pairs(self._holder:GetItem("Effects"):Items()) do
+            btn:SetBorder({left = table.contains(self._environment_effects, btn.name)})
+        end
+        managers.environment_effects:set_active_effects(self._environment_effects)
     end
 end
 
