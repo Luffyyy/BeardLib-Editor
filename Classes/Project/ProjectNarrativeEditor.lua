@@ -161,7 +161,7 @@ function ProjectNarrativeEditor:create(create_data)
                 local cv = template.contract_visuals
                 local preview = cv.preview_image
                 if preview.icon then
-                    local icon = tweak_Data.hud_icons[preview.icon]
+                    local icon = tweak_data.hud_icons[preview.icon]
                     if icon then
                         template.icon = icon.texture
                     end
