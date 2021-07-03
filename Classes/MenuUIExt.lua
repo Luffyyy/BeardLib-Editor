@@ -259,9 +259,9 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	o2.offset = {p.offset[1] * 4, p.offset[2]}
 	o2.on_callback = nil
 	o2.on_callback = p.btn_callback
-	local btn = p:button("select_button", function()
+	p:button("select_button", function()
 		local list = p.custom_list or BLE.Utils:GetEntries({
-			type = typ, loaded = NotNil(o.loaded, typ ~= "texture"), filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
+			type = typ, loaded = false, filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
@@ -269,7 +269,11 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 		BLE.ListDialog:Show({
 			list = list,
 			sort = o.sort_func == nil,
-			callback = function(path) 
+			callback = function(path)
+				local assets = managers.editor.parts.assets
+				if not assets:is_asset_loaded(typ, path) then
+					assets:quick_load_from_db(typ, path)
+				end
 				p:SetValue(path, true)
 				if not o.not_close then
 					BLE.ListDialog:Hide()
