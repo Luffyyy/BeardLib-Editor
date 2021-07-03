@@ -5,7 +5,7 @@
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"
 		auto_image_color="true"
-		min_lib_ver="4.4"
+		min_lib_ver="4.5"
 		core_class="Core.lua"
 	>
     <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor" dont_delete="true"/>
