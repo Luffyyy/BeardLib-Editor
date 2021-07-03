@@ -423,7 +423,7 @@ function ItemExt:Rotation(name, clbk, value, o)
 end
 
 function ItemExt:Shape(name, clbk, value, o)
-	local p = self:divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Shape", align_method = "centered_grid", color = false}, o))
+	local p = self:simple_divgroup(name, table.merge({full_bg_color = false, on_callback = clbk, value_type = "Shape", align_method = "centered_grid", color = false}, o))
 	o = {}
 	value = value or Rotation()
 	local TB = p:GetToolbar()
