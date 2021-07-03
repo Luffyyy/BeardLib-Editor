@@ -940,7 +940,11 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
         end
         for _, u in pairs(units) do
             if not table.contains(self._selected_units, u) then
-                table.insert(self._selected_units, u)
+                if alt() then
+                    table.insert(self._selected_units, 1, u)
+                else
+                    table.insert(self._selected_units, u)
+                end
             elseif not self._mouse_hold then
                 table.delete(self._selected_units, u)
             end
