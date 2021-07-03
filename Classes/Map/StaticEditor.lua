@@ -947,6 +947,8 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
                 end
             elseif not self._mouse_hold then
                 table.delete(self._selected_units, u)
+            else
+                return
             end
         end
     elseif alive(unit) then
