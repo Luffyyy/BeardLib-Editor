@@ -399,12 +399,14 @@ function StaticEditor:update_positions()
     local unit = self._selected_units[1]
     if alive(unit) then
         if #self._selected_units > 1 or not unit:mission_element() then
-            self:GetItem("Position"):SetValue(unit:position())
-            self:GetItem("Rotation"):SetValue(unit:rotation())
-            self:GetPart("instances"):update_positions()
-            self:GetPart("world"):update_positions()
-            self:GetItem("Position"):SetStep(self._parent._grid_size)
-            --self:GetItem("Rotation"):SetStep(self._parent._snap_rotation)
+            if alive(self:GetItem("Position")) then
+                self:GetItem("Position"):SetValue(unit:position())
+                self:GetItem("Rotation"):SetValue(unit:rotation())
+                self:GetPart("instances"):update_positions()
+                self:GetPart("world"):update_positions()
+                self:GetItem("Position"):SetStep(self._parent._grid_size)
+                --self:GetItem("Rotation"):SetStep(self._parent._snap_rotation)
+            end
         elseif unit:mission_element() and self:GetPart("mission")._current_script then
             self:GetPart("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end
