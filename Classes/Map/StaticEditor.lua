@@ -995,6 +995,7 @@ function Static:selection_to_menu()
         else
             self:set_unit()
         end
+        self:GetPart("select"):set_selected_objects()
     end
     self:GetPart("world"):set_selected_unit()
     self:recalc_all_locals()
@@ -1037,6 +1038,7 @@ function Static:set_multi_selected()
         self:update_positions()
         self:build_group_options()
         self._holder:AlignItems(true)
+        self:GetPart("select"):set_selected_objects()
     end)
 end
 

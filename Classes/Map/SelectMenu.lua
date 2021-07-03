@@ -16,6 +16,12 @@ function SelectMenu:get_menu(name)
     return self._tab_classes[name]
 end
 
+function SelectMenu:set_selected_objects()
+    for _, tab in pairs(self._tab_classes) do
+        tab:set_selected_objects()
+     end
+end
+
 function SelectMenu:reload_menus()
     for _, tab in pairs(self._tab_classes) do
        tab:reload()

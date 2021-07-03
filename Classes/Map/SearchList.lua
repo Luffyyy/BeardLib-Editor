@@ -113,7 +113,15 @@ function SearchList:get_page_ranges()
 end
 
 function SearchList:create_list_item(item)
-    return self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {border_left = true, offset = {1, 4}})
+    return self._list:button(self:friendly_item_name(item), ClassClbk(self, "on_click_item", item), {
+        border_left = true,
+        border_color = self:get_border_color(item),
+        offset = {1, 4},
+    })
+end
+
+function SearchList:get_border_color(item)
+    return nil
 end
 
 function SearchList:friendly_item_name(item)

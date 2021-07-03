@@ -27,6 +27,26 @@ function SelectSearchList:delete_object(object)
     end
 end
 
+function SelectSearchList:set_selected_objects()
+    if not self._filtered then
+        return
+    end
+    local selected_units = self:selected_units()
+    for _, item in pairs(self._filtered) do
+        local gui_item = item.gui_item
+        if alive(gui_item) then
+            local selected = table.contains(selected_units, item.unit) and Color.green or self._list.border_color
+            if selected ~= gui_item.border_color then
+                gui_item:SetBorder({color = selected})
+            end
+        end
+    end
+end
+
+function SearchList:get_border_color(item)
+    return table.contains(self:selected_units(), item.unit) and Color.green or nil
+end
+
 function SelectSearchList:select_all_visible()
     self._select_all = true
     if not ctrl() then
@@ -45,7 +65,7 @@ function UnitSelectList:do_search_list()
     for _, unit in pairs(World:find_units_quick("disabled", "all")) do
         local ud = unit:unit_data()
         if ud and self:check_search(ud.name_id, unit) then
-            self:insert_item_to_filtered_list({name = ud.name_id, object = unit})
+            self:insert_item_to_filtered_list({name = ud.name_id, object = unit, unit = unit})
         end
     end
 end
@@ -76,13 +96,14 @@ end
 ElementSelectList = ElementSelectList or class(SelectSearchList)
 
 function ElementSelectList:do_search_list()
+    local mission = self:GetPart("mission")
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
                 for _, element in pairs(tbl.elements) do
                     local name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]"
                     if self:check_search(name) then
-                        self:insert_item_to_filtered_list({name = name, object = element.id, element = element})
+                        self:insert_item_to_filtered_list({name = name, object = element.id, element = element, unit = mission:get_element_unit(element.id)})
                     end
                 end
             end
@@ -104,11 +125,12 @@ end
 function ElementSelectList:add_object(element)
     local name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]"
     if self:check_search(name) then
-        self:insert_item_to_filtered_list({name = name, object = element.id, element = element})
+        self:insert_item_to_filtered_list({name = name, object = element.id, element = element, unit = self:GetPart("mission"):get_element_unit(element.id)})
         self:sort_items()
         self:do_show()
     end
 end
+
 ------------------------------------- Instances -------------------------------------------
 
 InstanceSelectList = InstanceSelectList or class(SelectSearchList)
@@ -123,7 +145,7 @@ function InstanceSelectList:do_search_list()
 end
 
 function InstanceSelectList:on_click_item(item)
-    managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.object)), self._select_all)
+    managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.object), {instance = true}), self._select_all)
 end
 
 function InstanceSelectList:add_object(name)
@@ -133,4 +155,38 @@ function InstanceSelectList:add_object(name)
         self:sort_items()
         self:do_show()
     end
+end
+
+function InstanceSelectList:set_selected_objects()
+    if not self._filtered then
+        return
+    end
+
+    local selected_instances = {}
+    for _, unit in pairs(self:selected_units()) do
+        if unit:fake() and unit:unit_data().instance then
+            table.insert(selected_instances, unit:object().name)
+        end
+    end
+
+    for _, item in pairs(self._filtered) do
+        local gui_item = item.gui_item
+        if alive(gui_item) then
+            local selected = table.contains(selected_instances, item.object) and Color.green or self._list.border_color
+            if selected ~= gui_item.border_color then
+                gui_item:SetBorder({color = selected})
+            end
+        end
+    end
+end
+
+function InstanceSelectList:get_border_color(item)
+    local selected_instances = {}
+    for _, unit in pairs(self:selected_units()) do
+        if unit:fake() and unit:unit_data().instance then
+            table.insert(selected_instances, unit:object().name)
+        end
+    end
+
+    return table.contains(selected_instances, item.object) and Color.green or nil
 end
