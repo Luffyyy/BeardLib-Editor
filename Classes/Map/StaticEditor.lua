@@ -977,6 +977,7 @@ function Static:selection_to_menu()
                 self:GetPart("mission"):set_element(unit:mission_element().element)
             elseif self:GetPart("world"):is_world_unit(unit:name()) then
                 self:GetPart("world"):build_unit_menu()
+                self._holder:AlignItems(true)
             elseif unit:fake() then
                 self:GetPart("instances"):set_instance()
             else
