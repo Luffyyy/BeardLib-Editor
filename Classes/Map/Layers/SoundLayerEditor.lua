@@ -78,7 +78,7 @@ function SndLayer:reset_selected_units()
 end
 
 function SndLayer:update(t, dt)
-	if self:Val("SoundUnits") or (self:Val("SoundUnitsWhileMenu") and self._parent._current_layer == "sound") then
+	if self:Val("SoundUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in ipairs(self._created_units) do
 			if alive(unit) then
@@ -149,7 +149,6 @@ function SndLayer:build_menu()
     buttons:button("SpawnSoundEmitter", ClassClbk(spawn, "begin_spawning", self._emitter_unit))
     buttons:button("SpawnSoundAreaEmitter", ClassClbk(spawn, "begin_spawning", self._area_emitter_unit))
     buttons:tickbox("SoundUnits", ClassClbk(opt, "update_option_value"), self:Val("SoundUnits"), {text = "Draw Sound Units"})
-    buttons:tickbox("SoundUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("SoundUnitsWhileMenu"), {text = "Draw Sound Units When Entering This Menu"})
 
 	local defaults = self._holder:group("Defaults")
 	local environments = managers.sound_environment:_environment_effects()
@@ -405,4 +404,8 @@ function SndLayer:deactivate(params)
 	if not params or not params.simulation then
 		--managers.editor:set_wanted_mute(true)
 	end
+end
+
+function SndLayer:can_unit_be_selected(unit)
+	return self:Val("SoundUnits")
 end

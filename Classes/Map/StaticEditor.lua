@@ -838,11 +838,8 @@ function Static:check_unit_ok(unit)
             return false
         end
     end
-    local current_layer = self:GetPart("world")._current_layer
-    if ud.env_unit and not (self:Val("EnvironmentUnits") or (self:Val("EnvironmentUnitsWhileMenu") and current_layer == "environment")) then
-        return false
-    end
-    if ud.sound_unit and not (self:Val("SoundUnits") or (self:Val("SoundUnitsWhileMenu") and current_layer == "sound")) then
+    local world = self:GetPart("world")
+    if world:is_world_unit(unit:name()) and not world:can_unit_be_selected(unit:name()) then
         return false
     end
     if ud.instance and not self:Val("SelectInstances") then

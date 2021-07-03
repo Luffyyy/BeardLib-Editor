@@ -63,6 +63,11 @@ function WData:do_spawn_unit(unit, data)
     end
 end
 
+function WData:can_unit_be_selected(unit)
+    local layer = self.layers[self._current_layer]
+    return layer and layer.is_my_unit and layer:is_my_unit(unit) and layer:can_unit_be_selected(unit) or false
+end
+
 function WData:is_world_unit(unit)
     unit = unit:id()
     for _, manager in pairs(self.layers) do
@@ -75,8 +80,9 @@ end
 
 function WData:build_unit_menu()
     local selected_unit = self:selected_unit()
+    local unit_ids = selected_unit:name():id()
     for _, manager in pairs(self.layers) do
-        if manager.build_unit_menu and manager:is_my_unit(selected_unit:name():id()) then
+        if manager.build_unit_menu and manager:is_my_unit(unit_ids) then
             manager:build_unit_menu()
         end
     end

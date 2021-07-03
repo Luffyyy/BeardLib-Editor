@@ -43,10 +43,7 @@ function AiEditor:init(parent)
 end
 
 function AiEditor:is_my_unit(unit)
-    if unit == self._patrol_point_unit:id() or unit == self._nav_surface_unit then
-        return true
-    end
-    return false
+    return unit == self._patrol_point_unit:id() or unit == self._nav_surface_unit
 end
 
 function AiEditor:_current_patrol_units(path_name)
@@ -281,9 +278,9 @@ end
 function AiEditor:update_positions() self:set_unit_pos() end
 
 function AiEditor:set_selected_unit()
-    local unit = self:selected_unit()
-
-    self:update_draw_data(unit)
+    if self:active() then
+        self:update_draw_data(self:selected_unit())
+    end
 end
 
 function AiEditor:set_unit_pos()
@@ -774,4 +771,8 @@ function AiEditor:build_visibility_graph()
     end, all_visible, exclude, include, ray_lenght)
 
     self:part("opt"):save_nav_data()
+end
+
+function AiEditor:can_unit_be_selected()
+    return self:Val("DrawPatrolPaths")
 end
