@@ -428,7 +428,7 @@ function EnvLayer:set_unit_pos(item)
 		unit:set_position(S:GetItem("Position"):Value())
 		unit:set_rotation(S:GetItem("Rotation"):Value())
 		unit:unit_data().position = unit:position()
-		unit:unit_data().rotation = unit:rotation()		
+		unit:unit_data().rotation = unit:rotation()
 	end
 	self:save()
 end
@@ -445,6 +445,7 @@ function EnvLayer:change_environment(item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
 	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
+	self:GetPart("env"):database_load_env(environment_values.environment)
 	self:save()
 end
 
