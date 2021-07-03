@@ -20,7 +20,9 @@ function ProjectManager:init()
 
     self._editing = self:divgroup("CurrEditing", {
         text = "Select a project to edit",
-        h = self._menu:ItemsHeight() - self._menu:OffsetY() * 2,
+        h = self._menu:ItemsHeight(1, 6),
+        align_method = "grid",
+        scrollbar = false,
         auto_height = false,
         border_left = false,
         private = {size = 24}
@@ -37,7 +39,7 @@ function ProjectManager:init()
     tb:button("Edit", ClassClbk(self, "select_project_dialog"))
     new:button("Map", ClassClbk(self, "create_new_map_dialog", false), {help = "A map with an inital level"})
     new:button("ClonedMap", ClassClbk(self, "create_new_cloned_map"), {help = "Clones an existing vanilla map"})
-    new:button("EmptyMap", ClassClbk(self, "create_new_map_dialog", ClassClbk(self, "create_new_map_clean")), {help = "A map with only the project structure"})
+    new:button("EmptyMapProject", ClassClbk(self, "create_new_map_dialog", ClassClbk(self, "create_new_map_clean")), {help = "A map with only the project structure"})
 
     self:set_edit_title()
 end

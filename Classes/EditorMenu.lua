@@ -5,13 +5,16 @@ function EditorMenu:init(load)
 	self._main_menu = MenuUI:new({
         name = "Editor",
         layer = 1500,
-        background_blur = true,
         auto_foreground = true,
+        highlight_image = true,
         accent_color = accent_color,
-        highlight_color = accent_color,
+        full_bg_color = BLE.Options:GetValue("BackgroundColor"),
+        highlight_color = BLE.Options:GetValue("ItemsHighlight"),
         background_color = BLE.Options:GetValue("BackgroundColor"),
         border_color = BLE.Options:GetValue("AccentColor"),
+        context_background_color = BLE.Options:GetValue("ContextMenusBackgroundColor"),
 		create_items = ClassClbk(self, "create_items"),
+        scroll_speed = BLE.Options:GetValue("Scrollspeed"),
 	})
     MenuCallbackHandler.BeardLibEditorMenu = ClassClbk(self, "set_enabled", true)
     local node = MenuHelperPlus:GetNode(nil, "options")
@@ -51,12 +54,13 @@ function EditorMenu:make_page(name, clbk, opt)
     end
     self._menus[name] = self._menus[name] or self._menu:Menu(table.merge({
         name = name,
-        items_size = 20,
         visible = false,
         private = {offset = {16, 4}},
+        inherit_values = {
+            full_bg_color = BLE.Options:GetValue("BoxesBackgroundColor"),
+        },
         h = self._main_menu._panel:h() - 60,
     }, opt or {}))
-    self._menus[name].highlight_color = self._menus[name].foreground:with_alpha(0.1)
     self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color})
 
     return self._menus[name]
@@ -76,10 +80,7 @@ function EditorMenu:create_items(menu)
         h = 30
 	})
 	ItemExt:add_funcs(self, self._tabs)
-    local s = self._tabs.items_size - 2
-    self:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), "guis/textures/menu_ui_icons", {84, 89, 36, 36}, {
-        highlight_color = false, w = s, h = s, position = "Right"
-    })
+    self:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), nil, BLE.Utils.EditorIcons.cross, {position = "RightOffsety"})
 end
 
 function EditorMenu:should_close()

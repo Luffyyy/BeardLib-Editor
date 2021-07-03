@@ -19,43 +19,49 @@ function ProjectEditor:init(parent, mod, previous_project_data)
     self._loaded_in_editor = mod == BLE.MapProject:current_mod()
 
     BLE.MapProject:set_edit_title(data.name)
+    local w = parent:ItemsWidth(2)
+    local h = parent:ItemsHeight(1)
     local menu = parent:pan("CurrEditing", {
-        w = 350,
-        position = "Left",
+        w = w * 2/7,
+        auto_height = false,
+        scrollbar = false,
+        h = h,
         border_left = false,
-        private = {size = 24}
     })
     self._left_menu = menu
 
     data.orig_id = data.orig_id or data.name
 
     local up = ClassClbk(self, "set_data_callback")
-    if self._loaded_in_editor then
-        menu:divider("Attention: we detected that this project is currently loaded. To avoid breaking the project/map, some options are disabled.")
-    end
-    menu:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
         text = "Module Properties",
-        w = parent:ItemsWidth() - 350,
-        h = parent:ItemsHeight(),
+        w = w * 5/7,
+        h = h,
         auto_height = false,
-        scrollbar = true,
         border_left = false,
-        position = "RightOffset-X"
     })
-    ItemExt:add_funcs(self)
-    self._modules_list = self._left_menu:divgroup("Modules", {max_height = 400})
 
-    self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
-
+    local main = self._left_menu:holder("Main")
+    if self._loaded_in_editor then
+        main:divider("Attention: we detected that this project is currently loaded. To avoid breaking the project/map, some options are disabled.")
+    end
+    main:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
     local actions = self._left_menu:divgroup("Actions")
+    actions:button("Create", ClassClbk(self, "open_create_dialog"))
     for id, action in pairs(self.ACTIONS) do
         actions:button(id, function()
             action(self)
         end)
     end
+
+    actions:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
+    actions:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
+    self._save_btn = actions:button("SaveChanges", ClassClbk(self, "save_data_callback"))
+
+    ItemExt:add_funcs(self)
+    self._modules_list = self._left_menu:divgroup("Modules", {stretch_to_bottom = true, auto_height = false})
 
     self._modules = {}
     for _, modl in pairs(self._data) do
@@ -65,9 +71,7 @@ function ProjectEditor:init(parent, mod, previous_project_data)
         end
     end
 
-    self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
-    self._left_menu:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
-    self._left_menu:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
+
     self:build_modules()
     if previous_project_data and previous_project_data._current_module_index and self._modules[previous_project_data._current_module_index] then
         self:open_module(self._modules[previous_project_data._current_module_index])
@@ -266,6 +270,7 @@ end
 function ProjectEditor:small_button(name, clbk, opt)
     self._menu:GetToolbar():tb_btn(name, clbk, table.merge({
         min_width = 100,
+        offset = 4,
         text_offset = {8, 2},
         border_bottom = true,
     }, opt))

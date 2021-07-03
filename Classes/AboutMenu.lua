@@ -1,7 +1,7 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
 	local EMenu = BLE.Menu
-	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16}))
+	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16, scrollbar = false}))
 	self:getmenu():Image({
 		name = "Logo",
 		icon_w = 128,

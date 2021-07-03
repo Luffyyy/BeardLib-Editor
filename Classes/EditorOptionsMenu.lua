@@ -3,17 +3,21 @@ local Options = EditorOptionsMenu
 function Options:init()
 	local O = BLE.Options
 	local EMenu = BLE.Menu
-	local page = EMenu:make_page("Options")
+	local page = EMenu:make_page("Options", nil, {scrollbar = false})
 	ItemExt:add_funcs(self, page)
-	local main = self:divgroup("Main")
+	local w = page:ItemsWidth(2, 6)
+	local h = page:ItemsHeight(2, 6)
+
+	local main = self:divgroup("Main", {w = w / 2, auto_height = false, h = h * 2/5})
 	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
 	main:slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
 	main:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
 	main:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
 	main:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 100, max = 1600})
 	main:slider("QuickAccessToolbarSize", ClassClbk(self, "set_clbk"), O:GetValue("QuickAccessToolbarSize"), {min = 18, max = 38})
+	main:button("ResetOptions", ClassClbk(self, "reset_options", page))
 
-	local visual = self:divgroup("Visual")
+	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 3/5})
 	visual:button("ResetVisualOptions", ClassClbk(self, "reset_options", visual))
 	visual:colorbox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"))
 	visual:colorbox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"))
@@ -24,10 +28,16 @@ function Options:init()
 	visual:colorbox("ToolbarButtonsColor", ClassClbk(self, "set_clbk"), O:GetValue("ToolbarButtonsColor"))
 	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
 
-	local themes = visual:divgroup("Themes", {last_y_offset = 0})
-	themes:button("Dark", ClassClbk(self, "set_theme"), {text = "Dark[Default]"})
-	themes:button("Light", ClassClbk(self, "set_theme"))
-	local input = self:divgroup("Input")
+	local themes = visual:divgroup("Themes", {align_method = "grid"})
+	themes:s_btn("Dark", ClassClbk(self, "set_theme"), {text = "Dark[Default]"})
+	themes:s_btn("Light", ClassClbk(self, "set_theme"))
+
+	local input = self:divgroup("Input", {w = w / 2, h = page:ItemsHeight(1, 6), auto_height = false, position = function(item)
+		if alive(main) then
+			local panel = main:Panel()
+			item:Panel():set_position(panel:right() + 12, panel:y())
+		end
+	end})
 	local function keybind(setting, supports_mouse, text)
 		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse, supports_additional = true})
 	end
@@ -55,8 +65,6 @@ function Options:init()
 	keybind("RotateSpawnDummyPitch")
 	keybind("RotateSpawnDummyRoll")
 	keybind("SettleUnits")
-
-	self:button("ResetOptions", ClassClbk(self, "reset_options", page))
 end
 
 function Options:show_disable_physics_fix_dialog()

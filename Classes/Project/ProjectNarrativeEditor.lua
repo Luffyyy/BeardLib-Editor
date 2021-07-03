@@ -81,7 +81,7 @@ function ProjectNarrativeEditor:build_menu(menu, data)
     local diff_settings_holder = diff_settings:pan("DifficultySettingsHolder", {
         text_offset_y = 0, align_method = "grid", offset = {diff_settings.offset[1], 0}})
 
-    local diff_settings_opt = {w = diff_settings_holder:ItemsWidth() / (#DIFFS + 1) - 2, offset = {2, 4}, size = 18}
+    local diff_settings_opt = {w = diff_settings_holder:ItemsWidth(#DIFFS+1, 2) / (#DIFFS+1), offset = {2, 4}, size = 18}
     local diff_settings_texts = diff_settings_holder:divgroup("Setting", diff_settings_opt)
 
     diff_settings_opt.border_left = false
