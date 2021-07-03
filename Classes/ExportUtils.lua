@@ -383,7 +383,7 @@ function Utils:ReadEffect(path, config, exclude, extra_info)
 end
 
 function Utils:ReadScene(path, config, exclude, extra_info)
-    self:AddForceLoaded(config, "scene", path, exclude, extra_info)
+    self:Add(config, "scene", path, exclude, extra_info)
     local node = self:ParseXml("scene", path)
     if node and not exclude.scene then
 		for child in node:children() do
