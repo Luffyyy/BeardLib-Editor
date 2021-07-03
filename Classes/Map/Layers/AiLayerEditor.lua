@@ -382,8 +382,12 @@ function AiEditor:update_draw_data(unit)
                 needs_unit_text = "(no seg)"
             end
 
-            self._draw_options[data.name]:SetText(data.name .. needs_unit_text)
-            self._draw_options[data.name]:SetEnabled(should_enable)
+            local text = data.name .. needs_unit_text
+            local opt = self._draw_options[data.name]
+            if text ~= opt:Text() then
+                opt:SetText(text)
+            end
+            opt:SetEnabled(should_enable)
         end
     end
 end
