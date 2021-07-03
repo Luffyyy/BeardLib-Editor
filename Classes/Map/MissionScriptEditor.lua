@@ -66,7 +66,7 @@ function MissionScriptEditor:work()
 			table.insert(self._links, element)
 		end
 	end
-	self._holder:AlignItems()
+	self._holder:AlignItems(true)
 end
 
 function MissionScriptEditor:build_instance_links()

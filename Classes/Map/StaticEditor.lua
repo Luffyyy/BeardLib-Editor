@@ -3,7 +3,7 @@ StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BLE.Utils
 function Static:init(parent, menu)
-    Static.super.init(self, parent, menu, "Selection", nil, {delay_align_items = true})
+    Static.super.init(self, parent, menu, "Selection", nil, {auto_align = false})
     self._selected_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
@@ -212,6 +212,7 @@ function Static:build_default()
     self:set_title("Selection")
     self:divider("No selection >_<", {border_left = false})
     self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
+    self._holder:AlignItems(true)
 end
 
 function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
@@ -912,32 +913,25 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
                     add = true
                     self:reset_selected_units()
 				end
-				local found
-				for _, continent in pairs(managers.worlddefinition._continent_definitions) do
-                    continent.editor_groups = continent.editor_groups or {}
-					for _, group in pairs(continent.editor_groups) do
-						if group.units then
-							if table.contains(group.units, unit:unit_data().unit_id) then
-                                for _, unit_id in pairs(group.units) do
-                                    local u = managers.worlddefinition:get_unit(unit_id)
-                                    if alive(u) and not table.contains(units, u) then
-                                        table.insert(units, u)
-                                    end
-								end
-                                if self._selected_group then
-                                    self._selected_group = nil
-                                else
-                                    self._selected_group = group
+                continent.editor_groups = continent.editor_groups or {}
+                for _, group in pairs(continent.editor_groups) do
+                    if group.units then
+                        if table.contains(group.units, unit:unit_data().unit_id) then
+                            for _, unit_id in pairs(group.units) do
+                                local u = managers.worlddefinition:get_unit(unit_id)
+                                if alive(u) and not table.contains(units, u) then
+                                    table.insert(units, u)
                                 end
-								found = true
-								break
                             end
-						end
-						if found then
-							break
-						end
+                            if self._selected_group then
+                                self._selected_group = nil
+                            else
+                                self._selected_group = group
+                            end
+                            break
+                        end
                     end
-				end
+                end
             end
         end
     end
@@ -1028,13 +1022,16 @@ function Static:select_unit(mouse2)
 end
 
 function Static:set_multi_selected()
-    self._built_multi = true
-    self._editors = {}
-	self:clear_menu()
-    self:build_unit_main_values()
-    self:build_positions_items()
-	self:update_positions()
-    self:build_group_options()
+    BeardLib:AddDelayedCall("BuildItemsStaticEditor", 0.05, function()
+        self._built_multi = true
+        self._editors = {}
+        self:clear_menu()
+        self:build_unit_main_values()
+        self:build_positions_items()
+        self:update_positions()
+        self:build_group_options()
+        self._holder:AlignItems(true)
+    end)
 end
 
 function Static:set_unit(reset)
@@ -1091,6 +1088,7 @@ function Static:set_menu_unit(unit)
     self:GetItem("UnitPath"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
     self:build_group_links(unit)
+    self._holder:AlignItems(true)
 end
 
 local function element_link_text(element, link, warn)
@@ -1199,6 +1197,8 @@ function Static:build_links(id, match, element)
     if #links_group:Items() == 0 then
         links_group:Destroy()
     end
+
+    self._holder:AlignItems(true)
 
     return links
 end
