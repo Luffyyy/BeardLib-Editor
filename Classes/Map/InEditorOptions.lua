@@ -227,9 +227,10 @@ The editor will now use this format and any old map will need to be converted. C
                 BeardLib.current_level._config.include = nil
                 local _, data = project:get_mod_and_config()
                 local level = project:get_current_level_node(data)
-                self:save(true, level.include)
-                level.include = nil
                 project:save_main_xml(data)
+                local include = level.include
+                level.include = nil
+                self:save(true, include)
             end)
         return
     end
