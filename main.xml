@@ -198,6 +198,7 @@
                 <option type="boolean" default_value="false" name="SurfaceMove"/>
                 <option type="boolean" default_value="true" name="DrawPatrolPaths"/>
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
+                <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
             </option_group>
         </options>

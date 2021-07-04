@@ -51,10 +51,16 @@ UnitSpawnList = UnitSpawnList or class(SpawnSearchList)
 function UnitSpawnList:init(parent)
     UnitSpawnList.super.init(self, parent)
 
+    self._options:tickbox("ShortUnitPaths", ClassClbk(self, "set_short_unit_paths"), BLE.Options:GetValue("Map/ShortUnitPaths"), {help = "Shortens the paths in this list"})
     self._options:tickbox("ShowLoadedUnitsOnly", ClassClbk(self, "do_search", false), false, {help = "Filters the list to show only units that are loaded."})
     self._options:tickbox("LoadWithPackages", nil, false, {
         help = "Opens a dialog to pick a package in order to load the unit instead of loading it from the database"
     })
+end
+
+function UnitSpawnList:set_short_unit_paths(item)
+    self:GetPart("opt"):update_option_value(item)
+    self:do_search()
 end
 
 local unit_ids = Idstring("unit")
@@ -68,6 +74,7 @@ local blacklist = {
 }
 function UnitSpawnList:do_search_list()
     local loaded_only = self._options:GetItemValue("ShowLoadedUnitsOnly")
+    local short_path = BLE.Options:GetValue("Map/ShortUnitPaths")
     for unit in pairs(BLE.DBPaths.unit) do
         local blacklisted = false
         for _, bad in pairs(blacklist) do
@@ -77,9 +84,13 @@ function UnitSpawnList:do_search_list()
             end
         end
         if not blacklisted then
-            if not loaded_only or PackageManager:has(unit_ids, unit:id()) then
-                if self:check_search(unit) then
-                    self:insert_item_to_filtered_list({name = unit:gsub("units/", ""), object = unit})
+            if self:check_search(unit) then
+                if not loaded_only or PackageManager:has(unit_ids, unit:id()) then
+                    local name = unit:gsub("units/", "")
+                    if short_path then
+                        name = BLE.Utils:ShortPath(name, 3)
+                    end
+                    self:insert_item_to_filtered_list({name = name, object = unit})
                 end
             end
         end
