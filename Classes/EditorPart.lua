@@ -81,6 +81,7 @@ end
 function Part:show_help(clbk)
     if self._help then
         self._help:SetVisible(true)
+        self._menu:AlignItems(true)
         self._help:SetCallback(clbk)
     end
 end

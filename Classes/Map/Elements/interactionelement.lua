@@ -34,6 +34,7 @@ function EditorInteraction:update_interaction_unit(pos, rot)
 				msg = "No interaction tweak data ID set"
 			end
 			self._last_alert = self:Alert(msg..". \nThe element will not work.")
+			self._holder:AlignItems(true)
 		end
 		if alive(element._unit) then
 			element._unit:set_position(self._element.values.position)

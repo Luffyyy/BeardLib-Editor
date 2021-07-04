@@ -234,7 +234,7 @@ function ItemExt:alert(text, color)
 end
 
 function ItemExt:info(text, color)
-	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 2, 24, 2}, border_lock_height = false})
+	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 4, 24, 4}, border_lock_height = false})
 	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, offset = 0, w = 24, h = 24})
 	return div
 end
