@@ -86,7 +86,7 @@ end
 function UnitSelectList:add_object(unit)
     local ud = unit:unit_data()
     if ud and self:check_search(ud.name, unit) then
-        self:insert_item_to_filtered_list({name = ud.name_id, object = unit})
+        self:insert_item_to_filtered_list({name = ud.name_id, object = unit, unit = unit})
         self:sort_items()
         self:do_show()
     end
