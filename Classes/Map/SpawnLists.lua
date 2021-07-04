@@ -37,12 +37,10 @@ function SpawnSearchList:create_list_item(item)
 end
 
 function SpawnSearchList:insert_item_to_filtered_list(item)
-    if not table.contains(self._filtered, item) then
-        if self._fav.spawn_menu[self:item_object(item)] then
-            table.insert(self._filtered, 1, item)
-        else
-            table.insert(self._filtered, item)
-        end
+    if self._fav.spawn_menu[self:item_object(item)] then
+        table.insert(self._filtered, 1, item)
+    else
+        table.insert(self._filtered, item)
     end
 end
 

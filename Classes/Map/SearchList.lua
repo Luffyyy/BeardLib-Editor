@@ -47,9 +47,7 @@ function SearchList:sort_items()
 end
 
 function SearchList:insert_item_to_filtered_list(item)
-    if not table.contains(self._filtered, item) then
-        table.insert(self._filtered, item)
-    end
+    table.insert(self._filtered, item)
 end
 
 function SearchList:do_search_list()
