@@ -17,6 +17,10 @@ function WData:data()
     return managers.worlddefinition and managers.worlddefinition._world_data
 end
 
+function WData:get_layer(name)
+    return self.layers[name]
+end
+
 function WData:destroy()
     for _, layer in pairs(self.layers) do
         layer:destroy()

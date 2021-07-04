@@ -69,8 +69,8 @@ function AssetsManagerDialog:_Show()
     local ptoolbar = packages:GetToolbar()
     ptoolbar:tb_btn("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
     local search_opt = {w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
-    ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
-    utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
+    ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt):RunCallback()
+    utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt):RunCallback()
 
     self._unit_info:divider("AssetsManagerStatus", {
         text = "(!) One or more units are missing, you can decide to search for a package that contains(most) of the unloaded units (for leftover units you can repeat this process)",
@@ -163,6 +163,7 @@ function AssetsManagerDialog:show_assets()
         })
 	end
 
+    local brush = self:GetPart("world"):get_layer("brush")
     for unit, times in pairs(managers.worlddefinition._all_names) do
         new_asset(unit, UNIT, times)
 	end
@@ -170,7 +171,11 @@ function AssetsManagerDialog:show_assets()
 	for type, assets in pairs(self._assets) do
 		for name, _ in pairs(assets) do
 			if type ~= UNIT or not managers.worlddefinition._all_names[name] then
-				new_asset(name, type, 0)
+                local times = 0
+                if table.contains(BLE.Brushes, name) then
+                    times = #brush:unit_positions(name)
+                end
+				new_asset(name, type, times)
 			end
 		end
 	end
@@ -664,6 +669,10 @@ function AssetsManagerDialog:remove_unit_from_map(remove_asset, name, type)
 
     local remove = function()
         if type == "unit" then
+            local brush = self:GetPart("world"):get_layer("brush")
+            if brush:is_my_unit(name) then
+                brush:delete_units(name)
+            end
             for k, unit in pairs(managers.worlddefinition._all_units) do
                 local ud = alive(unit) and unit:unit_data()
                 if ud and not ud.instance and ud.name == name then
@@ -849,7 +858,9 @@ function AssetsManagerDialog:set_unit_selected(item)
         if file then
             load_from = (load_from or "") .. "\n"..(file.from_db and "Database" or "Map Assets")
             if type == UNIT and not managers.worlddefinition._all_names[asset] then
-                unused = true
+                if not table.contains(BLE.Brushes, asset) or  #self:GetPart("world"):get_layer("brush"):unit_positions(asset) == 0 then
+                    unused = true
+                end
             end
         end
         self._inspect:divider("Asset: ".. tostring(BLE.Utils:ShortPath(asset.."."..type, 2)))
