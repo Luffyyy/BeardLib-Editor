@@ -228,13 +228,13 @@ end
 
 function ItemExt:alert(text, color)
 	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, border_color = color or Color.yellow, border_lock_height = false})
-	div:tb_imgbtn("Alert", nil, nil, {304, 0, 48, 48}, {divider_type = true, offset = 0, w = 24, h = 24})
+	div:tb_imgbtn("Alert", nil, nil, BLE.Utils.EditorIcons.alert, {divider_type = true, offset = 0, w = 24, h = 24})
 	return div
 end
 
 function ItemExt:info(text, color)
 	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, border_lock_height = false})
-	div:tb_imgbtn("Info", nil, nil, {252, 132, 72, 72}, {divider_type = true, offset = 0, w = 24, h = 24})
+	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, offset = 0, w = 24, h = 24})
 	return div
 end
 

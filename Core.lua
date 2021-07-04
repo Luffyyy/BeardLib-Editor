@@ -537,9 +537,6 @@ function BLE:PausedUpdate(t, dt)
 end
 
 function BLE:SetLoadingText(text)
-    self.hints = self.hints or FileIO:ReadScriptData(Path:Combine(self.AssetsDirectory, "tips.txt"), "json")
-    self.hint = self.hint or table.random(self.hints)
-
     if alive(Global.LoadingText) then
         local project = BeardLib.current_level and BeardLib.current_level._mod
         local typ = Global.editor_loaded_instance and "Instance " or "Level "
@@ -552,8 +549,6 @@ function BLE:SetLoadingText(text)
         	s = "[SAFE MODE]" .. "\n" .. s
         end
         s = s .. "\n" .. tostring(text)
-        s = s .. "\n\n" .. "Did you know? "
-        s = s .. self.hint
         Global.LoadingText:set_name(s)
         return s
     end

@@ -5,10 +5,15 @@ function MainLayerEditor:init(parent)
         self._continent_settings = ContinentSettingsDialog:new(BLE._dialogs_opt)
         self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
     end
+
+    self.hints = FileIO:ReadScriptData(Path:Combine(BLE.AssetsDirectory, "tips.txt"), "json")
 end
 
 function MainLayerEditor:build_menu()
     self._holder:ClearItems()
+
+    self._hint = self._holder:info("hint")
+    self:random_hint()
 
     if not BeardLib.current_level then
         local s = "Preview mode"
@@ -16,6 +21,7 @@ function MainLayerEditor:build_menu()
         s = s .. "\nIf you wish to clone it please use the 'Clone Existing Heist' feature in projects menu."
         self._holder:alert(s)
     end
+
     if Global.editor_safe_mode then
         local warn = self._holder:alert("Safe mode\nMost features are disabled")
         warn:tb_btn("Load normal mode", function()
@@ -44,6 +50,14 @@ function MainLayerEditor:build_menu()
     mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
     self:build_continents()
+end
+
+function MainLayerEditor:random_hint()
+    BeardLib:AddDelayedCall("BLEHint", self._hint_set and 60 or 0, function()
+        self._hint:SetText(table.random(self.hints))
+        self._hint_set = true
+        self:random_hint()
+    end)
 end
 
 --Continents
