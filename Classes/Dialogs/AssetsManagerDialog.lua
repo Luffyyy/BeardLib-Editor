@@ -157,7 +157,7 @@ function AssetsManagerDialog:show_assets()
             text = asset.."."..type..(type == "unit" and "("..(ready and times or "Copying")..")" or ""),
 			label = "assets",
 			disabled_alpha = 0.8,
-			index = (not loaded or unused) and 1 or nil,
+			index = (not loaded or unused) and 2 or nil,
 			enabled = ready,
             background_color = color and color:with_alpha(0.4),
         })
