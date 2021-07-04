@@ -315,8 +315,12 @@ function Static:build_unit_main_values()
     end
 
     main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {control_slice = 0.75, check = function(unit)
-        local t = Utils:GetUnitType(unit)
-        return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
+        for _, bad in pairs(UnitSpawnList.BLACKLIST) do
+            if unit:match(bad) then
+                return false
+            end
+        end
+        return true
     end})
 
     local has_elements = false

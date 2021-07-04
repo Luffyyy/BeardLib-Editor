@@ -64,7 +64,7 @@ function UnitSpawnList:set_short_unit_paths(item)
 end
 
 local unit_ids = Idstring("unit")
-local blacklist = {
+UnitSpawnList.BLACKLIST = {
     "/wpn_",
     "/msk_",
     "/npc_",
@@ -77,7 +77,7 @@ function UnitSpawnList:do_search_list()
     local short_path = BLE.Options:GetValue("Map/ShortUnitPaths")
     for unit in pairs(BLE.DBPaths.unit) do
         local blacklisted = false
-        for _, bad in pairs(blacklist) do
+        for _, bad in pairs(self.BLACKLIST) do
             if unit:match(bad) then
                 blacklisted = true
                 break
