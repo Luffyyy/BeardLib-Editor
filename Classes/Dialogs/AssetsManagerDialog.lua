@@ -69,8 +69,8 @@ function AssetsManagerDialog:_Show()
     local ptoolbar = packages:GetToolbar()
     ptoolbar:tb_btn("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
     local search_opt = {w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
-    ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt):RunCallback()
-    utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt):RunCallback()
+    self._search_packages = ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
+    self._search = utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
 
     self._unit_info:divider("AssetsManagerStatus", {
         text = "(!) One or more units are missing, you can decide to search for a package that contains(most) of the unloaded units (for leftover units you can repeat this process)",
@@ -977,6 +977,8 @@ function AssetsManagerDialog:reload()
     self:set_unit_selected()
     self:set_unit_selected(nil, selected)
     self._menu:AlignItems(true)
+    self._search_packages:RunCallback()
+    self._search:RunCallback()
 end
 
 function AssetsManagerDialog:hide(yes)
