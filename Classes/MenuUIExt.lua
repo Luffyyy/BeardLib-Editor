@@ -48,7 +48,6 @@ function ItemExt:tb_btn(name, callback, o)
 		size_by_text = true,
 		offset = 2,
 		text_align = "center",
-		text_vertical = "center",
 	}, o))
 end
 
@@ -59,18 +58,17 @@ function ItemExt:s_btn(name, callback, o)
 		on_callback = callback,
 		size_by_text = true,
 		text_align = "center",
-		text_vertical = "center",
 	}, o))
 end
 
-function ItemExt:sq_btn(name, callback, o)    
-	local s = (o and o.size) or self.items_size
+function ItemExt:sq_btn(name, callback, o)
+	local s = self.size * 1.4
 	o = o or {}
-	o.min_width = s
-	o.min_height = s
-	o.max_height = s
-	o.max_width = s
-	return self:tb_btn(name, callback, o)
+	o.text_align = "center"
+	o.fit_width = false
+	o.w = s
+	o.h = s
+	return self:button(name, callback, o)
 end
 
 function ItemExt:Pasta1(name, callback, o)
@@ -151,7 +149,10 @@ function ItemExt:group(name, o)
 		inherit_values = {
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
 		},
-		private = {size = BLE.Options:GetValue("MapEditorFontSize") * 1.2, background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)}}
+		private = {
+			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
+			background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)},
+		}
 	, o))
 end
 
@@ -233,7 +234,7 @@ function ItemExt:alert(text, color)
 end
 
 function ItemExt:info(text, color)
-	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, border_lock_height = false})
+	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 2, 24, 2}, border_lock_height = false})
 	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, offset = 0, w = 24, h = 24})
 	return div
 end
@@ -403,7 +404,7 @@ function ItemExt:Rotation(name, clbk, value, o)
 		return Rotation(items[1]:Value(), items[2]:Value(), items[3]:Value())
 	end
 	p.get_value = p.Value
-	
+
 	function p:SetValue(val, run_callback)
 		items[1]:SetValue(val:yaw())
 		items[2]:SetValue(val:pitch())

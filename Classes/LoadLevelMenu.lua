@@ -17,9 +17,9 @@ function LoadLevelMenu:init(data)
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2})
 	ItemExt:add_funcs(self)
 	local filters = self:holder("Filters", {align_method = "grid", inherit_values = {size_by_text = true, offset = 0}})
-	local w = filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla).w
-	w = w + filters:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true)).w
-	w = w + filters:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true)).w
+	local w = filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla):Width()
+	w = w + filters:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true)):Width()
+	w = w + filters:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true)):Width()
 	filters:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = filters:ItemsWidth() - w, index = 1, control_slice = 0.85, offset = 0})
 
 	local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})

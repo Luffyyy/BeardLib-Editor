@@ -64,7 +64,7 @@ function QuickAccess:NumberBox(parent, name, params)
         align_method = "grid_from_right"
     })
 
-    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
+    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, text_offset = 0, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
     holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
 end
 
