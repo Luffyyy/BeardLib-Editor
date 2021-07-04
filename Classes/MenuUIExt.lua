@@ -146,14 +146,19 @@ function ItemExt:group(name, o)
 		name = name,
 		text = string.pretty2(name),
 		offset = 6,
+		closed = self.saved_group_states and self.saved_group_states[name] or false,
 		inherit_values = {
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
 		},
 		private = {
 			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
-			background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)},
-		}
-	, o))
+			background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)
+		},
+		on_group_toggled = function(item)
+			self.saved_group_states = self.saved_group_states or {}
+			self.saved_group_states[name] = item.closed
+		end,
+	}, o))
 end
 
 function ItemExt:notebook(name, o)
