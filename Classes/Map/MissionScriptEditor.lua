@@ -379,7 +379,7 @@ function MissionScriptEditor:set_element_data(item)
 	local function set_element_data()
 		local data = self:ItemData(item)
 		data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
-		data[item.name] = tonumber(data[item.name]) or data[item.name]
+		data[item.name] = item.type_name ~= "ColoredTextBox" and tonumber(data[item.name]) or data[item.name]
 		if item.name == "base_delay_rand" then
 			data[item.name] = data[item.name] > 0 and data[item.name] or nil
 		end
