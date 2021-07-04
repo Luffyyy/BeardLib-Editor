@@ -1,0 +1,6 @@
+[
+    "The editor is approved by Ilija!",
+    "You can search using multiple queries by splitting them with a comma. For example: floor,wall",
+    "You can select multiple objects by holding CTRL and moving your mouse. ALT does the opposite",
+    "The editor was created in 2016 after I (Luffy) was playing around with the possiblity of editing maps"
+]
