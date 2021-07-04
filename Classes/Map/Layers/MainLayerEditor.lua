@@ -12,7 +12,7 @@ end
 function MainLayerEditor:build_menu()
     self._holder:ClearItems()
 
-    self._hint = self._holder:info("hint")
+    self._hint = self._holder:info("hint", {button_type = true})
     self:random_hint()
 
     if not BeardLib.current_level then
@@ -54,9 +54,18 @@ end
 
 function MainLayerEditor:random_hint()
     BeardLib:AddDelayedCall("BLEHint", self._hint_set and 60 or 0, function()
-        self._hint:SetText(table.random(self.hints))
+        local h = table.random(self.hints)
+        self._hint:SetText(h)
         self._hint_set = true
         self:random_hint()
+        local link = h:match("(https?://[%w-_%.%?%.:/%+=&]+)")
+        self._hint.button_type = true
+        self._hint.divider_type = link == nil
+        self._hint.on_callback = function()
+            if link then
+                os.execute('start "" "'..link..'"')
+            end
+        end
     end)
 end
 
