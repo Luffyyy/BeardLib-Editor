@@ -522,7 +522,7 @@ end
 
 function BrushLayerEditor:search_units(item)
 	item = item or self._unit_list:GetItem("Search")
-	local search = item:Value():lower()
+	local search = item:Value():lower():escape_special()
 	self._unit_list:ClearItems("units")
 	for _, name in pairs(self._brush_units) do
 		if name:lower():match(search) then

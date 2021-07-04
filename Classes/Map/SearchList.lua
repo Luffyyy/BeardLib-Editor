@@ -29,7 +29,7 @@ function SearchList:do_search(no_reset_page, no_clear, t)
         if not alive(self._list) then -- CAN happen when the code reloads
             return
         end
-        self._search = item:Value()
+        self._search = item:Value():lower():escape_special()
         self._filtered = {}
         self:do_search_list()
         if not no_reset_page then
@@ -131,7 +131,7 @@ function SearchList:item_object(item)
 end
 
 function SearchList:check_search(check)
-    return not self._search or self._search:len() == 0 or check:lower():match(self._search:lower())
+    return not self._search or self._search:len() == 0 or check:lower():match(self._search)
 end
 
 function SearchList:set_page(page)
