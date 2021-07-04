@@ -29,7 +29,12 @@ function SearchList:do_search(no_reset_page, no_clear, t)
         if not alive(self._list) then -- CAN happen when the code reloads
             return
         end
-        self._search = item:Value():lower():escape_special()
+        local search = item:Value():lower():split(",")
+        self._search = {}
+        for _, s in pairs(search) do
+            s = s:escape_special()
+            table.insert(self._search, s)
+        end
         self._filtered = {}
         self:do_search_list()
         if not no_reset_page then
@@ -131,7 +136,17 @@ function SearchList:item_object(item)
 end
 
 function SearchList:check_search(check)
-    return not self._search or self._search:len() == 0 or check:lower():match(self._search)
+    check = check:lower()
+    if not self._search or #self._search == 0 then
+        return true
+    else
+        for _, search in pairs(self._search) do
+            if check:match(search) then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 function SearchList:set_page(page)
