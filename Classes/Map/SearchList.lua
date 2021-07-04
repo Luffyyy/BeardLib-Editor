@@ -128,11 +128,11 @@ function SearchList:get_border_color(item)
 end
 
 function SearchList:friendly_item_name(item)
-    return type(item) == "table" and item.name or item
+    return item.name
 end
 
 function SearchList:item_object(item)
-    return type(item) == "table" and item.menu or item
+    return item.object
 end
 
 function SearchList:check_search(check)

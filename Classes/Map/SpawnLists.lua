@@ -9,7 +9,7 @@ end
 function SpawnSearchList:create_list_item(item)
     local favbtn
     local favorited = false
-    local object = self:item_object(item)
+    local object = item.fav_id
     if self._fav.spawn_menu[object] then
         favorited = true
         favbtn = {
@@ -37,13 +37,28 @@ function SpawnSearchList:create_list_item(item)
 end
 
 function SpawnSearchList:insert_item_to_filtered_list(item)
-    if self._fav.spawn_menu[self:item_object(item)] then
+    if self._fav.spawn_menu[item.fav_id] then
         table.insert(self._filtered, 1, item)
     else
         table.insert(self._filtered, item)
     end
 end
 
+function SpawnSearchList:sort_items()
+    local spawn_menu = self._fav.spawn_menu
+    table.sort(self._filtered, function(a,b)
+        local a_is_fav = spawn_menu[a.fav_id]
+        local b_is_fav = spawn_menu[b.fav_id]
+
+        if a_is_fav and b_is_fav or not a_is_fav and not b_is_fav then
+            return a.name < b.name
+        elseif a_is_fav then
+            return true
+        elseif b_is_fav then
+            return false
+        end
+    end)
+end
 ------------------------------------- Units -------------------------------------------
 
 UnitSpawnList = UnitSpawnList or class(SpawnSearchList)
@@ -90,7 +105,7 @@ function UnitSpawnList:do_search_list()
                     if short_path then
                         name = BLE.Utils:ShortPath(name, 3)
                     end
-                    self:insert_item_to_filtered_list({name = name, object = unit})
+                    self:insert_item_to_filtered_list({name = name, object = unit, fav_id = unit})
                 end
             end
         end
@@ -130,22 +145,9 @@ function ElementSpawnList:do_search_list()
     for _, element in pairs(BLE._config.MissionElements) do
         local name = element:gsub("Element", "")
         if self:check_search(element) then
-            self:insert_item_to_filtered_list({name = name, object = element})
+            self:insert_item_to_filtered_list({name = name, object = element, fav_id = element})
         end
     end
-    local spawn_menu = self._fav.spawn_menu
-    table.sort(self._filtered, function(a,b)
-        local a_is_fav = spawn_menu[a.object]
-        local b_is_fav = spawn_menu[b.object]
-
-        if a_is_fav and b_is_fav or not a_is_fav and not b_is_fav then
-            return a.object < b.object
-        elseif a_is_fav then
-            return true
-        elseif b_is_fav then
-            return false
-        end
-    end)
 end
 
 function ElementSpawnList:on_click_item(item)
@@ -163,7 +165,7 @@ function PrefabSpawnList:do_search_list()
     self._filtered = {}
     for name, prefab in pairs(BLE.Prefabs) do
         if self:check_search(name) then
-            self:insert_item_to_filtered_list({name = name, object = prefab})
+            self:insert_item_to_filtered_list({name = name, object = prefab, fav_id = name})
         end
     end
 end
@@ -180,7 +182,7 @@ function InstanceSpawnList:do_search_list()
     self._filtered = {}
     for _, path in pairs(table.merge(BLE.Utils:GetEntries({type = "world"}), table.map_keys(BeardLib.managers.MapFramework._loaded_instances))) do
         if path:match("levels/instances") and self:check_search(path) then
-            self:insert_item_to_filtered_list({name = path:gsub("levels/instances/", ""), object = path})
+            self:insert_item_to_filtered_list({name = path:gsub("levels/instances/", ""), object = path, fav_id = path})
         end
     end
 end
