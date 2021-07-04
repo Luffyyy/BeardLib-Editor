@@ -977,8 +977,10 @@ function AssetsManagerDialog:reload()
     self:set_unit_selected()
     self:set_unit_selected(nil, selected)
     self._menu:AlignItems(true)
-    self._search_packages:RunCallback()
-    self._search:RunCallback()
+    if alive(self._search) then
+        self._search_packages:RunCallback()
+        self._search:RunCallback()
+    end
 end
 
 function AssetsManagerDialog:hide(yes)
