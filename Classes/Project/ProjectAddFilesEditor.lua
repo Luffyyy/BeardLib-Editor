@@ -166,7 +166,7 @@ function ProjectAddFilesModule:add_file(path, search_deps, no_reload, from_db)
         temp = table.add_merge({{_meta = ext, path = path_no_ext, unload = true}}, self._data)
     end
 
-    local new_add = {_meta = "AddFiles"}
+    local new_add = {}
     for k, v in pairs(self._data) do
         if tonumber(k) and type(v) ~= "table" then
             new_add[k] = v
