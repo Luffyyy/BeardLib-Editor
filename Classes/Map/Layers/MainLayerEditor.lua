@@ -411,9 +411,7 @@ function MainLayerEditor:open_load_dialog(params)
     local units = {}
 	local ext = params.ext
     for unit in pairs(BLE.DBPaths[ext]) do
-        if not unit:match("wpn_") and not unit:match("msk_") then
-            table.insert(units, unit)
-        end
+        table.insert(units, unit)
     end
 	BLE.ListDialog:Show({
 	    list = units,
