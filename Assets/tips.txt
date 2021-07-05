@@ -12,7 +12,7 @@
     "You can use 'mkp' or 'mockup' units to quickly prototype a level",
     "You can customize appearence and keyboard shortcuts to your liking in the options menu",
     "Holding ALT while moving a selection creates a duplicate",
-    "Holding CTRL while moving a selection snaps the grid to 1"
+    "Holding CTRL while moving a selection snaps the grid to 1",
     "Remember to create manual backups of your project regularly",
     "Use a combination of portals and occluders to optimize your map",
     "'ExecuteOnStartup' will execute as soon as you load into the loadout screen. Use an AreaTrigger set to 'player' to actually start your script"
