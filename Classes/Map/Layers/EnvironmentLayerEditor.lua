@@ -392,7 +392,6 @@ function EnvLayer:build_unit_menu()
 			cm:GetToolbar():lbl("ID", {
 				text = "ID " .. ud.unit_id,
 				size_by_text = true,
-				offset = 0
 			})
 			cm:textbox("Name", ClassClbk(self, "set_unit_data"), ud.name_id, {
 				help = "the name of the unit",

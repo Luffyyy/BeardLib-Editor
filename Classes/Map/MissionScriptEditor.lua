@@ -114,7 +114,7 @@ function MissionScriptEditor:_create_panel()
 		group = self._main_group, return_hex = true,
 		help = "A unique color for this element for debugging purposes. Uses default if empty.", data = self._element, allow_empty = true
 	})
-	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true, offset=0})
+	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {group = self._main_group, data = self._element})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
