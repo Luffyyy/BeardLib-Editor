@@ -74,7 +74,7 @@ end
 
 function Part:make_collapse_all_button()
     local tb = self._menu:GetToolbar()
-    tb:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all, {offset = 2})
+    tb:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all)
     self._help = tb:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {visible = false})
 end
 

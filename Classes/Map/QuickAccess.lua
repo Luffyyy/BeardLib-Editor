@@ -5,7 +5,7 @@ function QuickAccess:init(parent, menu)
     local normal = not Global.editor_safe_mode
     local size = BLE.Options:GetValue("QuickAccessToolbarSize")
     local align_method = BLE.Options:GetValue("GUIOnRight") and "grid" or "grid_from_right"
-    
+
     self._menu = menu:Menu({
         name = "Toolbar",
         auto_foreground = true,
@@ -13,7 +13,7 @@ function QuickAccess:init(parent, menu)
         visible = self:value("QuickAccessToolbar"),
         position = BLE.Options:GetValue("GUIOnRight") and "TopLeft" or "TopRight",
         align_method = align_method,
-        w = (size + 1) * 5,
+        w = size * 5,
         private = {offset = 0}
     })
 
@@ -38,9 +38,10 @@ function QuickAccess:init(parent, menu)
         {name = "LocalTransform", rect = {390, 118, 36, 36}, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
 
-    local opt = {size = size, h = size, offset = 3, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = align_method}
+    local opt = {size = size, h = size, offset = 0, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = align_method}
 
     self:build_values(self._menu:holder("Values", opt))
+    opt.offset = {0, 2}
     self:build_toggles(self._menu:holder("Toggles", opt))
     self:build_buttons(self._menu:holder("Buttons", opt))
 end
@@ -71,7 +72,7 @@ end
 function QuickAccess:build_toggles(parent)
     for _, toggle in pairs(self._toggles) do
         local t = self:Toggle(parent, toggle, "textures/editor_icons_df")
-        
+
         if toggle.name:match("_widget_toggle") then
             self:update_widget_toggle(t)
         elseif not toggle.callback then
@@ -82,9 +83,8 @@ end
 
 function QuickAccess:Toggle(parent, params, tx)
     local item = parent:tb_imgbtn(params.name, params.callback or ClassClbk(self, "ToggleOptionValue", params.name), nil, params.rect, {
-        offset = 2,
-        size = parent:H() * 0.9,
-        img_offset = 3,
+        offset = 0,
+        size = parent:H(),
         help = params.help,
         enabled = params.enabled,
         disabled_alpha = 0.2,
@@ -97,10 +97,8 @@ end
 function QuickAccess:build_buttons(parent)
     for _, button in pairs(self._buttons) do
         parent:tb_imgbtn(button.name, ClassClbk(self, button.callback), nil, button.rect, {
-            offset = 2, 
-            size = parent:H() * 0.9, 
-            img_offset = 3, 
-            help = button.help, 
+            offset = 0,
+            help = button.help,
             enabled = button.enabled,
             disabled_alpha = 0.2,
             background_color = BLE.Options:GetValue("ToolbarButtonsColor")

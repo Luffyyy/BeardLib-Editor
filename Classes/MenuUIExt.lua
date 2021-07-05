@@ -28,13 +28,17 @@ function ItemExt:getmenu()
 end
 
 function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
+	local offset = o and o.offset or 4
+	local s = (o and o.size or self:H()) - offset*2
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
 		auto_foreground = false,
-		size = self:H()*0.8,
-		offset = 2,
-		img_offset = 4,
+		offset = offset,
+		w = s,
+		h = s,
+		img_scale = 0.6,
+		position = "Centery",
 		texture = texture or BLE.Utils.EditorIcons.texture,
 		texture_rect = rect,
 	}, o))
@@ -234,13 +238,13 @@ end
 
 function ItemExt:alert(text, color)
 	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, border_color = color or Color.yellow, border_lock_height = false})
-	div:tb_imgbtn("Alert", nil, nil, BLE.Utils.EditorIcons.alert, {divider_type = true, offset = 0, w = 24, h = 24})
+	div:tb_imgbtn("Alert", nil, nil, BLE.Utils.EditorIcons.alert, {divider_type = true, img_scale = 0.8, w = 24, h = 24})
 	return div
 end
 
 function ItemExt:info(text, color)
 	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 4, 24, 4}, border_lock_height = false})
-	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, offset = 0, w = 24, h = 24})
+	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, img_scale = 0.8, w = 24, h = 24})
 	return div
 end
 
