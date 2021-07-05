@@ -35,8 +35,8 @@ function MainLayerEditor:build_menu()
         self._holder:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
 
-    local load = self._holder:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
     local load_extract = self._holder:divgroup("LoadFromDatabase", {align_method = "grid"})
+    local load = self._holder:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
 
     local assets = self:GetPart("assets")
     for _, ext in pairs(BLE.UsableAssets) do
