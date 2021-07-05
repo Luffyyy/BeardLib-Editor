@@ -358,7 +358,7 @@ function ItemExt:Vector3(name, clbk, value, o)
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
-		items[i] = p:numberbox(control, function()
+		items[i] = p:numberbox(control:upper(), function()
 			p:RunCallback()
 		end, value and value[control] or 0, {w = (p:ItemsWidth() / (vector2 and 2 or 3)) - p:OffsetX(), control_slice = 0.8, step = p.step})
 	end
@@ -407,7 +407,7 @@ function ItemExt:Rotation(name, clbk, value, o)
 	local controls = {"yaw", "pitch", "roll"}
 	local items = {}
 	for i, control in pairs(controls) do
-		items[i] = p:numberbox(control:sub(1, 1), function()
+		items[i] = p:numberbox(control:sub(1, 1):upper(), function()
 			p:RunCallback()
 		end, value and value[control](value) or 0, {w = p:ItemsWidth() / 3 - p:OffsetX(), control_slice = 0.8})
 	end
