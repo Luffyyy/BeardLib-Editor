@@ -107,9 +107,8 @@ function WData:make_tabs(tabs)
     local managers = {"main", "environment", "sound", "portal", "ai", "brush"}
     self._current_layer = self._current_layer or "main"
     for i, name in pairs(managers) do
-        self._tabs:tb_btn(name, ClassClbk(self, "open_tab", name:lower()), {
+        self._tabs:s_btn(name, ClassClbk(self, "open_tab", name:lower()), {
             enabled = not Global.editor_safe_mode,
-            size = 16,
             text = name == "ai" and "AI" or string.capitalize(name),
             border_bottom = i == 1
         })
