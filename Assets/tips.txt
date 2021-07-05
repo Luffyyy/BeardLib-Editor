@@ -7,5 +7,13 @@
     "Want to know more about the editor? Visit the wiki: https://wiki.modworkshop.net/books/beardlib-editor-tutorials",
     "Trouble with navigation? Some models are larger than they seem! Use the 'Draw Bodies' setting to see a props collision",
     "Need help? Join the PAYDAY 2 Maps Discord https://discord.gg/fn62qaq",
-    "If you encounter a bug, please report it to us through the issues section on GitHub"
+    "If you encounter a bug, please report it to us through the issues section on GitHub",
+    "You can link Timer, Stopwatch and Counter elements to a timer unit",
+    "You can use 'mkp' or 'mockup' units to quickly prototype a level",
+    "You can customize appearence and keyboard shortcuts to your liking in the options menu",
+    "Holding ALT while moving a selection creates a duplicate",
+    "Holding CTRL while moving a selection snaps the grid to 1"
+    "Remember to create manual backups of your project regularly",
+    "Use a combination of portals and occluders to optimize your map",
+    "'ExecuteOnStartup' will execute as soon as you load into the loadout screen. Use an AreaTrigger set to 'player' to actually start your script"
 ]
