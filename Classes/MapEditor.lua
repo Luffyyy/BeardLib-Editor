@@ -738,6 +738,9 @@ function Editor:update(t, dt)
         return
     end
     if BeardLib.Utils.Input:IsTriggered(self._toggle_trigger) and not self._partially_disabled then
+        if BLE.Options:GetValue("Map/SaveBeforePlayTesting") and self._enabled then
+            self.parts.opt:save()
+        end
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
