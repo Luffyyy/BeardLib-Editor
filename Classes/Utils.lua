@@ -23,7 +23,10 @@ Utils.EditorIcons = {
     help = {160, 64, 64, 64},
     alert = {448, 448, 64, 64},
     settings_gear = {320, 448, 64, 64},
-    select = {64, 0, 32, 32}
+    select = {64, 0, 32, 32},
+    copy = {64, 96, 32, 32},
+    paste = {96, 96, 32, 32},
+    round_number = {128, 96, 32, 32}
 }
 
 Utils.ElementIcons = {

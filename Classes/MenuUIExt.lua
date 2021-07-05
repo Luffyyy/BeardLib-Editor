@@ -347,9 +347,10 @@ function ItemExt:Vector3(name, clbk, value, o)
 	value = value or Vector3()
 	local vector2 = p.vector2
 	local TB = p:GetToolbar()
-	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
-	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
-	TB:sq_btn("r", ClassClbk(self, "RoundAxis"), {offset = 6})
+	local icons = BLE.Utils.EditorIcons
+	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
+	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
+	TB:tb_imgbtn("r", ClassClbk(self, "RoundAxis"), nil, icons.round_number, {help = "Round X,Y,Z Values"})
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -394,9 +395,11 @@ function ItemExt:Rotation(name, clbk, value, o)
 	o = {}
 	value = value or Rotation()
 	local TB = p:GetToolbar()
-	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 6})
-	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 6})
-	TB:sq_btn("r", ClassClbk(self, "RoundAxis"), {offset = 6})
+	local icons = BLE.Utils.EditorIcons
+	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
+	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
+	TB:tb_imgbtn("r", ClassClbk(self, "RoundAxis"), nil, icons.round_number, {help = "Round Y,P,R Values"})
+
 	local controls = {"yaw", "pitch", "roll"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -433,8 +436,9 @@ function ItemExt:Shape(name, clbk, value, o)
 	o = {}
 	value = value or Rotation()
 	local TB = p:GetToolbar()
-	TB:sq_btn("p", ClassClbk(self, "PasteAxis"), {offset = 0})
-	TB:sq_btn("c", ClassClbk(self, "CopyAxis"), {offset = 0})
+	local icons = BLE.Utils.EditorIcons
+	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
+	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
 	local controls = {"width", "height", "depth", "radius"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -447,7 +451,7 @@ function ItemExt:Shape(name, clbk, value, o)
 		return {_shape = true, width = items[1]:Value(), height = items[2]:Value(), depth = items[3]:Value(), radius = items[4]:Value()}
 	end
 	p.get_value = p.Value
-	
+
 	function p:SetStep(step)
 		items[1].step = step
 		items[2].step = step
