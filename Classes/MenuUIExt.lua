@@ -38,7 +38,6 @@ function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
 		w = s,
 		h = s,
 		img_scale = 0.6,
-		position = "Centery",
 		texture = texture or BLE.Utils.EditorIcons.texture,
 		texture_rect = rect,
 	}, o))

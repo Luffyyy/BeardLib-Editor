@@ -120,11 +120,11 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
     end
 
     if not self._single_select then
-        local updown = item:Divider({offset = 0, w =self._tbl.values_list_width/3, enabled = selected, align_method = "centered_grid", entry = entry})
+        local updown = item:Divider({offset = 2, w =self._tbl.values_list_width/3, enabled = selected, align_method = "centered_grid", entry = entry})
         local max = #self._selected_list
         local entry_i = table.get_key(self._selected_list, entry)
-        updown:tb_imgbtn("Up", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {32, 0, 32, 32}, {up = true, enabled = entry_i and entry_i > 1, size = item.size*1.2})
-        updown:tb_imgbtn("Down", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {0, 0, 32, 32}, {enabled = entry_i and entry_i < max, size = item.size*1.2})
+        updown:tb_imgbtn("Up", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {32, 0, 32, 32}, {up = true, img_scale = 1, enabled = entry_i and entry_i > 1})
+        updown:tb_imgbtn("Down", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {0, 0, 32, 32}, {img_scale = 1, enabled = entry_i and entry_i < max})
     end
 
     opt = {control_slice = 1, color = false, free_typing = self._params.combo_free_typing, w = self._tbl.values_list_width-16}
