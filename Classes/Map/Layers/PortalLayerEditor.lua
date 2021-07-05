@@ -4,6 +4,7 @@ function PortalLayer:init(parent)
 	PortalLayer.super.init(self, parent, "PortalLayerEditor", {private = {offset = 0, h = parent._holder:ItemsHeight()-16}})
 	self._created_units = {}
 	self._portal_shape_unit = "core/units/portal_shape/portal_shape"
+    self._units_visible = true
 end
 
 function PortalLayer:loaded_continents()
@@ -160,6 +161,7 @@ end
 function PortalLayer:load_portal_units()
     local units = self._holder:GetItem("Units")
     units:ClearItems()
+    units:GetToolbar():tb_imgbtn("ToggleVisibility", ClassClbk(self, "toggle_units_visible"), nil, BLE.Utils.EditorIcons.eye, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Toggle Visibility"})
     if self._selected_portal then
         for unit_id, _ in pairs(self._selected_portal._ids) do
             local unit = managers.worlddefinition:get_unit(unit_id)
@@ -264,6 +266,9 @@ function PortalLayer:refresh()
 end
 
 function PortalLayer:select_portal(name, nounselect, noswitch)
+    if self._units_visible == false then
+        self:toggle_units_visible()
+    end
     if noswitch ~= true then
         self._parent:Switch()
     end
@@ -272,7 +277,7 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
     end
     self._selected_shape = nil
     self._holder:GetItem("Shapes"):ClearItems("Shapes")
-    self._holder:GetItem("Units"):ClearItems("Units")
+    self._holder:GetItem("Units"):ClearItems()
     if self._selected_portal then
         self._holder:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
@@ -337,4 +342,22 @@ function PortalLayer:auto_fill_portal(item)
         self:load_portal_units()
         self:save()
     end)
+end
+
+function PortalLayer:toggle_units_visible(item)
+    if not self._selected_portal then
+        return
+    end
+
+    self._units_visible = not self._units_visible
+    for unit_id, _ in pairs(self._selected_portal._ids) do
+        local unit = managers.worlddefinition:get_unit(unit_id)
+        if unit and alive(unit) then
+            unit:set_enabled(self._units_visible)
+        end
+    end
+    if item then
+        item.enabled_alpha = self._units_visible and 1 or 0.5
+        item:SetEnabled(item.enabled)
+    end
 end

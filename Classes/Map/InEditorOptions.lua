@@ -28,6 +28,7 @@ function Options:build_default()
     main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Val("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
     main:tickbox("SaveBeforePlayTesting", ClassClbk(self, "update_option_value"), self:Val("SaveBeforePlayTesting"), {help = "Saves your map as soon as you playtest your map"})
     main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Val("SaveMapFilesInBinary"), {help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
+    main:tickbox("SaveWarningAfterGameStarted", ClassClbk(self, "update_option_value"), self:Val("SaveWarningAfterGameStarted"), {help = "Show a warning message when trying to save after play testing started the heist, where you can allow or disable saving for that session"})
     main:tickbox("BackupMaps", ClassClbk(self, "update_option_value"), self:Val("BackupMaps"))
     main:tickbox("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Val("RemoveOldLinks"), {
         text = "Remove Old Links Of Copied Elements",
@@ -207,9 +208,23 @@ function Options:add_save_callback(id, func)
     self._save_callbacks[id] = func
 end
 
-function Options:save(force_backup, old_include)
+function Options:save(force_backup, old_include, skip_warning)
     if self._saving then
         return
+    end
+
+    if not skip_warning and self:Val("SaveWarningAfterGameStarted") and self._parent._before_state then
+        if self._playtest_saving_allowed == false then
+            self:GetPart("status"):ShowKeybindMessage("Saving is disabled for this session")
+            return
+        elseif self._playtest_saving_allowed == nil then
+            self._playtest_saving_allowed = false
+            BLE.Utils:YesNoQuestion("Saving while the heist is running can lead to unintended side effects. Do you want to allow saving for this session?", function() 
+                self._playtest_saving_allowed = true 
+                self:save(force_backup, old_include)
+            end)
+            return
+        end
     end
 
     if BeardLib.current_level and BeardLib.current_level._config.include then
@@ -231,7 +246,7 @@ The editor will now use this format and any old map will need to be converted. C
                 local include = level.include
                 level.include = nil
                 project:save_main_xml(data)
-                self:save(true, include)
+                self:save(true, include, true)
             end)
         return
     end
