@@ -653,7 +653,7 @@ end
 function AiEditor:build_nav_segments()
     -- Add later the options to the menu
     BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
-        self:part("opt"):save()
+        self:part("opt"):save(nil, nil, true)
         local settings = {}
         local nav_surfaces = {}
 
