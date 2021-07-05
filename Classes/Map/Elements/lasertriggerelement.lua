@@ -155,6 +155,10 @@ function EditorLaserTrigger:_break_moving_point()
 	self._moving_point_undo = nil
 end
 
+function EditorLaserTrigger:mouse_busy()
+	return self._editing
+end
+
 function EditorLaserTrigger:mouse_pressed(button, x, y)
 	if self._editing then
 		if button == Idstring("0") then

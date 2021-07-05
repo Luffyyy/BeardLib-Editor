@@ -147,6 +147,12 @@ function MissionEditor:set_element(element)
     end
 end
 
+function MissionEditor:mouse_busy()
+    if self._current_script and self._current_script.mouse_busy and self._current_script:mouse_busy() then
+        return true
+    end
+end
+
 function MissionEditor:mouse_pressed(...)
     if self._current_script and self._current_script.mouse_pressed and self._current_script:mouse_pressed(...) then
         return true
