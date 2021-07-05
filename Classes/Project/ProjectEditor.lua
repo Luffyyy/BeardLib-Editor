@@ -49,12 +49,6 @@ function ProjectEditor:init(parent, mod, previous_project_data)
     end
     main:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
     local actions = self._left_menu:divgroup("Actions")
-    actions:button("Create", ClassClbk(self, "open_create_dialog"))
-    for id, action in pairs(self.ACTIONS) do
-        actions:button(id, function()
-            action(self)
-        end)
-    end
 
     actions:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
     actions:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
@@ -62,6 +56,12 @@ function ProjectEditor:init(parent, mod, previous_project_data)
 
     ItemExt:add_funcs(self)
     self._modules_list = self._left_menu:divgroup("Modules", {stretch_to_bottom = true, auto_height = false})
+    self._modules_list:GetToolbar():tb_imgbtn("Create", ClassClbk(self, "open_create_dialog"), nil, BLE.Utils.EditorIcons.plus)
+    for id, action in pairs(self.ACTIONS) do
+        actions:button(id, function()
+            action(self)
+        end)
+    end
 
     self._modules = {}
     for _, modl in pairs(self._data) do
@@ -83,14 +83,14 @@ end
 ---List the modules
 function ProjectEditor:build_modules()
     local modules = self._modules_list
-    modules:ClearItems()
+    modules:ClearItems("modules")
     for _, mod in pairs(self._modules) do
         local meta = mod._meta
         local text = string.capitalize(meta)
         if ProjectEditor.EDITORS[meta].HAS_ID and mod._main_xml_data.id then
             text = text .. ": "..mod._main_xml_data.id
         end
-        mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
+        mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text, label = "modules"})
     end
 end
 
@@ -270,7 +270,7 @@ end
 function ProjectEditor:small_button(name, clbk, opt)
     self._menu:GetToolbar():tb_btn(name, clbk, table.merge({
         min_width = 100,
-        offset = 4,
+        offset = 8,
         text_offset = {8, 2},
         border_bottom = true,
     }, opt))
