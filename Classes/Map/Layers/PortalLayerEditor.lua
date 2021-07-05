@@ -277,7 +277,7 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
     end
     self._selected_shape = nil
     self._holder:GetItem("Shapes"):ClearItems("Shapes")
-    self._holder:GetItem("Units"):ClearItems("Units")
+    self._holder:GetItem("Units"):ClearItems()
     if self._selected_portal then
         self._holder:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
