@@ -1,10 +1,15 @@
-SpawnMenu = SpawnMenu or class(EditorPart)
+SpawnMenu = SpawnMenu or class(SelectMenu)
 function SpawnMenu:init(parent, menu)
-    self.super.init(self, parent, menu, "Spawn Menu", {make_tabs = true, scrollbar = false})
-    self._tabs:s_btn("Unit", ClassClbk(self, "open_tab"), {border_bottom = true})
-    self._tabs:s_btn("Element", ClassClbk(self, "open_tab"))
-    self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"))
-    self._tabs:s_btn("Prefab", ClassClbk(self, "open_tab"))
+    local unit_key = BLE.Options:GetValue("Input/SpawnUnit")
+    local element_key = BLE.Options:GetValue("Input/SpawnElement")
+    local instance_key = BLE.Options:GetValue("Input/SpawnInstance")
+    local prefab_key = BLE.Options:GetValue("Input/SpawnPrefab")
+
+    SelectMenu.super.init(self, parent, menu, "Spawn Menu", {make_tabs = true, scrollbar = false})
+    self._tabs:s_btn("Unit", ClassClbk(self, "open_tab"), {border_bottom = true, text = string.len(unit_key) > 0 and "Unit ("..unit_key..")" or nil})
+    self._tabs:s_btn("Element", ClassClbk(self, "open_tab"), {text = string.len(element_key) > 0 and "Element ("..element_key..")" or nil})
+    self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"), {text = string.len(instance_key) > 0 and "Instance ("..instance_key..")" or nil})
+    self._tabs:s_btn("Prefab", ClassClbk(self, "open_tab"), {text = string.len(prefab_key) > 0 and "Prefab ("..prefab_key..")" or nil})
     self._tab_classes = {
         unit = UnitSpawnList:new(self),
         element = ElementSpawnList:new(self),
@@ -14,17 +19,10 @@ function SpawnMenu:init(parent, menu)
     self._tab_classes.unit:set_visible(true)
 end
 
-function SpawnMenu:get_menu(name)
-    return self._tab_classes[name]
-end
-
-function SpawnMenu:open_tab(item)
-    for name, tab in pairs(self._tab_classes) do
-        tab:set_visible(name == item.name:lower())
-    end
-    for _, tab in pairs(self._tabs:Items()) do
-        tab:SetBorder({bottom = tab == item})
-    end
+function SpawnMenu:enable()
+    SelectMenu.super.enable(self)
+    self:bind_opt("SpawnUnit", ClassClbk(self, "open_tab_by_name", "unit", true))
+    self:bind_opt("SpawnElement", ClassClbk(self, "open_tab_by_name", "element", true))
 end
 
 function SpawnMenu:begin_spawning_element(element)
