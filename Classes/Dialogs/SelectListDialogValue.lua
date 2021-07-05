@@ -31,14 +31,14 @@ function SelectListDialogValue:MakeListItems(params)
     self._tbl.entry_values = self._tbl.entry_values or params and params.entry_values
     self._tbl.combo_items_func = self._tbl.combo_items_func or params and params.combo_items_func
     self._tbl.values_list_width = self._tbl.values_list_width or params and params.values_list_width or 200
-    self._list_items_menu = self:divgroup("Select or Deselect", {offset = 0, auto_align = false, border_left = false, border_bottom = true})
+    self._list_items_menu = self:divgroup("Select or Deselect", {offset = 0, auto_align = false, border_left = false, border_bottom = true, border_position_below_title = true})
     local tb = self._list_items_menu:GetToolbar()
     if not self._single_select then
-        tb:divider("Order", {w = self._tbl.values_list_width / 3, border_left = false, border_bottom = true})
+        tb:divider("Order", {w = self._tbl.values_list_width / 3, border_left = false})
     end
     if self._tbl.entry_values then
         for _, value in pairs(self._tbl.entry_values) do
-            tb:divider(value.name, {w = self._tbl.values_list_width, border_left = false, border_bottom = true})
+            tb:divider(value.name, {w = self._tbl.values_list_width, border_left = false})
         end
     end
     self.super.MakeListItems(self, params)
