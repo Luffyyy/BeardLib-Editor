@@ -31,14 +31,14 @@ function SelectListDialogValue:MakeListItems(params)
     self._tbl.entry_values = self._tbl.entry_values or params and params.entry_values
     self._tbl.combo_items_func = self._tbl.combo_items_func or params and params.combo_items_func
     self._tbl.values_list_width = self._tbl.values_list_width or params and params.values_list_width or 200
-    self._list_items_menu = self:divgroup("Select or Deselect", {offset = 0, auto_align = false})
+    self._list_items_menu = self:divgroup("Select or Deselect", {offset = 0, auto_align = false, border_left = false, border_bottom = true})
     local tb = self._list_items_menu:GetToolbar()
     if not self._single_select then
-        tb:divider("Order", {w = self._tbl.values_list_width / 3, offset = {1, 0}})
+        tb:divider("Order", {w = self._tbl.values_list_width / 3, border_left = false, border_bottom = true})
     end
     if self._tbl.entry_values then
         for _, value in pairs(self._tbl.entry_values) do
-            tb:divider(value.name, {w = self._tbl.values_list_width, offset = {1, 0}})
+            tb:divider(value.name, {w = self._tbl.values_list_width, border_left = false, border_bottom = true})
         end
     end
     self.super.MakeListItems(self, params)
@@ -98,7 +98,7 @@ function SelectListDialogValue:ToggleClbk(entry, item, no_refresh)
 end
 
 function SelectListDialogValue:ToggleItem(name, selected, entry)
-    local opt = {offset = 4, text_offset_y = 0, align_method = "grid_from_right", entry = entry}
+    local opt = {align_method = "grid_from_right", entry = entry}
     local item
     if self._single_select then
         item = self._list_items_menu:tickbox(name, ClassClbk(self, "ToggleClbk", entry), selected, opt)
@@ -123,11 +123,11 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
         local updown = item:Divider({offset = 0, w =self._tbl.values_list_width/3, enabled = selected, align_method = "centered_grid", entry = entry})
         local max = #self._selected_list
         local entry_i = table.get_key(self._selected_list, entry)
-        updown:tb_imgbtn("Up", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {23, 2, 17, 17}, {up = true, enabled = entry_i and entry_i > 1})
-        updown:tb_imgbtn("Down", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {3, 0, 17, 17}, {enabled = entry_i and entry_i < max})
+        updown:tb_imgbtn("Up", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {32, 0, 32, 32}, {up = true, enabled = entry_i and entry_i > 1, size = item.size*1.2})
+        updown:tb_imgbtn("Down", ClassClbk(self, "ChangeOrder"), "guis/textures/menu_ui_icons", {0, 0, 32, 32}, {enabled = entry_i and entry_i < max, size = item.size*1.2})
     end
 
-    opt = {control_slice = 1, offset = {5, 0}, color = false, free_typing = self._params.combo_free_typing, text_offset_y = 0, w = self._tbl.values_list_width}
+    opt = {control_slice = 1, color = false, free_typing = self._params.combo_free_typing, w = self._tbl.values_list_width-16}
     local values = entry.values
     if self._tbl.entry_values then
         for i, value in pairs(self._tbl.entry_values) do
