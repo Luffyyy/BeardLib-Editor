@@ -9,7 +9,7 @@ function AboutMenu:init()
 		offset = 0,
 		texture = "textures/editor_logo",
 	})
-    local info = self:pan("Info", {w = 512, border_color = BLE.Options:GetValue("AccentColor")})
+    local info = self:pan("Info", {w = 600, border_color = BLE.Options:GetValue("AccentColor")})
     local function link_button(name, url) return info:button(name, SimpleClbk(os.execute, 'start "" "'..url..'"'), {text = name}) end
     local function center_text(text, opt) return info:divider(text, table.merge({color = false, text = text}, opt)) end
     center_text("Created by Luffy and Simon W")
