@@ -55,13 +55,13 @@ function EditorMenu:make_page(name, clbk, opt)
     self._menus[name] = self._menus[name] or self._menu:Menu(table.merge({
         name = name,
         visible = false,
-        private = {offset = {16, 4}},
+        private = {offset = {8, 4}},
         inherit_values = {
             full_bg_color = BLE.Options:GetValue("BoxesBackgroundColor"),
         },
-        h = self._main_menu._panel:h() - 60,
+        h = self._main_menu._panel:h() - 40,
     }, opt or {}))
-    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color})
+    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color, offset = 6})
 
     return self._menus[name]
 end
@@ -73,11 +73,10 @@ function EditorMenu:create_items(menu)
     })
 	self._tabs = self._menu:Holder({
         name = "tabs",
-        size = 24,
         index = 1,
-        private = {offset = {16, 2}},
+        private = {offset = {8, 0}},
         align_method = "grid",
-        h = 30
+        h = 32
 	})
 	ItemExt:add_funcs(self, self._tabs)
     self:tb_imgbtn("Close", ClassClbk(self, "set_enabled", false), nil, BLE.Utils.EditorIcons.cross, {position = "RightOffsety"})
@@ -122,7 +121,7 @@ function EditorMenu:select_page(page)
     for name, m in pairs(self._menus) do
         self._tabs:GetItem(name):SetBorder({bottom = false})
         m:SetVisible(false)
-    end 
+    end
     if not page or self._current_page == page then
         self._current_page = nil
         return
