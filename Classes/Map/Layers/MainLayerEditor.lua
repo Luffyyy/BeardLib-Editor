@@ -35,15 +35,17 @@ function MainLayerEditor:build_menu()
         self._holder:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
 
-    local load_extract = self._holder:divgroup("LoadFromDatabase", {align_method = "grid"})
+    local load_db = self._holder:divgroup("LoadFromDatabase", {align_method = "grid"})
     local load = self._holder:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
 
     local assets = self:GetPart("assets")
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()
         load:s_btn(ext, ClassClbk(self, "open_load_dialog", {ext = ext}), {text = text})
-        load_extract:s_btn(ext, ClassClbk(self, "open_load_dialog", {on_click = ClassClbk(assets, "quick_load_from_db", ext), ext = ext}), {text = text})
+        load_db:s_btn(ext, ClassClbk(self, "open_load_from_db_dialog", {ext = ext}), {text = text})
     end
+    load_db:s_btn("Other", ClassClbk(self, "open_load_any_ext_dialog", ClassClbk(self, "open_load_from_db_dialog")))
+    load:s_btn("Other", ClassClbk(self, "open_load_any_ext_dialog", ClassClbk(self, "open_load_dialog")))
 
     local mng = self._holder:divgroup("Managers", {align_method = "grid", enabled = BeardLib.current_level ~= nil})
     mng:s_btn("Assets", ClassClbk(self:GetPart("assets"), "Show") or nil)
@@ -368,44 +370,21 @@ function MainLayerEditor:CanOpenDialog(name)
     return true
 end
 
--- function MainLayerEditor:open_spawn_unit_dialog(params)
---     if not self:CanOpenDialog("SpawnUnit") then
---         return
---     end
+function MainLayerEditor:open_load_any_ext_dialog(clbk)
+	BLE.ListDialog:Show({
+	    list = table.map_keys(BLE.DBPaths),
+		force = true,
+        callback = function(ext)
+            BLE.ListDialog:Hide()
+            clbk({ext = ext})
+	    end
+	})
+end
 
--- 	params = params or {}
---     local pkgs = self._assets_manager and self._assets_manager:get_level_packages()
--- 	BLE.MSLD:Show({
--- 	    list = BLE.Utils:GetUnits({
--- 			not_loaded = params.not_loaded,
--- 			packages = pkgs,
--- 			slot = params.slot,
--- 			type = params.type,
--- 			not_types = {Idstring("being"), Idstring("brush"), Idstring("wpn"), Idstring("item")},
--- 			not_in_slot = "brushes"
--- 		}),
---         force = true,
---         no_callback = ClassClbk(self, "CloseDialog"),
---         callback = function(unit)
---             self:CloseDialog()
--- 	    	if type(params.on_click) == "function" then
--- 	    		params.on_click(unit)
--- 	    	else
---                 if not self._assets_manager or self._assets_manager:is_asset_loaded("unit", unit) or not params.not_loaded then
---                     if PackageManager:has(Idstring("unit"), unit:id()) then
---                         self:BeginSpawning(unit)
---                     else
---                         BLE.Utils:Notify("Error", "Cannot spawn the unit")
---                     end
---                 else
---                     BLE.Utils:QuickDialog({title = "Well that's annoying..", no = "No", message = "This unit is not loaded and if you want to spawn it you have to load a package for it, search packages for the unit?"}, {{"Yes", function()
---                         self._assets_manager:find_package(unit, "unit", true)
---                     end}})
---                 end
--- 			end
--- 	    end
--- 	})
--- end
+function MainLayerEditor:open_load_from_db_dialog(params)
+    params.on_click = ClassClbk(self:GetPart("assets"), "quick_load_from_db")
+    self:open_load_dialog(params)
+end
 
 function MainLayerEditor:open_load_dialog(params)
     local units = {}
@@ -422,7 +401,7 @@ function MainLayerEditor:open_load_dialog(params)
                 self:CloseDialog()
             end
             if params.on_click then
-                params.on_click(asset)
+                params.on_click(ext, asset)
             else
                 local assets = self:GetPart("assets")
                 assets:find_package(asset, ext, true)

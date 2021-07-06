@@ -50,13 +50,8 @@ end
 
 --At the moment only used to confirm all dependencies are loaded
 function Utils:CheckFile(ext, path)
-	if not Utils.Reading[ext] then
-		self:Log("Extension %s does not have a read function!", ext)
-		return
-    end
-
 	local config = {}
-    if not Utils.Reading[ext](self, path, config, {}) then
+    if Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, {}) then
         return false
     end
     local errors = {}
@@ -98,13 +93,9 @@ end
 
 function Utils:GetDependencies(ext, path, ignore_default, exclude)
     exclude = exclude or {texture = true, model = true, cooked_physics = true, animation = true}
-	if not Utils.Reading[ext] then
-		self:Log("Extension %s does not have a read function!", ext)
-		return
-	end
-
 	local config = {}
-    if not Utils.Reading[ext](self, path, config, exclude) then
+
+	if Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude) then
         return false
 	end
 
