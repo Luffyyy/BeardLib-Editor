@@ -895,7 +895,7 @@ function Editor:update_camera(t, dt)
     local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
     local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
     local rot_new = Rotation(yaw_new, pitch_new, 0)
-    local keep_active = self.parts.opt and self.parts.opt:get_value("KeepMouseActiveWhileFlying")
+    local keep_active = BLE.Options:GetValue("Map/KeepMouseActiveWhileFlying")
     if keep_active then
         if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
             self:mouse_moved(managers.mouse_pointer:world_position())

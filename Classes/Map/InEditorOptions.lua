@@ -1,14 +1,14 @@
 InEditorOptions = InEditorOptions or class(EditorPart)
 local Options = InEditorOptions
 function Options:init(parent, menu)
-    self.super.init(self, parent, menu, "Options")    
+    self.super.init(self, parent, menu, "Options")
     self._wanted_elements = {}
     self._save_callbacks = {}
 end
 
 --TODO: cleanup
 function Options:build_default()
-    local groups_opt = {offset = {8, 4}}
+    local groups_opt = {align_method = "grid"}
 
     local main = self:group("Editor", groups_opt)
     local grid_size = self:Val("GridSize")
@@ -24,42 +24,32 @@ function Options:build_default()
     if not BeardLib.current_level then
         main:textbox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.current_level_id or ""))
     end
-    main:numberbox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Val("AutoSaveMinutes"), {help = "Set the time for auto saving"})
-    main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Val("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
-    main:tickbox("SaveBeforePlayTesting", ClassClbk(self, "update_option_value"), self:Val("SaveBeforePlayTesting"), {help = "Saves your map as soon as you playtest your map"})
-    main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Val("SaveMapFilesInBinary"), {help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
-    main:tickbox("SaveWarningAfterGameStarted", ClassClbk(self, "update_option_value"), self:Val("SaveWarningAfterGameStarted"), {help = "Show a warning message when trying to save after play testing started the heist, where you can allow or disable saving for that session"})
-    main:tickbox("BackupMaps", ClassClbk(self, "update_option_value"), self:Val("BackupMaps"))
-    main:tickbox("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Val("RemoveOldLinks"), {
-        text = "Remove Old Links Of Copied Elements",
-        help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
-    })
-    main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Val("KeepMouseActiveWhileFlying"))
-    main:tickbox("QuickAccessToolbar", ClassClbk(self, "update_option_value"), self:Val("QuickAccessToolbar"))
 
-    local camera = self:group("Camera", groups_opt)
     local cam_speed = self:Val("CameraSpeed")
     local fov = self:Val("CameraFOV")
     local far_clip = self:Val("CameraFarClip")
-    camera:numberbox("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1})
-    camera:numberbox("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
-    camera:numberbox("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
-    camera:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false)
-    camera:numberbox("OrthographicScale", ClassClbk(self._parent, "set_orthographic_scale"), 80)
+    main:numberbox("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1})
+    main:numberbox("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
+    main:numberbox("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
+    local ort = main:numberbox("Orthographic", ClassClbk(self._parent, "set_orthographic_scale"), 80)
+    ort:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {position = function(item)
+        item:SetPositionByString("Center")
+        item:Move(-16)
+    end, size_by_text = true, text = ""})
 
-    local map = self:group("Map", groups_opt)
-    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})
-    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"))
-    map:tickbox("HighlightOccluders", nil, false)
-    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"))
-    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"))
-    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"))
-    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"))
-    map:tickbox("DrawPortals", nil, false)
-    map:numberbox("InstanceIndexSize", ClassClbk(self, "update_option_value"), self:Val("InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
+    local map = self:group("Draw/Show", groups_opt)
+    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units", size_by_text = true})
+    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"), {size_by_text = true})
+    map:tickbox("HighlightOccluders", nil, false, {size_by_text = true})
+    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"), {size_by_text = true})
+    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"), {size_by_text = true})
+    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"), {size_by_text = true})
+    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"), {size_by_text = true})
 
     local raycast = self:group("Raycast/Selecting", groups_opt)
-    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
+    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {
+        text = "Auto Switch To Selection", help = "Automatically switches to the selection menu when selecting something"
+    })
     raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
     raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
@@ -68,27 +58,16 @@ function Options:build_default()
     raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Val("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
     raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Val("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection",
-        control_slice = 0.25,
     })
     raycast:numberbox("RaycastDistance", nil, 200000)
 
-    local mission = self:group("Mission", groups_opt)
-	mission:tickbox("UniqueElementIcons", ClassClbk(self, "update_option_value"), self:Val("UniqueElementIcons"))
-    mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Val("RandomizedElementsColor"))
-    mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
-    mission:slider("ElementsSize", ClassClbk(self, "update_option_value"), self:Val("ElementsSize"), {max = 64, min = 16, floats = 0})
-
     local other = self:group("Other", groups_opt)
-    other:button("General Options", function()
-        BLE.Menu:set_enabled(true)
-    end)
-    other:button("TeleportPlayer", ClassClbk(self, "drop_player"))
-    other:button("LogPosition", ClassClbk(self, "position_debug"))
+    other:s_btn("LogPosition", ClassClbk(self, "position_debug"))
     if BeardLib.current_level then
-        other:button("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
+        other:s_btn("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
     end
-    other:button("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
-    other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false)
+    other:s_btn("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
+    other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false, {size_by_text = true})
 
     self:toggle_autosaving()
 end
@@ -98,7 +77,7 @@ function Options:enable()
     self:bind_opt("SaveMap", ClassClbk(self, "KeySPressed"))
     self:bind_opt("IncreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed"))
     self:bind_opt("DecreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed", true))
-    self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"))
+    self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"), nil, true)
     self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
 end
 
@@ -138,16 +117,12 @@ function Options:update_option_value(item)
     elseif name == "DrawOnlyElementsOfCurrentScript" or name == "ShowElements" then
         self:GetPart("mission"):set_elements_vis()
         self:GetPart("quick"):UpdateToggle(name, value)
-    elseif name == "AutoSave" or name == "AutoSaveMinutes" then
-        self:toggle_autosaving()
     elseif name == "CameraFOV" then
         self._parent:set_camera_fov(value)
     elseif name == "CameraFarClip" then
         self._parent:set_camera_far_range(value)
     elseif name == "SurfaceMove" then
         self._parent:set_use_surface_move(value)
-    elseif name == "QuickAccessToolbar" then
-        self._parent:set_use_quick_access(value)
     end
 end
 
@@ -377,8 +352,8 @@ The editor will now use this format and any old map will need to be converted. C
 end
 
 function Options:toggle_autosaving()
-    if self:get_value("AutoSave") and BeardLib.current_level then
-        self._auto_save = TimerManager:main():time() + (self:get_value("AutoSaveMinutes") * 60)
+    if self:Val("AutoSave") and BeardLib.current_level then
+        self._auto_save = TimerManager:main():time() + (self:Val("AutoSaveMinutes") * 60)
     else
         self._auto_save = nil
     end

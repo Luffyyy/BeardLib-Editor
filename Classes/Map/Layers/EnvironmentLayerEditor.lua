@@ -203,7 +203,7 @@ function EnvLayer:update(t, dt)
 		end
 	end
 
-	if self:Val("EnvironmentUnits") and self._parent._current_layer == "environment" then
+	if self._holder:GetItemValue("EnvironmentUnits") and self._parent._current_layer == "environment" then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
 			if alive(unit) then
@@ -308,7 +308,7 @@ function EnvLayer:build_menu()
 	local spawn = self:GetPart("spawn")
     environment_group:button("SpawnEffect", ClassClbk(spawn, "begin_spawning", self._effect_unit))
     environment_group:button("SpawnEnvironmentArea", ClassClbk(spawn, "begin_spawning", self._environment_area_unit))
-    environment_group:tickbox("EnvironmentUnits", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnits"), {text = "Draw"})
+    environment_group:tickbox("EnvironmentUnits", nil, true, {text = "Draw"})
 
 	local dome_occ = self._holder:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
@@ -745,5 +745,5 @@ function EnvLayer:create_cube_map(selection, type)
 end
 
 function EnvLayer:can_unit_be_selected(unit)
-	return self:Val("EnvironmentUnits")
+	return self._holder:GetItemValue("SoundUnits")
 end

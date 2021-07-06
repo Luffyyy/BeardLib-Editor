@@ -3,22 +3,47 @@ local Options = EditorOptionsMenu
 function Options:init()
 	local O = BLE.Options
 	local EMenu = BLE.Menu
+	local icons =  BLE.Utils.EditorIcons
 	local page = EMenu:make_page("Options", nil, {scrollbar = false})
 	ItemExt:add_funcs(self, page)
-	local w = page:ItemsWidth(2, 6)
+	local w = page:ItemsWidth(2, 0)
 	local h = page:ItemsHeight(2, 6)
 
-	local main = self:divgroup("Main", {w = w / 2, auto_height = false, h = h * 2/5})
+	local main = self:divgroup("Main", {w = w / 2, auto_height = false, h = h * 1/2})
+	main:GetToolbar():tb_imgbtn("ResetMainOptions", ClassClbk(self, "reset_options", main), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset main settings"})
+	main:button("ResetAllOptions", ClassClbk(self, "reset_options", page))
 	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
-	main:slider("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
-	main:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
-	main:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
-	main:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 100, max = 1600})
-	main:slider("QuickAccessToolbarSize", ClassClbk(self, "set_clbk"), O:GetValue("QuickAccessToolbarSize"), {min = 18, max = 38})
-	main:button("ResetOptions", ClassClbk(self, "reset_options", page))
 
-	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 3/5})
-	visual:button("ResetVisualOptions", ClassClbk(self, "reset_options", visual))
+	main:separator()
+	main:numberbox("AutoSaveMinutes", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/AutoSaveMinutes"), {help = "Set the time for auto saving"})
+    main:tickbox("AutoSave", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
+    main:tickbox("SaveBeforePlayTesting", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveBeforePlayTesting"), {help = "Saves your map as soon as you playtest your map"})
+    main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveMapFilesInBinary"), {
+		help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"
+	})
+    main:tickbox("BackupMaps", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/BackupMaps"))
+    main:tickbox("SaveWarningAfterGameStarted", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveWarningAfterGameStarted"), {
+		help = "Show a warning message when trying to save after play testing started the heist, where you can allow or disable saving for that session"
+	})
+	main:separator()
+    main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/KeepMouseActiveWhileFlying"))
+    main:tickbox("QuickAccessToolbar", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/QuickAccessToolbar"))
+	main:tickbox("RemoveOldLinks", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RemoveOldLinks"), {
+        text = "Remove Old Links Of Copied Elements",
+        help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
+    })
+	main:separator()
+
+	main:numberbox("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
+	main:numberbox("InstanceIndexSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
+
+	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 1/2})
+	visual:GetToolbar():tb_imgbtn("ResetVisualOptions", ClassClbk(self, "reset_options", visual), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset visual settings"})
+	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
+	visual:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 100, max = 1600})
+	visual:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
+	visual:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 100, max = 1600})
+	visual:slider("QuickAccessToolbarSize", ClassClbk(self, "set_clbk"), O:GetValue("QuickAccessToolbarSize"), {min = 18, max = 38})
 	visual:colorbox("AccentColor", ClassClbk(self, "set_clbk"), O:GetValue("AccentColor"))
 	visual:colorbox("BackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BackgroundColor"))
 	visual:colorbox("ItemsHighlight", ClassClbk(self, "set_clbk"), O:GetValue("ItemsHighlight"))
@@ -26,11 +51,11 @@ function Options:init()
 	visual:colorbox("BoxesBackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("BoxesBackgroundColor"))
 	visual:colorbox("ToolbarBackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("ToolbarBackgroundColor"))
 	visual:colorbox("ToolbarButtonsColor", ClassClbk(self, "set_clbk"), O:GetValue("ToolbarButtonsColor"))
-	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
-
-	local themes = visual:divgroup("Themes", {align_method = "grid"})
-	themes:s_btn("Dark", ClassClbk(self, "set_theme"), {text = "Dark[Default]"})
-	themes:s_btn("Light", ClassClbk(self, "set_theme"))
+	visual:separator()
+    visual:colorbox("ElementsColor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementsColor"))
+	visual:tickbox("UniqueElementIcons", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/UniqueElementIcons"))
+    visual:tickbox("RandomizedElementsColor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RandomizedElementsColor"))
+    visual:slider("ElementsSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementsSize"), {max = 64, min = 16, floats = 0})
 
 	local input = self:divgroup("Input", {w = w / 2, h = page:ItemsHeight(1, 6), auto_height = false, position = function(item)
 		if alive(main) then
@@ -41,7 +66,8 @@ function Options:init()
 	local function keybind(setting, supports_mouse, text)
 		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse, supports_additional = true})
 	end
-	input:button("ResetInputOptions", ClassClbk(self, "reset_options", input))
+	input:GetToolbar():tb_imgbtn("ResetInputOptions", ClassClbk(self, "reset_options", input), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset input settings"})
+
 	keybind("TeleportToSelection")
 	keybind("CopyUnit")
 	keybind("PasteUnit")
@@ -131,8 +157,16 @@ end
 
 function Options:set_clbk(item)
 	self:set(item.name, NotNil(item:Value(), ""))
-	if item.name == "LevelsColumns" then
-		BLE.LoadLevel:load_levels()
+end
+
+function Options:set_map_clbk(item)
+	local name = item.name
+	local value = item:Value()
+	self:set("Map/"..item.name, NotNil(value, ""))
+	if name == "QuickAccessToolbar" then
+        managers.editor:set_use_quick_access(value)
+	elseif name == "AutoSave" or name == "AutoSaveMinutes" then
+        managers.editor.parts.opt:toggle_autosaving()
 	end
 end
 

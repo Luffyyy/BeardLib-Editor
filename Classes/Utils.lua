@@ -26,7 +26,8 @@ Utils.EditorIcons = {
     select = {64, 0, 32, 32},
     copy = {64, 96, 32, 32},
     paste = {96, 96, 32, 32},
-    round_number = {128, 96, 32, 32}
+    round_number = {128, 96, 32, 32},
+    reset_settings = {64, 64, 32, 32}
 }
 
 Utils.ElementIcons = {

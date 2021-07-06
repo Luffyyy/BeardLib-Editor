@@ -88,6 +88,9 @@ end
 function PortalLayer:build_menu()
 
     local h = self._holder:ItemsHeight(4) / 4
+	local opt = self:GetPart("opt")
+
+    self._holder:tickbox("DrawPortals", nil, true)
     local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
     local shapes = self._holder:group("Shapes", {h = h, auto_height = false})
@@ -121,15 +124,17 @@ end
 
 function PortalLayer:update(t, dt)
     local portal = self._selected_portal
-    if portal then
-        for unit_id in pairs(portal._ids) do  
-            local unit = managers.worlddefinition:get_unit(unit_id)
-            if alive(unit) then
-                Application:draw(unit, 1, 0, 0)
+    if self._holder:GetItemValue("DrawPortals") then
+        if portal then
+            for unit_id in pairs(portal._ids) do  
+                local unit = managers.worlddefinition:get_unit(unit_id)
+                if alive(unit) then
+                    Application:draw(unit, 1, 0, 0)
+                end
             end
-        end
-        for _, shape in pairs(portal._shapes) do
-            shape:draw(t, dt, 1, self._selected_shape == shape and 0 or 1,1)
+            for _, shape in pairs(portal._shapes) do
+                shape:draw(t, dt, 1, self._selected_shape == shape and 0 or 1,1)
+            end
         end
     end
     for _, unit in pairs(self._created_units) do
