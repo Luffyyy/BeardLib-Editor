@@ -16,7 +16,7 @@ local ComboBox = C.ComboBox
 ComboBox.set_value = ComboBox.SetSelectedItem
 ComboBox.get_value = ComboBox.SelectedItem
 
-local color
+local COLOR = BLE.Options:GetValue("AccentColor")
 ItemExt = {}
 ItemExt.get_value = Item.Value
 ItemExt.set_value = Item.SetValue
@@ -25,6 +25,7 @@ ItemExt.set_visible = Item.SetVisible
 
 ItemExt.DEFAULT_OFFSET = {BLE.Options:GetValue("BoxesXOffset"), BLE.Options:GetValue("BoxesYOffset")}
 ItemExt.ITEMS_OFFSET = {BLE.Options:GetValue("ItemsXOffset"), BLE.Options:GetValue("ItemsYOffset")}
+local SIZE = BLE.Options:GetValue("MapEditorFontSize")
 
 function ItemExt:get_boxes_offset()
 	return clone(self.DEFAULT_OFFSET)
@@ -138,8 +139,7 @@ function ItemExt:ulbl(name, o)
 end
 
 function ItemExt:divider(name, o)
-	color = color or BLE.Options:GetValue("AccentColor")
-	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = color, offset = {8, 4}}, o))
+	return self:Divider(table.merge({name = name, text = string.pretty2(name), color = COLOR, offset = {8, 4}}, o))
 end
 
 function ItemExt:img(name, o)
@@ -147,27 +147,26 @@ function ItemExt:img(name, o)
 end
 
 function ItemExt:separator(o)
-	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Divider(table.merge({
 		name = "div", text = o and o.text or "", h = (not o or not o.text) and 2 or nil, size_by_text = false, border_bottom = true, border_color = self.foreground:with_alpha(0.1)
 	}, o))
 end
 
 function ItemExt:group(name, o)
-	color = color or BLE.Options:GetValue("AccentColor")
 	return self:Group(table.merge({
-		color = color,
+		color = COLOR,
 		name = name,
 		text = string.pretty2(name),
 		offset = self:get_boxes_offset(),
 		closed = self.saved_group_states and self.saved_group_states[name] or false,
 		inherit_values = {
+			size = SIZE,
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
 			offset = self:get_items_offset()
 		},
 		private = {
-			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
-			background_color = color:with_alpha(0.15), highlight_color = color:with_alpha(0.15)
+			size = SIZE,
+			background_color = COLOR:with_alpha(0.15), highlight_color = COLOR:with_alpha(0.15)
 		},
 		on_group_toggled = function(item)
 			self.saved_group_states = self.saved_group_states or {}
@@ -177,8 +176,7 @@ function ItemExt:group(name, o)
 end
 
 function ItemExt:notebook(name, o)
-	color = color or BLE.Options:GetValue("AccentColor")
-	return self:NoteBook(table.merge({color = color, name = name, text = string.pretty2(name)}, o))
+	return self:NoteBook(table.merge({color = COLOR, name = name, text = string.pretty2(name)}, o))
 end
 
 function ItemExt:popup(name, o)
@@ -196,16 +194,18 @@ function ItemExt:holder(name, o)
 end
 
 function ItemExt:divgroup(name, o)
-	color = color or BLE.Options:GetValue("AccentColor")
 	return self:DivGroup(table.merge({
 		name = name,
-		color = color,
+		color = COLOR,
 		offset = self:get_boxes_offset(),
 		private = {
-			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
-			background_color = color:with_alpha(0.2),
+			size = SIZE * 1.2,
+			background_color = COLOR:with_alpha(0.2),
 		},
-		inherit_values = {offset = self:get_items_offset()},
+		inherit_values = {
+			offset = self:get_items_offset(),
+			size = SIZE,
+		},
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
