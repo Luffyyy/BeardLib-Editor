@@ -32,6 +32,8 @@ function ProjectManager:init()
     tb.inherit_values = {
         text_align = "center",
         size_by_text = false,
+        offset = 8,
+        text_offset = {8, 2},
         w = 100,
         border_bottom = true
     }
