@@ -12,8 +12,10 @@ end
 function MainLayerEditor:build_menu()
     self._holder:ClearItems()
 
-    self._hint = self._holder:info("hint", {button_type = true})
-    self:random_hint()
+    if BLE.Options:GetValue("Map/ShowHints") then
+        self._hint = self._holder:info("hint")
+        self:random_hint()
+    end
 
     if not BeardLib.current_level then
         local s = "Preview mode"

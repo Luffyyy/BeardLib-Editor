@@ -28,6 +28,7 @@ function Options:init()
 	main:separator()
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/KeepMouseActiveWhileFlying"))
     main:tickbox("QuickAccessToolbar", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/QuickAccessToolbar"))
+    main:tickbox("ShowHints", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ShowHints"), {help = "Shows hints in the main tab of the world menu"})
 	main:tickbox("RemoveOldLinks", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RemoveOldLinks"), {
         text = "Remove Old Links Of Copied Elements",
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
