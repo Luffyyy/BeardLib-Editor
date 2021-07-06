@@ -106,13 +106,13 @@ function EnvEditor:build_default()
 
     -- TEXTURES
     local textures = self:group("Underlay / Textures", {control_slice = 0.5})
-    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, text = "Underlay", check = function(entry) 
+    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, text = "Underlay",  check = function(entry) 
         return not (entry:match("core/levels") or entry:match("levels/zone")) 
     end}))
     self:add_sky_param(textures:pathbox("sky_texture", nil, "", "texture", {not_close = true, text = "Sky Texture"}))
     self:add_sky_param(textures:pathbox("global_texture", nil, "", "texture", {not_close = true, text = "Cubemap"}))
-    self:add_sky_param(textures:pathbox("global_world_overlay_texture", nil, "", "texture", {not_close = true, text = "World overlay texture"}))
-    self:add_sky_param(textures:pathbox("global_world_overlay_mask_texture", nil, "", "texture", {not_close = true, text = "World overlay mask"}))
+    self:add_sky_param(textures:pathbox("global_world_overlay_texture", nil, "", "texture", {not_close = true, text = "World Overlay Texture", control_slice = 0.55}))
+    self:add_sky_param(textures:pathbox("global_world_overlay_mask_texture", nil, "", "texture", {not_close = true, text = "World Overlay Mask", control_slice = 0.55}))
 
     -- SHADOWS
     local shadows = self:group("Shadows", {control_slice = 0.5})
