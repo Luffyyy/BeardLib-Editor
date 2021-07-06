@@ -19,7 +19,6 @@ function Part:init(parent, menu, name, opt, mopt)
     self._menu = menu:DivGroup(table.merge({
         name = name,
         text = string.pretty2(name),
-        control_slice = 0.5,
         inherit_values = {
             full_bg_color = boxes_color,
         },
