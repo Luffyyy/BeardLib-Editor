@@ -270,7 +270,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 	local tb = self:textbox(name, callback, value, table.merge({
 		text = string.pretty2(name),
 		textbox_font_size = self.size * 0.75,
-		control_slice = 0.75,
+		control_slice = 0.65,
 		textbox_offset = 36
 	}, o))
 	tb:tb_imgbtn("Browse", function()
