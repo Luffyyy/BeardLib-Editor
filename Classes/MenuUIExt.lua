@@ -267,24 +267,14 @@ local function check_slot(slot, unit)
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
-	o = o or {}
-	local p = self:pan(name, table.merge({full_bg_color = false, align_method = "grid", text = o.text or string.pretty2(name)}, o))
-	local o2 = {}
-	o2.control_slice = p.control_slice or 0.7
-	p.on_callback = callback
-	o2.text = p.text
-	local t = p:textbox("path", function()
-		p:RunCallback()
-	end, value, o)
-	if p.disable_input then
-		t.divider_type = true
-	end
-	o2.text = "Browse " .. tostring(typ).."s"
-	o2.offset = {p.offset[1] * 4, p.offset[2]}
-	o2.on_callback = nil
-	o2.on_callback = p.btn_callback
-	p:button("select_button", function()
-		local list = p.custom_list or BLE.Utils:GetEntries({
+	local tb = self:textbox(name, callback, value, table.merge({
+		text = string.pretty2(name),
+		textbox_font_size = self.size * 0.75,
+		control_slice = 0.68,
+		textbox_offset = 36
+	}, o))
+	tb:tb_imgbtn("Browse", function()
+		local list = o.custom_list or BLE.Utils:GetEntries({
 			type = typ, loaded = false, filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
@@ -298,23 +288,23 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 				if not assets:is_asset_loaded(typ, path) then
 					assets:quick_load_from_db(typ, path)
 				end
-				p:SetValue(path, true)
+				tb:SetValue(path, true)
 				if not o.not_close then
 					BLE.ListDialog:Hide()
 				end
 			end
 		})
-	end, o2)
-	function p:SetValue(val, run_callback)
-		t:SetValue(val, false)
-		if run_callback then
-			self:RunCallback()
+	end, nil, BLE.Utils.EditorIcons.plus, {
+		help = "Browse " .. tostring(typ).."s",
+		size = self.size,
+		offset = 0,
+		img_scale = 1,
+		position = function(item)
+			item:SetPositionByString("RightCentery")
+			item:Move(-6)
 		end
-	end
-	function p:Value()
-		return t:Value()
-	end
-	return p
+	})
+	return tb
 end
 
 function ItemExt:CopyAxis(item)

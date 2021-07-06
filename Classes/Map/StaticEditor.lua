@@ -314,7 +314,7 @@ function Static:build_unit_main_values()
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
     end
 
-    main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {control_slice = 0.75, check = function(unit)
+    main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {check = function(unit)
         for _, bad in pairs(UnitSpawnList.BLACKLIST) do
             if unit:match(bad) then
                 return false
