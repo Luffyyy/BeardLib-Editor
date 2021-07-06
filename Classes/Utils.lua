@@ -30,7 +30,18 @@ Utils.EditorIcons = {
     reset_settings = {64, 64, 32, 32},
     dots = {128, 128, 32, 32},
     list = {128, 64, 32, 32},
-    browse_file = {128, 32, 32, 32}
+    browse_file = {128, 32, 32, 32},
+    grid = {466, 18, 28, 28},
+    snap_rotation = {416, 18, 32, 32},
+    ignore_raycast = {451, 115, 42, 42},
+    show_elements = {464, 64, 32, 32},
+    editor_units = {416, 64, 32, 32},
+    rotation_widget = {0, 128, 64, 64},
+    move_widget = {64, 128, 64, 64},
+    teleport = {368, 16, 32, 32},
+    teleport_selection = {368, 64, 32, 32},
+    local_transform = {390, 118, 36, 36},
+    global_transform = {336, 112, 32, 32}
 }
 
 Utils.ElementIcons = {
