@@ -71,7 +71,7 @@ function SearchList:do_show(no_clear)
     local perapge = self.PER_PAGE
     local pages = math.ceil(table.size(self._filtered) / perapge)
     local page = self._page
-    local pagination = BeardLib.Utils:MakePagination(page, pages, 2)
+    local pagination = BeardLib.Utils:MakePagination(page, pages, self._parent._holder:W() < 350 and 1 or 2)
 
     local h = self._pages_panel:ItemsHeight(1)
     local icons = BLE.Utils.EditorIcons
