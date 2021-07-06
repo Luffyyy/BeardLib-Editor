@@ -292,15 +292,14 @@ function EditorLaserTrigger:set_edit_points(item)
 end
 
 function EditorLaserTrigger:fill_connections_box()
-	self._connections_box:ClearItems()
-	self._connections_box:button("Deselect", ClassClbk(self, "select_connection"))
+	local items = {"None"}
 	for i, connection in ipairs(self._element.values.connections) do
-		self._connections_box:button("Connection #" .. tostring(i), ClassClbk(self, "select_connection"), {selected_index = i})
+		table.insert(items, {text = "Connection #" .. tostring(i), value = i})
 	end
+	self._connections_box:SetItems(items)
 end
 
 function EditorLaserTrigger:set_connection_from_position(item)
-	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local from = self._element.values.points[connection.from]
 	from.pos = self:GetItemValue("FromPosition")
@@ -309,7 +308,6 @@ function EditorLaserTrigger:set_connection_from_position(item)
 end
 
 function EditorLaserTrigger:set_connection_to_position(item)
-	local static = self:GetPart("static")
 	local connection = self._element.values.connections[self._selected_connection]
 	local to = self._element.values.points[connection.to]
 	to.pos = self:GetItemValue("ToPosition")
@@ -318,8 +316,8 @@ function EditorLaserTrigger:set_connection_to_position(item)
 end
 
 function EditorLaserTrigger:update_selection(item)
-	local static = self:GetPart("static")
 	self._selected_connection_box:ClearItems()
+	self._selected_connection_box:SetVisible(self._selected_connection ~= nil)
 	if self._selected_connection then
 		local connection = self._element.values.connections[self._selected_connection]
 		local from = self._element.values.points[connection.from]
@@ -327,10 +325,11 @@ function EditorLaserTrigger:update_selection(item)
 		self._selected_connection_box:Vec3Rot("From", ClassClbk(self, "set_connection_from_position"), from.pos, from.rot, {use_gridsnap_step = true})
 		self._selected_connection_box:Vec3Rot("To", ClassClbk(self, "set_connection_to_position"), to.pos, to.rot, {use_gridsnap_step = true})
 	end
+	self._holder:AlignItems(true)
 end
 
 function EditorLaserTrigger:select_connection(item)
-	local selected_index = item.selected_index
+	local selected_index = item:SelectedItem().value
 	if not selected_index then
 		self._selected_connection = nil
 		self:update_selection()
@@ -342,19 +341,20 @@ end
 
 function EditorLaserTrigger:_build_panel()
 	self:_create_panel()
-	self:Text("Editing points:\nLMB to create/remove/place a point\nRMB to connect points\nMMB to move an existing point")
+	self:Info("Editing points:\nLMB to create/remove/place a point\nRMB to connect points\nMMB to move an existing point")
 	self._class_group:tickbox("EditPoints", ClassClbk(self, "set_edit_points"), false)
-	self._connections_box = self._class_group:group("Connections", {max_h = 400, scrollbar = true})
-	self._selected_connection_box = self._class_group:group("SelectedConnection")
-	self:NumberCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval"})
-	self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type"})
-	self:ComboCtrl("color", {"red","green","blue"})
- 	self:ComboCtrl("cycle_type", {"flow", "pop"})
-	self:BooleanCtrl("visual_only")
-	self:BooleanCtrl("skip_dummies")
-	self:BooleanCtrl("flicker_remove", {help = "Will flicker the lasers when removed"})
-	self:NumberCtrl("cycle_interval", {floats = 2, min = 0, help = "Set the check cycle interval for the laser, in seconds (0 == disabled)"})
-	self:NumberCtrl("cycle_active_amount", {floats = 0, min = 1, help = "Defines how many are active during cycle"})
- 	self:BooleanCtrl("cycle_random")
+	self._connections_box = self._class_group:combobox("SelectedConnection", ClassClbk(self, "select_connection"), {"None"}, 1)
+	self._selected_connection_box = self._class_group:group("SelectedConnection", {visible = false})
+	local options = self._class_group:group("Options")
+	self:NumberCtrl("interval", {floats = 2, min = 0.01, help = "Set the check interval for the laser, in seconds", text = "Check interval", group = options})
+	self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type", group = options})
+	self:ComboCtrl("color", {"red","green","blue"}, {group = options})
+ 	self:ComboCtrl("cycle_type", {"flow", "pop"}, {group = options})
+	self:BooleanCtrl("flicker_remove", {help = "Will flicker the lasers when removed", group = options})
+	self:NumberCtrl("cycle_interval", {floats = 2, min = 0, help = "Set the check cycle interval for the laser, in seconds (0 == disabled)", group = options})
+	self:NumberCtrl("cycle_active_amount", {floats = 0, min = 1, help = "Defines how many are active during cycle", group = options})
+	self:BooleanCtrl("visual_only", {group = options})
+	self:BooleanCtrl("skip_dummies", {group = options})
+	self:BooleanCtrl("cycle_random", {group = options})
 	self:fill_connections_box()
 end
