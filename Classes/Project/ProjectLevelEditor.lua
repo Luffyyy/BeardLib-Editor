@@ -43,8 +43,8 @@ function ProjectLevelEditor:build_menu(menu, data)
     menu:combobox("AiGroupType", up, aitype, table.get_key(aitype, data.ai_group_type) or 1)
 
     local styles = table.map_keys(tweak_data.scene_poses.player_style)
-    menu:combobox("PlayerStyle", up, styles, table.get_key(styles, data.player_style or "generic"), {
-        help = "Set the player style for the map, make sure the packages for the suits are loaded!"
+    menu:combobox("PlayerStyle", up, styles, table.get_key(styles, data.player_style or "generic") or data.player_style, {
+        help = "Set the player style for the map, make sure the packages for the suits are loaded!", free_typing = true
     })
     menu:tickbox("TeamAiOff", up, data.team_ai_off)
     menu:tickbox("RetainBags", up, data.repossess_bags)
