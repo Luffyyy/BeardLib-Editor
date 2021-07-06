@@ -17,25 +17,26 @@ function QuickAccess:init(parent, menu)
         private = {offset = 0}
     })
 
+    local icons = BLE.Utils.EditorIcons
     self._values = {
-        {name = "SnapRotation", rect = {416, 18, 32, 32}, w = 2, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
-        {name = "GridSize", rect = {466, 18, 28, 28}, w = 3, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
+        {name = "SnapRotation", rect = icons.snap_rotation, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
+        {name = "GridSize", rect = icons.grid, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
     }
 
     self._toggles = {
-        {name = "IgnoreFirstRaycast", rect = {451, 115, 42, 42}, help = "Ignore First Raycast"},
-        {name = "ShowElements", rect = {464, 64, 32, 32}, help = "Show Elements"},
-        {name = "EditorUnits", rect = {416, 64, 32, 32}, help = "Draw editor units"},
-        {name = "rotation_widget_toggle", rect = {0, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "rotation"), help = "Toggle Rotation Widget", enabled = normal and self._parent._has_fix},
-        {name = "move_widget_toggle", rect = {64, 128, 64, 64}, callback = ClassClbk(self, "toggle_widget", "move"), help = "Toggle Move Widget", enabled = normal and self._parent._has_fix}
+        {name = "IgnoreFirstRaycast", rect = icons.ignore_raycast, help = "Ignore First Raycast"},
+        {name = "ShowElements", rect = icons.show_elements, help = "Show Elements"},
+        {name = "EditorUnits", rect = icons.editor_units, help = "Draw editor units"},
+        {name = "rotation_widget_toggle", rect = icons.rotation_widget, callback = ClassClbk(self, "toggle_widget", "rotation"), help = "Toggle Rotation Widget", enabled = normal and self._parent._has_fix},
+        {name = "move_widget_toggle", rect = icons.move_widget, callback = ClassClbk(self, "toggle_widget", "move"), help = "Toggle Move Widget", enabled = normal and self._parent._has_fix}
     }
 
     self._buttons = {
-        {name = "GeneralOptions", rect = {321, 449, 62, 62}, callback = "open_options", help = "General Options"},
-        {name = "Deselect", rect = {99, 3, 26, 26}, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
-        {name = "TeleportPlayer", rect = {368, 16, 32, 32}, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
-        {name = "TeleportToSelection", rect = {368, 64, 32, 32}, callback = "to_selection", help = "Teleport Camera To Selection", enabled = normal and self._parent._has_fix},
-        {name = "LocalTransform", rect = {390, 118, 36, 36}, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
+        {name = "GeneralOptions", rect = icons.settings_gear, callback = "open_options", help = "General Options"},
+        {name = "Deselect", rect = icons.cross_box, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
+        {name = "TeleportPlayer", rect = icons.teleport, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
+        {name = "TeleportToSelection", rect = icons.teleport_selection, callback = "to_selection", help = "Teleport Camera To Selection", enabled = normal and self._parent._has_fix},
+        {name = "LocalTransform", rect = icons.local_transform, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
 
     local opt = {size = size, h = size, offset = 0, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = align_method}
@@ -168,7 +169,7 @@ end
 function QuickAccess:update_local_move(val)
     local buttonItem = self._menu:GetItem("LocalTransform")
 
-    local rect = val and {390, 118, 36, 36} or {336, 112, 32, 32}
+    local rect = val and BLE.Utils.EditorIcons.local_transform or BLE.Utils.EditorIcons.global_transform
     buttonItem.img:set_image("textures/editor_icons_df", unpack(rect))
     buttonItem:SetHelp((val and "Local" or "Global") .. " Transform Orientation")
 end
