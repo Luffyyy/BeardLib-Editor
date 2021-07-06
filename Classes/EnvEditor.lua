@@ -14,7 +14,7 @@ function EnvEditor:init(parent, menu)
     self._reported_data_path_map = {}
     self._shadow_blocks = {}
     self._shadow_params = {}
-    self.super.init(self, parent, menu, "Environment", {items_size = 16, control_slice = 0.6, offset = 1, use_alpha = false})
+    self.super.init(self, parent, menu, "Environment", {control_slice = 0.6, offset = 1, use_alpha = false})
 end
 
 function EnvEditor:load_included_environments()

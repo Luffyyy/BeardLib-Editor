@@ -1129,7 +1129,6 @@ function Static:build_links(id, match, element)
     local function create_link(text, id, group, clbk)
         group:button(id, clbk, {
             text = text,
-            font_size = 14,
             label = "elements"
         })
     end
