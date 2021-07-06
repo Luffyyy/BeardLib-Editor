@@ -94,7 +94,7 @@ function MissionScriptEditor:_create_panel()
 
 	local SE = self:GetPart("static")
 	SE:show_help(ClassClbk(self, "open_wiki"))
-	self._main_group = self._holder:group("Main")
+	self._main_group = self._holder:group("Main", {align_method = "grid"})
 	local quick_buttons = self._holder:group("QuickActions", {align_method = "grid"})
 	local transform = self._holder:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
@@ -127,8 +127,8 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
- 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
-    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
+ 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group, size_by_text = true})
+    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group, size_by_text = true})
 	local on_exec = {values = {{name = "Delay", key = "delay"}}, key = "id", orig = {id = 0, delay = 0}}
 	if self.ON_EXECUTED_ALTERNATIVES then
 		on_exec.orig.alternative = "none"
