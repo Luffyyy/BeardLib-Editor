@@ -58,57 +58,65 @@ function SelectSearchList:select_all_visible()
     self._select_all = nil
 end
 
+function SelectSearchList:add_object(object)
+    if self:insert_object(object) then
+        self:sort_items()
+        self:do_show()
+    end
+end
 ------------------------------------- Units -------------------------------------------
 
 UnitSelectList = UnitSelectList or class(SelectSearchList)
 function UnitSelectList:do_search_list()
     for _, unit in pairs(World:find_units_quick("disabled", "all")) do
-        local ud = unit:unit_data()
-        if ud and self:check_search(ud.name_id, unit) then
-            self:insert_item_to_filtered_list({name = ud.name_id, object = unit, unit = unit})
-        end
+        self:insert_object(unit)
     end
 end
 
-function UnitSelectList:check_search(check, unit)
+function UnitSelectList:insert_object(unit)
     local ud = unit:unit_data()
     if not ud then
         return false
     end
-    local ok = ud.name and not ud.instance and (unit:enabled() or (ud.name_id and ud.continent))
-    return ok and UnitSelectList.super.check_search(self, check)
+
+    local text = ud.name_id .. " [" .. ud.unit_id .."]"
+
+    if ud.name and not ud.instance and (unit:enabled() or (ud.name_id and ud.continent)) then
+        if self:check_search(text, unit) then
+            self:insert_item_to_filtered_list({name = text, object = unit, unit = unit})
+            return true
+        end
+    end
+    return false
 end
 
 function UnitSelectList:on_click_item(item)
     managers.editor:select_unit(item.object, self._select_all)
-end
-
-function UnitSelectList:add_object(unit)
-    local ud = unit:unit_data()
-    if ud and self:check_search(ud.name, unit) then
-        self:insert_item_to_filtered_list({name = ud.name_id, object = unit, unit = unit})
-        self:sort_items()
-        self:do_show()
-    end
 end
 ------------------------------------- Elements -------------------------------------------
 
 ElementSelectList = ElementSelectList or class(SelectSearchList)
 
 function ElementSelectList:do_search_list()
-    local mission = self:GetPart("mission")
     for _, script in pairs(managers.mission._missions) do
         for _, tbl in pairs(script) do
             if tbl.elements then
                 for _, element in pairs(tbl.elements) do
-                    local name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]"
-                    if self:check_search(name) then
-                        self:insert_item_to_filtered_list({name = name, object = element.id, element = element, unit = mission:get_element_unit(element.id)})
-                    end
+                    self:insert_object(element)
                 end
             end
         end
     end
+end
+
+function ElementSelectList:insert_object(element)
+    local mission = self:GetPart("mission")
+    local name = tostring(element.editor_name) .. " - " .. tostring(element.class:gsub("Element", "")) .. " [" .. tostring(element.id) .. "]"
+    if self:check_search(name) then
+        self:insert_item_to_filtered_list({name = name, object = element.id, element = element, unit = mission:get_element_unit(element.id)})
+        return true
+    end
+    return false
 end
 
 function ElementSelectList:on_click_item(item)
@@ -122,25 +130,13 @@ function ElementSelectList:create_list_item(item)
     })
 end
 
-function ElementSelectList:add_object(element)
-    local name = tostring(element.editor_name) .. " [" .. tostring(element.id) .."]"
-    if self:check_search(name) then
-        self:insert_item_to_filtered_list({name = name, object = element.id, element = element, unit = self:GetPart("mission"):get_element_unit(element.id)})
-        self:sort_items()
-        self:do_show()
-    end
-end
-
 ------------------------------------- Instances -------------------------------------------
 
 InstanceSelectList = InstanceSelectList or class(SelectSearchList)
 
 function InstanceSelectList:do_search_list()
     for _, name in pairs(managers.world_instance:instance_names()) do
-        if self:check_search(name) then
-            local folder = managers.world_instance:get_instance_data_by_name(name).folder:gsub("levels/instances/", "")
-            self:insert_item_to_filtered_list({name = name.. "("..folder..")", object = name})
-        end
+        self:insert_object(name)
     end
 end
 
@@ -148,13 +144,13 @@ function InstanceSelectList:on_click_item(item)
     managers.editor:select_unit(FakeObject:new(managers.world_instance:get_instance_data_by_name(item.object), {instance = true}), self._select_all)
 end
 
-function InstanceSelectList:add_object(name)
-    local folder = managers.world_instance:get_instance_data_by_name(name).folder:gsub("levels/instances/", "")
+function InstanceSelectList:insert_object(name)
     if self:check_search(name) then
+        local folder = managers.world_instance:get_instance_data_by_name(name).folder:gsub("levels/instances/", "")
         self:insert_item_to_filtered_list({name = name.. "("..folder..")", object = name})
-        self:sort_items()
-        self:do_show()
+        return true
     end
+    return false
 end
 
 function InstanceSelectList:set_selected_objects()
