@@ -885,7 +885,7 @@ function Editor:update_camera(t, dt)
     local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
     if self._orthographic then
         self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
-        self.parts.opt:GetItem("OrthographicScale"):SetValue(self._mul)
+        self.parts.opt:GetItem("Orthographic"):SetValue(self._mul)
         self:set_orthographic_screen()
     else
         move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
