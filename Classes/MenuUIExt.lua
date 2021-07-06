@@ -236,13 +236,13 @@ function ItemExt:colorbox(name, callback, value, o)
 end
 
 function ItemExt:alert(text, color)
-	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 4, 28, 4}, border_color = color or Color.yellow, border_lock_height = false})
+	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, highlight_color = self.full_bg_color, text_offset = {4, 4, 32, 4}, border_color = color or Color.yellow, border_lock_height = false})
 	div:tb_imgbtn("Alert", nil, nil, BLE.Utils.EditorIcons.alert, {divider_type = true, img_scale = 0.8, w = 24, h = 24})
 	return div
 end
 
 function ItemExt:info(text, color)
-	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, text_offset = {4, 4, 28, 4}, border_lock_height = false})
+	local div = self:lbl(text, {color = true, private = {background_color = self.full_bg_color}, highlight_color = self.full_bg_color, text_offset = {4, 4, 32, 4}, border_lock_height = false})
 	div:tb_imgbtn("Info", nil, nil, BLE.Utils.EditorIcons.help, {divider_type = true, img_scale = 0.8, w = 24, h = 24})
 	return div
 end
