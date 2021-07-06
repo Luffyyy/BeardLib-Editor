@@ -8,7 +8,7 @@ end
 
 --TODO: cleanup
 function Options:build_default()
-    local groups_opt = {align_method = "grid"}
+    local groups_opt = {align_method = "grid", control_slice = 0.5}
 
     local main = self:group("Editor", groups_opt)
     local grid_size = self:Val("GridSize")
