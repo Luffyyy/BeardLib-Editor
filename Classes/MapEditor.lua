@@ -629,10 +629,11 @@ function Editor:destroy()
         World:delete_unit(self._move_widget._widget)
         World:delete_unit(self._rotate_widget._widget)
     end
+    local menu_vis = self._editor_menu:Visible()
     self._menu:Destroy()
     local selected_units = self:selected_units()
     return {
-        enabled = self._enabled,
+        enabled = menu_vis,
         last_menu = self._current_menu_name,
         selected_units = #selected_units > 0 and selected_units or nil,
         mission_units = self.parts.mission:units(),

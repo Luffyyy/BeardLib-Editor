@@ -12,6 +12,7 @@ function Options:init()
 	local main = self:divgroup("Main", {w = w / 2, auto_height = false, h = h * 1/2})
 	main:GetToolbar():tb_imgbtn("ResetMainOptions", ClassClbk(self, "reset_options", main), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset main settings"})
 	main:button("ResetAllOptions", ClassClbk(self, "reset_options", page))
+	main:button("ReloadEditor", ClassClbk(self, "reload"), {help = "A reload button if you wish to see your changes in effect faster. Pleae don't use this when actually working on a project."})
 	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
 
 	main:separator()
@@ -178,4 +179,10 @@ end
 function Options:set(option, value)
 	BLE.Options:SetValue(option, value)
 	BLE.Options:Save()
+end
+
+function Options:reload()
+	BeardLib:AddDelayedCall("SettingsReloadBLE", 0.1, function()
+		BLE:MapEditorCodeReload()
+	end)
 end

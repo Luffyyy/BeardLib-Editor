@@ -43,6 +43,7 @@ function EditorMenu:Load(data)
 end
 
 function EditorMenu:Destroy()
+    BeardLib.managers.dialog:CloseDialog(self)
     self._main_menu:Destroy()
     return {last_page = self._current_page, opened = self._enabled}
 end
