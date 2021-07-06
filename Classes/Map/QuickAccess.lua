@@ -179,6 +179,9 @@ function QuickAccess:toggle_local_move() self._parent:toggle_local_move() end
 function QuickAccess:deselect_unit() BLE.Utils:GetPart("static"):deselect_unit() end
 function QuickAccess:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function QuickAccess:to_selection() return BLE.Utils:GetPart("static"):KeyFPressed() end
-function QuickAccess:open_options() BLE.Menu:set_enabled(true) end
+function QuickAccess:open_options()
+    BLE.Menu:select_page("options")
+    BLE.Menu:set_enabled(true)
+end
 function QuickAccess:enabled() return self:value("QuickAccessToolbar") end
 function QuickAccess:value(n) return BLE.Options:GetValue("Map/" .. n, "Value") end

@@ -52,7 +52,8 @@ function EditorMenu:make_page(name, clbk, opt)
     if opt then
         opt.index = nil
     end
-    self._menus[name] = self._menus[name] or self._menu:Menu(table.merge({
+    local name_lower = name:lower()
+    self._menus[name_lower] = self._menus[name_lower] or self._menu:Menu(table.merge({
         name = name,
         visible = false,
         private = {offset = {8, 4}},
@@ -61,9 +62,9 @@ function EditorMenu:make_page(name, clbk, opt)
         },
         h = self._main_menu._panel:h() - 40,
     }, opt or {}))
-    self:s_btn(name, clbk or ClassClbk(self, "select_page", name), {index = index, highlight_color = self._menus[name].highlight_color, offset = 6})
+    self:s_btn(name_lower, clbk or ClassClbk(self, "select_page", name), {index = index, text = name, highlight_color = self._menus[name_lower].highlight_color, offset = 6})
 
-    return self._menus[name]
+    return self._menus[name_lower]
 end
 
 function EditorMenu:create_items(menu)
@@ -118,6 +119,7 @@ function EditorMenu:set_enabled(enabled)
 end
 
 function EditorMenu:select_page(page)
+    page = page:lower()
     for name, m in pairs(self._menus) do
         self._tabs:GetItem(name):SetBorder({bottom = false})
         m:SetVisible(false)
