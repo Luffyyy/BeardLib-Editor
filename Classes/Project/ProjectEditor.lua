@@ -20,7 +20,7 @@ function ProjectEditor:init(parent, mod, previous_project_data)
 
     BLE.MapProject:set_edit_title(data.name)
     local w = parent:ItemsWidth(2)
-    local h = parent:ItemsHeight(1)
+    local h = parent:ItemsHeight(1, ItemExt:get_boxes_offset()[2])
     local menu = parent:pan("CurrEditing", {
         w = w * 2/7,
         auto_height = false,
