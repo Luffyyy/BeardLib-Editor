@@ -120,13 +120,12 @@ end
 
 function EditorMenu:select_page(page)
     page = page:lower()
+    if not page or self._current_page == page then
+        return
+    end
     for name, m in pairs(self._menus) do
         self._tabs:GetItem(name):SetBorder({bottom = false})
         m:SetVisible(false)
-    end
-    if not page or self._current_page == page then
-        self._current_page = nil
-        return
     end
     self._current_page = page
     self._tabs:GetItem(page):SetBorder({bottom = true})
