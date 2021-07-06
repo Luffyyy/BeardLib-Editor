@@ -870,7 +870,6 @@ end
 
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
-    
     local shft = shift()
     local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
     if not move or not shft then

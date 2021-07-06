@@ -314,7 +314,7 @@ function Static:build_unit_main_values()
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
     end
 
-    main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {check = function(unit)
+    main:pathbox("Unit", ClassClbk(self, "set_unit_data"), name, "unit", {control_slice = 0.8, check = function(unit)
         for _, bad in pairs(UnitSpawnList.BLACKLIST) do
             if unit:match(bad) then
                 return false
@@ -516,7 +516,7 @@ function Static:set_unit_data()
 
             self:set_unit_simple_values(unit)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
-            self:set_unit_path(unit, self:GetItem("UnitPath"):Value())
+            self:set_unit_path(unit, self:GetItem("Unit"):Value())
         end
     else
         local i = 0
@@ -530,7 +530,7 @@ function Static:set_unit_data()
                 if continent then
                     self:set_unit_continent(unit, ud.continent, continent:SelectedItem(), true)
                 end
-                self:set_unit_path(unit, self:GetItem("UnitPath"):Value(), i ~= 1)
+                self:set_unit_path(unit, self:GetItem("Unit"):Value(), i ~= 1)
             end
         end
     end
@@ -1067,7 +1067,7 @@ function Static:set_menu_unit(unit)
 
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
     self:GetItem("Enabled"):SetValue(unit:enabled())
-    self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
+    self:GetItem("Unit"):SetValue(unit:unit_data().name, false, true)
 	self:GetItem("ID"):SetText("ID "..unit:unit_data().unit_id)
 	local not_brush = not unit:unit_data().brush_unit
 	local disable_shadows = self:GetItem("DisableShadows")
@@ -1097,7 +1097,7 @@ function Static:set_menu_unit(unit)
     self:GetItem("Continent"):SetSelectedItem(unit:unit_data().continent)
     local not_w_unit = not (unit:wire_data() or unit:ai_editor_data())
     self:GetItem("Continent"):SetEnabled(not_w_unit)
-    self:GetItem("UnitPath"):SetEnabled(not_w_unit)
+    self:GetItem("Unit"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
     self:build_group_links(unit)
     self._holder:AlignItems(true)
