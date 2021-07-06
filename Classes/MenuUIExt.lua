@@ -23,13 +23,24 @@ ItemExt.set_value = Item.SetValue
 ItemExt.set_enabled = Item.SetEnabled
 ItemExt.set_visible = Item.SetVisible
 
+ItemExt.DEFAULT_OFFSET = {BLE.Options:GetValue("BoxesXOffset"), BLE.Options:GetValue("BoxesYOffset")}
+ItemExt.ITEMS_OFFSET = {BLE.Options:GetValue("ItemsXOffset"), BLE.Options:GetValue("ItemsYOffset")}
+
+function ItemExt:get_boxes_offset()
+	return clone(self.DEFAULT_OFFSET)
+end
+
+function ItemExt:get_items_offset()
+	return clone(self.ITEMS_OFFSET)
+end
+
 function ItemExt:getmenu()
 	return self
 end
 
 function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
-	local offset = o and o.offset or 4
-	local s = (o and o.size or self:H()) - offset*2
+	local offset = self:ConvertOffset(o and o.offset or 4)
+	local s = (o and o.size or self:H()) - offset[1]*2
 	return self:ImageButton(table.merge({
 		name = name,
 		on_callback = callback,
@@ -115,7 +126,7 @@ function ItemExt:keybind(...)
 end
 
 function ItemExt:pan(name, o)
-	return self:Menu(table.merge({name = name, auto_height = true, offset = 6}, o))
+	return self:Menu(table.merge({name = name, auto_height = true, offset = self:get_boxes_offset(), inherit_values = {offset = self:get_items_offset()}}, o))
 end
 
 function ItemExt:lbl(name, o)
@@ -148,10 +159,11 @@ function ItemExt:group(name, o)
 		color = color,
 		name = name,
 		text = string.pretty2(name),
-		offset = 6,
+		offset = self:get_boxes_offset(),
 		closed = self.saved_group_states and self.saved_group_states[name] or false,
 		inherit_values = {
             highlight_color = BLE.Options:GetValue("ItemsHighlight"),
+			offset = self:get_items_offset()
 		},
 		private = {
 			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
@@ -180,7 +192,7 @@ function ItemExt:tholder(name, o, text_o)
 end
 
 function ItemExt:holder(name, o)
-	return self:Holder(table.merge({name = name, text = string.pretty2(name), offset = 6}, o))
+	return self:Holder(table.merge({name = name, text = string.pretty2(name), offset = self:get_boxes_offset(), inherit_values = {offset = self:get_items_offset()}}, o))
 end
 
 function ItemExt:divgroup(name, o)
@@ -188,11 +200,12 @@ function ItemExt:divgroup(name, o)
 	return self:DivGroup(table.merge({
 		name = name,
 		color = color,
-		offset = 6,
+		offset = self:get_boxes_offset(),
 		private = {
 			size = BLE.Options:GetValue("MapEditorFontSize") * 1.2,
 			background_color = color:with_alpha(0.2),
 		},
+		inherit_values = {offset = self:get_items_offset()},
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false
@@ -202,6 +215,8 @@ end
 function ItemExt:simple_divgroup(name, o)
 	return self:DivGroup(table.merge({
 		name = name,
+		offset = self:get_boxes_offset(),
+		inherit_values = {offset = self:get_items_offset()},
 		text = string.pretty2(name),
 		auto_height = true,
 		background_visible = false

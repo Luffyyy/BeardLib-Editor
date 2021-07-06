@@ -10,6 +10,7 @@
 	>
     <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor" dont_delete="true"/>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="Data Files" folder_name="Data" install_directory="$ModPath$" name="DataFilesUpdate"/>
+    <load_first Options="true"/>
     <Classes directory="Classes">
 		<class file="Utils.lua"/>
 		<class file="ExportUtils.lua"/>
@@ -114,7 +115,7 @@
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
         <hook source_file="lib/managers/menu/menucomponentmanager" file="LoadLastLevelButton.lua"/>
     </Hooks>
-    <Options build_menu="false" auto_load="true">
+    <Options build_menu="false" early_post_init="true">
         <options>                
             <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
@@ -130,6 +131,10 @@
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
             <option type="number" min="18" max="38" default_value="28" name="QuickAccessToolbarSize"/>
             <option type="number" min="1" max="200" default_value="24" name="Scrollspeed"/>
+            <option type="number" min="0" max="16" default_value="6" name="BoxesXOffset"/>
+            <option type="number" min="0" max="16" default_value="4" name="BoxesYOffset"/>
+            <option type="number" min="0" max="16" default_value="6" name="ItemsXOffset"/>
+            <option type="number" min="0" max="16" default_value="2" name="ItemsYOffset"/>
             <option name="LastLoaded" type="table"/>
             <option name="GUIOnRight" type="bool" value="false"/>
             
@@ -204,7 +209,7 @@
                 <option name="FavoriteItems" type="table"/>
             </option_group>
         </options>
-    </Options>    
+    </Options>
     <AddFiles directory="Assets">
         <material_config path="core/material_configs/hub_elements"/>
         <png path="textures/editor_logo"/>
