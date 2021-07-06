@@ -310,7 +310,7 @@ function Static:build_unit_main_values()
     local name = self:unit_value("name")
     local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})
     if not self._built_multi then
-        main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, foreground = main.foreground, auto_foreground = false})
+        main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, foreground = main.foreground, auto_foreground = false, offset = 6})
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
     end
 

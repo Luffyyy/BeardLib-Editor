@@ -233,6 +233,7 @@ function AiEditor:build_unit_menu()
         main:GetToolbar():lbl("ID", {
             text = "ID " .. unit:unit_data().unit_id,
             size_by_text = true,
+            offset = 6
         })
         main:textbox("Name", ClassClbk(self, "set_unit_data"), unit:unit_data().name_id, {
             help = "the name of the unit",
