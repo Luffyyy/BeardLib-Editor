@@ -239,11 +239,18 @@ end
 
 function ProjectPackageModule:build_menu(menu, data)
     ProjectPackageModule.super.build_menu(self, menu, data)
-    menu:textbox("Id", ClassClbk(self, "set_data_callback"), data.id, {index = 2})
+    if self._main_xml_data.id then
+        self._id_in_main = true
+    end
+    menu:textbox("Id", ClassClbk(self, "set_data_callback"), self._main_xml_data.id or data.id, {index = 2})
 end
 
 function ProjectPackageModule:set_data_callback(item)
     local data = ProjectPackageModule.super.set_data_callback(self, item)
-    data.id = self:GetItemValue("Id")
+    if self._id_in_main then
+        self._main_xml_data.id = self:GetItemValue("Id")
+    else
+        data.id = self:GetItemValue("Id")
+    end
     return data
 end
