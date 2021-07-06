@@ -294,11 +294,9 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 				end
 			end
 		})
-	end, nil, BLE.Utils.EditorIcons.plus, {
+	end, nil, BLE.Utils.EditorIcons.dots, {
 		help = "Browse " .. tostring(typ).."s",
-		size = self.size,
-		offset = 0,
-		img_scale = 1,
+		size = self.size * 1.75,
 		position = function(item)
 			item:SetPositionByString("RightCentery")
 			item:Move(-6)

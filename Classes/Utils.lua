@@ -27,7 +27,10 @@ Utils.EditorIcons = {
     copy = {64, 96, 32, 32},
     paste = {96, 96, 32, 32},
     round_number = {128, 96, 32, 32},
-    reset_settings = {64, 64, 32, 32}
+    reset_settings = {64, 64, 32, 32},
+    dots = {128, 128, 32, 32},
+    list = {128, 64, 32, 32},
+    browse_file = {128, 32, 32, 32}
 }
 
 Utils.ElementIcons = {
