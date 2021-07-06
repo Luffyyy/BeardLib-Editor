@@ -83,13 +83,17 @@ function ProjectAddFilesModule:add_file_db_dialog(ext)
 		force = true,
         callback = function(asset)
             self:add_file(asset.."."..ext, true, false, true)
-            BLE.ListDialog:Hide()
+            if not ctrl() then
+                BLE.MSLD:Hide()
+            end
 	    end,
         select_multi_clbk = function(assets)
             for _, asset in pairs(assets) do
                 self:add_file(asset.."."..ext, true, false, true)
             end
-            BLE.ListDialog:Hide()
+            if not ctrl() then
+                BLE.MSLD:Hide()
+            end
         end
 	})
 end
