@@ -2,9 +2,7 @@ AssetsManagerDialog = AssetsManagerDialog or class(MenuDialog)
 AssetsManagerDialog.type_name = "AssetsManagerDialog"
 AssetsManagerDialog._no_reshaping_menu = true
 AssetsManagerDialog.ImportHelp = [[
-This will search for dependencies that the unit requires in order to load.
-Any missing dependency from your extract directory will fail the load. So be sure your extract is not outdated.
-After pressing export please wait until you see another dialog that will confirm that the export was complete.
+This will search for dependencies that the asset requires in order to load. Some are optional, some are semi-optional and some are required.
 ]]
 
 local ADD = "add"
