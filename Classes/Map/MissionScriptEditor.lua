@@ -556,16 +556,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 	self:OpenManageListDialog(params, units,
 		function(unit)
 			local ud = unit:unit_data()
-			local groups = self:part("static"):get_groups_from_unit(unit)
-			local groups_str
-			if next(groups) then
-				groups_str = "Groups: "
-				for i, grp in ipairs(groups) do
-					groups_str = groups_str .. grp.name .. (i < #groups and "|" or "")
-				end
-			end
-
-			return string.format("%s [%s] %s", ud.name_id, ud.unit_id or "", groups_str or "")
+			return string.format("%s [%s]", ud.name_id, ud.unit_id or "")
 		end,
 		function(unit)
 			return (not params.units or table.contains(params.units, unit:unit_data().name))
