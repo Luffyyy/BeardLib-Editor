@@ -136,10 +136,16 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
                 item:numberbox("", ClassClbk(self, "ValueClbk", i), v, opt)
             elseif type(v) == "boolean" then
                 item:tickbox("", ClassClbk(self, "ValueClbk", i), v, opt)
-            elseif v then
+            else
                 local items = self._tbl.combo_items_func and self._tbl.combo_items_func(name, entry, i)
                 if items then
-                    item:combobox("", ClassClbk(self, "ValueClbk", i), items, table.get_key(items, v) or v, opt)
+                    local selected = v or 1
+                    for i, item in pairs(items) do
+                        if item == v or type(item) == "table" and item.value == v then
+                            selected = i
+                        end
+                    end
+                    item:combobox("", ClassClbk(self, "ValueClbk", i), items, selected, opt)
                 else
                     item:textbox("", ClassClbk(self, "ValueClbk", i), v, opt)
                 end
@@ -147,4 +153,5 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
         end
     end
     table.insert(self._visible_items, item)
+
 end

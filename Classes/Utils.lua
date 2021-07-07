@@ -491,7 +491,7 @@ end
 local ids = getmetatable(Idstring())
 function ids:s()
     local t = self:t()
-    return managers.editor and managers.editor._idstrings[t] or intensities[t] or t
+    return managers.editor and managers.editor._idstrings[t] or intensities[t] or Utils:Unhash(self) or t
 end
 
 
@@ -805,12 +805,19 @@ function Utils:GetUnitType(unit)
 end
 
 function Utils:Unhash(ids, type)
-    for path in pairs(BLE.DBPaths[type or "other"]) do
+    for path in pairs(BLE.DBPaths[type] or {}) do
         if Idstring(path) == ids then
             return path
         end
     end
     return ids:key()
+end
+
+function Utils:UnhashStr(ids)
+    if not BLE.DBPaths.other then
+        return nil
+    end
+    return BLE.DBPaths.other[ids:key()] or nil
 end
 
 function Utils:Notify(title, msg, clbk)

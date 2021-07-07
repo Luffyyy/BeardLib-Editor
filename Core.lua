@@ -294,19 +294,24 @@ function BLE:GeneratePackageData()
 					pkg = packages_paths[current_pkg]
                 end
 
-				local path, typ = unpack(string.split(line, "%."))
-                if pkg then
-                    if typ then -- Added typ check here
-                        pkg[typ] = pkg[typ] or {}
+                if current_pkg == "other" then
+                    paths.other = paths.other or {}
+                    paths.other[line:key()] = line
+                else
+                    local path, typ = unpack(string.split(line, "%."))
+                    if pkg then
+                        if typ then -- Added typ check here
+                            pkg[typ] = pkg[typ] or {}
+                        end
                     end
-                end
-                if typ then -- Added typ check here
-                    paths[typ] = paths[typ] or {}
-
-                    if DB:has(typ, path) then
-                        paths[typ][path] = true
-                        if pkg then
-                            pkg[typ][path] = true
+                    if typ then -- Added typ check here
+                        paths[typ] = paths[typ] or {}
+    
+                        if DB:has(typ, path) then
+                            paths[typ][path] = true
+                            if pkg then
+                                pkg[typ][path] = true
+                            end
                         end
                     end
                 end
