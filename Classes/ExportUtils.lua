@@ -156,7 +156,12 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
 end
 
 function Utils:ReadUnit(unit, config, exclude, extra_info)
-    self:Add(config, "unit", unit, extra_info)
+    if extra_info and extra_info.load then
+        extra_info.load = nil
+        self:AddForceLoaded(config, "unit", unit, extra_info)
+    else
+        self:Add(config, "unit", unit, extra_info)
+    end
 
     local file_ext = unit..".unit"
     if not self.assets_dir then
@@ -200,7 +205,7 @@ function Utils:ReadUnit(unit, config, exclude, extra_info)
             elseif name == "network" and not exclude.network_unit then
                 local remote_unit = child:parameter("remote_unit")
 				if remote_unit and remote_unit ~= "" and remote_unit ~= unit then --unsure what to do with remote units that are an empty string.
-                    if not self:ReadUnit(remote_unit, config, exclude, {file = file_ext, where = "network node/remote_unit value"}) and rom then
+                    if not self:ReadUnit(remote_unit, config, exclude, {file = file_ext, where = "network node/remote_unit value", load = true}) and rom then
                         return false
                     end
                 end
