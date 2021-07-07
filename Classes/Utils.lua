@@ -491,7 +491,7 @@ end
 local ids = getmetatable(Idstring())
 function ids:s()
     local t = self:t()
-    return managers.editor and managers.editor._idstrings[t] or intensities[t] or Utils:Unhash(self) or t
+    return managers.editor and managers.editor._idstrings[t] or intensities[t] or t
 end
 
 
