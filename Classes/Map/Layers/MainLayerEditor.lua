@@ -40,6 +40,8 @@ function MainLayerEditor:build_menu()
     local load_db = self._holder:divgroup("LoadFromDatabase", {align_method = "grid"})
     local load = self._holder:divgroup("LoadWithPackages", {enabled = BeardLib.current_level ~= nil, align_method = "grid"})
 
+    load_db:GetToolbar():tickbox("WithOptions", nil, false, {size_by_text = true, offset = 4, help = "If turned on, will open a dialog to let you decide what to load and if to include it in the project"})
+
     local assets = self:GetPart("assets")
     for _, ext in pairs(BLE.UsableAssets) do
         local text = ext:capitalize()
@@ -384,7 +386,7 @@ function MainLayerEditor:open_load_any_ext_dialog(clbk)
 end
 
 function MainLayerEditor:open_load_from_db_dialog(params)
-    params.on_click = ClassClbk(self:GetPart("assets"), "quick_load_from_db")
+    params.on_click = ClassClbk(self:GetPart("assets"), self._holder:GetItemValue("WithOptions") and "open_load_from_db_dialog_quick" or "quick_load_from_db")
     self:open_load_dialog(params)
 end
 

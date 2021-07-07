@@ -222,6 +222,14 @@ function AssetsManagerDialog:load_all_from_extract_dialog()
    self:load_from_db_dialog(self._missing_assets)
 end
 
+function AssetsManagerDialog:open_load_from_db_dialog_quick(typ, path)
+    self:load_from_db_dialog({
+        [typ] = {
+            [path] = true
+        }
+    })
+end
+
 function AssetsManagerDialog:load_from_db_dialog(assets, clbk)
 	if not assets and not self._tbl._selected then
 		return
