@@ -910,7 +910,7 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
                 end
             end
         else
-            if self:GetPart("opt"):get_value("SelectEditorGroups") then
+            if self:GetPart("opt"):get_value("SelectEditorGroups") and not unit:fake() then
                 local continent = managers.worlddefinition:get_continent_of_static(unit)
                 if not add then
                     add = true
