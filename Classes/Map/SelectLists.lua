@@ -160,7 +160,7 @@ function InstanceSelectList:set_selected_objects()
 
     local selected_instances = {}
     for _, unit in pairs(self:selected_units()) do
-        if unit:fake() and unit:unit_data().instance then
+        if alive(unit) and unit:fake() and unit:unit_data().instance then
             table.insert(selected_instances, unit:object().name)
         end
     end
@@ -179,7 +179,7 @@ end
 function InstanceSelectList:get_border_color(item)
     local selected_instances = {}
     for _, unit in pairs(self:selected_units()) do
-        if unit:fake() and unit:unit_data().instance then
+        if alive(unit) and unit:fake() and unit:unit_data().instance then
             table.insert(selected_instances, unit:object().name)
         end
     end
