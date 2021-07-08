@@ -38,7 +38,7 @@ function Options:init()
 
 	main:numberbox("UndoHistorySize", ClassClbk(self, "set_clbk"), O:GetValue("UndoHistorySize"), {min = 1, max = 100000})
 	main:numberbox("InstanceIndexSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
-	main:numberbox("Scrollspeed", ClassClbk(self, "set_clbk"), O:GetValue("Scrollspeed"), {max = 100, floats = 1, min = 1, help = "Sets the default index size for instances."})
+	main:numberbox("Scrollspeed", ClassClbk(self, "set_clbk"), O:GetValue("Scrollspeed"), {max = 100, floats = 1, min = 1})
 
 	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 1/2})
 	visual:GetToolbar():tb_imgbtn("ResetVisualOptions", ClassClbk(self, "reset_options", visual), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset visual settings"})
