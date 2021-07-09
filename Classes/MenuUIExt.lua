@@ -267,6 +267,7 @@ local function check_slot(slot, unit)
 end
 
 function ItemExt:pathbox(name, callback, value, typ, o)
+	o = o or {}
 	local tb = self:textbox(name, callback, value, table.merge({
 		text = string.pretty2(name),
 		textbox_font_size = self.size * 0.75,
