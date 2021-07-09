@@ -139,13 +139,17 @@ function SelectListDialogValue:ToggleItem(name, selected, entry)
             else
                 local items = self._tbl.combo_items_func and self._tbl.combo_items_func(name, entry, i)
                 if items then
-                    local selected = v or 1
+                    local selected = v
                     for i, item in pairs(items) do
-                        if item == v or type(item) == "table" and item.value == v then
+                        if selected == nil or (item == v or type(item) == "table" and (item.name == v or item.value == v)) then
                             selected = i
+                            break
                         end
                     end
-                    item:combobox("", ClassClbk(self, "ValueClbk", i), items, selected, opt)
+                    local combo = item:combobox("", ClassClbk(self, "ValueClbk", i), items, selected, opt)
+                    if not v then
+                        combo:RunCallback()
+                    end
                 else
                     item:textbox("", ClassClbk(self, "ValueClbk", i), v, opt)
                 end

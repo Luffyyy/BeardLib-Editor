@@ -418,6 +418,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		units = opt.units,
 		single_select = opt.single_select,
 		need_name_id = opt.need_name_id,
+		combo_free_typing = opt.combo_free_typing,
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
 end
@@ -665,7 +666,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 		allow_multi_insert = NotNil(params.allow_multi_insert, true),
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
-		combo_free_typing = true,
+		combo_free_typing = NotNil(params.combo_free_typing, true),
 		not_table = params.not_table,
 		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
 	})

@@ -15,7 +15,7 @@ function EditorNavObstacle:_build_panel()
     self:BuildUnitsManage("obstacle_list", { values_name = "Object", value_key = "obj_name", key = "unit_id", orig = {unit_id = 0, obj_name = nil, guis_id = 1}, combo_items_func = function(name, value)
         -- get all obj idstrings and map them to unindented values
         return table.collect(self:_get_objects_by_unit(value.unit), self._unindent_obj_name)
-    end})
+    end}, nil, {combo_free_typing = false})
 end
 
 function EditorNavObstacle:_get_objects_by_unit(unit)
