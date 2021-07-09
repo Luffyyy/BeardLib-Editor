@@ -1,7 +1,8 @@
 [
     "The editor is approved by Ilija!",
     "You can search using multiple queries by splitting them with a comma. For example: floor,wall",
-    "You can select multiple objects by holding CTRL and moving your mouse. ALT does the opposite",
+    "You can select multiple objects with box selection by holding CTRL + Right Mouse Button while moving your mouse. ALT does the opposite",
+    "You can select multiple objects by holding the Right Mouse Button",
     "The editor was created in 2016 after I (Luffy) was playing around with the possiblity of editing maps",
     "The best method to handle doors is to leave an opened version in the editor_only continent, you can then make your normal door ignore Disabled on AI Graph without having to deal with lots of unneeded startup management!",
     "Want to know more about the editor? Visit the wiki: https://wiki.modworkshop.net/books/beardlib-editor-tutorials",
