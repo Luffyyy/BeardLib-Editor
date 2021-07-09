@@ -746,5 +746,5 @@ function EnvLayer:create_cube_map(selection, type)
 end
 
 function EnvLayer:can_unit_be_selected(unit)
-	return self._holder:GetItemValue("SoundUnits")
+	return self._holder:GetItemValue("EnvironmentUnits")
 end
