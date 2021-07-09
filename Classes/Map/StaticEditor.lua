@@ -912,26 +912,28 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
         else
             if self:GetPart("opt"):get_value("SelectEditorGroups") and not unit:fake() then
                 local continent = managers.worlddefinition:get_continent_of_static(unit)
-                if not add then
-                    add = true
-                    self:reset_selected_units()
-				end
-                continent.editor_groups = continent.editor_groups or {}
-                for _, group in pairs(continent.editor_groups) do
-                    if group.units then
-                        if table.contains(group.units, unit:unit_data().unit_id) then
-                            for _, unit_id in pairs(group.units) do
-                                local u = managers.worlddefinition:get_unit(unit_id)
-                                if alive(u) and not table.contains(units, u) then
-                                    table.insert(units, u)
+                if continent then
+                    if not add then
+                        add = true
+                        self:reset_selected_units()
+                    end
+                    continent.editor_groups = continent.editor_groups or {}
+                    for _, group in pairs(continent.editor_groups) do
+                        if group.units then
+                            if table.contains(group.units, unit:unit_data().unit_id) then
+                                for _, unit_id in pairs(group.units) do
+                                    local u = managers.worlddefinition:get_unit(unit_id)
+                                    if alive(u) and not table.contains(units, u) then
+                                        table.insert(units, u)
+                                    end
                                 end
+                                if self._selected_group then
+                                    self._selected_group = nil
+                                else
+                                    self._selected_group = group
+                                end
+                                break
                             end
-                            if self._selected_group then
-                                self._selected_group = nil
-                            else
-                                self._selected_group = group
-                            end
-                            break
                         end
                     end
                 end
