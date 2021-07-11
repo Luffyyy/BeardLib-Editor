@@ -366,3 +366,7 @@ function PortalLayer:toggle_units_visible(item)
         item:SetEnabled(item.enabled)
     end
 end
+
+function PortalLayer:can_unit_be_selected(unit)
+	return self._holder:GetItemValue("DrawPortals")
+end
