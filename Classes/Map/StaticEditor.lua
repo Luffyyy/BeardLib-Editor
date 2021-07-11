@@ -304,6 +304,7 @@ function Static:build_unit_editor_menu()
     self:build_unit_main_values()
     self:build_positions_items()
     self:build_extension_items()
+    self:build_physics_items()
 end
 
 function Static:build_unit_main_values()
@@ -1043,6 +1044,7 @@ function Static:set_multi_selected()
         self:build_positions_items()
         self:update_positions()
         self:build_group_options()
+        self:build_physics_items()
         self._holder:AlignItems(true)
         self:GetPart("select"):set_selected_objects()
     end)
@@ -1680,4 +1682,103 @@ function Static:remove_polyline()
 
 		self._polyline = nil
 	end
+end
+
+function Static:build_physics_items()
+    local can_physics = false
+    for _, unit in pairs(self._selected_units) do
+        if self:can_do_physics(unit) then
+            can_physics = true
+            break
+        end
+    end
+
+    if not can_physics then return end
+
+    local physics_items = self:group("Physics")
+    physics_items:divider("PhysicsToolTip", {text = "Simulate physics on units to settle them into more natural positions."})
+    physics_items:s_btn("Simulate Physics", ClassClbk(self, "physics_simulation_dialog"))
+end
+
+function Static:can_do_physics(unit)
+    if not unit then return false end
+    if not alive(unit) then return false end
+
+    if unit:mission_element() then return false end
+    if unit:num_bodies() == 0 then return false end
+
+    return true
+end
+
+function Static:physics_simulation_dialog()
+    if not self:selected_unit() or not self._selected_units or self._grabbed_unit then
+        return
+    end
+
+    BLE.Dialog:Show({
+        title = "Physics Simulation",
+        message = "Simulating Physics...",
+        callback = ClassClbk(self, "stop_physics_simulation"),
+        no_callback = ClassClbk(self, "stop_physics_simulation"),
+        yes = "End Simulation",
+        force = true
+    })
+
+    self:start_physics_simulation()
+end
+
+function Static:start_physics_simulation()
+    self:StorePreviousPosRot()
+
+    self._physics_sim_units = clone(self._selected_units)
+    self._physics_sim_previous_unit_settings = {}
+
+    for _, unit in pairs(self._physics_sim_units) do
+        if self:can_do_physics(unit) then
+            self._physics_sim_previous_unit_settings[unit:editor_id()] = {}
+
+            for i_body = 0, unit:num_bodies() - 1 do
+                local body = unit:body(i_body)
+
+                self._physics_sim_previous_unit_settings[unit:editor_id()][i_body] = {
+                    collisions_enabled = body:collisions_enabled(),
+                    fixed = body:fixed(),
+                    keyframed = body:keyframed(),
+                    dynamic = body:dynamic()
+                }
+
+                body:set_ignore_static(false)
+
+                body:set_collisions_enabled(true)
+                body:set_dynamic()
+            end
+        end
+    end
+end
+
+function Static:stop_physics_simulation()
+    for _, unit in pairs(self._physics_sim_units) do
+        if self:can_do_physics(unit) then
+            local previous_settings = self._physics_sim_previous_unit_settings[unit:editor_id()]
+
+            for i_body, body_settings in pairs(previous_settings) do
+                local body = unit:body(i_body)
+
+                body:set_collisions_enabled(body_settings.collisions_enabled)
+
+                if body_settings.fixed then
+                    body:set_fixed()
+                elseif body_settings.keyframed then
+                    body:set_keyframed()
+                elseif body_settings.dynamic then
+                    body:set_dynamic()
+                end
+            end
+        end
+    end
+
+    self._selected_units = clone(self._physics_sim_units)
+
+    self:update_positions()
+    self:recalc_all_locals()
 end
