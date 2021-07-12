@@ -248,6 +248,8 @@
 	    <value_node value="ElementXAudio"/>
         <value_node value="ElementXAudioOperator"/>
 	    <value_node value="ElementBLCustomAchievement"/>
+        <value_node value="ElementRelativeTeleport"/>
+        <value_node value="ElementRelativeTeleportTarget"/>
         
         <!--Normal-->
         <value_node value="ElementSideJobAward"/>
@@ -287,7 +289,7 @@
         <value_node value="ElementRandomInstanceInputEvent"/>
         <value_node value="ElementInstanceOutput"/>
         <value_node value="ElementInstanceOutputEvent"/>
-	<value_node value="ElementRandomInstanceOutputEvent"/>
+        <value_node value="ElementRandomInstanceOutputEvent"/>
         <value_node value="ElementInstancePoint"/>
         <value_node value="ElementInstanceSetParams"/>
         <value_node value="ElementShape"/>
