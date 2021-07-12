@@ -1721,6 +1721,7 @@ function Static:physics_simulation_dialog()
         callback = ClassClbk(self, "stop_physics_simulation"),
         no_callback = ClassClbk(self, "stop_physics_simulation"),
         yes = "End Simulation",
+        position = "RightBottomOffset-",
         force = true
     })
 
