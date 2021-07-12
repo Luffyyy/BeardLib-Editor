@@ -4,7 +4,7 @@ local Utils = EditorUtils.Export
 Utils.return_on_missing = true
 Utils.check_path_before_insert = false
 Utils.pack_extra_info = false
-Utils.pack_extract_path = true
+Utils.pack_extract_path = false
 Utils.assets_dir = nil
 Utils.optional_assets = {cooked_physics = true, bnk = true}
 function Utils:init(config)

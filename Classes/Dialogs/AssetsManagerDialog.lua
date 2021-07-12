@@ -357,7 +357,7 @@ function AssetsManagerDialog:load_from_db(missing_assets, exclude, inc_in_proj, 
 		for asset in pairs(assets) do
 			local cfg = self._exporter:GetDependencies(ext, asset, true, exclude)
 			if cfg then
-				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset, from_db = not inc_in_proj}, cfg))
+				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset, from_db = not inc_in_proj and true or nil}, cfg))
 			else
 				failed_all = true
 			end
@@ -386,98 +386,49 @@ end
 function AssetsManagerDialog:_load_from_db(config, inc_in_proj, dontask, failed_all, clbk)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
-    local to_copy = {}
     if data then
         local level = project:current_level()
         local add = project:read_xml(level._add_path) or {_meta = "add", directory = "assets"}
-        self:merge_add_configs(add, config, function(clean)
-            if inc_in_proj then
-                table.insert(to_copy, clean)
-            else
-                BLE.DBPackages.map_assets = BLE.DBPackages.map_assets or {}
-                local package = BLE.DBPackages.map_assets
-                for _, asset in pairs(config) do
-                    if type(asset) == "table" then
-                        if asset._meta == UNIT then
-                            package.unit = package.unit or {}
-                            package.unit[asset.path] = true
-                        elseif asset._meta == ADD or asset._meta == UNIT_LOAD then
-                            local typ = asset.type or "unit"
-                            package[typ] = package[typ] or {}
-                            package[typ][asset.path] = true
+        local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "assets")
+
+        self:merge_add_configs(add, clone(config), function()
+            BLE.DBPackages.map_assets = BLE.DBPackages.map_assets or {}
+            local package = BLE.DBPackages.map_assets
+            for _, asset in pairs(config) do
+                local typ = asset.type or "unit"
+                local name = asset.path
+
+                local to_copy = {}
+                package[typ] = package[typ] or {}
+                package[typ][name] = true
+
+                -- Write file into disk if need to include in project
+                if inc_in_proj then
+                    if asset._meta == ADD or asset._meta == UNIT_LOAD then
+                        for _, as in pairs(asset) do
+                            if type(as) == "table" and asset._meta then
+                                table.insert(to_copy, {path = as.path, type = as._meta})
+                            end
                         end
+                    else
+                        table.insert(to_copy, {path = name, type = typ})
+                    end
+                    for _, as in pairs(to_copy) do
+                        local read_data = blt.asset_db.read_file(as.path, as.type)
+                        FileIO:WriteTo(Path:Combine(assets_dir, as.path.."."..as.type), read_data)
                     end
                 end
             end
         end)
         local function save()
-            local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
-            if not inc_in_proj then
-                project:save_xml(level._add_path, add)
-                CustomPackageManager:LoadPackageConfig(assets_dir, add, true)
-                self:reload()
-                if clbk then
-                    clbk()
-                end
-                return
-            end
-            local copy_data = {}
-            for _, unit_load in pairs(to_copy) do
-                if type(unit_load) == "table" then
-                    for _, asset in pairs(unit_load) do
-						if type(asset) == "table" and asset.path then
-							local type = asset._meta
-							local name = asset.path
-
-                            local path = name.."."..type
-                            local to_path = Path:Combine(assets_dir, path)
-                            table.insert(copy_data, {asset.extract_real_path, to_path})
-                            asset.extract_real_path = nil
-                            local dir = Path:GetDirectory(to_path)
-                            if not FileIO:Exists(dir) then
-                                FileIO:MakeDir(dir)
-                            end
-							self._unready_assets[type] = self._unready_assets[type] or {}
-                            self._unready_assets[type][name] = true
-                        end
-                    end
-                end
-            end
             project:save_xml(level._add_path, add)
-            if #copy_data > 0 then
-                FileIO:CopyFilesToAsync(copy_data, function(success)
-                    if success then
-                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, true)
-                        if failed_all then
-                            BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
-                        elseif not clbk then
-                            BLE.Utils:Notify("Info", "Copied assets successfully")
-						end
-						for type, assets in pairs(self._unready_assets) do
-							for asset, _ in pairs(assets) do
-								if type == UNIT then
-                                    BLE.DBPackages.map_assets.unit = BLE.DBPackages.map_assets.unit or {}
-                                    BLE.DBPackages.map_assets.unit[asset] = true
-								end
-								assets[asset] = nil
-							end
-						end
-
-                        self:reload()
-
-                        if clbk then
-                            clbk()
-                        end
-                    end
-                end)
-			elseif failed_all then
-                BLE.Utils:Notify("Info", "No assets to copy, failed to export an asset or more.")
-            else
-                if clbk then
-                    clbk()
-                else
-                    BLE.Utils:Notify("Info", "No assets to copy")
-                end
+            CustomPackageManager:LoadPackageConfig(assets_dir, add, true)
+            self:reload()
+            if clbk then
+                clbk()
+            end
+            if inc_in_proj then
+                BLE.Utils:Notify("Info", "Copied assets successfully")
             end
         end
         if not dontask then
@@ -603,8 +554,7 @@ function AssetsManagerDialog:scan_assets()
             assets_dir = assets_dir,
             fallback_to_db_assets = true,
             check_path_before_insert = true,
-            return_on_missing = false,
-            pack_extract_path = false
+            return_on_missing = false
         })
 
         self:merge_add_configs(add, self:scan_dir(scanner, scanner.assets_dir))
