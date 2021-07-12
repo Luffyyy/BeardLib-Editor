@@ -40,7 +40,7 @@ Utils.EditorIcons = {
     move_widget = {64, 128, 64, 64},
     teleport = {368, 16, 32, 32},
     teleport_selection = {368, 64, 32, 32},
-    local_transform = {390, 118, 36, 36},
+    local_transform = {391, 118, 36, 36},
     global_transform = {336, 112, 32, 32}
 }
 

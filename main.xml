@@ -137,6 +137,7 @@
             <option type="number" min="0" max="16" default_value="2" name="ItemsYOffset"/>
             <option name="LastLoaded" type="table"/>
             <option name="GUIOnRight" type="bool" value="false"/>
+            <option name="ToolbarPosition" type="number" min="1" max="3" default_value="1"/>
             
             <option_group name="Input">
                 <option type="string" default_value="1" name="SpawnUnit"/>

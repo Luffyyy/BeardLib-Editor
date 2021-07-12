@@ -4,70 +4,93 @@ function QuickAccess:init(parent, menu)
 
     local normal = not Global.editor_safe_mode
     local size = BLE.Options:GetValue("QuickAccessToolbarSize")
-    local align_method = BLE.Options:GetValue("GUIOnRight") and "grid" or "grid_from_right"
+    local toolbar_position = BLE.Options:GetValue("ToolbarPosition")
+    local reversed = BLE.Options:GetValue("GUIOnRight")
+   
+    if toolbar_position == 1 then
+        position = reversed and "TopLeft" or "TopRight"
+    elseif toolbar_position == 2 then
+        position = "CenterTop"
+        reversed = false
+    elseif toolbar_position == 3 then
+        position = "CenterBottom"
+        reversed = false
+    end
 
     self._menu = menu:Menu({
         name = "Toolbar",
         auto_foreground = true,
         scrollbar = false,
         visible = self:value("QuickAccessToolbar"),
-        position = BLE.Options:GetValue("GUIOnRight") and "TopLeft" or "TopRight",
-        align_method = align_method,
-        w = size * 5,
+        position = position,
+        align_method = toolbar_position > 1 and "reversed_grid" or "reversed",
         private = {offset = 0}
     })
 
     local icons = BLE.Utils.EditorIcons
     self._values = {
-        {name = "SnapRotation", rect = icons.snap_rotation, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
-        {name = "GridSize", rect = icons.grid, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
+        {name = "SnapRotation", rect = icons.snap_rotation, reversed = reversed, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
+        {name = "GridSize", rect = icons.grid, reversed = not reversed, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
     }
 
     self._toggles = {
-        {name = "IgnoreFirstRaycast", rect = icons.ignore_raycast, help = "Ignore First Raycast"},
+        {name = "IgnoreFirstRaycast", rect = icons.ignore_raycast, offset = reversed and 0, help = "Ignore First Raycast"},
         {name = "ShowElements", rect = icons.show_elements, help = "Show Elements"},
         {name = "EditorUnits", rect = icons.editor_units, help = "Draw editor units"},
         {name = "rotation_widget_toggle", rect = icons.rotation_widget, callback = ClassClbk(self, "toggle_widget", "rotation"), help = "Toggle Rotation Widget", enabled = normal and self._parent._has_fix},
-        {name = "move_widget_toggle", rect = icons.move_widget, callback = ClassClbk(self, "toggle_widget", "move"), help = "Toggle Move Widget", enabled = normal and self._parent._has_fix}
+        {name = "move_widget_toggle", rect = icons.move_widget, offset = reversed and {2,0} or 0, callback = ClassClbk(self, "toggle_widget", "move"), help = "Toggle Move Widget", enabled = normal and self._parent._has_fix}
     }
 
     self._buttons = {
-        {name = "GeneralOptions", rect = icons.settings_gear, callback = "open_options", help = "General Options"},
+        {name = "GeneralOptions", rect = icons.settings_gear, offset = reversed and 0, callback = "open_options", help = "General Options"},
         {name = "Deselect", rect = icons.cross_box, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
         {name = "TeleportPlayer", rect = icons.teleport, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
         {name = "TeleportToSelection", rect = icons.teleport_selection, callback = "to_selection", help = "Teleport Camera To Selection", enabled = normal and self._parent._has_fix},
-        {name = "LocalTransform", rect = icons.local_transform, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
+        {name = "LocalTransform", rect = icons.local_transform, offset = reversed and {2,0} or 0, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
 
-    local opt = {size = size, h = size, offset = 0, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = align_method}
+    local opt = {h = size, offset = {0, 2}, background_color = BLE.Options:GetValue("ToolbarBackgroundColor"), align_method = reversed and "grid" or "reversed_grid"}
+    if toolbar_position == 2 then
+        opt.offset = {2, 0}
+    elseif toolbar_position == 3 then
+        opt.offset = {2, 1}
+    end
 
-    self:build_values(self._menu:holder("Values", opt))
-    opt.offset = {0, 2}
-    self:build_toggles(self._menu:holder("Toggles", opt))
     self:build_buttons(self._menu:holder("Buttons", opt))
+    self:build_toggles(self._menu:holder("Toggles", opt))
+    if toolbar_position == 3 then
+        opt.offset = {0, 1}
+    else
+        opt.offset = 0
+    end
+    self:build_values(self._menu:holder("Values", opt))
+
+    self:AlignItems(self._menu, toolbar_position > 1)
+    self._menu:AlignItems()
 end
 
 function QuickAccess:build_values(parent)
     for _, value in pairs(self._values) do
         local t = self:NumberBox(parent, value.name, value)
     end
+    
+    self:AlignItems(parent)
 end
 
 function QuickAccess:NumberBox(parent, name, params)
 
-    local width = (parent:H()) * 2.5
-    local icon_w = parent:H() * 0.9
+    local width = self._menu:Items()[1]:W() / 2
 
     local holder = parent:holder(name.."_panel", {
-        offset = 2,
+        offset = 0,
         w = width,
         size = parent:H(),
         h = parent:H(),
-        align_method = "grid_from_right"
+        align_method = params.reversed and "grid" or "grid_from_right_reversed"
     })
 
-    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-icon_w)*0.9, size = holder:H() * 0.75, h = holder:H() * 0.9, text_offset = 0, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
-    holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H() * 0.9, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
+    holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H(), help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
+    holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-parent:H())-1, size = holder:H() * 0.75, h = holder:H(), text_offset = 0, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
 end
 
 function QuickAccess:build_toggles(parent)
@@ -80,12 +103,15 @@ function QuickAccess:build_toggles(parent)
             self:UpdateToggle(toggle.name, self:value(toggle.name))
         end
     end
+
+    self:AlignItems(parent)
 end
 
 function QuickAccess:Toggle(parent, params, tx)
     local item = parent:tb_imgbtn(params.name, params.callback or ClassClbk(self, "ToggleOptionValue", params.name), nil, params.rect, {
-        offset = 0,
-        size = parent:H(),
+        w = parent:H(),
+        h = parent:H(),
+        offset = params.offset or {2, 0},
         help = params.help,
         enabled = params.enabled,
         disabled_alpha = 0.2,
@@ -98,13 +124,41 @@ end
 function QuickAccess:build_buttons(parent)
     for _, button in pairs(self._buttons) do
         parent:tb_imgbtn(button.name, ClassClbk(self, button.callback), nil, button.rect, {
-            offset = 0,
+            w = parent:H(),
+            h = parent:H(),
+            offset = button.offset or {2, 0},
             help = button.help,
             enabled = button.enabled,
             disabled_alpha = 0.2,
             background_color = BLE.Options:GetValue("ToolbarButtonsColor")
         })
     end
+
+    self:AlignItems(parent)
+end
+
+function QuickAccess:AlignItems(panel, additive)
+    local max_w = 0
+    local function align(item)
+        if additive then
+            max_w = max_w + item:W()+2
+        else
+            max_w = item:Right()
+        end
+        
+    end
+
+    local items = panel:Items()
+    if panel.align_method == "reversed_grid" then
+        for i=#items, 1, -1 do
+            align(items[i])
+        end
+    else
+        for i=1, #items do
+            align(items[i])
+        end
+    end
+    panel:SetSize(max_w)
 end
 
 function QuickAccess:SetVisible(visible)
