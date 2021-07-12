@@ -3,7 +3,7 @@
 BeardLib-Editor is a tool that allows you to edit and create things like maps & environments.
 
 ## Installation
-1. (Required to use the massunits tool) https://dotnet.microsoft.com/download/dotnet/5.0/runtime Download the x64 version runtime.
+1. (Required for the massunits tool) https://dotnet.microsoft.com/download/dotnet/5.0/runtime Download the x64 version runtime.
 2. Install [SuperBLT](https://superblt.znix.xyz)
 3. Install [BeardLib](https://modworkshop.net/mod/14924)
 4. After downloading the editor by clicking `Code` -> `Download ZIP`, unzip the contents of the ZIP file in the mods folder of the game.

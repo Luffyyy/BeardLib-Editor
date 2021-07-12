@@ -6,11 +6,20 @@ function StatusMenu:init(parent, menu)
         scrollbar = false,
         visible = false,
         w = 200,
-        h = 100
+        h = 100,
     })
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._text = self._menu:divider({name = "Text", text = "", text_align = "right"})
-    self._menu:SetPosition( BLE.Options:GetValue("GUIOnRight") and menu:W() - w - 200 or w, 0)
+    
+    local gui_right = BLE.Options:GetValue("GUIOnRight")
+    self._menu:SetPosition(gui_right and menu:W() - w - 200 or w)
+    if BLE.Options:GetValue("ToolbarPosition") == 2 then
+        if gui_right then
+            self._menu:SetPosition(0)
+        else
+            self._menu:SetPosition(nil, BLE.Options:GetValue("QuickAccessToolbarSize"))
+        end
+    end
 end
 
 function StatusMenu:SetVisible(visible)

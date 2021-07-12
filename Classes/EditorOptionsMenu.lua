@@ -10,8 +10,8 @@ function Options:init()
 	local h = page:ItemsHeight(2, 6)
 
 	local main = self:divgroup("Main", {w = w / 2, auto_height = false, h = h * 1/2})
-	main:GetToolbar():tb_imgbtn("ResetMainOptions", ClassClbk(self, "reset_options", main), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset main settings"})
-	main:button("ResetAllOptions", ClassClbk(self, "reset_options", page))
+	main:GetToolbar():tb_imgbtn("ResetMainOptions", ClassClbk(self, "show_reset_dialog", main), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset main settings"})
+	main:button("ResetAllOptions", ClassClbk(self, "show_reset_dialog", page))
 	main:button("ReloadEditor", ClassClbk(self, "reload"), {help = "A reload button if you wish to see your changes in effect faster. Pleae don't use this when actually working on a project."})
 	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
 
@@ -41,8 +41,9 @@ function Options:init()
 	main:numberbox("Scrollspeed", ClassClbk(self, "set_clbk"), O:GetValue("Scrollspeed"), {max = 100, floats = 1, min = 1})
 
 	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 1/2})
-	visual:GetToolbar():tb_imgbtn("ResetVisualOptions", ClassClbk(self, "reset_options", visual), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset visual settings"})
+	visual:GetToolbar():tb_imgbtn("ResetVisualOptions", ClassClbk(self, "show_reset_dialog", visual), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset visual settings"})
 	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
+	visual:combobox("ToolbarPosition", ClassClbk(self, "set_clbk"), {"Top Corner", "Top Middle", "Bottom Middle"}, O:GetValue("ToolbarPosition"))
 	visual:slider("MapEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorPanelWidth"), {min = 300, max = 1600})
 	visual:slider("MapEditorFontSize", ClassClbk(self, "set_clbk"), O:GetValue("MapEditorFontSize"), {min = 8, max = 42})
 	visual:slider("ParticleEditorPanelWidth", ClassClbk(self, "set_clbk"), O:GetValue("ParticleEditorPanelWidth"), {min = 300, max = 1600})
@@ -73,7 +74,7 @@ function Options:init()
 	local function keybind(setting, supports_mouse, text)
 		return input:keybind("Input/"..setting, ClassClbk(self, "set_clbk"), O:GetValue("Input/"..setting), {text = text or string.pretty2(setting), supports_mouse = supports_mouse, supports_additional = true})
 	end
-	input:GetToolbar():tb_imgbtn("ResetInputOptions", ClassClbk(self, "reset_options", input), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset input settings"})
+	input:GetToolbar():tb_imgbtn("ResetInputOptions", ClassClbk(self, "show_reset_dialog", input), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset input settings"})
 
 	keybind("TeleportToSelection")
 	keybind("CopyUnit")
@@ -119,6 +120,10 @@ Clicking 'Yes' will %s the physics settings fix and close the game. After openin
 		end
 		setup:quit()
 	end)
+end
+
+function Options:show_reset_dialog(menu)
+	BLE.Utils:YesNoQuestion("Do you want to reset the selected options?", ClassClbk(self, "reset_options", menu))
 end
 
 function Options:Load(data)
