@@ -93,7 +93,8 @@ function BLE:InitManagers(data)
         BeardLib:AddDelayedCall("FixEditorResolution", 0.5, ClassClbk(BLE, "MapEditorCodeReload"), true)
     end)
 
-    self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
+    local bg_color = self.Options:GetValue("BackgroundColor")
+    self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = bg_color, bg_color = bg_color:with_alpha(0.3), no_blur = true}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
     self.ListDialog = ListDialog:new(self._dialogs_opt)
     self.SelectDialog = SelectListDialog:new(self._dialogs_opt)
