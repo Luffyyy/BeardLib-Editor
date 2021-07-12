@@ -179,9 +179,9 @@ function EditorInstanceSetParams:_build_from_params()
         if data.type == "number" then
             value_ctrlr = self:NumberCtrl(name, opt)
         elseif data.type == "enemy" then
-            value_ctrlr = self:PathCtrl(name, "unit", 12)
+            value_ctrlr = self:PathCtrl(name, "unit", '/ene_')
         elseif data.type == "civilian" then
-        	value_ctrlr = self:PathCtrl(name, "unit", 21)
+        	value_ctrlr = self:PathCtrl(name, "unit", '/civ_')
         elseif data.type == "objective" then
             value_ctrlr = self:ComboCtrl(name, managers.objectives:objectives_by_name(), opt)
         elseif data.type == "enemy_spawn_action" then

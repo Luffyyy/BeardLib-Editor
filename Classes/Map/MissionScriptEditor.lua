@@ -735,10 +735,10 @@ function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	return (opt.group or self._holder):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
-function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
+function MissionScriptEditor:PathCtrl(value_name, type, check_match, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	opt.check = function(unit)
-		return (not check_slot or BLE.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
+		return not unit:match("husk") and (not check_match or unit:match(check_match))
 	end
 	opt.not_close = true
     return (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
