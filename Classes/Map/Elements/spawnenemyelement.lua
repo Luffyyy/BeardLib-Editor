@@ -55,7 +55,7 @@ end
 
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-	self:PathCtrl("enemy", "unit", '/ene_')
+	self:PathCtrl("enemy", "unit", "/ene_", BLE.Utils.EnemyBlacklist)
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")

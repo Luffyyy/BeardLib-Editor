@@ -735,13 +735,28 @@ function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	return (opt.group or self._holder):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
-function MissionScriptEditor:PathCtrl(value_name, type, check_match, opt)
+function MissionScriptEditor:PathCtrl(value_name, typ, check_match, check_not_match, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	opt.check = function(unit)
-		return not unit:match("husk") and (not check_match or unit:match(check_match))
+		if unit:match("husk") then
+			return false
+		end
+		local check_match_tbl = type(check_match) == "table" and check_match or {check_match}
+		local check_not_match_tbl = type(check_not_match) == "table" and check_not_match or {check_not_match}
+		for _, check in pairs(check_match_tbl) do
+			if not unit:match(check) then
+				return false
+			end
+		end
+		for _, check in pairs(check_not_match_tbl) do
+			if unit:match(check) then
+				return false
+			end
+		end
+		return true
 	end
 	opt.not_close = true
-    return (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
+    return (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], typ, opt)
 end
 
 function MissionScriptEditor:Vector3Ctrl(value_name, opt)

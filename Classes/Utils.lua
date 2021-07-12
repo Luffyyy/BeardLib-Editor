@@ -238,6 +238,15 @@ Utils.ElementIcons = {
 	UnloadStatic = {768, 256}
 }
 
+--- Contains words of units that do have ene_ in them, however aren't actually spawnable enemies. Used to filter out that list further
+Utils.EnemyBlacklist = {
+    "/ene_acc",
+    "/ene_dummy_corpse",
+    "ene_swat_heavy_policia_federale_fbi_helmet",
+    "pose_dead",
+    "_debris"
+}
+
 function Utils:GetIcon(name)
     return Utils.EditorIcons[name]
 end
