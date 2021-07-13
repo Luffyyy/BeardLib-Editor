@@ -1,5 +1,6 @@
 EditorSlowMotion = EditorSlowMotion or class(MissionScriptEditor)
-function EditorSlowMotion:_build_panel()
+function EditorSlowMotion:create_element()
+	EditorSlowMotion.super.create_element(self)
     self._element.class = "ElementSlowMotion"
     self._element.values.eff_name = ""
 end
