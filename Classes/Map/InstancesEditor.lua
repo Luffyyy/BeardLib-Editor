@@ -38,10 +38,10 @@ function Instance:set_instance(reset)
     self._static:clear_menu()
 end
 
-function Instance:delete_instance(instance)
+function Instance:delete_instances()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:fake() then
-            instance = instance or unit:object()
+            local instance = unit:object()
             local instances = managers.worlddefinition._continent_definitions[instance.continent].instances
             for _, mission in pairs(managers.mission._missions) do
                 for _, script in pairs(mission) do

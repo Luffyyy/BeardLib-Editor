@@ -1259,15 +1259,20 @@ end
 
 function Static:delete_selected(item)
     self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
+
     local should_reload = #self._selected_units < 10
+
+    -- Delete instances
+    if self:selected_unit():fake() or #self._selected_units > 1 then
+        self:GetPart("instances"):delete_instances()
+        if should_reload then
+            self:GetPart("select"):get_menu("instance"):reload()
+        end
+    end
+
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
-            if unit:fake() then
-                self:GetPart("instances"):delete_instance()
-                if should_reload then
-                    self:GetPart("select"):get_menu("instance"):reload()
-                end
-            else
+            if not unit:fake() then
                 self:delete_unit_group_data(unit)
                 self._parent:DeleteUnit(unit, false, should_reload)
             end
