@@ -1543,7 +1543,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             if v.type == "element" then
 				table.insert(units, self:GetPart("mission"):add_element(v.mission_element_data.class, nil, v.mission_element_data, true))
             elseif v.type == "instance" then
-                table.insert(units, self:GetPart("world"):SpawnInstance(v.instance_data.folder, v.instance_data, false))
+                table.insert(units, self:GetPart("spawn"):SpawnInstance(v.instance_data.folder, v.instance_data, false))
             elseif v.unit_data then
                 table.insert(units, self._parent:SpawnUnit(v.unit_data.name, v, nil, v.unit_data.unit_id, true))
             end
