@@ -888,6 +888,7 @@ function FakeObject:editable_gui() return nil end
 function FakeObject:zipline() return nil end
 function FakeObject:ladder() return nil end
 function FakeObject:name() return Idstring("blank") end
+function FakeObject:num_bodies() return 0 end
 
 function Utils:GetPart(name)
     return managers.editor.parts[name]
