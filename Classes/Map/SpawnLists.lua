@@ -84,8 +84,7 @@ UnitSpawnList.BLACKLIST = {
     "/msk_",
     "/npc_",
     "/npc_",
-    "/ene_",
-    "/brushes"
+    "/ene_"
 }
 function UnitSpawnList:do_search_list()
     local loaded_only = self._options:GetItemValue("ShowLoadedUnitsOnly")
@@ -98,7 +97,7 @@ function UnitSpawnList:do_search_list()
                 break
             end
         end
-        if not blacklisted then
+        if not blacklisted and not table.contains(BLE.Brushes, unit) then
             if self:check_search(unit) then
                 if not loaded_only or PackageManager:has(unit_ids, unit:id()) then
                     local name = unit:gsub("units/", "")
