@@ -186,9 +186,10 @@ end
 
 function QuickAccess:UpdateToggle(name, val)
     local item = self._menu:GetItem(name)
-
-    item.img:set_alpha(val and 1 or 0.5)
-    item:SetBorder({bottom = val})
+    if item then
+        item.img:set_alpha(val and 1 or 0.5)
+        item:SetBorder({bottom = val})
+    end
 end
 function QuickAccess:UpdateNumberBox(name)
     local inputItem = self._menu:GetItem(name)
