@@ -786,7 +786,7 @@ function Utils:GetUnits(params)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_types or not table.contains(not_types, unit_type))
-		local unit_loaded = params.not_loaded or BLE.DBPackages.map_assets.unit[unit]
+		local unit_loaded = params.not_loaded or (BLE.DBPackages.map_assets and BLE.DBPackages.map_assets.unit and BLE.DBPackages.map_assets.unit[unit])
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true
