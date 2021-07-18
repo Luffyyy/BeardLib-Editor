@@ -235,7 +235,9 @@ Utils.ElementIcons = {
 	TeamAICommands = {576, 256},
 	TeamRelation = {640, 256},
 	TerminateAssault = {704, 256},
-	UnloadStatic = {768, 256}
+	UnloadStatic = {768, 256},
+	RelativeTeleport = {704, 384},
+	RelativeTeleportTarget = {896, 384}
 }
 
 --- Contains words of units that do have ene_ in them, however aren't actually spawnable enemies. Used to filter out that list further
