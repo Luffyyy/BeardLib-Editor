@@ -881,6 +881,10 @@ function WorldDef:prepare_for_spawn_instance(instance)
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
 		self:report_stuff()
 	end
+
+	if instance.mission_placed then
+		managers.world_instance:prepare_serialized_instance_data(instance)
+	end
 end
 
 function WorldDef:report_stuff()

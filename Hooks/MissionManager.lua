@@ -449,10 +449,11 @@ end
 --Instance elements--
 local MScript = MissionScript
 function MScript:_preload_instance_class_elements(prepare_mission_data)
-	prepare_mission_data.instance_name = nil
 	for _, instance_mission_data in pairs(prepare_mission_data) do
-		for _, element in ipairs(instance_mission_data.elements) do
-			self:_element_class(element.module, element.class)
+		if type(instance_mission_data) == "table" then
+			for _, element in ipairs(instance_mission_data.elements) do
+				self:_element_class(element.module, element.class)
+			end
 		end
 	end
 end
@@ -460,12 +461,14 @@ end
 function MScript:create_instance_elements(prepare_mission_data)
 	local new_elements = {}
 	local instance_name = prepare_mission_data.instance_name
-	prepare_mission_data.instance_name = nil
 	for _, instance_mission_data in pairs(prepare_mission_data) do
-		new_elements = self:_create_elements(instance_mission_data.elements, instance_name)
+		if type(instance_mission_data) == "table" then
+			new_elements = self:_create_elements(instance_mission_data.elements, instance_name)
+		end
 	end
 	return new_elements
 end
+
 --Instance elements code end
 
 function MScript:_create_elements(elements, instance_name)

@@ -100,7 +100,6 @@
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
         <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
         <hook source_file="lib/managers/mission/elementspawncivilian" file="Fixes.lua"/>
-        <hook source_file="core/lib/managers/mission/coreelementinstance" file="Fixes.lua"/>
         <hook source_file="lib/managers/mission/elementspawnenemydummy" file="Fixes.lua"/>
     	<hook source_file="core/lib/managers/mission/coreelementarea" file="Fixes.lua"/>
         <hook source_file="lib/managers/missionassetsmanager" file="MissionAssetsManager.lua"/>

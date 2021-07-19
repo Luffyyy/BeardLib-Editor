@@ -155,10 +155,10 @@ function SpawnMenu:SpawnInstance(instance, instance_data, spawn)
         local data = managers.world_instance:get_instance_data_by_name(instance_name)
         local prepare_mission_data = managers.world_instance:prepare_mission_data_by_name(instance_name)
         local script = managers.mission._scripts[instance.script]
-        if not data.mission_placed then
-            script:create_instance_elements(prepare_mission_data)
-        else
+        if data.mission_placed then
             script:_preload_instance_class_elements(prepare_mission_data)
+        else
+            script:create_instance_elements(prepare_mission_data)
         end
 
         local unit = FakeObject:new(data, {instance = true})

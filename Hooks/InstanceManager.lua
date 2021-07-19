@@ -52,6 +52,8 @@ function Instance:custom_create_instance(instance_name, custom_data)
 	local instance = self:get_instance_data_by_name(instance_name)
 	local continent_data = managers.worlddefinition._continents[instance.continent]
 	local package_data = managers.world_instance:packages_by_instance(instance)
+	local orig_pos = instance.position
+	local orig_rot = instance.rotation
 	instance.position = custom_data.position or Vector3()
 	instance.rotation = custom_data.rotation or Rotation()
 	local prepared_unit_data = managers.world_instance:prepare_unit_data(instance, continent_data)
@@ -73,6 +75,9 @@ function Instance:custom_create_instance(instance_name, custom_data)
 	end
 	local prepare_mission_data = self:prepare_mission_data_by_name(instance_name)
 	managers.mission:script(instance.script):external_create_instance_elements(prepare_mission_data, instance_name)
+
+	instance.position = orig_pos
+	instance.rotation = orig_rot
 end
 
 function Instance:prepare_mission_data_by_name(name)
