@@ -725,10 +725,11 @@ function Static:get_groups_from_unit(unit)
     local continent = managers.worlddefinition:get_continent_of_static(unit)
     if not continent or not continent.editor_groups then return {} end
     local groups = {}
+    local id = unit:unit_data().unit_id
     for _, editor_group in pairs(continent.editor_groups) do
         if editor_group.name then   -- temp bandaid for nil groups
             for _, unit_id in pairs(editor_group.units) do
-                if unit_id == unit:unit_data().unit_id then
+                if unit_id == id then
                     table.insert(groups, editor_group)
                 end
             end

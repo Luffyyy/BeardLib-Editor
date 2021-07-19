@@ -554,10 +554,11 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		end
 		return not ud.instance and ud.unit_id ~= 0 and (not params.check_unit or params.check_unit(unit))
 	end)
+	local static = self:part("static")
 	self:OpenManageListDialog(params, units,
 		function(unit)
 			local ud = unit:unit_data()
-			local groups = self:part("static"):get_groups_from_unit(unit)
+			local groups = static:get_groups_from_unit(unit)
 			local groups_str
 			if next(groups) then
 				groups_str = "Groups: "
