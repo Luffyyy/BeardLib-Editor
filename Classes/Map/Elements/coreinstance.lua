@@ -123,6 +123,9 @@ function EditorInstancePoint:_build_panel()
 		end
 	end
 	self:ComboCtrl("instance", names)
+	if #names == 0 then
+		self._class_group:alert("It seems there are no instances with the mission placed option on, try turning some on")
+	end
 	self:build_instance_links()
 end
 
