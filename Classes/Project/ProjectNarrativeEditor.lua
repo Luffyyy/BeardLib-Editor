@@ -375,9 +375,10 @@ end
 
 --- Open a dialog to select crimenet videos for the narrative
 function ProjectNarrativeEditor:set_crimenet_videos_dialog()
+    self._data.crimenet_videos._meta = nil
     BLE.SelectDialog:Show({
         selected_list = self._data.crimenet_videos,
-        list = EU:GetEntries({type = "movie", check = function(entry)
+        list = EU:GetEntries({type = "movie", filenames = true, check = function(entry)
             return entry:match("movies/")
         end}),
         callback = function(list) self._data.crimenet_videos = list end
