@@ -116,6 +116,7 @@ function WData:make_tabs(tabs)
 end
 
 function WData:open_tab(name, item)
+    item = item or self._tabs:GetItem(name)
     self._current_layer = name
     for _, tab in pairs(self._tabs:Items()) do
         tab:SetBorder({bottom = tab.name == item.name})
