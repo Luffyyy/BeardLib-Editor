@@ -1742,10 +1742,13 @@ function Static:start_physics_simulation()
 
     for _, unit in pairs(self._physics_sim_units) do
         if self:can_do_physics(unit) then
+            local orientation_object = unit:orientation_object()
+
             self._physics_sim_previous_unit_settings[unit:editor_id()] = {}
 
             for i_body = 0, unit:num_bodies() - 1 do
                 local body = unit:body(i_body)
+                local root_object = body:root_object()
 
                 self._physics_sim_previous_unit_settings[unit:editor_id()][i_body] = {
                     collisions_enabled = body:collisions_enabled(),
@@ -1754,10 +1757,14 @@ function Static:start_physics_simulation()
                     dynamic = body:dynamic()
                 }
 
-                body:set_ignore_static(false)
+                if orientation_object == root_object then
+                    body:set_ignore_static(false)
 
-                body:set_collisions_enabled(true)
-                body:set_dynamic()
+                    body:set_collisions_enabled(true)
+                    body:set_dynamic()
+                else
+                    body:set_collisions_enabled(false)
+                end
             end
         end
     end
