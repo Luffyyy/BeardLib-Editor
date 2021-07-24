@@ -67,7 +67,7 @@ function UnitSpawnList:init(parent)
     UnitSpawnList.super.init(self, parent)
 
     self._options:tickbox("ShortUnitPaths", ClassClbk(self, "set_short_unit_paths"), BLE.Options:GetValue("Map/ShortUnitPaths"), {help = "Shortens the paths in this list"})
-    self._options:tickbox("ShowLoadedUnitsOnly", ClassClbk(self, "do_search", false), false, {help = "Filters the list to show only units that are loaded."})
+    self._options:tickbox("ShowLoadedUnitsOnly", ClassClbk(self, "do_search", false, false), false, {help = "Filters the list to show only units that are loaded."})
     self._options:tickbox("LoadWithPackages", nil, false, {
         help = "Opens a dialog to pick a package in order to load the unit instead of loading it from the database"
     })
