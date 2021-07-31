@@ -259,7 +259,7 @@ The editor will now use this format and any old map will need to be converted. C
 
         local world_data = deep_clone(worlddef._world_data)
         if BeardLib.current_level then
-            local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
+            local map_dbpath = BeardLib.current_level._inner_dir
             local environment_values = world_data.environment.environment_values
             if string.begins(environment_values.environment, map_dbpath) then
                 environment_values.environment = string.gsub(environment_values.environment, map_dbpath, ".map")
