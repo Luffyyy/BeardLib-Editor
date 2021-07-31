@@ -42,7 +42,7 @@ function ProjectInstanceEditor:create(create_data)
             elseif string.begins(name, " ") then
                 warn = "Invalid ID!"
             else
-                if instances["levels/instances/mods/"..name] then
+                if instances[Path:Combine("levels/instances/mods/", name)] or instances[Path:Combine("levels/instances/mods/", self._mod.Name, name)] then
                     warn = string.format("An instance with the id %s already exists! Please use a unique id", name)
                 end
             end
@@ -92,7 +92,7 @@ function ProjectInstanceEditor:set_data_callback()
     local name_item = self:GetItem("InstanceID")
     local new_name = name_item:Value()
     local title = "Instance ID"
-    
+
     local index_size = self._menu:GetItemValue("IndexSize")
     data.index_size = index_size ~= -1 and index_size or nil
 

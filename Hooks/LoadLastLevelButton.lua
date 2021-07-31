@@ -47,10 +47,10 @@ function BLTNotificationsGui:mouse_pressed(button, x, y)
         if alive(self._beardlib_editor_startlast) and self._beardlib_editor_startlast:inside(x,y) then
             local data = BLE.Options:GetValue("LastLoaded")
             if data and data.name then
-                if tweak_data.levels[data.name] or data.instance and BeardLib.managers.MapFramework._loaded_instances["levels/" .. data.name .. "/world"] then
+                if tweak_data.levels[data.name] or data.instance and BeardLib.managers.MapFramework._loaded_instances[data.instance] then
                     BLE.LoadLevel:load_level(data)
                 else
-                    BeardLib.Managers.Dialog:Simple():Show({title = managers.localization:text("mod_assets_error"), message = "Heist \"" .. data.name .. "\" not found.", force = true})
+                    BeardLib.Managers.Dialog:Simple():Show({title = managers.localization:text("mod_assets_error"), message = "Level \"" .. data.name .. "\" not found.", force = true})
                 end
             end
             return true

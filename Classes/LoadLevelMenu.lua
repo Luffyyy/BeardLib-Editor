@@ -97,9 +97,6 @@ function LoadLevelMenu:load_levels()
 end
 
 function LoadLevelMenu:do_load_levels()
-	local vanilla = self:GetItem("Vanilla"):Value()
-	local custom = self:GetItem("Custom"):Value()
-    local columns = BLE.Options:GetValue("LevelsColumns")
     local levels = self:GetItem("LevelList")
     local loc = managers.localization
 	levels:ClearItems()
@@ -113,7 +110,7 @@ function LoadLevelMenu:do_load_levels()
 
 	for path, instance in pairs(BeardLib.managers.MapFramework._loaded_instances) do
 		local id = instance._config.id
-		levels:button("instances/mods/"..id, ClassClbk(self, "load_level"), {text = path, real_id = id, instance = true})
+		levels:button(path, ClassClbk(self, "load_level"), {text = path, real_id = id, instance = true})
 	end
 
 	self:search_levels()
@@ -122,7 +119,6 @@ end
 function LoadLevelMenu:do_load_narratives()
 	local vanilla = self:GetItem("Vanilla"):Value()
 	local custom = self:GetItem("Custom"):Value()
-    local columns = BLE.Options:GetValue("LevelsColumns")
     local levels = self:GetItem("LevelList")
     levels:ClearItems()
     local loc = managers.localization
