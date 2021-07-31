@@ -202,7 +202,7 @@ function BLE:LoadCustomAssets()
                 self:LoadCustomAssetsToHashList(add, directory, "map_assets")
             end
             local local_add = project:read_xml(level._local_add_path)
-            local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
+            local map_dbpath = BeardLib.current_level._inner_dir
             if local_add then
                 for _, file in pairs(local_add) do
                     local ext = file._meta
