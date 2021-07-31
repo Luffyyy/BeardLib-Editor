@@ -11,11 +11,13 @@ function EditorPointOfNoReturn:create_element()
 	self._element.values.time_easy_wish = nil
 	self._element.values.time_overkill_290 = 15
 	self._element.values.time_sm_wish = nil
+	self._element.values.tweak_id = "noreturn"
 end
 
 function EditorPointOfNoReturn:_build_panel()
 	self:_create_panel()
 	self:BuildElementsManage("elements", nil, {"ElementAreaTrigger"})
+	self:ComboCtrl("tweak_id", table.map_keys(tweak_data.point_of_no_returns), {help = "Select a tweak id."})
 	self:NumberCtrl("time_normal", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "Normal"})
 	self:NumberCtrl("time_hard", {floats = 0, min = 1, help = "Set the time left(seconds)", text  = "Hard"})
 	self:NumberCtrl("time_overkill", {floats = 0, min = 1, help = "Set the time left(seconds)", text = "Very hard"})

@@ -5,10 +5,7 @@ local EU = BLE.Utils
 local tx = "textures/editor_icons_df"
 
 function AiEditor:init(parent)
-    self:init_basic(parent, "AiLayerEditor")
-    self._parent = parent
-    self._menu = parent._holder
-    ItemExt:add_funcs(self)
+    AiEditor.super.init(self, parent, "AiLayerEditor")
 
     self._draw_helpers = {
         { name = "quads", needs_unit = true, dont_disable = true },
@@ -46,10 +43,7 @@ function AiEditor:init(parent)
 end
 
 function AiEditor:is_my_unit(unit)
-    if unit == self._patrol_point_unit:id() or unit == self._nav_surface_unit then
-        return true
-    end
-    return false
+    return unit == self._patrol_point_unit:id() or unit == self._nav_surface_unit
 end
 
 function AiEditor:_current_patrol_units(path_name)
@@ -105,9 +99,10 @@ end
 
 function AiEditor:build_menu()
     self:save()
-    self:ClearItems()
-    local graphs = self:group("Graphs")
-    graphs:button("SpawnNavSurface", ClassClbk(self._parent, "BeginSpawning", "core/units/nav_surface/nav_surface"))
+    self._holder:ClearItems()
+    local graphs = self._holder:group("Graphs")
+    local spawn = self:GetPart("spawn")
+    graphs:button("SpawnNavSurface", ClassClbk(spawn, "begin_spawning", "core/units/nav_surface/nav_surface"))
     graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
     graphs:button("SaveNavigationData", ClassClbk(self:part("opt"), "save_nav_data", false), { enabled = self._parent._parent._has_fix })
     --[[
@@ -143,7 +138,7 @@ function AiEditor:build_menu()
 
     self:_build_draw_data(group)
 
-    local ai_settings = self:group("AISettings", {text = "AI Settings"})
+    local ai_settings = self._holder:group("AISettings", {text = "AI Settings"})
     ai_settings:combobox("GroupState",
         function(item)
             self:data().ai_settings.group_state = item:SelectedItem()
@@ -151,7 +146,7 @@ function AiEditor:build_menu()
         self._group_states,
         table.get_key(self._group_states, self:data().ai_settings.group_state))
 
-    local ai_data = self:group("AIData", {text = "AI Data"})
+    local ai_data = self._holder:group("AIData", {text = "AI Data"})
     ai_data:tickbox("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"))
     ai_data:GetToolbar():tb_imgbtn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
@@ -160,8 +155,8 @@ function AiEditor:build_menu()
 
     self:_build_ai_data(ai_data)
 
-    local other = self:group("Other")
-    other:button("SpawnCoverPoint", ClassClbk(self._parent, "BeginSpawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    local other = self._holder:group("Other")
+    other:button("SpawnCoverPoint", ClassClbk(self:part("spawn"), "begin_spawning", "units/dev_tools/level_tools/ai_coverpoint"))
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 end
 
@@ -238,7 +233,7 @@ function AiEditor:build_unit_menu()
         main:GetToolbar():lbl("ID", {
             text = "ID " .. unit:unit_data().unit_id,
             size_by_text = true,
-            offset = 0
+            offset = 6
         })
         main:textbox("Name", ClassClbk(self, "set_unit_data"), unit:unit_data().name_id, {
             help = "the name of the unit",
@@ -283,9 +278,9 @@ end
 function AiEditor:update_positions() self:set_unit_pos() end
 
 function AiEditor:set_selected_unit()
-    local unit = self:selected_unit()
-
-    self:update_draw_data(unit)
+    if self:active() then
+        self:update_draw_data(self:selected_unit())
+    end
 end
 
 function AiEditor:set_unit_pos()
@@ -384,14 +379,18 @@ function AiEditor:update_draw_data(unit)
                 needs_unit_text = "(no seg)"
             end
 
-            self._draw_options[data.name]:SetText(data.name .. needs_unit_text)
-            self._draw_options[data.name]:SetEnabled(should_enable)
+            local text = data.name .. needs_unit_text
+            local opt = self._draw_options[data.name]
+            if text ~= opt:Text() then
+                opt:SetText(text)
+            end
+            opt:SetEnabled(should_enable)
         end
     end
 end
 
 function AiEditor:update_ai_data()
-    local ai_data = self:GetItem("AIData")
+    local ai_data = self._holder:GetItem("AIData")
     ai_data:ClearItems("patrol_path")
 
     self:_build_ai_data(ai_data)
@@ -537,6 +536,7 @@ function AiEditor:_clear_graphs()
             managers.editor:DeleteUnit(unit)
         end
     end
+    self:GetPart("select"):reload_menu("unit")
 end
 
 function AiEditor:_clear_selected_nav_segment()
@@ -545,6 +545,7 @@ function AiEditor:_clear_selected_nav_segment()
             managers.editor:DeleteUnit(unit)
         end
     end
+    self:GetPart("select"):reload_menu("unit")
 end
 
 function AiEditor:_draw_nav_segments(item)
@@ -577,6 +578,7 @@ function AiEditor:_delete_patrol_path(path_name)
         for _, unit in ipairs(to_delete) do
             managers.editor:DeleteUnit(unit)
         end
+        self:GetPart("select"):reload_menu("unit")
 
         managers.ai_data:remove_patrol_path(path_name)
         self:update_ai_data()
@@ -589,7 +591,7 @@ end
 
 function AiEditor:_delete_patrol_point(unit)
     EU:YesNoQuestion("Do you want to delete this patrol point?", function()
-        managers.editor:DeleteUnit(unit)
+        managers.editor:DeleteUnit(unit, false, true)
 
         self:update_ai_data()
     end)
@@ -631,6 +633,8 @@ function AiEditor:do_spawn_unit(unit_path, ud)
     table.insert(self._units, unit)
 
     self:build_menu()
+
+    return unit
 end
 
 function AiEditor:_add_patrol_point(unit)
@@ -650,7 +654,7 @@ end
 function AiEditor:build_nav_segments()
     -- Add later the options to the menu
     BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
-        self:part("opt"):save()
+        self:part("opt"):save(nil, nil, true)
         local settings = {}
         local nav_surfaces = {}
 
@@ -767,4 +771,8 @@ function AiEditor:build_visibility_graph()
     end, all_visible, exclude, include, ray_lenght)
 
     self:part("opt"):save_nav_data()
+end
+
+function AiEditor:can_unit_be_selected()
+    return self:Val("DrawPatrolPaths")
 end

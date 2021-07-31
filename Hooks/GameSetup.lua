@@ -1,5 +1,5 @@
 Hooks:PostHook(GameSetup, "init_finalize", "BeardLibEditorInitFinalize", function()
-	BeardLibEditor:SetLoadingText("Almost There")
+	BLE:SetLoadingText("Almost There")
 	if Global.editor_mode then 
 		if Global.game_settings.single_player then
 			game_state_machine:change_state_by_name("editor")

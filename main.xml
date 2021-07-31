@@ -1,15 +1,16 @@
 <mod 
 		name="BeardLib-Editor"
-		global_key="BeardLibEditor"
+		global_key="BLE"
 		ignore_errors="true"
 		image="textures/editor_logo"
 		color="Color(0.8,0.8,0.8)"
 		auto_image_color="true"
-		min_lib_ver="4.4"
+		min_lib_ver="4.5"
 		core_class="Core.lua"
 	>
     <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor" dont_delete="true"/>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="Data Files" folder_name="Data" install_directory="$ModPath$" name="DataFilesUpdate"/>
+    <load_first Options="true"/>
     <Classes directory="Classes">
 		<class file="Utils.lua"/>
 		<class file="ExportUtils.lua"/>
@@ -30,6 +31,7 @@
             <class file="ProjectNarrativeEditor.lua"/>
             <class file="ProjectLocalizationEditor.lua"/>
             <class file="ProjectUpdatesEditor.lua"/>
+            <class file="ProjectAddFilesEditor.lua"/>
         </classes>
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="FileWatcher.lua"/>
@@ -48,6 +50,16 @@
 			<class file="MultiSelectListDialog.lua"/>
 		</classes>
 
+		<classes directory="Map/Layers">
+			<class file="LayerEditor.lua"/>
+			<class file="BrushLayerEditor.lua"/>
+			<class file="PortalLayerEditor.lua"/>
+			<class file="EnvironmentLayerEditor.lua"/>
+			<class file="SoundLayerEditor.lua"/>
+			<class file="AiLayerEditor.lua"/>
+			<class file="MainLayerEditor.lua"/>
+        </classes>
+
 		<classes directory="Map">
 			<class file="EditUnit.lua"/>
 			<class file="MissionEditor.lua"/>
@@ -57,6 +69,7 @@
 			<class file="InEditorOptions.lua"/>
 			<class file="UpperMenu.lua"/>
 			<class file="StatusMenu.lua"/>
+            <class file="QuickAccess.lua"/>
 			<class file="EditorConsole.lua"/>
 			<class file="InstancesEditor.lua"/>
 			<class file="WorldDataEditor.lua"/>
@@ -65,14 +78,15 @@
 			<class file="EditZipline.lua"/>
 			<class file="EditUnitLight.lua"/>
 			<class file="MissionScriptEditor.lua"/>
-			<class file="LayerEditor.lua"/>
-			<class file="EnvironmentLayerEditor.lua"/>
-			<class file="PortalLayerEditor.lua"/>
-			<class file="SoundLayerEditor.lua"/>
-			<class file="AiLayerEditor.lua"/>
 			<class file="UndoUnitHandler.lua"/>
 			<class file="CubemapCreator.lua"/>
+			<class file="SearchList.lua"/>
+			<class file="SpawnLists.lua"/>
+			<class file="SelectLists.lua"/>
+			<class file="SelectMenu.lua"/>
+			<class file="SpawnMenu.lua"/>
 		</classes>
+
     </Classes>
     <Hooks directory="Hooks">
         <hook source_file="core/lib/managers/mission/coremissionmanager" file="MissionManager.lua"/>
@@ -86,7 +100,6 @@
         <hook source_file="lib/managers/mission/elementaiglobalevent" file="ElementAiGlobalEvent.lua"/>
         <hook source_file="lib/managers/mission/elementlasertrigger" file="ElementLaserTrigger.lua"/>
         <hook source_file="lib/managers/mission/elementspawncivilian" file="Fixes.lua"/>
-        <hook source_file="core/lib/managers/mission/coreelementinstance" file="Fixes.lua"/>
         <hook source_file="lib/managers/mission/elementspawnenemydummy" file="Fixes.lua"/>
     	<hook source_file="core/lib/managers/mission/coreelementarea" file="Fixes.lua"/>
         <hook source_file="lib/managers/missionassetsmanager" file="MissionAssetsManager.lua"/>
@@ -101,26 +114,38 @@
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
         <hook source_file="lib/managers/menu/menucomponentmanager" file="LoadLastLevelButton.lua"/>
     </Hooks>
-    <Options build_menu="false" auto_load="true">
+    <Options build_menu="false" early_post_init="true">
         <options>                
             <option type="number" default_value="3" name="LevelsColumns"/>
-            <option type="string" default_value="assets/extract" name="ExtractDirectory"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
-            <option type="Color" default_value="Color(0.6, 0.2, 0.2, 0.2)" name="BackgroundColor"/>
+            <option type="Color" default_value="Color('99333333')" name="BackgroundColor"/>
+            <option type="Color" default_value="Color('f21e1e1e')" name="ContextMenusBackgroundColor"/>
+            <option type="Color" default_value="Color('99282828')" name="BoxesBackgroundColor"/>
+            <option type="Color" default_value="Color('993c3c3c')" name="ItemsHighlight"/>
+            <option type="Color" default_value="Color('99282828')" name="ToolbarBackgroundColor"/>
+            <option type="Color" default_value="Color('00333333')" name="ToolbarButtonsColor"/>
 			<option type="number" min="1" max="100000" default_value="250" name="UndoHistorySize"/>
-			<option type="number" min="100" max="1600" default_value="320" name="MapEditorPanelWidth"/>
-			<option type="number" min="100" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
+			<option type="number" min="300" max="1600" default_value="350" name="MapEditorPanelWidth"/>
+			<option type="number" min="300" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
+            <option type="number" min="18" max="38" default_value="28" name="QuickAccessToolbarSize"/>
+            <option type="number" min="1" max="200" default_value="32" name="Scrollspeed"/>
+            <option type="number" min="0" max="16" default_value="6" name="BoxesXOffset"/>
+            <option type="number" min="0" max="16" default_value="4" name="BoxesYOffset"/>
+            <option type="number" min="0" max="16" default_value="6" name="ItemsXOffset"/>
+            <option type="number" min="0" max="16" default_value="2" name="ItemsYOffset"/>
             <option name="LastLoaded" type="table"/>
             <option name="GUIOnRight" type="bool" value="false"/>
-
+            <option name="ToolbarPosition" type="number" min="1" max="3" default_value="1"/>
+            
             <option_group name="Input">
                 <option type="string" default_value="1" name="SpawnUnit"/>
                 <option type="string" default_value="2" name="SpawnElement"/>
                 <option type="string" default_value="3" name="SelectUnit"/>
                 <option type="string" default_value="4" name="SelectElement"/>
-                <option type="string" default_value="5" name="LoadUnit"/>
-                <option type="string" default_value="6" name="LoadUnitFromExtract"/>
+                <option type="string" default_value="" name="SpawnInstance"/>
+                <option type="string" default_value="" name="SpawnPrefab"/>
+                <option type="string" default_value="" name="SelectInstance"/>
 
                 <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
@@ -141,6 +166,8 @@
 				<option type="string" default_value="f" name="RotateSpawnDummyYaw"/>
 				<option type="string" default_value="g" name="RotateSpawnDummyPitch"/>
 				<option type="string" default_value="h" name="RotateSpawnDummyRoll"/>
+                <option type="string" default_value="end" name="SettleUnits"/>
+                <option type="string" default_value="left ctrl+t" name="ToggleTransformOrientation"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
@@ -151,12 +178,15 @@
                 <option type="number" default_value="90" name="SnapRotation" min="1" max="360" step="1"/>
                 <option type="number" default_value="90" name="RotateSpawnDummy" min="1" max="360" step="1"/>
                 <option type="number" default_value="250" name="InstanceIndexSize" min="1" max="100000" step="1"/>
+                <option type="boolean" default_value="true" name="QuickAccessToolbar"/>
                 <option type="boolean" default_value="true" name="DrawOnlyElementsOfCurrentScript"/>
                 <option type="boolean" default_value="true" name="SelectInstances"/>
                 <option type="boolean" default_value="true" name="SaveMapFilesInBinary"/>
                 <option type="boolean" default_value="true" name="BackupMaps"/>
                 <option type="boolean" default_value="false" name="AutoSave"/>
                 <option type="number" default_value="5" name="AutoSaveMinutes"/>
+                <option type="boolean" default_value="false" name="SaveBeforePlayTesting"/>
+                <option type="boolean" default_value="false" name="SaveWarningAfterGameStarted"/>
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
                 <option type="boolean" default_value="true" name="UniqueElementIcons"/>
                 <option type="number" default_value="32" name="ElementsSize" min="16" max="64" step="1"/>
@@ -165,10 +195,6 @@
                 <option type="number" default_value="0.5" name="EndlessSelectionReset"/>
                 <option type="boolean" default_value="true" name="SelectAndGoToMenu"/>
                 <option type="boolean" default_value="false" name="EditorUnits"/>
-                <option type="boolean" default_value="false" name="SoundUnits"/>
-                <option type="boolean" default_value="true" name="SoundUnitsWhileMenu"/>
-                <option type="boolean" default_value="FALSE" name="EnvironmentUnits"/>
-                <option type="boolean" default_value="true" name="EnvironmentUnitsWhileMenu"/>
                 <option type="boolean" default_value="false" name="HighlightUnits"/>
                 <option type="boolean" default_value="false" name="HighlightInstances"/>
                 <option type="boolean" default_value="false" name="DrawBodies"/>
@@ -178,9 +204,12 @@
                 <option type="boolean" default_value="false" name="SurfaceMove"/>
                 <option type="boolean" default_value="true" name="DrawPatrolPaths"/>
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
+                <option type="boolean" default_value="true" name="ShowHints"/>
+                <option name="ShortUnitPaths" type="bool" value="false"/>
+                <option name="FavoriteItems" type="table"/>
             </option_group>
         </options>
-    </Options>    
+    </Options>
     <AddFiles directory="Assets">
         <material_config path="core/material_configs/hub_elements"/>
         <png path="textures/editor_logo"/>
@@ -219,6 +248,8 @@
 	    <value_node value="ElementXAudio"/>
         <value_node value="ElementXAudioOperator"/>
 	    <value_node value="ElementBLCustomAchievement"/>
+        <value_node value="ElementRelativeTeleport"/>
+        <value_node value="ElementRelativeTeleportTarget"/>
         
         <!--Normal-->
         <value_node value="ElementSideJobAward"/>
@@ -258,7 +289,7 @@
         <value_node value="ElementRandomInstanceInputEvent"/>
         <value_node value="ElementInstanceOutput"/>
         <value_node value="ElementInstanceOutputEvent"/>
-	<value_node value="ElementRandomInstanceOutputEvent"/>
+        <value_node value="ElementRandomInstanceOutputEvent"/>
         <value_node value="ElementInstancePoint"/>
         <value_node value="ElementInstanceSetParams"/>
         <value_node value="ElementShape"/>

@@ -2,8 +2,8 @@ if not Global.editor_mode then
 	return
 end
 
-local BeardLibEditor = BeardLibEditor
-local Utils = BeardLibEditor.Utils
+local BLE = BLE
+local Utils = BLE.Utils
 
 core:module("CoreMissionManager")
 core:import("CoreMissionScriptElement")
@@ -92,7 +92,7 @@ function Mission:get_new_id(continent)
 		tbl[i] = true
 		return i
 	else
-		_G.BeardLibEditor:log("[ERROR] continent needed for element id")
+		_G.BLE:log("[ERROR] continent needed for element id")
 	end
 end
 
@@ -203,7 +203,7 @@ function Mission:add_element(element)
 			end
 		end
 	else
-		_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element(1)")
+		_G.BLE:log("[ERROR] Something went wrong when trying to add the element(1)")
 	end
 	if not script then
 		if not mission then
@@ -222,7 +222,7 @@ function Mission:add_element(element)
 				end
 			end
 		else
-			_G.BeardLibEditor:log("[ERROR] Something went wrong when trying to add the element(2)")
+			_G.BLE:log("[ERROR] Something went wrong when trying to add the element(2)")
 		end
 	end
 
@@ -230,7 +230,7 @@ function Mission:add_element(element)
 		table.insert(script.elements, element)
 		return self._scripts[script_name]:create_element(element, true)
 	else
-		_G.BeardLibEditor:log("[ERROR] No mission scripts found in the map! cannot add elements")
+		_G.BLE:log("[ERROR] No mission scripts found in the map! cannot add elements")
 	end
 end
 
@@ -449,10 +449,11 @@ end
 --Instance elements--
 local MScript = MissionScript
 function MScript:_preload_instance_class_elements(prepare_mission_data)
-	prepare_mission_data.instance_name = nil
 	for _, instance_mission_data in pairs(prepare_mission_data) do
-		for _, element in ipairs(instance_mission_data.elements) do
-			self:_element_class(element.module, element.class)
+		if type(instance_mission_data) == "table" then
+			for _, element in ipairs(instance_mission_data.elements) do
+				self:_element_class(element.module, element.class)
+			end
 		end
 	end
 end
@@ -460,12 +461,14 @@ end
 function MScript:create_instance_elements(prepare_mission_data)
 	local new_elements = {}
 	local instance_name = prepare_mission_data.instance_name
-	prepare_mission_data.instance_name = nil
 	for _, instance_mission_data in pairs(prepare_mission_data) do
-		new_elements = self:_create_elements(instance_mission_data.elements, instance_name)
+		if type(instance_mission_data) == "table" then
+			new_elements = self:_create_elements(instance_mission_data.elements, instance_name)
+		end
 	end
 	return new_elements
 end
+
 --Instance elements code end
 
 function MScript:_create_elements(elements, instance_name)

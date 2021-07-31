@@ -43,13 +43,13 @@ end
 
 function EditorAlertTrigger:apply_preset(item)
 	local value = item:SelectedItem()
-	BeardLibEditor.Utils:YesNoQuestion("This will apply the preset" .. (item:SelectedItem() or ""), function()
+	BLE.Utils:YesNoQuestion("This will apply the preset" .. (item:SelectedItem() or ""), function()
 		if value == "clear" then
 			self:_set_filter_none()
 		elseif value == "all" then
 			self:_set_filter_all()
 		else
-			BeardLibEditor:log(tostring(value) .. " Didn't have preset yet.")
+			BLE:log(tostring(value) .. " Didn't have preset yet.")
 		end	
 	end)
 end

@@ -6,7 +6,7 @@ Hooks:PreHook(Setup, "start_loading_screen", "BeardLibEditorStartLoadingScreen",
 			local gui_data = CoreGuiDataManager.GuiDataManager:new(LoadingEnvironmentScene:gui())
 			local ws = gui_data:create_fullscreen_workspace()
 			local panel = ws:panel():panel({name = "Load", layer = 50})
-			local bgcolor = BeardLibEditor.Options:GetValue("BackgroundColor")
+			local bgcolor = BLE.Options:GetValue("BackgroundColor")
 			panel:rect({
 				name = "Background",
 		       	color = bgcolor:with_alpha(1),
@@ -19,7 +19,7 @@ Hooks:PreHook(Setup, "start_loading_screen", "BeardLibEditorStartLoadingScreen",
 				align = "center",
 				vertical = "center",
 			})
-			Global.LoadingText:set_text(BeardLibEditor:SetLoadingText("Waiting For Response"))
+			Global.LoadingText:set_text(BLE:SetLoadingText("Waiting For Response"))
 			if Global.check_load_time then
 				Global.check_load_time = os.clock()
 			end
@@ -40,12 +40,12 @@ end)
 
 Hooks:PreHook(Setup, "init_managers", "BeardLibEditorInitManagersPre", function()
 	if managers.editor then
-		BeardLibEditor:SetLoadingText("Starting Loading Managers")
+		BLE:SetLoadingText("Starting Loading Managers")
 	end
 end)
 
 Hooks:PostHook(Setup, "init_managers", "BeardLibEditorInitManagers", function()
 	if managers.editor then
-		BeardLibEditor:SetLoadingText("Done Loading Managers")
+		BLE:SetLoadingText("Done Loading Managers")
 	end
 end)

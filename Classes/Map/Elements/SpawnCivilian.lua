@@ -20,7 +20,7 @@ end
 
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
-	self:PathCtrl("enemy", "unit", 21, {text = "Civilian"})
+	self:PathCtrl("enemy", "unit", '/civ_', "dummy_corpse", {text = "Civilian"})
 	self:ComboCtrl("state", table.list_add(clone(CopActionAct._act_redirects.civilian_spawn), {"none"}))
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")

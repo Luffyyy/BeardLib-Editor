@@ -3,7 +3,7 @@ StaticEditor = StaticEditor or class(EditorPart)
 local Static = StaticEditor
 local Utils = BLE.Utils
 function Static:init(parent, menu)
-    Static.super.init(self, parent, menu, "Selection", nil, {delay_align_items = true})
+    Static.super.init(self, parent, menu, "Selection", nil, {auto_align = false})
     self._selected_units = {}
     self._nav_surfaces = {}
     self._ignore_raycast = {}
@@ -20,12 +20,14 @@ function Static:enable()
     self:bind_opt("CopyUnit", ClassClbk(self, "CopySelection"))
     self:bind_opt("PasteUnit", ClassClbk(self, "Paste"))
     self:bind_opt("TeleportToSelection", ClassClbk(self, "KeyFPressed"))
-    local menu = self:GetPart("menu")
-    self:bind_opt("ToggleRotationWidget", ClassClbk(menu, "toggle_widget", "rotation"))
-    self:bind_opt("ToggleMoveWidget", ClassClbk(menu, "toggle_widget", "move"))
+    local quick = self:GetPart("quick")
+    self:bind_opt("ToggleRotationWidget", ClassClbk(quick, "toggle_widget", "rotation"))
+    self:bind_opt("ToggleMoveWidget", ClassClbk(quick, "toggle_widget", "move"))
+    self:bind_opt("ToggleTransformOrientation", ClassClbk(self._parent, "toggle_local_move"))
     self:bind_opt("RotateSpawnDummyYaw", ClassClbk(self, "RotateSpawnDummyYaw"))
     self:bind_opt("RotateSpawnDummyPitch", ClassClbk(self, "RotateSpawnDummyPitch"))
     self:bind_opt("RotateSpawnDummyRoll", ClassClbk(self, "RotateSpawnDummyRoll"))
+    self:bind_opt("SettleUnits", ClassClbk(self, "SettleUnits"))
 end
 
 function Static:get_grabbed_unit()
@@ -53,8 +55,26 @@ function Static:RotateSpawnDummyRoll()
     end
 end
 
+function Static:SettleUnits()
+    self:StorePreviousPosRot()
+    local selected_units = self:selected_units()
+    for i, unit in pairs(selected_units) do
+        if alive(unit) then
+            local from = unit:position()
+            local to = from - Vector3(0, 0, 2000)
+            local ray = World:raycast("ray", from, to, "slot_mask", self._parent._editor_all, "ignore_unit", selected_units)
+            if ray and ray.body then
+                local pos = ray.position
+                local rot = unit:rotation()
+                BLE.Utils:SetPosition(unit, pos, rot)
+            end
+        end
+    end
+    self:recalc_all_locals()
+end
+
 function Static:mouse_pressed(button, x, y)
-    if not self:enabled() then
+    if not self:enabled() or managers.editor:mouse_busy() then
         return
     end
     if button == Idstring("2") then
@@ -81,9 +101,10 @@ function Static:mouse_pressed(button, x, y)
                 local ray = World:raycast("ray", from, to, "ray_type", "widget", "target_unit", self._parent._move_widget:widget())
                 if ray and ray.body then
                     if (alt() and not ctrl()) then self:Clone() end
+                    local rot = self._parent:use_local_move() and unit:rotation() or Rotation()
                     self:StorePreviousPosRot()
                     self._parent._move_widget:add_move_widget_axis(ray.body:name():s())
-                    self._parent._move_widget:set_move_widget_offset(unit, unit:rotation())
+                    self._parent._move_widget:set_move_widget_offset(unit, rot)
                     self._parent._using_move_widget = true
                 end
             end
@@ -129,7 +150,6 @@ function Static:finish_grabbing()
     transform:SetEnabled(true)
 end
 
-function Static:update_grid_size() self:set_unit() end
 function Static:deselect_unit(item) self:set_unit(true) end
 function Static:mouse_released(button, x, y)
     if not self:enabled() then
@@ -192,11 +212,12 @@ function Static:build_default()
     self:set_title("Selection")
     self:divider("No selection >_<", {border_left = false})
     self:button("World Menu", ClassClbk(self:GetPart("world"), "Switch"))
+    self._holder:AlignItems(true)
 end
 
 function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
 	self:set_title("Selection")
-    local quick = self:group("QuickButtons", {align_method = "grid"})
+    local quick = self:group("QuickActions", {align_method = "grid"})
     quick:s_btn("Deselect", ClassClbk(self, "deselect_unit"))
     quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
     if not cannot_be_prefab then
@@ -283,19 +304,24 @@ function Static:build_unit_editor_menu()
     self:build_unit_main_values()
     self:build_positions_items()
     self:build_extension_items()
+    self:build_physics_items()
 end
 
 function Static:build_unit_main_values()
     local name = self:unit_value("name")
     local main = self:group("Main", {align_method = "grid", visible = not self._built_multi or name ~= nil})
     if not self._built_multi then
-        main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, offset=0})
+        main:GetToolbar():lbl("ID", {text = "ID: 0000000", size_by_text = true, foreground = main.foreground, auto_foreground = false, offset = 6})
         main:textbox("Name", ClassClbk(self, "set_unit_data"), nil, {help = "the name of the unit", control_slice = 0.8})
     end
 
-    main:pathbox("UnitPath", ClassClbk(self, "set_unit_data"), name, "unit", {control_slice = 0.75, check = function(unit)
-        local t = Utils:GetUnitType(unit)
-        return t ~= Idstring("being") and t ~= Idstring("brush") and t ~= Idstring("wpn") and t ~= Idstring("item")
+    main:pathbox("Unit", ClassClbk(self, "set_unit_data"), name, "unit", {control_slice = 0.8, check = function(unit)
+        for _, bad in pairs(UnitSpawnList.BLACKLIST) do
+            if unit:match(bad) then
+                return false
+            end
+        end
+        return true
     end})
 
     local has_elements = false
@@ -378,12 +404,14 @@ function StaticEditor:update_positions()
     local unit = self._selected_units[1]
     if alive(unit) then
         if #self._selected_units > 1 or not unit:mission_element() then
-            self:GetItem("Position"):SetValue(unit:position())
-            self:GetItem("Rotation"):SetValue(unit:rotation())
-            self:GetPart("instances"):update_positions()
-            self:GetPart("world"):update_positions()
-            self:GetItem("Position"):SetStep(self._parent._grid_size)
-            --self:GetItem("Rotation"):SetStep(self._parent._snap_rotation)
+            if alive(self:GetItem("Position")) then
+                self:GetItem("Position"):SetValue(unit:position())
+                self:GetItem("Rotation"):SetValue(unit:rotation())
+                self:GetPart("instances"):update_positions()
+                self:GetPart("world"):update_positions()
+                self:GetItem("Position"):SetStep(self._parent._grid_size)
+                --self:GetItem("Rotation"):SetStep(self._parent._snap_rotation)
+            end
         elseif unit:mission_element() and self:GetPart("mission")._current_script then
             self:GetPart("mission")._current_script:update_positions(unit:position(), unit:rotation())
         end
@@ -444,7 +472,7 @@ function Static:open_addremove_group_dialog(remove)
                     self:part("world"):refresh()
                 end
             end
-            BeardLibEditor.ListDialog:hide()
+            BLE.ListDialog:hide()
         end
     })
 end
@@ -489,7 +517,7 @@ function Static:set_unit_data()
 
             self:set_unit_simple_values(unit)
             managers.worlddefinition:set_unit(prev_id, unit, old_continent, new_continent)
-            self:set_unit_path(unit, self:GetItem("UnitPath"):Value())
+            self:set_unit_path(unit, self:GetItem("Unit"):Value())
         end
     else
         local i = 0
@@ -503,7 +531,7 @@ function Static:set_unit_data()
                 if continent then
                     self:set_unit_continent(unit, ud.continent, continent:SelectedItem(), true)
                 end
-                self:set_unit_path(unit, self:GetItem("UnitPath"):Value(), i ~= 1)
+                self:set_unit_path(unit, self:GetItem("Unit"):Value(), i ~= 1)
             end
         end
     end
@@ -548,6 +576,7 @@ function Static:set_unit_path(unit, path, add)
         ud.name = path
         new_unit = self._parent:SpawnUnit(ud.name, unit, add == true, ud.unit_id)
         self._parent:DeleteUnit(unit, true)
+        self:GetPart("select"):reload_menu("unit")
     end
     return new_unit
 end
@@ -600,8 +629,10 @@ end
 
 function Static:StorePreviousPosRot()
 	for _, unit in pairs(self._selected_units) do
-		unit:unit_data()._prev_pos = unit:position()
-		unit:unit_data()._prev_rot = unit:rotation()
+        if alive(unit) then
+            unit:unit_data()._prev_pos = unit:position()
+            unit:unit_data()._prev_rot = unit:rotation()
+        end
 	end
 end
 
@@ -644,7 +675,7 @@ end
 
 function Static:add_group(item)
     local unit = self:selected_unit()
-    BeardLibEditor.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
+    BLE.InputDialog:Show({title = "Group Name", text = unit:unit_data().name_id, callback = function(name)
         local continent = managers.worlddefinition:get_continent_of_static(unit)
         local exists
         for _, group in pairs(continent.editor_groups) do
@@ -694,10 +725,11 @@ function Static:get_groups_from_unit(unit)
     local continent = managers.worlddefinition:get_continent_of_static(unit)
     if not continent or not continent.editor_groups then return {} end
     local groups = {}
+    local id = unit:unit_data().unit_id
     for _, editor_group in pairs(continent.editor_groups) do
         if editor_group.name then   -- temp bandaid for nil groups
             for _, unit_id in pairs(editor_group.units) do
-                if unit_id == unit:unit_data().unit_id then
+                if unit_id == id then
                     table.insert(groups, editor_group)
                 end
             end
@@ -739,15 +771,16 @@ end
 function Static:add_selection_to_prefabs(item, prefab_name)
     local remove_old_links
     local name_id = self._selected_units[1]:unit_data().name_id
-    BeardLibEditor.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
+    BLE.InputDialog:Show({title = "Prefab Name", text = #self._selected_units == 1 and name_id ~= "none" and name_id or prefab_name or "Prefab", callback = function(prefab_name, menu)
     	if prefab_name:len() > 200 then
-    		BeardLibEditor.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
+    		BLE.Dialog:Show({title = "ERROR!", message = "Prefab name is too long!", callback = function()
     			self:add_selection_to_prefabs(item, prefab_name)
     		end})
     		return
     	end
-        BeardLibEditor.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
-        FileIO:WriteScriptData(Path:Combine(BeardLibEditor.PrefabsDirectory, prefab_name..".prefab"), BeardLibEditor.Prefabs[prefab_name], "binary")
+        BLE.Prefabs[prefab_name] = self:GetCopyData(NotNil(remove_old_links and remove_old_links:Value(), true))
+        FileIO:WriteScriptData(Path:Combine(BLE.PrefabsDirectory, prefab_name..".prefab"), BLE.Prefabs[prefab_name], "binary")
+        self:GetPart("spawn"):get_menu("prefab"):reload()
     end, create_items = function(input_menu)
         remove_old_links = input_menu:tickbox("RemoveOldLinks", nil, self:Val("RemoveOldLinks"), {text = "Remove Old Links Of Copied Elements"})
     end})
@@ -811,11 +844,8 @@ function Static:check_unit_ok(unit)
             return false
         end
     end
-    local current_layer = self:GetPart("world")._current_layer
-    if ud.env_unit and not (self:Val("EnvironmentUnits") or (self:Val("EnvironmentUnitsWhileMenu") and current_layer == "environment")) then
-        return false
-    end
-    if ud.sound_unit and not (self:Val("SoundUnits") or (self:Val("SoundUnitsWhileMenu") and current_layer == "sound")) then
+    local world = self:GetPart("world")
+    if world:is_world_unit(unit:name()) and not world:can_unit_be_selected(unit:name()) then
         return false
     end
     if ud.instance and not self:Val("SelectInstances") then
@@ -827,7 +857,7 @@ function Static:check_unit_ok(unit)
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:GetPart("opt")._wanted_elements
     if mission_element then
-        return BeardLibEditor.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
+        return BLE.Options:GetValue("Map/ShowElements") and (#wanted_elements == 0 or table.get_key(wanted_elements, managers.mission:get_mission_element(mission_element).class))
     else
         return unit:visible()
     end
@@ -882,38 +912,33 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
                 end
             end
         else
-            if self:GetPart("opt"):get_value("SelectEditorGroups") then
+            if self:GetPart("opt"):get_value("SelectEditorGroups") and not unit:fake() then
                 local continent = managers.worlddefinition:get_continent_of_static(unit)
-                if not add then
-                    add = true
-                    self:reset_selected_units()
-				end
-				local found
-				for _, continent in pairs(managers.worlddefinition._continent_definitions) do
+                if continent then
+                    if not add then
+                        add = true
+                        self:reset_selected_units()
+                    end
                     continent.editor_groups = continent.editor_groups or {}
-					for _, group in pairs(continent.editor_groups) do
-						if group.units then
-							if table.contains(group.units, unit:unit_data().unit_id) then
+                    for _, group in pairs(continent.editor_groups) do
+                        if group.units then
+                            if table.contains(group.units, unit:unit_data().unit_id) then
                                 for _, unit_id in pairs(group.units) do
                                     local u = managers.worlddefinition:get_unit(unit_id)
                                     if alive(u) and not table.contains(units, u) then
                                         table.insert(units, u)
                                     end
-								end
+                                end
                                 if self._selected_group then
                                     self._selected_group = nil
                                 else
                                     self._selected_group = group
                                 end
-								found = true
-								break
+                                break
                             end
-						end
-						if found then
-							break
-						end
+                        end
                     end
-				end
+                end
             end
         end
     end
@@ -923,9 +948,15 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
         end
         for _, u in pairs(units) do
             if not table.contains(self._selected_units, u) then
-                table.insert(self._selected_units, u)
+                if alt() then
+                    table.insert(self._selected_units, 1, u)
+                else
+                    table.insert(self._selected_units, u)
+                end
             elseif not self._mouse_hold then
                 table.delete(self._selected_units, u)
+            else
+                return
             end
         end
     elseif alive(unit) then
@@ -943,14 +974,14 @@ function Static:selection_to_menu()
     local unit = self:selected_unit()
     self._parent:use_widgets(unit and alive(unit) and unit:enabled())
     for _, check_unit in pairs(self:selected_units()) do
-        if check_unit:mission_element() then
+        if alive(check_unit) and check_unit:mission_element() then
             check_unit:mission_element():select()
         end
     end
 
     if #self._selected_units > 1 then
         self:set_multi_selected()
-        if self:Val("SelectAndGoToMenu") then
+        if self:Val("SelectAndGoToMenu") and not ctrl() then
             self:Switch()
         end
     else
@@ -960,17 +991,19 @@ function Static:selection_to_menu()
                 self:GetPart("mission"):set_element(unit:mission_element().element)
             elseif self:GetPart("world"):is_world_unit(unit:name()) then
                 self:GetPart("world"):build_unit_menu()
+                self._holder:AlignItems(true)
             elseif unit:fake() then
                 self:GetPart("instances"):set_instance()
             else
                 self:set_unit()
             end
-            if self:Val("SelectAndGoToMenu") then
+            if self:Val("SelectAndGoToMenu") and not ctrl() then
                 self:Switch()
             end
         else
             self:set_unit()
         end
+        self:GetPart("select"):set_selected_objects()
     end
     self:GetPart("world"):set_selected_unit()
     self:recalc_all_locals()
@@ -979,7 +1012,7 @@ end
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
 function Static:select_unit(mouse2)
-    local rays = self._parent:select_unit_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
+    local rays = self._parent:select_units_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
     self:recalc_all_locals()
     if rays then
         for _, ray in pairs(rays) do
@@ -1004,13 +1037,18 @@ function Static:select_unit(mouse2)
 end
 
 function Static:set_multi_selected()
-    self._built_multi = true
-    self._editors = {}
-	self:clear_menu()
-    self:build_unit_main_values()
-    self:build_positions_items()
-	self:update_positions()
-    self:build_group_options()
+    BeardLib:AddDelayedCall("BuildItemsStaticEditor", 0.05, function()
+        self._built_multi = true
+        self._editors = {}
+        self:clear_menu()
+        self:build_unit_main_values()
+        self:build_positions_items()
+        self:update_positions()
+        self:build_group_options()
+        self:build_physics_items()
+        self._holder:AlignItems(true)
+        self:GetPart("select"):set_selected_objects()
+    end)
 end
 
 function Static:set_unit(reset)
@@ -1034,7 +1072,7 @@ function Static:set_menu_unit(unit)
 
     self:GetItem("Name"):SetValue(unit:unit_data().name_id, false, true)
     self:GetItem("Enabled"):SetValue(unit:enabled())
-    self:GetItem("UnitPath"):SetValue(unit:unit_data().name, false, true)
+    self:GetItem("Unit"):SetValue(unit:unit_data().name, false, true)
 	self:GetItem("ID"):SetText("ID "..unit:unit_data().unit_id)
 	local not_brush = not unit:unit_data().brush_unit
 	local disable_shadows = self:GetItem("DisableShadows")
@@ -1064,9 +1102,10 @@ function Static:set_menu_unit(unit)
     self:GetItem("Continent"):SetSelectedItem(unit:unit_data().continent)
     local not_w_unit = not (unit:wire_data() or unit:ai_editor_data())
     self:GetItem("Continent"):SetEnabled(not_w_unit)
-    self:GetItem("UnitPath"):SetEnabled(not_w_unit)
+    self:GetItem("Unit"):SetEnabled(not_w_unit)
     self:build_links(unit:unit_data().unit_id)
     self:build_group_links(unit)
+    self._holder:AlignItems(true)
 end
 
 local function element_link_text(element, link, warn)
@@ -1095,13 +1134,12 @@ function Static:build_links(id, match, element)
     local function create_link(text, id, group, clbk)
         group:button(id, clbk, {
             text = text,
-            font_size = 14,
             label = "elements"
         })
     end
 
     local links = managers.mission:get_links_paths_new(id, match)
-    local links_group = self:GetItem("LinkedBy") or self:group("LinkedBy", {max_height = 200})
+    local links_group = self._holder:GetItem("LinkedBy") or self._holder:group("LinkedBy", {max_height = 200})
     local same_links = {}
     links_group:ClearItems()
 
@@ -1123,7 +1161,7 @@ function Static:build_links(id, match, element)
     end
 
     if match == Utils.LinkTypes.Element then
-        local linking_group = self:GetItem("LinkingTo") or self:group("LinkingTo", {max_height = 200})
+        local linking_group = self._holder:GetItem("LinkingTo") or self._holder:group("LinkingTo", {max_height = 200})
         if alive(linking_group) then
             linking_group:ClearItems()
         end
@@ -1176,6 +1214,8 @@ function Static:build_links(id, match, element)
         links_group:Destroy()
     end
 
+    self._holder:AlignItems(true)
+
     return links
 end
 
@@ -1220,15 +1260,27 @@ end
 
 function Static:delete_selected(item)
     self:GetPart("undo_handler"):SaveUnitValues(self._selected_units, "delete")
+
+    local should_reload = #self._selected_units < 10
+
+    -- Delete instances
+    if self:selected_unit():fake() or #self._selected_units > 1 then
+        self:GetPart("instances"):delete_instances()
+        if should_reload then
+            self:GetPart("select"):get_menu("instance"):reload()
+        end
+    end
+
     for _, unit in pairs(self._selected_units) do
         if alive(unit) then
-            if unit:fake() then
-                self:GetPart("instances"):delete_instance()
-            else
+            if not unit:fake() then
                 self:delete_unit_group_data(unit)
-                self._parent:DeleteUnit(unit)
+                self._parent:DeleteUnit(unit, false, should_reload)
             end
         end
+    end
+    if not should_reload then
+        self:GetPart("select"):reload_menus()
     end
     self:reset_selected_units()
     self:set_unit()
@@ -1267,7 +1319,7 @@ function Static:update(t, dt)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
     end
 
-    local color = BeardLibEditor.Options:GetValue("AccentColor"):with_alpha(1)
+    local color = BLE.Options:GetValue("AccentColor"):with_alpha(1)
     self._pen:set(color)
     local draw_bodies = self:Val("DrawBodies")
     if managers.viewport:get_current_camera() then
@@ -1427,10 +1479,10 @@ end
 
 function Static:SpawnCopyData(copy_data, prefab)
     copy_data = deep_clone(copy_data)
-    local project = BeardLibEditor.MapProject
+    local project = BLE.MapProject
     local missing_units = {}
     local missing
-    local assets = self:GetPart("world")._assets_manager
+    local assets = self:GetPart("assets")
     local mod, data = project:get_mod_and_config()
     local unit_ids = Idstring("unit")
     local add
@@ -1461,7 +1513,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             local unit = v.unit_data.name
             if missing_units[unit] == nil then
                 local is_preview_not_loaded = (not assets and not PackageManager:has(unit_ids, unit:id()))
-                local not_loaded = not assets and assets:is_asset_loaded(unit, "unit")
+                local not_loaded = not assets and assets:is_asset_loaded("unit", unit)
                 if is_preview_not_loaded or not_loaded then
                     missing_units[unit] = true
                     missing = true
@@ -1497,7 +1549,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             if v.type == "element" then
 				table.insert(units, self:GetPart("mission"):add_element(v.mission_element_data.class, nil, v.mission_element_data, true))
             elseif v.type == "instance" then
-                table.insert(units, self:GetPart("world"):SpawnInstance(v.instance_data.folder, v.instance_data, false))
+                table.insert(units, self:GetPart("spawn"):SpawnInstance(v.instance_data.folder, v.instance_data, false))
             elseif v.unit_data then
                 table.insert(units, self._parent:SpawnUnit(v.unit_data.name, v, nil, v.unit_data.unit_id, true))
             end
@@ -1505,30 +1557,44 @@ function Static:SpawnCopyData(copy_data, prefab)
 		--When all units are spawned properly you can select.
         self:set_selected_units(units)
         self:GetPart("undo_handler"):SaveUnitValues(units, "spawn")
+        self:GetPart("select"):reload_menu("unit")
         self:StorePreviousPosRot()
     end
     if missing then
         if assets then
-            Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {{"Load Units", function()
-                local function find_packages()
+            Utils:QuickDialog({title = ":(", message = "A unit or more are unloaded, to spawn the prefab/copy you have to load all of the units"}, {
+                {"Load Units Using DB", function()
                     for unit, is_missing in pairs(missing_units) do
-                        if is_missing then
-                            if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
-                                missing_units[unit] = nil
-                            end
+                        if assets:db_has_asset("unit", unit) then
+                            assets:quick_load_from_db("unit", unit)
                         else
-                            missing_units[unit] = nil
+                            Utils:Notify("Failed", "Unfortunately not all assets can be loaded, therefore this prefab cannot be spawned in this map.")
+                            return
                         end
                     end
-                    if table.size(missing_units) > 0 then
-                        assets:find_packages({unit = missing_units}, find_packages)
-                    else
-                        Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
-                        all_ok_spawn()
+                    all_ok_spawn()
+                end},
+                {"Load Units Using Packages", function()
+                    local function find_packages()
+                        for unit, is_missing in pairs(missing_units) do
+                            if is_missing then
+                                if (assets:is_asset_loaded(unit, "unit") or add and FileIO:Exists(Path:Combine(mod.ModPath, add.directory, unit..".unit"))) then
+                                    missing_units[unit] = nil
+                                end
+                            else
+                                missing_units[unit] = nil
+                            end
+                        end
+                        if table.size(missing_units) > 0 then
+                            assets:find_packages({unit = missing_units}, find_packages)
+                        else
+                            Utils:Notify("Nice!", "All units are now loaded, spawning prefab/copy..")
+                            all_ok_spawn()
+                        end
                     end
-                end
-                find_packages()
-            end}})
+                    find_packages()
+                end}
+            })
         else
             Utils:Notify("ERROR!", "Cannot spawn the prefab[Unloaded units]")
         end
@@ -1622,4 +1688,111 @@ function Static:remove_polyline()
 
 		self._polyline = nil
 	end
+end
+
+function Static:build_physics_items()
+    local can_physics = false
+    for _, unit in pairs(self._selected_units) do
+        if self:can_do_physics(unit) then
+            can_physics = true
+            break
+        end
+    end
+
+    if not can_physics then return end
+
+    local physics_items = self:group("Physics")
+    physics_items:divider("PhysicsToolTip", {text = "Simulate physics on units to settle them into more natural positions."})
+    physics_items:s_btn("Simulate Physics", ClassClbk(self, "physics_simulation_dialog"))
+end
+
+function Static:can_do_physics(unit)
+    if not unit then return false end
+    if not alive(unit) then return false end
+
+    if unit:mission_element() then return false end
+    if unit:num_bodies() == 0 then return false end
+
+    return true
+end
+
+function Static:physics_simulation_dialog()
+    if not self:selected_unit() or not self._selected_units or self._grabbed_unit then
+        return
+    end
+
+    BLE.Dialog:Show({
+        title = "Physics Simulation",
+        message = "Simulating Physics...",
+        callback = ClassClbk(self, "stop_physics_simulation"),
+        no_callback = ClassClbk(self, "stop_physics_simulation"),
+        yes = "End Simulation",
+        position = "RightBottomOffset-",
+        force = true
+    })
+
+    self:start_physics_simulation()
+end
+
+function Static:start_physics_simulation()
+    self:StorePreviousPosRot()
+
+    self._physics_sim_units = clone(self._selected_units)
+    self._physics_sim_previous_unit_settings = {}
+
+    for _, unit in pairs(self._physics_sim_units) do
+        if self:can_do_physics(unit) then
+            local orientation_object = unit:orientation_object()
+
+            self._physics_sim_previous_unit_settings[unit:editor_id()] = {}
+
+            for i_body = 0, unit:num_bodies() - 1 do
+                local body = unit:body(i_body)
+                local root_object = body:root_object()
+
+                self._physics_sim_previous_unit_settings[unit:editor_id()][i_body] = {
+                    collisions_enabled = body:collisions_enabled(),
+                    fixed = body:fixed(),
+                    keyframed = body:keyframed(),
+                    dynamic = body:dynamic()
+                }
+
+                if orientation_object == root_object then
+                    body:set_ignore_static(false)
+
+                    body:set_collisions_enabled(true)
+                    body:set_dynamic()
+                else
+                    body:set_collisions_enabled(false)
+                end
+            end
+        end
+    end
+end
+
+function Static:stop_physics_simulation()
+    for _, unit in pairs(self._physics_sim_units) do
+        if self:can_do_physics(unit) then
+            local previous_settings = self._physics_sim_previous_unit_settings[unit:editor_id()]
+
+            for i_body, body_settings in pairs(previous_settings) do
+                local body = unit:body(i_body)
+
+                body:set_collisions_enabled(body_settings.collisions_enabled)
+
+                if body_settings.fixed then
+                    body:set_fixed()
+                elseif body_settings.keyframed then
+                    body:set_keyframed()
+                elseif body_settings.dynamic then
+                    body:set_dynamic()
+                end
+            end
+        end
+    end
+
+    self._selected_units = clone(self._physics_sim_units)
+
+    self:update_positions()
+    self:recalc_all_locals()
 end

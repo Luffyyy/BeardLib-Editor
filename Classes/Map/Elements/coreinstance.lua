@@ -123,6 +123,9 @@ function EditorInstancePoint:_build_panel()
 		end
 	end
 	self:ComboCtrl("instance", names)
+	if #names == 0 then
+		self._class_group:alert("It seems there are no instances with the mission placed option on, try turning some on")
+	end
 	self:build_instance_links()
 end
 
@@ -157,7 +160,7 @@ function EditorInstanceSetParams:_check_change_instance(new_instance)
 		self._element.values.instance = new_instance
 		return
 	end
-	BeardLibEditor.Utils:YesNoQuestion("This will change the instance from " .. self._element.values.instance .. " to " .. new_instance .. "and will reset the params", function()
+	BLE.Utils:YesNoQuestion("This will change the instance from " .. self._element.values.instance .. " to " .. new_instance .. "and will reset the params", function()
 		self._element.values.params = {}
 		self._element.values.instance = new_instance
 		self:_build_from_params()
@@ -179,9 +182,9 @@ function EditorInstanceSetParams:_build_from_params()
         if data.type == "number" then
             value_ctrlr = self:NumberCtrl(name, opt)
         elseif data.type == "enemy" then
-            value_ctrlr = self:PathCtrl(name, "unit", 12)
+            value_ctrlr = self:PathCtrl(name, "unit", "/ene_", BLE.Utils.EnemyBlacklist)
         elseif data.type == "civilian" then
-        	value_ctrlr = self:PathCtrl(name, "unit", 21)
+        	value_ctrlr = self:PathCtrl(name, "unit", "/civ_", "dummy_corpse")
         elseif data.type == "objective" then
             value_ctrlr = self:ComboCtrl(name, managers.objectives:objectives_by_name(), opt)
         elseif data.type == "enemy_spawn_action" then
@@ -219,7 +222,7 @@ function EditorInstanceSetParams:_build_panel()
 
 	self:ComboCtrl("instance", names)
 	self:BooleanCtrl("apply_on_execute")
-	self._instance_menu = self:divgroup("Instance Params")
+	self._instance_menu = self._holder:divgroup("Instance Params")
 	self:_build_from_params()
 	self:build_instance_links()
 end

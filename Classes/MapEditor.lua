@@ -31,6 +31,7 @@ function Editor:init(data)
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+    self._use_local_move = true
     self:_init_post_effects()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
@@ -49,9 +50,13 @@ function Editor:init(data)
     local normal = not self._safemode
     self._menu = MenuUI:new({
         layer = 100,
-        scroll_speed = 100,
+        scroll_speed = BLE.Options:GetValue("Scrollspeed"),
         allow_full_input = true,
+        highlight_image = true,
+        highlight_color = BLE.Options:GetValue("ItemsHighlight"),
         background_color = Color.transparent,
+        items_size = BLE.Options:GetValue("MapEditorFontSize"),
+        context_background_color = BLE.Options:GetValue("ContextMenusBackgroundColor"),
         accent_color = BLE.Options:GetValue("AccentColor"),
         mouse_press = normal and ClassClbk(self, "mouse_pressed"),
         mouse_release = normal and ClassClbk(self, "mouse_released"),
@@ -95,16 +100,20 @@ end
 --Who doesn't like a short code :P
 function Editor:m() return self.parts end
 
-function Editor:post_init(menu)    
+function Editor:post_init(menu)
 	self._editor_menu = menu:Menu({label = "editor_menu", align_method = "none", visible = false, auto_height = false, w = menu.w, h = menu.h, scrollbar = false})
     local m = self.parts
     m.console = EditorConsole:new(self, self._editor_menu)
     m.menu = UpperMenu:new(self, self._editor_menu)
     m.status = StatusMenu:new(self, self._editor_menu)
+    m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.assets = AssetsManagerDialog:new(BLE._dialogs_opt)
     m.world = WorldDataEditor:new(self, self._editor_menu)
     m.mission = MissionEditor:new(self, self._editor_menu)
     m.static = StaticEditor:new(self, self._editor_menu)
-    m.opt = InEditorOptions:new(self, self._editor_menu)
+    m.quick = QuickAccess:new(self, self._editor_menu)
+    m.select = SelectMenu:new(self, self._editor_menu)
+    m.spawn = SpawnMenu:new(self, self._editor_menu)
     m.env = EnvEditor:new(self, self._editor_menu)
     m.instances = InstancesEditor:new(self, self._editor_menu)
     m.undo_handler = UndoUnitHandler:new(self, self._editor_menu)
@@ -128,7 +137,7 @@ function Editor:post_init(menu)
 
     menu.mouse_move = ClassClbk(m.static, "mouse_moved")
     if self._has_fix then
-        m.menu:toggle_widget("move")
+        m.quick:toggle_widget("move")
     end
 end
 
@@ -262,13 +271,26 @@ function Editor:use_widgets(use)
     self._rotate_widget:set_enabled(use)
 end
 
+function Editor:mouse_busy()
+    for _, manager in pairs(self.parts) do
+        if manager.mouse_busy and manager:mouse_busy() then
+            return true
+        end
+    end
+    return false
+end
+
 function Editor:mouse_moved(x, y)
     self.parts.static:mouse_moved(x, y)
 end
 
 function Editor:mouse_released(button, x, y)
     self:OnWidgetReleased()
-    self.parts.static:mouse_released(button, x, y)    
+    for _, part in pairs(self.parts) do
+        if part.mouse_released then
+            part:mouse_released(button, x, y)
+        end
+    end
     self:reset_widget_values()
 end
 
@@ -276,19 +298,20 @@ function Editor:mouse_pressed(button, x, y)
     if self._editor_menu:ChildrenMouseFocused() then
         return
     end
-    if self.parts.world:mouse_pressed(button, x, y) then
-        return
+    for _, part in pairs(self.parts) do
+        if part.mouse_pressed then
+            if part:mouse_pressed(button, x, y) then
+                break
+            end
+        end
     end
-    if self.parts.mission:mouse_pressed(button, x, y) then
-        return
-    end
-    self.parts.static:mouse_pressed(button, x, y)
 end
 
 function Editor:select_unit(unit, add, switch)
     add = NotNil(add, ctrl())
+    switch = NotNil(switch, not add)
     self.parts.static:set_selected_unit(unit, add)
-    if switch then
+    if switch and BLE.Options:GetValue("SelectAndGoToMenu") then
         self.parts.static:Switch()
     end
 end
@@ -303,13 +326,13 @@ function Editor:select_element(element, add, switch)
     end
 end
 
-function Editor:DeleteUnit(unit, keep_links)
+function Editor:DeleteUnit(unit, keep_links, reload_select)
+    local element = nil
     if alive(unit) then
         if unit:mission_element() then
-            managers.mission:delete_element(unit:mission_element().element.id) 
-            if managers.editor then
-                self.parts.mission:remove_element_unit(unit)
-            end
+            element = unit:mission_element().element
+            managers.mission:delete_element(element.id)
+            self.parts.mission:remove_element_unit(unit)
         end
         local ud = unit:unit_data()
 		if ud then
@@ -319,6 +342,13 @@ function Editor:DeleteUnit(unit, keep_links)
         World:delete_unit(unit)
     end
     managers.worlddefinition:check_names()
+    if reload_select then
+        if element then
+            self.parts.select:get_menu("element"):delete_object(element.id)
+        else
+            self.parts.select:get_menu("unit"):delete_object(unit)
+        end
+    end
 end
 
 function Editor:GetSpawnPosition(data)
@@ -326,7 +356,7 @@ function Editor:GetSpawnPosition(data)
     if data then
         position = data.position
     end
-    return position or (self.parts.world:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
+    return position or (self.parts.spawn:is_spawning() and self._spawn_position) or self:cam_spawn_pos()
 end
 
 function Editor:GetSpawnRotation(data)
@@ -334,7 +364,7 @@ function Editor:GetSpawnRotation(data)
     if data then
         rotation = data.rotation
     end
-    return rotation or (self.parts.world:is_spawning() and self.parts.world._dummy_spawn_unit:rotation()) or Rotation()
+    return rotation or (self.parts.spawn:is_spawning() and self.parts.spawn._dummy_spawn_unit:rotation()) or Rotation()
 end
 
 function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
@@ -473,6 +503,7 @@ function Editor:set_enabled(enabled)
         Global.check_load_time = nil
     end
     self:update_post_effects()
+    managers.worlddefinition:report_stuff()
 end
 
 function Editor:set_unit_positions(pos)
@@ -570,7 +601,19 @@ end
 
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
-function Editor:update_snap_rotation(value) self._snap_rotation = tonumber(value) end
+function Editor:set_use_quick_access(value) self.parts.quick:SetVisible(value) end
+function Editor:toggle_local_move() 
+    self._use_local_move = not self._use_local_move
+    self.parts.quick:update_local_move(self._use_local_move)
+end
+function Editor:update_snap_rotation(value) 
+    self._snap_rotation = tonumber(value) 
+    for _, manager in pairs(self.parts) do
+        if manager.update_snap_rotation then
+            manager:update_snap_rotation()
+        end
+    end
+end
 function Editor:destroy()
     local scroll_y_tbl = {}
     for name, manager in pairs(self.parts) do
@@ -586,10 +629,11 @@ function Editor:destroy()
         World:delete_unit(self._move_widget._widget)
         World:delete_unit(self._rotate_widget._widget)
     end
+    local menu_vis = self._editor_menu:Visible()
     self._menu:Destroy()
     local selected_units = self:selected_units()
     return {
-        enabled = self._enabled,
+        enabled = menu_vis,
         last_menu = self._current_menu_name,
         selected_units = #selected_units > 0 and selected_units or nil,
         mission_units = self.parts.mission:units(),
@@ -599,6 +643,7 @@ function Editor:destroy()
 end
 function Editor:add_element(element, item) self.parts.mission:add_element(element) end
 function Editor:Log(...) self.parts.console:Log(...) end
+function Editor:output(...) self:Log(...) end
 function Editor:Error(...) self.parts.console:Error(...) end
 
 --Return functions
@@ -613,6 +658,7 @@ function Editor:grid_size() return ctrl() and 1 or self._grid_size end
 function Editor:camera_rotation() return self._camera_object:rotation() end
 function Editor:camera_position() return self._camera_object:position() end
 function Editor:snap_rotation() return ctrl() and 1 or self._snap_rotation end
+function Editor:use_local_move() return self._use_local_move end
 function Editor:get_cursor_look_point(dist) return self._camera_object:screen_to_world(self:cursor_pos() + Vector3(0, 0, dist)) end
 function Editor:world_to_screen(pos) return self._camera_object:world_to_screen(pos) end
 function Editor:screen_to_world(pos, dist) return self._camera_object:screen_to_world(pos + Vector3(0, 0, dist)) end
@@ -648,16 +694,28 @@ function Editor:screen_pos(pos)
 	return Vector3(self._screen_borders.width * (pos.x + 1) / 2, self._screen_borders.height * (pos.y + 1) / 2, 0)
 end
 
-function Editor:select_unit_by_raycast(slot, clbk)
+function Editor:select_unit_by_raycast(slot, ray_type, from, to)
+    local distance = self.parts.opt:get_value("RaycastDistance")
+    local rays = World:raycast_all("ray", from or self:get_cursor_look_point(0), to or self:get_cursor_look_point(distance), "ray_type", ray_type or "body editor walk", "slot_mask", slot)
+    if #rays > 0 then
+        for _, r in pairs(rays) do
+            return r
+        end
+    else
+        return false
+    end
+end
+
+function Editor:select_units_by_raycast(slot, clbk)
     local first = true
     local ignore = self.parts.opt:get_value("IgnoreFirstRaycast")
     local distance = self.parts.opt:get_value("RaycastDistance")
     local select_all = self.parts.opt:get_value("SelectAllRaycast")
-    local rays = World:raycast_all("ray", self:get_cursor_look_point(0), self:get_cursor_look_point(distance), "ray_type", "body editor walk", "slot_mask", slot)
+    local rays = World:raycast_all("ray", from or self:get_cursor_look_point(0), to or self:get_cursor_look_point(distance), "ray_type", ray_type or "body editor walk", "slot_mask", slot)
     local ret_rays = {}
     if #rays > 0 then
         for _, r in pairs(rays) do
-            if clbk(r.unit) then
+            if not clbk or clbk(r.unit) then
                 if not ignore or not first then
                     table.insert(ret_rays, r)
                     if not select_all then
@@ -681,6 +739,9 @@ function Editor:update(t, dt)
         return
     end
     if BeardLib.Utils.Input:IsTriggered(self._toggle_trigger) and not self._partially_disabled then
+        if BLE.Options:GetValue("Map/SaveBeforePlayTesting") and self._enabled then
+            self.parts.opt:save()
+        end
         if not self._enabled then
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
@@ -751,7 +812,7 @@ function Editor:unbind(opt)
 end
 
 function Editor:get_dummy_or_grabbed_unit()
-    return self.parts.world:get_dummy_unit() or self.parts.static:get_grabbed_unit()
+    return self.parts.spawn:get_dummy_unit() or self.parts.static:get_grabbed_unit()
 end
 
 function Editor:current_position()
@@ -810,7 +871,6 @@ end
 
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
-    
     local shft = shift()
     local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
     if not move or not shft then
@@ -825,7 +885,7 @@ function Editor:update_camera(t, dt)
     local move_dir = self._camera_rot:x() * axis_move.x + self._camera_rot:y() * axis_move.y
     if self._orthographic then
         self._mul = self._mul + (camera_speed * (btn_move_up - btn_move_down))/50
-        self.parts.opt:GetItem("OrthographicScale"):SetValue(self._mul)
+        self.parts.opt:GetItem("Orthographic"):SetValue(self._mul)
         self:set_orthographic_screen()
     else
         move_dir = move_dir + btn_move_up * Vector3(0, 0, 1) + btn_move_down * Vector3(0, 0, -1)
@@ -835,7 +895,7 @@ function Editor:update_camera(t, dt)
     local yaw_new = self._camera_rot:yaw() + axis_look.x * -1 * 5 * turn_speed
     local pitch_new = math.clamp(self._camera_rot:pitch() + axis_look.y * 5 * turn_speed, pitch_min, pitch_max)
     local rot_new = Rotation(yaw_new, pitch_new, 0)
-    local keep_active = self.parts.opt and self.parts.opt:get_value("KeepMouseActiveWhileFlying")
+    local keep_active = BLE.Options:GetValue("Map/KeepMouseActiveWhileFlying")
     if keep_active then
         if mvector3.not_equal(v0, axis_move) or mvector3.not_equal(v0, axis_look) or btn_move_up ~= 0 or btn_move_down ~= 0 then
             self:mouse_moved(managers.mouse_pointer:world_position())
@@ -857,7 +917,8 @@ function Editor:update_widgets(t, dt)
             widget_pos = self:screen_to_world(widget_pos, 1000)
             local widget_rot = self:widget_rot()
             if self._using_move_widget and self._move_widget:enabled() then
-                local result_pos = self._move_widget:calculate(self:widget_unit(), widget_rot, widget_pos, widget_screen_pos)
+                local move_rot = self._use_local_move and widget_rot or Rotation()
+                local result_pos = self._move_widget:calculate(self:widget_unit(), move_rot, widget_pos, widget_screen_pos)
                 if self._last_pos ~= result_pos then
                     self:set_unit_positions(result_pos)
                     self:update_positions()
@@ -877,7 +938,8 @@ function Editor:update_widgets(t, dt)
                     self:set_unit_positions(self._last_pos)
                     self._last_pos = nil
                 end
-                BLE.Utils:SetPosition(self._move_widget._widget, widget_pos, widget_rot)
+                local move_rot = self._use_local_move and widget_rot or Rotation()
+                BLE.Utils:SetPosition(self._move_widget._widget, widget_pos, move_rot)
                 self._move_widget:update(t, dt)
             end
             if self._rotate_widget:enabled() then
@@ -899,7 +961,7 @@ function Editor:draw_marker(t, dt)
         local selected_units = self:selected_units()
         for _, ray in pairs(rays) do
             local unit = ray.unit
-            if ray and unit ~= self.parts.world._dummy_spawn_unit then
+            if ray and unit ~= self.parts.spawn._dummy_spawn_unit then
                 if not self.parts.static._grabbed_unit or not table.contains(selected_units, unit) then
                     pos = ray.position
                     break
@@ -913,10 +975,9 @@ end
 function Editor:draw_grid(t, dt)
 
 	local rot = Rotation(0, 0, 0)
-	if alive(self:selected_unit()) and self:local_rot() then
+	if alive(self:selected_unit()) and self:local_rot() and self._use_local_move then
 		rot = self:selected_unit():rotation()
     end
-
     if self._using_move_widget and self._move_widget:enabled() and self:widget_unit() then
         for i = -12, 12, 1 do
             local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()

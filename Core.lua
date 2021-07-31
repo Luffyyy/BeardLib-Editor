@@ -1,8 +1,6 @@
 local UNIT_LOAD = "unit_load"
 local ADD = "add"
 
-BLE = BeardLibEditor
-BLE.DBEntries = {}
 BLE.Updaters = {}
 BLE.DBPaths = {}
 BLE.Prefabs = {}
@@ -19,7 +17,6 @@ function BLE:Init()
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
     self.HasFix = not FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and FileIO:Exists(self.ModPath.."supermod.xml")
-	self.ExtractDirectory = self.Options:GetValue("ExtractDirectory").."/"
     self.UsableAssets = {"unit", "effect", "environment", "scene"}
 
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
@@ -32,7 +29,7 @@ function BLE:Init()
 
     local packages_file = Path:Combine(self.ModPath, "packages.txt")
     if FileIO:Exists(packages_file) then
-        BeardLibEditor:GeneratePackageData()
+        self:GeneratePackageData()
         FileIO:Delete(packages_file)
     end
 end
@@ -50,6 +47,7 @@ end
 function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
+    self:Dofiles(Path:Combine(self.MapClassesDir, "Layers"))
     self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 
@@ -95,7 +93,8 @@ function BLE:InitManagers(data)
         BeardLib:AddDelayedCall("FixEditorResolution", 0.5, ClassClbk(BLE, "MapEditorCodeReload"), true)
     end)
 
-    self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = self.Options:GetValue("BackgroundColor")}
+    local bg_color = self.Options:GetValue("BackgroundColor")
+    self._dialogs_opt = {accent_color = self.Options:GetValue("AccentColor"), background_color = bg_color, bg_color = bg_color:with_alpha(0.3), no_blur = true}
     self.Dialog = MenuDialog:new(self._dialogs_opt)
     self.ListDialog = ListDialog:new(self._dialogs_opt)
     self.SelectDialog = SelectListDialog:new(self._dialogs_opt)
@@ -104,7 +103,6 @@ function BLE:InitManagers(data)
     self.InputDialog = InputDialog:new(self._dialogs_opt)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
     self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)    
-
 
     if Global.editor_mode then
         if not self._vp then
@@ -175,7 +173,7 @@ function BLE:InitManagers(data)
         for i, difficulty in ipairs(tweak_data.difficulties) do
             table.insert(self.ConstPackages, "packages/" .. (difficulty or "normal"))
         end
-        for path, _ in pairs(self.Utils.allowed_units) do
+        for path, _ in pairs(self.Utils.core_units) do
             Global.DBPaths.unit[path] = true
         end
         self:LoadCustomAssets()
@@ -189,32 +187,29 @@ function BLE:LoadCustomAssets()
         if data.AddFiles then
             local config = data.AddFiles
             local directory = config.full_directory or Path:Combine(mod.ModPath, config.directory)
-            self:LoadCustomAssetsToHashList(config, directory)
+            self:LoadCustomAssetsToHashList(config, directory, "map_assets")
         end
-        local level = project:get_level_by_id(data, Global.current_level_id)
+        local level = BeardLib.current_level
         if level then
             self:log("Loading Custom Assets to Hashlist")
-            level.add = level.add or {}
-            local add_path = Path:Combine(level.include.directory, "add.xml")
-            if not FileIO:Exists(Path:Combine(mod.ModPath, add_path)) then
-                local add = table.merge({directory = "assets"}, deep_clone(level.add)) --TODO just copy the xml template
-                project:save_xml(add_path, add)
+            if not project:has_file(level._add_path) then
+                local add = table.merge({directory = "assets"}, deep_clone(level.add or {}))
+                project:save_xml(level._add_path, add)
             end
-            level.add = {file = add_path}
-            project:save_main_xml(data, true)
-            local add = project:read_xml(level.add.file)
+            local add = project:read_xml(level._add_path)
             if add then
                 local directory = add.full_directory or Path:Combine(mod.ModPath, add.directory)
-                self:LoadCustomAssetsToHashList(add, directory)
+                self:LoadCustomAssetsToHashList(add, directory, "map_assets")
             end
-            for i, include_data in ipairs(level.include) do
-                if include_data.file then
-                    local file_split = string.split(include_data.file, "[.]")
-                    local typ = file_split[2]
-                    local path = Path:Combine("levels/mods/", level.id, file_split[1])
-                    if FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
-                        self.DBPaths[typ] = self.DBPaths[typ] or {}
-                        self.DBPaths[typ][path] = true
+            local local_add = project:read_xml(level._local_add_path)
+            local map_dbpath = BeardLib.current_level._inner_dir
+            if local_add then
+                for _, file in pairs(local_add) do
+                    local ext = file._meta
+                    if ext == "environment" then
+                        local path = map_dbpath.."/"..file.path
+                        self.DBPaths[ext] = self.DBPaths[ext] or {}
+                        self.DBPaths[ext][path] = true
                     end
                 end
             end
@@ -251,11 +246,13 @@ function BLE:LoadHashlist()
         self.DBPackages = clone(Global.DBPackages)
         self.WorldSounds = Global.WorldSounds
         self.DefaultAssets = Global.DefaultAssets
+        self.Brushes = Global.Brushes
         self:log("DBPaths already loaded")
 	else
         self.DBPaths = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
         self.DBPackages = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "PackagesPaths.bin"), "binary")
         self.WorldSounds = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
+        self.Brushes = string.split(FileIO:ReadFrom(Path:Combine(self.DataDirectory, "Brushes.txt"), "r"), "\n")
         self.DefaultAssets = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
@@ -263,6 +260,7 @@ function BLE:LoadHashlist()
         Global.DBPackages = self.DBPackages
         Global.WorldSounds = self.WorldSounds
         Global.DefaultAssets = self.DefaultAssets
+        Global.Brushes = self.Brushes
     end
     local script_data_types = clone(self._config.script_data_types)
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
@@ -297,19 +295,24 @@ function BLE:GeneratePackageData()
 					pkg = packages_paths[current_pkg]
                 end
 
-				local path, typ = unpack(string.split(line, "%."))
-                if pkg then
-                    if typ then -- Added typ check here
-                        pkg[typ] = pkg[typ] or {}
+                if current_pkg == "other" then
+                    paths.other = paths.other or {}
+                    paths.other[line:key()] = line
+                else
+                    local path, typ = unpack(string.split(line, "%."))
+                    if pkg then
+                        if typ then -- Added typ check here
+                            pkg[typ] = pkg[typ] or {}
+                        end
                     end
-                end
-                if typ then -- Added typ check here
-                    paths[typ] = paths[typ] or {}
-
-                    if DB:has(typ, path) then
-                        paths[typ][path] = true
-                        if pkg then
-                            pkg[typ][path] = true
+                    if typ then -- Added typ check here
+                        paths[typ] = paths[typ] or {}
+    
+                        if DB:has(typ, path) then
+                            paths[typ][path] = true
+                            if pkg then
+                                pkg[typ][path] = true
+                            end
                         end
                     end
                 end
@@ -327,44 +330,75 @@ function BLE:GeneratePackageData()
     self:LoadHashlist()
 end
 
+function BLE:GenerateBrushData()
+    --Contains units that do not follow the pattern. To reduce the time it takes to search these units.
+    local brush_units = {
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_3",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_2",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_01",
+        "units/pd2_dlc_holly/mansion/vegetation/lxa_vegetation_bush_small/lxa_vegetation_bush_small_a",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_11",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_02",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_mix_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_7",
+        "units/world/props/nick/nick_speedrun",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_green_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_6",
+        "units/pd2_dlc_peta/terrain/pta_2_grass_tufts_brown_medium",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_4",
+        "units/pd2_dlc_jerry/terrain/jry_rock_03",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_5",
+        "units/world/architecture/secret_stash/props/secret_stash_props_trash_1",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_08",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_06",
+        "units/pd2_dlc_bph/props/bph_prop_bloodsplatter/bph_prop_blood_handprint_05"
+    }
+    for unit in pairs(BLE.DBPaths.unit) do
+        if unit:match("brush") and blt.asset_db.has_file(unit, "unit") then
+            local read = blt.asset_db.read_file(unit, "unit")
+            if read then
+                if read:match('type="brush" slot="29"') then
+                    table.insert(brush_units, unit)
+                end
+                read = nil
+            end
+        end
+    end
+    FileIO:WriteTo(Path:Combine(BLE.DataDirectory, "Brushes.txt"), table.concat(brush_units, "\n"), "w")
+    self.Brushes = brush_units
+    Global.Brushes = brush_units
+end
+
 --Gets all emitters and occasionals from extracted .world_sounds
 function BLE:GenerateSoundData()
     local sounds = {}
-    local function get_sounds(path)
-        for _, file in pairs(FileIO:GetFiles(path)) do
-            if string.ends(file, ".world_sounds") then
-                local data = FileIO:ReadScriptData(Path:Combine(path, file), "binary")
-                if not table.contains(sounds, data.default_ambience) then
-                    table.insert(sounds, data.default_ambience)
-                end
-                if not table.contains(sounds, data.default_occasional) then
-                    table.insert(sounds, data.default_occasional)
-                end
-                for _, v in pairs(data.sound_area_emitters) do
-                    if not table.contains(sounds, v.emitter_event) then
-                        table.insert(sounds, v.emitter_event)
-                    end
-                end
-                for _, v in pairs(data.sound_emitters) do
-                    if not table.contains(sounds, v.emitter_event) then
-                        table.insert(sounds, v.emitter_event)
-                    end
-                end
-                for _, v in pairs(data.sound_environments) do
-                    if not table.contains(sounds, v.ambience_event) then
-                        table.insert(sounds, v.ambience_event)
-                    end
-                    if not table.contains(sounds, v.occasional_event) then
-                        table.insert(sounds, v.occasional_event)
-                    end
-                end
+    for _, file in pairs(self.DBPaths.world_sounds) do
+        local data = self.Utils:ParseXml("world_sounds", file, true)
+        if not table.contains(sounds, data.default_ambience) then
+            table.insert(sounds, data.default_ambience)
+        end
+        if not table.contains(sounds, data.default_occasional) then
+            table.insert(sounds, data.default_occasional)
+        end
+        for _, v in pairs(data.sound_area_emitters) do
+            if not table.contains(sounds, v.emitter_event) then
+                table.insert(sounds, v.emitter_event)
             end
         end
-        for _, folder in pairs(FileIO:GetFolders(path)) do
-            get_sounds(Path:Combine(path, folder))
+        for _, v in pairs(data.sound_emitters) do
+            if not table.contains(sounds, v.emitter_event) then
+                table.insert(sounds, v.emitter_event)
+            end
+        end
+        for _, v in pairs(data.sound_environments) do
+            if not table.contains(sounds, v.ambience_event) then
+                table.insert(sounds, v.ambience_event)
+            end
+            if not table.contains(sounds, v.occasional_event) then
+                table.insert(sounds, v.occasional_event)
+            end
         end
     end
-    get_sounds(self.ExtractDirectory)
     FileIO:WriteScriptData(Path:Combine(self.ModPath, "Data", "WorldSounds.bin"), sounds, "binary")
     self.WorldSounds = sounds
     Global.WorldSounds = sounds
@@ -449,7 +483,9 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                         end
 
                         if not failed and not package_id then
-                            self.Utils.allowed_units[path] = true
+                            self.DBPackages.map_assets = self.DBPackages.map_assets or {}
+                            self.DBPackages.map_assets.unit = self.DBPackages.map_assets.unit or {}
+                            self.DBPackages.map_assets.unit[path] = true
                         end
                     elseif package_id then
                         self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(package_id), tostring(path), tostring(directory))
@@ -470,13 +506,12 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                     if from_db or FileIO:Exists(file_path) then
                         self.DBPaths[typ] = self.DBPaths[typ] or {}
                         self.DBPaths[typ][path] = true
-                        
+
                         if package_id then
+                            self.DBPackages[package_id] = self.DBPackages[package_id] or {}
                             local package = self.DBPackages[package_id]
                             package[typ] = package[typ] or {}
                             package[typ][path] = true
-                        else
-                            self.Utils.allowed_units[path] = true
                         end
                     end
                 end
@@ -510,10 +545,10 @@ end
 function BLE:SetLoadingText(text)
     if alive(Global.LoadingText) then
         local project = BeardLib.current_level and BeardLib.current_level._mod
-        local typ = Global.editor_loaded_instance and "Instance level " or "Level "
+        local typ = Global.editor_loaded_instance and "Instance " or "Level "
         local s = typ.. tostring(Global.current_level_id)
         if project then
-            s = typ.."in project " .. tostring(project.Name) .. ":" .. tostring(Global.current_level_id)
+            s = typ.. tostring(project.Name) .. ":" .. tostring(Global.current_level_id)
         end
 
         if Global.editor_safe_mode then

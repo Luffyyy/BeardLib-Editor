@@ -24,7 +24,7 @@ function EditorInstigatorRule:_build_panel()
 end
 
 function EditorInstigatorRule:_update_rules_panel()
-	self:ClearItems("rules")
+	self._holder:ClearItems("rules")
 	local t = self._element.values
 	local instigator = t.instigator
 	t.rules[instigator] = t.rules[instigator] or {}
@@ -34,14 +34,14 @@ function EditorInstigatorRule:_update_rules_panel()
 		self:ListSelector("carry_ids", table.map_keys(tweak_data.equipments.specials), {label = "rules", data = data})
 		self:ListSelector("mission_equipment", table.map_keys(tweak_data.equipments.specials), {label = "rules", data = data})
 	elseif instigator == "enemies" then
-		self:ListSelector("enemy_names", BeardLibEditor.Utils:GetUnits({slot = 12}), {label = "rules", data = data})
+		self:ListSelector("enemy_names", BLE.Utils:GetUnits({slot = 12}), {label = "rules", data = data})
 		self:ListSelector("pickup", EditorPickup.get_options(), {label = "rules", data = data})
 	elseif instigator == "civilians" then
-		self:ListSelector("civilian_names", BeardLibEditor.Utils:GetUnits({slot = 21}), {label = "rules", data = data})
+		self:ListSelector("civilian_names", BLE.Utils:GetUnits({slot = 21}), {label = "rules", data = data})
 		self:ListSelector("pickup", EditorPickup.get_options(), {label = "rules", data = data})
 	elseif instigator == "loot" then
 		self:ListSelector("carry_ids", tweak_data.carry:get_carry_ids(), {label = "rules", data = data})
 	elseif instigator == "vehicle" then
-		self:ListSelector("vehicle_names", BeardLibEditor.Utils:GetUnits({slot = 39}), {label = "rules", data = data})
+		self:ListSelector("vehicle_names", BLE.Utils:GetUnits({slot = 39}), {label = "rules", data = data})
 	end
 end

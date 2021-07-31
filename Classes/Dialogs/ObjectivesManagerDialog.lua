@@ -28,7 +28,7 @@ function ObjectivesManagerDialog:_Show()
     end
     self._params = nil
     self._objectives = nil
-    local project = BeardLibEditor.MapProject
+    local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
         local level = project:get_level_by_id(data, Global.current_level_id)
@@ -46,13 +46,13 @@ function ObjectivesManagerDialog:_Show()
     end
     if not self._objectives then
         self:hide()
-        BeardLibEditor.Utils:Notify("Error", "Your map is not setup correctly")
+        BLE.Utils:Notify("Error", "Your map is not setup correctly")
     end
     self._missing_units = {}
 	local objectives = self:divgroup("Objectives", {h = self._menu:ItemsHeight(), auto_height = false, scrollbar = true})
 	local add = self._menu:sq_btn("Add", ClassClbk(self, "edit_or_add_objective", false), {offset = 4, text = "+", position = "TopRightOffset-xy"})
     
-    self:textbox("Search", ClassClbk(BeardLibEditor.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
+    self:textbox("Search", ClassClbk(BLE.Utils, "FilterList", objectives), "", {w = 300, control_slice = 0.8, lines = 1, highlight_color = false, position = function(item)
         item:SetPositionByString("Top")
         item:Panel():set_world_right(add:Panel():world_left() - 4)
     end})
@@ -77,7 +77,7 @@ function ObjectivesManagerDialog:remove_previous_objectives()
 end
 
 function ObjectivesManagerDialog:remove_objective(objective)
-    BeardLibEditor.Utils:YesNoQuestion("This will remove the objective", function()
+    BLE.Utils:YesNoQuestion("This will remove the objective", function()
         self:remove_previous_objectives()
         table.delete(self._objectives, objective)
         self:save_and_reload()

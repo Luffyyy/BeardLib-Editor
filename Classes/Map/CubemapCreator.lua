@@ -21,21 +21,27 @@ function CubemapCreator:init(parent, menu, cam)
 	self._camera = cam
     self._cube_counter = 1
 	self._creating_cube_map = false
-	
+end
+
+function CubemapCreator:enable()
 	self:_init_paths()
 end
 
 function CubemapCreator:_init_paths()
 	-- need to encase it in ""
-	self._gen_path = encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.exe"))
-	self._tool_path_template = function(tool_path)
-		return encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", tool_path))
+	local project = BLE.MapProject
+	local level_path = project:current_level_path()
+	if level_path then
+		self._gen_path = encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "gen_cubemap.exe"))
+		self._tool_path_template = function(tool_path)
+			return encase_quotemarks(Path:Combine(Application:base_path(), BLE.ModPath, "Tools", tool_path))
+		end
+		self._cubelights_path = level_path .. "/cube_lights"
+		self._cubemaps_path = level_path .. "/cubemaps"
+		self._tools_path = BLE.ModPath .. "Tools/"
+		self._temp_path = self._tools_path .. "temp/"
+		FileIO:MakeDir(self._temp_path)
 	end
-	self._cubelights_path = "levels/mods/" .. Global.current_level_id .. "/cube_lights"
-	self._cubemaps_path = "levels/mods/" .. Global.current_level_id .. "/cubemaps"
-	self._tools_path = BLE.ModPath .. "Tools/"
-	self._temp_path = self._tools_path .. "temp/"
-	FileIO:MakeDir(self._temp_path)
 end
 
 function CubemapCreator:update(t, dt)
@@ -637,7 +643,7 @@ function CubemapCreator:_generate_cubemap(file)
 	exe_path = exe_path .. encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, filename)) .. " "
 	exe_path = encase_quotemarks(exe_path)
 	if os.execute(exe_path) == 0 then 
-		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine("assets", self._params.output_path, self._params.output_name .. ".texture")))
+		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine(self._params.output_path, self._params.output_name .. ".texture")))
 		self:_move_output(self._params.output_name)
 		
 		if self._params.dome_occ or #self._cubes_que < 1 then
@@ -657,9 +663,10 @@ function CubemapCreator:_generate_spot_projection() -- Not implemented yet
 end
 
 function CubemapCreator:_move_output(output_path)
+	local output_temp = self._params.output_name .. (self._params.dome_occ and ".tga" or ".dds")
 	local output = self._params.output_name .. ".texture"
 	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
-	local final_path = Path:Combine(map_path, "assets", self._params.output_path, output)
+	local final_path = Path:Combine(self._params.output_path, output)
 	if self._names then
 		for i=1, 6 do
 			FileIO:Delete(self._params.source_path .. self._names[i])
@@ -670,24 +677,13 @@ function CubemapCreator:_move_output(output_path)
 		FileIO:Delete(final_path)
 	end
 
-	local ext = self._params.dome_occ and ".tga" or ".dds"
+	FileIO:MakeDir(self._params.output_path)
+	FileIO:MoveTo(self._params.source_path .. output_temp, final_path)
 
-	FileIO:MakeDir(Path:Combine(map_path, "assets", self._params.output_path))
-	FileIO:MoveTo(self._params.source_path .. self._params.output_name .. ext, final_path)
-
-	-- Updating Add.xml
+	local project = BLE.MapProject
+	local level_path = project:current_level_path()
 	local file_path = Path:Combine(self._params.output_path, tostring(self._params.output_name))
-	local xml_path = Path:Combine(map_path, "levels", Global.current_level_id, "add.xml")
-	local add = FileIO:ReadScriptData(xml_path, "custom_xml")
-	for _, tbl in pairs(add) do
-		if tbl.path == file_path then 
-			log(file_path)
-			return
-		end
-	end
-	table.insert(add, {_meta = "texture", path = file_path})
-	FileIO:WriteScriptData(xml_path, add, "custom_xml")
-	
+	self:GetPart("opt"):save_local_add_xml({{_meta = "texture", path = file_path:gsub(level_path.."/", "")}})
 end
 
 function CubemapCreator:notify_success(type)

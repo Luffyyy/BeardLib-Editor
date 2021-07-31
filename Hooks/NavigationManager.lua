@@ -101,8 +101,8 @@ function NavigationManager:build_complete_clbk(draw_options)
 	self:set_debug_draw_state(draw_options)
 	if self:is_data_ready() then
 		self._load_data = self:get_save_data()
-        local c = BeardLibEditor.Utils:GetPart("opt")
-        BeardLibEditor:log("Navigation data Progress: Done!")
+        local c = BLE.Utils:GetPart("opt")
+        BLE:log("Navigation data Progress: Done!")
     end
 	if self._build_complete_clbk then
 		self._build_complete_clbk()

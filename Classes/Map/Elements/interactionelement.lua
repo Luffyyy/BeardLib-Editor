@@ -2,12 +2,9 @@ EditorInteraction = EditorInteraction or class(MissionScriptEditor)
 EditorInteraction.ON_EXECUTED_ALTERNATIVES = {"interacted", "interupt", "start"}
 function EditorInteraction:init(...)
 	local unit = "units/dev_tools/mission_elements/point_interaction/interaction_dummy"
-	local assets = self:GetPart("world")._assets_manager
+	local assets = self:GetPart("assets")
 	if not PackageManager:has(Idstring("unit"), Idstring(unit)) and assets then
-		BeardLibEditor.Utils:QuickDialog({title = "An error appears!", message = "This element requires the interaction dummy unit to be loaded or else it won't work!"}, {{"Load it", function()
-            assets:find_package(unit, "unit", true)
-		end}})
-		return
+		self:GetPart("assets"):quick_load_from_db("unit", unit)
 	end
 	return EditorInteraction.super.init(self, ...)
 end
@@ -37,6 +34,7 @@ function EditorInteraction:update_interaction_unit(pos, rot)
 				msg = "No interaction tweak data ID set"
 			end
 			self._last_alert = self:Alert(msg..". \nThe element will not work.")
+			self._holder:AlignItems(true)
 		end
 		if alive(element._unit) then
 			element._unit:set_position(self._element.values.position)

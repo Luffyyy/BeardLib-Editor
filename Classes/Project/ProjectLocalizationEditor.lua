@@ -37,7 +37,7 @@ function ProjectLocalization:build_menu(menu, data)
     actions:button("AddLanguage", ClassClbk(self, "add_lang"))
     actions:button("RemoveLanguage", ClassClbk(self, "remove_lang"))
     actions:button("MakeDefault", ClassClbk(self, "make_lang_default"))
-    self._strings_panel = self:pan("Strings", {max_height = self._menu:ItemsHeight() - actions:OuterHeight() - self._menu:OffsetY() - 10})
+    self._strings_panel = self:pan("Strings", {max_height = self._menu:ItemsHeight() - actions:OuterHeight() - self._menu:OffsetY() - 10, auto_align = false})
     lang:SetSelectedItem(table.get_key(self._languages, data.default) or langs[1], true)
 end
 
@@ -110,6 +110,7 @@ function ProjectLocalization:open_lang(file)
     for key, str in pairs(self._current_lang) do
         self:insert_string_item(key, str)
     end
+    self._strings_panel:AlignItems(true)
     self:GetItem("MakeDefault"):SetEnabled(self._data.default ~= file)
     self:GetItem("RemoveLanguage"):SetEnabled(self._data.default ~= file)
 end
@@ -120,7 +121,7 @@ function ProjectLocalization:insert_string_item(key, str)
     local opt = {w = keypan:ItemsWidth() / 2 - 15, control_slice = 0.85, offset = 0}
     keypan:textbox("Key", ClassClbk(self, "set_loc_id"), key, opt)
     keypan:textbox("String", ClassClbk(self, "set_loc_value"), str, opt)
-    keypan:tb_imgbtn("Remove", ClassClbk(self, "remove_loc"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, position = "RightCenteryOffset-x", size = 25})
+    keypan:tb_imgbtn("Remove", ClassClbk(self, "remove_loc"), nil, {97, 1, 30, 30}, {highlight_color = Color.red, position = "RightTopOffset-y", size = 25})
 end
 
 function ProjectLocalization:create()

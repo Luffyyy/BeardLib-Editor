@@ -7,163 +7,246 @@ BLE.Utils = BLE.Utils or {}
 local Utils = BLE.Utils
 
 Utils.EditorIcons = {
-    ["texture"] = "textures/editor_icons_df",
-    ["trash"] = {7, 2, 48, 48},
-    ["pen"] = {66, 1, 48, 48},
-    ["cross"] = {182, 4, 48, 48},
-    ["cross_box"] = {122, 1, 48, 48},
-    ["arrow_up"] = {11, 58, 48, 48},
-    ["arrow_down"] = {61, 58, 48, 48},
-    ["plus"] = {111, 55, 48, 48},
-    ["minus"] = {161, 55, 48, 48},
-    ["eye"] = {155, 95, 64, 64},
-    ["collapse_all"] = {161, 158, 50, 50},
-    ["help"] = {8, 149, 64, 64},
-    ["alert"] = {107, 181, 64, 64},
-    ["settings_gear"] = {385, 385, 115, 115},
+    texture = "textures/editor_icons_df",
+    trash = {0, 0, 32, 32},
+    pen = {32, 0, 32, 32},
+    cross = {101, 5, 22, 22},
+    cross_box = {0, 96, 32, 32},
+    arrow_up = {0, 32, 32, 32},
+    arrow_down = {32, 32, 32, 32},
+    arrow_left = {0, 64, 32, 32},
+    arrow_right = {32, 64, 32, 32},
+    plus = {65, 33, 30, 30},
+    minus = {97, 33, 30, 30},
+    eye = {96, 64, 32, 32},
+    collapse_all = {128, 0, 32, 32},
+    help = {164, 68, 56, 56},
+    alert = {304, 0, 48, 48},
+    settings_gear = {320, 448, 64, 64},
+    select = {64, 0, 32, 32},
+    copy = {64, 96, 32, 32},
+    paste = {96, 96, 32, 32},
+    round_number = {128, 96, 32, 32},
+    reset_settings = {64, 64, 32, 32},
+    dots = {128, 128, 32, 32},
+    list = {128, 64, 32, 32},
+    browse_file = {128, 32, 32, 32},
+    grid = {466, 18, 28, 28},
+    snap_rotation = {416, 18, 32, 32},
+    ignore_raycast = {451, 115, 42, 42},
+    show_elements = {464, 64, 32, 32},
+    editor_units = {416, 64, 32, 32},
+    rotation_widget = {0, 128, 64, 64},
+    move_widget = {64, 128, 64, 64},
+    teleport = {368, 16, 32, 32},
+    teleport_selection = {368, 64, 32, 32},
+    local_transform = {391, 118, 36, 36},
+    global_transform = {336, 112, 32, 32}
 }
 
 Utils.ElementIcons = {
-    ["texture"] = "textures/element_icons_df",
-    ["MissionScript"] = {0,0},
-    ["Random"] = {64,0},
-    ["Toggle"] = {128,0},
-    ["Debug"] = {192,0},
-    ["SpawnGageAssignment"] = {256,0},
-    ["Interaction"] = {320,0},
-    ["Operator"] = {384,0},
-    ["Waypoint"] = {448,0},
-    ["UnitSequence"] = {0, 64},
-    ["UnitSequenceTrigger"] = {64, 64},
-    ["EnableUnit"] = {128, 64},
-    ["DisableUnit"] = {192, 64},
-    ["MoveUnit"] = {256, 64},
-    ["RotateUnit"] = {320, 64},
-    ["SpawnUnit"] = {384, 64},
-    ["UnitDamage"] = {448, 64},
-    ["LogicChance"] = {0, 128},
-    ["LogicChanceTrigger"] = {64, 128},
-    ["LogicChanceOperator"] = {128, 128},
-    ["Timer"] = {192, 128},
-    ["TimerTrigger"] = {256, 128},
-    ["TimerOperator"] = {320, 128},
-    ["HeistTimer"] = {385, 128},
-    ["Filter"] = {448, 128},
-    ["PlayerSpawner"] = {0, 192},
-    ["SpawnCivilian"] = {64, 192},
-    ["SpawnCivilianGroup"] = {128, 192},
-    ["SpawnEnemyDummy"] = {192, 192},
-    ["SpawnEnemyGroup"] = {256, 192},
-    ["EnemyPreferedAdd"] = {320, 192},
-    ["EnemyPreferedRemove"] = {384, 192},
-    ["SetOutline"] = {448, 192},
-    ["Counter"] = {0, 256},
-    ["CounterFilter"] = {64, 256},
-    ["CounterTrigger"] = {128, 256},
-    ["CounterOperator"] = {192, 256},
-    ["Stopwatch"] = {256, 256},
-    ["StopwatchFilter"] = {320, 256},
-    ["StopwatchTrigger"] = {384, 256},
-    ["StopwatchOperator"] = {448, 256},
-    ["AiGlobalEvent"] = {0, 320},
-    ["GlobalEventTrigger"] = {64, 320},
-    ["WhisperState"] = {128, 320},
-    ["MissionEnd"] = {193, 320},
-    ["PointOfNoReturn"] = {256, 320},
-    ["FleePoint"] = {320, 320},
-    ["EnemyDummyTrigger"] = {384, 320},
-    ["SpecialObjective"] = {448, 320},
-    ["PlayEffect"] = {0, 384},
-    ["StopEffect"] = {64, 384},
-    ["OverlayEffect"] = {128, 384},
-    ["PlaySound"] = {193, 384},
-    ["CustomSound"] = {256, 384},
-    ["XAudio"] = {320, 384},
-    ["XAudioOperator"] = {384, 384},
-    ["Difficulty"] = {448, 384},
-    ["Shape"] = {0, 448},
-    ["AreaTrigger"] = {64, 448},
-    ["AreaReportTrigger"] = {64, 448},
-    ["AreaOperator"] = {128, 448},
-    ["AreaMinPoliceForce"] = {192, 448},
-    ["AIGraph"] = {256, 448},
-    ["AIArea"] = {321, 448},
-    ["AIRemove"] = {384, 448},
-    ["TeleportPlayer"] = {448, 448},
-    ["PlayerStyle"] = {0, 512},
-    ["PlayerState"] = {64, 512},
-    ["PlayerStateTrigger"] = {128, 512},
-    ["ModifyPlayer"] = {192, 512},
-    ["PlayerCharacterTrigger"] = {256, 512},
-    ["PlayerNumberCheck"] = {321, 512},
-    ["Money"] = {384, 512},
-    ["Experience"] = {448, 512},
-    ["BlurZone"] = {0, 576},
-    ["BLCustomAchievement"] = {64, 576},
-    ["AwardAchievment"] = {128, 576},
-    ["AssetTrigger"] = {192, 576},
-    ["SecurityCamera"] = {256, 576},
-    ["AccessCamera"] = {321, 576},
-    ["AccessCameraOperator"] = {384, 576},
-    ["AccessCameraTrigger"] = {448, 576},
-    ["InstancePoint"] = {0, 640},
-    ["InstanceInputEvent"] = {64, 640},
-    ["RandomInstanceInputEvent"] = {128, 640},
-    ["InstanceInput"] = {192, 640},
-    ["InstanceOutputEvent"] = {256, 640},
-    ["RandomInstanceOutputEvent"] = {320, 640},
-    ["InstanceOutput"] = {384, 640},
-    ["InstanceParams"] = {448, 640},
-    ["InstanceSetParams"] = {0, 704},
-    ["LootBag"] = {64, 704},
-    ["Carry"] = {128, 704},
-    ["InventoryDummy"] = {192, 704},
-    ["Dialogue"] = {256, 704},
-    ["TeammateComment"] = {320, 704},
-    ["DisableShout"] = {384, 704},
-    ["DropinState"] = {448, 704},
-    ["SmokeGrenade"] = {0, 768},
-    ["SpawnGrenade"] = {64, 768},
-    ["Explosion"] = {128, 768},
-    ["ExplosionDamage"] = {128, 768},
-    ["SpecialObjectiveGroup"] = {192, 768},
-    ["SpecialObjectiveTrigger"] = {256, 768},
-    ["Spotter"] = {320, 768},
-    ["ChangeVanSkin"] = {384, 768},
-    ["CheckDLC"] = {448, 768},
-    ["DifficultyLevelCheck"] = {0, 832},
-    ["FadeToBlack"] = {64, 832},
-    ["Feedback"] = {128, 832},
-    ["Hint"] = {192, 832},
-    ["Invulnerable"] = {257, 832},
-    ["KillZone"] = {320, 832},
-    ["LaserTrigger"] = {384, 832},
-    ["LoadDelayed"] = {448, 832},
-    ["LookAtTrigger"] = {0, 896},
-    ["LootBagTrigger"] = {64, 896},
-    ["AlertTrigger"] = {128, 896},
-    ["CharacterTeam"] = {192, 896},
-    ["Environment"] = {256, 896},
-    ["EnvironmentOperator"] = {320, 896},
-    ["Equipment"] = {384, 896},
-    ["Instigator"] = {448, 896},
-    ["SpawnDeployable"] = {0, 960},
-    ["Missions"] = {64, 960},
-    ["NavObstacle"] = {128, 960},
-    ["Music"] = {192, 960},
-    ["Objective"] = {256, 960},
-    ["Pickup"] = {320, 960},
-    ["JobValue"] = {384, 960},
-    ["JobValueFilter"] = {448, 960},
-    ["Variable"] = {512, 0},
-    ["VariableGet"] = {576, 0},
-    ["VariableSet"] = {640, 0},
-    ["VehicleBoarding"] = {704, 0},
-    ["VehicleOperator"] = {768, 0},
-    ["VehicleSpawner"] = {832, 0},
-    ["VehicleTrigger"] = {896, 0},
-    ["PrePlanning"] = {960, 0},
-    ["PrePlanningExecuteGroup"] = {960, 0}
+	texture = "textures/element_icons_df",
+	MissionScript = {0,0},
+	Random = {64,0},
+	Toggle = {128,0},
+	Debug = {192,0},
+	SpawnGageAssignment = {256,0},
+	Interaction = {320,0},
+	Operator = {384,0},
+	Waypoint = {448,0},
+	UnitSequence = {0, 64},
+	UnitSequenceTrigger = {64, 64},
+	EnableUnit = {128, 64},
+	DisableUnit = {192, 64},
+	MoveUnit = {256, 64},
+	RotateUnit = {320, 64},
+	SpawnUnit = {384, 64},
+	UnitDamage = {448, 64},
+	LogicChance = {0, 128},
+	LogicChanceTrigger = {64, 128},
+	LogicChanceOperator = {128, 128},
+	Timer = {192, 128},
+	TimerTrigger = {256, 128},
+	TimerOperator = {320, 128},
+	HeistTimer = {385, 128},
+	Filter = {448, 128},
+	PlayerSpawner = {0, 192},
+	SpawnCivilian = {64, 192},
+	SpawnCivilianGroup = {128, 192},
+	SpawnEnemyDummy = {192, 192},
+	SpawnEnemyGroup = {256, 192},
+	EnemyPreferedAdd = {320, 192},
+	EnemyPreferedRemove = {384, 192},
+	SetOutline = {448, 192},
+	Counter = {0, 256},
+	CounterFilter = {64, 256},
+	CounterTrigger = {128, 256},
+	CounterOperator = {192, 256},
+	Stopwatch = {256, 256},
+	StopwatchFilter = {320, 256},
+	StopwatchTrigger = {384, 256},
+	StopwatchOperator = {448, 256},
+	AiGlobalEvent = {0, 320},
+	GlobalEventTrigger = {64, 320},
+	WhisperState = {128, 320},
+	MissionEnd = {193, 320},
+	PointOfNoReturn = {256, 320},
+	FleePoint = {320, 320},
+	EnemyDummyTrigger = {384, 320},
+	SpecialObjective = {448, 320},
+	PlayEffect = {0, 384},
+	StopEffect = {64, 384},
+	OverlayEffect = {128, 384},
+	PlaySound = {193, 384},
+	CustomSound = {256, 384},
+	XAudio = {320, 384},
+	XAudioOperator = {384, 384},
+	Difficulty = {448, 384},
+	Shape = {0, 448},
+	AreaTrigger = {64, 448},
+	AreaReportTrigger = {640, 64},
+	AreaOperator = {128, 448},
+	AreaMinPoliceForce = {192, 448},
+	AIGraph = {256, 448},
+	AIArea = {321, 448},
+	AIRemove = {384, 448},
+	TeleportPlayer = {448, 448},
+	PlayerStyle = {0, 512},
+	PlayerState = {64, 512},
+	PlayerStateTrigger = {128, 512},
+	ModifyPlayer = {192, 512},
+	PlayerCharacterTrigger = {256, 512},
+	PlayerNumberCheck = {321, 512},
+	Money = {384, 512},
+	Experience = {448, 512},
+	BlurZone = {0, 576},
+	BLCustomAchievement = {64, 576},
+	AwardAchievment = {128, 576},
+	AssetTrigger = {192, 576},
+	SecurityCamera = {256, 576},
+	AccessCamera = {321, 576},
+	AccessCameraOperator = {384, 576},
+	AccessCameraTrigger = {448, 576},
+	InstancePoint = {0, 640},
+	InstanceInputEvent = {64, 640},
+	RandomInstanceInputEvent = {128, 640},
+	InstanceInput = {192, 640},
+	InstanceOutputEvent = {256, 640},
+	RandomInstanceOutputEvent = {320, 640},
+	InstanceOutput = {384, 640},
+	InstanceParams = {448, 640},
+	InstanceSetParams = {0, 704},
+	LootBag = {64, 704},
+	Carry = {128, 704},
+	InventoryDummy = {192, 704},
+	Dialogue = {256, 704},
+	TeammateComment = {320, 704},
+	DisableShout = {384, 704},
+	DropinState = {448, 704},
+	SmokeGrenade = {0, 768},
+	SpawnGrenade = {64, 768},
+	Explosion = {128, 768},
+	ExplosionDamage = {704, 64},
+	SpecialObjectiveGroup = {192, 768},
+	SpecialObjectiveTrigger = {256, 768},
+	Spotter = {320, 768},
+	ChangeVanSkin = {384, 768},
+	CheckDLC = {448, 768},
+	DifficultyLevelCheck = {0, 832},
+	FadeToBlack = {64, 832},
+	Feedback = {128, 832},
+	Hint = {192, 832},
+	Invulnerable = {257, 832},
+	KillZone = {320, 832},
+	LaserTrigger = {384, 832},
+	LoadDelayed = {448, 832},
+	LookAtTrigger = {0, 896},
+	LootBagTrigger = {64, 896},
+	AlertTrigger = {128, 896},
+	CharacterTeam = {192, 896},
+	Environment = {256, 896},
+	EnvironmentOperator = {320, 896},
+	Equipment = {384, 896},
+	Instigator = {448, 896},
+	SpawnDeployable = {0, 960},
+	Missions = {64, 960},
+	NavObstacle = {128, 960},
+	Music = {192, 960},
+	Objective = {256, 960},
+	Pickup = {320, 960},
+	JobValue = {384, 960},
+	JobValueFilter = {448, 960},
+	Variable = {512, 0},
+	VariableGet = {576, 0},
+	VariableSet = {640, 0},
+	VehicleBoarding = {704, 0},
+	VehicleOperator = {768, 0},
+	VehicleSpawner = {832, 0},
+	VehicleTrigger = {896, 0},
+	PrePlanning = {960, 0},
+	PrePlanningExecuteGroup = {832, 256},
+	AIAttention = {768, 320},
+	AIForceAttention = {832, 320},
+	AIForceAttentionOperator = {896, 320},
+	AIGroupType = {960, 320},
+	ActionMessage = {64, 960},
+	ActivateScript = {896, 256},
+	AreaDespawn = {768, 64},
+	ApplyJobValue = {512, 64},
+	BainState = {576, 64},
+	BlackscreenVariant = {640, 384},
+	CharacterDamage = {896, 960},
+	CharacterSequence = {960, 256},
+	CustomSafehouseAwardTrophy = {512, 320},
+	CustomSafehouseTrophyFilter = {576, 320},
+	CustomSafehouseFilter = {640, 320},
+	DangerZone = {832, 64},
+	EnableSoundEnvironment = {704, 320},
+	EndscreenVariant = {64, 960},
+	ExecuteInOtherMission = {64, 960},
+	ExecuteWithCode = {896, 64},
+	FakeAssaultState = {960, 64},
+	Flashlight = {64, 960},
+	GameDirection = {64, 960},
+	Heat = {64, 960},
+	InstigatorOperator = {512, 128},
+	InstigatorRule = {576, 128},
+	InstigatorTrigger = {640, 128},
+	JobStageAlternative = {704, 128},
+	LootPile = {768, 128},
+	LootSecuredTrigger = {832, 128},
+	MandatoryBags = {896, 128},
+	MissionFilter = {960, 128},
+	OverrideInstigator = {512, 192},
+	PhysicsPush = {576, 192},
+	PickupCriminalDeployables = {64, 960},
+	Pressure = {64, 960},
+	ProfileFilter = {640, 192},
+	PushInstigator = {704, 192},
+	ScenarioEvent = {576, 384},
+	SequenceCharacter = {512, 384},
+	SideJobAward = {768, 192},
+	SideJobFilter = {832, 192},
+	Statistics = {896, 192},
+	StatisticsContact = {960, 192},
+	StatisticsJobs = {512, 256},
+	TangoAward = {64, 960},
+	TangoFilter = {64, 960},
+	TeamAICommands = {576, 256},
+	TeamRelation = {640, 256},
+	TerminateAssault = {704, 256},
+	UnloadStatic = {768, 256},
+	RelativeTeleport = {704, 384},
+	RelativeTeleportTarget = {896, 384}
+}
+
+--- Contains words of units that do have ene_ in them, however aren't actually spawnable enemies. Used to filter out that list further
+Utils.EnemyBlacklist = {
+    "/ene_acc",
+    "/ene_dummy_corpse",
+    "ene_swat_heavy_policia_federale_fbi_helmet",
+    "pose_dead",
+    "_debris"
 }
 
 function Utils:GetIcon(name)
@@ -230,8 +313,8 @@ function Utils:SetPosition(unit, position, rotation, ud, offset)
     end
 end
 
-function Utils:ParseXml(typ, path, scriptdata, assets_dir)
-	local file = Path:Combine(assets_dir or BLE.ExtractDirectory, path.."."..typ)
+function Utils:ParseXmlFromAssets(typ, path, scriptdata, assets_dir)
+	local file = Path:Combine(assets_dir, path.."."..typ)
 	local load = function(path)
 		if scriptdata then
 			return FileIO:ReadScriptData(path, "binary")
@@ -241,14 +324,20 @@ function Utils:ParseXml(typ, path, scriptdata, assets_dir)
 	end
     if FileIO:Exists(file) then
         return load(file)
-	else
-        --This is confusing..
-        local key_file = Path:Combine(assets_dir or BLE.ExtractDirectory, BLEP.swap_endianness(path:key()).."."..typ)
-		if FileIO:Exists(key_file) then
-			return load(key_file)
-		else
-			return nil
+    else
+        return nil
+    end
+end
+
+function Utils:ParseXml(typ, path, scriptdata)
+    if blt.asset_db.has_file(path, typ) then
+        if scriptdata then
+            return FileIO:ConvertScriptData(blt.asset_db.read_file(path, typ), "binary")
+        else
+            return Node.from_xml(blt.asset_db.read_file(path, typ))
         end
+    else
+        return nil
     end
 end
 
@@ -270,7 +359,7 @@ function Utils:FilterList(a,b)
                 item:SetVisible(false, true, true)
             else
                 local search_val = search:Value():escape_special()
-                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, true, true)
+                item:SetVisible(search_val == "" or item:Text():find(search_val) ~= nil, false, true)
                 i = i + 1
             end
         end
@@ -293,8 +382,6 @@ function Utils:GetPackageSize(package)
     end
 end
 
-Utils.allowed_units = {}
-
 Utils.core_units = {
     ["core/units/effect/effect"] = true,
     ["core/units/nav_surface/nav_surface"] = true,
@@ -308,11 +395,11 @@ Utils.core_units = {
 }
 
 function Utils:IsLoaded(asset, type, packages)
-    if self.allowed_units[asset] or self.core_units[asset] then
+    if self.core_units[asset] then
         return true
     end
     for name, package in pairs(packages or BLE.DBPackages) do
-        if not name:match("all_") and package[type] and package[type][asset] then
+        if not name:begins("all_") and package[type] and package[type][asset] then
             return true
         end
     end
@@ -556,9 +643,23 @@ end
 
 function Utils:EditableGuiData(unit)
     local t
+
+	--If this counts as a number and has no space at the end, insert a space so it won't be converted from 01 to 1.
+	--Then handle removing said space in BeardLib.
+
     if unit:editable_gui() then
+        local text = unit:editable_gui():text()
+        local space_fix = nil
+        if tonumber(text) and text:begins("0") then
+            space_fix = true
+            if not text:ends(" ") then
+                text = text .. " "
+            end
+        end
+
         t = {
-            text = unit:editable_gui():text(),
+            space_fix = space_fix,
+            text = text,
             font_color = unit:editable_gui():font_color(),
             font_size = unit:editable_gui():font_size(),
             font = unit:editable_gui():font(),
@@ -687,7 +788,7 @@ function Utils:GetUnits(params)
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_types or not table.contains(not_types, unit_type))
-		local unit_loaded = params.not_loaded or self.allowed_units[unit]
+		local unit_loaded = params.not_loaded or (BLE.DBPackages.map_assets and BLE.DBPackages.map_assets.unit and BLE.DBPackages.map_assets.unit[unit])
         if not unit_loaded then
             if packages then
                 unit_loaded = loaded_units[unit] == true
@@ -715,12 +816,19 @@ function Utils:GetUnitType(unit)
 end
 
 function Utils:Unhash(ids, type)
-    for path in pairs(BLE.DBPaths[type or "other"]) do
+    for path in pairs(BLE.DBPaths[type] or {}) do
         if Idstring(path) == ids then
             return path
         end
     end
     return ids:key()
+end
+
+function Utils:UnhashStr(ids)
+    if not BLE.DBPaths.other then
+        return nil
+    end
+    return BLE.DBPaths.other[ids:key()] or nil
 end
 
 function Utils:Notify(title, msg, clbk)
@@ -782,6 +890,7 @@ function FakeObject:editable_gui() return nil end
 function FakeObject:zipline() return nil end
 function FakeObject:ladder() return nil end
 function FakeObject:name() return Idstring("blank") end
+function FakeObject:num_bodies() return 0 end
 
 function Utils:GetPart(name)
     return managers.editor.parts[name]

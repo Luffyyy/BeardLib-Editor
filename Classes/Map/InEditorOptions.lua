@@ -1,13 +1,14 @@
 InEditorOptions = InEditorOptions or class(EditorPart)
 local Options = InEditorOptions
 function Options:init(parent, menu)
-    self.super.init(self, parent, menu, "Options")    
+    self.super.init(self, parent, menu, "Options")
     self._wanted_elements = {}
+    self._save_callbacks = {}
 end
 
 --TODO: cleanup
 function Options:build_default()
-    local groups_opt = {offset = {8, 4}}
+    local groups_opt = {align_method = "grid", control_slice = 0.5}
 
     local main = self:group("Editor", groups_opt)
     local grid_size = self:Val("GridSize")
@@ -23,39 +24,32 @@ function Options:build_default()
     if not BeardLib.current_level then
         main:textbox("MapSavePath", nil, Path:Combine(BeardLib.config.maps_dir, Global.current_level_id or ""))
     end
-    main:numberbox("AutoSaveMinutes", ClassClbk(self, "update_option_value"), self:Val("AutoSaveMinutes"), {help = "Set the time for auto saving"})
-    main:tickbox("AutoSave", ClassClbk(self, "update_option_value"), self:Val("AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
-    main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "update_option_value"), self:Val("SaveMapFilesInBinary"), {help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"})
-    main:tickbox("BackupMaps", ClassClbk(self, "update_option_value"), self:Val("BackupMaps"))
-    main:tickbox("RemoveOldLinks", ClassClbk(self, "update_option_value"), self:Val("RemoveOldLinks"), {
-        text = "Remove Old Links Of Copied Elements",
-        help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
-    })
-    main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "update_option_value"), self:Val("KeepMouseActiveWhileFlying"))
 
-    local camera = self:group("Camera", groups_opt)
     local cam_speed = self:Val("CameraSpeed")
     local fov = self:Val("CameraFOV")
     local far_clip = self:Val("CameraFarClip")
-    camera:numberbox("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1})
-    camera:numberbox("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
-    camera:numberbox("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
-    camera:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false)
-    camera:numberbox("OrthographicScale", ClassClbk(self._parent, "set_orthographic_scale"), 80)
+    main:numberbox("CameraSpeed", ClassClbk(self, "update_option_value"), cam_speed, {max = 10, min = 0, step = 0.1})
+    main:numberbox("CameraFOV", ClassClbk(self, "update_option_value"), fov, {max = 170, min = 40, step = 1})
+    main:numberbox("CameraFarClip", ClassClbk(self, "update_option_value"), far_clip, {max = 500000, min = 1000, step = 100})
+    local ort = main:numberbox("Orthographic", ClassClbk(self._parent, "set_orthographic_scale"), 80, {textbox_offset = 32})
+    ort:tickbox("Orthographic", ClassClbk(self._parent, "toggle_orthographic"), false, {position = function(item)
+        item:SetPositionByString("RightCentery")
+        item:Move(-4)
+    end, size_by_text = true, text = ""})
 
-    local map = self:group("Map", groups_opt)
-    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units"})
-    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"))
-    map:tickbox("HighlightOccluders", nil, false)
-    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"))
-    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"))
-    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"))
-    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"))
-    map:tickbox("DrawPortals", nil, false)
-    map:numberbox("InstanceIndexSize", ClassClbk(self, "update_option_value"), self:Val("InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
+    local map = self:group("Draw/Show", groups_opt)
+    map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units", size_by_text = true})
+    map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"), {size_by_text = true})
+    map:tickbox("HighlightOccluders", nil, false, {size_by_text = true})
+    map:tickbox("HighlightInstances", ClassClbk(self, "update_option_value"), self:Val("HighlightInstances"), {size_by_text = true})
+    map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"), {size_by_text = true})
+    map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"), {size_by_text = true})
+    map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"), {size_by_text = true})
 
     local raycast = self:group("Raycast/Selecting", groups_opt)
-    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {text = "Go to selection menu when selecting"})
+    raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {
+        text = "Auto Switch To Selection", help = "Automatically switches to the selection menu when selecting something"
+    })
     raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
     raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
@@ -64,38 +58,16 @@ function Options:build_default()
     raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Val("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
     raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Val("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection",
-        control_slice = 0.25,
     })
     raycast:numberbox("RaycastDistance", nil, 200000)
 
-    local mission = self:group("Mission", groups_opt)
-	mission:tickbox("UniqueElementIcons", ClassClbk(self, "update_option_value"), self:Val("UniqueElementIcons"))
-    mission:tickbox("RandomizedElementsColor", ClassClbk(self, "update_option_value"), self:Val("RandomizedElementsColor"))
-    mission:colorbox("ElementsColor", ClassClbk(self, "update_option_value"), self:Val("ElementsColor"))
-    mission:slider("ElementsSize", ClassClbk(self, "update_option_value"), self:Val("ElementsSize"), {max = 64, min = 16, floats = 0})
-
-    --Can't find a place for these
-    local fixes = self:group("Fixes", groups_opt)
-    fixes:button("Remove brush(massunits) layer", ClassClbk(self, "remove_brush_layer"), {
-        help = "Brushes/Mass units are small decals in the map such as garbage on floor and such, sadly the editor has no way of editing it, the best you can do is remove it."
-    })
-
-    local world = self:GetPart("world")
-    if world._assets_manager then
-        fixes:button("Clean add.xml", ClassClbk(world._assets_manager, "clean_add_xml"), {help = "This removes unused files from the add.xml and cleans duplicates"})
-    end
-
     local other = self:group("Other", groups_opt)
-    other:button("General Options", function()
-        BLE.Menu:set_enabled(true)
-    end)
-    other:button("TeleportPlayer", ClassClbk(self, "drop_player"))
-    other:button("LogPosition", ClassClbk(self, "position_debug"))
+    other:s_btn("LogPosition", ClassClbk(self, "position_debug"))
     if BeardLib.current_level then
-        other:button("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
+        other:s_btn("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
     end
-    other:button("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
-    other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false)
+    other:s_btn("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
+    other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false, {size_by_text = true})
 
     self:toggle_autosaving()
 end
@@ -105,7 +77,7 @@ function Options:enable()
     self:bind_opt("SaveMap", ClassClbk(self, "KeySPressed"))
     self:bind_opt("IncreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed"))
     self:bind_opt("DecreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed", true))
-    self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"))
+    self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"), nil, true)
     self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
 end
 
@@ -116,7 +88,9 @@ function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
 function Options:ChangeCameraSpeed(decrease)
     local cam_speed = self:GetItem("CameraSpeed")
-    cam_speed:SetValue(cam_speed:Value() + (decrease == true and -1 or 1), true)
+    local change = ctrl() and 0.1 or 1
+    cam_speed:SetValue(cam_speed:Value() + (decrease == true and -change or change), true)
+    self:GetPart("status"):ShowKeybindMessage("Camera speed changed to: "..cam_speed:Value())
 end
 
 function Options:KeySPressed()
@@ -135,14 +109,14 @@ function Options:update_option_value(item)
                 unit:set_visible(value)
             end
         end
+        self:GetPart("quick"):UpdateToggle(name, value)
     elseif name == "GridSize" then
         self._parent:update_grid_size(value)
     elseif name == "SnapRotation" then
         self._parent:update_snap_rotation(value)
     elseif name == "DrawOnlyElementsOfCurrentScript" or name == "ShowElements" then
         self:GetPart("mission"):set_elements_vis()
-    elseif name == "AutoSave" or name == "AutoSaveMinutes" then
-        self:toggle_autosaving()
+        self:GetPart("quick"):UpdateToggle(name, value)
     elseif name == "CameraFOV" then
         self._parent:set_camera_fov(value)
     elseif name == "CameraFarClip" then
@@ -164,7 +138,7 @@ end
 
 function Options:update(t, dt)
     Options.super.update(self, t, dt)
-    
+
     if self._auto_save and t >= self._auto_save then
         self:save()
     end
@@ -205,10 +179,57 @@ function Options:map_world_path()
     return map_path
 end
 
-function Options:save()
+function Options:add_save_callback(id, func)
+    self._save_callbacks[id] = func
+end
+
+function Options:save(force_backup, old_include, skip_warning)
     if self._saving then
         return
     end
+
+    if not skip_warning and self:Val("SaveWarningAfterGameStarted") and self._parent._before_state then
+        if self._playtest_saving_allowed == false then
+            self:GetPart("status"):ShowKeybindMessage("Saving is disabled for this session")
+            return
+        elseif self._playtest_saving_allowed == nil then
+            self._playtest_saving_allowed = false
+            BLE.Utils:YesNoQuestion("Saving while the heist is running can lead to unintended side effects. Do you want to allow saving for this session?", function() 
+                self._playtest_saving_allowed = true 
+                self:save(force_backup, old_include)
+            end)
+            return
+        end
+    end
+
+    if BeardLib.current_level and BeardLib.current_level._config.include then
+        BLE.Utils:YesNoQuestion([[
+In order to handle files better and not clutter the main.xml, the level module will now have the include section in a separate file.
+
+This file (LEVEL/add_local.xml) looks very similar to add.xml. 
+And essentially will be used to load things that load from the level itself and not from the assets folder that is shared with all levels. 
+
+This allows us to declutter the main.xml when loading things such as cube lights.
+
+The editor will now use this format and any old map will need to be converted. Clicking 'Yes' will backup your map into 'Maps/backups' and then convert it.
+            ]]
+            , function()
+                local project = BLE.MapProject
+                BeardLib.current_level._config.include = nil
+                local _, data = project:get_mod_and_config()
+                local level = project:get_current_level_node(data)
+                local include = level.include
+                level.include = nil
+                project:save_main_xml(data)
+                self:save(true, include, true)
+            end)
+        return
+    end
+
+    for _, clbk in pairs(self._save_callbacks) do
+        clbk()
+    end
+
     self:GetPart("static"):set_units()
     local panel = self:GetPart("menu"):GetItem("save").panel
     local bg = alive(panel) and panel:child("bg_save") or panel:rect({
@@ -223,21 +244,22 @@ function Options:save()
     local xml = save_in_binary and "binary" or "generic_xml"
     local cusxml = save_in_binary and "binary" or "custom_xml"
     local include = {
-        {_meta = "file", file = "world.world", type = xml},
-        {_meta = "file", file = "continents.continents", type = cusxml},
-        {_meta = "file", file = "mission.mission", type = cusxml},
-        {_meta = "file", file = "nav_manager_data.nav_data", type = xml},
-        {_meta = "file", file = "world_sounds.world_sounds", type = xml},
-        {_meta = "file", file = "world_cameras.world_cameras", type = cusxml}
+        {_meta = "world", path = "world", script_data_type = xml},
+        {_meta = "continents", path = "continents", script_data_type = cusxml},
+        {_meta = "mission", path = "mission", script_data_type = cusxml},
+        {_meta = "nav_data", path = "nav_manager_data", script_data_type = xml},
+        {_meta = "world_sounds", path = "world_sounds", script_data_type = xml},
+        {_meta = "world_cameras", path = "world_cameras", script_data_type = cusxml},
+        {_meta = "massunit", path = "massunit", reload = true},
     }
     local worlddef = managers.worlddefinition
     local path = self:map_path()
 	local function save()
         local map_path = self:map_world_path()
-    
+
         local world_data = deep_clone(worlddef._world_data)
         if BeardLib.current_level then
-            local map_dbpath = Path:Combine("levels/mods/", BeardLib.current_level._config.id)
+            local map_dbpath = BeardLib.current_level._inner_dir
             local environment_values = world_data.environment.environment_values
             if string.begins(environment_values.environment, map_dbpath) then
                 environment_values.environment = string.gsub(environment_values.environment, map_dbpath, ".map")
@@ -261,14 +283,14 @@ function Options:save()
                 end
             end
         end
-        
+
         local missions = {}
         for name, data in pairs(worlddef._continent_definitions) do
             local dir = Path:Combine(map_path, name)
             local continent_file = name .. ".continent"
             local mission_file = name .. ".mission"
-            table.insert(include, {_meta = "file", file = name.."/"..continent_file, type = cusxml})
-            table.insert(include, {_meta = "file", file = name.."/"..mission_file, type = xml})
+            table.insert(include, {_meta = "continent", path = name.."/"..name, script_data_type = cusxml})
+            table.insert(include, {_meta = "mission", path = name.."/"..name, script_data_type = xml})
             self:SaveData(dir, continent_file, FileIO:ConvertToScriptData(data, cusxml))
             self:SaveData(dir, mission_file, FileIO:ConvertToScriptData(managers.mission._missions[name], xml))
             missions[name] = {file = Path:Combine(name, name)}
@@ -289,12 +311,17 @@ function Options:save()
 
         self:save_cover_data(include)
         self:save_nav_data(include)
-        for _, folder in pairs(FileIO:GetFolders(map_path)) do
-            if folder ~= "environments" and not worlddef._continent_definitions[folder] then
-                FileIO:Delete(Path:Combine(map_path, folder))
+
+        if old_include then
+            -- This should get filtered by the save XML function, if there are any copies of the same file.
+            for _, file in pairs(old_include) do
+                if type(file) == "table" and file.file then
+                    table.insert(include, {path = Path:GetFilePathNoExt(file.file), _meta = Path:GetFileExtension(file.file), script_data_type = file.type})
+                end
             end
         end
-        self:save_main_xml(include)
+
+        self:save_local_add_xml(include)
         self._saving = false
         self:toggle_autosaving()
 
@@ -310,7 +337,7 @@ function Options:save()
 		bg:set_bottom(bg:parent():bottom())
 		play_value(bg, "w", w, {time = 15})
 	end
-    if FileIO:Exists(path) and self:Val("BackupMaps") then
+    if FileIO:Exists(path) and self:Val("BackupMaps") or force_backup then
         local backups_dir = Path:Combine(BeardLib.config.maps_dir, "backups")
         FileIO:MakeDir(backups_dir)
         local backup_dir = Path:Combine(backups_dir, table.remove(string.split(path, "/")))
@@ -325,34 +352,36 @@ function Options:save()
 end
 
 function Options:toggle_autosaving()
-    if self:get_value("AutoSave") and BeardLib.current_level then
-        self._auto_save = TimerManager:main():time() + (self:get_value("AutoSaveMinutes") * 60)
+    if self:Val("AutoSave") and BeardLib.current_level then
+        self._auto_save = TimerManager:main():time() + (self:Val("AutoSaveMinutes") * 60)
     else
         self._auto_save = nil
     end
 end
 
-function Options:save_main_xml(include)
+function Options:save_local_add_xml(include)
     local project = BLE.MapProject
-    local mod, data = project:get_mod_and_config()
-    if data then
-        local level = project:get_level_by_id(data, Global.current_level_id)
-        local temp = include and table.list_add(include, clone(level.include)) or level.include
-        level.include = {directory = level.include.directory}
-        for i, include_data in ipairs(temp) do
-            if type(include_data) == "table" and include_data.file and FileIO:Exists(Path:Combine(mod.ModPath, level.include.directory, include_data.file)) then
+    local level = BeardLib.current_level
+    if level then
+        local add = project:read_xml(level._local_add_path, false)
+        local temp = include and table.list_add(include, clone(add)) or add
+        local level_dir = project:current_level_path()
+        local new_add = {_meta = "add"}
+        for i, child in pairs(temp) do
+            if type(child) == "table" and child.path and FileIO:Exists(Path:Combine(level_dir, child.path.."."..child._meta)) then
                 local exists
-                for _, inc_data in ipairs(level.include) do
-                    if type(inc_data) == "table" and inc_data.file == include_data.file then
+                for _, _child in ipairs(new_add) do
+                    if type(child) == "table" and child.path == _child.path and child._meta == _child._meta then
                         exists = true
+                        break
                     end
                 end
                 if not exists then
-                    table.insert(level.include, include_data)
+                    table.insert(new_add, child)
                 end
             end
         end
-        project:save_main_xml(data)
+        project:save_xml(level._local_add_path, new_add)
     end
 end
 
@@ -364,7 +393,7 @@ function Options:SaveData(path, file_name, data)
     FileIO:WriteTo(Path:Combine(path, file_name), data)
 end
 
-function Options:save_nav_data(include)    
+function Options:save_nav_data(include)
     local path = self:map_world_path()
     local had_include = not not include
     include = include or {}
@@ -372,7 +401,7 @@ function Options:save_nav_data(include)
     local save_in_binary = self:Val("SaveMapFilesInBinary")
     local typ = save_in_binary and "binary" or "generic_xml"
     if save_data then
-        table.insert(include, {_meta = "file", file = "nav_manager_data.nav_data", type = typ})
+        table.insert(include, {_meta = "nav_data", path = "nav_manager_data", script_data_type = typ})
         --This sucks
         self:SaveData(path, "nav_manager_data.nav_data", save_in_binary and FileIO:ConvertToScriptData(FileIO:ConvertScriptData(save_data, "generic_xml"), typ) or save_data)
     else
@@ -380,7 +409,7 @@ function Options:save_nav_data(include)
         return
     end
     if not had_include then
-        self:save_main_xml(include)
+        self:save_local_add_xml(include)
 	    managers.game_play_central:restart_the_game()
     end
 end
@@ -403,23 +432,16 @@ function Options:save_cover_data(include)
         table.insert(covers.rotations, math.round(rot:yaw()))
     end
     local typ = self:Val("SaveMapFilesInBinary") and "binary" or "custom_xml"
-    table.insert(include, {_meta = "file", file = "cover_data.cover_data", type = typ})
+    table.insert(include, {_meta = "cover_data", path = "cover_data", script_data_type = typ})
     self:SaveData(path, "cover_data.cover_data", FileIO:ConvertToScriptData(covers, typ))
     if not had_include then
-        self:save_main_xml(include)
+        self:save_local_add_xml(include)
     end
 end
 
 
 function Options:open_in_explorer(world_path)
     Application:shell_explore_to_folder(string.gsub(world_path == true and self:map_world_path() or self:map_path(), "/", "\\"))
-end
-
-function Options:remove_brush_layer()
-    BLE.Utils:YesNoQuestion("This will remove the brush layer from your level, this cannot be undone from the editor.", function()
-        self:part("world"):data().brush = nil
-        MassUnitManager:delete_all_units()
-    end)
 end
 
 function Options:toggle_surfacemove(item)

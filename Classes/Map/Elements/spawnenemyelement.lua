@@ -55,7 +55,7 @@ end
 
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-	self:PathCtrl("enemy", "unit", 12)
+	self:PathCtrl("enemy", "unit", "/ene_", BLE.Utils.EnemyBlacklist)
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")
@@ -79,14 +79,14 @@ end
 local unit_ids = Idstring("unit")
 function EditorSpawnEnemyDummy:set_element_data(item, ...)
 	if item.name == "enemy" then
-		local assets = self:GetPart("world")._assets_manager
+		local assets = self:GetPart("assets")
 		local unit = item:Value()
 		local spawn_ids = unit:id()
 		if not DB:has(unit_ids, spawn_ids) then
 			return
 		end
 		if not PackageManager:has(unit_ids, spawn_ids) and assets then
-			BeardLibEditor.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
+			BLE.Utils:QuickDialog({title = "Load unit", message = "This unit is not loaded"}, {{"Search for package", function()
 				assets:find_package(unit, "unit", true, ClassClbk(self, "set_element_data", item))
 			end}})
 			return

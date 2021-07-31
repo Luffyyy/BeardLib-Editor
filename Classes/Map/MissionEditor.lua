@@ -1,13 +1,13 @@
 MissionEditor = MissionEditor or class(EditorPart)
 function MissionEditor:units() return self._units end
 function MissionEditor:init(parent, menu)
-    local elements = file.GetFiles(BeardLibEditor.ElementsDir)
+    local elements = file.GetFiles(BLE.ElementsDir)
     if not elements then
-        BeardLibEditor:log("[ERROR] MissionEditor class has failed to initialize[Missing elements]")
+        BLE:log("[ERROR] MissionEditor class has failed to initialize[Missing elements]")
         return
     end
     for _, file in pairs(elements) do
-        dofile(BeardLibEditor.ElementsDir .. file)
+        dofile(BLE.ElementsDir .. file)
     end
     for _, element in pairs(BLE._config.MissionElements) do
         local class_name = element:gsub('Element', 'Editor')
@@ -123,8 +123,8 @@ function MissionEditor:get_editor_class(c)
 end
 
 function MissionEditor:alert_missing_element_editor(c)
-    BeardLibEditor.Utils:QuickDialog({title = "Well that's embarrassing..", no = "No", message = "Seems like there is no editor class for this element, report this to us?"}, {{"Yes", function()
-        local url = "https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues/new?labels[]=bug&title=No editor class for the element "..c:gsub("Element", "")
+    BLE.Utils:QuickDialog({title = "Well that's embarrassing..", no = "No", message = "Seems like there is no editor class for this element, report this to us?"}, {{"Yes", function()
+        local url = "https://github.com/Luffyyy/BeardLib-Editor/issues/new?labels[]=bug&title=No editor class for the element "..c:gsub("Element", "")
         os.execute('start "" "'..url..'"')
     end}})
 end
@@ -144,6 +144,12 @@ function MissionEditor:set_element(element)
         else
 			self:alert_missing_element_editor(element.class)
         end
+    end
+end
+
+function MissionEditor:mouse_busy()
+    if self._current_script and self._current_script.mouse_busy and self._current_script:mouse_busy() then
+        return true
     end
 end
 
@@ -173,6 +179,7 @@ function MissionEditor:add_element(name, add_to_selection, old_element, no_selec
 				self:GetPart("static"):set_selected_unit(unit, add_to_selection)
 			end
 		end
+        self:GetPart("select"):get_menu("element"):add_object(unit:mission_element().element)
 		return unit
     else
         self:alert_missing_element_editor(name)

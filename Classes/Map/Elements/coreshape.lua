@@ -219,7 +219,7 @@ function EditorAreaDespawn:_build_panel()
 	local slot_masks = table.map_keys(managers.slot._masks)
 	self._slots_presets_list = self:combobox("SlotsPresets", ClassClbk(self, "set_slots_preset"), slot_masks)
 
-	local slots = self:group("Slots")
+	local slots = self._holder:group("Slots")
 	local slot_boxes = {}
 
 	for i = 0, 7 do

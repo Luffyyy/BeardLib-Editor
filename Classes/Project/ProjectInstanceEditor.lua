@@ -25,6 +25,7 @@ end
 function ProjectInstanceEditor:build_menu(menu, data)
     data.orig_id = data.orig_id or data.id
     menu:textbox("InstanceID", ClassClbk(self, "set_data_callback"), data.id, {forbidden_chars = {':','*','?','"','<','>','|'}})
+    menu:numberbox("IndexSize", ClassClbk(self, "set_data_callback"), data.index_size or -1, {help = "Set index size for the instance. Set it as -1 if you wish to unset it", floats = 0})
 end
 
 function ProjectInstanceEditor:create(create_data)
@@ -41,7 +42,7 @@ function ProjectInstanceEditor:create(create_data)
             elseif string.begins(name, " ") then
                 warn = "Invalid ID!"
             else
-                if instances["levels/instances/mods/"..name] then
+                if instances[Path:Combine("levels/instances/mods/", name)] or instances[Path:Combine("levels/instances/mods/", self._mod.Name, name)] then
                     warn = string.format("An instance with the id %s already exists! Please use a unique id", name)
                 end
             end
@@ -65,8 +66,6 @@ function ProjectInstanceEditor:create(create_data)
                 template.id = name
                 local proj_path = self._parent:get_dir()
                 local level_path = Path:Combine(self.LEVELS_DIR, template.id)
-                template.include.directory = level_path
-
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Instance"), Path:Combine(proj_path, level_path))
             end
@@ -82,7 +81,6 @@ function ProjectInstanceEditor:pre_clone_level(create_data)
     local name = create_data.name
     local level = deep_clone(BLE.MapProject._instance_module_template)
     level.id = name
-    level.include.directory = Path:Combine(self.LEVELS_DIR, name)
     return level, create_data.clone_path:gsub("world", "")
 end
 
@@ -94,6 +92,10 @@ function ProjectInstanceEditor:set_data_callback()
     local name_item = self:GetItem("InstanceID")
     local new_name = name_item:Value()
     local title = "Instance ID"
+
+    local index_size = self._menu:GetItemValue("IndexSize")
+    data.index_size = index_size ~= -1 and index_size or nil
+
     if data.id ~= new_name then
         local exists = false
         for _, mod in pairs(self._parent:get_modules("instance")) do

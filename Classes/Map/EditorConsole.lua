@@ -3,7 +3,7 @@ function EditorConsole:init(parent, menu)
     self._parent = parent
     self._options_menu = menu:Menu({
         name = "console_options",
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
         auto_height = true,
         offset = 0,
         layer = 999,
@@ -24,10 +24,10 @@ function EditorConsole:init(parent, menu)
         position = function(item)
             item:Panel():set_position(self._options_menu:Panel():leftbottom())    
         end,
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
     })
     ItemExt:add_funcs(self, self._options_menu)
-    local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BeardLibEditor.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
+    local opt = {border_bottom = true, text_align = "center", border_size = 1, border_color = BLE.Options:GetValue("AccentColor"), w = self._options_menu.w / 5}
     self:button("Close", ClassClbk(self, "ToggleConsole"), opt)
     self:button("Clear", ClassClbk(self, "Clear"), table.merge(opt, {border_color = Color("ffc300")}))
     self.info_log = self:tickbox("Info", ClassClbk(self, "FilterConsole"), true, table.merge(opt, {border_color = Color.yellow}))
@@ -70,7 +70,7 @@ end
 function EditorConsole:Log(msg, ...) self:PrintMessage("info_log", msg, ...) end 
 function EditorConsole:LogMission(msg, ...) self:PrintMessage("mission_log", msg, ...) end
 function EditorConsole:Error(msg, ...) self:PrintMessage("error_log", msg, ...) end
-function EditorConsole:Clear() self:ClearItems() end
+function EditorConsole:Clear() self._menu:ClearItems() end
 
 
 function EditorConsole:disable()

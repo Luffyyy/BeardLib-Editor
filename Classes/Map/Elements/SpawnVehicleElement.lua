@@ -14,7 +14,7 @@ function EditorVehicleSpawner:warn_vehicle()
 			local unit = element._vehicles[self._element.values.vehicle]
 			if self._element.values.vehicle and not PackageManager:has(Idstring("unit"), Idstring(unit)) then
 				self:Text("[Warning] Vehicle is not loaded!", {label = "temp"})
-				local assets = self:GetPart("world")._assets_manager
+				local assets = self:GetPart("assets")
 				if assets then
 					self._class_group:button("Fix by loading the vehicle", ClassClbk(assets, "find_package", unit, true), {label = "temp"})
 				end

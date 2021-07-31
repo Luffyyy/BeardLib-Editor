@@ -1,7 +1,7 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
-	local EMenu = BeardLibEditor.Menu
-	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16}))
+	local EMenu = BLE.Menu
+	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16, scrollbar = false}))
 	self:getmenu():Image({
 		name = "Logo",
 		icon_w = 128,
@@ -9,7 +9,7 @@ function AboutMenu:init()
 		offset = 0,
 		texture = "textures/editor_logo",
 	})
-    local info = self:pan("Info", {w = 512, border_color = BeardLibEditor.Options:GetValue("AccentColor")})
+    local info = self:pan("Info", {w = 600, border_color = BLE.Options:GetValue("AccentColor")})
     local function link_button(name, url) return info:button(name, SimpleClbk(os.execute, 'start "" "'..url..'"'), {text = name}) end
     local function center_text(text, opt) return info:divider(text, table.merge({color = false, text = text}, opt)) end
     center_text("Created by Luffy and Simon W")

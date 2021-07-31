@@ -41,7 +41,7 @@ function SConverter:init()
             path_data.assets = false
         end
     end
-    local menu = BeardLibEditor.Menu
+    local menu = BLE.Menu
     self._menu = menu:make_page("ScriptData")
     ItemExt:add_funcs(self)
     self:CreateRootItems()
@@ -72,13 +72,13 @@ function SConverter:ConvertFile(file, from_i, to_i, filename_dialog)
 		end
 	end
     if not convert_data and not self.assets then
-        BeardLibEditor:log("[Error] File not accessible")
+        BLE:log("[Error] File not accessible")
         return
     end
     local convert_data = convert_data or PackageManager:_script_data(file_split[2]:id(), file_split[1]:id())
     local new_path = self.assets and string.gsub(Application:base_path(),  "\\", "/") .. filename_split[#filename_split] .. "." .. to_data.name or file .. "." .. to_data.name
     if filename_dialog then
-        BeardLibEditor.InputDialog:Show({title = "File name", text = new_path, callback = ClassClbk(self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
+        BLE.InputDialog:Show({title = "File name", text = new_path, callback = ClassClbk(self, "SaveConvertedData", {to_data = to_data, convert_data = convert_data})})
     else
         self:SaveConvertedData({to_data = to_data, convert_data = convert_data}, true, new_path)
     end
@@ -100,7 +100,7 @@ function SConverter:MainItems()
 end
 
 function SConverter:RefreshFilesAndFolders()
-    self:ClearItems()
+    self._menu:ClearItems()
     self:MainItems()
 	
     if not self.assets then
@@ -144,7 +144,7 @@ function SConverter:RefreshFilesAndFolders()
 end
 
 function SConverter:CreateScriptDataFileOption()
-    self:ClearItems()
+    self._menu:ClearItems()
 	self:MainItems()
 
     local up_level = string.split(self.current_script_path, "/")
@@ -175,7 +175,7 @@ function SConverter:CreateScriptDataFileOption()
 end
 
 function SConverter:CreateRootItems()
-    self:ClearItems()
+    self._menu:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
         self:button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
     end
@@ -190,7 +190,7 @@ function SConverter:BackToRoot(item)
 end
 
 function SConverter:OpenBrowseDialog()
-	BeardLibEditor.InputDialog:Show({title = "Browse to..", text = "", callback = function(path)
+	BLE.InputDialog:Show({title = "Browse to..", text = "", callback = function(path)
 		path = path:gsub("\\", "/")
 		if FileIO:Exists(path) then
 			self.current_script_path = path
@@ -218,7 +218,7 @@ function SConverter:OpenFolderInExplorer(item)
 end
 
 function SConverter:BackToShortcuts(item)
-    self:ClearItems()
+    self._menu:ClearItems()
     self.assets = false
     self.current_script_path = ""
     self:CreateRootItems()

@@ -15,7 +15,7 @@ function EditWire:update_positions()
 	self:SetItemValue("TargetRotation", object:rotation())
 end
 
-function EditWire:set_menu_unit(unit)   
+function EditWire:set_menu_unit(unit)
 	self._menu:GetItem("Slack"):SetValue(unit and unit:wire_data() and unit:wire_data().slack)
 	local object = self:target_object()
 	self:SetItemValue("TargetPosition", object:position())

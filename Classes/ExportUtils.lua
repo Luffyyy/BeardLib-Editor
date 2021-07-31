@@ -4,8 +4,9 @@ local Utils = EditorUtils.Export
 Utils.return_on_missing = true
 Utils.check_path_before_insert = false
 Utils.pack_extra_info = false
-Utils.pack_extract_path = true
+Utils.pack_extract_path = false
 Utils.assets_dir = nil
+Utils.optional_assets = {cooked_physics = true, bnk = true}
 function Utils:init(config)
     config = config or {}
     if config.return_on_missing ~= nil then
@@ -22,6 +23,9 @@ function Utils:init(config)
     end
     if config.assets_dir ~= nil then
         self.assets_dir = config.assets_dir
+    end
+    if config.fallback_to_db_assets then
+        self._fallback_to_db_assets = true
     end
 end
 
@@ -46,13 +50,8 @@ end
 
 --At the moment only used to confirm all dependencies are loaded
 function Utils:CheckFile(ext, path)
-	if not Utils.Reading[ext] then
-		self:Log("Extension %s does not have a read function!", ext)
-		return
-    end
-
 	local config = {}
-    if not Utils.Reading[ext](self, path, config, {}) then
+    if Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, {}) then
         return false
     end
     local errors = {}
@@ -64,15 +63,39 @@ function Utils:CheckFile(ext, path)
     return errors
 end
 
-function Utils:GetDependencies(ext, path, ignore_default, exclude)
-    exclude = exclude or {}
-	if not Utils.Reading[ext] then
-		self:Log("Extension %s does not have a read function!", ext)
-		return
-	end
+local FROM_ASSETS_DIR = 1
+local FROM_DB = 2
 
+function Utils:AssetExists(ext, path, lang)
+    if self.assets_dir then
+        if FileIO:Exists(Path:Combine(self.assets_dir or '', path..(lang and "."..lang or "").."."..ext)) then
+            return true, FROM_ASSETS_DIR
+        elseif not self._fallback_to_db_assets then
+            return false
+        end
+    end
+
+    return blt.asset_db.has_file(path, ext, {language = lang}), FROM_DB
+end
+
+function Utils:ParseXml(ext, path, scriptdata)
+    if self.assets_dir then
+        local data = EditorUtils:ParseXmlFromAssets(ext, path, scriptdata, self.assets_dir)
+        if data then
+            return data
+        elseif not self._fallback_to_db_assets then
+            return nil
+        end
+    end
+
+    return EditorUtils:ParseXml(ext, path, scriptdata)
+end
+
+function Utils:GetDependencies(ext, path, ignore_default, exclude)
+    exclude = exclude or {texture = true, model = true, cooked_physics = true, animation = true}
 	local config = {}
-    if not Utils.Reading[ext](self, path, config, exclude) then
+
+	if Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude) then
         return false
 	end
 
@@ -80,56 +103,51 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
     local temp = deep_clone(config)
     config = {}
 
-    local function add_to_config(file, file_path)
-        if self.pack_extract_path then
+    local function add_to_config(file, file_path, from)
+        if self.pack_extract_path and from == FROM_ASSETS_DIR then
             file.extract_real_path = file_path
+        end
+        if self._fallback_to_db_assets and from == FROM_DB then
+            file.from_db = true
         end
         if not self.check_path_before_insert or FileIO:Exists(file_path) then
             table.insert(config, file)
         end
     end
 
-
     for _, file in pairs(temp) do
-        local file_path = Path:Combine(self.assets_dir, file.path.."."..file._meta)
         local ext = file._meta
         local file_id, ext_id = file.path:id(), ext:id()
-        if DB:has(ext_id, file_id) then --Does the file exist at all?
-            if not ignore_default or not (Global.DefaultAssets[ext] and Global.DefaultAssets[ext][file.path] and dyn:has_resource(ext_id, file_id, dyn.DYN_RESOURCES_PACKAGE)) then
-                local is_bnk = ext == "bnk"
-                local success
-                if is_bnk then
-                    local possible_bnk_dir = Path:Combine(self.assets_dir, file.path..".english.bnk")
-                    if FileIO:Exists(possible_bnk_dir) then
-                        add_to_config(file, possible_bnk_dir)
-                        success = true
-                    end
+        if not ignore_default or not (Global.DefaultAssets[ext] and Global.DefaultAssets[ext][file.path] and dyn:has_resource(ext_id, file_id, dyn.DYN_RESOURCES_PACKAGE)) then
+            local is_bnk = ext == "bnk"
+            local success
+            if is_bnk then
+                local possible_bnk_dir = Path:Combine(file.path..".english.bnk")
+                if self.assets_dir then
+                    possible_bnk_dir = Path:Combine(self.assets_dir, possible_bnk_dir)
                 end
-                if not success then
-                    if FileIO:Exists(file_path) then
-                        add_to_config(file, file_path)
+                local exists, from = self:AssetExists(ext, file.path, "english")
+                if exists then
+                    add_to_config(file, possible_bnk_dir, from)
+                    success = true
+                end
+            end
+            local file_path = file.path.."."..file._meta
+            if self.assets_dir then
+                file_path = Path:Combine(self.assets_dir, file_path)
+            end
+            if not success then
+                local exists, from = self:AssetExists(ext, file.path)
+                if exists then
+                    add_to_config(file, file_path, from)
+                elseif not self.optional_assets[ext] then
+                    if self.assets_dir then
+                        self:Log("[Unit Import %s] File %s doesn't exist", tostring(path), file_path)
+                        return false
                     else
-                        local key = BLEP.swap_endianness(file_id:key())
-                        self:Log("[Unit Import %s] File %s doesn't exist, trying to use the path key instead %s", tostring(unit), file_path, tostring(key))
-                        if is_bnk then
-                            local possible_bnk_dir = Path:Combine(self.assets_dir, key..".english.bnk")
-                            if FileIO:Exists(possible_bnk_dir) then
-                                add_to_config(file, possible_bnk_dir)
-                                success = true
-                            end
-                        end
-                        if not success then
-                            local key_file_path = Path:Combine(self.assets_dir, key.."."..ext)
-                            if FileIO:Exists(key_file_path) then
-                                self:Log("[Unit Import %s] Found missing file %s!", tostring(unit), file_path)
-                                add_to_config(file, key_file_path)
-                            elseif self.return_on_missing then
-                                self:Log("[Unit Import %s] File %s doesn't exist therefore unit cannot be loaded. %s", tostring(unit), file_path, key_file_path)
-                                return false
-                            end
-                        end
+                        self:Log("[Unit Import %s] File %s doesn't exist in the database, therefore, unit cannot be loaded.", tostring(path), file_path)
+                        return false
                     end
-
                 end
             end
         end
@@ -138,14 +156,19 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude)
 end
 
 function Utils:ReadUnit(unit, config, exclude, extra_info)
-    self:Add(config, "unit", unit, extra_info)
+    if extra_info and extra_info.load then
+        extra_info.load = nil
+        self:AddForceLoaded(config, "unit", unit, extra_info)
+    else
+        self:Add(config, "unit", unit, extra_info)
+    end
 
     local file_ext = unit..".unit"
     if not self.assets_dir then
-        self:Log("Importing unit from extract to map assets " .. tostring(unit))
+        self:Log("Importing unit from database to map assets " .. tostring(unit))
     end
 
-	local node = EditorUtils:ParseXml("unit", unit, nil, self.assets_dir)
+	local node = self:ParseXml("unit", unit)
 	local rom = self.return_on_missing
 
     if node then
@@ -182,7 +205,7 @@ function Utils:ReadUnit(unit, config, exclude, extra_info)
             elseif name == "network" and not exclude.network_unit then
                 local remote_unit = child:parameter("remote_unit")
 				if remote_unit and remote_unit ~= "" and remote_unit ~= unit then --unsure what to do with remote units that are an empty string.
-                    if not self:ReadUnit(remote_unit, config, exclude, {file = file_ext, where = "network node/remote_unit value"}) and rom then
+                    if not self:ReadUnit(remote_unit, config, exclude, {file = file_ext, where = "network node/remote_unit value", load = true}) and rom then
                         return false
                     end
                 end
@@ -198,7 +221,7 @@ function Utils:ReadObject(path, config, exclude, extra_info)
     local file_ext = path..".object"
 
 
-	local node = EditorUtils:ParseXml("object", path, nil, self.assets_dir)
+	local node = self:ParseXml("object", path)
 	local rom = self.return_on_missing
 
     if node then
@@ -233,7 +256,7 @@ end
 
 function Utils:ReadAnimationStateMachine(path, config, exclude, extra_info)
     self:Add(config, "animation_state_machine", path, exclude, extra_info)
-	local node = EditorUtils:ParseXml("animation_state_machine", path, nil, self.assets_dir)
+	local node = self:ParseXml("animation_state_machine", path)
     if node then
         for anim_child in node:children() do    
             if anim_child:name() == "states" then
@@ -252,7 +275,7 @@ end
 
 function Utils:ReadAnimationDefintion(path, config, exclude, extra_info)
     self:Add(config, "animation_def", path, exclude, extra_info)
-    local node = EditorUtils:ParseXml("animation_def", path, nil, self.assets_dir)
+    local node = self:ParseXml("animation_def", path)
     if node then
         for anim_child in node:children() do
             if anim_child:name() == "animation_set" then
@@ -267,7 +290,7 @@ end
 
 function Utils:ReadAnimationSubset(path, config, exclude, extra_info)
     self:Add(config, "animation_subset", path, exclude, extra_info)
-    local node = EditorUtils:ParseXml("animation_subset", path, nil, self.assets_dir)
+    local node = self:ParseXml("animation_subset", path)
     if node and not exclude.animation then
         for anim_set_child in node:children() do
             self:Add(config, "animation", anim_set_child:parameter("file"), exclude, {file = path.."animation_subset", where = "animation node"})
@@ -278,11 +301,18 @@ end
 
 function Utils:ReadSequenceManager(path, config, exclude, extra_info)
     self:Add(config, "sequence_manager", path, exclude, extra_info)
-	local tbl = EditorUtils:ParseXml("sequence_manager", path, true, self.assets_dir) -- scriptdata.
+	local tbl = self:ParseXml("sequence_manager", path, true) -- scriptdata.
 	if tbl and tbl.unit then
 		for _, sequence in ipairs(tbl.unit) do
 			if type(sequence) == "table" and sequence._meta == "sequence" and sequence.spawn_unit then
-				self:ReadUnit(sequence.spawn_unit.name:gsub("'", ""), config, exclude, {file = path..".sequence_manager", where = "unit node/sequence node/spawn unit value"})
+                local unit = sequence.spawn_unit.name:gsub("'", "")
+                if unit:begins(" ") then
+                    unit = unit:sub(2)
+                end
+                if unit:ends(" ") then
+                    unit = unit:sub(1, unit:len()-1)
+                end
+				self:ReadUnit(unit, config, exclude, {file = path..".sequence_manager", where = "unit node/sequence node/spawn unit value"})
 			end
 		end
 	end
@@ -291,7 +321,7 @@ end
 
 function Utils:ReadMaterialConfig(path, config, exclude, extra_info)
     self:Add(config, "material_config", path, exclude, extra_info)
-	local node = EditorUtils:ParseXml("material_config", path, nil, self.assets_dir)
+	local node = self:ParseXml("material_config", path)
 	if node and not exclude.texture then
 		for mat_child in node:children() do
 			if mat_child:name() == "material" then
@@ -308,7 +338,7 @@ end
 
 function Utils:ReadEffect(path, config, exclude, extra_info)
     self:AddForceLoaded(config, "effect", path, exclude, extra_info)
-	local node = EditorUtils:ParseXml("effect", path, nil, self.assets_dir)
+	local node = self:ParseXml("effect", path)
 	local rom = self.return_on_missing
 
     local file_ext = path..".effect"
@@ -349,8 +379,8 @@ function Utils:ReadEffect(path, config, exclude, extra_info)
 end
 
 function Utils:ReadScene(path, config, exclude, extra_info)
-    self:AddForceLoaded(config, "scene", path, exclude, extra_info)
-    local node = EditorUtils:ParseXml("scene", path, nil, self.assets_dir)
+    self:Add(config, "scene", path, exclude, extra_info)
+    local node = self:ParseXml("scene", path)
     if node and not exclude.scene then
 		for child in node:children() do
 			if child:name() == "load_scene" and child:has_parameter("materials") then
@@ -363,9 +393,13 @@ end
 
 function Utils:ReadEnvironment(path, config, exclude, extra_info)
 	self:Add(config, "environment", path, exclude, extra_info)
-	local tbl = EditorUtils:ParseXml("environment", path, true, self.assets_dir)
-	if tbl and tbl.data and tbl.data.others and tbl.data.others.underlay then
-		self:ReadScene(tbl.data.others.underlay, exclude, {file = path..".environment", where = "others node/underlay value"})
+	local tbl = self:ParseXml("environment", path, true)
+	if tbl and tbl.data and tbl.data.others then
+        for _, param in pairs(tbl.data.others) do
+            if param.key == "underlay" then
+                self:ReadScene(param.value, config, exclude, {file = path..".environment", where = "others node/underlay value"})
+            end
+        end
 	end
 	return tbl ~= nil
 end

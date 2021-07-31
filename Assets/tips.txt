@@ -1,0 +1,22 @@
+[
+    "The editor is approved by Ilija!",
+    "You can search using multiple queries by splitting them with a comma. For example: floor,wall",
+    "You can select multiple objects with box selection by holding CTRL + Right Mouse Button while moving your mouse. ALT does the opposite",
+    "You can select multiple objects by holding the Right Mouse Button",
+    "The editor was created in 2016 after I (Luffy) was playing around with the possiblity of editing maps",
+    "The best method to handle doors is to leave an opened version in the editor_only continent, you can then make your normal door ignore Disabled on AI Graph without having to deal with lots of unneeded startup management!",
+    "Want to know more about the editor? Visit the wiki: https://wiki.modworkshop.net/books/beardlib-editor-tutorials",
+    "Trouble with navigation? Some models are larger than they seem! Use the 'Draw Bodies' setting to see a props collision",
+    "Need help? Join the PAYDAY 2 Maps Discord https://discord.gg/fn62qaq",
+    "If you encounter a bug, please report it to us through the issues section on GitHub https://github.com/Luffyyy/BeardLib-Editor/issues",
+    "You can link Timer, Stopwatch and Counter elements to a timer unit",
+    "You can use 'mkp' or 'mockup' units to quickly prototype a level",
+    "You can customize appearence and keyboard shortcuts to your liking in the options menu",
+    "Holding ALT while moving a selection creates a duplicate",
+    "Holding CTRL while moving a selection snaps the grid to 1",
+    "Remember to create manual backups of your project regularly",
+    "Use a combination of portals and occluders to optimize your map",
+    "'ExecuteOnStartup' will execute as soon as you load into the loadout screen. Use an AreaTrigger set to 'player' to actually start your script",
+    "Tips with links are clickable!",
+    "Have an idea? Post it in the discussions section on GitHub https://github.com/Luffyyy/BeardLib-Editor/discussions"
+]

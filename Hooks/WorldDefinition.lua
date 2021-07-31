@@ -1,6 +1,7 @@
-local BLE = BeardLibEditor
+local BLE = BLE
 local BeardLib = BeardLib
 local Utils = BLE.Utils
+local unit_ids = Idstring("unit")
 
 core:module("CoreWorldDefinition")
 
@@ -21,6 +22,9 @@ function WorldDef:init(params, ...)
 	self._name_ids = {}
 	self._all_names = {}
 	self._statics = {}
+
+	self._werent_loaded = {}
+	self._failed_to_load = {}
 
 	WorldDef.super.init(self, params, ...)
 	self._world_data = self:_serialize_to_script(params.file_type, params.file_path)
@@ -227,6 +231,33 @@ function WorldDefinition:create(layer, offset)
 	return return_data
 end
 
+
+function WorldDef:_create_massunit(data, offset)
+	local path = self:world_dir() .. data.file
+
+	if data and data.preload_units then
+        for _, unit in pairs(data.preload_units) do
+			if not PackageManager:has(unit_ids, unit:id()) then
+				local unhashed = type(unit) == "string" and unit or BLE.Utils:Unhash(unit ,"unit")
+				if unhashed then
+					managers.editor.parts.assets:quick_load_from_db("unit", unhashed)
+					table.insert(self._werent_loaded, unhashed)
+				else
+					table.insert(self._werent_loaded, unit:key())
+				end
+			end
+		end
+	end
+
+	self:preload_massunit_units(data)
+
+	MassUnitManager:delete_all_units()
+
+	if PackageManager:has(Idstring("massunit"), path:id()) then
+		MassUnitManager:load(path:id(), offset, Rotation(), self._massunit_replace_names)
+	end
+end
+
 function WorldDef:spawn_quick(return_data, offset)
 	offset = offset or Vector3()
 	if self._needed_to_spawn then
@@ -343,7 +374,7 @@ end
 
 function WorldDef:set_up_name_id(unit)
 	local ud = unit:unit_data()
-	if ud.name_id ~= "none" then
+	if ud.name_id and ud.name_id ~= "none" then
 		self:insert_name_id(unit)
 	else
 		ud.name_id = self:get_name_id(unit, ud.from_name_id)
@@ -638,7 +669,19 @@ function WorldDef:make_unit(data, offset)
 		if MassUnitManager:can_spawn_unit(Idstring(name)) then
 			unit = MassUnitManager:spawn_unit(Idstring(name), data.position + offset, data.rotation)
 		else
-			unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)		
+			local failed = false
+			if not PackageManager:has(unit_ids, Idstring(name)) then
+				if blt.asset_db.has_file(name, "unit") then
+					table.insert(self._werent_loaded, name)
+					managers.editor.parts.assets:quick_load_from_db("unit", name)
+				else
+					failed = true
+					table.insert(self._failed_to_load, name)
+				end
+			end
+			if not failed then
+				unit = CoreUnit.safe_spawn_unit(name, data.position, data.rotation)
+			end
 		end
 	end
 	local not_allowed = {
@@ -836,6 +879,28 @@ function WorldDef:prepare_for_spawn_instance(instance)
 	if self._init_done then
 		self:spawn_quick()
 		PackageManager:set_resource_loaded_clbk(Idstring("unit"), _G.ClassClbk(managers.sequence, "clbk_pkg_manager_unit_loaded"))
+		self:report_stuff()
+	end
+
+	if instance.mission_placed then
+		managers.world_instance:prepare_serialized_instance_data(instance)
+	end
+end
+
+function WorldDef:report_stuff()
+	if #self._werent_loaded > 0 then
+		local str = "The following units were not loaded:\n"..table.concat(self._werent_loaded, "\n")
+		str = str .. "\nIn order to ensure smooth editing with as little crashes as possible, we loaded the units for you."
+		str = str .. "\nThe units will appear in the assets manager."
+		BLE.Utils:Notify("Heads up", str)
+		self._werent_loaded = {}
+	end
+	if #self._failed_to_load > 0 then
+		local str = "The following units were not loaded:\n"..table.concat(self._failed_to_load, "\n")
+		str = str .. "\nUnfortunately, these files are not part of the game and so we could not automatically load them."
+		str = str .. "\nYou should load these units properly before continuing to work on this map."
+		BLE.Utils:Notify("WARNING", str)
+		self._failed_to_load = {}
 	end
 end
 
@@ -855,7 +920,7 @@ if Unit then
 	local unit_datas = {}
 	local orig = Unit.unit_data
 	function Unit:unit_data(...)
-		local data = orig(self, ...)
+		local data = alive(self) and orig(self, ...) or nil
 		if not data and unit_datas[self:key()] then
 			return unit_datas[self:key()]
 		end

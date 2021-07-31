@@ -1,9 +1,7 @@
 SoundLayerEditor = SoundLayerEditor or class(EnvironmentLayerEditor)
 local SndLayer = SoundLayerEditor
 function SndLayer:init(parent)
-	self:init_basic(parent, "SoundLayerEditor")
-	self._menu = parent._holder
-	ItemExt:add_funcs(self)
+	EnvironmentLayerEditor.super.init(self, parent, "SoundLayerEditor")
 	self._created_units = {}
 	self._environment_unit = "core/units/sound_environment/sound_environment"
 	self._emitter_unit = "core/units/sound_emitter/sound_emitter"
@@ -80,7 +78,7 @@ function SndLayer:reset_selected_units()
 end
 
 function SndLayer:update(t, dt)
-	if self:Val("SoundUnits") or (self:Val("SoundUnitsWhileMenu") and self._parent._current_layer == "sound") then
+	if self._holder:GetItemValue("SoundUnits") then
 		local selected_units = self:selected_units()
 		for _, unit in ipairs(self._created_units) do
 			if alive(unit) then
@@ -143,16 +141,16 @@ function SndLayer:emitter_events()
 end
 
 function SndLayer:build_menu()
-	local buttons = self:group("Actions")
+	local buttons = self._holder:group("Actions")
 	local opt = self:GetPart("opt")
+	local spawn = self:GetPart("spawn")
 	buttons:button("RestartAllEmitters", ClassClbk(self, "on_restart_emitters"))
-    buttons:button("SpawnSoundEnvironment", ClassClbk(self._parent, "BeginSpawning", self._environment_unit))
-    buttons:button("SpawnSoundEmitter", ClassClbk(self._parent, "BeginSpawning", self._emitter_unit))
-    buttons:button("SpawnSoundAreaEmitter", ClassClbk(self._parent, "BeginSpawning", self._area_emitter_unit))
-    buttons:tickbox("SoundUnits", ClassClbk(opt, "update_option_value"), self:Val("SoundUnits"), {text = "Draw Sound Units"})
-    buttons:tickbox("SoundUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("SoundUnitsWhileMenu"), {text = "Draw Sound Units When Entering This Menu"})
+    buttons:button("SpawnSoundEnvironment", ClassClbk(spawn, "begin_spawning", self._environment_unit))
+    buttons:button("SpawnSoundEmitter", ClassClbk(spawn, "begin_spawning", self._emitter_unit))
+    buttons:button("SpawnSoundAreaEmitter", ClassClbk(spawn, "begin_spawning", self._area_emitter_unit))
+    buttons:tickbox("SoundUnits", nil, true, {text = "Draw Sound Units"})
 
-	local defaults = self:group("Defaults")
+	local defaults = self._holder:group("Defaults")
 	local environments = managers.sound_environment:_environment_effects()
 	self._default_environment = defaults:combobox("Environment", ClassClbk(self, "select_default_sound_environment"), environments, table.get_key(environments, managers.sound_environment:default_environment()))
 	local events = self:ambience_events()
@@ -406,4 +404,8 @@ function SndLayer:deactivate(params)
 	if not params or not params.simulation then
 		--managers.editor:set_wanted_mute(true)
 	end
+end
+
+function SndLayer:can_unit_be_selected(unit)
+	return self._holder:GetItemValue("SoundUnits")
 end

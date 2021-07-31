@@ -2,7 +2,7 @@ Hooks:PostHook(BLTNotificationsGui, "_setup", "BLESetup", function(self)
     self._beardlib_editor_menu = self._beardlib_panel:bitmap({
         name = "BeardlibEditorMenu",
         texture = "textures/editor_icons_df",
-        texture_rect = {256, 262, 115, 115},
+        texture_rect = {304, 48, 48, 48},
         w = 28,
         h = 28,
         y = 8,
@@ -14,7 +14,7 @@ Hooks:PostHook(BLTNotificationsGui, "_setup", "BLESetup", function(self)
         self._beardlib_editor_startlast = self._beardlib_panel:bitmap({
             name = "RestartLastEditorHeist",
             texture = "textures/editor_icons_df",
-            texture_rect = {116, 110, 32, 32},
+            texture_rect = {64, 64, 32, 32},
             w = 28,
             h = 28,
             y = 8,
@@ -47,10 +47,10 @@ function BLTNotificationsGui:mouse_pressed(button, x, y)
         if alive(self._beardlib_editor_startlast) and self._beardlib_editor_startlast:inside(x,y) then
             local data = BLE.Options:GetValue("LastLoaded")
             if data and data.name then
-                if tweak_data.levels[data.name] or data.instance and BeardLib.managers.MapFramework._loaded_instances["levels/" .. data.name .. "/world"] then
+                if tweak_data.levels[data.name] or data.instance and BeardLib.managers.MapFramework._loaded_instances[data.instance] then
                     BLE.LoadLevel:load_level(data)
                 else
-                    BeardLib.Managers.Dialog:Simple():Show({title = managers.localization:text("mod_assets_error"), message = "Heist \"" .. data.name .. "\" not found.", force = true})
+                    BeardLib.Managers.Dialog:Simple():Show({title = managers.localization:text("mod_assets_error"), message = "Level \"" .. data.name .. "\" not found.", force = true})
                 end
             end
             return true

@@ -13,16 +13,25 @@ function Part:init(parent, menu, name, opt, mopt)
     self:init_basic(parent, name)
     opt = opt or {}
     mopt = mopt or {}
-    self._menu = menu:Menu(table.merge({
+
+    local boxes_color = BLE.Options:GetValue("BoxesBackgroundColor")
+
+    self._menu = menu:DivGroup(table.merge({
         name = name,
-        control_slice = 0.5,
-        size = BLE.Options:GetValue("MapEditorFontSize"),
-        auto_foreground = true,
-        background_color = BLE.Options:GetValue("BackgroundColor"),
-        full_bg_color = BLE.Options:GetValue("BackgroundColor"),
+        text = string.pretty2(name),
+        inherit_values = {
+            full_bg_color = boxes_color,
+        },
+        auto_foreground = true, 
         scrollbar = false,
         visible = false,
-        private = {offset = 0},
+        auto_height = false,
+        private = {
+            offset = 0,
+            size = BLE.Options:GetValue("MapEditorFontSize") * 1.335,
+            background_color = BLE.Options:GetValue("AccentColor"),
+            full_bg_color = BLE.Options:GetValue("BackgroundColor"),
+        },
         position = function(item)
             if BLE.Options:GetValue("GUIOnRight") then
                 item:SetPositionByString("Right")
@@ -32,23 +41,30 @@ function Part:init(parent, menu, name, opt, mopt)
         w = BLE.Options:GetValue("MapEditorPanelWidth"),
         h = self:GetPart("menu"):get_menu_h() - 1
     }, mopt))
-    self._menu.highlight_color = self._menu.foreground:with_alpha(0.1)
     ItemExt:add_funcs(self)
-    local title_h = 4
-    if not opt.no_title then
-        title_h = self:divider("Title", {size = BLE.Options:GetValue("MapEditorFontSize") * 1.335, offset = 0, background_color = BLE.Options:GetValue("AccentColor"), text = string.pretty2(name)}):Height()
-    end
     if opt.make_tabs then
-        self._tabs = self:holder("Tabs", table.merge({
+        self._tabs = self._menu:holder("Tabs", table.merge({
             align_method = "centered_grid",
+            full_bg_color = BLE.Options:GetValue("BoxesBackgroundColor"),
             offset = 0,
-            inherit_values = {offset = {6, 4}},
+            inherit_values = {offset = 6},
         }, opt.tabs_opt))
-        opt.make_tabs(self._tabs)
-        title_h = title_h + self._tabs:OuterHeight()
+        if type(opt.make_tabs) == "function" then
+            opt.make_tabs(self._tabs)
+        end
     end
 
-    self._holder = self:pan("Holder", table.merge({offset = 0, inherit_values = {offset = {6, 4}}, auto_height = false, h = self._menu.h - title_h, scroll_width = 6}, opt))
+    self._holder = self._menu:pan("Holder", table.merge({
+        offset = 0,
+        auto_height = false,
+        full_bg_color = BLE.Options:GetValue("BackgroundColor"),
+        inherit_values = {
+            offset = {6, 4},
+            full_bg_color = boxes_color,
+        },
+        stretch_to_bottom = true,
+        scroll_width = 4
+    }, opt))
     ItemExt:add_funcs(self, self._holder)
     self:build_default_menu()
     self:make_collapse_all_button()
@@ -56,16 +72,15 @@ function Part:init(parent, menu, name, opt, mopt)
 end
 
 function Part:make_collapse_all_button()
-    local title = self._menu:GetItem("Title")
-    if title then
-        title:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all, {offset = 0})
-        self._help = title:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {offset = 0, visible = false})
-    end
+    local tb = self._menu:GetToolbar()
+    tb:tb_imgbtn("CollapseAll", ClassClbk(self, "collapse_all", false), nil, BLE.Utils.EditorIcons.collapse_all)
+    self._help = tb:tb_imgbtn("Help", nil, nil, BLE.Utils.EditorIcons.help, {visible = false})
 end
 
 function Part:show_help(clbk)
     if self._help then
         self._help:SetVisible(true)
+        self._menu:AlignItems(true)
         self._help:SetCallback(clbk)
     end
 end
@@ -121,15 +136,15 @@ function Part:clear_menu()
     if self._help then
         self._help:SetVisible(false)
     end
-    self:ClearItems()
+    self._holder:ClearItems()
 end
 function Part:build_default_menu()
     self:clear_menu()
     self:build_default()
 end
 function Part:build_default() end
-function Part:set_title(title) self._menu:GetItem("Title"):SetText(title or self._menu.name) end
-function Part:get_title() return self._menu:GetItem("Title"):Text() end
+function Part:set_title(title) self._menu:SetText(title or self._menu.name) end
+function Part:get_title() return self._menu:Text() end
 function Part:enable()
     self._enabled = true
 end

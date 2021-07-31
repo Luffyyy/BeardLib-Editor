@@ -38,10 +38,10 @@ function Instance:set_instance(reset)
     self._static:clear_menu()
 end
 
-function Instance:delete_instance(instance)
+function Instance:delete_instances()
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:fake() then
-            instance = instance or unit:object()
+            local instance = unit:object()
             local instances = managers.worlddefinition._continent_definitions[instance.continent].instances
             for _, mission in pairs(managers.mission._missions) do
                 for _, script in pairs(mission) do
@@ -50,7 +50,7 @@ function Instance:delete_instance(instance)
                     end
                 end
             end
-            managers.mission:delete_links(instance.name, BeardLibEditor.Utils.LinkTypes.Instance)
+            managers.mission:delete_links(instance.name, BLE.Utils.LinkTypes.Instance)
             for i, ins in pairs(instances) do
                 if ins.name == instance.name then
                     for _, unit in pairs(World:find_units_quick("all")) do
@@ -275,7 +275,7 @@ function Instance:set_data(item)
             end
         end
     else
-        BeardLibEditor:log("[Error] This is not a valid instance")
+        BLE:log("[Error] This is not a valid instance")
     end
     self:AlignItems()
 end

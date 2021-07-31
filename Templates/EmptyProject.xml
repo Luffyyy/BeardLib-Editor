@@ -1,3 +1,3 @@
-<table name="map">
+<table name="map" min_lib_ver="4.5">
 	<Localization default="english.txt" directory="loc"/>
 </table>

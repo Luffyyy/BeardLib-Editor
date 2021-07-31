@@ -39,12 +39,13 @@ function MissionScriptEditor:create_element()
 end
 
 function MissionScriptEditor:work()
-	self._menu = self:GetPart("static")._holder
-	ItemExt:add_funcs(self)
+	local static = self:GetPart("static")
+	self._holder = static._holder
+	ItemExt:add_funcs(self, self._holder)
 
-	self.super.build_default_menu(self)
+	static:clear_menu()
 	self:_build_panel()
-    self._links = self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+    self._links = static:build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
     if #self._class_group._my_items == 0 then
     	self:RemoveItem(self._class_group)
     end
@@ -65,7 +66,7 @@ function MissionScriptEditor:work()
 			table.insert(self._links, element)
 		end
 	end
-	self:AlignItems()
+	self._holder:AlignItems(true)
 end
 
 function MissionScriptEditor:build_instance_links()
@@ -89,15 +90,15 @@ function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
 	end
-	self:ClearItems()
+	self._holder:ClearItems()
 
 	local SE = self:GetPart("static")
 	SE:show_help(ClassClbk(self, "open_wiki"))
-	self._main_group = self:group("Main")
-	local quick_buttons = self:group("QuickButtons", {align_method = "grid"})
-	local transform = self:group("Transform")
+	self._main_group = self._holder:group("Main", {align_method = "grid"})
+	local quick_buttons = self._holder:group("QuickActions", {align_method = "grid"})
+	local transform = self._holder:group("Transform")
 	local element = self._element.class:gsub("Element", "") .. ""
-	self._class_group = self:group(element)
+	self._class_group = self._holder:group(element)
 	SE:SetTitle(element)
 	quick_buttons:s_btn("Deselect", ClassClbk(self, "deselect_element"))    
 	quick_buttons:s_btn("Delete", ClassClbk(SE, "delete_selected_dialog"))
@@ -109,7 +110,11 @@ function MissionScriptEditor:_create_panel()
 	end
 
 	self:StringCtrl("editor_name", {group = self._main_group, help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element})
-	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true, offset=0})
+	self:ColorCtrl("editor_color", {
+		group = self._main_group, return_hex = true,
+		help = "A unique color for this element for debugging purposes. Uses default if empty.", data = self._element, allow_empty = true
+	})
+	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true, offset = 6})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {group = self._main_group, data = self._element})
  	self._element.values.position = self._element.values.position or Vector3()
  	self._element.values.rotation = self._element.values.rotation or Rotation()
@@ -122,8 +127,8 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("trigger_times", {help = "Specifies how many times this element can be executed (0 = unlimited times)", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay", {help = "Specifies a base delay that is added to each on executed delay", group = self._main_group, floats = 0, min = 0})
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
- 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group})
-    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group})
+ 	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group, size_by_text = true})
+    self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group, size_by_text = true})
 	local on_exec = {values = {{name = "Delay", key = "delay"}}, key = "id", orig = {id = 0, delay = 0}}
 	if self.ON_EXECUTED_ALTERNATIVES then
 		on_exec.orig.alternative = "none"
@@ -148,7 +153,7 @@ function MissionScriptEditor:open_wiki()
 end
 
 function MissionScriptEditor:set_selected_on_executed_element_delay(item)
-	local value = self._menu:GetItem("OnExecutedList"):Value()
+	local value = self._holder:GetItem("OnExecutedList"):Value()
 	if value then
 		self._element.values.on_executed[value].delay = item:Value()
 		self:update_element()
@@ -351,11 +356,18 @@ function MissionScriptEditor:update_element(position_only, old_script)
 	if alive(unit) and unit.element then
 		unit:set_position(self._element.values.position)
 		unit:set_rotation(self._element.values.rotation)
+		if self._element.editor_color and self._element.editor_color:len() > 0 then
+			local color = Color:from_hex(self._element.editor_color)
+			if color ~= unit._color then
+				unit:mission_element():set_color(color)
+				unit:mission_element():select()
+			end
+		end
 	end
 	if not position_only then
 		self:get_on_executed_units()
 		managers.mission:set_element(self._element, old_script)
-		self:GetPart("static"):build_links(self._element.id, BeardLibEditor.Utils.LinkTypes.Element, self._element)
+		self:GetPart("static"):build_links(self._element.id, BLE.Utils.LinkTypes.Element, self._element)
 	end
 end
 
@@ -367,14 +379,14 @@ function MissionScriptEditor:set_element_data(item)
 	local function set_element_data()
 		local data = self:ItemData(item)
 		data[item.name] = item.SelectedItem and item:SelectedItem() or item:Value()
-		data[item.name] = tonumber(data[item.name]) or data[item.name]
+		data[item.name] = item.type_name ~= "ColoredTextBox" and tonumber(data[item.name]) or data[item.name]
 		if item.name == "base_delay_rand" then
 			data[item.name] = data[item.name] > 0 and data[item.name] or nil
 		end
 		self:update_element(false, old_script)
 	end
 	if item.name == "script" and item:SelectedItem() ~= old_script then
-		BeardLibEditor.Utils:YesNoQuestion("This will move the element to a different mission script, the id will be changed and all links will be removed!", function()
+		BLE.Utils:YesNoQuestion("This will move the element to a different mission script, the id will be changed and all links will be removed!", function()
 			set_element_data()
 			self:GetPart("mission"):set_elements_vis()
 			self:GetItem("ID"):SetText("ID "..self._element.id)
@@ -389,8 +401,8 @@ end
 
 function MissionScriptEditor:set_element_position(menu)
 	local SE = self:GetPart("static")
-	self._element.values.position = self:GetItem("Position"):Value()
-	self._element.values.rotation = self:GetItem("Rotation"):Value()
+	self._element.values.position = self._holder:GetItem("Position"):Value()
+	self._element.values.rotation = self._holder:GetItem("Rotation"):Value()
 	self:update_element(true)
 end
 
@@ -406,6 +418,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		units = opt.units,
 		single_select = opt.single_select,
 		need_name_id = opt.need_name_id,
+		combo_free_typing = opt.combo_free_typing,
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
 end
@@ -541,10 +554,11 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		end
 		return not ud.instance and ud.unit_id ~= 0 and (not params.check_unit or params.check_unit(unit))
 	end)
+	local static = self:part("static")
 	self:OpenManageListDialog(params, units,
 		function(unit)
 			local ud = unit:unit_data()
-			local groups = self:part("static"):get_groups_from_unit(unit)
+			local groups = static:get_groups_from_unit(unit)
 			local groups_str
 			if next(groups) then
 				groups_str = "Groups: "
@@ -654,7 +668,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 		return a._index < b._index
 	end)
 
-	BeardLibEditor.SelectDialogValue:Show({
+	BLE.SelectDialogValue:Show({
 	    selected_list = selected_list,
 		list = list,
 		entry_values = tdata and tdata.values,
@@ -662,7 +676,7 @@ function MissionScriptEditor:OpenManageListDialog(params, objects, name_func, ch
 		allow_multi_insert = NotNil(params.allow_multi_insert, true),
 		need_name_id = params.need_name_id,
 		single_select = params.single_select,
-		combo_free_typing = true,
+		combo_free_typing = NotNil(params.combo_free_typing, true),
 		not_table = params.not_table,
 		callback = params.callback or ClassClbk(self, "ManageElementIdsClbk", params)
 	})
@@ -690,7 +704,7 @@ function MissionScriptEditor:Text(text, opt)
 end
 
 function MissionScriptEditor:ListSelectorOpen(params)
-    BeardLibEditor.SelectDialog:Show({
+    BLE.SelectDialog:Show({
         selected_list = params.selected_list,
         list = params.list,
         callback = params.callback or function(list) 
@@ -702,61 +716,81 @@ end
 function MissionScriptEditor:ListSelector(value_name, list, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local data = self:ItemData(opt)
-	return (opt.group or self._menu):button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
+	return (opt.group or self._holder):button(value_name, ClassClbk(self, "ListSelectorOpen", {value_name = value_name, selected_list = data[value_name], list = list, data = data}), opt)
 end
 
 function MissionScriptEditor:NumberCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):numberbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):numberbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:BooleanCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):tickbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):tickbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+end
+
+function MissionScriptEditor:ColorCtrl(value_name, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+    return (opt.group or self._holder):colorbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:StringCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
-    return (opt.group or self._menu):textbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+    return (opt.group or self._holder):textbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
+	return (opt.group or self._holder):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
-function MissionScriptEditor:PathCtrl(value_name, type, check_slot, opt)
+function MissionScriptEditor:PathCtrl(value_name, typ, check_match, check_not_match, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	opt.check = function(unit)
-		return (not check_slot or BeardLibEditor.Utils:InSlot(unit, check_slot)) and not unit:match("husk")
+		if unit:match("husk") then
+			return false
+		end
+		local check_match_tbl = type(check_match) == "table" and check_match or {check_match}
+		local check_not_match_tbl = type(check_not_match) == "table" and check_not_match or {check_not_match}
+		for _, check in pairs(check_match_tbl) do
+			if not unit:match(check) then
+				return false
+			end
+		end
+		for _, check in pairs(check_not_match_tbl) do
+			if unit:match(check) then
+				return false
+			end
+		end
+		return true
 	end
 	opt.not_close = true
-    return (opt.group or self._menu):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], type, opt)
+    return (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], typ, opt)
 end
 
 function MissionScriptEditor:Vector3Ctrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+	return (opt.group or self._holder):Vector3(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:RotationCtrl(value_name, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	local value = self:ItemData(opt)[value_name]
-	return (opt.group or self._menu):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
+	return (opt.group or self._holder):Rotation(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], opt)
 end
 
 function MissionScriptEditor:Info(text, color, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-	return (opt.group or self._menu):info(text, color)
+	return (opt.group or self._holder):info(text, color)
 end
 
 function MissionScriptEditor:Alert(text, color, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-	return (opt.group or self._menu):alert(text, color)
+	return (opt.group or self._holder):alert(text, color)
 end
 
 -- TODO: maybe add linking to other stuff like units with sequence elements

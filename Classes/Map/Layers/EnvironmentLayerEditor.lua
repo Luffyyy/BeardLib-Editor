@@ -3,9 +3,7 @@ local sky_rot_key = Idstring("sky_orientation/rotation"):key()
 local DEFAULT_CUBEMAP_RESOLUTION = 512
 local EnvLayer = EnvironmentLayerEditor
 function EnvLayer:init(parent)
-	self:init_basic(parent, "EnvironmentLayerEditor")
-	self._menu = parent._holder
-	ItemExt:add_funcs(self)
+	EnvLayer.super.init(self, parent, "EnvironmentLayerEditor")
 	self._wind_speeds = {
 	 	{speed = 0, beaufort = 0, description = "Calm"},
 		{speed = 0.3, beaufort = 1, description = "Light air"},
@@ -78,7 +76,7 @@ end
 function EnvLayer:find_cubemaps()
 	self._cubemap_units = {}
 	for _, unit in pairs(managers.worlddefinition._all_units) do
-        if unit:name() == self._cubemap_unit:id() then
+        if alive(unit) and unit:name() == self._cubemap_unit:id() then
             table.insert(self._cubemap_units, unit)
         end
     end
@@ -205,7 +203,7 @@ function EnvLayer:update(t, dt)
 		end
 	end
 
-	if self:Val("EnvironmentUnits") or self:Val("EnvironmentUnitsWhileMenu") and self._parent._current_layer == "environment" then
+	if self._holder:GetItemValue("EnvironmentUnits") and self._parent._current_layer == "environment" then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
 			if alive(unit) then
@@ -261,9 +259,9 @@ function EnvLayer:build_menu()
 
 	local environment_values = data.environment_values
 
-    local environment_group = self:group("Environment")
+    local environment_group = self._holder:group("Environment")
 	environment_group:pathbox("Environment", ClassClbk(self, "change_environment"), environment_values.environment, "environment", {not_close = true})
-    local sky = self:group("Sky")
+    local sky = self._holder:group("Sky")
     sky:slider("SkyRotation", ClassClbk(self, "change_sky_rotation"), environment_values.sky_rot, {min = 0, max = 360})
     local colors = {
         "color_off",
@@ -307,20 +305,19 @@ function EnvLayer:build_menu()
 	end)
     environment_group:combobox("ColorGrading", ClassClbk(self, "change_color_grading"), colors, table.get_key(colors, environment_values.color_grading))
 
-	local utils = self:GetPart("world")
-    environment_group:button("SpawnEffect", ClassClbk(utils, "BeginSpawning", self._effect_unit))
-    environment_group:button("SpawnEnvironmentArea", ClassClbk(utils, "BeginSpawning", self._environment_area_unit))
-    environment_group:tickbox("EnvironmentUnits", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnits"), {text = "Draw"})
-    environment_group:tickbox("EnvironmentUnitsWhileMenu", ClassClbk(opt, "update_option_value"), self:Val("EnvironmentUnitsWhileMenu"), {text = "Draw When Entering This Menu"})
+	local spawn = self:GetPart("spawn")
+    environment_group:button("SpawnEffect", ClassClbk(spawn, "begin_spawning", self._effect_unit))
+    environment_group:button("SpawnEnvironmentArea", ClassClbk(spawn, "begin_spawning", self._environment_area_unit))
+    environment_group:tickbox("EnvironmentUnits", nil, true, {text = "Draw"})
 
-	local dome_occ = self:group("DomeOcclusion", {visible = true}) 
+	local dome_occ = self._holder:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
-    dome_occ:button("SpawnDomeOcclusion", ClassClbk(utils, "BeginSpawning", self._dome_occ_shape_unit))	
+    dome_occ:button("SpawnDomeOcclusion", ClassClbk(spawn, "begin_spawning", self._dome_occ_shape_unit))	
 	dome_occ:button("Generate", ClassClbk(self, "generate_dome_occ", "all"))
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
     dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
 
-	local wind = self:group("Wind")
+	local wind = self._holder:group("Wind")
 	self._draw_wind = wind:tickbox("Draw", nil, false)
 	local wind_vals = data.wind
     wind:slider("WindDirection", ClassClbk(self, "update_wind_direction"), wind_vals.angle, {min = -360, max = 360, floats = 0})
@@ -328,9 +325,9 @@ function EnvLayer:build_menu()
     wind:slider("TiltAngle", ClassClbk(self, "update_tilt_angle"), wind_vals.tilt, {min = -90, max = 90, floats = 0})
     wind:slider("TiltVariation", ClassClbk(self, "update_tilt_variation"), self._wind_tilt_var, {min = -90, max = 90, floats = 0})
     wind:slider("Speed", ClassClbk(self, "update_wind_speed"), self._wind_speed * 10, {min = 0, max = 408, floats = 0})
-    self._wind_text = self:divider("Beaufort/WindDesc")
-    self:update_wind_speed_labels()
     wind:slider("SpeedVariation", ClassClbk(self, "update_wind_speed_variation"), self._wind_speed_variation * 10, {min = 0, max = 408, floats = 0})
+    self._wind_text = wind:divider("Beaufort/WindDesc")
+    self:update_wind_speed_labels()
 end
 
 function EnvLayer:build_unit_menu()
@@ -395,7 +392,7 @@ function EnvLayer:build_unit_menu()
 			cm:GetToolbar():lbl("ID", {
 				text = "ID " .. ud.unit_id,
 				size_by_text = true,
-				offset = 0
+				offset = 6
 			})
 			cm:textbox("Name", ClassClbk(self, "set_unit_data"), ud.name_id, {
 				help = "the name of the unit",
@@ -430,7 +427,7 @@ function EnvLayer:set_unit_pos(item)
 		unit:set_position(S:GetItem("Position"):Value())
 		unit:set_rotation(S:GetItem("Rotation"):Value())
 		unit:unit_data().position = unit:position()
-		unit:unit_data().rotation = unit:rotation()		
+		unit:unit_data().rotation = unit:rotation()
 	end
 	self:save()
 end
@@ -446,6 +443,7 @@ end
 function EnvLayer:change_environment(item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
+	self:GetPart("env"):database_load_env(environment_values.environment)
 	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:save()
 end
@@ -745,4 +743,8 @@ function EnvLayer:create_cube_map(selection, type)
 	}
 
 	self:GetPart("cubemap_creator"):create_cube_map(params)
+end
+
+function EnvLayer:can_unit_be_selected(unit)
+	return self._holder:GetItemValue("EnvironmentUnits")
 end

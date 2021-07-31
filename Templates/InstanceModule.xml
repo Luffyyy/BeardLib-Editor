@@ -1,21 +1,3 @@
 <instance id="map">
-	<add directory="assets">
-	</add>
-	<include directory="levels/map">
-		<file file="world.world" type="binary"/>
-		<file file="continents.continents" type="binary"/>
-		<file file="mission.mission" type="binary"/>
-		<file file="nav_manager_data.nav_data" type="binary"/>
-		<file file="world_sounds.world_sounds" type="binary"/>
-		<file file="world_cameras.world_cameras" type="binary"/>
-		<file file="world/world.continent" type="binary"/>
-		<file file="world/world.mission" type="binary"/>
-		<file file="cover_data.cover_data" type="binary"/>
-		<file file="environments/default.environment" type="custom_xml"/>
-	</include>
-	<packages>
-		<value_node value="levels/instances/unique/sub_sewer_sidespawn/world/world"/>
-	</packages>
-	<script_data_mods directory="scriptdata">
-	</script_data_mods>
+	<packages/>
 </instance>

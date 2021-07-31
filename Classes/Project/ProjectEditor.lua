@@ -19,38 +19,44 @@ function ProjectEditor:init(parent, mod, previous_project_data)
     self._loaded_in_editor = mod == BLE.MapProject:current_mod()
 
     BLE.MapProject:set_edit_title(data.name)
+    local w = parent:ItemsWidth(2)
+    local h = parent:ItemsHeight(1, ItemExt:get_boxes_offset()[2])
     local menu = parent:pan("CurrEditing", {
-        w = 350,
-        position = "Left",
+        w = w * 2/7,
+        auto_height = false,
+        scrollbar = false,
+        h = h,
         border_left = false,
-        private = {size = 24}
     })
     self._left_menu = menu
 
     data.orig_id = data.orig_id or data.name
 
     local up = ClassClbk(self, "set_data_callback")
-    if self._loaded_in_editor then
-        menu:divider("Attention: we detected that this project is currently loaded. To avoid breaking the project/map, some options are disabled.")
-    end
-    menu:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
 
     self._menu = parent:divgroup("CurrentModule", {
         private = {size = 24},
         text = "Module Properties",
-        w = parent:ItemsWidth() - 350,
-        h = parent:ItemsHeight(),
+        w = w * 5/7,
+        h = h,
         auto_height = false,
-        scrollbar = true,
         border_left = false,
-        position = "RightOffset-X"
     })
-    ItemExt:add_funcs(self)
-    self._modules_list = self._left_menu:divgroup("Modules")
 
-    self._left_menu:button("Create", ClassClbk(self, "open_create_dialog"))
-
+    local main = self._left_menu:holder("Main")
+    if self._loaded_in_editor then
+        main:divider("Attention: we detected that this project is currently loaded. To avoid breaking the project/map, some options are disabled.")
+    end
+    main:textbox("ProjectName", up, data.name, {forbidden_chars = {':','*','?','"','<','>','|'}, enabled = not self._loaded_in_editor})
     local actions = self._left_menu:divgroup("Actions")
+
+    actions:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
+    actions:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
+    self._save_btn = actions:button("SaveChanges", ClassClbk(self, "save_data_callback"))
+
+    ItemExt:add_funcs(self)
+    self._modules_list = self._left_menu:divgroup("Modules", {stretch_to_bottom = true, auto_height = false})
+    self._modules_list:GetToolbar():tb_imgbtn("Create", ClassClbk(self, "open_create_dialog"), nil, BLE.Utils.EditorIcons.plus)
     for id, action in pairs(self.ACTIONS) do
         actions:button(id, function()
             action(self)
@@ -65,9 +71,7 @@ function ProjectEditor:init(parent, mod, previous_project_data)
         end
     end
 
-    self._save_btn = self._left_menu:button("SaveChanges", ClassClbk(self, "save_data_callback"))
-    self._left_menu:button("OpenInFileExplorer", ClassClbk(self, 'open_in_file_explorer'))
-    self._left_menu:button("Close", ClassClbk(BLE.MapProject, "close_current_project"))
+
     self:build_modules()
     if previous_project_data and previous_project_data._current_module_index and self._modules[previous_project_data._current_module_index] then
         self:open_module(self._modules[previous_project_data._current_module_index])
@@ -79,14 +83,14 @@ end
 ---List the modules
 function ProjectEditor:build_modules()
     local modules = self._modules_list
-    modules:ClearItems()
+    modules:ClearItems("modules")
     for _, mod in pairs(self._modules) do
         local meta = mod._meta
         local text = string.capitalize(meta)
-        if ProjectEditor.EDITORS[meta].HAS_ID then
-            text = text .. ": "..mod._data.id
+        if ProjectEditor.EDITORS[meta].HAS_ID and (mod._main_xml_data.id or mod._data.id) then
+            text = text .. ": "..(mod._main_xml_data.id or mod._data.id)
         end
-        mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text})
+        mod._btn = modules:button(mod.id, ClassClbk(self, "open_module", mod), {text = text, label = "modules"})
     end
 end
 
@@ -98,6 +102,18 @@ function ProjectEditor:get_module(id, meta)
     for _, mod in pairs(self._modules) do
         local data = mod._data
         if data._meta == meta and data.id == id then
+            return mod
+        end
+    end
+end
+
+--- Searches a module meta, used to find levels from a narrative chain at the moment.
+--- @param meta string
+--- @return table
+function ProjectEditor:get_module_by_meta(meta)
+    for _, mod in pairs(self._modules) do
+        local data = mod._data
+        if data._meta == meta then
             return mod
         end
     end
@@ -254,6 +270,7 @@ end
 function ProjectEditor:small_button(name, clbk, opt)
     self._menu:GetToolbar():tb_btn(name, clbk, table.merge({
         min_width = 100,
+        offset = 8,
         text_offset = {8, 2},
         border_bottom = true,
     }, opt))

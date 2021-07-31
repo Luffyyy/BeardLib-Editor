@@ -62,7 +62,7 @@ function ContinentSettingsDialog:hide(success)
                         if ud then
                             ud.continent = name
                         else
-                            BeardLibEditor:log("[Warning] Unit with no unit data inside continent")
+                            BLE:log("[Warning] Unit with no unit data inside continent")
                         end
                     end
                 end

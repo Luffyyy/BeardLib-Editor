@@ -14,22 +14,26 @@ function EnvEditor:init(parent, menu)
     self._reported_data_path_map = {}
     self._shadow_blocks = {}
     self._shadow_params = {}
-    self.super.init(self, parent, menu, "Environment", {items_size = 16, control_slice = 0.6, offset = 1, use_alpha = false})
+    self.super.init(self, parent, menu, "Environment", {control_slice = 0.6, offset = 1, use_alpha = false})
 end
 
 function EnvEditor:load_included_environments()
     local included = self:GetItem("IncludedEnvironments")
     local level = BeardLib.current_level
+    local project = BLE.MapProject
+
     if included and level then
         included:ClearItems("environment")
         local has_items = false
-        for _, include in ipairs(level._config.include) do
-            if type(include) == "table" and string.ends(include.file, "environment") then
-                local file = Path:Combine(level._mod.ModPath, level._config.include.directory, include.file)
+        local add = project:read_xml(level._local_add_path)
+        for _, child in pairs(add) do
+            if type(child) == "table" and child._meta == "environment" then
+                local file_name = child.path..".environment"
+                local file = Path:Combine(project:current_level_path(), file_name)
                 if FileIO:Exists(file) then
                     has_items = true
-                    local env = included:button(include.file, ClassClbk(self, "open_environment", file), {text = include.file, label = "environment"})
-                    env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, {184, 2, 48, 48}, {highlight_color = Color.red, offset = 0})
+                    local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
+                    env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
                 end
             end
         end
@@ -47,7 +51,7 @@ function EnvEditor:build_default()
     if BeardLib.current_level then
         local included = self:divgroup("IncludedEnvironments")
         self:load_included_environments()
-        included:GetToolbar():tb_btn("IncludeCurrent", ClassClbk(self, "include_current_dialog"), {offset = 0})
+        included:GetToolbar():tb_btn("IncludeCurrent", ClassClbk(self, "include_current_dialog"), {offset = 4})
     end
 
     local quick = self:divgroup("Quick actions")
@@ -102,13 +106,13 @@ function EnvEditor:build_default()
 
     -- TEXTURES
     local textures = self:group("Underlay / Textures", {control_slice = 0.5})
-    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, text = "Underlay", check = function(entry) 
+    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, text = "Underlay",  check = function(entry) 
         return not (entry:match("core/levels") or entry:match("levels/zone")) 
     end}))
     self:add_sky_param(textures:pathbox("sky_texture", nil, "", "texture", {not_close = true, text = "Sky Texture"}))
     self:add_sky_param(textures:pathbox("global_texture", nil, "", "texture", {not_close = true, text = "Cubemap"}))
-    self:add_sky_param(textures:pathbox("global_world_overlay_texture", nil, "", "texture", {not_close = true, text = "World overlay texture"}))
-    self:add_sky_param(textures:pathbox("global_world_overlay_mask_texture", nil, "", "texture", {not_close = true, text = "World overlay mask"}))
+    self:add_sky_param(textures:pathbox("global_world_overlay_texture", nil, "", "texture", {not_close = true, text = "World Overlay Texture", control_slice = 0.55}))
+    self:add_sky_param(textures:pathbox("global_world_overlay_mask_texture", nil, "", "texture", {not_close = true, text = "World Overlay Mask", control_slice = 0.55}))
 
     -- SHADOWS
     local shadows = self:group("Shadows", {control_slice = 0.5})
@@ -119,6 +123,13 @@ function EnvEditor:build_default()
     self._shadow_params.d3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", shadows:slider("d3", nil, 1, {text = "3rd slice depth end", min = 0, floats = 0, max = 1000000}))
     self._shadow_params.o2 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", shadows:slider("o2", nil, 1, {text = "Blend overlap(2nd & 3rd)", min = 0, floats = 0,  max = 1000000}))
     self._shadow_params.o3 = self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", shadows:slider("o3", nil, 1, {text = "Blend overlap(3rd & 4th)", min = 0, floats = 0, max = 1000000}))
+
+    local effects = self:group("Effects", {max_height = 220})
+	local all_effects = managers.environment_effects:effects_names()
+	table.sort(all_effects)
+    for _, name in pairs(all_effects) do
+        effects:button(name, ClassClbk(self, "choose_effects"), {text = name, border_left = table.contains(self._environment_effects, name)})
+    end
 
     -- DUMMY SHADOWS
     self:add_post_processors_param("shadow_processor", "shadow_rendering", "shadow_modifier", DummyItem:new("slice0"))
@@ -132,6 +143,17 @@ function EnvEditor:build_default()
 
     managers.viewport:first_active_viewport():set_environment_editor_callback(ClassClbk(self, "feed"))
     self._built = true
+end
+
+function EnvEditor:choose_effects(item)
+    local name = item.name
+    if table.contains(self._environment_effects, name) then
+        table.delete(self._environment_effects, name)
+    else
+        table.insert(self._environment_effects, name)
+    end
+    item:SetBorder({left = table.contains(self._environment_effects, name)})
+    managers.environment_effects:set_active_effects(self._environment_effects)
 end
 
 function EnvEditor:set_post_effects_enabled(item)
@@ -185,6 +207,7 @@ end
 
 function EnvEditor:load_env(env)
     if env and env.data then
+        local had_effects = false
         for k,v in pairs(env.data) do
             if k == "others" then
                 self:database_load_sky(v)
@@ -194,10 +217,18 @@ function EnvEditor:load_env(env)
                 self:database_load_underlay(v)
             elseif k == "environment_effects" then
                 self:database_load_environment_effects(v)
-            end    
+                had_effects = true
+            end
         end
         self:parse_shadow_data()
+        if not had_effects then
+            self._environment_effects = {}
+        end
         self:set_effect_data(self._environment_effects)
+        for _, btn in pairs(self._holder:GetItem("Effects"):Items()) do
+            btn:SetBorder({left = table.contains(self._environment_effects, btn.name)})
+        end
+        managers.environment_effects:set_active_effects(self._environment_effects)
     end
 end
 
@@ -466,9 +497,8 @@ function EnvEditor:open_default_custom_environment()
     local data = self:GetPart("world"):data()
     local environment = data.environment.environment_values.environment
     local level = BeardLib.current_level
-    local map_dbpath = Path:Combine("levels/mods/", level._config.id)
-    if string.begins(environment, map_dbpath) then
-        local file_path = string.gsub(environment, map_dbpath, Path:Combine(level._mod.ModPath, level._config.include.directory)) .. ".environment"
+    if string.begins(environment, level._inner_dir) then
+        local file_path = string.gsub(environment, level._inner_dir, level._level_dir) .. ".environment"
         if FileIO:Exists(file_path) then
             self:open_environment(file_path)
         else
@@ -480,11 +510,12 @@ end
 function EnvEditor:uninclude_environment_dialog(item)
     BLE.Utils:YesNoQuestion("This will uninclude the environment from your level and will delete the file itself", function()
         local level = BeardLib.current_level
+        local project = BLE.MapProject
         local pname = item.parent.name
-        FileIO:Delete(Path:Combine(level._mod.ModPath, level._config.include.directory, pname))
-        self:GetPart("opt"):save_main_xml()
+        FileIO:Delete(Path:Combine(project:current_level_path(), pname))
+        self:GetPart("opt"):save_local_add_xml()
         local env = pname:gsub(".environment", "")
-        Global.DBPaths.environment[Path:Combine("levels/mods/", level.id, env)] = nil
+        Global.DBPaths.environment[Path:Combine(level._inner_dir, env)] = nil
         BLE:LoadCustomAssets()
         self:load_included_environments()
     end)
@@ -492,7 +523,8 @@ end
 
 function EnvEditor:include_current_dialog(name)
     local level = BeardLib.current_level
-    local env_dir = Path:Combine(level._mod.ModPath, level._config.include.directory, "environments")
+    local project = BLE.MapProject
+    local env_dir = Path:Combine(project:current_level_path(), "environments")
     BLE.InputDialog:Show({
         title = "Environment name:",
         text = type(name) == "string" and name or self._last_custom and Path:GetFileNameWithoutExtension(self._last_custom) or "",
@@ -511,7 +543,7 @@ function EnvEditor:include_current_dialog(name)
         end,
         callback = function(name)
             self:write_to_disk(Path:Combine(env_dir, name..".environment"))
-            self:GetPart("opt"):save_main_xml({{_meta = "file", file = Path:Combine("environments", name..".environment"), type = "custom_xml"}})
+            self:GetPart("opt"):save_local_add_xml({{_meta = "environment", path = Path:Combine("environments", name), script_data_type = "custom_xml"}})
             BLE.MapProject:reload_mod(level._mod.Name)
             BLE:LoadCustomAssets()
             self:load_included_environments()

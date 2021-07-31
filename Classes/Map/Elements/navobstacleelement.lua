@@ -12,13 +12,10 @@ end
 function EditorNavObstacle:_build_panel()
     self:_create_panel()
     self:ComboCtrl("operation", { "add", "remove" }, { help = "Choose if you want to add or remove an obstacle" })
-    self:BuildUnitsManage("obstacle_list", { values_name = "Object", value_key = "obj_name", key = "unit_id", orig = { unit_id = 0, obj_name = Idstring(""), guis_id = 1 }, combo_items_func = function(name, value)
+    self:BuildUnitsManage("obstacle_list", { values_name = "Object", value_key = "obj_name", key = "unit_id", orig = {unit_id = 0, obj_name = nil, guis_id = 1}, combo_items_func = function(name, value)
         -- get all obj idstrings and map them to unindented values
-        -- why the fuck is this function called collect it should be called map AAAA
-        local objects = table.collect(self:_get_objects_by_unit(value.unit), self._unindent_obj_name)
-
-        return objects
-    end })
+        return table.collect(self:_get_objects_by_unit(value.unit), self._unindent_obj_name)
+    end}, nil, {combo_free_typing = false})
 end
 
 function EditorNavObstacle:_get_objects_by_unit(unit)
@@ -26,17 +23,17 @@ function EditorNavObstacle:_get_objects_by_unit(unit)
 
     if unit then
         local root_obj = unit:orientation_object()
-        all_object_names = {}
-        local tree_depth = 1
-
         local function _process_object_tree(obj, depth)
-            local indented_name = obj:name():s()
+            local name = obj:name()
+            local indented_name = BLE.Utils:UnhashStr(name)
+            local has_unhashed = indented_name == nil
+            indented_name = indented_name or name:key()
 
-            for i = 1, depth, 1 do
+            for i = 1, depth  do
                 indented_name = "-" .. indented_name
             end
 
-            table.insert(all_object_names, indented_name)
+            table.insert(all_object_names, {unhashed = indented_name, hashed = name, has_unhashed = has_unhashed})
 
             local children = obj:children()
 
@@ -51,12 +48,11 @@ function EditorNavObstacle:_get_objects_by_unit(unit)
     return all_object_names
 end
 
-function EditorNavObstacle._unindent_obj_name(obj_name)
+function EditorNavObstacle._unindent_obj_name(obj)
+    local obj_name = obj.unhashed
     while string.sub(obj_name, 1, 1) == "-" do
         obj_name = string.sub(obj_name, 2)
     end
 
-    local xml = ScriptSerializer:from_custom_xml(string.format('<table type="table" id="%s">', obj_name))
-
-    return xml.id
+    return {text = obj_name, value = obj.hashed}
 end

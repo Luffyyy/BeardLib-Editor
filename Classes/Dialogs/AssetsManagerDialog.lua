@@ -2,9 +2,7 @@ AssetsManagerDialog = AssetsManagerDialog or class(MenuDialog)
 AssetsManagerDialog.type_name = "AssetsManagerDialog"
 AssetsManagerDialog._no_reshaping_menu = true
 AssetsManagerDialog.ImportHelp = [[
-This will search for dependencies that the unit requires in order to load.
-Any missing dependency from your extract directory will fail the load. So be sure your extract is not outdated.
-After pressing export please wait until you see another dialog that will confirm that the export was complete.
+This will search for dependencies that the asset requires in order to load. Some are optional, some are semi-optional and some are required.
 ]]
 
 local ADD = "add"
@@ -15,9 +13,7 @@ function AssetsManagerDialog:init(params, menu)
     if self.type_name == AssetsManagerDialog.type_name then
         params = params and clone(params) or {}
     end
-    self._exporter = BLE.Utils.Export:new({
-        assets_dir = BLE.ExtractDirectory
-    })
+    self._exporter = BLE.Utils.Export:new()
 	params.scrollbar = false
     menu = menu or BeardLib.managers.dialog:Menu()
     self._unit_info = menu:Menu(table.merge({
@@ -71,28 +67,28 @@ function AssetsManagerDialog:_Show()
     local ptoolbar = packages:GetToolbar()
     ptoolbar:tb_btn("Add", ClassClbk(self, "add_package_dialog"), {text = "+"})
     local search_opt = {w = 300, lines = 1, text = "Search", offset = 0, control_slice = 0.8, highlight_color = false}
-    ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
-    utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
+    self._search_packages = ptoolbar:textbox("Search", ClassClbk(BLE.Utils, "FilterList", "packages"), "", search_opt)
+    self._search = utoolbar:textbox("Search2", ClassClbk(BLE.Utils, "FilterList", "assets"), "", search_opt)
 
     self._unit_info:divider("AssetsManagerStatus", {
         text = "(!) One or more units are missing, you can decide to search for a package that contains(most) of the unloaded units (for leftover units you can repeat this process)",
         visible = false,
         color = false,
     })
-    self._unit_info:button("FixBySearchingPackages", ClassClbk(self, "find_packages", false))
-    self._unit_info:button("FixByLoadingFromExtract", ClassClbk(self, "load_all_from_extract_dialog"))
-    self._unit_info:button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false))
-    self._unit_info:button("PackageReport", ClassClbk(self, "package_report"))
-    self._unit_info:button("ScanAssetsDirectory", ClassClbk(self, "scan_assets"))
-    self._unit_info:divider("UnitInfoTitle", {text = "Unit Inspection"})
-    self._unit_info:divider("UnitInfo", {text = "None Selected.", color = false})
-    local actions = self._unit_info:divgroup("Actions")
-    actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, enabled = false})
-    actions:button("LoadFromExtract", ClassClbk(self, "load_from_extract_dialog", false, false), {offset = 0, enabled = false, visible = FileIO:Exists(BLE.ExtractDirectory)})
+    local manager = self._unit_info:divgroup("Actions")
+    manager:button("FixBySearchingPackages", ClassClbk(self, "find_packages", false))
+    manager:button("FixByLoadingFromDatabase", ClassClbk(self, "load_all_from_extract_dialog"))
+    manager:button("RemoveAndUnloadUnusedAssets", ClassClbk(self, "remove_unused_units_from_map", false))
+    manager:button("PackageReport", ClassClbk(self, "package_report"))
+    manager:button("ScanAssetsDirectory", ClassClbk(self, "scan_assets"))
+    manager:button("CleanAddXml", ClassClbk(self, "clean_add_xml"))
+    self._inspect = self._unit_info:divgroup("UnitInfoTitle", {text = "Inspection"})
+    local actions = self._unit_info:divgroup("SelectionActions")
+    actions:button("FindPackage", ClassClbk(self, "find_package", false, false, false), {offset = 0, visible = false})
+    actions:button("LoadFromDatabase", ClassClbk(self, "load_from_db_dialog", false, false), {offset = 0, visible = false})
 
-    actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false), {offset = 0, enabled = false})
-    actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false), {offset = 0, enabled = false})
-    actions:button("UnloadAsset", ClassClbk(self, "unload_asset", false, false), {offset = 0, enabled = false})
+    actions:button("RemoveAndUnloadAsset", ClassClbk(self, "remove_unit_from_map", true, false, false), {offset = 0, visible = false})
+    actions:button("Remove", ClassClbk(self, "remove_unit_from_map", false, false, false), {offset = 0, visible = false})
 
     self:reload()
 end
@@ -102,9 +98,8 @@ function AssetsManagerDialog:load_assets()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
-        local level = project:get_level_by_id(data, Global.current_level_id)
-        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:read_xml(add_path)
+        local level = project:current_level()
+        local add = project:read_xml(level._add_path)
         if add then
 			for _, node in pairs(add) do
 				if type(node) == "table" then
@@ -115,7 +110,7 @@ function AssetsManagerDialog:load_assets()
 					local name = node.path or node.name
 					if type and name then
 						self._assets[type] = self._assets[type] or {}
-						self._assets[type][name] = true
+						self._assets[type][name] = node
 					end
 				end
             end
@@ -138,12 +133,12 @@ function AssetsManagerDialog:show_assets()
     local project = BLE.MapProject
     local mod = project:current_mod()
     if self._tbl._data then
-        add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
+        add = self._current_level.add
     end
     local panic
 	local new_asset = function(asset, type, times)
 		local ready = self:asset_ready(type, asset)
-        local loaded = self:is_asset_loaded(asset, type)
+        local loaded = self:is_asset_loaded(type, asset)
         if not loaded then
             if add then
                 loaded = self._assets[type] and self._assets[type][asset] ~= nil
@@ -158,23 +153,28 @@ function AssetsManagerDialog:show_assets()
         local color = not ready and Color.cyan or not loaded and Color.red or (unused and Color.yellow) or nil
         units:button(asset, ClassClbk(self, "set_unit_selected"), {
 			asset_type = type,
-            text = asset.."."..type.."("..(ready and times or "Copying")..")",
+            text = asset.."."..type..(type == "unit" and "("..(ready and times or "Copying")..")" or ""),
 			label = "assets",
 			disabled_alpha = 0.8,
-			index = (not loaded or unused) and 1 or nil,
+			index = (not loaded or unused) and 2 or nil,
 			enabled = ready,
             background_color = color and color:with_alpha(0.4),
         })
 	end
-	
+
+    local brush = self:GetPart("world"):get_layer("brush")
     for unit, times in pairs(managers.worlddefinition._all_names) do
         new_asset(unit, UNIT, times)
 	end
-	
+
 	for type, assets in pairs(self._assets) do
 		for name, _ in pairs(assets) do
 			if type ~= UNIT or not managers.worlddefinition._all_names[name] then
-				new_asset(name, type, 0)
+                local times = 0
+                if table.contains(BLE.Brushes, name) then
+                    times = #brush:unit_positions(name)
+                end
+				new_asset(name, type, times)
 			end
 		end
 	end
@@ -182,7 +182,7 @@ function AssetsManagerDialog:show_assets()
     local panicked = self._unit_info:GetItem("AssetsManagerStatus"):Visible()
     self._unit_info:GetItem("AssetsManagerStatus"):SetVisible(panic)
     self._unit_info:GetItem("FixBySearchingPackages"):SetVisible(panic)
-    self._unit_info:GetItem("FixByLoadingFromExtract"):SetVisible(panic)
+    self._unit_info:GetItem("FixByLoadingFromDatabase"):SetVisible(panic)
     if panicked and not panic then
         self:all_ok_dialog()
     end
@@ -192,7 +192,9 @@ function AssetsManagerDialog:show_packages()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     self._tbl._data = data
-    self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
+
+    local level = project:get_current_level_node(self._tbl._data)
+    self._current_level = level
 
     local packages = self:GetItem("Packages", true)
     if not packages then
@@ -200,15 +202,14 @@ function AssetsManagerDialog:show_packages()
     end
     packages:ClearItems("packages")
     if self._tbl._data then
-        local level = project:get_level_by_id(self._tbl._data, Global.current_level_id)
         if level.packages then
             for i, package in pairs(level.packages) do
                 local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
                 local size = not custom and BLE.Utils:GetPackageSize(package)
                 if size or custom then
-                    local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.2fmb)", package, size)
+                    local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.3fmb)", package, size)
                     local pkg = packages:divider(package, {text = text, label = "packages"})
-                    pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, {184, 2, 48, 48})
+                    pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, BLE.Utils.EditorIcons.cross)
                 end
             end
         end
@@ -216,10 +217,18 @@ function AssetsManagerDialog:show_packages()
 end
 
 function AssetsManagerDialog:load_all_from_extract_dialog()
-   self:load_from_extract_dialog(self._missing_assets)
+   self:load_from_db_dialog(self._missing_assets)
 end
 
-function AssetsManagerDialog:load_from_extract_dialog(assets, clbk)
+function AssetsManagerDialog:open_load_from_db_dialog_quick(typ, path)
+    self:load_from_db_dialog({
+        [typ] = {
+            [path] = true
+        }
+    })
+end
+
+function AssetsManagerDialog:load_from_db_dialog(assets, clbk)
 	if not assets and not self._tbl._selected then
 		return
 	end
@@ -237,7 +246,7 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
 		local items = {}
 
         for _, pkg in pairs(BLE.Utils:GetPackages(path or self._tbl._selected.name, typ or self._tbl._selected.asset_type, true)) do
-            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.2fmb)", pkg.name, pkg.package_size)
+            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.3fmb)", pkg.name, pkg.package_size)
             table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
 		end
 
@@ -303,10 +312,8 @@ end
 function AssetsManagerDialog:clean_add_xml()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
-    local level = project:current_level(data)
-    level.add = level.add or {}
-    local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-    local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
+    local level = project:current_level()
+    local add = project:read_xml(level._add_path) or {_meta = "add", directory = "assets"}
     local new_add = {}
 
     for k, v in pairs(add) do
@@ -325,16 +332,24 @@ function AssetsManagerDialog:clean_add_xml()
                 end
             end
             if not exists then
-                if not v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. (v.type or v._meta)) then
+                if v.from_db or v.path or FileIO:Exists(Path:Combine(mod.ModPath, new_add.directory, v.path) ..".".. (v.type or v._meta)) then
                     table.insert(new_add, self:clean_add_asset_tbl(v))
                 end
             end
         end
     end
-    project:save_xml(add_path, new_add)
+    project:save_xml(level._add_path, new_add)
 end
 
-function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask, clbk)
+function AssetsManagerDialog:db_has_asset(ext, asset)
+    return blt.asset_db.has_file(asset, ext)
+end
+
+function AssetsManagerDialog:quick_load_from_db(ext, asset, clbk)
+    self:load_from_db({[ext] = {[asset] = true}}, nil, false, true, clbk)
+end
+
+function AssetsManagerDialog:load_from_db(missing_assets, exclude, inc_in_proj, dontask, clbk)
     missing_assets = missing_assets or self._missing_assets
     local config = {}
 	local failed_all = false
@@ -342,13 +357,13 @@ function AssetsManagerDialog:load_from_extract(missing_assets, exclude, dontask,
 		for asset in pairs(assets) do
 			local cfg = self._exporter:GetDependencies(ext, asset, true, exclude)
 			if cfg then
-				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset}, cfg))
+				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset, from_db = not inc_in_proj and true or nil}, cfg))
 			else
 				failed_all = true
 			end
 		end
     end
-    self:_load_from_extract(config, dontask, failed_all, clbk)
+    self:_load_from_db(config, inc_in_proj, dontask, failed_all, clbk)
 end
 
 function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
@@ -363,85 +378,65 @@ function AssetsManagerDialog:merge_add_configs(config, config_to_merge, clbk)
         local clean = self:clean_add_asset_tbl(v)
         if not exists then
             table.insert(config, clean)
-            if clbk then clbk(clean) end
         end
+        if clbk then clbk(clean) end
     end
 end
 
-function AssetsManagerDialog:_load_from_extract(config, dontask, failed_all, clbk)
+function AssetsManagerDialog:_load_from_db(config, inc_in_proj, dontask, failed_all, clbk)
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
-    local to_copy = {}
     if data then
-        local level = project:current_level(data)
-        level.add = level.add or {}
-        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
-        self:merge_add_configs(add, config, function(clean)
-            table.insert(to_copy, clean)
-        end)
-        local function save()
-            local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
-            local copy_data = {}
-            for _, unit_load in pairs(to_copy) do
-                if type(unit_load) == "table" then
-                    for _, asset in pairs(unit_load) do
-						if type(asset) == "table" and asset.path then
-							local type = asset._meta
-							local name = asset.path
+        local level = project:current_level()
+        local add = project:read_xml(level._add_path) or {_meta = "add", directory = "assets"}
+        local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "assets")
 
-                            local path = name.."."..type
-                            local to_path = Path:Combine(assets_dir, path)
-                            table.insert(copy_data, {asset.extract_real_path, to_path})
-                            asset.extract_real_path = nil
-                            local dir = Path:GetDirectory(to_path)
-                            if not FileIO:Exists(dir) then
-                                FileIO:MakeDir(dir)
+        self:merge_add_configs(add, clone(config), function()
+            BLE.DBPackages.map_assets = BLE.DBPackages.map_assets or {}
+            local package = BLE.DBPackages.map_assets
+            for _, asset in pairs(config) do
+                local typ = asset.type or "unit"
+                local name = asset.path
+
+                local to_copy = {}
+                package[typ] = package[typ] or {}
+                package[typ][name] = true
+
+                -- Write file into disk if need to include in project
+                if inc_in_proj then
+                    if asset._meta == ADD or asset._meta == UNIT_LOAD then
+                        for _, as in pairs(asset) do
+                            if type(as) == "table" and asset._meta then
+                                table.insert(to_copy, {path = as.path, type = as._meta})
                             end
-							self._unready_assets[type] = self._unready_assets[type] or {}
-                            self._unready_assets[type][name] = true
                         end
+                    else
+                        table.insert(to_copy, {path = name, type = typ})
+                    end
+                    for _, as in pairs(to_copy) do
+                        local read_data = blt.asset_db.read_file(as.path, as.type)
+                        FileIO:WriteTo(Path:Combine(assets_dir, as.path.."."..as.type), read_data)
                     end
                 end
             end
-            project:save_xml(add_path, add)
-            if #copy_data > 0 then
-                FileIO:CopyFilesToAsync(copy_data, function(success)
-                    if success then
-                        CustomPackageManager:LoadPackageConfig(assets_dir, to_copy, true)
-                        if failed_all then
-                            BLE.Utils:Notify("Info", "Copied some assets, some have failed because not all dependencies exist in the extract path")
-                        elseif not clbk then
-                            BLE.Utils:Notify("Info", "Copied assets successfully")
-						end
-						for type, assets in pairs(self._unready_assets) do
-							for asset, _ in pairs(assets) do
-								if type == UNIT then
-									BLE.Utils.allowed_units[asset] = true
-								end
-								assets[asset] = nil
-							end
-						end
-
-                        self:reload()
-
-                        if clbk then
-                            clbk()
-                        end
-                    end
-                end)
-			elseif failed_all then
-                BLE.Utils:Notify("Info", "No assets to copy, failed to export an asset or more.")
-            else
-                if clbk then
-                    clbk()
-                else
-                    BLE.Utils:Notify("Info", "No assets to copy")
-                end
+        end)
+        local function save()
+            project:save_xml(level._add_path, add)
+            CustomPackageManager:LoadPackageConfig(assets_dir, add, true)
+            self:reload()
+            if clbk then
+                clbk()
+            end
+            if inc_in_proj then
+                BLE.Utils:Notify("Info", "Copied assets successfully")
             end
         end
         if not dontask then
-            BLE.Utils:YesNoQuestion("This will copy the required files from your extract directory and add the files to your map assets proceed?", save, function()
+            local warn = "This will add the files to your map assets (add.xml) proceed?"
+            if inc_in_proj then
+                warn = "This will copy the required files from your extract directory and add the files to your map assets (add.xml) proceed?"
+            end
+            BLE.Utils:YesNoQuestion(warn, save, function()
                 CustomPackageManager:UnloadPackageConfig(config)
             end)
         else
@@ -552,20 +547,18 @@ function AssetsManagerDialog:scan_assets()
     local project = BLE.MapProject
     local mod, data = project:get_mod_and_config()
     if data then
-        local level = project:current_level(data)
-        level.add = level.add or {}
-        local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-        local add = project:read_xml(add_path) or {_meta = "add", directory = "assets"}
+        local level = project:current_level()
+        local add = project:read_xml(level._add_path) or {_meta = "add", directory = "assets"}
         local assets_dir = Path:CombineDir(mod.ModPath, add.directory or "")
         local scanner = BLE.Utils.Export:new({
             assets_dir = assets_dir,
+            fallback_to_db_assets = true,
             check_path_before_insert = true,
-            return_on_missing = false,
-            pack_extract_path = false
+            return_on_missing = false
         })
 
         self:merge_add_configs(add, self:scan_dir(scanner, scanner.assets_dir))
-        project:save_xml(add_path, add)
+        project:save_xml(level._add_path, add)
     end
 end
 
@@ -577,10 +570,12 @@ function AssetsManagerDialog:scan_dir(scanner, path, big_path, addxml)
 			local file_path = Path:Normalize(Path:Combine(path:gsub(big_path, ""), file))
 			local splt = file_path:split("%.")
 			local add = scanner:GetDependencies(splt[2], splt[1])
-			add._meta = "add"
-			add.path = splt[1]
-			add.type = "unit"
-			table.insert(addxml, add)
+            if add then
+                add._meta = "add"
+                add.path = splt[1]
+                add.type = "unit"
+                table.insert(addxml, add)
+            end
         end
     end
     for _, folder in pairs(FileIO:GetFolders(path)) do
@@ -630,19 +625,26 @@ function AssetsManagerDialog:remove_unit_from_map(remove_asset, name, type)
 	type = type or self._tbl._selected.asset_type
 
     local remove = function()
-        for k, unit in pairs(managers.worlddefinition._all_units) do
-            local ud = alive(unit) and unit:unit_data()
-            if ud and not ud.instance and ud.name == name then
-                managers.editor:DeleteUnit(unit)
+        if type == "unit" then
+            local brush = self:GetPart("world"):get_layer("brush")
+            if brush:is_my_unit(name) then
+                brush:delete_units(name)
             end
-        end
-        managers.worlddefinition._all_names[name] = nil
-        local continents = managers.worlddefinition._continent_definitions
-        for cname, continent in pairs(continents) do
-            if continent.statics then
-                for i, static in pairs(continent.statics) do
-                    if static.unit_data and static.unit_data.name == name then
-                        table.remove(continent.statics, i)
+            for k, unit in pairs(managers.worlddefinition._all_units) do
+                local ud = alive(unit) and unit:unit_data()
+                if ud and not ud.instance and ud.name == name then
+                    managers.editor:DeleteUnit(unit, false, false)
+                end
+            end
+            self:GetPart("select"):reload_menu("unit")
+            managers.worlddefinition._all_names[name] = nil
+            local continents = managers.worlddefinition._continent_definitions
+            for cname, continent in pairs(continents) do
+                if continent.statics then
+                    for i, static in pairs(continent.statics) do
+                        if static.unit_data and static.unit_data.name == name then
+                            table.remove(continent.statics, i)
+                        end
                     end
                 end
             end
@@ -674,19 +676,12 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
         local project = BLE.MapProject
         local mod, data = project:get_mod_and_config()
         if data then
-            local current_level = project:current_level(data)
-            current_level.add = current_level.add or {directory = "assets"}
-            local current_add_path = current_level.add.file or Path:Combine(current_level.include.directory, "add.xml")
-			local current_add = project:read_xml(current_add_path)
+            local current_level = project:current_level()
+			local current_add = project:read_xml(current_level._add_path)
 
             local add_xmls = {}
             project:for_each_level(data, function(level)
-                level.add = level.add or {}
-                local add_path = level.add.file or Path:Combine(level.include.directory, "add.xml")
-                local add = project:read_xml(add_path)
-                if add.directory == current_add.directory then --Although unlikely, count for cases where the other level has the assets in a different location.
-                    table.insert(add_xmls, add)
-                end
+                table.insert(add_xmls, project:read_xml(level._add_path))
             end)
 
 			if current_add then
@@ -718,7 +713,6 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 					if type(node) == "table" then
 						local path = node.path or node.name
 						local asset_type = node.type or node._meta
-						prnt("check", path, name, asset_type, typ)
 						if path == name and asset_type == typ then
 							if node._meta == UNIT_LOAD or node._meta == ADD then
 								for _, asset in pairs(node) do
@@ -731,14 +725,14 @@ function AssetsManagerDialog:unload_asset(typ, name, no_dialog)
 							end
 							table.remove_key(current_add, k)
 							if asset_type == UNIT then
-								BLE.Utils.allowed_units[name] = nil
+                                BLE.DBPackages.map_assets.unit[name] = nil
 							end
 							break
 						end
 					end
                 end
             end
-            project:save_xml(current_add_path, current_add)
+            project:save_xml(current_level._add_path, current_add)
             FileIO:DeleteEmptyFolders(Path:Combine(mod.ModPath, current_add.directory))
             if no_dialog ~= false then
                 self:reload()
@@ -757,20 +751,20 @@ function AssetsManagerDialog:check_data()
         local project = BLE.MapProject
         local mod, data = project:get_mod_and_config()
         self._tbl._data = data
-        self._current_level = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id)
+        self._current_level = BLE.MapProject:get_current_level_node(self._tbl._data)
     end
 end
 
 function AssetsManagerDialog:get_level_packages()
     self:check_data()
-    local packages = {}
-    for _, package in ipairs(table.merge(clone(BLE.ConstPackages), clone(self._current_level.packages))) do
+    local packages = {map_assets = BLE.DBPackages.map_assets}
+    for _, package in ipairs(table.merge(clone(BLE.ConstPackages), clone(self._current_level.packages or {}))) do
         packages[package] = BLE.DBPackages[package]
     end
     return packages
 end
 
-function AssetsManagerDialog:is_asset_loaded(asset, type)
+function AssetsManagerDialog:is_asset_loaded(type, asset)
     return BLE.Utils:IsLoaded(asset, type, self:get_level_packages())
 end
 
@@ -794,58 +788,60 @@ function AssetsManagerDialog:set_unit_selected(item)
             item:SetBorder({left = true})
         end
     end
-    local loaded_from_package
     local unused
 	local asset
 	local type
+    local file
+    local from_db
+    self._inspect:ClearItems()
     if self._tbl._selected then
 		asset = self._tbl._selected.name
 		type = self._tbl._selected.asset_type
-        local project = BLE.MapProject
         local load_from
         for _, pkg in pairs(self:get_packages_of_asset(asset, type, true)) do
-            loaded_from_package = true
             load_from = load_from or ""
             local name = pkg.name
             if name:sub(1, 6) == "levels" then
                 name = BLE.Utils:ShortPath(name, 3)
             end
-            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.2fmb)", name, pkg.package_size)
+            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.3fmb)", name, pkg.package_size)
             load_from = load_from.."\n"..pkg_s
-        end
-        local add
-        local project = BLE.MapProject
-        local mod = project:current_mod()
-        if self._tbl._data then
-            add = project:get_level_by_id(self._tbl._data, Global.current_level_id).add
         end
         if BLE.Utils.core_units[asset] then
             load_from = "Core Assets"
         end
-        if self._assets[type] and self._assets[type][asset] then
-            load_from = (load_from or "") .. "\n".."Map Assets"
+        file = self._assets[type] and self._assets[type][asset] or nil
+        from_db = file and file.from_db or false
+        if file then
+            load_from = (load_from or "") .. "\n"..(file.from_db and "Database" or "Map Assets")
             if type == UNIT and not managers.worlddefinition._all_names[asset] then
-                load_from = load_from .. "\n" .. "| Warning: Unused!"
-                unused = true
+                if not table.contains(BLE.Brushes, asset) or  #self:GetPart("world"):get_layer("brush"):unit_positions(asset) == 0 then
+                    unused = true
+                end
             end
         end
-        self._unit_info:GetItem("UnitInfo"):SetText("| Asset:\n"..BLE.Utils:ShortPath(asset.."."..type, 2) .. "\n| " .. (load_from and "Loaded From:"..load_from or "Unloaded, please load the asset using one of the methods below"))
+        self._inspect:divider("Asset: ".. tostring(BLE.Utils:ShortPath(asset.."."..type, 2)))
+        self._inspect:divider("LoadedFrom", {text = "Loaded From: "..(load_from or "Unloaded, please load the asset using one of the methods below")})
+        if unused then
+            self._inspect:divider("Warning: Unused!")
+        end
     else
-        self._unit_info:GetItem("UnitInfo"):SetText("None Selected.")
+        self._inspect:divider("NoAsset", {text = "No Asset Selected."})
     end
-    self._unit_info:GetItem("FindPackage"):SetEnabled(asset ~= nil)
-    self._unit_info:GetItem("LoadFromExtract"):SetEnabled(asset ~= nil)
-    self._unit_info:GetItem("RemoveAndUnloadAsset"):SetEnabled(not unused and asset ~= nil)
-    self._unit_info:GetItem("Remove"):SetEnabled(not unused and asset ~= nil)
-    self._unit_info:GetItem("UnloadAsset"):SetEnabled((unused or loaded_from_package) and asset and type and self._assets[type] and self._assets[type][asset])
+    local has_in_db = asset and DB:has(type:id(), asset:id()) or false
+    self._unit_info:GetItem("FindPackage"):SetVisible(has_in_db)
+    self._unit_info:GetItem("LoadFromDatabase"):SetVisible(not from_db and has_in_db)
+    self._unit_info:GetItem("RemoveAndUnloadAsset"):SetVisible(unused or type ~= "unit" and asset ~= nil)
+    self._unit_info:GetItem("Remove"):SetVisible(not unused and asset ~= nil and type == "unit")
     self._unit_info:AlignItems(true)
 end
 
 function AssetsManagerDialog:add_package(package)
     self:check_data()
     local project = BLE.MapProject
-    local level_packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
-    table.insert(level_packages, package)
+    local level = self._current_level
+    level.packages = level.packages or {}
+    table.insert(level.packages, package)
     PackageManager:set_resource_loaded_clbk(Idstring(UNIT), nil)
     if PackageManager:package_exists(package.."_init") and not PackageManager:loaded(package.."_init") then
         PackageManager:load(package.."_init")
@@ -873,13 +869,14 @@ function AssetsManagerDialog:all_ok_dialog()
             end}})
         else
             BLE.Dialog:Show(opt)
-        end        
+        end
     end
 end
 
 function AssetsManagerDialog:add_package_dialog()
     local packages = {}
-    local level_packages = BLE.MapProject:get_level_by_id(self._tbl._data, Global.current_level_id).packages
+    self._current_level.packages = self._current_level.packages or {}
+    local level_packages = self._current_level.packages
     for name in pairs(BLE.DBPackages) do
         if not table.contains(level_packages, name) and not name:begins("all_") and not name:ends("_init") then
             table.insert(packages, {package = name, name = name})
@@ -901,7 +898,7 @@ end
 function AssetsManagerDialog:remove_package(package, item)
     BLE.Utils:YesNoQuestion("This will remove the package from your level(this will not unload the package if there's a spawned unit that is loaded by the package)", function()
         local project = BLE.MapProject
-        local packages = project:get_level_by_id(self._tbl._data, Global.current_level_id).packages
+        local packages = self._current_level.packages
         for i, pkg in ipairs(packages) do
             if pkg == package then
                 table.remove(packages, i)
@@ -937,9 +934,17 @@ function AssetsManagerDialog:reload()
     self:set_unit_selected()
     self:set_unit_selected(nil, selected)
     self._menu:AlignItems(true)
+    if alive(self._search) then
+        self._search_packages:RunCallback()
+        self._search:RunCallback()
+    end
 end
 
 function AssetsManagerDialog:hide(yes)
     self._unit_info:SetVisible(false)
     return AssetsManagerDialog.super.hide(self, yes)
+end
+
+function AssetsManagerDialog:GetPart(name)
+    return managers.editor.parts[name]
 end

@@ -4,7 +4,7 @@ local UHandler = UndoUnitHandler
 function UHandler:init(parent, menu)
     self._parent = parent
     self._triggers = {}
-    
+
     self._history = {}
     self._undo_history_size = math.floor(BLE.Options:GetValue("UndoHistorySize"))
 
@@ -14,7 +14,7 @@ function UHandler:init(parent, menu)
         delete = function(k) self:restore_unit(k) end,
         spawn = function(k) self:delete_unit(k) end
     }
-    
+
     self._redo_funcs = {
         pos = function(k) self:redo_unit_pos_rot(k) end,
         rot = function(k) self:redo_unit_pos_rot(k) end,
@@ -77,7 +77,7 @@ function UHandler:Undo()
     end
 
     self._history_point = self:GetPoint()-1
-    
+
     local point = self._history[self._history_point]
     local action_type = point.action_type
     if action_type == "spawn" then
@@ -89,6 +89,7 @@ function UHandler:Undo()
 
     self._static:recalc_all_locals()
     self._static:update_positions()
+    self:GetPart("select"):reload_menus()
 end
 
 function UHandler:Redo()
@@ -118,6 +119,7 @@ function UHandler:Redo()
 
     self._static:recalc_all_locals()
     self._static:update_positions()
+    self:GetPart("select"):reload_menus()
 end
 
 function UHandler:build_unit_data(unit)

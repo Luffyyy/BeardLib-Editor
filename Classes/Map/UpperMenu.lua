@@ -4,19 +4,19 @@ function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
     self._tabs = {
-        {name = "world", rect = {135, 271, 115, 115}},
-        {name = "static", rect = {256, 262, 115, 115}, enabled = normal},
-        {name = "env", rect = {15, 267, 115, 115}},
-        {name = "opt", rect = {385, 385, 115, 115}},
-        {name = "save", rect = {260, 385, 115, 115}, callback = ClassClbk(self, "save"), enabled = normal},
-        {name = "move_widget_toggle", rect = {9, 377, 115, 115}, callback = ClassClbk(self, "toggle_widget", "move"), enabled = normal and self._parent._has_fix},
-        {name = "rotation_widget_toggle", rect = {137, 383, 115, 115}, callback = ClassClbk(self, "toggle_widget", "rotation"), enabled = normal and self._parent._has_fix},
+        {name = "world", rect = {0, 448, 64, 64}},
+        {name = "static", rect = {192, 448, 64, 64}, enabled = normal},
+        {name = "spawn", rect = {64, 448, 64, 64}, enabled = normal},
+        {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
+        {name = "env", rect = {256, 448, 64, 64}},
+        {name = "opt", rect = {320, 448, 64, 64}},
+        {name = "save", rect = {383, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
         name = "upper_menu",
-        background_color = BeardLibEditor.Options:GetValue("BackgroundColor"),
-        accent_color = BeardLibEditor.Options:GetValue("AccentColor"),
+        background_color = BLE.Options:GetValue("BackgroundColor"),
+        accent_color = BLE.Options:GetValue("AccentColor"),
         w = w,
         position = BLE.Options:GetValue("GUIOnRight") and "Right" or nil,
         h = 300 / #self._tabs - 4,
@@ -26,15 +26,7 @@ function UpperMenu:init(parent, menu)
         scrollbar = false,
         visible = true,
     })
-    local s = 300 / #self._tabs
-    self._line = self._menu:Panel():rect({
-        color = self._menu.accent_color,
-        layer = 10,
-        x = -s,
-        y = self._menu:H() - 2,
-        w = s,
-        h = 2,
-    })
+    self._tab_size = self._menu:ItemsWidth(#self._tabs) / #self._tabs
     ItemExt:add_funcs(self)
 end
 
@@ -58,7 +50,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         cannot_be_enabled = enabled == false,
         on_callback = ClassClbk(self, "select_tab", clbk or false),
         disabled_alpha = 0.2,
-        w = 300 / #self._tabs,
+        w = self._tab_size,
         h = self._menu:H(),
         icon_w = s - 12,
         icon_h = s - 12,
@@ -69,7 +61,7 @@ function UpperMenu:select_tab(clbk, item)
     if clbk then
         clbk(item)
     else
-        self:Switch(BeardLibEditor.Utils:GetPart(item.name))
+        self:Switch(BLE.Utils:GetPart(item.name))
     end
 end
 
@@ -90,23 +82,6 @@ function UpperMenu:set_tabs_enabled(enabled)
     end
 end
 
-function UpperMenu:toggle_widget(name, item)
-    if ctrl() then return end
-    item = item or self:GetItem(name.."_widget_toggle")
-    local menu = item.parent
-    if not item.enabled then return end
-
-    self._parent["toggle_"..name.."_widget"](self._parent)
-    self._parent:use_widgets(self._parent:selected_unit() ~= nil)
-    self:update_toggle(item)
-end
-
-function UpperMenu:update_toggle(item)
-    local name = item.name:gsub("_widget_toggle", "")
-    item.enabled_alpha = self._parent[name.."_widget_enabled"](self._parent) and 1 or 0.5
-    item:SetEnabled(item.enabled)
-end
-
 function UpperMenu:Switch(manager, no_anim)
     local item = self:GetItem(manager.manager_name)
     local menu = manager._menu
@@ -117,22 +92,12 @@ function UpperMenu:Switch(manager, no_anim)
     self._parent._current_menu = menu
     self._parent._current_menu_name = item.name
     menu:SetVisible(true)
-    self:move_line_to(item, no_anim)
-end
-
-function UpperMenu:move_line_to(item, no_anim)
-    if not alive(item) then
-        return
-    end
-    if no_anim then
-        self._line:stop()
-        self._line:set_x(item:X())
-    else
-        play_value(self._line, "x", item:X())
+    for _, it in pairs(self._menu:Items()) do
+        it:SetBorder({bottom = it == item})
     end
 end
 
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
-    BeardLibEditor.Utils:GetPart("opt"):save()
+    BLE.Utils:GetPart("opt"):save()
 end

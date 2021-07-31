@@ -43,6 +43,14 @@ function ProjectNarrativeEditor:build_menu(menu, data)
     menu:button("SetCrimenetVideos", ClassClbk(self, "set_crimenet_videos_dialog"))
     menu:tickbox("HideFromCrimenet", up, data.hide_from_crimenet)
 
+    local icon_group = menu:divgroup("Icon", divgroup_opt)
+    icon_group:button("SelectIconFromDisk", ClassClbk(self, "SelectIconFromDisk"))
+    icon_group:pathbox("Icon", up, data.icon, "texture", {text = "Icon Path"})
+    icon_group:divider("IconHelp", {
+        text = "If no icon is defined, the icon is automatically loaded assets/guis/textures/mods/icons ([ID].png or [ID].texture)"
+        ..". Use the button on top to easily select the icon from disk."
+    })
+
     local chain = menu:divgroup("Chain", divgroup_opt)
     chain:button("AddExistingLevel", ClassClbk(self, "add_exisiting_level_dialog"))
     chain:button("AddNewLevel", function()
@@ -73,10 +81,10 @@ function ProjectNarrativeEditor:build_menu(menu, data)
     local diff_settings_holder = diff_settings:pan("DifficultySettingsHolder", {
         text_offset_y = 0, align_method = "grid", offset = {diff_settings.offset[1], 0}})
 
-    local diff_settings_opt = {w = diff_settings_holder:ItemsWidth() / (#DIFFS + 1) - 2, offset = {2, 4}, size = 18}
+    local diff_settings_opt = {w = diff_settings_holder:ItemsWidth(#DIFFS+1, 2) / (#DIFFS+1), offset = {2, 4}, size = 18}
     local diff_settings_texts = diff_settings_holder:divgroup("Setting", diff_settings_opt)
 
-    diff_settings_opt.border_left = false 
+    diff_settings_opt.border_left = false
 
     local div_texts_opt = {size_by_text = true, border_left = true, offset = {0, diff_settings_texts.offset[2]}}
     diff_settings_texts:lbl("Contract Cost", div_texts_opt)
@@ -95,6 +103,25 @@ function ProjectNarrativeEditor:build_menu(menu, data)
         opt.max = 5
         self._experience_multipliers[i] = group:numberbox("ExperienceMul"..i, up, data.experience_mul[i] or 0, opt)
     end
+end
+
+function ProjectNarrativeEditor:SelectIconFromDisk()
+    local base_path = Path:Normalize(Application:base_path())
+
+    BLE.FBD:Show({
+        where = base_path,
+        extensions = {"texture", "png"},
+        file_click = function(path)
+            local af = self._parent:get_module_by_meta("AddFiles")
+            local icon = Path:Combine(self._parent:get_dir(), af and af.directory or "assets", "guis/textures/mods/icons", "narr_"..self._data.id)
+            FileIO:Delete(icon..".png")
+            FileIO:Delete(icon..".texture")
+            FileIO:CopyFile(path, icon..'.'..Path:GetFileExtension(path))
+            self._data.icon = nil
+            self._parent:save_data_callback()
+            BLE.FBD:Hide()
+        end
+    })
 end
 
 function ProjectNarrativeEditor:create(create_data)
@@ -130,8 +157,17 @@ function ProjectNarrativeEditor:create(create_data)
             template.id = name
 
             if create_data.clone_id then
-                table.merge(template, tweak_data.narrative.jobs[create_data.clone_id])
+                table.merge(template, deep_clone(tweak_data.narrative.jobs[create_data.clone_id]))
                 local cv = template.contract_visuals
+                local preview = cv.preview_image
+                if preview.icon then
+                    local icon = tweak_data.hud_icons[preview.icon]
+                    if icon then
+                        template.icon = icon.texture
+                    end
+                elseif preview.id then
+                    template.icon = "guis/dlcs/" .. (preview.folder or "bro") .. "/textures/pd2/crimenet/" .. preview.id
+                end
                 template.max_mission_xp = cv and cv.max_mission_xp or template.max_mission_xp
                 template.min_mission_xp = cv and cv.min_mission_xp or template.min_mission_xp
                 template.contract_visuals = nil
@@ -339,9 +375,10 @@ end
 
 --- Open a dialog to select crimenet videos for the narrative
 function ProjectNarrativeEditor:set_crimenet_videos_dialog()
+    self._data.crimenet_videos._meta = nil
     BLE.SelectDialog:Show({
         selected_list = self._data.crimenet_videos,
-        list = EU:GetEntries({type = "movie", check = function(entry)
+        list = EU:GetEntries({type = "movie", filenames = true, check = function(entry)
             return entry:match("movies/")
         end}),
         callback = function(list) self._data.crimenet_videos = list end
@@ -387,6 +424,10 @@ function ProjectNarrativeEditor:set_data_callback()
     data.debrief_event = events:match(",") and string.split(events, ",") or {events}
     data.briefing_event = self:GetItemValue("BriefingEvent")
     data.contact = self:GetItem("Contact"):SelectedItem()
+    data.icon = self:GetItem("Icon"):Value()
+    if data.icon == "" then
+        data.icon = nil
+    end
     data.hide_from_crimenet = self:GetItemValue("HideFromCrimenet")
 end
 
@@ -396,6 +437,13 @@ function ProjectNarrativeEditor:save_data()
     if orig_id ~= narr.id then
         tweak_data.narrative.jobs[orig_id] = nil
         table.delete(tweak_data.narrative._jobs_index, orig_id)
+
+        local af = self._parent:get_module_by_meta("AddFiles")
+        local icon = Path:Combine(self._parent:get_dir(), af and af.directory or "assets", "guis/textures/mods/icons", "narr_")
+
+        -- Move old icon
+        FileIO:MoveTo(icon .. orig_id..".png", icon .. narr.id..".png")
+        FileIO:MoveTo(icon .. orig_id..".texture", icon .. narr.id..".texture")
     end
     narr.orig_id = nil
     return ProjectNarrativeEditor.super.save_data(self)

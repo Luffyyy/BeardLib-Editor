@@ -45,7 +45,7 @@ function EditorSpawnEnemyGroup:_build_panel()
 		table.insert(opt, cat_name)
 	end
 	for i, o in ipairs(opt) do
-		self._menu:Toggle({
+		self._holder:Toggle({
 			name = o,
 			text = o,
 			value = self._element.values.preferred_spawn_groups and table.contains(self._element.values.preferred_spawn_groups, o) or false,
