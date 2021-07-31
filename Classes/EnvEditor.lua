@@ -26,14 +26,16 @@ function EnvEditor:load_included_environments()
         included:ClearItems("environment")
         local has_items = false
         local add = project:read_xml(level._local_add_path)
-        for _, child in pairs(add) do
-            if type(child) == "table" and child._meta == "environment" then
-                local file_name = child.path..".environment"
-                local file = Path:Combine(project:current_level_path(), file_name)
-                if FileIO:Exists(file) then
-                    has_items = true
-                    local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
-                    env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
+        if add then
+            for _, child in pairs(add) do
+                if type(child) == "table" and child._meta == "environment" then
+                    local file_name = child.path..".environment"
+                    local file = Path:Combine(project:current_level_path(), file_name)
+                    if FileIO:Exists(file) then
+                        has_items = true
+                        local env = included:button(file_name, ClassClbk(self, "open_environment", file), {text = file_name, label = "environment"})
+                        env:tb_imgbtn("Uniclude", ClassClbk(self, "uninclude_environment_dialog"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
+                    end
                 end
             end
         end
