@@ -443,8 +443,8 @@ end
 function EnvLayer:change_environment(item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
-	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:GetPart("env"):database_load_env(environment_values.environment)
+	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:save()
 end
 
