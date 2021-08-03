@@ -363,7 +363,7 @@ function Options:save_local_add_xml(include)
     local project = BLE.MapProject
     local level = BeardLib.current_level
     if level then
-        local add = project:read_xml(level._local_add_path, false)
+        local add = project:read_xml(level._local_add_path, false) or {}
         local temp = include and table.list_add(include, clone(add)) or add
         local level_dir = project:current_level_path()
         local new_add = {_meta = "add"}
