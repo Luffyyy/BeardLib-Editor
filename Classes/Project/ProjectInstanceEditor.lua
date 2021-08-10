@@ -42,7 +42,7 @@ function ProjectInstanceEditor:create(create_data)
             elseif string.begins(name, " ") then
                 warn = "Invalid ID!"
             else
-                if instances[Path:Combine("levels/instances/mods/", name)] or instances[Path:Combine("levels/instances/mods/", self._mod.Name, name)] then
+                if instances[Path:Combine("levels/instances/mods/", name)] or instances[Path:Combine("levels/instances/mods/", self._parent._mod.Name, name)] then
                     warn = string.format("An instance with the id %s already exists! Please use a unique id", name)
                 end
             end
