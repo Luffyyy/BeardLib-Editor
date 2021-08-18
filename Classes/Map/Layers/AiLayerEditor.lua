@@ -194,6 +194,7 @@ end
 function AiEditor:_build_ai_data(ai_data)
     local patrol_paths = managers.ai_data:all_patrol_paths()
     local has_items = false
+    local spawn = self:GetPart("spawn")
     for name, points in pairs(patrol_paths) do
         has_items = true
         local patrol_path = ai_data:group(name, {label = "patrol_path"})
@@ -202,7 +203,7 @@ function AiEditor:_build_ai_data(ai_data)
         )
 
         patrol_path:GetToolbar():tb_imgbtn("CreateNewPoint", function()
-            self._parent:BeginSpawning(self._patrol_point_unit)
+            spawn:begin_spawning(self._patrol_point_unit)
             self._selected_path = name
         end, tx, EU.EditorIcons["plus"], {help = "Create new patrol point"})
 
