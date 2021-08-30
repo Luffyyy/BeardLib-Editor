@@ -81,6 +81,7 @@ function ProjectManager:get_level_by_id(data, id)
             return level
         end
     end
+    id = Path:GetFileName(id)
     for _, level in pairs(XML:GetNodes(data, "instance")) do
         if level.id == id then
             return level
