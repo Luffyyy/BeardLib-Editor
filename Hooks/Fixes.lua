@@ -82,7 +82,7 @@ elseif F == "levelstweakdata" then
 			self[id] = table.merge(clone(instance._config), {
 				name_id = "none",
 				briefing_id = "none",
-				world_name = "instances/mods/".. Global.current_level_id,
+				world_name = instance._levels_less_path,
 				ai_group_type = self.ai_groups.default,
 				intro_event = "nothing",
 				outro_event = "nothing",
