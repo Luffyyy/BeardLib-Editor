@@ -135,6 +135,7 @@
             <option type="number" min="0" max="16" default_value="6" name="ItemsXOffset"/>
             <option type="number" min="0" max="16" default_value="2" name="ItemsYOffset"/>
             <option name="LastLoaded" type="table"/>
+            <option name="LastConvertedFile" type="string"/>
             <option name="GUIOnRight" type="bool" value="false"/>
             <option name="ToolbarPosition" type="number" min="1" max="3" default_value="1"/>
             
