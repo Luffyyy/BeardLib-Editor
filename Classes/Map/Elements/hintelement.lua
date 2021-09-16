@@ -19,6 +19,7 @@ end
 function EditorHint:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("hint_id", table.list_add({"none"}, managers.hint:ids()), {help = "Select a text id from the combobox"})
+	self:BooleanCtrl("instigator_only", {help = "This hint will only be visible for the player that triggers it"})
 	self._text = self:divider("")
 	self:_set_text()
 end
