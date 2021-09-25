@@ -18,6 +18,7 @@ function SConverter:init()
         {path = "%userprofile%/Documents/", name = "Documents"},
         {path = "%userprofile%/Desktop/", name = "Desktop"},
         {path = string.gsub(Application:base_path(), "\\", "/"), name = "PAYDAY 2 Directory"},
+        {path = BLE.Options:GetValue("LastConvertedFile") or "C:/", name = "Last Converted File"},
         {path = "C:/", name = "C Drive"},
         {path = "D:/", name = "D Drive"},
         {path = "E:/", name = "E Drive"},
@@ -87,6 +88,7 @@ end
 function SConverter:SaveConvertedData(params, value)
     FileIO:WriteScriptData(value, params.convert_data, params.to_data.name)
     self:RefreshFilesAndFolders()
+    self:SaveFolderPath()
 end
 
 function SConverter:GetFilesAndFolders(current_path)
@@ -230,4 +232,10 @@ function SConverter:ConvertClick(item)
     if convertfrom_item and convertto_item then
         self:ConvertFile(self.current_selected_file_path, convertfrom_item:Value(), convertto_item:Value(), true)
     end    
+end
+--Save the folder of the converted file, for usage in last converted shortcut
+function SConverter:SaveFolderPath()
+    BLE.Options:SetValue("LastConvertedFile", self.current_script_path)
+    --replace the path to update the shortcut without a reload
+    SConverter.script_data_paths[5].path = BLE.Options:GetValue("LastConvertedFile")
 end
