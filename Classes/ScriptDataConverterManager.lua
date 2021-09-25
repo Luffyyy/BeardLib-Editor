@@ -177,7 +177,7 @@ end
 function SConverter:CreateRootItems()
     self._menu:ClearItems()
     for i, path_data in pairs(self.script_data_paths) do
-        self:button(path_data.name, ClassClbk(self, "FolderClick"), {base_path = path_data.path, assets = path_data.assets})
+        self:button(path_data.name, ClassClbk(self, "FolderClick"), {text = path_data.name, base_path = path_data.path, assets = path_data.assets})
     end
 end
 
