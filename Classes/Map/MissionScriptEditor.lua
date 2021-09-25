@@ -745,6 +745,11 @@ function MissionScriptEditor:ComboCtrl(value_name, items, opt)
 	return (opt.group or self._holder):combobox(value_name, ClassClbk(self, "set_element_data"), items, opt and opt.free_typing and value or table.get_key(items, value), opt)
 end
 
+function MissionScriptEditor:FSPathCtrl(value_name, typ, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+	return (opt.group or self._holder):fs_pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], typ, opt)
+end
+
 function MissionScriptEditor:PathCtrl(value_name, typ, check_match, check_not_match, opt)
 	opt = self:BasicCtrlInit(value_name, opt)
 	opt.check = function(unit)

@@ -266,6 +266,27 @@ local function check_slot(slot, unit)
 	return BLE.Utils:InSlot(unit, slot) and not unit:match("husk")
 end
 
+function ItemExt:fs_pathbox(name, callback, value, typ, o)
+	o = o or {}
+	o.browse_func = function(tb)
+		BLE.FBD:Show({
+			where = BLE.MapProject:current_path() or string.gsub(Application:base_path(), "\\", "/"),
+			extensions = type(typ) == "table" and typ or {typ},
+			file_click = function(path)
+				if o.process_path then
+					tb:SetValue(o.process_path(path), true)
+				else
+					tb:SetValue(path, true)
+				end
+				if not o.not_close then
+					BLE.FBD:Hide()
+				end
+			end
+		})
+	end
+	return self:pathbox(name, callback, value, nil, o)
+end
+
 function ItemExt:pathbox(name, callback, value, typ, o)
 	o = o or {}
 	local tb = self:textbox(name, callback, value, table.merge({
@@ -275,6 +296,11 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 		textbox_offset = 36
 	}, o))
 	tb:tb_imgbtn("Browse", function()
+		if o.browse_func then
+			o.browse_func(tb)
+			return
+		end
+
 		local list = o.custom_list or BLE.Utils:GetEntries({
 			type = typ, loaded = false, filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})

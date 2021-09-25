@@ -186,7 +186,7 @@ end
 --- @return string
 function ProjectManager:current_level_path()
     local path = self:current_path()
-    return path and Path:Combine(path, self:maps_path())
+    return path and Path:CombineDir(path, self:maps_path())
 end
 
 --- Returns a list of all MapFramework projects.
