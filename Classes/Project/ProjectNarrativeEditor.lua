@@ -159,15 +159,18 @@ function ProjectNarrativeEditor:create(create_data)
             if create_data.clone_id then
                 table.merge(template, deep_clone(tweak_data.narrative.jobs[create_data.clone_id]))
                 local cv = template.contract_visuals
-                local preview = cv.preview_image
-                if preview.icon then
-                    local icon = tweak_data.hud_icons[preview.icon]
-                    if icon then
-                        template.icon = icon.texture
+                local preview = cv and cv.preview_image
+                if preview then
+                    if preview.icon then
+                        local icon = tweak_data.hud_icons[preview.icon]
+                        if icon then
+                            template.icon = icon.texture
+                        end
+                    elseif preview.id then
+                        template.icon = "guis/dlcs/" .. (preview.folder or "bro") .. "/textures/pd2/crimenet/" .. preview.id
                     end
-                elseif preview.id then
-                    template.icon = "guis/dlcs/" .. (preview.folder or "bro") .. "/textures/pd2/crimenet/" .. preview.id
                 end
+
                 template.max_mission_xp = cv and cv.max_mission_xp or template.max_mission_xp
                 template.min_mission_xp = cv and cv.min_mission_xp or template.min_mission_xp
                 template.contract_visuals = nil
