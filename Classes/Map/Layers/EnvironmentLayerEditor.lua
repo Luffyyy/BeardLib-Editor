@@ -458,7 +458,7 @@ end
 
 function EnvLayer:set_environment_area(env)
 	local area = self:selected_unit():unit_data().environment_area
-	area:set_environment(self._environment_area_ctrls.environment_path.Value())
+	area:set_environment(self._environment_area_ctrls.environment_path:Value())
 	self:save()
 end
 
