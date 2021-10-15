@@ -968,6 +968,10 @@ function Editor:draw_marker(t, dt)
                 end
             end
         end
+	local grid = self._grid_size
+        mvector3.set_x(pos, math.floor(pos.x / grid) * grid)
+        mvector3.set_y(pos, math.floor(pos.y / grid) * grid)
+        mvector3.set_z(pos, math.floor(pos.z / grid) * grid)
     end
     self._spawn_position = pos
 end
