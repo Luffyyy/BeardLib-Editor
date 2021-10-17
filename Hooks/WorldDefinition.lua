@@ -447,7 +447,9 @@ function WorldDef:get_unit_number(name)
 end
 
 function WorldDef:init_done()
+	managers.worlddefinition._world_data.camera_bookmarks = managers.worlddefinition._world_data.camera_bookmarks or {}
 	managers.editor:load_continents(self._continent_definitions)
+	managers.editor:load_camera_location(self._world_data.camera_bookmarks)
 	local i = 1 
 	for continent, data in pairs(self._continent_definitions) do
 		if self._continents[continent].base_id then

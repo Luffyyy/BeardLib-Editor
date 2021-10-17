@@ -3,6 +3,7 @@ function MainLayerEditor:init(parent)
 	MainLayerEditor.super.init(self, parent, "MainLayerEditor", {visible = true})
     if BeardLib.current_level then
         self._continent_settings = ContinentSettingsDialog:new(BLE._dialogs_opt)
+        self._bookmark_settings = BookmarkSettingsDialog:new(BLE._dialogs_opt)
         self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
     end
 
@@ -56,6 +57,7 @@ function MainLayerEditor:build_menu()
     mng:s_btn("Objectives", self._objectives_manager and ClassClbk(self._objectives_manager, "Show") or nil)
 
     self:build_continents()
+    self:build_bookmarks()
 end
 
 function MainLayerEditor:random_hint()
@@ -110,6 +112,92 @@ function MainLayerEditor:build_continents()
                 script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select All"})
             end
         end
+    end
+end
+
+--Camera Bookmarks
+function MainLayerEditor:build_bookmarks()
+    local bookmarks = self._holder:GetItem("CameraBookmarks") or self._holder:group("CameraBookmarks")
+    bookmarks:ClearItems()
+    local toolbar = bookmarks:GetToolbar()
+    local icons = BLE.Utils.EditorIcons
+    local world_data = managers.worlddefinition._world_data
+
+    toolbar:tb_imgbtn("NewBookmark", ClassClbk(self, "new_bookmark"), tx, icons.plus, {help = "Save current camera location as a bookmark"})
+    if world_data.camera_bookmarks then
+        local bookmark = bookmarks:divider("default", {align_method = "grid_from_right", border_color = not world_data.camera_bookmarks.default and Color.green or nil, offset = {8, 4}})
+        bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", "default"), nil, icons.teleport, {help = "Jump to bookmark"})
+
+        for name, data in pairs(world_data.camera_bookmarks) do
+            if type(data) == "table" and data.position and data.rotation then
+                local is_default = world_data.camera_bookmarks.default == name
+                bookmark = bookmarks:divider(name, {align_method = "grid_from_right", border_color = is_default and Color.green or nil, text = name, offset = {8, 4}})
+
+                bookmark:tb_imgbtn("RemoveBookmark", ClassClbk(self, "remove_bookmark", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove Bookmark"})
+                bookmark:tb_imgbtn("Settings", ClassClbk(self, "open_bookmark_settings", name), nil, icons.settings_gear, {help = "Bookmark Settings"})
+                bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", name), nil, icons.teleport, {help = "Jump to bookmark"})
+            end
+        end
+    end
+end
+
+function MainLayerEditor:new_bookmark()
+    local world_data = managers.worlddefinition._world_data
+    BLE.InputDialog:Show({title = "Camera bookmark name", text = "", callback = function(name)
+        if name == "" then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name cannot be empty!", callback = function()
+                self:new_bookmark()
+            end})
+            return
+        elseif  name == "default" or string.begins(name, " ") then
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:new_bookmark()
+            end})
+            return
+        elseif world_data.camera_bookmarks and world_data.camera_bookmarks[name] then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name already taken!", callback = function()
+                self:new_bookmark()
+            end})
+            return
+        end
+
+        world_data.camera_bookmarks = managers.worlddefinition._world_data.camera_bookmarks or {}
+        world_data.camera_bookmarks[name] = managers.worlddefinition._world_data.camera_bookmarks[name] or {
+            position = managers.editor._camera_pos or Vector3(),
+            rotation = managers.editor._camera_rot or Rotation()
+        }
+
+        self:build_bookmarks()
+    end})
+end
+
+function MainLayerEditor:remove_bookmark(name)
+    local world_data = managers.worlddefinition._world_data
+    if world_data.camera_bookmarks and world_data.camera_bookmarks[name] then
+        BLE.Utils:YesNoQuestion("This will remove the bookmark!", function()
+            managers.worlddefinition._world_data.camera_bookmarks[name] = nil
+            if world_data.camera_bookmarks.default == name then
+                managers.worlddefinition._world_data.camera_bookmarks.default = nil
+            end
+            self:build_bookmarks()
+        end)
+    end
+end
+
+function MainLayerEditor:open_bookmark_settings(name)
+    self._bookmark_settings:Show({name = name, callback = ClassClbk(self, "build_bookmarks")})
+end
+
+function MainLayerEditor:jump_to_bookmark(name)
+    local cameras_data = managers.worlddefinition._world_data
+    if name and cameras_data.camera_bookmarks then
+        local bookmark = cameras_data.camera_bookmarks[name]
+        if bookmark and type(bookmark) == "table" then
+            managers.editor:set_camera(bookmark.position, bookmark.rotation)
+        else
+            managers.editor:set_camera(Vector3(864, -789, 458), Rotation(54.8002, -21.7002, 8.53774e-007))
+        end
+        self:GetPart("status"):ShowKeybindMessage("Jumped to "..name)
     end
 end
 
