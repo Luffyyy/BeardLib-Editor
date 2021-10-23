@@ -27,6 +27,11 @@ function EnvLayer:init(parent)
 	self._cubemap_unit = "core/units/cubemap_gizmo/cubemap_gizmo"
 end
 
+function EnvLayer:set_visible(visible)
+    EnvLayer.super.set_visible(self, visible)
+	self:set_draw_env_units()
+end
+
 function EnvLayer:loaded_continents()
 	EnvLayer.super.loaded_continents(self)
 
@@ -194,6 +199,10 @@ function EnvLayer:reset_selected_units()
 	self:save()
 end
 
+function EnvLayer:should_draw()
+	return self._parent._current_layer == "environment" and self._holder:GetItemValue("EnvironmentUnits")
+end
+
 function EnvLayer:update(t, dt)
 	if self._draw_wind and self._draw_wind:Value() then
 		for i = -0.9, 1.2, 0.3 do
@@ -203,7 +212,7 @@ function EnvLayer:update(t, dt)
 		end
 	end
 
-	if self._holder:GetItemValue("EnvironmentUnits") and self._parent._current_layer == "environment" then
+	if self:should_draw() then
 		local selected_units = self:selected_units()
 		for _, unit in pairs(self._cubemap_units) do
 			if alive(unit) then
@@ -308,7 +317,7 @@ function EnvLayer:build_menu()
 	local spawn = self:GetPart("spawn")
     environment_group:button("SpawnEffect", ClassClbk(spawn, "begin_spawning", self._effect_unit))
     environment_group:button("SpawnEnvironmentArea", ClassClbk(spawn, "begin_spawning", self._environment_area_unit))
-    environment_group:tickbox("EnvironmentUnits", nil, true, {text = "Draw"})
+    self._draw_env_units = environment_group:tickbox("EnvironmentUnits", ClassClbk(self, "set_draw_env_units"), true, {text = "Draw"})
     environment_group:tickbox("OverkillCubemapTools", ClassClbk(self, "set_option"), self:Val("OverkillCubemapTools"), {
         help = "Use the cubemap tools overkill uses. They're slower, however they look more accurate to what the real editor would generate."
     })
@@ -402,6 +411,16 @@ function EnvLayer:build_unit_menu()
 				index = 1,
 				control_slice = 0.8
 			})
+		end
+	end
+end
+
+function EnvLayer:set_draw_env_units()
+	local vis = self:should_draw()
+	for _, unit in pairs(World:find_units_quick("all")) do
+		local ud = unit:unit_data()
+		if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor) and (ud.projection_lights) then
+			unit:set_visible(vis)
 		end
 	end
 end
@@ -752,5 +771,5 @@ function EnvLayer:create_cube_map(selection, type)
 end
 
 function EnvLayer:can_unit_be_selected(unit)
-	return self._holder:GetItemValue("EnvironmentUnits")
+	return self:should_draw()
 end

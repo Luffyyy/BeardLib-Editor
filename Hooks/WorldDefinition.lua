@@ -565,8 +565,9 @@ function WorldDef:add_unit(unit)
 end
 
 function WorldDef:_set_only_visible_in_editor(unit, data)
-	if unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor then
-		unit:set_visible(BLE.Options:GetOption("Map/EditorUnits").value)
+	local ud = unit:unit_data()
+	if (ud.only_visible_in_editor or ud.only_exists_in_editor) then
+		unit:set_visible(BLE.Options:GetOption("Map/EditorUnits").value and not ud.projection_lights)
 	end
 end
 

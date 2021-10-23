@@ -105,7 +105,8 @@ function Options:update_option_value(item)
     --Clean this too
     if name == "EditorUnits" then
         for _, unit in pairs(World:find_units_quick("all")) do
-            if type(unit:unit_data()) == "table" and (unit:unit_data().only_visible_in_editor or unit:unit_data().only_exists_in_editor) then
+            local ud = unit:unit_data()
+            if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor) and not ud.projection_lights then
                 unit:set_visible(value)
             end
         end

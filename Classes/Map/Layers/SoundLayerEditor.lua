@@ -8,6 +8,10 @@ function SndLayer:init(parent)
 	self._area_emitter_unit = "core/units/sound_area_emitter/sound_area_emitter"
 end
 
+function SndLayer:set_visible(visible)
+    EnvironmentLayerEditor.super.set_visible(self, visible)
+end
+
 function SndLayer:loaded_continents()
 	EnvironmentLayerEditor.super.loaded_continents(self)
 	for _, area in ipairs(managers.sound_environment:areas()) do
