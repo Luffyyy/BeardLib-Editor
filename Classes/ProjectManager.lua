@@ -37,7 +37,8 @@ function ProjectManager:init()
         w = 100,
         border_bottom = true
     }
-    local new = tb:popup("New...")
+    --TODO: improve popup menu so I don't need to do this dumb shit
+    local new = tb:popup("New...", {inherit_values = {size_by_text = false, w = 150, text_align = "left"}})
     tb:button("Edit", ClassClbk(self, "select_project_dialog"))
     new:button("Map", ClassClbk(self, "create_new_map_dialog", false), {help = "A map with an inital level"})
     new:button("ClonedMap", ClassClbk(self, "create_new_cloned_map"), {help = "Clones an existing vanilla map"})
