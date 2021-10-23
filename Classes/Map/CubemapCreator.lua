@@ -624,7 +624,7 @@ end
 function CubemapCreator:_generate_cubemap(file)
 	-- TODO: allow using the old generation script because
 	-- the ovk one is slow as shit
-	local ovk = self._params.dome_occ ~= nil -- or self:value("OverkillCubemapTools")
+	local ovk = true --self._params.dome_occ ~= nil or self:value("OverkillCubemapTools")
 	log("Using overkill tools?", tostring(ovk))
 	local exe_path = ovk and (encase_quotemarks(
 		Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "cubemap_"..file .. ".bat")
@@ -673,7 +673,7 @@ function CubemapCreator:_generate_spot_projection() -- Not implemented yet
 end
 
 function CubemapCreator:_move_output(output_path)
-	local ovk = self._params.dome_occ ~= nil -- or self:value("OverkillCubemapTools")
+	local ovk = true -- self._params.dome_occ ~= nil or self:value("OverkillCubemapTools")
 	local output_temp = self._params.output_name .. (ovk and ".dds" or ".texture")
 	local output = self._params.output_name .. ".texture"
 	local final_path = Path:Combine(self._params.output_path, output)
