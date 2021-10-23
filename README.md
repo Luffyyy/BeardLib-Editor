@@ -2,6 +2,12 @@
 
 BeardLib-Editor is a tool that allows you to edit and create things like maps & environments.
 
+# !!!!!!!!!!!!!!!!!NOTICE ABOUT MATCHMAKING!!!!!!!!!!!!!!
+Matchmaking is **disabled** by default due to having to edit the physics settings of the game.
+Playing with people with said edit can cause issues if not everyone has the said fix. 
+
+In order to enable matchmaking, you must disable the physics fix through the editor's options menu. Do note that without that fix, the editor will not work properly.
+
 ## Installation
 1. (Required for the massunits tool) https://dotnet.microsoft.com/download/dotnet/5.0/runtime Download the x64 version runtime.
 2. Install [SuperBLT](https://superblt.znix.xyz)
@@ -10,12 +16,6 @@ BeardLib-Editor is a tool that allows you to edit and create things like maps & 
 5. Launch the game and click `Yes` on the dialog that pops up. These files are required.
 
 If you install the dev branch, make sure you have the latest BeardLib commit https://github.com/simon-wh/PAYDAY-2-BeardLib it's possible that branch uses unreleased features not found in the public (MWS) version.
-
-## Matchmaking
-Matchmaking is **disabled** by default due to having to edit the physics settings of the game.
-Playing with people with said edit can cause issues if not everyone has the said fix. 
-
-In order to enable matchmaking, you must disable the physics fix through the editor's options menu. Do note that without that fix, the editor will not work properly.
 
 ## Guides
 https://www.youtube.com/playlist?list=PLRSASA7UrjTsX1WWG6kStRTK51DKSEDPn

@@ -575,6 +575,13 @@ function Editor:load_continents(continents)
     end
 end
 
+function Editor:load_camera_location(camera_bookmarks)
+    if camera_bookmarks and camera_bookmarks.default and camera_bookmarks[camera_bookmarks.default] then
+        local bookmark = camera_bookmarks[camera_bookmarks.default]
+        self:set_camera(bookmark.position, bookmark.rotation)
+    end
+end
+
 function Editor:unit_spawned(unit)
 	for _, manager in pairs(self.parts) do
 		if manager.unit_spawned then

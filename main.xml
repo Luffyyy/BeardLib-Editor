@@ -46,6 +46,7 @@
 			<class file="ObjectivesManagerDialog.lua"/>
 			<class file="SelectListDialogValue.lua"/>
 			<class file="ContinentSettingsDialog.lua"/>
+            <class file="BookmarkSettingsDialog.lua"/>
 			<class file="ObjectiveSettingsDialog.lua"/>
 			<class file="MultiSelectListDialog.lua"/>
 		</classes>
