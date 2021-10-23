@@ -241,6 +241,7 @@ function CubemapCreator:next_cube()
 			source_path = self._temp_path,
 			output_path = cube.light and self._cubelights_path or self._cubemaps_path,
 			output_name = cube.output_name or "cubemap",
+			resolution = resolution,
 			unit = cube.unit,
 			light = cube.light,
 			spot = cube.spot
@@ -345,7 +346,7 @@ function CubemapCreator:_create_cube_map()
         self._camera:set_rotation(Rotation(Vector3(0, 0, -1), Vector3(0, -1, 0)))
         self._wait_frames = 50
 	elseif self._cube_counter == 7 then
-		self:_generate_cubemap(self._params.light and "cubemap_light" or "cubemap_reflection")
+		self:_generate_cubemap(self._params.light and "light" or "reflect")
 		self:_cubemap_done()
 
 		return true
@@ -482,7 +483,7 @@ function CubemapCreator:_tick_generate_dome_occlusion(t, dt)
 			self._params.dome_occ.wait_frames = 10 -- Let the file generate so python doesn't fail
 		end
         if self._params.step == 2 then
-			self:_generate_cubemap("spotmapgen")
+			self:_generate_cubemap("dome_occ")
         elseif self._params.step == 3 then
             self:dome_occlusion_done()
         end
@@ -516,7 +517,7 @@ function CubemapCreator:cube_map_done()
 		managers.editor:update_post_effects()
 		self:viewport():vp():set_post_processor_effect("World", Idstring("deferred"), Idstring("deferred_lighting"))
 		self:viewport():vp():set_post_processor_effect("World", Idstring("depth_projection"), Idstring("depth_project_empty"))
-		
+
 		for _, cube in pairs(self._cubemap_params.cubes) do
 			cube.light:set_enable(cube.enabled)
 		end
@@ -604,7 +605,7 @@ function CubemapCreator:dome_occlusion_done()
 		self:notify_success(self._notify_success)
 		self._notify_success = nil
 	end
-	
+
 	self._params = nil
 end
 
@@ -623,29 +624,36 @@ end
 function CubemapCreator:_generate_cubemap(file)
 	-- TODO: allow using the old generation script because
 	-- the ovk one is slow as shit
-	local exe_path = encase_quotemarks(
-		Path:Combine(Application:base_path(), BLE.ModPath, "Tools", file .. ".bat")
-	) .. " "
+	local ovk = self._params.dome_occ ~= nil or self:value("OverkillCubemapTools")
+	log("Using overkill tools?", tostring(ovk))
+	local exe_path = ovk and (encase_quotemarks(
+		Path:Combine(Application:base_path(), BLE.ModPath, "Tools", "cubemap_"..file .. ".bat")
+	) .. " ") or string.format('%s %s -i ', self._gen_path, file)
 
 	local input_path
+	local base_temp = self._params.dome_occ and self._temp_path or Path:Combine(Application:base_path(), self._temp_path)
 	if not self._params.dome_occ then
 		for i, _ in pairs(self._names) do
 			-- absolute paths have to have "" around them because of spaces in the base_path
-			input_path = encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, self._name_ordered[i])) .. " "
+			input_path = encase_quotemarks(Path:Combine(base_temp, self._name_ordered[i])) .. " "
 			exe_path = exe_path .. input_path
 		end
 	else
-		input_path = encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, self._params.output_name .. ".tga")) .. " "
+		input_path = encase_quotemarks(Path:Combine(base_temp, self._params.output_name .. ".tga")) .. " "
 		exe_path = exe_path .. input_path
 	end
 
-	local filename = self._params.output_name .. (self._params.dome_occ and ".tga" or ".dds")
-	exe_path = exe_path .. encase_quotemarks(Path:Combine(Application:base_path(), self._temp_path, filename)) .. " "
+	local filename = self._params.output_name .. ".dds"
+	exe_path = exe_path .. (ovk and "" or "-o ") .. encase_quotemarks(Path:Combine(base_temp, filename)) .. " "
 	exe_path = encase_quotemarks(exe_path)
-	if os.execute(exe_path) == 0 then 
-		self._parent:Log("Cubemap path is: " .. tostring(Path:Combine(self._params.output_path, self._params.output_name .. ".texture")))
+
+	if ovk and self._params.resolution then
+		exe_path = exe_path .. self._params.resolution .. " "
+	end
+
+	if os.execute(exe_path) == 0 then
+		log("Cubemap path is: " .. tostring(Path:Combine(self._params.output_path, self._params.output_name .. ".texture")))
 		self:_move_output(self._params.output_name)
-		
 		if self._params.dome_occ or #self._cubes_que < 1 then
 			self._notify_success = file
 		end
@@ -663,9 +671,9 @@ function CubemapCreator:_generate_spot_projection() -- Not implemented yet
 end
 
 function CubemapCreator:_move_output(output_path)
-	local output_temp = self._params.output_name .. (self._params.dome_occ and ".tga" or ".dds")
+	local ovk = self._params.dome_occ ~= nil or self:value("OverkillCubemapTools")
+	local output_temp = self._params.output_name .. (ovk and ".dds" or ".texture")
 	local output = self._params.output_name .. ".texture"
-	local map_path = Path:Combine(BeardLib.config.maps_dir, BLE.MapProject:current_mod().Name) --mapproject comes into scope after init so i putit there
 	local final_path = Path:Combine(self._params.output_path, output)
 	if self._names then
 		for i=1, 6 do
@@ -677,17 +685,24 @@ function CubemapCreator:_move_output(output_path)
 		FileIO:Delete(final_path)
 	end
 
+	-- Delete temp tga
+	if not ovk or self._params.dome_occ ~= nil then
+		local tga_path = Path:Combine(self._params.source_path, self._params.output_name..".tga")
+		if FileIO:Exists(tga_path) then
+			FileIO:Delete(tga_path)
+		end
+	end
+
 	FileIO:MakeDir(self._params.output_path)
 	FileIO:MoveTo(self._params.source_path .. output_temp, final_path)
 
-	local project = BLE.MapProject
-	local level_path = project:current_level_path()
+	local level_path = BLE.MapProject:current_level_path()
 	local file_path = Path:Combine(self._params.output_path, tostring(self._params.output_name))
 	self:GetPart("opt"):save_local_add_xml({{_meta = "texture", path = file_path:gsub(level_path.."/", "")}})
 end
 
 function CubemapCreator:notify_success(type)
-	type = type == "cubemap_light" and "Cubelight(s)" or "Cubemap(s)"
+	type = type == "light" and "Cubelight(s)" or "Cubemap(s)"
 	BLE.Utils:Notify("Info", type .. " successfully created! Check console log for paths.\nDO NOT rename the cubemap files or delete the cubemap gizmos these cubemaps were built on!")
 end
 

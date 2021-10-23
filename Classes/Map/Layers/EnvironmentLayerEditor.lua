@@ -309,6 +309,9 @@ function EnvLayer:build_menu()
     environment_group:button("SpawnEffect", ClassClbk(spawn, "begin_spawning", self._effect_unit))
     environment_group:button("SpawnEnvironmentArea", ClassClbk(spawn, "begin_spawning", self._environment_area_unit))
     environment_group:tickbox("EnvironmentUnits", nil, true, {text = "Draw"})
+    environment_group:tickbox("OverkillCubemapTools", ClassClbk(self, "set_option"), self:Val("OverkillCubemapTools"), {
+        help = "Use the cubemap tools overkill uses. They're slower, however they look more accurate to what the real editor would generate."
+    })
 
 	local dome_occ = self._holder:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
@@ -403,6 +406,9 @@ function EnvLayer:build_unit_menu()
 	end
 end
 
+function EnvLayer:set_option(item)
+    self:set_value(item:Name(), item:Value())
+end
 
 function EnvLayer:set_unit_data()
 	local S = self:GetPart("static")

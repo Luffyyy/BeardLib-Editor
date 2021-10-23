@@ -209,6 +209,7 @@
                 <option type="boolean" default_value="true" name="ShowHints"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
+                <option name="OverkillCubemapTools" type="bool" value="true"/>
             </option_group>
         </options>
     </Options>
