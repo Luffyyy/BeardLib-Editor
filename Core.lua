@@ -121,7 +121,8 @@ function BLE:InitManagers(data)
     end
 
     if not self.FileWatcher and FileIO:Exists("mods/developer.txt") then --Code refresh is only for developers!
-        self.FileWatcher = FileWatcher:new(Path:Combine(self.ClassDirectory), {
+        self.FileWatcher = FileWatcher:new({
+            path = Path:Combine(self.ClassDirectory),
             callback = ClassClbk(self, "MapEditorCodeReload"),
             scan_t = 0.5
         })

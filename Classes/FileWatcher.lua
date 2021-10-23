@@ -2,10 +2,10 @@
 
 FileWatcher = FileWatcher or class()
 
-function FileWatcher:init(path, opt)
+function FileWatcher:init(opt)
     self._files = {}
     self._folders = {}
-    self._path = path
+    self._path = opt.path
     opt = opt or {}
     self._scan_t = opt.scan_t
     self._callback = opt.callback
@@ -15,19 +15,35 @@ function FileWatcher:init(path, opt)
     self._dont_scan_files = opt.dont_scan_files or false
     self._dont_scan_folders = opt.dont_scan_folders or false
     self._dont_rescan_files = opt.dont_rescan_files or false
-    self:CollectFilesAndFolders(path)
+
+    if opt.files then
+        for _, file in ipairs(opt.files) do
+            self:WatchFile(file)
+        end
+    end
+
+    self:CollectFilesAndFolders(self._path)
+end
+
+function FileWatcher:WatchFile(file)
+    self._files[file] = lfs.attributes(file, "modification")
+end
+
+function FileWatcher:UnwatchFile(file)
+    self._files[file] = nil
 end
 
 function FileWatcher:CollectFilesAndFolders(path)
-    for _, file in pairs(FileIO:GetFiles(path)) do
-        local full_path = path.."/"..file
-        self._files[full_path] = lfs.attributes(full_path, "modification")
-    end
-    
-    for _, folder in pairs(FileIO:GetFolders(path)) do
-        local full_path = path.."/"..folder
-        self._folders[full_path] = lfs.attributes(full_path, "modification")
-        self:CollectFilesAndFolders(full_path)
+    if path then
+        for _, file in pairs(FileIO:GetFiles(path)) do
+            self:WatchFile(path.."/"..file)
+        end
+        
+        for _, folder in pairs(FileIO:GetFolders(path)) do
+            local full_path = path.."/"..folder
+            self._folders[full_path] = lfs.attributes(full_path, "modification")
+            self:CollectFilesAndFolders(full_path)
+        end
     end
 end
 
