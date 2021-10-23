@@ -90,7 +90,7 @@ function EditUnitLight:update_light()
 	local projection_texture = unit:unit_data().projection_textures
 	projection_texture = projection_texture and projection_texture[name] or EditUnitLight.DEFAULT_SPOT_PROJECTION_TEXTURE
 	self._spot_texture:SetValue(projection_texture)
-end 
+end
 
 function EditUnitLight:set_unit_data()	
 	local unit = self:selected_unit()
