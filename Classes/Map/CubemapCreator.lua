@@ -647,9 +647,7 @@ function CubemapCreator:_generate_cubemap(file)
 	exe_path = exe_path .. (ovk and "" or "-o ") .. encase_quotemarks(Path:Combine(base_temp, filename)) .. " "
 	exe_path = encase_quotemarks(exe_path)
 
-	log(tostring(exe_path))
-
-	if ovk and self._params.resolution and not self._params.dome_occ then
+	if ovk and self._params.resolution then
 		exe_path = exe_path .. self._params.resolution .. " "
 	end
 
