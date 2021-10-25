@@ -18,6 +18,11 @@ body:
     validations:
       required: true
   - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: "If relevant, it's recommended to include the SBLT log file. You can find the it in mods/logs."
+  - type: textarea
     id: reproduction
     attributes:
       label: Minimal reproduction
