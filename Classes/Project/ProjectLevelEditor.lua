@@ -117,13 +117,25 @@ function ProjectLevelEditor:create(create_data)
             if create_data.chain_level then
                 create_data.chain_level.level_id = name
             end
+
+            local proj_path = self._parent:get_dir()
+
+            --Create scriptdata mod for the objectives if it doesn't exist already.
+            local scriptdata_dir = Path:Combine(proj_path, "scriptdata")
+            if not FileIO:Exists(scriptdata_dir) then
+                FileIO:MakeDir(scriptdata_dir)
+                local file_path = Path:Combine(scriptdata_dir, "objectives.objective")
+                if not FileIO:Exists(file_path) then
+                    FileIO:WriteTo(file_path, "<table></table>")
+                end
+            end
+
             if create_data.clone_id then
                 create_data.name = name
                 template = self:clone_level(create_data)
             else
                 template = deep_clone(BLE.MapProject._level_module_template)
                 template.id = name
-                local proj_path = self._parent:get_dir()
                 local level_path = Path:Combine(self.LEVELS_DIR, template.id)
                 FileIO:MakeDir(Path:Combine(proj_path, level_path))
                 FileIO:CopyToAsync(Path:Combine(BLE.MapProject._templates_directory, "Level"), Path:Combine(proj_path, level_path))
@@ -203,16 +215,6 @@ function ProjectLevelEditor:clone_level(create_data)
 
     local dir = self._parent:get_dir()
     local custom_level_dir = Path:Combine(dir, self.LEVELS_DIR, name)
-
-    --Create scriptdata mod for the objectives if it doesn't exist already.
-    local scriptdata_dir = Path:Combine(dir, "scriptdata")
-    if not FileIO:Exists(scriptdata_dir) then
-        FileIO:MakeDir(scriptdata_dir)
-        local file_path = Path:Combine(scriptdata_dir, "objectives.objective")
-        if not FileIO:Exists(file_path) then
-            FileIO:WriteTo(file_path, "<table></table>")
-        end
-    end
 
     local local_add = {_meta = "add"}
     --This local function is used to extract the files of the map by reading the scriptdata.
