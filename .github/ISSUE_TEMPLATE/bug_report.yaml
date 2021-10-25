@@ -8,7 +8,6 @@ body:
     attributes:
       label: Describe the bug
       description: A clear and concise description of what the bug is. Screenshots are applicable.
-      value: "A bug happened!"
     validations:
       required: true
   - type: textarea
