@@ -18,7 +18,7 @@ body:
       description: Please describe how to reproduce the issue, if you provide a minimal reproduction, explain how to get the bug to appear from there.
     validations:
       required: true
-   - type: markdown
+  - type: markdown
     id: reproduction
     attributes:
       label: Minimal reproduction
