@@ -20,7 +20,7 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: In order for us to solve the issue, you must post a crashlog and SBLT log. You can find the SBLT log in mods/logs and crashlog in %localappdata%/payday 2/crash.txt
+      description: In order for us to solve the issue, you must provide a crashlog and SBLT log. You can find the SBLT log in mods/logs and crashlog in %localappdata%/payday 2/crash.txt
     validations:
       required: true
   - type: textarea
