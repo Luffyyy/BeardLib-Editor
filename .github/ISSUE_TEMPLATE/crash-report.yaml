@@ -17,7 +17,7 @@ body:
       description: Please describe how to reproduce the crash, if you provide a minimal reproduction, explain how to get the bug to appear from there.
     validations:
       required: true
-   - type: textarea
+  - type: textarea
     id: logs
     attributes:
       label: Logs
