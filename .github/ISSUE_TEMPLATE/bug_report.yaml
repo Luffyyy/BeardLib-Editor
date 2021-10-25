@@ -1,0 +1,27 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    id: describe
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is. Screenshots are applicable.
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: markdown
+    id: steps
+    attributes:
+      label: Steps to reproduce the issue
+      description: Please describe how to reproduce the issue, if you provide a minimal reproduction, explain how to get the bug to appear from there.
+    validations:
+      required: true
+   - type: markdown
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: To allow maintainers to focus on the issue better and to try resolving it, it is highly recommended to include a minimal project with said issue.
+  
+
