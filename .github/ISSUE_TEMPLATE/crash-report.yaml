@@ -1,6 +1,5 @@
 name: Crash Report
 description: File a crash report
-title: ""
 labels: ["crash"]
 body:
   - type: textarea
