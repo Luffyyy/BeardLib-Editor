@@ -5,7 +5,7 @@ function EditorTeleportPlayer:create_element()
 	self._element.values.use_instigator = true
 end
 
-function EditorTeleportPlayer:build_panel()
+function EditorTeleportPlayer:_build_panel()
 	self:_create_panel()
 	self:BooleanCtrl("use_instigator")
 end

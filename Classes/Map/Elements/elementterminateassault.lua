@@ -4,7 +4,7 @@ function EditorTerminateAssault:create_element()
 	self._element.class = "ElementTerminateAssault"
 end
 
-function EditorTerminateAssault:build_panel()
+function EditorTerminateAssault:_build_panel()
     self:_create_panel()
     self:Text("This element will stop the current assault, and will hide the assault corner HUD element.")
 end
