@@ -1,0 +1,30 @@
+name: Bug Report
+description: File a bug report
+labels: ["bug"]
+body:
+  - type: textarea
+    id: describe
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is. Screenshots are applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce the issue
+      description: Please describe how to reproduce the issue, if you provide a minimal reproduction, explain how to get the bug to appear from there.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log file
+      description: "If relevant, it's recommended to include the SBLT log file. You can find it in mods/logs."
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: To allow maintainers to focus on the issue better and to try resolving it, it is highly recommended to include a minimal project with said issue.
+  
+
