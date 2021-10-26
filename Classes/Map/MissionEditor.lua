@@ -11,7 +11,7 @@ function MissionEditor:init(parent, menu)
     end
     for _, element in pairs(BLE._config.MissionElements) do
         local class_name = element:gsub('Element', 'Editor')
-        if not rawget(_G, class_name) or not rawget(_G, element.."Editor") then
+        if not rawget(_G, class_name) and not rawget(_G, element.."Editor") then
             local c = class(MissionScriptEditor)
             c.CLASS = element
             rawset(_G, class_name, c)
