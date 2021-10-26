@@ -115,7 +115,7 @@ function MissionEditor:remove_element_unit(unit)
 end
 
 function MissionEditor:get_editor_class(c)
-    local clss = rawget(_G, c:gsub("Element", "Editor"))
+    local clss = rawget(_G, c .. "Editor") or rawget(_G, c:gsub("Element", "Editor"))
     if not clss then
         EditorActionMessage = EditorActionMessage or class(MissionScriptEditor)
     end
