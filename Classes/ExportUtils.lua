@@ -33,14 +33,14 @@ function Utils:Add(config, ext, path, exclude, extra_info)
 	if exclude and exclude[ext] then
         return
     end
-    table.insert(config, {_meta = ext, path = path, unload = true, extra_info = self.pack_extra_info and extra_info or nil})
+    table.insert(config, {_meta = ext, path = path, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 function Utils:AddForceLoaded(config, ext, path, exclude, extra_info)
 	if exclude and exclude[ext] then
         return
     end
-    table.insert(config, {_meta = ext, path = path, unload = true, load = true, extra_info = self.pack_extra_info and extra_info or nil})
+    table.insert(config, {_meta = ext, path = path, load = true, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 
