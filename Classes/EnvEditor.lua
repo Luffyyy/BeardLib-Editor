@@ -108,7 +108,7 @@ function EnvEditor:build_default()
 
     -- TEXTURES
     local textures = self:group("Underlay / Textures", {control_slice = 0.5})
-    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, text = "Underlay",  check = function(entry) 
+    self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, loaded = true, text = "Underlay", check = function(entry)
         return not (entry:match("core/levels") or entry:match("levels/zone")) 
     end}))
     self:add_sky_param(textures:pathbox("sky_texture", nil, "", "texture", {not_close = true, text = "Sky Texture"}))
