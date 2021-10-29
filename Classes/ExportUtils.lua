@@ -383,8 +383,14 @@ function Utils:ReadScene(path, config, exclude, extra_info)
     local node = self:ParseXml("scene", path)
     if node and not exclude.scene then
 		for child in node:children() do
-			if child:name() == "load_scene" and child:has_parameter("materials") then
-				self:ReadMaterialConfig(child:parameter("materials"), config, exclude, {file = path..".scene", where = "load_scene node/materials value"})
+			if child:name() == "load_scene"  then
+                if child:has_parameter("file") then
+                    log(tostring(child:parameter("file")), "load model")
+                    self:Add(config, "model", child:parameter("file"), exclude, {where = "load_scene node/file value"})
+                end
+                if child:has_parameter("materials") then
+                    self:ReadMaterialConfig(child:parameter("materials"), config, exclude, {file = path..".scene", where = "load_scene node/materials value"})
+                end
 			end
         end
     end
