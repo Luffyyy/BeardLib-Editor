@@ -23,7 +23,7 @@ local function create_texture_selector(parent, view, prop)
 end
 
 local function create_effect_selector(parent, view, prop)
-    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect", {background_color = prop._bgcolor})
+    return parent:pathbox(prop:name(), ClassClbk(prop, "on_commit", view), prop._value, "effect", {background_color = prop._bgcolor, loaded = true})
 end
 
 local function create_percentage_slider(parent, view, prop)

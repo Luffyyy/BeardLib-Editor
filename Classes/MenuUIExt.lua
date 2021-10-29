@@ -302,7 +302,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 		end
 
 		local list = o.custom_list or BLE.Utils:GetEntries({
-			type = typ, loaded = false, filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
+			type = typ, loaded = o.loaded or false, filenames = false, check = o.check or (o.slot and SimpleClbk(check_slot, o.slot))
 		})
 		if o.sort_func then
 			o.sort_func(list)
