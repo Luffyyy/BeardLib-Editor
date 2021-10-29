@@ -450,7 +450,7 @@ function EnvEditor:feed(handler, viewport, scene)
             end
         end
 	end
-	
+
     for kmat, vmat in pairs(self._underlayeffect.materials) do
         for kpar, vpar in pairs(vmat.params) do
             self:set_data_path("underlay_effect/" .. kmat .. "/" .. kpar, handler, vpar:Value())
@@ -458,9 +458,21 @@ function EnvEditor:feed(handler, viewport, scene)
 	end
 
 	for kpar, vpar in pairs(self._sky.params) do
-		if kpar ~= "underlay" or PackageManager:has(scene_ids, Idstring(vpar:Value())) then
-			self:set_data_path("others/" .. kpar, handler, vpar:Value())
-		end
+        local val = vpar:Value()
+        local set = function()
+            self:set_data_path("others/" .. kpar, handler, val)
+        end
+		if kpar == "underlay" then
+            local assets = self:GetPart("assets")
+            --I don't fucking know why but loading scenes just doesn't work
+            if assets:is_asset_loaded("scene", val) then
+                set()
+            else
+                assets:quick_load_from_db("scene", val, set)
+            end
+        else
+            set()
+        end
     end
 end
 
