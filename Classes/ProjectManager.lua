@@ -77,6 +77,10 @@ end
 --- @param id string
 --- @return table
 function ProjectManager:get_level_by_id(data, id)
+    if not data then
+        return nil
+    end
+
     for _, level in pairs(XML:GetNodes(data, "level")) do
         if level.id == id then
             return level
