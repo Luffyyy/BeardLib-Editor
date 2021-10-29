@@ -78,7 +78,7 @@ end
 --- @return table
 function ProjectManager:get_level_by_id(data, id)
     if not data then
-        return nil
+        return tweak_data.levels[id]
     end
 
     for _, level in pairs(XML:GetNodes(data, "level")) do
