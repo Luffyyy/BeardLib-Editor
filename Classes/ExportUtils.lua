@@ -385,7 +385,6 @@ function Utils:ReadScene(path, config, exclude, extra_info)
 		for child in node:children() do
 			if child:name() == "load_scene"  then
                 if child:has_parameter("file") then
-                    log(tostring(child:parameter("file")), "load model")
                     self:Add(config, "model", child:parameter("file"), exclude, {where = "load_scene node/file value"})
                 end
                 if child:has_parameter("materials") then
