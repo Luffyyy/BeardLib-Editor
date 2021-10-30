@@ -686,7 +686,7 @@ end
 function MissionScriptEditor:BasicCtrlInit(value_name, opt)
 	opt = opt or {}
 	opt.group = opt.group or self._class_group
-	opt.text = string.pretty(value_name, true)
+	opt.text = opt.text or string.pretty(value_name, true)
 	return opt
 end
 
