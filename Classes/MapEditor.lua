@@ -32,6 +32,11 @@ function Editor:init(data)
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
     self._use_local_move = true
+
+	self._brush = Draw:brush()
+    self._brush:set_font(Idstring("fonts/font_medium"), 32)
+    self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
+
     self:_init_post_effects()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
@@ -216,14 +221,15 @@ end
 
 local dis = mvector3.distance
 function Editor:SetRulerPoints()
-    local start_pos = self._current_pos    
+    local start_pos = self._current_pos
 	if not self._end_pos then
         self._start_pos = start_pos
         self:Log("[RULER]Start position: " .. tostring(start_pos))
     else
-        self:Log(string.format("[RULER]Length: %.2fm", dis(self._start_pos, self._end_pos) / 100))
+        self:Log("[RULER]Length ".. tostring(self._ruler_dist))
         self:Log("[RULER]End position: " .. tostring(self._end_pos))
         self._end_pos = nil
+        self._ruler_dist = nil
         self._start_pos = nil
 	end
 end
@@ -1008,10 +1014,15 @@ function Editor:draw_ruler(t, dt)
 	local start_pos = self._start_pos
     local end_pos = self._current_pos
     self._end_pos = end_pos
+    self._ruler_dist = string.format("%.2fm", dis(self._start_pos, self._end_pos) / 100)
 
-	Application:draw_sphere(start_pos, 10, 1, 1, 1)
-	Application:draw_sphere(end_pos, 10, 1, 1, 1)
+	Application:draw_sphere(start_pos, 5, 1, 1, 1)
+	Application:draw_sphere(end_pos, 5, 1, 1, 1)
 	Application:draw_line(start_pos, end_pos, 1, 1, 1)
+	Application:draw_line(start_pos, end_pos, 1, 1, 1)
+    if end_pos then
+        self._brush:text(end_pos + Vector3(0, 0, 45), tostring(self._ruler_dist))
+    end
 end
 
 function Editor:update_positions()
