@@ -30,13 +30,14 @@ function SpawnMenu:begin_spawning_element(element)
     self:begin_spawning("units/mission_element/element")
 end
 
-function SpawnMenu:begin_spawning(unit)
+function SpawnMenu:begin_spawning(unit, pos, rot)
     local begin_spawning = function()
         self._currently_spawning = unit
         self:remove_dummy_unit()
         if self._parent._spawn_position then
-            self._dummy_spawn_unit = World:spawn_unit(unit:id(), self._parent._spawn_position)
+            self._dummy_spawn_unit = World:spawn_unit(unit:id(), pos or self._parent._spawn_position, rot)
         end
+
         self:SetTitle("Press: LMB to spawn, RMB to cancel") 
     end
     if PackageManager:has(Idstring("unit"), unit:id()) then

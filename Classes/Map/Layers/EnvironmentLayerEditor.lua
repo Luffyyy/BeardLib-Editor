@@ -325,7 +325,7 @@ function EnvLayer:build_menu()
 
 	local dome_occ = self._holder:group("DomeOcclusion", {visible = true}) 
     --self._draw_occ_shape = dome_occ:tickbox("Draw", nil, false)
-    dome_occ:button("SpawnDomeOcclusion", ClassClbk(spawn, "begin_spawning", self._dome_occ_shape_unit))	
+    dome_occ:button("SpawnDomeOcclusion", ClassClbk(spawn, "begin_spawning", self._dome_occ_shape_unit, nil, Rotation(-90, 0, 0)))
 	dome_occ:button("Generate", ClassClbk(self, "generate_dome_occ", "all"))
     local res = {64, 128, 256, 512, 1024, 2048, 4096}
     dome_occ:combobox("Resolution", ClassClbk(self, "set_dome_occ_resolution"), res, table.get_key(res, environment_values.dome_occ_resolution or 256))
