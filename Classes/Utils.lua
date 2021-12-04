@@ -205,6 +205,7 @@ Utils.ElementIcons = {
 	EndscreenVariant = {64, 960},
 	ExecuteInOtherMission = {64, 960},
 	ExecuteWithCode = {896, 64},
+	ExecuteCode = {896, 64},
 	FakeAssaultState = {960, 64},
 	Flashlight = {64, 960},
 	GameDirection = {64, 960},
