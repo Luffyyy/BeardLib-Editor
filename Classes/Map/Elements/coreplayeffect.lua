@@ -19,6 +19,35 @@ function EditorPlayEffect:_build_panel()
 	self:NumberCtrl("max_amount", {floats = 0, min = 0, help = "Maximum amount of spawns when repeating effects (0 = unlimited)"})
 end
 
+function EditorPlayEffect:test_element()
+	if self._element.values.effect ~= "none" then
+		self:stop_test_element()
+
+		if not PackageManager:has(Idstring("effect"), self._element.values.effect:id()) then
+			self:GetPart("assets"):quick_load_from_db("effect", self._element.values.effect)
+		end
+
+		local position = self._element.values.screen_space and Vector3() or self._unit:position()
+		local rotation = self._element.values.screen_space and Rotation() or self._unit:rotation()
+		self._effect = World:effect_manager():spawn({
+			effect = self._element.values.effect:id(),
+			position = position,
+			rotation = rotation,
+			base_time = self._element.values.base_time or 0,
+			random_time = self._element.values.random_time or 0,
+			max_amount = self._element.values.max_amount ~= 0 and self._element.values.max_amount or nil
+		})
+	end
+end
+
+function EditorPlayEffect:stop_test_element()
+	if self._effect then
+		World:effect_manager():kill(self._effect)
+
+		self._effect = false
+	end
+end
+
 EditorStopEffect = EditorStopEffect or class(MissionScriptEditor)
 function EditorStopEffect:create_element()
 	EditorStopEffect.super.create_element(self)
