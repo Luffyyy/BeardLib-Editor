@@ -35,6 +35,12 @@ function SpawnMenu:begin_spawning(unit, pos, rot)
         self._currently_spawning = unit
         self:remove_dummy_unit()
         if self._parent._spawn_position then
+            if type(pos) ~= "userdata" then
+                pos = nil
+            end
+            if type(rot) ~= "userdata" then
+                rot = nil
+            end
             self._dummy_spawn_unit = World:spawn_unit(unit:id(), pos or self._parent._spawn_position, rot)
         end
 
