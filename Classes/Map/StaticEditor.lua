@@ -827,6 +827,12 @@ function Static:recalc_locals(unit, reference)
 	unit:unit_data().local_rot = ref_rot * unit:rotation()
 end
 
+local unallowed = {
+    Idstring("units/payday2/characters/fps_mover/bain"),
+    Idstring("core/units/move_widget/move_widget"),
+    Idstring("core/units/rotation_widget/rotation_widget"),
+}
+
 function Static:check_unit_ok(unit)
     local ud = unit:unit_data()
     if not ud then
@@ -844,8 +850,15 @@ function Static:check_unit_ok(unit)
             return false
         end
     end
+
     local world = self:GetPart("world")
-    if world:is_world_unit(unit:name()) and not world:can_unit_be_selected(unit:name()) then
+    local unit_name = unit:name()
+
+    if table.contains(unallowed, unit_name) then
+        return false
+    end
+
+    if world:is_world_unit(unit_name) and not world:can_unit_be_selected(unit_name) then
         return false
     end
     if ud.instance and not self:Val("SelectInstances") then
@@ -1009,20 +1022,12 @@ function Static:selection_to_menu()
     self:recalc_all_locals()
 end
 
-local unallowed = {
-    Idstring("units/payday2/characters/fps_mover/bain"),
-    Idstring("core/units/move_widget/move_widget"),
-    Idstring("core/units/rotation_widget/rotation_widget"),
-}
-
-local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
-
 function Static:select_unit(mouse2)
     local rays = self._parent:select_units_by_raycast(self._parent._editor_all, ClassClbk(self, "check_unit_ok"))
     self:recalc_all_locals()
     if rays then
         for _, ray in pairs(rays) do
-            if alive(ray.unit) and not table.contains(unallowed, ray.unit:name()) then
+            if alive(ray.unit) then
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
