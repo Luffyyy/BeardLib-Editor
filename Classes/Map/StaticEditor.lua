@@ -1009,6 +1009,12 @@ function Static:selection_to_menu()
     self:recalc_all_locals()
 end
 
+local unallowed = {
+    Idstring("units/payday2/characters/fps_mover/bain"),
+    Idstring("core/units/move_widget/move_widget"),
+    Idstring("core/units/rotation_widget/rotation_widget"),
+}
+
 local bain_ids = Idstring("units/payday2/characters/fps_mover/bain")
 
 function Static:select_unit(mouse2)
@@ -1016,7 +1022,7 @@ function Static:select_unit(mouse2)
     self:recalc_all_locals()
     if rays then
         for _, ray in pairs(rays) do
-            if alive(ray.unit) and ray.unit:name() ~= bain_ids then
+            if alive(ray.unit) and not table.contains(unallowed, ray.unit:name()) then
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
