@@ -315,6 +315,10 @@ function PortalLayer:load_portal_shapes()
 end
 
 function PortalLayer:add_shape()
+    if not self._selected_portal then
+        return
+    end
+    
     self:do_spawn_unit(self._portal_shape_unit, {position = managers.editor:GetSpawnPosition(), portal = self._selected_portal})
     self:load_portal_shapes()
     self:save()
