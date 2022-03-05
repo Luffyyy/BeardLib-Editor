@@ -1084,6 +1084,18 @@ function Editor:_set_fixed_resolution(size)
 
 end
 
+function Editor:change_visualization(viz)
+	if viz ~= "deferred_lighting" then
+		self:disable_all_post_effects(true)
+	else
+		self:update_post_effects()
+	end
+
+	for _, vp in ipairs(managers.viewport:viewports()) do
+		vp:set_visualization_mode(viz)
+	end
+end
+
 function Editor:disable_all_post_effects(no_keep_state)
     for _, pe in pairs(self._post_effects) do
         pe.off()

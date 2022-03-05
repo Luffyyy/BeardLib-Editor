@@ -37,6 +37,15 @@ function Options:build_default()
         item:Move(-4)
     end, size_by_text = true, text = ""})
 
+    local render_modes = {
+        "deferred_lighting",
+        "albedo_visualization",
+        "normal_visualization",
+        "specular_visualization",
+        "glossiness_visualization",
+        "depth_visualization"
+	}
+
     local map = self:group("Draw/Show", groups_opt)
     map:tickbox("EditorUnits", ClassClbk(self, "update_option_value"), self:Val("EditorUnits"), {help = "Draw editor units", size_by_text = true})
     map:tickbox("HighlightUnits", ClassClbk(self, "update_option_value"), self:Val("HighlightUnits"), {size_by_text = true})
@@ -45,6 +54,7 @@ function Options:build_default()
     map:tickbox("ShowElements", ClassClbk(self, "update_option_value"), self:Val("ShowElements"), {size_by_text = true})
     map:tickbox("DrawBodies", ClassClbk(self, "update_option_value"), self:Val("DrawBodies"), {size_by_text = true})
     map:tickbox("DrawOnlyElementsOfCurrentScript", ClassClbk(self, "update_option_value"), self:Val("DrawOnlyElementsOfCurrentScript"), {size_by_text = true})
+    map:combobox("VisualizationMode", ClassClbk(self, "update_visualization"), render_modes, 1)
 
     local raycast = self:group("Raycast/Selecting", groups_opt)
     raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {
@@ -125,6 +135,11 @@ function Options:update_option_value(item)
     elseif name == "SurfaceMove" then
         self._parent:set_use_surface_move(value)
     end
+end
+
+function Options:update_visualization(item)
+    local visualization = item:SelectedItem()
+    self._parent:change_visualization(visualization)
 end
 
 function Options:get_value(opt)
