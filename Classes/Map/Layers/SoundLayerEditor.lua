@@ -145,6 +145,8 @@ function SndLayer:emitter_events()
 end
 
 function SndLayer:build_menu()
+	self._holder:ClearItems()
+	
 	local buttons = self._holder:group("Actions")
 	local opt = self:GetPart("opt")
 	local spawn = self:GetPart("spawn")

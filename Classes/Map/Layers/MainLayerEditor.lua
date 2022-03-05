@@ -14,6 +14,7 @@ function MainLayerEditor:build_menu()
     self._holder:ClearItems()
 
     if BLE.Options:GetValue("Map/ShowHints") then
+        self._hint_set = nil
         self._hint = self._holder:info("hint")
         self:random_hint()
     end
@@ -211,7 +212,7 @@ function MainLayerEditor:set_current_continent(item)
 end
 
 function MainLayerEditor:open_continent_settings(continent)
-    self._continent_settings:Show({continent = continent, callback = ClassClbk(self, "build_default_menu")})
+    self._continent_settings:Show({continent = continent, callback = ClassClbk(self, "build_menu")})
 end
 
 function MainLayerEditor:remove_continent(continent)

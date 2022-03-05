@@ -263,6 +263,8 @@ function EnvLayer:draw_wind(pos)
 end
 
 function EnvLayer:build_menu()
+	self._holder:ClearItems()
+	
 	local data = self:data()
 	local opt = self:GetPart("opt")
 
