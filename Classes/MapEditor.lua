@@ -31,6 +31,7 @@ function Editor:init(data)
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
+    self._hidden_units = {}
     self._use_local_move = true
 
 	self._brush = Draw:brush()
@@ -627,6 +628,65 @@ function Editor:update_snap_rotation(value)
         end
     end
 end
+
+function Editor:hide_units() 
+    local selected_units = self:selected_units()
+
+    if alt() then 
+        self:on_unhide_all()
+    elseif shift() then
+        self:on_hide_unselected()
+    else
+        self:on_hide_selected()
+    end
+end
+
+function Editor:on_hide_selected()
+    for _, unit in ipairs(clone(self:selected_units())) do
+        self:set_unit_visible(unit, false)
+    end
+    self.parts.status:ShowKeybindMessage("Hidden selected units")
+end
+
+function Editor:on_hide_unselected()
+    for id, name in ipairs(self._continents) do
+        for id, unit in ipairs(self.parts.world.layers.main:get_all_units_from_continent(name)) do
+            if not table.contains(self:selected_units(), unit) and unit:visible() then
+                self:set_unit_visible(unit, false)
+            end
+        end
+    end
+    self.parts.status:ShowKeybindMessage("Hidden all not selected units")
+end
+
+function Editor:on_unhide_all()
+    local to_hide = clone(self._hidden_units)
+
+    for _, unit in ipairs(to_hide) do
+        self:set_unit_visible(unit, true)
+    end
+    self.parts.status:ShowKeybindMessage("Unhidden all hidden units")
+end
+
+function Editor:set_unit_visible(unit, visible)
+	if not alive(unit) then
+		return
+	end
+
+	--if unit:mission_element() then
+	--	unit:mission_element():on_set_visible(visible)
+	--end
+	unit:set_enabled(visible)
+
+	if not unit:enabled() then
+		if not table.contains(self._hidden_units, unit) then
+			table.insert(self._hidden_units, unit)
+		end
+    else
+        table.delete(self._hidden_units, unit)
+	end
+end
+
 function Editor:destroy()
     local scroll_y_tbl = {}
     for name, manager in pairs(self.parts) do
@@ -679,6 +739,7 @@ function Editor:camera() return self._camera_object end
 function Editor:viewport() return self._vp end
 function Editor:camera_fov() return self:camera():fov() end
 function Editor:set_camera_far_range(range) return self:camera():set_far_range(range) end
+function Editor:hidden_units() return self._hidden_units end
 
 function Editor:cam_spawn_pos()
     local cam = managers.viewport:get_current_camera()

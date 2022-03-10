@@ -127,6 +127,7 @@ end
 function Part:bind_opt(opt, clbk, in_dialogs) self:bind("Input/"..opt, clbk, in_dialogs) end
 function Part:selected_unit() return self._parent:selected_unit() end
 function Part:selected_units() return self._parent:selected_units() end
+function Part:hidden_units() return self._parent:hidden_units() end
 function Part:enabled() return self._enabled end
 function Part:value(n) return BLE.Options:GetValue("Map/" .. n, "Value") end
 function Part:set_value(n, v) return BLE.Options:SetValue("Map/" .. n, v) end

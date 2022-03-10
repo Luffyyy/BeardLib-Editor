@@ -28,6 +28,7 @@ function Static:enable()
     self:bind_opt("RotateSpawnDummyPitch", ClassClbk(self, "RotateSpawnDummyPitch"))
     self:bind_opt("RotateSpawnDummyRoll", ClassClbk(self, "RotateSpawnDummyRoll"))
     self:bind_opt("SettleUnits", ClassClbk(self, "SettleUnits"))
+    self:bind_opt("HideUnits", ClassClbk(self._parent, "hide_units"))
 end
 
 function Static:get_grabbed_unit()
