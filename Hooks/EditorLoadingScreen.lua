@@ -7,6 +7,17 @@ function es:init(gui, res, p, layer)
 	else
 		es.super.init(self, gui, res, p, layer)
 	end
+
+	local panel = self._gui:workspaces()[1]:panel()
+	self._indicator = panel:bitmap({
+		name = "indicator",
+		texture = "textures/editor_icons_df",
+		texture_rect = {0, 192, 64, 64},
+		w = 32,
+		h = 32,
+		layer = 100
+	})
+	self._indicator:set_center(panel:w() / 2, panel:h() / 1.7)
 end
 
 function es:update(...)
@@ -15,6 +26,9 @@ function es:update(...)
 	else
 		es.super.update(self, ...)
 	end
+
+	local args = {...}
+	self._indicator:rotate(-180 * args[3])
 end
 
 function es:do_editor_stuff()
