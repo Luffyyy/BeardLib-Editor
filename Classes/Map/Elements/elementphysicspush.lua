@@ -14,7 +14,7 @@ end
 
 function EditorPhysicsPush:_build_panel()
 	self:_create_panel()
-	self:NumberCtrl("range", {min = 1, max = 10000, text = "Range:"})
+	self:NumberCtrl("physicspush_range", {min = 1, max = 10000, text = "Range:"})
 	self:NumberCtrl("physicspush_velocity", {min = 1, max = 5000, text =  "Velocity:"})
 	self:NumberCtrl("physicspush_mass", {min = 1, max = 5000, text = "Mass:"})
 end
