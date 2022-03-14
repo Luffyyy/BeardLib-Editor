@@ -4,31 +4,30 @@ function es:init(gui, res, p, layer)
 	self._gui = gui
 	if arg.load_level_data.level_data.editor_load then
 		self._is_editor = true
+		local panel = self._gui:workspaces()[1]:panel()
+		self._indicator = panel:bitmap({
+			name = "indicator",
+			texture = "textures/editor_icons_df",
+			texture_rect = {0, 192, 64, 64},
+			w = 32,
+			h = 32,
+			layer = 100
+		})
+		self._indicator:set_center(panel:w() / 2, panel:h() / 1.7)
 	else
 		es.super.init(self, gui, res, p, layer)
 	end
-
-	local panel = self._gui:workspaces()[1]:panel()
-	self._indicator = panel:bitmap({
-		name = "indicator",
-		texture = "textures/editor_icons_df",
-		texture_rect = {0, 192, 64, 64},
-		w = 32,
-		h = 32,
-		layer = 100
-	})
-	self._indicator:set_center(panel:w() / 2, panel:h() / 1.7)
 end
 
 function es:update(...)
 	if self._is_editor then
-		self:do_editor_stuff() 
+		self:do_editor_stuff() 	
+		
+		local args = {...}
+		self._indicator:rotate(-180 * args[3])
 	else
 		es.super.update(self, ...)
 	end
-
-	local args = {...}
-	self._indicator:rotate(-180 * args[3])
 end
 
 function es:do_editor_stuff()
