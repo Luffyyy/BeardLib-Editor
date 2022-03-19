@@ -469,6 +469,7 @@
 		<value_node value="physics_settings"/>
 		<value_node value="world_sounds"/>
 		<value_node value="blacklist"/>
+		<value_node value="prefab"/>
 	</script_data_types>
     <script_data_formats>
         <value_node value="json"/>
