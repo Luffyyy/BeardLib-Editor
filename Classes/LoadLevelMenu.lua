@@ -52,7 +52,7 @@ end
 
 function LoadLevelMenu:search_levels(item)
 	item = item or self:GetItem("Search")
-	local search = item:Value():escape_special()
+	local search = item:Value():escape_special():lower()
 	local searching = search:len() > 0
 	if self:GetItemValue("Narratives") then
 		for _, menu in pairs(self._levels:Items()) do
@@ -60,11 +60,11 @@ function LoadLevelMenu:search_levels(item)
 				for _, item in pairs(menu:Items()) do
 					if item.type_name == "Holder" then
 						menu:SetVisible(false)
-						if not searching or item.text:find(search) then
+						if not searching or item.text:lower():find(search) then
 							menu:SetVisible(true)
 						else
 							for _, _item in pairs(item:Items()) do
-								if _item.text:find(search) then
+								if _item.text:lower():find(search) then
 									menu:SetVisible(true)
 									break
 								end
@@ -76,7 +76,7 @@ function LoadLevelMenu:search_levels(item)
 		end
 	else
 		for _, btn in pairs(self._levels:Items()) do
-			if not searching or btn.text:find(search) then
+			if not searching or btn.text:lower():find(search) then
 				btn:SetVisible(true)
 			else
 				btn:SetVisible(false)
