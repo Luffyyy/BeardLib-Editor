@@ -428,7 +428,7 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
             local typ = v._meta
             local from_db = NotNil(v.from_db, add.from_db)
             if typ == UNIT_LOAD or typ == ADD then
-                self:LoadCustomAssetsToHashList(v, directory, package_id)
+                self:LoadCustomAssetsToHashList(v, v.directory and Path:Combine(directory, v.directory) or directory, package_id)
             else
                 path = Path:Normalize(path)
                 local dir = Path:Combine(directory, path)
@@ -489,9 +489,9 @@ function BLE:LoadCustomAssetsToHashList(add, directory, package_id)
                             self.DBPackages.map_assets.unit[path] = true
                         end
                     elseif package_id then
-                        self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(package_id), tostring(path), tostring(directory))
+                        self:Err("Custom package %s has a unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s Path: %s", tostring(package_id), tostring(path), tostring(directory), tostring(dir))
                     else
-                        self:Err("Unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s", tostring(path), tostring(directory))
+                        self:Err("Unit loaded with shortcuts (%s), but one of the dependencies don't exist! Directory: %s Path: %s", tostring(path), tostring(directory), tostring(dir))
                     end
                 elseif CustomPackageManager.TEXTURE_SHORTCUTS[typ] then
                     for _, suffix in pairs(CustomPackageManager.TEXTURE_SHORTCUTS[typ]) do
