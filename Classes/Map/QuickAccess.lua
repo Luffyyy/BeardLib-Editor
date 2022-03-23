@@ -45,7 +45,7 @@ function QuickAccess:init(parent, menu)
         {name = "GeneralOptions", rect = icons.settings_gear, offset = reversed and 0, callback = "open_options", help = "General Options"},
         {name = "Deselect", rect = icons.cross_box, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
         {name = "TeleportPlayer", rect = icons.teleport, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
-        {name = "TeleportToSelection", rect = icons.teleport_selection, callback = "to_selection", help = "Teleport Camera To Selection", enabled = normal and self._parent._has_fix},
+        {name = "TeleportToSelection", rect = icons.teleport_selection, items = {}, callback = "open_teleport_menu", help = "Teleport Camera To...", enabled = normal and self._parent._has_fix},
         {name = "LocalTransform", rect = icons.local_transform, offset = reversed and {2,0} or 0, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}
     }
 
@@ -123,15 +123,20 @@ end
 
 function QuickAccess:build_buttons(parent)
     for _, button in pairs(self._buttons) do
-        parent:tb_imgbtn(button.name, ClassClbk(self, button.callback), nil, button.rect, {
+        local item = parent:tb_imgbtn(button.name, ClassClbk(self, button.callback), nil, button.rect, {
             w = parent:H(),
             h = parent:H(),
             offset = button.offset or {2, 0},
             help = button.help,
             enabled = button.enabled,
             disabled_alpha = 0.2,
+            items = button.items,
+            context_font_size = 23,
             background_color = BLE.Options:GetValue("ToolbarButtonsColor")
         })
+        if button.items then
+            item._list:hide()
+        end
     end
 
     self:AlignItems(parent)
@@ -234,7 +239,35 @@ function QuickAccess:update_snap_rotation() self:UpdateNumberBox("SnapRotation")
 function QuickAccess:toggle_local_move() self._parent:toggle_local_move() end
 function QuickAccess:deselect_unit() BLE.Utils:GetPart("static"):deselect_unit() end
 function QuickAccess:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
-function QuickAccess:to_selection() return BLE.Utils:GetPart("static"):KeyFPressed() end
+
+function QuickAccess:open_teleport_menu(item) 
+    local items = {"default"}
+    local bookmarks = managers.worlddefinition and managers.worlddefinition._world_data and managers.worlddefinition._world_data.camera_bookmarks
+    if bookmarks then
+        for name, data in pairs(bookmarks) do
+           if data and type(data) == "table" then
+                table.insert(items, 1, name)
+            end
+        end
+    end
+    if BLE.Utils:GetPart("static")._selected_units[1] then
+        table.insert(items, #items+1, " -Selection- ")
+    end
+    item.items = items
+    item.ContextMenuCallback = item.ContextMenuCallback or function(self, item)
+        if item == " -Selection- " then
+            BLE.Utils:GetPart("static"):KeyFPressed() 
+        else
+            BLE.Utils:GetPart("world"):get_layer("main"):jump_to_bookmark(item)
+        end
+        return
+    end
+
+    item._list:update_search()
+    item._list:show()
+    item._list:reposition()
+end
+
 function QuickAccess:open_options()
     BLE.Menu:select_page("options")
     BLE.Menu:set_enabled(true)
