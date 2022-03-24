@@ -30,7 +30,7 @@ function SpawnMenu:begin_spawning_element(element)
     self:begin_spawning("units/mission_element/element")
 end
 
-function SpawnMenu:begin_spawning(unit, pos, rot)
+function SpawnMenu:begin_spawning(unit, pos, rot, orientate)
     local begin_spawning = function()
         self._currently_spawning = unit
         self:remove_dummy_unit()
@@ -43,7 +43,9 @@ function SpawnMenu:begin_spawning(unit, pos, rot)
             end
             self._dummy_spawn_unit = World:spawn_unit(unit:id(), pos or self._parent._spawn_position, rot)
         end
-
+        if orientate then
+            self._currently_orientating = unit
+        end
         self:SetTitle("Press: LMB to spawn, RMB to cancel") 
     end
     if PackageManager:has(Idstring("unit"), unit:id()) then
@@ -73,10 +75,18 @@ function SpawnMenu:mouse_pressed(button, x, y)
             local unit = self._parent:SpawnUnit(self._currently_spawning)
             self:GetPart("select"):get_menu("unit"):add_object(unit)
             self:GetPart("undo_handler"):SaveUnitValues({unit}, "spawn")
+            if self._currently_orientating then
+                self:remove_dummy_unit()
+                self._currently_spawning = nil
+            end
+            return true
+        elseif self._currently_orientating then
+            self:begin_spawning(self._currently_orientating, nil, nil, true)
             return true
         end
-    elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element) then
+    elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element or self._currently_orientating) then
         self:remove_dummy_unit()
+        self._currently_orientating = nil
         self._currently_spawning = nil
         self._currently_spawning_element = nil
         self:SetTitle()
@@ -103,6 +113,8 @@ function SpawnMenu:is_spawning()
     return self._currently_spawning_element or self._currently_spawning
 end
 
+local orient_rot = Rotation()
+local orient_pos = Vector3()
 function SpawnMenu:update(t, dt)
     self.super.update(self, t, dt)
 
@@ -113,6 +125,18 @@ function SpawnMenu:update(t, dt)
         end
         Application:draw_line(self._parent._spawn_position - Vector3(0, 0, 2000), self._parent._spawn_position + Vector3(0, 0, 2000), 0, 1, 0)
         Application:draw_sphere(self._parent._spawn_position, 30, 0, 1, 0)
+    elseif self._currently_orientating and self._parent:selected_unit() then
+        local pos = self._parent:selected_unit():position()
+        mvector3.set(orient_pos, pos) 
+        mvector3.set(orient_pos, self._parent._spawn_position - orient_pos)
+        mvector3.set_z(orient_pos, 0)
+        mrotation.set_look_at(orient_rot, orient_pos, math.UP)
+
+        self._parent:set_unit_rotations(orient_rot)
+        self._parent:update_positions(orient_rot)
+        Application:draw_line(pos - Vector3(0, 0, -50), pos + Vector3(0, 0, -50) + ((pos + orient_pos) - pos):normalized() * 2000, 0, 1, 0)
+        Application:draw_sphere(pos, 30, 0, 1, 0)
+        Application:draw_line(pos - Vector3(0, 0, 2000), pos + Vector3(0, 0, 2000), 0, 1, 0)
     end
 end
 
