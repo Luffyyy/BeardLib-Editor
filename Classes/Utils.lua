@@ -69,6 +69,7 @@ Utils.ElementIcons = {
 	TimerTrigger = {256, 128},
 	TimerOperator = {320, 128},
 	HeistTimer = {385, 128},
+    Clock = {385, 128},
 	Filter = {448, 128},
 	PlayerSpawner = {0, 192},
 	SpawnCivilian = {64, 192},

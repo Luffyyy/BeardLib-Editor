@@ -438,6 +438,7 @@
 	    <value_node value="ElementAreaDespawn"/>
         <value_node value="ElementSpawnTeamAI"/>
         <value_node value="ElementForceEndAssaultState"/>
+        <value_node value="ElementClock"/>
 	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
 	    <value_node value="ElementHeistTimerTrigger"/-->
 	<value_node value="ElementAIGroupType"/>
