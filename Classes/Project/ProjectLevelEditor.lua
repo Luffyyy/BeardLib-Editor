@@ -39,7 +39,7 @@ function ProjectLevelEditor:build_menu(menu, data)
     menu:numberbox("GhostBonus", up, data.data or 0, {max = 1, min = 0, step = 0.1})
     menu:numberbox("MaxBags", up, data.max_bags, {max = 999, min = 0, floats = 0})
 
-    local aitype = table.map_keys(LevelsTweakData.LevelType)
+    local aitype = table.map_keys(tweak_data.levels.ai_groups)
     menu:combobox("AiGroupType", up, aitype, table.get_key(aitype, data.ai_group_type) or 1)
 
     local styles = table.map_keys(tweak_data.scene_poses.player_style)
