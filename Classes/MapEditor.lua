@@ -33,6 +33,7 @@ function Editor:init(data)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
     self._hidden_units = {}
     self._use_local_move = true
+    self._disable_portals = true
 
 	self._brush = Draw:brush()
     self._brush:set_font(Idstring("fonts/font_medium"), 32)
@@ -628,6 +629,7 @@ function Editor:update_snap_rotation(value)
         end
     end
 end
+function Editor:set_disable_portals(value) self._disable_portals = value end
 
 function Editor:hide_units() 
     local selected_units = self:selected_units()
@@ -740,6 +742,8 @@ function Editor:viewport() return self._vp end
 function Editor:camera_fov() return self:camera():fov() end
 function Editor:set_camera_far_range(range) return self:camera():set_far_range(range) end
 function Editor:hidden_units() return self._hidden_units end
+function Editor:disable_portals() return self._enabled and self._disable_portals end
+
 
 function Editor:cam_spawn_pos()
     local cam = managers.viewport:get_current_camera()

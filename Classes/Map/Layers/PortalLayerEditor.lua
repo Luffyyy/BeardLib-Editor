@@ -90,6 +90,7 @@ function PortalLayer:build_menu()
     local h = self._holder:ItemsHeight(4) / 4
 	local opt = self:GetPart("opt")
 
+    self._holder:tickbox("EnablePortalsInEditor", ClassClbk(self, "set_disable_portals"), false)
     self._holder:tickbox("DrawPortals", nil, true)
     local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
@@ -373,4 +374,9 @@ end
 
 function PortalLayer:can_unit_be_selected(unit)
 	return self._holder:GetItemValue("DrawPortals")
+end
+
+function PortalLayer:set_disable_portals(item)
+	managers.editor:set_disable_portals(not item:Value())
+    managers.portal:pseudo_reset()
 end

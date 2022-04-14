@@ -326,6 +326,7 @@
         <value_node value="ElementAssetTrigger"/>
         <value_node value="ElementAwardAchievment"/>
         <value_node value="ElementBainState"/>
+        <value_node value="ElementEndscreenVariant"/>
         <value_node value="ElementBlackscreenVariant"/>
         <value_node value="ElementBlurZone"/>
         <value_node value="ElementCarry"/>
@@ -424,7 +425,6 @@
         <value_node value="ElementApplyJobValue"/>
         <value_node value="ElementJobValueFilter"/>
         <value_node value="ElementStopEffect"/>
-        <value_node value="ElementEndscreenVariant"/>
         <value_node value="ElementLootBagTrigger"/>
 	    <value_node value="ElementCounterReset"/>
 	    <value_node value="ElementTerminateAssault"/>
@@ -436,6 +436,9 @@
 	    <value_node value="ElementInstigatorTrigger"/>
 	    <value_node value="ElementHeistTimer"/>
 	    <value_node value="ElementAreaDespawn"/>
+        <value_node value="ElementSpawnTeamAI"/>
+        <value_node value="ElementForceEndAssaultState"/>
+        <value_node value="ElementClock"/>
 	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
 	    <value_node value="ElementHeistTimerTrigger"/-->
 	<value_node value="ElementAIGroupType"/>

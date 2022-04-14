@@ -4,7 +4,9 @@ function SearchList:init(parent)
     self._menu = parent._holder:pan("Tab", {visible = false, auto_height = false, stretch_to_bottom = true, scrollbar = false})
 
     self._options = self._menu:group("Options")
-    self._options:textbox("Search", ClassClbk(self, "do_search", false, false), nil, {control_slice = 0.75})
+    local search = self._options:textbox("Search", ClassClbk(self, "do_search", false, false), nil, {textbox_offset = 22, control_slice = 0.75})
+    local h = self._options:ItemsHeight(1)
+    search:tb_imgbtn("ClearSearch", ClassClbk(self, "clear_search"), nil, BLE.Utils.EditorIcons.cross, {w = h, h = h, offset = 0, img_scale = 0.5, position = "RightCentery"})
 
     self._parent = parent
     self._pages_panel = self._menu:holder("Pages", {align_method = "centered_grid", auto_align = false, h = 32, size = self._menu.size * 0.9, inherit_values = {offset = 2}, visible = not self.HIDE_PAGINATION})
@@ -18,6 +20,11 @@ end
 
 function SearchList:set_visible(vis)
     self._menu:SetVisible(vis)
+end
+
+function SearchList:clear_search(item)
+    self._options:GetItem("Search"):SetValue("")
+    self:do_search(false, false)
 end
 
 function SearchList:on_click_item(name)

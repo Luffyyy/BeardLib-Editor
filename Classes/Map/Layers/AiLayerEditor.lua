@@ -156,7 +156,9 @@ function AiEditor:build_menu()
     self:_build_ai_data(ai_data)
 
     local other = self._holder:group("Other")
-    other:button("SpawnCoverPoint", ClassClbk(self:part("spawn"), "begin_spawning", "units/dev_tools/level_tools/ai_coverpoint"))
+    other:button("SpawnCoverPoint", function()
+        self:part("spawn"):begin_spawning("units/dev_tools/level_tools/ai_coverpoint", nil, nil, true)
+    end)
     other:button("SaveCoverData", ClassClbk(self:part("opt"), "save_cover_data", false))
 end
 
