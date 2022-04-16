@@ -81,6 +81,10 @@ function SpawnMenu:mouse_pressed(button, x, y)
             end
             return true
         elseif self._currently_orientating then
+            local unit = self._parent:selected_unit()
+            if alive(unit) then
+                BLE.Utils:SetPosition(unit, unit:position(), unit:rotation())
+            end
             self:begin_spawning(self._currently_orientating, nil, nil, true)
             return true
         end
