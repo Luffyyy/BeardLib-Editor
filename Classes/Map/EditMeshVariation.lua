@@ -21,7 +21,11 @@ function EditMeshVariation:set_unit_data()
     ud.mesh_variation = self._menu:GetItem("MeshVariation"):SelectedItem()
     local mesh_variation = ud.mesh_variation
     if mesh_variation and mesh_variation ~= "" then
-        managers.sequence:run_sequence_simple2(mesh_variation, "change_state", unit)
+        
+        --The delayed collision update breaks animations in the sequence, so this needs a delay too
+        BeardLib:AddDelayedCall("BLEMeshVariation"..tostring(mesh_variation), 0.015, function()
+            managers.sequence:run_sequence_simple2(mesh_variation, "change_state", unit)
+        end, true)
     end
 
     local material = self._menu:GetItem("MaterialVariation"):Value()
