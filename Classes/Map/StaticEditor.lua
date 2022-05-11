@@ -151,7 +151,11 @@ function Static:finish_grabbing()
     transform:SetEnabled(true)
 end
 
-function Static:deselect_unit(item) self:set_unit(true) end
+function Static:deselect_unit(item) 
+    self:set_unit(true) 
+    self:GetPart("select"):reload_menus()
+end
+
 function Static:mouse_released(button, x, y)
     if not self:enabled() then
         return
@@ -619,6 +623,7 @@ function Static:set_unit_group(old_id, new_id, old_continent, new_continent)
 				for i, unit_id in pairs(group.units) do
 					if unit_id == old_id then
 						group.units[i] = new_id
+                        self:GetPart("select"):reload_menu("group")
 						return
 					end
 				end
@@ -651,6 +656,7 @@ function Static:set_group_name(item, group, name)
         if item then
             self._selected_group.name = item:Value()
             self:part("world"):refresh()
+            self:GetPart("select"):reload_menu("group")
             return
         end
         for _, editor_group in pairs(managers.worlddefinition._continent_definitions[continent].editor_groups) do
@@ -660,6 +666,7 @@ function Static:set_group_name(item, group, name)
         end
     end
     self:part("world"):refresh()
+    self:GetPart("select"):reload_menu("group")
 end
 
 function Static:remove_group(item, group)
@@ -672,6 +679,7 @@ function Static:remove_group(item, group)
         end
     end
     self:part("world"):refresh()
+    self:GetPart("select"):reload_menu("group")
 end
 
 function Static:add_group(item)
@@ -694,6 +702,7 @@ function Static:add_group(item)
             self:build_group_options()
         end
         self:part("world"):refresh()
+        self:GetPart("select"):reload_menu("group")
     end})
 end
 
@@ -924,6 +933,7 @@ function Static:set_selected_unit(unit, add, skip_menu, skip_recalc)
                 if #self._selected_group.units <= 1 then
                     self:remove_group()
                 end
+                self:GetPart("select"):reload_menu("group")
             end
         else
             if self:GetPart("opt"):get_value("SelectEditorGroups") and not unit:fake() then
@@ -1032,13 +1042,18 @@ function Static:select_unit(mouse2)
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
-                if not mouse2 and ctrl() then
+                if not mouse2 and (ctrl() or alt()) then
                     local selected_unit = self:selected_unit()
                     if alive(selected_unit) and selected_unit:mission_element() then
                         local script = self:GetPart("mission")._current_script
                         if script then
-                            script:link_selection(ray.unit)
-                            return
+                            if ctrl() then
+                                script:link_selection(ray.unit)
+                                return
+                            elseif alt() and script.link_managed then
+                                script:link_managed(ray.unit)
+                                return
+                            end
                         end
                     end
                 end

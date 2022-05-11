@@ -4,14 +4,17 @@ function SelectMenu:init(parent, menu)
     local unit_key = BLE.Options:GetValue("Input/SelectUnit")
     local element_key = BLE.Options:GetValue("Input/SelectElement")
     local instance_key = BLE.Options:GetValue("Input/SelectInstance")
+    local group_key = BLE.Options:GetValue("Input/SelectGroup")
 
     self._tabs:s_btn("Unit", ClassClbk(self, "open_tab"), {border_bottom = true, text = string.len(unit_key) > 0 and "Unit ("..unit_key..")" or nil})
     self._tabs:s_btn("Element", ClassClbk(self, "open_tab"), {text = string.len(element_key) > 0 and "Element ("..element_key ..")" or nil})
     self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"), {text = string.len(instance_key) > 0 and "Instance ("..instance_key ..")" or nil})
+    self._tabs:s_btn("Group", ClassClbk(self, "open_tab"), {text = string.len(group_key) > 0 and "Group ("..group_key ..")" or nil})
     self._tab_classes = {
         unit = UnitSelectList:new(self),
         element = ElementSelectList:new(self),
         instance = InstanceSelectList:new(self),
+        group = GroupSelectList:new(self)
     }
     self._tab_classes.unit:set_visible(true)
 end
@@ -65,4 +68,6 @@ function SelectMenu:enable()
     SelectMenu.super.enable(self)
     self:bind_opt("SelectUnit", ClassClbk(self, "open_tab_by_name", "unit", true))
     self:bind_opt("SelectElement", ClassClbk(self, "open_tab_by_name", "element", true))
+	self:bind_opt("SelectInstance", ClassClbk(self, "open_tab_by_name", "instance", true))
+	self:bind_opt("SelectGroup", ClassClbk(self, "open_tab_by_name", "group", true))
 end

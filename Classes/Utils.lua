@@ -24,6 +24,7 @@ Utils.EditorIcons = {
     alert = {304, 0, 48, 48},
     settings_gear = {320, 448, 64, 64},
     select = {64, 0, 32, 32},
+    select_all = {128, 160, 32, 32},
     copy = {64, 96, 32, 32},
     paste = {96, 96, 32, 32},
     round_number = {128, 96, 32, 32},

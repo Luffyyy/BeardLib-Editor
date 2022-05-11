@@ -148,6 +148,7 @@
                 <option type="string" default_value="" name="SpawnInstance"/>
                 <option type="string" default_value="" name="SpawnPrefab"/>
                 <option type="string" default_value="" name="SelectInstance"/>
+                <option type="string" default_value="" name="SelectGroup"/>
 
                 <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
