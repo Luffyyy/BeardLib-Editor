@@ -98,20 +98,35 @@ end
 
 function LoadLevelMenu:do_load_levels()
     local levels = self:GetItem("LevelList")
+	local vanilla = self:GetItem("Vanilla"):Value()
+	local custom = self:GetItem("Custom"):Value()
     local loc = managers.localization
 	levels:ClearItems()
 
 	for _, id in pairs(tweak_data.levels._level_index) do
 		local level = tweak_data.levels[id]
 		if level then
-			levels:button(id, ClassClbk(self, "load_level"), {text = (level.name_id and loc:text(level.name_id) or "").."/"..id})
+			if (level.custom and custom) or (not level.custom and vanilla) then
+				levels:button(id, ClassClbk(self, "load_level"), {text = (level.name_id and loc:text(level.name_id) or "").."/"..id, vanilla = not level.custom})
+			end
 		end
 	end
 
-	for path, instance in pairs(BeardLib.managers.MapFramework._loaded_instances) do
-		local id = instance._config.id
-		path = path:gsub("levels/", ""):gsub("/world", "")
-		levels:button(path, ClassClbk(self, "load_level"), {text = path, instance = true})
+	if custom then
+		for path, instance in pairs(BeardLib.managers.MapFramework._loaded_instances) do
+			local id = instance._config.id
+			path = path:gsub("levels/", ""):gsub("/world", "")
+			levels:button(path, ClassClbk(self, "load_level"), {text = path, instance = true})
+		end
+	end
+
+	if self:GetItem("Vanilla"):Value() then
+		for _, path in pairs(BLE.Utils:GetEntries({type = "world"})) do
+			if path:match("levels/instances") then
+				path = path:gsub("levels/", ""):gsub("/world", "")
+				levels:button(path, ClassClbk(self, "load_level"), {text = path, vanilla = true, instance = true})
+			end
+		end
 	end
 
 	self:search_levels()
@@ -235,7 +250,8 @@ function LoadLevelMenu:load_level(item)
 	local function load()
 		Global.editor_mode = true
 		Global.current_mission_filter = filter == 0 and nil or filter
-		Global.editor_loaded_instance = item.instance and true or false
+		Global.editor_loaded_instance = item.instance and item.instance or false
+		Global.editor_return_bookmark = item.return_bookmark
         Global.editor_safe_mode = safe_mode == true
         Global.check_load_time = check_load == true
         Global.editor_log_on_spawn = log_on_spawn == true
@@ -254,16 +270,18 @@ function LoadLevelMenu:load_level(item)
         BLE.Menu:set_enabled(false)
 
 	--Saving the last loaded heist to file for the restart button
-	BLE.Options:SetValue("LastLoaded", {name = item.name, narr_id = item.narr_id, instance = item.instance or nil, real_id = item.real_id or nil, vanilla = item.vanilla})
+	BLE.Options:SetValue("LastLoaded", {name = item.name, narr_id = item.narr_id, instance = item.instance and true or nil, real_id = item.real_id or nil, vanilla = item.vanilla})
     end
 
     local load_tbl = {{"Yes", load}}
-    if item.vanilla then
-        BLE.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla heist you can only preview it, clone the heist if you wish to edit the heist!"}, load_tbl)
+	local unsaved_warning = Global.editor_mode and "\n\nAll unsaved progress on the current level will be lost!" or ""
+	if item.vanilla then
+		local level_type = item.instance and "instance" or "heist"
+       	BLE.Utils:QuickDialog({title = "Preview level '" .. tostring(level_id).."'?", message = "Since this is a vanilla " ..level_type.. " you can only preview it, clone the " ..level_type.. " if you wish to edit it!"..unsaved_warning}, load_tbl)
     elseif safe_mode then
-        BLE.Utils:QuickDialog({title = "Test level '" .. tostring(level_id).."'?", message = "Safemode is used to access the assets manager when the units fail to load by not spawning them"}, load_tbl)        
+        BLE.Utils:QuickDialog({title = "Test level '" .. tostring(level_id).."'?", message = "Safemode is used to access the assets manager when the units fail to load by not spawning them"..unsaved_warning}, load_tbl)        
     else
-        BLE.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "This will load the level in the editor and will allow you to edit it"}, load_tbl)
+        BLE.Utils:QuickDialog({title = "Edit level '" .. tostring(level_id).."'?", message = "This will load the level in the editor and will allow you to edit it"..unsaved_warning}, load_tbl)
     end
 end
 

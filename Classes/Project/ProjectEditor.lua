@@ -231,6 +231,7 @@ end
 --- @param mod table
 function ProjectEditor:delete_module(mod)
     BLE.Utils:YesNoQuestion("This will delete the module. Any data related to that module will be lost and cannot retrieved.", function()
+        mod:delete()
         table.delete_value(self._data, mod._data)
         table.delete_value(self._modules, mod)
         self:save_data_callback()
@@ -262,7 +263,6 @@ function ProjectEditor:delete_current_module()
     if not self._current_module then
         return
     end
-    self._current_module:delete()
     self:delete_module(self._current_module)
 end
 

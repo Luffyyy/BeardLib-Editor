@@ -2,7 +2,7 @@ Hooks:PreHook(Setup, "start_loading_screen", "BeardLibEditorStartLoadingScreen",
 	Global.level_data.editor_load = nil
 	if Global.level_data and Global.editor_mode then
 		local level_tweak_data = tweak_data.levels[Global.current_level_id]
-		if level_tweak_data then
+		if level_tweak_data or Global.editor_loaded_instance then
 			local gui_data = CoreGuiDataManager.GuiDataManager:new(LoadingEnvironmentScene:gui())
 			local ws = gui_data:create_fullscreen_workspace()
 			local panel = ws:panel():panel({name = "Load", layer = 50})

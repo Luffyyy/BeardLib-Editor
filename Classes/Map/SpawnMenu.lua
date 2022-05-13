@@ -8,7 +8,7 @@ function SpawnMenu:init(parent, menu)
     SelectMenu.super.init(self, parent, menu, "Spawn Menu", {make_tabs = true, scrollbar = false})
     self._tabs:s_btn("Unit", ClassClbk(self, "open_tab"), {border_bottom = true, text = string.len(unit_key) > 0 and "Unit ("..unit_key..")" or nil})
     self._tabs:s_btn("Element", ClassClbk(self, "open_tab"), {text = string.len(element_key) > 0 and "Element ("..element_key..")" or nil})
-    self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"), {text = string.len(instance_key) > 0 and "Instance ("..instance_key..")" or nil})
+    self._tabs:s_btn("Instance", ClassClbk(self, "open_tab"), {text = string.len(instance_key) > 0 and "Instance ("..instance_key..")" or nil, enabled = not Global.editor_loaded_instance})
     self._tabs:s_btn("Prefab", ClassClbk(self, "open_tab"), {text = string.len(prefab_key) > 0 and "Prefab ("..prefab_key..")" or nil})
     self._tab_classes = {
         unit = UnitSpawnList:new(self),

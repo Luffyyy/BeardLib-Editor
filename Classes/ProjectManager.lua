@@ -78,7 +78,7 @@ end
 --- @return table
 function ProjectManager:get_level_by_id(data, id)
     if not data then
-        return tweak_data.levels[id]
+        return tweak_data.levels[id] or {}
     end
 
     for _, level in pairs(XML:GetNodes(data, "level")) do
@@ -277,13 +277,16 @@ function ProjectManager:reload_mod(mod_name)
         end
     end
     BeardLib.managers.MapFramework:RemoveMod(mod_name)
-    self:load_mods()
+    self:load_mods(mod_name)
 end
 
 --- Loads BeardLib mods again (MapFramework).
-function ProjectManager:load_mods()
+function ProjectManager:load_mods(mod_name)
     BeardLib.managers.MapFramework:Load()
     BeardLib.managers.MapFramework:RegisterHooks()
+    if mod_name then
+        BeardLib.managers.MapFramework:GetModByName(mod_name):PreInitModules(true) --this is a mess
+    end
     BLE.LoadLevel:load_levels()
 end
 

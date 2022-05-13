@@ -584,9 +584,10 @@ function Editor:load_continents(continents)
 end
 
 function Editor:load_camera_location(camera_bookmarks)
-    if camera_bookmarks and camera_bookmarks.default and camera_bookmarks[camera_bookmarks.default] then
-        local bookmark = camera_bookmarks[camera_bookmarks.default]
+    if Global.editor_return_bookmark or (camera_bookmarks and camera_bookmarks.default and camera_bookmarks[camera_bookmarks.default]) then
+        local bookmark = Global.editor_return_bookmark or camera_bookmarks[camera_bookmarks.default]
         self:set_camera(bookmark.position, bookmark.rotation)
+        Global.editor_return_bookmark = nil
     end
 end
 

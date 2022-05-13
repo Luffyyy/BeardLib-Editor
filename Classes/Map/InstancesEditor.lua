@@ -16,7 +16,8 @@ function Instance:build_editor_menu()
     local other = self:group("Main")
     self._static:build_positions_items(true, true)
     self._static:SetTitle("Instance Selection")
-    other:textbox("Name", ClassClbk(self, "set_data"), nil, {help = "the name of the instance(make sure it's unique!)"})
+    other:textbox("Name", ClassClbk(self, "set_data"), nil, {help = "the name of the instance(make sure it's unique!)", control_slice = 0.8})
+    other:textbox("Instance", ClassClbk(self, "set_data"), nil, {enabled = false, control_slice = 0.8})
     other:combobox("Continent", ClassClbk(self, "set_data"), self._parent._continents, 1)
     other:combobox("Script", ClassClbk(self, "set_data"), table.map_keys(managers.mission._scripts), 1)
     other:tickbox("MissionPlaced", ClassClbk(self, "set_data"), false)
@@ -38,7 +39,7 @@ function Instance:set_instance(reset)
     self._static:clear_menu()
 end
 
-function Instance:delete_instances()
+function Instance:delete_instances(keep_links)
     for _, unit in pairs(self:selected_units()) do
         if alive(unit) and unit:fake() then
             local instance = unit:object()
@@ -50,7 +51,9 @@ function Instance:delete_instances()
                     end
                 end
             end
-            managers.mission:delete_links(instance.name, BLE.Utils.LinkTypes.Instance)
+            if not keep_links then
+                managers.mission:delete_links(instance.name, BLE.Utils.LinkTypes.Instance)
+            end
             for i, ins in pairs(instances) do
                 if ins.name == instance.name then
                     for _, unit in pairs(World:find_units_quick("all")) do
@@ -77,12 +80,62 @@ end
 function Instance:set_menu_unit(unit)
     self:build_editor_menu()
     local instance = unit:object()
+    local custom = BeardLib.managers.MapFramework._loaded_instances[instance.folder] and true or false
     self:GetItem("Name"):SetValue(instance.name, false, true)
+    self:GetItem("Instance"):SetValue(instance.folder, false, true)
     self:GetItem("MissionPlaced"):SetValue(instance.mission_placed)
     self:GetItem("Continent"):SetSelectedItem(instance.continent)
     self:GetItem("Script"):SetSelectedItem(instance.script)
+
+    local quick = self._static:GetItem("QuickActions")
+    quick:s_btn(custom and "Edit Instance" or "Preview Instance", ClassClbk(self, "edit_instance", instance.folder, custom))
+    if not custom then
+        quick:s_btn("Clone Instance", ClassClbk(self, "clone_instance", instance.folder))
+    end
     self._static:build_links(instance.name, BLE.Utils.LinkTypes.Instance)
     self._static:update_positions()
+end
+
+function Instance:edit_instance(path, custom)
+    path = path:gsub("levels/", ""):gsub("/world", "")
+    local level_data = {name = Global.game_settings.level_id, narr_id = Global.job_manager.current_job, return_bookmark = {position = managers.editor._camera_pos, rotation = managers.editor._camera_rot}}
+    BLE.LoadLevel:load_level({name = path, instance = level_data, vanilla = not custom})
+end
+
+function Instance:clone_instance(path)
+    BLE.MapProject:select_project(BLE.MapProject:current_mod())
+    ProjectInstanceEditor:new(BLE.MapProject._project, nil, {clone_path = path, final_callback = ClassClbk(self, "replace_instance")})
+end
+
+function Instance:replace_instance(success, data)
+    if success and data then
+        local function replace()
+            local current_mod = BLE.MapProject:current_mod()
+            local world_path = Path:Combine("levels/instances/mods/", current_mod.Name, data.id, "world")
+
+            local unit = self:selected_unit()
+            local instance = unit:object()
+            local name = instance.name
+            local continent = instance.continent
+            local script = instance.script
+            local mission_placed = instance.mission_placed 
+            local position = unit:position()
+            local rotation = unit:rotation()
+    
+            self:delete_instances(true)
+            self:GetPart("spawn"):SpawnInstance(world_path, {
+                name = name, 
+                position = position,
+                rotation = rotation,
+                continent = continent,
+                script = script,
+                mission_placed = mission_placed
+            }, true)
+            self:set_instance()
+            self:GetPart("opt"):save()
+        end
+        BLE.Utils:QuickDialog({title = "Replace Instance?", message = "Do you want to replace the instance with the newly created clone of it? (All links and properties will be carried over)"}, {{"Yes", replace}})
+    end
 end
 
 function Instance:update_positions()
