@@ -85,9 +85,14 @@ function EditMeshVariation:get_material_configs_from_meta(unit)
 
     if #groups > 0 then
         local list = BLE.Utils:GetEntries({type = "material_config", loaded = false, match = Path:GetDirectory(unit_name, "/"), filenames = false})
-
         for _, entry in ipairs(list) do
-			local node = BLE.Utils:ParseXml("material_config", entry)
+            local node = BLE.Utils:ParseXml("material_config", entry)
+            if not node then
+                local asset = BeardLibFileManager:Get("material_config", entry)
+                if asset and FileIO:Exists(asset.file) then
+                    node = SystemFS:parse_xml(asset.file, "r")
+                end
+            end
 
             if node then
                 for _, group in ipairs(groups) do
