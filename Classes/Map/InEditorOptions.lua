@@ -36,6 +36,7 @@ function Options:build_default()
         item:SetPositionByString("RightCentery")
         item:Move(-4)
     end, size_by_text = true, text = ""})
+    main:tickbox("UseLight", ClassClbk(self, "toggle_light"), false, {text = "Head Light", help = "Turn head light on / off"})
 
     local render_modes = {
         "deferred_lighting",
@@ -89,12 +90,22 @@ function Options:enable()
     self:bind_opt("DecreaseCameraSpeed", ClassClbk(self, "ChangeCameraSpeed", true))
     self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"), nil, true)
     self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
+    self:bind_opt("ToggleLight", ClassClbk(self, "toggle_light"))
 end
 
 function Options:pause_game(item) Application:set_pause(item.value) end
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
+
+function Options:toggle_light(item) 
+    if not item then
+        item = self:GetItem("UseLight")
+        item:SetValue(not item:Value())
+        self:GetPart("status"):ShowKeybindMessage("Head Light "..(item:Value() and "enabled" or "disabled"))
+    end
+    self._parent:toggle_light(item:Value())
+end
 
 function Options:ChangeCameraSpeed(decrease)
     local cam_speed = self:GetItem("CameraSpeed")

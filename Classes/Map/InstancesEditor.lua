@@ -89,7 +89,7 @@ function Instance:set_menu_unit(unit)
 
     local quick = self._static:GetItem("QuickActions")
     quick:s_btn(custom and "Edit Instance" or "Preview Instance", ClassClbk(self, "edit_instance", instance.folder, custom))
-    if not custom then
+    if BeardLib.current_level and not custom then
         quick:s_btn("Clone Instance", ClassClbk(self, "clone_instance", instance.folder))
     end
     self._static:build_links(instance.name, BLE.Utils.LinkTypes.Instance)

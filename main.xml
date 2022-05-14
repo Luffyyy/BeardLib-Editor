@@ -172,6 +172,7 @@
                 <option type="string" default_value="end" name="SettleUnits"/>
                 <option type="string" default_value="left ctrl+t" name="ToggleTransformOrientation"/>
                 <option type="string" default_value="v" name="HideUnits"/>
+                <option type="string" default_value="f" name="ToggleLight"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>

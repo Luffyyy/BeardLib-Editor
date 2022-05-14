@@ -9,8 +9,8 @@ function AboutMenu:init()
 		offset = 0,
 		texture = "textures/editor_logo",
 	})
-    local info = self:pan("Info", {w = 600, border_color = BLE.Options:GetValue("AccentColor")})
-    local function link_button(name, url) return info:button(name, SimpleClbk(os.execute, 'start "" "'..url..'"'), {text = name}) end
+    local info = self:pan("Info", {w = 600, border_color = BLE.Options:GetValue("AccentColor"), align_method ="centered_grid", offset = 2})
+    local function link_button(name, url) return info:button(name, SimpleClbk(os.execute, 'start "" "'..url..'"'), {text = name, size_by_text = true}) end
     local function center_text(text, opt) return info:divider(text, table.merge({color = false, text = text}, opt)) end
     center_text("Created by Luffy and Simon W")
     info:divider("Thanks:", {size = 32, border_left = false, border_bottom = true})
@@ -23,10 +23,12 @@ function AboutMenu:init()
     center_text("TheRealDannyyy for helping testing the dev branch")
     center_text("Sora for giving feedback and pushing quick bug fixes in github")
     center_text("For anyone else who helped!")
-    info:divider("Links", {size = 32, border_left = false, border_bottom = true})
+    info:divider("Links:", {size = 32, border_left = false, border_bottom = true})
     link_button("GitHub", "https://github.com/Luffyyy/BeardLib-Editor")
     link_button("ModWorkshop", "https://modworkshop.net/mod/16837")
-    link_button("Wiki", "https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor")
+    link_button("Beardlib Wiki", "https://luffyyy.gitbook.io/beardlib/")
+    link_button("Editor Wiki", "https://wiki.modworkshop.net/books/beardlib-editor-tutorials")
+    link_button("PD2M Guides", "https://payday2maps.net/guides/")
     link_button("Feedback", "https://github.com/Luffyyy/BeardLib-Editor/issues")
 end
 

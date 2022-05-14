@@ -40,6 +40,7 @@ function Editor:init(data)
     self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
 
     self:_init_post_effects()
+    self:_init_head_lamp()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
     self:check_has_fix()
@@ -210,6 +211,19 @@ function Editor:_init_post_effects()
 			end
 		}
 	}
+end
+
+function Editor:_init_head_lamp()
+	self._light = World:create_light("omni|specular")
+
+	self._light:set_far_range(20000)
+	self._light:set_color(Vector3(1, 1, 1))
+	self._light:set_multiplier(LightIntensityDB:lookup(Idstring("identity")))
+	self._light:set_enable(false)
+end
+
+function Editor:toggle_light(value)
+    self._light:set_enable(value)
 end
 
 function Editor:update_grid_size(value)
@@ -705,6 +719,9 @@ function Editor:destroy()
         World:delete_unit(self._move_widget._widget)
         World:delete_unit(self._rotate_widget._widget)
     end
+    if alive(self._light) then
+		World:delete_light(self._light)
+	end
     local menu_vis = self._editor_menu:Visible()
     self._menu:Destroy()
     local selected_units = self:selected_units()
@@ -825,7 +842,11 @@ function Editor:update(t, dt)
             self._before_state = game_state_machine:current_state_name()
             game_state_machine:change_state_by_name("editor")
         elseif managers.platform._current_presence == "Playing" then
-            game_state_machine:change_state_by_name(self._before_state or "ingame_waiting_for_players")
+            local state = self._before_state or "ingame_waiting_for_players"
+            if not game_state_machine:can_change_state_by_name(state) then
+                game_state_machine:change_state_by_name("ingame_standard")
+            end
+            game_state_machine:change_state_by_name(state)
         else
             game_state_machine:change_state_by_name("ingame_waiting_for_players")
         end
@@ -984,6 +1005,7 @@ function Editor:update_camera(t, dt)
     end
     if move then
         self:set_camera(pos_new, shft and rot_new or self:camera_rotation())
+        self._light:set_local_position(pos_new)
     end
 end
 

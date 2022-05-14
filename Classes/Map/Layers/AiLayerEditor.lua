@@ -13,7 +13,7 @@ function AiEditor:init(parent)
         { name = "blockers" },
         { name = "vis_graph", needs_unit = true },
         { name = "coarse_graph" },
-        { name = "nav_links", needs_unit = true },
+        { name = "nav_links" },
         { name = "covers" }
     }
 

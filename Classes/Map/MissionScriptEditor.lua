@@ -112,7 +112,7 @@ function MissionScriptEditor:_create_panel()
 	self:StringCtrl("editor_name", {group = self._main_group, help = "A name/nickname for the element, it makes it easier to find in the editor", data = self._element})
 	self:ColorCtrl("editor_color", {
 		group = self._main_group, return_hex = true,
-		help = "A unique color for this element for debugging purposes. Uses default if empty.", data = self._element, allow_empty = true
+		help = "A unique color for this element for debugging purposes. Uses default if empty.", data = self._element, allow_empty = true, use_alpha = false
 	})
 	self._main_group:GetToolbar():lbl("ID", {text = "ID "..self._element.id, size_by_text = true, offset = 6})
  	self:ComboCtrl("script", table.map_keys(managers.mission._scripts), {group = self._main_group, data = self._element})

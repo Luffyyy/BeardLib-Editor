@@ -108,7 +108,7 @@ function BLE:InitManagers(data)
         if not self._vp then
             self._vp = managers.viewport:new_vp(0, 0, 1, 1, "MapEditor", 10)
             self._camera_object = World:create_camera()
-            self._camera_object:set_near_range(20)
+            self._camera_object:set_near_range(1)
             self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
             self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
             self._camera_object:set_position(Vector3(864, -789, 458))
