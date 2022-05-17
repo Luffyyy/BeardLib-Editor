@@ -66,10 +66,12 @@ function Options:build_default()
     raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
     raycast:tickbox("SelectInstances", ClassClbk(self, "update_option_value"), self:Val("SelectInstances"))
     raycast:tickbox("SelectAllRaycast", nil, false)
+    raycast:tickbox("UseSnappoints", nil, false, {help = "Snap the grabbed unit onto pre-defined points on other units."})
     raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Val("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
     raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Val("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection",
     })
+    raycast:numberbox("SnappointRange", nil, 800, {text = "Snappoint Search Range"})
     raycast:numberbox("RaycastDistance", nil, 200000)
 
     local other = self:group("Other", groups_opt)

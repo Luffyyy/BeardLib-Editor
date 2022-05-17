@@ -110,6 +110,7 @@ function SpawnMenu:remove_dummy_unit()
         unit:set_enabled(false)
         unit:set_slot(0)
         World:delete_unit(unit)
+        self._dummy_spawn_unit = nil
     end
 end
 

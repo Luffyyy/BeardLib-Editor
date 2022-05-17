@@ -877,6 +877,7 @@ function Editor:update(t, dt)
             self:draw_marker(t, dt)
             self:draw_grid(t, dt)
             self:draw_ruler(t, dt)
+            self:update_snappoints(t, dt)
         else
             self.parts.cubemap_creator:update(t, dt)
         end
@@ -922,7 +923,6 @@ function Editor:current_position()
 
     local unit = self:get_dummy_or_grabbed_unit()
     local grid_size = self:grid_size()
-    
     if self._use_surface_move or ctrl() then
         p2 = self:get_cursor_look_point(25000)
         local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
@@ -964,7 +964,6 @@ function Editor:current_position()
             end
         end
     end
-
     self._current_pos = current_pos or self._current_pos
     return current_pos, current_rot
 end
@@ -1071,6 +1070,64 @@ function Editor:draw_marker(t, dt)
         end
     end
     self._spawn_position = pos
+end
+
+function Editor:update_snappoints(t, dt)
+    local pos = self._current_pos
+    local unit = self:get_dummy_or_grabbed_unit()
+    
+    if alive(unit) and self.parts.opt:get_value("UseSnappoints") and pos then
+		local r = self.parts.opt:get_value("SnappointRange")
+
+		Application:draw_sphere(pos, r, 1, 0, 1)
+        self._snap_table = self._snap_table or {}
+
+        local units = unit:find_units("intersect", "force_physics", "sphere", pos, r, managers.slot:get_mask("surface_move"))
+        local closest_snap = nil
+
+        for _, unit in ipairs(units) do
+            if unit:visible() then
+                local aligns = { unit:orientation_object() }-- intersect_unit:get_objects(Idstring("snap*"))
+                local objects = unit:get_objects_by_type(Idstring("object3d"))
+                if #objects > #self._snap_table / 2 then
+                    local start_pos = #self._snap_table / 2 + 1
+                    local end_pos = #objects - #self._snap_table / 2
+
+                    for i = start_pos, end_pos do
+                        table.insert(self._snap_table, Idstring("snap_"..i))
+                        local id = "snap_".. (i < 10 and ("0"..i) or i)
+                        table.insert(self._snap_table, Idstring(id))
+                    end
+                end
+                
+                for _, o in ipairs(objects) do
+                    if table.contains(self._snap_table, o:name()) then
+                        table.insert(aligns, o)
+                    end
+                end
+
+                for _, o in ipairs(aligns) do
+                    local len = (o:position() - pos):length()
+
+                    if len < r and (not closest_snap or len < (closest_snap:position() - pos):length()) then
+                        closest_snap = o
+                    end
+
+                    Application:draw_rotation_size(o:position(), o:rotation(), 400)
+                    Application:draw_sphere(o:position(), 50, 0, 1, 1)
+                end
+
+                Application:draw(unit, 1, 0, 0)
+            end
+        end
+
+        if closest_snap then
+            self._spawn_position = closest_snap:position()
+            self._current_rot = closest_snap:rotation() * unit:rotation():inverse()
+        end
+    elseif self._snap_table then
+        self._snap_table = nil
+	end
 end
 
 function Editor:draw_grid(t, dt)
