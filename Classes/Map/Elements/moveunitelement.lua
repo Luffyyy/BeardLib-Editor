@@ -8,7 +8,24 @@ function EditorMoveUnit:create_element()
     self._element.values.remember_unit_position = false
 end
 
-function EditorMoveUnit:update(t, dt)
+function EditorMoveUnit:update_selected()
+	for _, id in pairs(self._element.values.unit_ids) do
+		local unit = managers.worlddefinition:get_unit(id)
+		if alive(unit) then
+			self:draw_link({
+				from_unit = self._unit,
+				to_unit = unit,
+				r = 0,
+				g = 0.75,
+				b = 0
+			})
+			Application:draw(unit, 0, 0.75, 0)
+		else
+			table.delete(self._element.values.unit_ids, id)
+			return
+		end
+	end
+
     local end_pos = self._element.values.end_pos
     local start_pos = self._element.values.position
     if not end_pos and self._element.values.displacement then
@@ -19,7 +36,6 @@ function EditorMoveUnit:update(t, dt)
 		Application:draw_sphere(end_pos, 10, 1, 0, 0)
 		Application:draw_line(start_pos, end_pos, 0, 1, 0)
 	end
-	EditorMoveUnit.super.update(self, t, dt)
 end
 
 function EditorMoveUnit:update_positions(...)
@@ -145,6 +161,25 @@ function EditorRotateUnit:set_element_position(...)
         self._element.values.offset = nil
 	end
 	self:update_element()
+end
+
+function EditorRotateUnit:update_selected()
+	for _, id in pairs(self._element.values.unit_ids) do
+		local unit = managers.worlddefinition:get_unit(id)
+		if alive(unit) then
+			self:draw_link({
+				from_unit = self._unit,
+				to_unit = unit,
+				r = 0,
+				g = 0.75,
+				b = 0
+			})
+			Application:draw(unit, 0, 0.75, 0)
+		else
+			table.delete(self._element.values.unit_ids, id)
+			return
+		end
+	end
 end
 
 function EditorRotateUnit:_build_panel()

@@ -1,4 +1,5 @@
 EditorStatistics = EditorStatistics or class(MissionScriptEditor)
+EditorStatistics.ELEMENT_FILTER = {}
 function EditorStatistics:create_element()
     self.super.create_element(self)
     self._element.class = "ElementStatistics"

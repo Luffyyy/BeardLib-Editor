@@ -15,4 +15,5 @@ function EditorSpawnTeamAI:_build_panel()
 	end
 
 	self:ComboCtrl("character", characters)
+	self:Text("Spawns a team AI if possible. NOTE: If a character is provided and it's not available it will not be spawned at all!")
 end

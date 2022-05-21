@@ -17,3 +17,35 @@ function EditorRandom:_build_panel()
 	self:BooleanCtrl("ignore_disabled")
 	self:Text("Use 'Amount' only to specify an exact amount of elements to execute. Use 'Amount Random' to add a random amount to 'Amount' ('Amount' + random('Amount Random').")
 end
+
+function EditorRandom:update_selected(t, dt)
+    if not alive(self._unit) then
+        return
+    end
+
+    if self._element.values.counter_id then
+		local unit = self:GetPart('mission'):get_element_unit(self._element.values.counter_id)
+		local r, g, b = unit:mission_element():get_link_color()
+		if unit then
+			self:draw_link(
+				{
+					g = g,
+					b = b,
+					r = r,
+					from_unit = self._unit,
+					to_unit = unit
+				}
+			)
+		else
+			self._element.values.counter_id = nil
+		end
+    end
+end
+
+function EditorRandom:link_managed(unit)
+	if alive(unit) then
+		if unit:mission_element() and unit:mission_element().element.class == "ElementCounter" then
+			self:AddOrRemoveManaged("counter_id", {element = unit:mission_element().element}, {not_table = true})
+		end
+	end
+end

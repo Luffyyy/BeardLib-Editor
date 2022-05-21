@@ -1,4 +1,5 @@
 EditorEnemyDummyTrigger = EditorEnemyDummyTrigger or class(MissionScriptEditor)
+EditorEnemyDummyTrigger.ELEMENT_FILTER = {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup", "ElementSpawnCivilian", "ElementSpawnCivilianGroup"}
 function EditorEnemyDummyTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementEnemyDummyTrigger"
@@ -8,16 +9,19 @@ end
 
 function EditorEnemyDummyTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnEnemyGroup", "ElementSpawnCivilian", "ElementSpawnCivilianGroup"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("event", {
 		"alerted",
 		"death",
+		"fire_death",
 		"killshot",
 		"fled",
 		"spawn",
 		"panic",
 		"weapons_hot",
 		"tied",
+		"marked",
+		"unmarked",
 		"anim_act_01",
 		"anim_act_02",
 		"anim_act_03",

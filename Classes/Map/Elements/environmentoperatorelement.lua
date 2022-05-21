@@ -1,4 +1,5 @@
 EditorEnvironmentOperator = EditorEnvironmentOperator or class(MissionScriptEditor)
+EditorEnvironmentOperator.ELEMENT_FILTER = {}
 EditorEnvironmentOperator.ACTIONS = {
 	"set",
 	"enable_global_override",

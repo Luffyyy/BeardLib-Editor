@@ -18,6 +18,48 @@ function EditorAccessCamera:_build_panel()
 	self:NumberCtrl("pitch_limit", {floats = 0, min = -1}, {help = "Specify a pitch limit."})
 end
 
+function EditorAccessCamera:get_unit()
+	self._camera_unit = nil
+    if not self._element.values.camera_u_id then
+        return
+    end
+	local unit = managers.worlddefinition:get_unit(self._element.values.camera_u_id)
+	if alive(unit) then
+		self._camera_unit = unit
+	end
+end
+
+function EditorAccessCamera:update_element(...)
+    EditorAccessCamera.super.update_element(self, ...)
+    self:get_unit()
+end
+
+function EditorAccessCamera:update_selected(t, dt)
+	Application:draw_cone(self._unit:position(), self._unit:position() + self._unit:rotation():y() * 75, 35, 1, 1, 1)
+
+	if alive(self._camera_unit) then
+		self:draw_link({
+			g = 0.75,
+			b = 0,
+			r = 0,
+			from_unit = self._unit,
+			to_unit = self._camera_unit
+		})
+		Application:draw(self._camera_unit, 0, 0.75, 0)
+	elseif self._element.values.camera_u_id then
+		self._element.values.camera_u_id = nil
+		self._camera_unit = nil
+	end
+end
+
+function EditorAccessCamera:link_managed(unit)
+	if alive(unit) then
+		if unit:base() and unit:base().security_camera and unit:unit_data() then
+			self:AddOrRemoveManaged("camera_u_id", {unit = unit}, {not_table = true})
+		end
+	end
+end
+
 EditorAccessCameraOperator = EditorAccessCameraOperator or class(MissionScriptEditor)
 function EditorAccessCameraOperator:create_element()
 	self.super.create_element(self)

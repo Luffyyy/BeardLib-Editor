@@ -29,6 +29,20 @@ function EditorSpecialObjectiveGroup:update_selected(t, dt)
             end
         end
     end
+    if self._element.values.followup_elements then
+		for _, element_id in ipairs(self._element.values.followup_elements) do
+			local unit = self:GetPart("mission"):get_element_unit(element_id)
+			if alive(unit) then
+				self:draw_link({
+					from_unit = self._unit,
+					to_unit = unit,
+					r = 0,
+					g = 0.75,
+					b = 0
+				})
+			end
+		end
+	end
 end
 
 function EditorSpecialObjectiveGroup:_build_panel()
@@ -40,4 +54,15 @@ function EditorSpecialObjectiveGroup:_build_panel()
 	self:NumberCtrl("base_chance", {min = 0, max = 1, floats = 2, help = "Used to specify chance to happen (1==absolutely!)"})
 	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyGroup"})
 	self:BuildElementsManage("followup_elements", nil, {"ElementSpecialObjective"})
+end
+
+function EditorSpecialObjectiveGroup:link_managed(unit)
+	if alive(unit) and unit:mission_element() then
+		local element = unit:mission_element().element
+		if element.class == "ElementSpawnEnemyGroup" then
+			self:AddOrRemoveManaged("spawn_instigator_ids", {element = element})
+        elseif element.class == "ElementSpecialObjective" then
+			self:AddOrRemoveManaged("followup_elements", {element = element})
+		end
+	end
 end

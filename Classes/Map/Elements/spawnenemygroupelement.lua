@@ -1,4 +1,5 @@
 EditorSpawnEnemyGroup = EditorSpawnEnemyGroup or class(MissionScriptEditor)
+EditorSpawnEnemyGroup.ELEMENT_FILTER = {"ElementSpawnEnemyDummy"}
 EditorSpawnEnemyGroup.RANDOMS = {"amount"}
 function EditorSpawnEnemyGroup:create_element()
 	self.super.create_element(self)
@@ -34,7 +35,7 @@ end
 
 function EditorSpawnEnemyGroup:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("spawn_type", table.list_add({"ordered"}, {"random", "group", "group_guaranteed"}), {help = "Specify how the enemy will be spawned."})
 	self:BooleanCtrl("ignore_disabled", {help = "Select if disabled spawn points should be ignored or not"})
 	self:NumberCtrl("amount", {floats = 0, min = 0, help = "Specify amount of enemies to spawn from group"})

@@ -15,6 +15,7 @@ function EditorLogicChance:_build_panel()
 	})
 end
 EditorLogicChanceOperator = EditorLogicChanceOperator or class(MissionScriptEditor)
+EditorLogicChanceOperator.ELEMENT_FILTER = {"ElementLogicChance"}
  
 function EditorLogicChanceOperator:create_element()
 	self.super.create_element(self)
@@ -26,7 +27,7 @@ function EditorLogicChanceOperator:create_element()
 end
 function EditorLogicChanceOperator:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementLogicChance"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("operation", {
 		"none",
 		"add_chance",
@@ -44,6 +45,7 @@ function EditorLogicChanceOperator:_build_panel()
 end
 
 EditorLogicChanceTrigger = EditorLogicChanceTrigger or class(MissionScriptEditor)
+EditorLogicChanceTrigger.ELEMENT_FILTER = {"ElementLogicChance"}
 function EditorLogicChanceTrigger:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementLogicChanceTrigger"
@@ -54,7 +56,7 @@ end
 
 function EditorLogicChanceTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementLogicChance"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("outcome", {"fail", "success"}, {help = "Select an outcome to trigger on"})
 	self:Text("This element is a trigger to logic chance elements.")
 end

@@ -145,6 +145,10 @@ function MissionScriptEditor:_create_panel()
 	if self.USES_POINT_ORIENTATION then
 		self:BuildElementsManage("orientation_elements")
 	end
+
+	if self.INSTANCE_VAR_NAMES then
+		self:BuildInstanceVariables()
+	end
 end
 
 function MissionScriptEditor:open_wiki()
@@ -448,6 +452,43 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 		classes = classes,
 		nil_on_empty = opt.nil_on_empty
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list"}, opt))
+end
+
+function MissionScriptEditor:BuildInstanceVariables()
+	local options = {}
+	local elements = self:GetPart("mission"):units()
+	local has_params = false
+	for _, unit in pairs(elements) do
+        local element_unit = unit:mission_element()
+        if element_unit and element_unit.element.class == "ElementInstanceParams" then
+			for _, param in ipairs(element_unit.element.values.params) do
+				options[param.type] = options[param.type] or {"not_used"}
+				table.insert(options[param.type], param.var_name)
+				has_params = true
+			end
+        end
+    end
+
+	if not has_params then
+		return
+	end
+
+	self._instance_group = self._holder:group("Instance Variables")
+	for _, data in ipairs(self.INSTANCE_VAR_NAMES) do
+		local opt = self:BasicCtrlInit(data.value)
+		local value = self._element.values.instance_var_names and self._element.values.instance_var_names[data.value] or "not_used"
+		local items = options[data.type] or {"not_used"}
+		self._instance_group:combobox(data.value, ClassClbk(self, "set_instance_var_name"), items, table.get_key(items, value))
+	end
+end
+
+function MissionScriptEditor:set_instance_var_name(item)
+	local value = item:SelectedItem()
+	value = value ~= "not_used" and value or nil
+	self._element.values.instance_var_names = self._element.values.instance_var_names or {}
+	self._element.values.instance_var_names[item:Name()] = value
+	self._element.values.instance_var_names = next(self._element.values.instance_var_names) and self._element.values.instance_var_names or nil
+	self:update_element(true)
 end
 
 function MissionScriptEditor:add_selected_units(value_name, clbk)
@@ -819,4 +860,70 @@ function MissionScriptEditor:link_selection(unit)
 
 		self:update_element()
 	end
+end
+
+function MissionScriptEditor:link_managed(unit)
+	if alive(unit) then
+		local values = self._element.values
+		if values.unit_ids and unit:unit_data() then
+			local ud = unit:unit_data()
+			self:AddOrRemoveManaged("unit_ids", ud.unit_id)
+		elseif values.elements and unit:mission_element() then
+			local element = unit:mission_element().element
+			if self.ELEMENT_FILTER and not table.contains(self.ELEMENT_FILTER, element.class) then
+				return
+			end
+			self:AddOrRemoveManaged("elements", element.id)
+		elseif self.USES_POINT_ORIENTATION and unit:mission_element() then
+			local element = unit:mission_element().element
+			self:AddOrRemoveManaged("orientation_elements", element.id)
+		end
+	end
+end
+
+function MissionScriptEditor:AddOrRemoveManaged(value_name, data, params, clbk)
+	params = params or {}
+	local current_value = self._element.values[value_name]
+	local tdata
+	local id
+	if type(data) == "table" then
+		local unit = data.unit
+		local element = data.element
+		local instance = data.instance
+		id = (unit and unit:unit_data().unit_id) or instance or (element and element.id)
+		tdata = data
+	else
+		id = data
+	end
+
+	if not params.not_table then
+		self._element.values[value_name] = self._element.values[value_name] or {}
+		local add = id
+		if tdata and tdata.orig then
+			add = clone(tdata.orig)
+			add[tdata.key] = id
+
+			for i, value in ipairs(self._element.values[value_name]) do
+				if value[tdata.key] == id then
+					add = value
+					break
+				end
+
+			end
+		end
+
+		if table.contains(current_value, add) then
+			table.delete(self._element.values[value_name], add)
+		else
+			table.insert(self._element.values[value_name], add)
+		end
+	else
+		if self._element.values[value_name] == id then
+			self._element.values[value_name] = nil
+		else
+			self._element.values[value_name] = id
+		end
+	end
+	if clbk then clbk(value_name) end
+	self:update_element()
 end

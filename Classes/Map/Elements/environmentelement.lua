@@ -1,4 +1,5 @@
 EditorEnvironment = EditorEnvironment or class(MissionScriptEditor)
+EditorEnvironment.ELEMENT_FILTER = {}
 EditorEnvironment._actions = {"set"}
 function EditorEnvironment:create_element()
     self.super.create_element(self)

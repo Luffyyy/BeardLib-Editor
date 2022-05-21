@@ -27,7 +27,7 @@ function EditorEnableUnit:update_selected()
     if self._units then
         for id, unit in pairs(self._units) do
             if not alive(unit) then
-                table.delete(self._hed.unit_ids, id)
+                table.delete(self._element.values.unit_ids, id)
 
                 self._units[id] = nil
             else

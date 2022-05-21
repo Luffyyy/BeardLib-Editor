@@ -27,3 +27,29 @@ function EditorSecurityCamera:_build_panel()
 	self:NumberCtrl("detection_delay_min", {min = 0, floats = 0, help = "Detection delay at zero distance."})
 	self:NumberCtrl("detection_delay_max", {min = 0, floats = 0, help = "Detection delay at max distance."})
 end
+
+function EditorSecurityCamera:update_selected(t, dt)
+	Application:draw_cone(self._unit:position(), self._unit:position() + self._unit:rotation():y() * 75, 35, 1, 1, 1)
+
+	local unit = managers.worlddefinition:get_unit(self._element.values.camera_u_id)
+	if alive(unit) then
+		self:draw_link({
+			g = 0.75,
+			b = 0,
+			r = 0,
+			from_unit = self._unit,
+			to_unit = unit
+		})
+		Application:draw(unit, 0, 0.75, 0)
+	else
+		self._element.values.camera_u_id = nil
+	end
+end
+
+function EditorSecurityCamera:link_managed(unit)
+	if alive(unit) then
+		if unit:base() and unit:base().security_camera and unit:unit_data() then
+			self:AddOrRemoveManaged("camera_u_id", {unit = unit}, {not_table = true})
+		end
+	end
+end

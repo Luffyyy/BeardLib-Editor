@@ -7,6 +7,7 @@ function EditorDebug:create_element(...)
 	self._element.values.debug_string = "none"
 	self._element.values.as_subtitle = false
 	self._element.values.show_instigator = false
+	self._element.values.color = nil
 end
 
 function EditorDebug:_build_panel()
@@ -14,4 +15,5 @@ function EditorDebug:_build_panel()
 	self:StringCtrl("debug_string")
 	self:BooleanCtrl("as_subtitle", {text = "Show as subtitle"})
 	self:BooleanCtrl("show_instigator")
+	self:ColorCtrl("color", {use_alpha = false})
 end

@@ -22,9 +22,18 @@ function EditorStopwatch:_build_panel()
 	self:Text("Creates a Stopwatch element. Continuously counts up once started until stopped or paused. Can be operated on using the StopwatchOperator element. Can be displayed on a digital gui.")
 end
 
+function EditorStopwatch:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("digital_gui_unit_ids", {unit = unit})
+		end
+	end
+end
+
 EditorStopwatchOperator = EditorStopwatchOperator or class(MissionScriptEditor)
 EditorStopwatchOperator.RANDOMS = {"time"}
 EditorStopwatchOperator.LINK_ELEMENTS = {"elements"}
+EditorStopwatchOperator.ELEMENT_FILTER = {"ElementStopwatch"}
 function EditorStopwatchOperator:create_element(...)
 	EditorStopwatchOperator.super.create_element(self, ...)
 	self._element.class = "ElementStopwatchOperator"
@@ -72,7 +81,7 @@ end
 
 function EditorStopwatchOperator:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementStopwatch"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self._combo_operation = self:ComboCtrl("operation", {"none", "pause","start","add_time", "subtract_time", "reset", "set_time", "save_time", "load_time"}, {
 		help = "Select an operation for the selected elements"
 	})
@@ -87,6 +96,7 @@ function EditorStopwatchOperator:_build_panel()
 end
 
 EditorStopwatchTrigger = EditorStopwatchTrigger or class(MissionScriptEditor)
+EditorStopwatchTrigger.ELEMENT_FILTER = {"ElementStopwatch"}
 EditorStopwatchTrigger.LINK_ELEMENTS = {"elements"}
 function EditorStopwatchTrigger:create_element()
 	EditorStopwatchTrigger.super.create_element(self)
@@ -97,7 +107,7 @@ end
 
 function EditorStopwatchTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementStopwatch"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:NumberCtrl("time", {floats = 1, min = 0, help = "Specify at what time on the Stopwatch this should trigger."})
 	self:Text("This element is a trigger to stopwatch elements.")
 end
@@ -106,6 +116,7 @@ EditorStopwatchFilter = EditorStopwatchFilter or class(MissionScriptEditor)
 EditorStopwatchFilter.SAVE_UNIT_POSITION = false
 EditorStopwatchFilter.SAVE_UNIT_ROTATION = false
 EditorStopwatchFilter.LINK_ELEMENTS = {"elements"}
+EditorStopwatchFilter.ELEMENT_FILTER = {"ElementStopwatch"}
 function EditorStopwatchFilter:create_element()
 	EditorStopwatchFilter.super.create_element(self)
 	self._element.class = "ElementStopwatchFilter"
@@ -127,7 +138,7 @@ end
 
 function EditorStopwatchFilter:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementCounter"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("needed_to_execute", {"all", "any"}, {help = "Select how many counter elements are needed to execute"})
 	self._value_ctrl = self:NumberCtrl("value", {help = "Specify value to trigger on.", enabled = self._element.values.Stopwatch_value_ids[1] == nil})
 	self:BuildElementsManage("Stopwatch_value_ids", nil, {"ElementStopwatch"}, ClassClbk(self, "set_Stopwatch_value"), {

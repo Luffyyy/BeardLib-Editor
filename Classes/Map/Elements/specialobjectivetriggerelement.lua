@@ -1,4 +1,5 @@
 EditorSpecialObjectiveTrigger = EditorSpecialObjectiveTrigger or class(MissionScriptEditor)
+EditorSpecialObjectiveTrigger.ELEMENT_FILTER = {"ElementSpecialObjective","ElementSpecialObjectiveGroup"}
 EditorSpecialObjectiveTrigger._options = {
 	"anim_act_01",
 	"anim_act_02",
@@ -26,6 +27,6 @@ end
 
 function EditorSpecialObjectiveTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementSpecialObjective","ElementSpecialObjectiveGroup"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("event", self._options, {help = "Select an event from the combobox"})
 end

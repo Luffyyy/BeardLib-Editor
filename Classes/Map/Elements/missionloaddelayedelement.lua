@@ -27,9 +27,17 @@ function EditorLoadDelayed:update(t, dt)
 	EditorLoadDelayed.super.update(self, t, dt)
 end
 
+function EditorLoadDelayed:check_unit(unit)
+	return unit:unit_data().delayed_load ~= nil
+end
+
 function EditorLoadDelayed:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = function(unit)
-		return unit:unit_data().delayed_load ~= nil
-	end})
+	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = ClassClbk(self, "check_unit")})
+end
+
+function EditorLoadDelayed:link_managed(unit)
+	if alive(unit) and unit:unit_data() and self:check_unit(unit) then
+		self:AddOrRemoveManaged("unit_ids", {unit = unit})
+	end
 end

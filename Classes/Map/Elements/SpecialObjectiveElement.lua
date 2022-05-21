@@ -246,6 +246,17 @@ function EditorSpecialObjective:stop_test_element()
     self._enemies = {}
 end
 
+function EditorSpecialObjective:link_managed(unit)
+	if alive(unit) and unit:mission_element() then
+		local element = unit:mission_element().element
+		if table.contains({"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"}, element.class) then
+			self:AddOrRemoveManaged("spawn_instigator_ids", {element = element})
+        elseif table.contains({"ElementSpecialObjective", "ElementSpecialObjectiveGroup"}, element.class) then
+			self:AddOrRemoveManaged("followup_elements", {element = element})
+		end
+	end
+end
+
 
 function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()
@@ -266,6 +277,44 @@ function EditorSpecialObjective:manage_flags()
     })
 end
 
+function EditorSpecialObjective:UnitCtrl(value_name, typ, check_match, check_not_match, opt)
+	opt = self:BasicCtrlInit(value_name, opt)
+	opt.check = function(unit)
+		if unit:match("husk") then
+			return false
+		end
+		local check_match_tbl = type(check_match) == "table" and check_match or {check_match}
+		local check_not_match_tbl = type(check_not_match) == "table" and check_not_match or {check_not_match}
+		local passed = false
+        for _, check in pairs(check_match_tbl) do
+			if unit:match(check) then
+				passed = true
+			end
+		end
+        if not passed then return false end
+		for _, check in pairs(check_not_match_tbl) do
+			if unit:match(check) then
+				return false
+			end
+		end
+		return true
+	end
+	opt.not_close = true
+    local tb = (opt.group or self._holder):pathbox(value_name, ClassClbk(self, "set_element_data"), self:ItemData(opt)[value_name], typ, opt)
+    local reset = tb:tb_imgbtn("Reset", function() 
+        tb:SetValue("default", true) 
+    end, nil, BLE.Utils.EditorIcons.cross, {
+        help = "Reset Unit",
+        size = tb.size * 1.75,
+		position = function(item)
+			item:SetPositionByString("RightCentery")
+			item:Move(-6)
+		end
+    }) 
+    reset:SetIndex(1)
+    return tb
+end
+
 function EditorSpecialObjective:_build_panel()
 	self:_create_panel()
 	self._nav_link_filter = managers.navigation:convert_access_filter_to_table(self._element.values.SO_access)
@@ -276,6 +325,7 @@ function EditorSpecialObjective:_build_panel()
 	self._class_group:button("ManageAccessFlags", ClassClbk(self, "manage_flags"), {help = "Decide which types of AI are affected by this element"})
 	self:BuildElementsManage("followup_elements", nil, {"ElementSpecialObjective", "ElementSpecialObjectiveGroup"})
 	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"})
+    self:UnitCtrl("test_unit", "unit", {"/ene_", "/civ", "/npc"}, table.merge(BLE.Utils.EnemyBlacklist, {"dummy_corpse", "/civ_acc", "/npc_acc"}))
     self:Vector3Ctrl("search_position")
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})

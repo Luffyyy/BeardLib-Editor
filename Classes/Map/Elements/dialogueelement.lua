@@ -6,6 +6,9 @@ function EditorDialogue:create_element()
 	self._element.values.execute_on_executed_when_done = false
 	self._element.values.use_position = false
 	self._element.values.force_quit_current = nil 
+	self._element.values.use_instigator = false 
+	self._element.values.can_not_be_muted = false 
+	self._element.values.play_on_player_instigator_only = false 
 end
 function EditorDialogue:new_save_values(...)
 	local t = EditorDialogue.super.new_save_values(self, ...)
@@ -36,4 +39,7 @@ function EditorDialogue:_build_panel()
 	self:BooleanCtrl("force_quit_current", {help = "Force quits current dialog to allow this to be played immediately"})
 	self:BooleanCtrl("execute_on_executed_when_done", {help = "Execute on executed when done"})
 	self:BooleanCtrl("use_position")
+	self:BooleanCtrl("use_instigator", {help = "Play on instigator"})
+	self:BooleanCtrl("can_not_be_muted", {help = "This dialogue will play regardless of if the player has disabled contractor VO"})
+	self:BooleanCtrl("play_on_player_instigator_only", {help = "This dialogue will only play on the player that triggers it"})
 end

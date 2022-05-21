@@ -173,6 +173,7 @@
                 <option type="string" default_value="left ctrl+t" name="ToggleTransformOrientation"/>
                 <option type="string" default_value="v" name="HideUnits"/>
                 <option type="string" default_value="f" name="ToggleLight"/>
+                <option type="string" default_value="space" name="LinkManaged"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
@@ -332,7 +333,6 @@
         <value_node value="ElementBlackscreenVariant"/>
         <value_node value="ElementBlurZone"/>
         <value_node value="ElementCarry"/>
-        <value_node value="ElementVariable"/>
         <value_node value="ElementCharacterOutline"/>
         <value_node value="ElementCharacterSequence"/>
         <value_node value="ElementCharacterTeam"/>
@@ -446,7 +446,7 @@
 	<value_node value="ElementAIGroupType"/>
     </MissionElements>
     <AutoClassElements>
-        <value_node value="ElementPickupCriminalDeployables"/>
+        <!--<value_node value="ElementPickupCriminalDeployables"/> Moved to a normal class to give information about its functionality-->
     </AutoClassElements>
 	<script_data_types>
 		<value_node value="sequence_manager"/>

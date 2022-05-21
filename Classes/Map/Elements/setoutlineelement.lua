@@ -1,4 +1,5 @@
 EditorSetOutline = EditorSetOutline or class(MissionScriptEditor)
+EditorSetOutline.ELEMENT_FILTER = {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"}
 function EditorSetOutline:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSetOutline"
@@ -13,7 +14,7 @@ function EditorSetOutline:_build_panel()
 		"ai_spawn_enemy",
 		"ai_spawn_civilian"
 	}
-	self:BuildElementsManage("elements", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:BooleanCtrl("set_outline", {text = "Enable outline"})
 	self:BooleanCtrl("use_instigator", {text = "Instigator only"})
 	self:BooleanCtrl("clear_previous", {text = "Clear previous outlines"})

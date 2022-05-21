@@ -1,4 +1,5 @@
 EditorStatisticsContact = EditorStatisticsContact or class(MissionScriptEditor)
+EditorStatisticsContact.ELEMENT_FILTER = {}
 function EditorStatisticsContact:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementStatisticsContact"

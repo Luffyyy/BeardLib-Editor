@@ -22,7 +22,7 @@ function EditorTangoAward:_build_panel()
 	end
 
 	self._challenge_box = self:ComboCtrl("challenge", self._challenge_ids, {help = "Select a challenge from the combobox"})
-	PrintT(self:get_objectives())
+	--PrintT(self:get_objectives())
 	self._objective_box = self:ComboCtrl("objective_id", self:get_objectives(), {help = "Select a challenge objective from the combobox"})
 
 	self:BooleanCtrl("award_instigator", {help = "Award only the instigator (Player or driver in vehicle)?"})

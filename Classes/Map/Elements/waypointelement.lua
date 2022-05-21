@@ -25,7 +25,8 @@ EditorWaypoint._icon_options = {
 	"pd2_chainsaw",
 	"pd2_car",
 	"pd2_melee",
-	"pd2_water_tap"
+	"pd2_water_tap",
+	"pd2_bodybag"
 }
 
 function EditorWaypoint:create_element()
@@ -55,4 +56,5 @@ function EditorWaypoint:_build_panel()
 	self:StringCtrl("text_id")
 	self._text = self._class_group:divider("")
 	self:_set_text()
+	self:Info("You can use any id from HudIconsTweakData as a waypoint icon if you type them in.")
 end

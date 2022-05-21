@@ -55,7 +55,6 @@ function Static:RotateSpawnDummyRoll()
         unit:set_rotation(unit:rotation() * Rotation(0, 0, self:Val("RotateSpawnDummy")))
     end
 end
-
 function Static:SettleUnits()
     self:StorePreviousPosRot()
     local selected_units = self:selected_units()
@@ -139,6 +138,10 @@ function Static:mouse_pressed(button, x, y)
         self:select_unit(true)
         self._mouse_hold = true
     end
+end
+
+function Static:KeySpaceDown()
+    return BeardLib.Utils.Input:Down(BLE.Options:GetValue("Input/LinkManaged"))
 end
 
 function Static:finish_grabbing()
@@ -1042,7 +1045,7 @@ function Static:select_unit(mouse2)
                 if not self._mouse_hold then
                     self._parent:Log("Ray hit " .. tostring(ray.unit:unit_data().name_id).. " " .. ray.body:name())
                 end
-                if not mouse2 and (ctrl() or alt()) then
+                if not mouse2 and (ctrl() or self:KeySpaceDown()) then
                     local selected_unit = self:selected_unit()
                     if alive(selected_unit) and selected_unit:mission_element() then
                         local script = self:GetPart("mission")._current_script
@@ -1050,7 +1053,7 @@ function Static:select_unit(mouse2)
                             if ctrl() then
                                 script:link_selection(ray.unit)
                                 return
-                            elseif alt() and script.link_managed then
+                            elseif self:KeySpaceDown() then
                                 script:link_managed(ray.unit)
                                 return
                             end

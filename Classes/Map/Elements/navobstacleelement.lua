@@ -48,6 +48,31 @@ function EditorNavObstacle:_get_objects_by_unit(unit)
     return all_object_names
 end
 
+function EditorNavObstacle:update_selected()
+	for _, obstacle in pairs(self._element.values.obstacle_list) do
+		local unit = managers.worlddefinition:get_unit(obstacle.unit_id)
+		if alive(unit) then
+			self:draw_link({
+				from_unit = self._unit,
+				to_unit = unit,
+				r = 1,
+				g = 0,
+				b = 1
+			})
+			Application:draw(unit, 1, 0, 1)
+		else
+			table.delete(self._element.values.obstacle_list, obstacle)
+			return
+		end
+	end
+end
+
+function EditorNavObstacle:link_managed(unit)
+	if alive(unit) and unit:unit_data() then
+		self:AddOrRemoveManaged("obstacle_list", {unit = unit, key = "unit_id", orig = {unit_id = 0, obj_name = nil, guis_id = 1}})
+	end
+end
+
 function EditorNavObstacle._unindent_obj_name(obj)
     local obj_name = obj.unhashed
     while string.sub(obj_name, 1, 1) == "-" do

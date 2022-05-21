@@ -23,6 +23,36 @@ function EditorTimer:_build_panel()
 	self:Text("Creates a timer element. When the timer runs out, execute will be run. The timer element can be operated on using the timer operator element")
 end
 
+function EditorTimer:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("digital_gui_unit_ids", {unit = unit})
+		end
+	end
+end
+
+function EditorTimer:update_selected(t, dt)
+    if self._element.values.digital_gui_unit_ids then
+        for _, id in ipairs(self._element.values.digital_gui_unit_ids) do
+			local unit = managers.worlddefinition:get_unit(id)
+            if alive(unit) then
+                self:draw_link(
+                    {
+                        g = 0.75,
+                        b = 0,
+                        r = 0,
+                        from_unit = self._unit,
+                        to_unit = unit
+                    }
+                )
+				Application:draw(unit, 0, 0.75, 0)
+			else
+				table.delete(self._element.values.digital_gui_unit_ids, id)
+            end
+        end
+    end
+end
+
 EditorHeistTimer = EditorHeistTimer or class(EditorTimer)
 EditorHeistTimer.CLASS = "ElementHeistTimer"
 
@@ -31,7 +61,7 @@ EditorTimerOperator.RANDOMS = {"time"}
 EditorTimerOperator.LINK_ELEMENTS = {"elements"}
 EditorTimerOperator.CLASS = "ElementTimerOperator"
 EditorTimerOperator.MODULE = "CoreElementTimer"
-EditorTimerOperator.ELEMENTS = {"ElementTimer", "ElementHeistTimer"}
+EditorTimerOperator.ELEMENT_FILTER = {"ElementTimer", "ElementHeistTimer"}
 function EditorTimerOperator:create_element()
 	EditorTimerOperator.super.create_element(self)
 	self._element.values.operation = "none"
@@ -41,7 +71,7 @@ end
 
 function EditorTimerOperator:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, self.ELEMENTS)
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("operation", {"none","pause","start","add_time","subtract_time","reset","set_time"}, {help = "Select an operation for the selected elements"})
 	self:NumberCtrl("time", {floats = 1, min = 0, help = "Amount of time to add, subtract or set to the timers."})
 	self:Text("This element can modify timer element.")
@@ -51,7 +81,7 @@ EditorTimerTrigger = EditorTimerTrigger or class(MissionScriptEditor)
 EditorTimerTrigger.LINK_ELEMENTS = {"elements"}
 EditorTimerTrigger.CLASS = "ElementTimerTrigger"
 EditorTimerTrigger.MODULE = "CoreElementTimer"
-EditorTimerTrigger.ELEMENTS = {"ElementTimer", "ElementHeistTimer"}
+EditorTimerTrigger.ELEMENT_FILTER = {"ElementTimer", "ElementHeistTimer"}
 
 function EditorTimerTrigger:create_element()
 	EditorTimerTrigger.super.create_element(self)
@@ -60,7 +90,7 @@ function EditorTimerTrigger:create_element()
 end
 function EditorTimerTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, self.ELEMENTS)
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:NumberCtrl("time", {floats = 1, min = 0, help = "Specify how much time should be left on the timer to trigger"})
 	self:Text("This element is a trigger to timer element.")
 end
@@ -70,8 +100,8 @@ EditorHeistTimer.CLASS = "ElementHeistTimer"
 
 EditorHeistTimerOperator = EditorHeistTimerOperator or class(EditorTimerOperator)
 EditorHeistTimerOperator.CLASS = "ElementHeistTimerOperator"
-EditorHeistTimerOperator.ELEMENTS = {"ElementHeistTimer"}
+EditorHeistTimerOperator.ELEMENT_FILTER = {"ElementHeistTimer"}
 
 EditorHeistTimerTrigger = EditorHeistTimerTrigger or class(EditorTimerTrigger)
 EditorHeistTimerTrigger.CLASS = "ElementHeistTimerTrigger"
-EditorHeistTimerTrigger.ELEMENTS = {"ElementHeistTimer"}
+EditorHeistTimerTrigger.ELEMENT_FILTER = {"ElementHeistTimer"}

@@ -30,6 +30,14 @@ function EditorVehicleBoarding:_build_panel(disable_params)
 	self:_populate_seats_list()
 end
 
+function EditorVehicleBoarding:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("vehicle", {unit = unit}, {not_table = true}, ClassClbk(self, "set_vehicle"))
+		end
+	end
+end
+
 function EditorVehicleBoarding:set_vehicle()
     local id = self._element.values.vehicle
     local vehicle_unit = managers.worlddefinition:get_unit(id)
@@ -88,6 +96,7 @@ function EditorVehicleBoarding:_populate_seats_list()
 	end
 
 	self:_build_group()
+	self._holder:AlignItems(true)
 end
 
 function EditorVehicleBoarding:_build_group()

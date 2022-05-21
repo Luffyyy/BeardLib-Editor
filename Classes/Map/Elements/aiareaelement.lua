@@ -30,3 +30,9 @@ function EditorAIArea:_build_panel()
 	self._element.values.nav_segs = self._element.values.nav_segs or {}
 	self:BuildUnitsManage("nav_segs", nil, nil, {text = "Navigation Surfaces", units = {"core/units/nav_surface/nav_surface"}})
 end
+
+function EditorAIArea:link_managed(unit)
+	if alive(unit) and unit:unit_data() and unit:unit_data().name == "core/units/nav_surface/nav_surface" then
+		self:AddOrRemoveManaged("nav_segs", {unit = unit})
+	end
+end

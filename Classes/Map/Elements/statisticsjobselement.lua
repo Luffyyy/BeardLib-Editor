@@ -1,4 +1,5 @@
 EditorStatisticsJobs = EditorStatisticsJobs or class(MissionScriptEditor)
+EditorStatisticsJobs.ELEMENT_FILTER = {}
 function EditorStatisticsJobs:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementStatisticsJobs"

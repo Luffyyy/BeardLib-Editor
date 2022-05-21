@@ -174,6 +174,55 @@ function EditorAreaTrigger:_build_panel(disable_params)
 	self:set_shape_type()
 end
 
+function EditorAreaTrigger:link_managed(unit)
+	if alive(unit) and unit:mission_element() then
+		local element = unit:mission_element().element
+		if table.contains({"ElementAreaTrigger", "ElementShape"}, element.class) then
+			self:AddOrRemoveManaged("use_shape_element_ids", {element = element}, nil, ClassClbk(self, "nil_if_empty"))
+		elseif element.class == "ElementInstigatorRule" then
+			self:AddOrRemoveManaged("rules_element_ids", {element = element}, nil, ClassClbk(self, "nil_if_empty"))
+		end
+	end
+end
+
+function EditorAreaTrigger:update_selected(t, dt)
+	if self._element.values.use_shape_element_ids then
+		for _, id in ipairs(self._element.values.use_shape_element_ids) do
+			local unit = self:GetPart('mission'):get_element_unit(id)
+
+			if alive(unit) then
+				local r, g, b = unit:mission_element():get_link_color()
+
+				self:draw_link({
+					from_unit = unit,
+					to_unit = self._unit,
+					r = r,
+					g = g,
+					b = b
+				})
+			end
+		end
+	end
+	
+	if self._element.values.rules_element_ids then
+		for _, id in ipairs(self._element.values.rules_element_ids) do
+			local unit = self:GetPart('mission'):get_element_unit(id)
+
+			if alive(unit) then
+				local r, g, b = unit:mission_element():get_link_color()
+
+				self:draw_link({
+					from_unit = unit,
+					to_unit = self._unit,
+					r = r,
+					g = g,
+					b = b
+				})
+			end
+		end
+	end
+end
+
 EditorAreaOperator = EditorAreaOperator or class(MissionScriptEditor)
 function EditorAreaOperator:init(...)
 	local unit = EditorAreaOperator.super.init(self, ...)

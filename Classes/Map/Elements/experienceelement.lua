@@ -1,4 +1,5 @@
 EditorExperience = EditorExperience or class(MissionScriptEditor)
+EditorExperience.ELEMENT_FILTER = {}
 function EditorExperience:create_element()
     self.super.create_element(self)
     self._element.class = "ElementExperience"

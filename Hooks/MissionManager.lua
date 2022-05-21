@@ -307,14 +307,14 @@ function Mission:delete_links(id, match, elements)
 end
 
 local unit_rules = {
-	keys = {"unit_id", "camera_u_id", "att_unit_id"},
+	keys = {"unit_id", "camera_u_id", "att_unit_id", "vehicle"},
 	tbl_keys = {"unit_ids", "graph_ids", "nav_segs", "digital_gui_unit_ids"},
 	tbl_value_keys = {
 		{"obstacle_list", "unit_id"}, {"trigger_list", "notify_unit_id"}, {"sequence_list", "unit_id"}
 	}
 }
 local element_rules = {
-	keys = {"counter_id", "sequence", "att_unit_id", "element_id"},
+	keys = {"counter_id", "sequence", "att_unit_id", "element_id", "backup_so"},
 	tbl_keys = {
 		"elements",
 		"instigator_ids",
@@ -327,7 +327,8 @@ local element_rules = {
 		"spawn_instigator_ids", 
 		"Stopwatch_value_ids",
 		"included_units",
-		"excluded_units"
+		"excluded_units",
+		"target"
 	},
 	tbl_value_keys = {{"on_executed", "id"}}
 }

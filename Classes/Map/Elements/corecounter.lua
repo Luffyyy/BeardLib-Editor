@@ -1,6 +1,4 @@
 EditorCounter = EditorCounter or class(MissionScriptEditor)
-EditorCounter.SAVE_UNIT_POSITION = false
-EditorCounter.SAVE_UNIT_ROTATION = false
 EditorCounter.INSTANCE_VAR_NAMES = {{type = "number", value = "counter_target"}}
 function EditorCounter:work(...)
 	self._draw = {key = "digital_gui_unit_ids"}
@@ -27,14 +25,20 @@ function EditorCounter:_build_panel()
 	self:Text("Units with number gui extension can have their value updated from a counter.")
 end
 
+function EditorCounter:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("digital_gui_unit_ids", {unit = unit})
+		end
+	end
+end
+
 EditorCounterOperator = EditorCounterOperator or class(MissionScriptEditor)
-EditorCounterOperator.SAVE_UNIT_POSITION = false
-EditorCounterOperator.SAVE_UNIT_ROTATION = false
+EditorCounterOperator.ELEMENT_FILTER = {"ElementCounter"}
 EditorCounterOperator.INSTANCE_VAR_NAMES = {
 	{type = "number", value = "amount"}
 }
 EditorCounterOperator.LINK_ELEMENTS = {"elements"}
-CounterOperatorUnitElement = CounterOperatorUnitElement or class(EditorCounterOperator)
 function EditorCounterOperator:create_element()
 	EditorCounterOperator.super.create_element(self)
 	self._element.class = "ElementCounterOperator"
@@ -53,10 +57,8 @@ function EditorCounterOperator:_build_panel()
 end
 
 EditorCounterTrigger = EditorCounterTrigger or class(MissionScriptEditor)
-EditorCounterTrigger.SAVE_UNIT_POSITION = false
-EditorCounterTrigger.SAVE_UNIT_ROTATION = false
+EditorCounterTrigger.ELEMENT_FILTER = {"ElementCounter"}
 EditorCounterTrigger.LINK_ELEMENTS = {"elements"}
-CounterTriggerUnitElement = CounterTriggerUnitElement or class(EditorCounterTrigger)
 function EditorCounterTrigger:create_element()
 	EditorCounterTrigger.super.create_element(self)
 	self._element.class = "ElementCounterTrigger"
@@ -75,10 +77,8 @@ function EditorCounterTrigger:_build_panel()
 end
 
 EditorCounterFilter = EditorCounterFilter or class(MissionScriptEditor)
-EditorCounterFilter.SAVE_UNIT_POSITION = false
-EditorCounterFilter.SAVE_UNIT_ROTATION = false
+EditorCounterFilter.ELEMENT_FILTER = {"ElementCounter"}
 EditorCounterFilter.LINK_ELEMENTS = {"elements"}
-CounterFilterUnitElement = CounterFilterUnitElement or class(EditorCounterFilter)
 function EditorCounterFilter:create_element()
 	EditorCounterFilter.super.create_element(self)
 	self._element.class = "ElementCounterFilter"

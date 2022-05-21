@@ -23,8 +23,16 @@ end
 function EditorObjective:set_element_data(params, ...)
 	EditorObjective.super.set_element_data(self, params, ...)
 	if params.name == "objective" then
+		self:_set_text()
+	elseif params.name == "objective" then
 	--	self:update_sub_objectives()
 	end
+end
+
+function EditorObjective:_set_text()
+	local objective = managers.objectives:get_objective(self._element.values.objective)
+	self._text:SetText("Text: " .. (objective and (objective.text.."\n\nDescription: "..objective.description) or "none"))
+	self._holder:AlignItems(true)
 end
 
 function EditorObjective:_build_panel()
@@ -35,5 +43,7 @@ function EditorObjective:_build_panel()
 	--self._sub_objective = self:ComboCtrl("sub_objective", table.list_add({"none"}, options), {help = "Select a sub objective from the combobox (if availible)"})
 	self:NumberCtrl("amount", {min = 0, max = 100, help = "Overrides objective amount counter with this value."})
 	self:BooleanCtrl("countdown", {help = "Sets whether this objective should be a countdown instead."})
-	self:Text("State complete_and_activate will complete any previous objective and activate the selected objective. Note that it might not function well with objectives using amount")
+	self._text = self:Text("")
+	self:Info("State complete_and_activate will complete any previous objective and activate the selected objective. Note that it might not function well with objectives using amount")
+	self:_set_text()
 end

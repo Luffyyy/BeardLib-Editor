@@ -1,4 +1,5 @@
 EditorVariableGet = EditorVariableGet or class(MissionScriptEditor)
+EditorVariableGet.ELEMENT_FILTER = {}
 EditorVariableGet.SAVE_UNIT_POSITION = false
 EditorVariableGet.SAVE_UNIT_ROTATION = false
 function EditorVariableGet:create_element(...)

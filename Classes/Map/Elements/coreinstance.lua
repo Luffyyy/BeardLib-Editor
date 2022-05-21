@@ -81,6 +81,12 @@ function EditorInstanceInputEvent:_build_panel()
 	self:build_instance_links()
 end
 
+function EditorInstanceInputEvent:link_managed(unit)
+	if alive(unit) and not unit:fake() and unit:unit_data() and unit:unit_data().instance then
+		self:AddOrRemoveManaged("event_list", {instance = unit:unit_data().instance, key = "instance", orig = {instance = "", event = "none"}})
+	end
+end
+
 EditorInstanceOutputEvent = EditorInstanceOutputEvent or class(EditorInstanceInputEvent)
 function EditorInstanceOutputEvent:init(...)
 	local unit = EditorInstanceOutputEvent.super.init(self, ...)
@@ -150,6 +156,12 @@ function EditorInstanceSetParams:update(t, dt)
 end
 
 function EditorInstanceSetParams:_check_change_instance(new_instance)
+	if not new_instance then
+		self._element.values.params = {}
+		self._element.values.instance = new_instance
+		self:_build_from_params()
+		return
+	end
 	if not self._element.values.instance or not next(self._element.values.params) then
 		self._element.values.instance = new_instance
 		return
@@ -172,6 +184,7 @@ function EditorInstanceSetParams:_build_from_params()
     self._instance_menu:ClearItems()
     if not self._element.values.instance then
     	self._instance_menu:divider("No instance selected", {color = false})
+		self._holder:AlignItems(true)
         return
     end
     local params = managers.world_instance:get_instance_params_by_name(self._element.values.instance) or {}
@@ -182,9 +195,9 @@ function EditorInstanceSetParams:_build_from_params()
         if data.type == "number" then
             value_ctrlr = self:NumberCtrl(name, opt)
         elseif data.type == "enemy" then
-            value_ctrlr = self:PathCtrl(name, "unit", "/ene_", BLE.Utils.EnemyBlacklist)
+            value_ctrlr = self:PathCtrl(name, "unit", "/ene_", BLE.Utils.EnemyBlacklist, opt)
         elseif data.type == "civilian" then
-        	value_ctrlr = self:PathCtrl(name, "unit", "/civ_", "dummy_corpse")
+        	value_ctrlr = self:PathCtrl(name, "unit", "/civ_", "dummy_corpse", opt)
         elseif data.type == "objective" then
             value_ctrlr = self:ComboCtrl(name, managers.objectives:objectives_by_name(), opt)
         elseif data.type == "enemy_spawn_action" then
@@ -202,6 +215,7 @@ function EditorInstanceSetParams:_build_from_params()
     if #self._instance_menu._my_items == 0 then
     	self._instance_menu:divider("No parameters", {color = false})
     end
+	self:update_element()
 end
 
 function EditorInstanceSetParams:_on_gui_toggle_use(item)
@@ -222,7 +236,7 @@ function EditorInstanceSetParams:_build_panel()
 
 	self:ComboCtrl("instance", names)
 	self:BooleanCtrl("apply_on_execute")
-	self._instance_menu = self._holder:divgroup("Instance Params")
+	self._instance_menu = self._class_group:group("Instance Params")
 	self:_build_from_params()
 	self:build_instance_links()
 end
@@ -318,7 +332,7 @@ function EditorInstanceParams:_remove_var_name(var_name, item)
 				rem_data.item:Destroy()
 				item:Destroy()
 			end
-
+			self._holder:AlignItems(true)
 			return
 		end
 	end
@@ -342,6 +356,8 @@ function EditorInstanceParams:_build_var_panel(data)
 	elseif data.type == "special_objective_action" then
 		self:_build_combobox(data, clone(CopActionAct._act_redirects.SO))
 	end
+
+	self._holder:AlignItems(true)
 end
 
 function EditorInstanceParams:_build_remove_var(item)

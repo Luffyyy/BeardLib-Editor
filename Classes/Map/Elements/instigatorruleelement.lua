@@ -24,7 +24,7 @@ function EditorInstigatorRule:_build_panel()
 end
 
 function EditorInstigatorRule:_update_rules_panel()
-	self._holder:ClearItems("rules")
+	self._class_group:ClearItems("rules")
 	local t = self._element.values
 	local instigator = t.instigator
 	t.rules[instigator] = t.rules[instigator] or {}
@@ -44,4 +44,5 @@ function EditorInstigatorRule:_update_rules_panel()
 	elseif instigator == "vehicle" then
 		self:ListSelector("vehicle_names", BLE.Utils:GetUnits({slot = 39}), {label = "rules", data = data})
 	end
+	self._holder:AlignItems(true)
 end

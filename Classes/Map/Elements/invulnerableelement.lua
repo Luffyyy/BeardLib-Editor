@@ -1,4 +1,11 @@
 EditorInvulnerable = EditorInvulnerable or class(MissionScriptEditor)
+EditorInvulnerable.ELEMENT_FILTER = {
+	"ElementSpawnEnemyDummy",
+	"ElementSpawnEnemyGroup",
+	"ElementSpawnCivilian",
+	"ElementSpawnCivilianGroup",
+	"ElementSpawnPlayer"
+}
 function EditorInvulnerable:create_element(...)
 	EditorInvulnerable.super.create_element(self, ...)
 	self._element.class = "ElementInvulnerable"
@@ -27,13 +34,7 @@ end
 
 function EditorInvulnerable:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {
-		"ElementSpawnEnemyDummy",
-		"ElementSpawnEnemyGroup",
-		"ElementSpawnCivilian",
-		"ElementSpawnCivilianGroup",
-		"ElementSpawnPlayer"
-	})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:BooleanCtrl("invulnerable")
 	self:BooleanCtrl("immortal")
 	self:Text("Makes a unit invulnerable or immortal.")

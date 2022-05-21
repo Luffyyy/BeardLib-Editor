@@ -25,12 +25,21 @@ function EditorUnitDamage:update(t, dt)
 	end
 	EditorUnitDamage.super.update(self, t, dt)
 end
+function EditorUnitDamage:check_unit(unit)
+	return unit.damage and unit:damage() ~= nil
+end
+
+function EditorUnitDamage:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("unit_ids", {unit = unit})
+		end
+	end
+end
 
 function EditorUnitDamage:_build_panel()
 	self:_create_panel()
-	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = function(unit)
-		return unit.damage and unit:damage() ~= nil
-	end})
+	self:BuildUnitsManage("unit_ids", nil, nil, {check_unit = ClassClbk(self, "check_unit")})
 	self:StringCtrl("damage_types")
 	self:Text([[
 CounterOperator elements will use the reported <damage> as the amount to add/subtract/set.

@@ -1,4 +1,5 @@
 EditorTeamAICommands = EditorTeamAICommands or class(MissionScriptEditor)
+EditorTeamAICommands.ELEMENT_FILTER = {}
 EditorTeamAICommands.SAVE_UNIT_POSITION = false
 EditorTeamAICommands.SAVE_UNIT_ROTATION = false
 function EditorTeamAICommands:create_element(...)

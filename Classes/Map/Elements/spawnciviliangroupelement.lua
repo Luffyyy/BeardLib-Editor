@@ -1,4 +1,5 @@
 EditorSpawnCivilianGroup = EditorSpawnCivilianGroup or class(MissionScriptEditor)
+EditorSpawnCivilianGroup.ELEMENT_FILTER = {"ElementSpawnCivilian"}
 function EditorSpawnCivilianGroup:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementSpawnCivilianGroup"	
@@ -11,7 +12,7 @@ end
 
 function EditorSpawnCivilianGroup:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementSpawnCivilian"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:BooleanCtrl("random", {text = "Select spawn points randomly"})
 	self:BooleanCtrl("ignore_disabled", {help = "Select if disabled spawn points should be ignored or not"})
 	self:NumberCtrl("amount", {min = 0, help = "Specify amount of civilians to spawn from group"})

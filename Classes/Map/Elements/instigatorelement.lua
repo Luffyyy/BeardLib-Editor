@@ -10,6 +10,7 @@ function EditorInstigator:_build_panel()
 end
 
 EditorInstigatorOperator = EditorInstigatorOperator or class(MissionScriptEditor)
+EditorInstigatorOperator.ELEMENT_FILTER = {"ElementInstigator"}
 function EditorInstigatorOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementInstigatorOperator"
@@ -20,7 +21,7 @@ end
 
 function EditorInstigatorOperator:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementInstigator"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("operation", {
 		"none",
 		"set",
@@ -55,6 +56,7 @@ function EditorInstigatorOperator:draw_links()
 end
 
 EditorInstigatorTrigger = EditorInstigatorTrigger or class(MissionScriptEditor)
+EditorInstigatorTrigger.ELEMENT_FILTER = {"ElementInstigator"}
 function EditorInstigatorTrigger:create_element(unit)
 	self.super.create_element(self)
 	self._element.class = "ElementInstigatorTrigger"
@@ -64,7 +66,7 @@ end
 
 function EditorInstigatorTrigger:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementInstigator"})
+	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:ComboCtrl("trigger_type", {
 		"death",
 		"set",
