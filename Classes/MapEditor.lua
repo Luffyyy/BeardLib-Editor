@@ -872,6 +872,11 @@ function Editor:update(t, dt)
                 end
             end
 
+            local btn_speed = self._con:get_input_float("freeflight_modifier_up") - self._con:get_input_float("freeflight_modifier_down")
+            if not_focused and allowed and shift() and btn_speed ~= 0 then
+                self.parts.opt:ChangeCameraSpeed(btn_speed < 0, true)
+            end
+
             self:update_camera(t, dt)
             self:update_widgets(t, dt)
             self:draw_marker(t, dt)

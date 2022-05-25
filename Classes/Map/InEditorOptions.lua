@@ -109,9 +109,9 @@ function Options:toggle_light(item)
     self._parent:toggle_light(item:Value())
 end
 
-function Options:ChangeCameraSpeed(decrease)
+function Options:ChangeCameraSpeed(decrease, incremental)
     local cam_speed = self:GetItem("CameraSpeed")
-    local change = ctrl() and 0.1 or 1
+    local change = incremental and math.max(cam_speed:Value() * 0.3, 0.1) or ctrl() and 0.1 or 1
     cam_speed:SetValue(cam_speed:Value() + (decrease == true and -change or change), true)
     self:GetPart("status"):ShowKeybindMessage("Camera speed changed to: "..cam_speed:Value())
 end
