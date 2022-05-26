@@ -433,6 +433,23 @@ function Mission:get_mission_element(id)
 	return nil
 end
 
+function Mission:get_used_units()
+	local used_units = {}
+	for _, script in pairs(self._missions) do
+		for _, tbl in pairs(script) do
+			if tbl.elements then
+				for i, element in pairs(tbl.elements) do	
+					local enemy = element.values.enemy
+					if enemy then
+						used_units[enemy] = used_units[enemy] and used_units[enemy] + 1 or 1
+					end
+				end
+			end
+		end
+	end
+	return used_units
+end
+
 function Mission:add_fading_debug_output(debug, color, as_subtitle)
 	if not self._fading_debug_enabled then
 		return
