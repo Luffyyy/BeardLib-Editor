@@ -220,6 +220,7 @@ function EditorSpecialObjective:test_element()
     t.values.followup_elements = nil
     t.values.trigger_on = 'none'
     t.values.spawn_instigator_ids = nil
+    t.values.enabled = true
     self._script = MissionScript:new({elements = {}})
     self._so_class = ElementSpecialObjective:new(self._script, t)
     self._so_class._values.align_position = nil
@@ -257,6 +258,31 @@ function EditorSpecialObjective:link_managed(unit)
 	end
 end
 
+function EditorSpecialObjective:generate_search_position(item)
+    local anim_set = AnimationManager:animation_set(Idstring("anims/units/enemies/cop/cop_def"))
+    local action_id = Idstring(self._element.values.so_action)
+
+    if anim_set and anim_set:has_animation(action_id) then
+        local root_id = Idstring("root_point")
+        local rotation = anim_set:animation_rotation(action_id, root_id, 1)
+        local displacement = anim_set:animation_total_displacement(action_id, root_id)
+
+        mrotation.invert(rotation)
+        mvector3.rotate_with(displacement, rotation)
+        mvector3.rotate_with(displacement, self._element.values.rotation)
+
+        local new_pos = self._element.values.position + displacement
+        local nav_tracker = managers.navigation._quad_field:create_nav_tracker(new_pos, true)
+        
+        new_pos = nav_tracker:field_position()
+        mvector3.set_static(new_pos, math.round(new_pos.x), math.round(new_pos.y), math.round(new_pos.z))
+        
+        managers.navigation._quad_field:destroy_nav_tracker(nav_tracker)
+
+        self._element.values.search_position = new_pos
+        self:GetItem("search_position"):SetValue(new_pos)
+    end
+end
 
 function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()
@@ -265,6 +291,27 @@ function EditorSpecialObjective:apply_preset(item)
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({})
 		elseif selection == "select all" then
 			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(NavigationManager.ACCESS_FLAGS)
+        elseif selection == "civilians" then
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({"civ_male", "civ_female"})
+        elseif selection == "team ai" then
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string({"teamAI1", "teamAI2", "teamAI3", "teamAI4"})
+        elseif selection == "all cops" then
+            local filter = {
+                "cop",
+                "fbi",
+                "swat",
+                "sniper",
+                "spooc",
+                "shield",
+                "tank",
+                "taser"
+            }
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(filter)
+        elseif selection == "all except civs" then
+            local filter = clone(NavigationManager.ACCESS_FLAGS)
+            table.delete(filter, "civ_male")
+            table.delete(filter, "civ_female")
+			self._element.values.SO_access = managers.navigation:convert_access_filter_to_string(filter)
 		end
 	end)
 end
@@ -321,12 +368,14 @@ function EditorSpecialObjective:_build_panel()
 	if type_name(self._element.values.SO_access) == "number" then
 		self._element.values.SO_access = tostring(self._element.values.SO_access)
 	end
-	self._class_group:combobox("AccessFlagsPreset", ClassClbk(self, "apply_preset"), {"clear all", "select all"}, nil, {help = "Here you can quickly select or deselect all access flags"})
+	self._class_group:combobox("AccessFlagsPreset", ClassClbk(self, "apply_preset"), {"clear all", "select all", "team ai", "civilians", "all except civs", "all cops"}, nil, {help = "Here you can quickly select or deselect all access flags"})
 	self._class_group:button("ManageAccessFlags", ClassClbk(self, "manage_flags"), {help = "Decide which types of AI are affected by this element"})
 	self:BuildElementsManage("followup_elements", nil, {"ElementSpecialObjective", "ElementSpecialObjectiveGroup"})
 	self:BuildElementsManage("spawn_instigator_ids", nil, {"ElementSpawnEnemyDummy", "ElementSpawnCivilian", "ElementSpawnEnemyGroup", "ElementSpawnCivilianGroup"})
     self:UnitCtrl("test_unit", "unit", {"/ene_", "/civ", "/npc"}, table.merge(BLE.Utils.EnemyBlacklist, {"dummy_corpse", "/civ_acc", "/npc_acc"}))
-    self:Vector3Ctrl("search_position")
+    local search = self:Vector3Ctrl("search_position")
+    local tb = search:GetToolbar()
+    tb:tb_imgbtn("generate_search_pos", ClassClbk(self, "generate_search_position"), nil, BLE.Utils.EditorIcons.global_transform, {help = "Automatically set search position based on the end point of the So Action animation. May not always give correct results and should only be used for navlinks!"})
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
 	self:BooleanCtrl("align_position", {text = "Align position"})
