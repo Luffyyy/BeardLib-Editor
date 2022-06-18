@@ -344,7 +344,7 @@ function Static:build_unit_main_values()
         local continent, values_differ = self:unit_value("continent")
         local list = self._parent._continents
         if values_differ then
-            list = table.list_add({"*", list})
+            list = table.list_add({"*"}, list)
         end
         local con = main:combobox("Continent", ClassClbk(self, "set_unit_data"), list, 1, {visible = not self._built_multi or continent ~= nil})
         con:SetSelectedItem(continent)
