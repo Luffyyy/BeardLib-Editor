@@ -36,7 +36,6 @@
 		<class file="ScriptDataConverterManager.lua"/>
 		<class file="FileWatcher.lua"/>
 		<class file="MapEditor.lua"/>
-		<class file="EnvEditor.lua"/>
 		<class file="LoadLevelMenu.lua"/>
 
 		<classes directory="Dialogs">
@@ -180,7 +179,7 @@
 				<option type="string" default_value="left ctrl+z" name="Undo"/>
 				<option type="string" default_value="left ctrl+y" name="Redo"/>
 				<option type="string" default_value="f1" name="ToggleConsole"/>
-				<option type="string" default_value="f" name="RotateSpawnDummyYaw"/>
+				<option type="string" default_value="j" name="RotateSpawnDummyYaw"/>
 				<option type="string" default_value="g" name="RotateSpawnDummyPitch"/>
 				<option type="string" default_value="h" name="RotateSpawnDummyRoll"/>
                 <option type="string" default_value="end" name="SettleUnits"/>
@@ -188,6 +187,10 @@
                 <option type="string" default_value="v" name="HideUnits"/>
                 <option type="string" default_value="f" name="ToggleLight"/>
                 <option type="string" default_value="space" name="LinkManaged"/>
+                <option type="string" default_value="page up" name="IncreaseGridSize"/>
+                <option type="string" default_value="page down" name="DecreaseGridSize"/>
+                <option type="string" default_value="m" name="OpenManageList"/>
+                <option type="string" default_value="b" name="OpenOnExecutedList"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>

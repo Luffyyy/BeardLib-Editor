@@ -23,6 +23,12 @@ function MissionEditor:init(parent, menu)
     self._name_ids = {}
 end
 
+function MissionEditor:enable()
+    MissionEditor.super.enable(self)
+    self:bind_opt("OpenManageList", ClassClbk(self, "open_managed_list"))
+    self:bind_opt("OpenOnExecutedList", ClassClbk(self, "open_on_executed_list"))
+end
+
 function MissionEditor:set_elements_vis(vis)
     local enabled = NotNil(vis, self:Val("ShowElements") and not Global.editor_safe_mode)
     local draw_script = self:Val("DrawOnlyElementsOfCurrentScript")
@@ -162,6 +168,18 @@ end
 function MissionEditor:mouse_released(...)
     if self._current_script and self._current_script.mouse_released and self._current_script:mouse_released(...) then
         return true
+    end
+end
+
+function MissionEditor:open_managed_list()
+    if self._current_script and self._current_script.open_managed_list then
+        self._current_script:open_managed_list()
+    end
+end
+
+function MissionEditor:open_on_executed_list()
+    if self._current_script and self._current_script.open_on_executed_list then
+        self._current_script:open_on_executed_list()
     end
 end
 

@@ -416,8 +416,9 @@ end
 function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
+	local text = opt.text
 	opt.group = nil
-	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenUnitsManageDialog", {
+	local button = (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenUnitsManageDialog", {
 		value_name = value_name,
 		update_clbk = update_clbk, 
 		check_unit = opt.check_unit,
@@ -428,24 +429,44 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		combo_free_typing = opt.combo_free_typing,
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
+	if not group then
+		local list = self._main_group:GetItem("OpenManageLists") or self._holder:popup("OpenManageLists", {text = false, size = 20, scrollbar = false, position = function(item)
+			item:SetPosition(0,0)
+		end})
+		list:tb_btn(value_name, button.on_callback, {
+			text = text or "Manage "..string.pretty(value_name, true)
+		})
+	end
+	return button
 end
 
 function MissionScriptEditor:BuildInstancesManage(value_name, table_data, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
+	local text = opt.text
 	opt.group = nil
-	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenInstancesManageDialog", {
+	local button = (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenInstancesManageDialog", {
 		value_name = value_name, 
 		update_clbk = update_clbk, 
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(instances)", help = "Decide which instances are in this list"}, opt))
+	if not group then
+		local list = self._main_group:GetItem("OpenManageLists") or self._holder:popup("OpenManageLists", {text = false, size = 20, scrollbar = false, position = function(item)
+			item:SetPosition(0,0)
+		end})
+		list:tb_btn(value_name, button.on_callback, {
+			text = text or "Manage "..string.pretty(value_name, true)
+		})
+	end
+	return button
 end
 
 function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes, update_clbk, opt)
 	opt = opt or {}
 	local group = opt.group
+	local text = opt.text
 	opt.group = nil
-	return (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
+	local button = (group or self._class_group):button("Manage"..value_name.."List", ClassClbk(self, "OpenElementsManageDialog", {
 		value_name = value_name,
 		skip_script_check = opt.skip_script_check,
 		update_clbk = update_clbk,
@@ -455,6 +476,39 @@ function MissionScriptEditor:BuildElementsManage(value_name, table_data, classes
 		classes = classes,
 		nil_on_empty = opt.nil_on_empty
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(elements)", help = "Decide which elements are in this list"}, opt))
+	if not group then
+		local list = self._holder:GetItem("OpenManageLists") or self._holder:popup("OpenManageLists", {text = false, size = 20, scrollbar = false, position = function(item)
+			item:SetPosition(0,0)
+		end})
+		list:tb_btn(value_name, button.on_callback, {
+			text = text or "Manage "..string.pretty(value_name, true)
+		})
+	end
+	return button
+end
+
+function MissionScriptEditor:open_managed_list()
+	local list = self._holder:GetItem("OpenManageLists")
+	if not list then
+		return
+	end
+	if #list:Items() > 1 then
+		if list.opened then
+			list:Close()
+		else
+			list:Open()
+			list._popup_menu:set_position(managers.mouse_pointer._mouse:position())
+		end
+	else
+		list:Items()[1]:RunCallback()
+	end
+end
+
+function MissionScriptEditor:open_on_executed_list()
+	local list = self._holder:GetItem("Manageon_executedList")
+	if list then
+		list:RunCallback()
+	end
 end
 
 function MissionScriptEditor:BuildInstanceVariables()

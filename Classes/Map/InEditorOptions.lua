@@ -4,6 +4,19 @@ function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")
     self._wanted_elements = {}
     self._save_callbacks = {}
+
+    self._grid_sizes = {
+		1,
+		25,
+		50,
+		100,
+		400,
+		800,
+		1000,
+		1600,
+		2000,
+		10000
+	}
 end
 
 --TODO: cleanup
@@ -84,6 +97,8 @@ function Options:enable()
     self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"), nil, true)
     self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
     self:bind_opt("ToggleLight", ClassClbk(self, "toggle_light"))
+    self:bind_opt("IncreaseGridSize", ClassClbk(self, "IncreaseGridSize"))
+    self:bind_opt("DecreaseGridSize", ClassClbk(self, "DecreaseGridSize"))
 end
 
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
@@ -92,6 +107,7 @@ function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
 function Options:toggle_light(item) 
     if not item then
+        log("toggle")
         item = self:GetPart("tools"):get_tool("general")._holder:GetItem("UseLight")
         item:SetValue(not item:Value())
         self:GetPart("status"):ShowKeybindMessage("Head Light "..(item:Value() and "enabled" or "disabled"))
@@ -138,6 +154,28 @@ function Options:update_option_value(item)
     elseif name == "SurfaceMove" then
         self._parent:set_use_surface_move(value)
     end
+end
+
+function Options:IncreaseGridSize()
+    local current_size = self:Val("GridSize")
+    for _, size in ipairs(self._grid_sizes) do
+        if size > current_size then
+            current_size = size
+            break
+        end
+    end
+    self:GetItem("GridSize"):SetValue(current_size, true)
+end
+
+function Options:DecreaseGridSize()
+    local current_size = self:Val("GridSize")
+    for _, size in table.reverse_ipairs(self._grid_sizes) do
+        if size < current_size then
+            current_size = size
+            break
+        end
+    end
+    self:GetItem("GridSize"):SetValue(current_size, true)
 end
 
 function Options:update_visualization(item)
