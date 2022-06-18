@@ -79,6 +79,7 @@ function MissionScriptEditor:get_on_executed_units()
 		if self:GetPart("mission"):get_element_unit(u.id) then
 			table.insert(self._on_executed_units, self:GetPart("mission"):get_element_unit(u.id))
 		end
+		if u.delay_rand == 0 then u.delay_rand = nil end
 	end
 end
 
@@ -129,7 +130,8 @@ function MissionScriptEditor:_create_panel()
     self:NumberCtrl("base_delay_rand", {help = "Specifies an additional random time to be added to base delay(delay + rand)", group = self._main_group, floats = 0, min = 0, text = "Random Delay"})
  	self:BooleanCtrl("enabled", {help = "Should the element be enabled", group = self._main_group, size_by_text = true})
     self:BooleanCtrl("execute_on_startup", {help = "Should the element execute when game starts", group = self._main_group, size_by_text = true})
-	local on_exec = {values = {{name = "Delay", key = "delay"}}, key = "id", orig = {id = 0, delay = 0}}
+	self:BooleanCtrl("debug", {help = "Should display a debug message when this element is executed (Only when the \"Element Executions\" debug option is set to elements with debug flag)", group = self._main_group, size_by_text = true})
+	local on_exec = {values = {{name = "Random Delay", key = "delay_rand"}, {name = "Delay", key = "delay"}}, key = "id", orig = {id = 0, delay = 0, delay_rand = 0}}
 	if self.ON_EXECUTED_ALTERNATIVES then
 		on_exec.orig.alternative = "none"
 		local alts = clone(self.ON_EXECUTED_ALTERNATIVES)
@@ -300,6 +302,7 @@ function MissionScriptEditor:draw_link_exec(element_unit, unit)
 	        text = text .. " - " .. alternative .. ""
 	    end
 
+		self._brush:set_color(Color.white)
 	    self._brush:center_text(element_unit:position() + dir, text, managers.editor:camera_rotation():x(), -managers.editor:camera_rotation():z())
 	    local element_col = element_unit:mission_element()._color
 		self._brush:set_color(element_col:contrast())

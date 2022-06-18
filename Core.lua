@@ -48,6 +48,8 @@ function BLE:MapEditorCodeReload()
     self:Dofiles(self.ClassDirectory)
     self:Dofiles(self.MapClassesDir)
     self:Dofiles(Path:Combine(self.MapClassesDir, "Layers"))
+    self:Dofiles(Path:Combine(self.MapClassesDir, "Tools"))
+    self:Dofiles(Path:Combine(self.MapClassesDir, "Tools/ParticleEditor"))
     self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 

@@ -471,7 +471,7 @@ end
 function EnvLayer:change_environment(item)
 	local environment_values = self:data().environment_values
 	environment_values.environment = item:Value()
-	self:GetPart("env"):database_load_env(environment_values.environment)
+	self:GetPart("tools"):get_tool("environment"):database_load_env(environment_values.environment)
 	managers.viewport:set_default_environment(environment_values.environment, nil, nil)
 	self:save()
 end

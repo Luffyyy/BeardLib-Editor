@@ -37,7 +37,6 @@
 		<class file="FileWatcher.lua"/>
 		<class file="MapEditor.lua"/>
 		<class file="EnvEditor.lua"/>
-		<class file="ParticleEditor.lua"/>
 		<class file="LoadLevelMenu.lua"/>
 
 		<classes directory="Dialogs">
@@ -61,6 +60,17 @@
 			<class file="MainLayerEditor.lua"/>
         </classes>
 
+        <classes directory="Map/Tools">
+			<class file="ToolEditor.lua"/>
+			<class file="EnvironmentToolEditor.lua"/>
+            <class file="GeneralToolEditor.lua"/>
+            <class file="DebugToolEditor.lua"/>
+            <class file="HUDCombatDebug.lua"/>
+            <classes directory="ParticleEditor">
+                <class file="ParticleEditor.lua"/>
+            </classes>
+        </classes>
+
 		<classes directory="Map">
 			<class file="EditUnit.lua"/>
 			<class file="MissionEditor.lua"/>
@@ -69,6 +79,7 @@
 			<class file="EditMeshVariation.lua"/>
 			<class file="InEditorOptions.lua"/>
 			<class file="UpperMenu.lua"/>
+            <class file="ToolsMenu.lua"/>
 			<class file="StatusMenu.lua"/>
             <class file="QuickAccess.lua"/>
 			<class file="EditorConsole.lua"/>
@@ -113,6 +124,9 @@
     	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     	<hook source_file="lib/tweak_data/levelstweakdata" file="Fixes.lua"/>
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
+        <hook source_file="lib/managers/group_ai_states/groupaistatebesiege" file="GroupAIStateBase.lua"/>
+        <hook source_file="lib/managers/group_ai_states/groupaistatebase" file="GroupAIStateBase.lua"/>
+        <hook source_file="lib/managers/mission/elementlookattrigger" file="ElementLookAtTrigger.lua"/>
         <hook source_file="lib/managers/menu/menucomponentmanager" file="LoadLastLevelButton.lua"/>
     </Hooks>
     <Options build_menu="false" early_post_init="true">
@@ -211,6 +225,7 @@
                 <option type="boolean" default_value="true" name="DrawPatrolPaths"/>
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
                 <option type="boolean" default_value="true" name="ShowHints"/>
+                <option type="boolean" default_value="true" name="RotationInfo"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
                 <option name="OverkillCubemapTools" type="bool" value="true"/>

@@ -36,7 +36,6 @@ function Options:build_default()
         item:SetPositionByString("RightCentery")
         item:Move(-4)
     end, size_by_text = true, text = ""})
-    main:tickbox("UseLight", ClassClbk(self, "toggle_light"), false, {text = "Head Light", help = "Turn head light on / off"})
 
     local render_modes = {
         "deferred_lighting",
@@ -74,14 +73,6 @@ function Options:build_default()
     raycast:numberbox("SnappointRange", nil, 800, {text = "Snappoint Search Range"})
     raycast:numberbox("RaycastDistance", nil, 200000)
 
-    local other = self:group("Other", groups_opt)
-    other:s_btn("LogPosition", ClassClbk(self, "position_debug"))
-    if BeardLib.current_level then
-        other:s_btn("OpenMapInExplorer", ClassClbk(self, "open_in_explorer"))
-    end
-    other:s_btn("OpenLevelInExplorer", ClassClbk(self, "open_in_explorer", true))
-    other:tickbox("PauseGame", ClassClbk(self, "pause_game"), false, {size_by_text = true})
-
     self:toggle_autosaving()
 end
 
@@ -95,14 +86,13 @@ function Options:enable()
     self:bind_opt("ToggleLight", ClassClbk(self, "toggle_light"))
 end
 
-function Options:pause_game(item) Application:set_pause(item.value) end
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
 function Options:toggle_light(item) 
     if not item then
-        item = self:GetItem("UseLight")
+        item = self:GetPart("tools"):get_tool("general")._holder:GetItem("UseLight")
         item:SetValue(not item:Value())
         self:GetPart("status"):ShowKeybindMessage("Head Light "..(item:Value() and "enabled" or "disabled"))
     end
@@ -158,11 +148,6 @@ end
 function Options:get_value(opt)
     local item = self:GetItem(opt)
     return item and item:Value()
-end
-
-function Options:position_debug()
-    BLE:log("Camera Position: %s", tostring(self._parent._camera_pos))
-	BLE:log("Camera Rotation: %s", tostring(self._parent._camera_rot))
 end
 
 function Options:update(t, dt)
@@ -466,11 +451,6 @@ function Options:save_cover_data(include)
     if not had_include then
         self:save_local_add_xml(include)
     end
-end
-
-
-function Options:open_in_explorer(world_path)
-    Application:shell_explore_to_folder(string.gsub(world_path == true and self:map_world_path() or self:map_path(), "/", "\\"))
 end
 
 function Options:toggle_surfacemove(item)

@@ -34,6 +34,7 @@ function Editor:init(data)
     self._hidden_units = {}
     self._use_local_move = true
     self._disable_portals = true
+    self._script_debug = true
 
 	self._brush = Draw:brush()
     self._brush:set_font(Idstring("fonts/font_medium"), 32)
@@ -92,7 +93,7 @@ function Editor:init(data)
             self.parts[data.last_menu]:Switch(true)
         end
         if data.particle_editor_active then
-            self.parts.env:open_effect_editor()
+            self.parts.tools:get_tool("general"):open_effect_editor()
         end
         if data.scroll_y_tbl then
             for name, y in pairs(data.scroll_y_tbl) do
@@ -122,7 +123,7 @@ function Editor:post_init(menu)
     m.quick = QuickAccess:new(self, self._editor_menu)
     m.select = SelectMenu:new(self, self._editor_menu)
     m.spawn = SpawnMenu:new(self, self._editor_menu)
-    m.env = EnvEditor:new(self, self._editor_menu)
+    m.tools = ToolsMenu:new(self, self._editor_menu)
     m.instances = InstancesEditor:new(self, self._editor_menu)
     m.undo_handler = UndoUnitHandler:new(self, self._editor_menu)
     m.cubemap_creator = CubemapCreator:new(self, self._editor_menu, self._camera_object)
@@ -131,6 +132,12 @@ function Editor:post_init(menu)
         self._mapeditor[n] = manager
     end
     m.particle = ParticleEditor:new(self, menu)
+    self._value_info = self._editor_menu:divider("ValueInfo", {
+        foreground = Color(1, 0.8, 0.8, 0), 
+        visible = false, 
+        size_by_text = true, 
+        border_left = false
+    })
 
     for name, manager in pairs(self.parts) do
         manager.manager_name = name
@@ -147,6 +154,9 @@ function Editor:post_init(menu)
     if self._has_fix then
         m.quick:toggle_widget("move")
     end
+
+    TimerManager:pausable():set_multiplier(1)
+	TimerManager:game_animation():set_multiplier(1)
 end
 
 --functions
@@ -255,6 +265,7 @@ function Editor:reset_widget_values()
     self._using_rotate_widget = false
     self._move_widget:reset_values()
     self._rotate_widget:reset_values()
+    self:set_value_info_visibility(false)
 end
 
 function Editor:StorePreviousPosRot()
@@ -645,6 +656,7 @@ function Editor:update_snap_rotation(value)
     end
 end
 function Editor:set_disable_portals(value) self._disable_portals = value end
+function Editor:set_script_debug(value) self._script_debug = value end
 
 function Editor:hide_units() 
     local selected_units = self:selected_units()
@@ -686,7 +698,7 @@ function Editor:on_unhide_all()
 end
 
 function Editor:set_unit_visible(unit, visible)
-	if not alive(unit) then
+	if not alive(unit) or not unit.set_enabled then
 		return
 	end
 
@@ -761,6 +773,7 @@ function Editor:camera_fov() return self:camera():fov() end
 function Editor:set_camera_far_range(range) return self:camera():set_far_range(range) end
 function Editor:hidden_units() return self._hidden_units end
 function Editor:disable_portals() return self._enabled and self._disable_portals end
+function Editor:script_debug() return self._script_debug end
 
 
 function Editor:cam_spawn_pos()
@@ -800,6 +813,16 @@ function Editor:select_unit_by_raycast(slot, ray_type, from, to)
     else
         return false
     end
+end
+
+function Editor:center_view_on_unit(unit)
+	if alive(unit) then
+        local unit_center = unit:oobb() and unit:oobb():center() or unit:position()
+		local rot = Rotation:look_at(self:camera_position(), unit_center, Vector3(0, 0, 1))
+		local pos = unit_center - rot:y() * unit:bounding_sphere_radius()
+
+		self:set_camera(pos, rot)
+	end
 end
 
 function Editor:select_units_by_raycast(slot, clbk)
@@ -887,6 +910,7 @@ function Editor:update(t, dt)
             self.parts.cubemap_creator:update(t, dt)
         end
     end
+    self.parts.tools:disabled_update(t, dt)
 end
 
 function Editor:bind(opt, clbk, in_dialogs)
@@ -1035,6 +1059,7 @@ function Editor:update_widgets(t, dt)
                 if self._last_rot ~= result_rot then
                     self:set_unit_rotations(result_rot)
                     self:update_positions()
+                    self:set_value_info_visibility(true)
                 end
                 self._last_rot = result_rot
             end
@@ -1081,7 +1106,7 @@ function Editor:update_snappoints(t, dt)
     local pos = self._current_pos
     local unit = self:get_dummy_or_grabbed_unit()
     
-    if alive(unit) and self.parts.opt:get_value("UseSnappoints") and pos then
+    if alive(unit) and self.parts.opt:get_value("UseSnappoints") and pos and unit.find_units then
 		local r = self.parts.opt:get_value("SnappointRange")
 
 		Application:draw_sphere(pos, r, 1, 0, 1)
@@ -1221,8 +1246,22 @@ end
 
 --Empty/Unused functions
 function Editor:register_message()end
-function Editor:set_value_info_pos() end
-function Editor:set_value_info() end
+function Editor:set_value_info_pos(position)
+	position = position:with_x((1 + position.x) / 2 * self._editor_menu.w)
+	position = position:with_y((1 + position.y) / 2 * self._editor_menu.h - 100)
+
+    self._value_info:SetCenter(position.x, position.y)
+end
+
+function Editor:set_value_info(info)
+    self._value_info:SetText(info)
+end
+
+function Editor:set_value_info_visibility(vis)
+    vis = BLE.Options:GetValue("Map/RotationInfo") and vis or false
+	self._value_info:SetVisible(vis)
+end
+
 
 function Editor:_set_fixed_resolution(size)
     Application:set_mode(size.x, size.y, false, -1, false, true)

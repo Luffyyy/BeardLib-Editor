@@ -6,8 +6,8 @@
 	"image" : "Assets/textures/editor_logo.png",
 	"hooks" : [
         {"hook_id" : "lib/utils/levelloadingscreenguiscript", "script_path" : "Hooks/EditorLoadingScreen.lua"},
-        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorpanel", "script_path" : "Classes/ParticleEditorPanel.lua"},
-        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorproperties", "script_path" : "Classes/ParticleEditorProperties.lua"},
-        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditoreffect", "script_path" : "Classes/ParticleEditorEffect.lua"}
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorpanel", "script_path" : "Classes/Map/Tools/ParticleEditor/ParticleEditorPanel.lua"},
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditorproperties", "script_path" : "Classes/Map/Tools/ParticleEditor/ParticleEditorProperties.lua"},
+        {"hook_id" : "core/lib/utils/dev/tools/particle_editor/coreparticleeditoreffect", "script_path" : "Classes/Map/Tools/ParticleEditor/ParticleEditorEffect.lua"}
 	]
 }

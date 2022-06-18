@@ -62,6 +62,23 @@ Hooks:PostHook(Mission, "post_init", "EditorSetDebugGUI", function(self)
 			end
 		end
 	end)
+
+	local pdo = self._persistent_debug_output:script()
+	Hooks:PostHook(pdo, "add_row", "EditorAddRow", function(text, color)
+		if not alive(pdo.main_panel) then
+			return
+		end
+		for _, c in pairs(pdo.main_panel:children()) do
+			for _, text in pairs(c:children()) do
+				text:configure({
+					font = _G.tweak_data.menu.pd2_large_font,
+					font_size = pdo.FONT_SIZE
+				})
+				local _,_,w,h = text:text_rect()
+				c:set_size(w,h)
+			end
+		end
+	end)
 end)
 
 Hooks:PostHook(MissionManager, "_show_debug_subtitle", "ChangeDebugSubtitleFont", function(self)
@@ -571,5 +588,13 @@ end
 function MScript:debug_output(debug, color)
 	if managers.editor then
 		Utils:GetPart("console"):LogMission(debug:gsub('%%', '%'))
+		managers.mission:add_persistent_debug_output(Application:date("%X") .. ": " .. debug, color)
 	end
+end
+
+function MScript:is_debug()
+	if managers.editor then
+		return managers.editor:script_debug()
+	end
+	return true
 end

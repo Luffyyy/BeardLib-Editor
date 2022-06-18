@@ -8,7 +8,7 @@ function UpperMenu:init(parent, menu)
         {name = "static", rect = {192, 448, 64, 64}, enabled = normal},
         {name = "spawn", rect = {64, 448, 64, 64}, enabled = normal},
         {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
-        {name = "env", rect = {256, 448, 64, 64}},
+        {name = "tools", rect = {256, 448, 64, 64}},
         {name = "opt", rect = {320, 448, 64, 64}},
         {name = "save", rect = {383, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
     }
