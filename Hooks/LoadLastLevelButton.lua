@@ -14,7 +14,7 @@ Hooks:PostHook(BLTNotificationsGui, "_setup", "BLESetup", function(self)
         self._beardlib_editor_startlast = self._beardlib_panel:bitmap({
             name = "RestartLastEditorHeist",
             texture = "textures/editor_icons_df",
-            texture_rect = {64, 64, 32, 32},
+            texture_rect = {72, 200, 48, 48},
             w = 28,
             h = 28,
             y = 8,
