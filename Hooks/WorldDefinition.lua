@@ -166,7 +166,11 @@ function WorldDefinition:create(layer, offset)
 
 	if layer == "environment" or layer == "all" then
 		local environment = self._definition.environment
-
+		if Global.editor_safe_mode then
+			environment.effects = {}
+			environment.environment_areas = {}
+			environment.environment_values.environment = "core/environments/default"
+		end
 		self:_create_environment(environment, offset)
 
 		return_data = environment
