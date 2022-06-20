@@ -290,12 +290,20 @@ function Editor:rotation_widget_enabled(use)
     return self._rotate_widget._use
 end
 
-function Editor:toggle_move_widget(use)
-    self._move_widget:set_use(not self:move_widget_enabled())
+function Editor:toggle_move_widget()
+    local use = not self:move_widget_enabled()
+    self._move_widget:set_use(use)
+    if use and self:rotation_widget_enabled() and not BLE.Options:GetValue("Map/AllowMultiWidgets") then
+        self.parts.quick:toggle_widget("rotation")
+    end
 end
 
 function Editor:toggle_rotation_widget()
-    self._rotate_widget:set_use(not self:rotation_widget_enabled())
+    local use = not self:rotation_widget_enabled()
+    self._rotate_widget:set_use(use)
+    if use and self:move_widget_enabled() and not BLE.Options:GetValue("Map/AllowMultiWidgets") then
+        self.parts.quick:toggle_widget("move")
+    end
 end
 
 function Editor:use_widgets(use)
@@ -643,6 +651,7 @@ end
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:set_use_quick_access(value) self.parts.quick:SetVisible(value) end
+function Editor:keybind_message(text) self.parts.status:ShowKeybindMessage(text) end
 function Editor:toggle_local_move() 
     self._use_local_move = not self._use_local_move
     self.parts.quick:update_local_move(self._use_local_move)
@@ -674,7 +683,7 @@ function Editor:on_hide_selected()
     for _, unit in ipairs(clone(self:selected_units())) do
         self:set_unit_visible(unit, false)
     end
-    self.parts.status:ShowKeybindMessage("Hidden selected units")
+    self:keybind_message("Hidden selected units")
 end
 
 function Editor:on_hide_unselected()
@@ -685,7 +694,7 @@ function Editor:on_hide_unselected()
             end
         end
     end
-    self.parts.status:ShowKeybindMessage("Hidden all not selected units")
+    self:keybind_message("Hidden all not selected units")
 end
 
 function Editor:on_unhide_all()
@@ -694,7 +703,7 @@ function Editor:on_unhide_all()
     for _, unit in ipairs(to_hide) do
         self:set_unit_visible(unit, true)
     end
-    self.parts.status:ShowKeybindMessage("Unhidden all hidden units")
+    self:keybind_message("Unhidden all hidden units")
 end
 
 function Editor:set_unit_visible(unit, visible)
@@ -968,10 +977,9 @@ function Editor:current_position()
             local n = ray.normal
             local x = math.round(p.x / grid_size + n.x) * grid_size
             local y = math.round(p.y / grid_size + n.y) * grid_size
-            local z = math.round(p.z / grid_size + n.z) * grid_size
-            current_pos = Vector3(x, y, z)
+            current_pos = Vector3(x, y, p.z)
 
-            if alive(unit) then
+            if alive(unit) and alt() then
                 local u_rot = unit:rotation()
                 local z = n
                 local x = (u_rot:x() - z * z:dot(u_rot:x())):normalized()
@@ -1166,7 +1174,7 @@ function Editor:draw_grid(t, dt)
 	if alive(self:selected_unit()) and self:local_rot() and self._use_local_move then
 		rot = self:selected_unit():rotation()
     end
-    if self._using_move_widget and self._move_widget:enabled() and self:widget_unit() then
+    if (self._using_move_widget and self._move_widget:enabled() and self:widget_unit()) or (self._use_surface_move and self:get_dummy_or_grabbed_unit()) then
         for i = -12, 12, 1 do
             local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
             local to_x = self:widget_unit():position() + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()

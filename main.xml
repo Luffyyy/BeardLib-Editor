@@ -191,6 +191,7 @@
                 <option type="string" default_value="page down" name="DecreaseGridSize"/>
                 <option type="string" default_value="m" name="OpenManageList"/>
                 <option type="string" default_value="b" name="OpenOnExecutedList"/>
+                <option type="string" default_value="left ctrl+g" name="ToggleSurfaceMove"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
@@ -229,6 +230,7 @@
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
                 <option type="boolean" default_value="true" name="ShowHints"/>
                 <option type="boolean" default_value="true" name="RotationInfo"/>
+                <option type="boolean" default_value="true" name="AllowMultiWidgets"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
                 <option name="OverkillCubemapTools" type="bool" value="true"/>

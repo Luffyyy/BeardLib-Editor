@@ -73,7 +73,8 @@ function Options:build_default()
     raycast:tickbox("SelectAndGoToMenu", ClassClbk(self, "update_option_value"), self:Val("SelectAndGoToMenu"), {
         text = "Auto Switch To Selection", help = "Automatically switches to the selection menu when selecting something"
     })
-    raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"))
+    local surface_key = BLE.Options:GetValue("Input/ToggleSurfaceMove")
+    raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"), {text = string.len(surface_key) > 0 and "Surface Move ("..utf8.to_upper(surface_key)..")" or nil})
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
     raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
     raycast:tickbox("SelectInstances", ClassClbk(self, "update_option_value"), self:Val("SelectInstances"))
@@ -99,18 +100,24 @@ function Options:enable()
     self:bind_opt("ToggleLight", ClassClbk(self, "toggle_light"))
     self:bind_opt("IncreaseGridSize", ClassClbk(self, "IncreaseGridSize"))
     self:bind_opt("DecreaseGridSize", ClassClbk(self, "DecreaseGridSize"))
+    self:bind_opt("ToggleSurfaceMove", ClassClbk(self, "ToggleSurfaceMove"))
 end
 
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
 
+function Options:ToggleSurfaceMove()
+    local item = self:GetItem("SurfaceMove")
+    item:SetValue(not item:Value(), true)
+    self._parent:keybind_message("Surface Move "..(item:Value() and "enabled" or "disabled"))
+end
+
 function Options:toggle_light(item) 
     if not item then
-        log("toggle")
         item = self:GetPart("tools"):get_tool("general")._holder:GetItem("UseLight")
         item:SetValue(not item:Value())
-        self:GetPart("status"):ShowKeybindMessage("Head Light "..(item:Value() and "enabled" or "disabled"))
+        self._parent:keybind_message("Head Light "..(item:Value() and "enabled" or "disabled"))
     end
     self._parent:toggle_light(item:Value())
 end
@@ -119,7 +126,7 @@ function Options:ChangeCameraSpeed(decrease, incremental)
     local cam_speed = self:GetItem("CameraSpeed")
     local change = incremental and math.max(cam_speed:Value() * 0.3, 0.1) or ctrl() and 0.1 or 1
     cam_speed:SetValue(cam_speed:Value() + (decrease == true and -change or change), true)
-    self:GetPart("status"):ShowKeybindMessage("Camera speed changed to: "..cam_speed:Value())
+    self._parent:keybind_message("Camera speed changed to: "..cam_speed:Value())
 end
 
 function Options:KeySPressed()
@@ -242,7 +249,7 @@ function Options:save(force_backup, old_include, skip_warning)
 
     if not skip_warning and self:Val("SaveWarningAfterGameStarted") and self._parent._before_state then
         if self._playtest_saving_allowed == false then
-            self:GetPart("status"):ShowKeybindMessage("Saving is disabled for this session")
+            self._parent:keybind_message("Saving is disabled for this session")
             return
         elseif self._playtest_saving_allowed == nil then
             self._playtest_saving_allowed = false

@@ -1355,7 +1355,7 @@ function Static:update(t, dt)
     if managers.viewport:get_current_camera() then
         for _, unit in pairs(self._selected_units) do
             if alive(unit) and not unit:fake() then
-                if draw_bodies then
+                if draw_bodies and not unit:mission_element() then
                     for i = 0, unit:num_bodies() - 1 do
                         local body = unit:body(i)
                         if self._parent:_should_draw_body(body) then

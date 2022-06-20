@@ -335,7 +335,7 @@ end
 function ItemExt:CopyAxis(item)
 	local menu = item.parent.parent
 	Application:set_clipboard(tostring(menu:Value()))
-	managers.editor:m().status:ShowKeybindMessage(menu:Name() .. " copied to clipboard")
+	managers.editor:keybind_message(menu:Name() .. " copied to clipboard")
 end
 
 function ItemExt:PasteAxis(item)
@@ -347,9 +347,9 @@ function ItemExt:PasteAxis(item)
 	end)
 	if result and type(result) == "table" and result._is_a_shape or type_name(result) == menu.value_type then
 		menu:SetValue(result, true)
-		managers.editor:m().status:ShowKeybindMessage(menu:Name() .. " pasted from clipboard")
+		managers.editor:keybind_message(menu:Name() .. " pasted from clipboard")
 	else
-		managers.editor:m().status:ShowKeybindMessage("Incorrect paste data")
+		managers.editor:keybind_message("Incorrect paste data")
 	end
 end
 
