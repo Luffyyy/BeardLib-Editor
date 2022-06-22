@@ -452,7 +452,7 @@ function Options:SaveData(path, file_name, data)
     FileIO:WriteTo(Path:Combine(path, file_name), data)
 end
 
-function Options:save_nav_data(include)
+function Options:save_nav_data(include, skip_restart)
     local path = self:map_world_path()
     local had_include = not not include
     include = include or {}
@@ -469,7 +469,9 @@ function Options:save_nav_data(include)
     end
     if not had_include then
         self:save_local_add_xml(include)
-	    managers.game_play_central:restart_the_game()
+        if not skip_restart then
+	        managers.game_play_central:restart_the_game()
+        end
     end
 end
 

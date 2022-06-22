@@ -100,11 +100,12 @@ end
 function AiEditor:build_menu()
     self:save()
     self._holder:ClearItems()
-    local graphs = self._holder:group("Graphs")
+    local graphs = self._holder:group("Graphs", {align_method = "grid"})
     local spawn = self:GetPart("spawn")
     graphs:button("SpawnNavSurface", ClassClbk(spawn, "begin_spawning", "core/units/nav_surface/nav_surface"))
-    graphs:button("BuildNavigationData", ClassClbk(self, "build_nav_segments"), { enabled = self._parent._parent._has_fix })
     graphs:button("SaveNavigationData", ClassClbk(self:part("opt"), "save_nav_data", false), { enabled = self._parent._parent._has_fix })
+    graphs:button("CalculateAll", ClassClbk(self, "build_nav_segments", "all"), { enabled = self._parent._parent._has_fix, size_by_text = true })
+    graphs:button("CalculateSelected", ClassClbk(self, "build_nav_segments", "selected"), { enabled = self._parent._parent._has_fix, size_by_text = true })
     --[[
         graphs:button(
             "CalculateAll",
@@ -130,8 +131,8 @@ function AiEditor:build_menu()
             )
         )
     ]]
-    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"))
-    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"))
+    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"), {size_by_text = true})
+    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {size_by_text = true})
 
     local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debugging [Toggle what to draw]" })
     local group = navigation_debug:pan("Draw", {align_method = "grid"})
@@ -534,21 +535,25 @@ function AiEditor:_calc_graphs(params)
 end
 
 function AiEditor:_clear_graphs()
-    for _, unit in pairs(World:find_units_quick("all")) do
-        if unit:name() == self._nav_surface_unit then
-            managers.editor:DeleteUnit(unit)
+    EU:YesNoQuestion("Do you want to delete all nav segments?", function()
+        for _, unit in pairs(World:find_units_quick("all")) do
+            if unit:name() == self._nav_surface_unit then
+                managers.editor:DeleteUnit(unit)
+            end
         end
-    end
-    self:GetPart("select"):reload_menu("unit")
+        self:GetPart("select"):reload_menu("unit")
+    end)
 end
 
 function AiEditor:_clear_selected_nav_segment()
-    for _, unit in pairs(self:selected_units()) do
-        if unit:name() == self._nav_surface_unit then
-            managers.editor:DeleteUnit(unit)
+    EU:YesNoQuestion("Do you want to delete the selected nav segments?", function()
+        for _, unit in pairs(self:selected_units()) do
+            if unit:name() == self._nav_surface_unit then
+                managers.editor:DeleteUnit(unit)
+            end
         end
-    end
-    self:GetPart("select"):reload_menu("unit")
+        self:GetPart("select"):reload_menu("unit")
+    end)
 end
 
 function AiEditor:_draw_nav_segments(item)
@@ -654,10 +659,20 @@ function AiEditor:data()
     return self._parent:data().ai_settings
 end
 
-function AiEditor:build_nav_segments()
+function AiEditor:build_nav_segments(build_type)
     -- Add later the options to the menu
-    BLE.Utils:YesNoQuestion("This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?", function()
-        self:part("opt"):save(nil, nil, true)
+    local text = "This will save the map, disable the player and AI, build the nav data and reload the game. Proceed?"
+    if build_type == "selected" then
+        if managers.editor._running_simulation then
+            BLE.Utils:Notify("Error!", "Cannot calculate selected while playtest is running.")
+            return
+        end
+        text = "This will build nav data for the selected segments. You will not be able to playtest until you reload the level. Proceed?"
+    end
+    BLE.Utils:YesNoQuestion(text, function()
+        if build_type == "all" then
+            self:part("opt"):save(nil, nil, true)
+        end
         local settings = {}
         local nav_surfaces = {}
 
@@ -681,11 +696,10 @@ function AiEditor:build_nav_segments()
                         unit:set_extension_update_enabled(extension:id(), false)
                     end
                 end
-            elseif unit:name() == self._nav_surface_unit then
+            elseif unit:name() == self._nav_surface_unit and (build_type == "all" or table.contains(self:selected_units(), unit)) then
                 table.insert(nav_surfaces, unit)
             end
         end
-
         local editor_ids = {}
         local duplicate_id_unit
         for _, unit in pairs(nav_surfaces) do
@@ -711,6 +725,8 @@ function AiEditor:build_nav_segments()
         if #settings < 1 then
             if #nav_surfaces > 0 then
                 BLE.Utils:Notify("Error!", "At least one nav surface has to touch a surface(that is also enabled while generating) for navigation to be built.")
+            elseif  build_type == "selected" then
+                BLE.Utils:Notify("Error!", "You need to select at least one nav segment.")
             else
                 BLE.Utils:Notify("Error!", "There are no nav surfaces in the map to begin building the navigation data, please spawn one")
                 local W = self:part("world")
@@ -735,8 +751,10 @@ function AiEditor:build_nav_segments()
             return
         end
 
-        managers.navigation:clear()
-        managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph"))
+        if build_type == "all" then
+            managers.navigation:clear()
+        end
+        managers.navigation:build_nav_segments(settings, ClassClbk(self, "build_visibility_graph", build_type))
 
     end)
 end
@@ -755,7 +773,7 @@ function AiEditor:reenable_disabled_units()
     self._disabled_units = {}
 end
 
-function AiEditor:build_visibility_graph()
+function AiEditor:build_visibility_graph(build_type)
     local all_visible = true
     local exclude, include
     if not all_visible then
@@ -769,11 +787,18 @@ function AiEditor:build_visibility_graph()
         end
     end
     local ray_lenght = 150
-    managers.navigation:build_visibility_graph(function()
-        managers.groupai:set_state("none")
-    end, all_visible, exclude, include, ray_lenght)
+    managers.navigation:build_visibility_graph(ClassClbk(self, "_visibility_graph_done", build_type), all_visible, exclude, include, ray_lenght)
+end
 
-    self:part("opt"):save_nav_data()
+function AiEditor:_visibility_graph_done(build_type)
+    managers.groupai:set_state("none")
+    if build_type == "selected" then
+        self:reenable_disabled_units()
+        self:set_selected_unit()
+        managers.editor._playtest_forbidden = true
+        managers.editor:keybind_message("Navigation calculation done")
+    end
+    self:part("opt"):save_nav_data(nil, build_type == "selected")
 end
 
 function AiEditor:can_unit_be_selected()

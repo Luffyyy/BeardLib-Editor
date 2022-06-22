@@ -373,7 +373,7 @@ function Static:build_extension_items()
 end
 
 function Static:build_grab_button(transform)
-    transform:button("Grab", ClassClbk(self, "start_grabbing"))
+    transform:GetToolbar():tb_imgbtn("Grab", ClassClbk(self, "start_grabbing"), nil, BLE.Utils.EditorIcons.grab, {help = "Grab"})
 end
 
 function Static:start_grabbing()
@@ -397,13 +397,13 @@ function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
     local transform = self:group("Transform")
     self:build_grab_button(transform)
 
-    transform:button("IgnoreRaycastOnce", function()
+    transform:GetToolbar():tb_imgbtn("IgnoreRaycastOnce", function(item)
         for _, unit in pairs(self:selected_units()) do
             if unit:unit_data().unit_id then
                 self._ignore_raycast[unit:unit_data().unit_id] = true
             end
         end
-    end)
+    end, nil, {32, 96, 32, 32}, {help = "Ignore Raycast Once"})
 
     transform:Vec3Rot("", ClassClbk(self, "set_unit_data"), nil, nil, {on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end
@@ -1731,9 +1731,8 @@ function Static:build_physics_items()
 
     if not can_physics then return end
 
-    local physics_items = self:group("Physics")
-    physics_items:divider("PhysicsToolTip", {text = "Simulate physics on units to settle them into more natural positions."})
-    physics_items:s_btn("Simulate Physics", ClassClbk(self, "physics_simulation_dialog"))
+    local quick = self:GetItem("QuickActions")
+    quick:s_btn("SimulatePhysics", ClassClbk(self, "physics_simulation_dialog"), {size_by_text = true, help = "Simulate physics on units to settle them into more natural positions."})
 end
 
 function Static:can_do_physics(unit)
@@ -1825,4 +1824,7 @@ function Static:stop_physics_simulation()
 
     self:update_positions()
     self:recalc_all_locals()
+    for _, unit in pairs(self._selected_units) do
+        BLE.Utils:SetPosition(unit, unit:position(), unit:rotation())
+    end
 end

@@ -42,7 +42,8 @@ Utils.EditorIcons = {
     teleport = {368, 16, 32, 32},
     teleport_selection = {368, 64, 32, 32},
     local_transform = {391, 118, 36, 36},
-    global_transform = {336, 112, 32, 32}
+    global_transform = {336, 112, 32, 32},
+    grab = {160, 224, 32, 32}
 }
 
 Utils.ElementIcons = {

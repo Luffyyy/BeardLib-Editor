@@ -35,6 +35,7 @@ function Editor:init(data)
     self._use_local_move = true
     self._disable_portals = true
     self._script_debug = true
+    self._running_simulation = false
 
 	self._brush = Draw:brush()
     self._brush:set_font(Idstring("fonts/font_medium"), 32)
@@ -102,6 +103,9 @@ function Editor:init(data)
         end
         if data.enabled then
             self:set_enabled(true)
+        end
+        if data.running_simulation then
+            self._running_simulation = data.running_simulation
         end
     end
 end
@@ -501,9 +505,18 @@ function Editor:set_camera(pos, rot)
     end
 end
 
+function Editor:force_editor_state()
+	game_state_machine:current_state():force_editor_state()
+end
+
 function Editor:partially_disable()
     self._partially_disabled = true
     self._menu:Disable()
+end
+
+function Editor:world_camera_disable()
+    self._partially_disabled = true
+    self._vp:set_active(false)
 end
 
 function Editor:enable()
@@ -752,6 +765,7 @@ function Editor:destroy()
         selected_units = #selected_units > 0 and selected_units or nil,
         mission_units = self.parts.mission:units(),
         particle_editor_active = self._particle_editor_active,
+        running_simulation = self._running_simulation,
         scroll_y_tbl = scroll_y_tbl
     }
 end
@@ -867,21 +881,7 @@ function Editor:update(t, dt)
         return
     end
     if BeardLib.Utils.Input:IsTriggered(self._toggle_trigger) and not self._partially_disabled then
-        if BLE.Options:GetValue("Map/SaveBeforePlayTesting") and self._enabled then
-            self.parts.opt:save()
-        end
-        if not self._enabled then
-            self._before_state = game_state_machine:current_state_name()
-            game_state_machine:change_state_by_name("editor")
-        elseif managers.platform._current_presence == "Playing" then
-            local state = self._before_state or "ingame_waiting_for_players"
-            if not game_state_machine:can_change_state_by_name(state) then
-                game_state_machine:change_state_by_name("ingame_standard")
-            end
-            game_state_machine:change_state_by_name(state)
-        else
-            game_state_machine:change_state_by_name("ingame_waiting_for_players")
-        end
+        self:toggle_playtesting()
     end
     if self:enabled() then
         local pos, rot = self:current_position()
@@ -966,7 +966,7 @@ function Editor:current_position()
         local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
         if rays then
             for _, unit_r in pairs(rays) do
-                if unit_r.unit ~= unit and unit_r.unit:visible() then
+                if not table.contains(self:selected_units(), unit_r.unit) and unit_r.unit:visible() then
                     ray = unit_r
                     break
                 end
@@ -1169,20 +1169,20 @@ function Editor:update_snappoints(t, dt)
 end
 
 function Editor:draw_grid(t, dt)
-
 	local rot = Rotation(0, 0, 0)
 	if alive(self:selected_unit()) and self:local_rot() and self._use_local_move then
 		rot = self:selected_unit():rotation()
     end
     if (self._using_move_widget and self._move_widget:enabled() and self:widget_unit()) or (self._use_surface_move and self:get_dummy_or_grabbed_unit()) then
+        local pos = self._using_move_widget and self:widget_unit():position() or self._current_pos
         for i = -12, 12, 1 do
-            local from_x = (self:widget_unit():position() + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
-            local to_x = self:widget_unit():position() + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()
+            local from_x = (pos + rot:x() * i * self:grid_size()) - rot:y() * 12 * self:grid_size()
+            local to_x = pos + rot:x() * i * self:grid_size() + rot:y() * 12 * self:grid_size()
 
             Application:draw_line(from_x, to_x, 0, 0.5, 0)
 
-            local from_y = (self:widget_unit():position() + rot:y() * i * self:grid_size()) - rot:x() * 12 * self:grid_size()
-            local to_y = self:widget_unit():position() + rot:y() * i * self:grid_size() + rot:x() * 12 * self:grid_size()
+            local from_y = (pos + rot:y() * i * self:grid_size()) - rot:x() * 12 * self:grid_size()
+            local to_y = pos + rot:y() * i * self:grid_size() + rot:x() * 12 * self:grid_size()
 
             Application:draw_line(from_y, to_y, 0, 0.5, 0)
         end
@@ -1251,9 +1251,32 @@ function Editor:toggle_orthographic(item)
 	end
 end
 
+function Editor:toggle_playtesting()
+    if BLE.Options:GetValue("Map/SaveBeforePlayTesting") and self._enabled and not self._running_simulation then
+        self.parts.opt:save()
+    end
 
---Empty/Unused functions
-function Editor:register_message()end
+    local state
+    if not self._enabled then
+        self._before_state = game_state_machine:current_state_name()
+        state = "editor"
+    elseif self._playtest_forbidden then
+        BLE.Utils:Notify("Error!", "Due to critical changes that would crash the game, playtesting is disabled. Please reload the level.")
+    elseif self._running_simulation then
+        state = self._before_state or "ingame_standard"
+        if not game_state_machine:can_change_state_by_name(state) then
+            game_state_machine:change_state_by_name("ingame_standard")
+        end
+    else
+        state = "ingame_waiting_for_players"
+        self._running_simulation = true
+    end
+
+    if state then
+        game_state_machine:change_state_by_name(state)
+    end
+end
+
 function Editor:set_value_info_pos(position)
 	position = position:with_x((1 + position.x) / 2 * self._editor_menu.w)
 	position = position:with_y((1 + position.y) / 2 * self._editor_menu.h - 100)
@@ -1320,4 +1343,8 @@ function Editor:update_post_effects()
         end
     end
 end
+
+
+--Empty/Unused functions
+function Editor:register_message()end
 
