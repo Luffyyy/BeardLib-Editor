@@ -17,10 +17,10 @@ function ProjectLocalization:Init(data)
         end
     end
     self._dir = data.directory or "loc"
-    if #self._languages == 0 and data.default then
+    if table.size(self._languages) == 0 and data.default then
         self._languages[data.default:split("%.")[1]] = data.default
     end
-    if #self._languages == 0 then
+    if table.size(self._languages) == 0 then
         data = self:create()
         self._languages.english = data.default
     end
@@ -101,9 +101,10 @@ function ProjectLocalization:open_lang(file)
         return
     end
     self:GetItem("AddString"):SetEnabled(true)
-
+    
     local path = Path:Combine(self._parent:get_dir(), self._dir, file)
-    self._current_lang = self._languages_to_save[file] or (FileIO:Exists(path) and FileIO:ReadScriptData(path, "json") or {})
+
+    self._current_lang = self._languages_to_save[file] or (self:read_lang(path) or {})
     self._current_lang_name = file
     self._languages_to_save[file] = self._current_lang
     self._strings_panel:ClearItems()
@@ -113,6 +114,29 @@ function ProjectLocalization:open_lang(file)
     self._strings_panel:AlignItems(true)
     self:GetItem("MakeDefault"):SetEnabled(self._data.default ~= file)
     self:GetItem("RemoveLanguage"):SetEnabled(self._data.default ~= file)
+end
+
+function ProjectLocalization:read_lang(path)
+    local ext = Path:GetFileExtension(path)
+	local contents
+	if ext == "lua" then
+		contents = blt.vm.dofile(path)
+	else
+		local data = FileIO:ReadFrom(path)
+		if data then
+			local passed = pcall(function()
+				if ext == "yaml" then
+					contents = YAML.eval(data)
+				else
+					contents = json10.decode(data)
+				end
+			end)
+			if not passed then
+				return false
+			end
+		end
+	end
+    return contents
 end
 
 function ProjectLocalization:insert_string_item(key, str)
@@ -180,7 +204,9 @@ function ProjectLocalization:save_data()
         FileIO:Delete(Path:Combine(dir, self._dir, file))
     end
     for file, data in pairs(self._languages_to_save) do
-        FileIO:WriteScriptData(Path:Combine(dir, self._dir, file), data, "json")
+        if Path:GetFileExtension(file) == "json" then
+            FileIO:WriteScriptData(Path:Combine(dir, self._dir, file), data, "json")
+        end
     end
     local loc = true
     while loc do
