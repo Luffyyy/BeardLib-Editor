@@ -94,10 +94,13 @@ function PortalLayer:build_menu()
     self._holder:tickbox("DrawPortals", nil, true)
     local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
-    local shapes = self._holder:group("Shapes", {h = h, auto_height = false})
+    local units = self._holder:group("Units", {enabled = false})
+    units:GetToolbar():tb_imgbtn("ToggleVisibility", ClassClbk(self, "toggle_units_visible"), nil, BLE.Utils.EditorIcons.eye, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Toggle Visibility"})
+    units:GetToolbar():tb_imgbtn("SelectUnits", ClassClbk(self, "select_portalled_units"), nil, BLE.Utils.EditorIcons.select, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Select all units inside portal"})
+    units:tickbox("HighlightUnitsInPortal", nil, true)
+    units:button("ManageUnitsInPortal", ClassClbk(self, "manage_units"))
+    local shapes = self._holder:group("Shapes", {stretch_to_bottom = true, auto_height = false, enabled = false})
     shapes:GetToolbar():tb_imgbtn("NewShape", ClassClbk(self, "add_shape"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Shape"})
-
-    self._holder:group("Units", {stretch_to_bottom = true, auto_height = false})
     self:load_portals()
     self:save()
 end
@@ -127,14 +130,18 @@ function PortalLayer:update(t, dt)
     local portal = self._selected_portal
     if self._holder:GetItemValue("DrawPortals") then
         if portal then
+            for _, shape in pairs(portal._shapes) do
+                shape:draw(t, dt, 1, self._selected_shape == shape and 0 or 1,1)
+            end
+        end
+    end
+    if self._holder:GetItemValue("HighlightUnitsInPortal") then
+        if portal then
             for unit_id in pairs(portal._ids) do  
                 local unit = managers.worlddefinition:get_unit(unit_id)
                 if alive(unit) then
                     Application:draw(unit, 1, 0, 0)
                 end
-            end
-            for _, shape in pairs(portal._shapes) do
-                shape:draw(t, dt, 1, self._selected_shape == shape and 0 or 1,1)
             end
         end
     end
@@ -166,32 +173,82 @@ end
 
 function PortalLayer:load_portal_units()
     local units = self._holder:GetItem("Units")
-    units:ClearItems()
-    units:GetToolbar():tb_imgbtn("ToggleVisibility", ClassClbk(self, "toggle_units_visible"), nil, BLE.Utils.EditorIcons.eye, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Toggle Visibility"})
-    if self._selected_portal then
-        for unit_id, _ in pairs(self._selected_portal._ids) do
-            local unit = managers.worlddefinition:get_unit(unit_id)
-            if unit then
-                local btn = units:button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id)})
-                btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit, btn), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
-            end
-        end
-    end
+    units:SetText("Units".. (self._selected_portal and (" ["..table.size(self._selected_portal._ids).."]") or "" ))
+    --units:ClearItems()
+    --if self._selected_portal then
+    --    for unit_id, _ in pairs(self._selected_portal._ids) do
+    --        local unit = managers.worlddefinition:get_unit(unit_id)
+    --        if unit then
+    --            local btn = units:button(unit_id, function() managers.editor:select_unit(unit) end, {text = string.format("%s[%s]", unit:unit_data().name_id, unit_id)})
+    --            btn:tb_imgbtn("Remove", ClassClbk(self, "remove_unit_from_portal", unit, btn), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
+    --        end
+    --    end
+    --end
 end
 
+function PortalLayer:manage_units(item)
+    if not self._selected_portal then
+        return
+    end
+
+    local units = World:find_units_quick("disabled", "all")
+	units = table.filter_list(units, function(unit)
+		local ud = unit:unit_data()
+		if not ud then
+			return false
+		end
+		return not ud.instance and ud.unit_id ~= 0
+	end)
+
+    local list = {}
+    local selected_list = {}
+    for i, unit in pairs(units) do
+        local ud = unit:unit_data()
+        local name = string.format("%s [%s]", ud.name_id, ud.unit_id or "")
+        local entry = {name = name, unit = unit}
+        table.insert(list, entry)
+        if self._selected_portal._ids[ud.unit_id] then
+            table.insert(selected_list, entry)
+        end
+    end
+    BLE.SelectDialog:Show({
+        selected_list = selected_list,
+        list = list,
+        allow_multi_insert = false,
+        callback = ClassClbk(self, "clbk_manage_units")
+    })
+end
+
+function PortalLayer:clbk_manage_units(items)
+    local all_units = {}
+    for _, data in ipairs(items) do
+        local ud = data.unit:unit_data()
+        all_units[ud.unit_id] = data.unit
+    end
+    for unit_id, _ in pairs(self._selected_portal._ids) do
+        local unit = managers.worlddefinition:get_unit(unit_id)
+        all_units[unit_id] = not all_units[unit_id] and unit or nil
+    end
+
+    for unit_id, unit in pairs(all_units) do
+        if self._selected_portal._ids[unit_id] then
+            self._selected_portal:remove_unit_id(unit)
+        elseif not self._selected_portal._ids[unit_id] then
+            self._selected_portal:add_unit_id(unit)
+        end
+    end
+    self:load_portal_units() 
+end
 function PortalLayer:remove_unit_from_portal(unit, item)
     if self._selected_portal then
         self._selected_portal:remove_unit_id(unit)
-        item = item or self._holder:GetItem(unit:unit_data().unit_id) 
-        if item then
-            item:Destroy()
-        end
+        self:load_portal_units()
     end
 end
 
-function PortalLayer:add_unit_to_portal(unit, no_reload)
-    self._selected_portal:add_unit_id(unit)
-    if not no_reload then
+function PortalLayer:add_unit_to_portal(unit)
+    if self._selected_portal then
+        self._selected_portal:add_unit_id(unit)
         self:load_portal_units()
     end
 end
@@ -283,18 +340,22 @@ function PortalLayer:select_portal(name, nounselect, noswitch)
     end
     self._selected_shape = nil
     self._holder:GetItem("Shapes"):ClearItems("Shapes")
-    self._holder:GetItem("Units"):ClearItems()
+    --self._holder:GetItem("Units"):ClearItems()
     if self._selected_portal then
         self._holder:GetItem("portal_"..self._selected_portal._name):SetBorder({left = false})
     end
     if self._selected_portal and self._selected_portal._name == name and nounselect ~= true then
         self._selected_portal = nil
+        self._holder:GetItem("Units"):SetEnabled(false)
+        self._holder:GetItem("Shapes"):SetEnabled(false)
     else
+        self._holder:GetItem("Units"):SetEnabled(true)
+        self._holder:GetItem("Shapes"):SetEnabled(true)
         self._holder:GetItem("portal_"..name):SetBorder({left = true})
         self._selected_portal = managers.portal:unit_groups()[name]
         self:load_portal_shapes()
-        self:load_portal_units()
-    end        
+    end    
+    self:load_portal_units()    
     self:select_shape()
     self:save()
 end
@@ -331,9 +392,9 @@ function PortalLayer:load_portals()
         portals:ClearItems("portals")
         for name, portal in pairs(managers.portal:unit_groups()) do
             local prtl = portals:button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {text = portal._name, label = "portals"})
-            prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red})
-            prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, BLE.Utils.EditorIcons.pen)
-            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, BLE.Utils.EditorIcons.select)
+            prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red, help = "Remove"})
+            prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, BLE.Utils.EditorIcons.pen, {help = "Rename"})
+            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, BLE.Utils.EditorIcons.select, {help = "Auto fill units inside shapes"})
         end
     end   
 end
@@ -370,6 +431,21 @@ function PortalLayer:toggle_units_visible(item)
         item.enabled_alpha = self._units_visible and 1 or 0.5
         item:SetEnabled(item.enabled)
     end
+end
+
+function PortalLayer:select_portalled_units(item)
+    if not self._selected_portal then
+        return
+    end
+
+    local select = {}
+    for unit_id, _ in pairs(self._selected_portal._ids) do
+        local unit = managers.worlddefinition:get_unit(unit_id)
+        if unit and alive(unit) then
+           table.insert(select, unit)
+        end
+    end
+    self:GetPart("static"):set_selected_units(select)
 end
 
 function PortalLayer:can_unit_be_selected(unit)
