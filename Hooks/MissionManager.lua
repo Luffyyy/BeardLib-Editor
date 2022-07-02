@@ -337,6 +337,7 @@ local element_rules = {
 		"instigator_ids",
 		"spawn_unit_elements", 
 		"use_shape_element_ids",
+		"orientation_elements",
 		"rules_element_ids", 
 		"spawn_groups", 
 		"spawn_points", 

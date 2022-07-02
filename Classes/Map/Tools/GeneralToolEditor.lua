@@ -25,7 +25,7 @@ function GenTool:build_menu()
     editors:button("EffectEditor", ClassClbk(self, "open_effect_editor"))
 
     local game = self._holder:group("Game", groups_opt)
-    game:slider("GameSpeed", ClassClbk(self, "set_game_speed"), 1, {max = 10, min = 0.1, step = 0.3, wheel_control = true, help = "High settings can have a negative effect on game logic, use with caution"})
+    game:slider("GameSpeed", ClassClbk(self, "set_game_speed"), 1, {max = 10, min = 0.1, step = 0.3, floats = 1, wheel_control = true, help = "High settings can have a negative effect on game logic, use with caution"})
     game:combobox("Difficulty", ClassClbk(self, "set_difficulty"), difficulty_loc, table.get_key(difficulty_ids, Global.game_settings.difficulty), {items_localized = true, items_pretty = true})
     game:numberbox("MissionFilter", ClassClbk(self, "set_mission_filter"), Global.current_mission_filter or 0, {floats = 0, min = 0, max = 5, help = "Set a mission filter to be forced on the level, 0 uses the default filter."})
     game:tickbox("PauseGame", ClassClbk(self, "pause_game"), false, {size_by_text = true})

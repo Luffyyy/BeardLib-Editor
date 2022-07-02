@@ -145,7 +145,11 @@ function MissionScriptEditor:_create_panel()
 		skip_script_check = self.SKIP_SCRIPT_CHECK
 	})
 	if self.USES_POINT_ORIENTATION then
-		self:BuildElementsManage("orientation_elements")
+		local orientation = self._class_group:pan("PointOrientation", {align_method = "grid", offset = 0, full_bg_color = false})
+		self:BuildElementsManage("orientation_elements", nil, nil, nil, {group = orientation})
+		self:BooleanCtrl("disable_orientation_on_use", {group = orientation, help = "Should the orientation element be disabled after using it", size_by_text = true})
+		self:BooleanCtrl("use_orientation_sequenced", {group = orientation, text = "Use sequenced", help = "Pick orientation elements in list order instead of randomly", size_by_text = true})
+		orientation:separator()
 	end
 
 	if self.INSTANCE_VAR_NAMES then
@@ -940,7 +944,6 @@ end
 
 function MissionScriptEditor:AddOrRemoveManaged(value_name, data, params, clbk)
 	params = params or {}
-	local current_value = self._element.values[value_name]
 	local tdata
 	local id
 	if type(data) == "table" then
@@ -955,6 +958,7 @@ function MissionScriptEditor:AddOrRemoveManaged(value_name, data, params, clbk)
 
 	if not params.not_table then
 		self._element.values[value_name] = self._element.values[value_name] or {}
+		local current_value = self._element.values[value_name]
 		local add = id
 		if tdata and tdata.orig then
 			add = clone(tdata.orig)

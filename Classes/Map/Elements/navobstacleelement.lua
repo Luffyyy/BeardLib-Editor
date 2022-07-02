@@ -69,7 +69,8 @@ end
 
 function EditorNavObstacle:link_managed(unit)
 	if alive(unit) and unit:unit_data() then
-		self:AddOrRemoveManaged("obstacle_list", {unit = unit, key = "unit_id", orig = {unit_id = 0, obj_name = nil, guis_id = 1}})
+        local objects = self:_get_objects_by_unit(unit)
+		self:AddOrRemoveManaged("obstacle_list", {unit = unit, key = "unit_id", orig = {unit_id = 0, obj_name = objects[1].hashed, guis_id = 1}})
 	end
 end
 
