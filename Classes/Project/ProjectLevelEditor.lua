@@ -195,14 +195,14 @@ function ProjectLevelEditor:clone_level(create_data)
                     break
                 end
                 if level.level_id then
-                    if chain_level.level_id == clone_id then
+                    if type(chain_level) == "table" and chain_level.level_id == clone_id then
                         extra_package(narr.package)
                         found_narr = true
                         break
                     end
                 else
                     for _, inner_chain_level in pairs(chain_level) do
-                        if inner_chain_level.level_id == clone_id then
+                        if type(inner_chain_level) == "table" and inner_chain_level.level_id == clone_id then
                             extra_package(narr.package)
                             found_narr = true
                             break
