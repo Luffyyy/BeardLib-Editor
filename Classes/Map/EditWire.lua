@@ -5,6 +5,7 @@ function EditWire:editable(unit) return unit:wire_data() and unit:get_object(A_T
 function EditWire:build_menu(parent)
 	local group = self:group("Wire")
 	group:numberbox("Slack", ClassClbk(self._parent, "set_unit_data"), 0)
+	group:tickbox("EditTarget", ClassClbk(self, "set_edit_target"), false, {help = "Allows editing the end point of the wire. Can be toggled with TAB"})
 	group:Vec3Rot("Target", ClassClbk(self, "set_target_axis"))
 end
 
@@ -27,8 +28,19 @@ function EditWire:target_object()
 end
 
 function EditWire:widget_unit()
-	if Input:keyboard():down(Idstring("tab")) then
+	if self._editing then
 		return self:target_object()
+	end
+	return self:selected_unit()
+end
+
+function EditWire:set_edit_target(item)
+	self._editing = item:Value()
+end
+
+function EditWire:update(t, dt)
+	if Input:keyboard():pressed(Idstring("tab")) then
+		self._menu:GetItem("EditTarget"):SetValue(not self._editing, true)
 	end
 end
 
