@@ -113,8 +113,8 @@ function BLE:InitManagers(data)
             self._camera_object:set_near_range(1)
             self._camera_object:set_far_range(BLE.Options:GetValue("Map/CameraFarClip"))
             self._camera_object:set_fov(BLE.Options:GetValue("Map/CameraFOV"))
-            self._camera_object:set_position(Vector3(864, -789, 458))
-            self._camera_object:set_rotation(Rotation(54.8002, -21.7002, 8.53774e-007))
+            self._camera_object:set_position(Vector3(-210, 655, 475))
+            self._camera_object:set_rotation(Rotation(-135, -40, 0))
             self._vp:set_camera(self._camera_object)
         end
 

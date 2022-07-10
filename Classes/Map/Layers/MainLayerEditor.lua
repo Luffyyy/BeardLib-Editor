@@ -206,7 +206,7 @@ function MainLayerEditor:jump_to_bookmark(name)
         if bookmark and type(bookmark) == "table" then
             managers.editor:set_camera(bookmark.position, bookmark.rotation)
         else
-            managers.editor:set_camera(Vector3(864, -789, 458), Rotation(54.8002, -21.7002, 8.53774e-007))
+            managers.editor:set_camera(Vector3(-210, 655, 475), Rotation(-135, -40, 0))
         end
          managers.editor:keybind_message("Jumped to "..name)
     end
