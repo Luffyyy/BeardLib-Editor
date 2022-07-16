@@ -5,6 +5,7 @@ function ToolsMenu:init(parent, menu)
         general = GeneralToolEditor:new(self),
         environment = EnvironmentToolEditor:new(self),
         debug = DebugToolEditor:new(self),
+        world_cameras = WorldCamerasToolEditor:new(self)
     }
     self._combat_debug = HUDCombatDebug:new()
 end
@@ -14,11 +15,11 @@ function ToolsMenu:get_tool(name)
 end
 
 function ToolsMenu:make_tabs(tabs)
-    local tools = {"general", "environment", "debug"}
+    local tools = {"general", "environment", "debug", "world_cameras"}
     self._current_tool = self._current_tool or "general"
     for i, name in pairs(tools) do
         self._tabs:s_btn(name, ClassClbk(self, "open_tab", name:lower()), {
-            text = string.capitalize(name),
+            text = string.capitalize(string.pretty(name)),
             border_bottom = i == 1
         })
     end
@@ -58,9 +59,18 @@ function ToolsMenu:destroy()
     end
 end
 
+
+function ToolsMenu:visible()
+    return self._menu:Visible()
+end
+
 function ToolsMenu:loaded_continents(continents, current_continent)
+    if self._loaded then
+        return
+    end
+    
     for name, manager in pairs(self.tools) do
-        if manager.build_menu then
+        if manager.build_menu and not manager._built then
             manager:build_menu()
         end
     end
@@ -96,14 +106,20 @@ function ToolsMenu:disabled_update(t, dt)
 end
 
 function ToolsMenu:mouse_busy()
+    if not self:visible() then
+        return false
+    end
     for _, layer in pairs(self.tools) do
-        if layer.mouse_busy and layer:mouse_busy(b, x, y) then
+        if layer.mouse_busy and layer:mouse_busy() then
             return true
         end
     end
 end
 
 function ToolsMenu:mouse_pressed(b, x, y)
+    if not self:visible() then
+        return false
+    end
     for _, layer in pairs(self.tools) do
         if layer.mouse_pressed and layer:mouse_pressed(b, x, y) then
             return true
@@ -112,6 +128,9 @@ function ToolsMenu:mouse_pressed(b, x, y)
 end
 
 function ToolsMenu:mouse_released(b, x, y)
+    if not self:visible() then
+        return false
+    end
     for _, layer in pairs(self.tools) do
         if layer.mouse_released and layer:mouse_released(b, x, y) then
             return true

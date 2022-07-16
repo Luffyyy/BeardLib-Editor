@@ -85,6 +85,34 @@ elseif civ or F == "elementspawnenemydummy" then
 		end
 		return orig(self, params, ...)
 	end
+elseif F == "coreelementworldcamera" then
+	core:module("CoreElementWorldCamera")
+	--Prevent black screen after executing from editor
+	Hooks:PostHook(ElementWorldCamera, "on_executed", "EditorWorldCameraFix", function(self, instigator)
+		if not managers.editor:enabled() then
+			return
+		end
+
+		if self._values.worldcamera_sequence and self._values.worldcamera_sequence ~= "none" then
+			local sequence = managers.worldcamera:world_camera_sequence(self._values.worldcamera_sequence)
+			if not sequence or #sequence == 0 then
+				self:camera_done()
+				return
+			end
+			managers.worldcamera:add_sequence_done_callback(self._values.worldcamera_sequence, callback(self, self, "camera_done"))
+		elseif self._values.worldcamera and self._values.worldcamera ~= "none" then
+			local camera = managers.worldcamera:world_camera(self._values.worldcamera)
+			if not camera or #camera._positions == 0 then
+				self:camera_done()
+				return
+			end
+			managers.worldcamera:add_world_camera_done_callback(self._values.worldcamera, callback(self, self, "camera_done"))
+		end
+	end)
+
+	function ElementWorldCamera:camera_done()
+		managers.editor:force_editor_state()
+	end
 elseif F == "levelstweakdata" then
 	Hooks:PostHook(LevelsTweakData, "init", "BLEInstanceFix", function(self)
 		if Global.editor_loaded_instance then
@@ -107,5 +135,29 @@ elseif F == "jobmanager" then
 			return
 		end
 		return {Global.current_mission_filter} or self:current_stage_data().mission_filter
+	end
+elseif F == "coreworldcameramanager" then
+	function CoreWorldCameraManager:save()
+		local worldcameras = {}
+	
+		for name, world_camera in pairs(self._world_cameras) do
+			worldcameras[name] = world_camera:save_data_table()
+		end
+	
+		managers.worlddefinition._world_cameras_data = {}
+		if table.size(worldcameras) > 0 or table.size(self._world_camera_sequences) > 0 then
+			managers.worlddefinition._world_cameras_data = {
+				worldcameras = worldcameras,
+				sequences = self._world_camera_sequences
+			}
+		end
+	end
+
+	function CoreWorldCamera:_check_loaded_data()
+		self._in_acc = math.round(self._in_acc * 100) / 100
+		self._out_acc = math.round(self._out_acc * 100) / 100
+		for _, key in pairs(self._keys) do
+			key.roll = key.roll or 0
+		end
 	end
 end

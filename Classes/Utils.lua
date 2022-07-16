@@ -43,7 +43,10 @@ Utils.EditorIcons = {
     teleport_selection = {368, 64, 32, 32},
     local_transform = {391, 118, 36, 36},
     global_transform = {336, 112, 32, 32},
-    grab = {160, 224, 32, 32}
+    grab = {160, 224, 32, 32},
+    play = {160, 192, 32, 32},
+    stop = {192, 192, 32, 32},
+    pause = {192, 224, 32, 32}
 }
 
 Utils.ElementIcons = {
@@ -241,7 +244,9 @@ Utils.ElementIcons = {
 	UnloadStatic = {768, 256},
 	RelativeTeleport = {704, 384},
 	RelativeTeleportTarget = {896, 384},
-	SlowMotion = {960, 384}
+	SlowMotion = {960, 384},
+    WorldCamera = {512, 0},
+    WorldCameraTrigger = {640, 448}
 }
 
 --- Contains words of units that do have ene_ in them, however aren't actually spawnable enemies. Used to filter out that list further

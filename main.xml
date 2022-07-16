@@ -64,6 +64,7 @@
 			<class file="EnvironmentToolEditor.lua"/>
             <class file="GeneralToolEditor.lua"/>
             <class file="DebugToolEditor.lua"/>
+            <class file="WorldCamerasToolEditor.lua"/>
             <class file="HUDCombatDebug.lua"/>
             <classes directory="ParticleEditor">
                 <class file="ParticleEditor.lua"/>
@@ -123,6 +124,8 @@
     	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     	<hook source_file="lib/tweak_data/levelstweakdata" file="Fixes.lua"/>
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
+        <hook source_file="core/lib/managers/coreworldcameramanager" file="Fixes.lua"/>
+        <hook source_file="core/lib/managers/mission/coreelementworldcamera" file="Fixes.lua"/>
         <hook source_file="lib/managers/group_ai_states/groupaistatebesiege" file="GroupAIStateBase.lua"/>
         <hook source_file="lib/managers/group_ai_states/groupaistatebase" file="GroupAIStateBase.lua"/>
         <hook source_file="lib/managers/mission/elementlookattrigger" file="ElementLookAtTrigger.lua"/>
@@ -461,6 +464,8 @@
         <value_node value="ElementSpawnTeamAI"/>
         <value_node value="ElementForceEndAssaultState"/>
         <value_node value="ElementClock"/>
+        <value_node value="ElementWorldCamera"/>
+        <value_node value="ElementWorldCameraTrigger"/>
 	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
 	    <value_node value="ElementHeistTimerTrigger"/-->
 	<value_node value="ElementAIGroupType"/>

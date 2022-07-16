@@ -37,6 +37,32 @@ function Editor:init(data)
     self._script_debug = true
     self._running_simulation = false
 
+    self._grid_sizes = {
+		1,
+		25,
+		50,
+		100,
+		400,
+		800,
+		1000,
+		1600,
+		2000,
+		10000
+	}
+    
+    self._snap_rotations = {
+		1,
+		2,
+		5,
+		10,
+		15,
+		30,
+		45,
+		60,
+		90,
+		180
+	}
+
 	self._brush = Draw:brush()
     self._brush:set_font(Idstring("fonts/font_medium"), 32)
     self._brush:set_render_template(Idstring("OverlayVertexColorTextured"))
@@ -255,12 +281,14 @@ function Editor:SetRulerPoints()
 	if not self._end_pos then
         self._start_pos = start_pos
         self:Log("[RULER]Start position: " .. tostring(start_pos))
+        self:set_value_info_visibility(true)
     else
         self:Log("[RULER]Length ".. tostring(self._ruler_dist))
         self:Log("[RULER]End position: " .. tostring(self._end_pos))
         self._end_pos = nil
         self._ruler_dist = nil
         self._start_pos = nil
+        self:set_value_info_visibility(false)
 	end
 end
 
@@ -505,8 +533,20 @@ function Editor:set_camera(pos, rot)
     end
 end
 
+function Editor:set_camera_roll(roll)
+	if roll then
+        local rot = Rotation(self._camera_rot:y(), roll)
+        self:set_camera(nil, Rotation(self._camera_rot:y(), rot:z()))
+	end
+end
+
+function Editor:set_camera_locked(locked)
+	self._camera_locked = locked
+end
+
 function Editor:force_editor_state()
 	game_state_machine:current_state():force_editor_state()
+    self.parts.menu:set_tabs_enabled(true)
 end
 
 function Editor:partially_disable()
@@ -517,6 +557,7 @@ end
 function Editor:world_camera_disable()
     self._partially_disabled = true
     self._vp:set_active(false)
+    self.parts.menu:set_tabs_enabled(false)
 end
 
 function Editor:enable()
@@ -660,6 +701,11 @@ function Editor:set_camera_fov(fov)
         self:camera():set_fov(fov)
     end
 end
+
+function Editor:default_camera_fov()
+	return BLE.Options:GetValue("Map/CameraFOV")
+end
+
 
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
@@ -966,7 +1012,7 @@ function Editor:current_position()
         local rays = World:raycast_all(p1, p2, nil, managers.slot:get_mask("surface_move"))
         if rays then
             for _, unit_r in pairs(rays) do
-                if not table.contains(self:selected_units(), unit_r.unit) and unit_r.unit:visible() then
+                if unit_r.unit:visible() and (self.parts.spawn:is_spawning() and unit_r.unit ~= unit) or (not self.parts.spawn:is_spawning() and not table.contains(self:selected_units(), unit_r.unit)) then
                     ray = unit_r
                     break
                 end
@@ -1008,7 +1054,7 @@ end
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
     local shft = shift()
-    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused())
+    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused() or self._camera_locked)
     if not move or not shft then
         managers.mouse_pointer:_activate()
     end
@@ -1197,14 +1243,16 @@ function Editor:draw_ruler(t, dt)
 	local start_pos = self._start_pos
     local end_pos = self._current_pos
     self._end_pos = end_pos
-    self._ruler_dist = string.format("%.2fm", dis(self._start_pos, self._end_pos) / 100)
+    self._ruler_dist = string.format("Length: %.2fm", dis(self._start_pos, self._end_pos) / 100)
 
 	Application:draw_sphere(start_pos, 5, 1, 1, 1)
 	Application:draw_sphere(end_pos, 5, 1, 1, 1)
 	Application:draw_line(start_pos, end_pos, 1, 1, 1)
 	Application:draw_line(start_pos, end_pos, 1, 1, 1)
     if end_pos then
-        self._brush:text(end_pos + Vector3(0, 0, 45), tostring(self._ruler_dist))
+        self:set_value_info(self._ruler_dist)
+	    self:set_value_info_pos(self:world_to_screen(end_pos)) 
+        --self._brush:text(end_pos + Vector3(0, 0, 45), tostring(self._ruler_dist))
     end
 end
 

@@ -4,19 +4,6 @@ function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")
     self._wanted_elements = {}
     self._save_callbacks = {}
-
-    self._grid_sizes = {
-		1,
-		25,
-		50,
-		100,
-		400,
-		800,
-		1000,
-		1600,
-		2000,
-		10000
-	}
 end
 
 --TODO: cleanup
@@ -165,7 +152,7 @@ end
 
 function Options:IncreaseGridSize()
     local current_size = self:Val("GridSize")
-    for _, size in ipairs(self._grid_sizes) do
+    for _, size in ipairs(self._parent._grid_sizes) do
         if size > current_size then
             current_size = size
             break
@@ -176,7 +163,7 @@ end
 
 function Options:DecreaseGridSize()
     local current_size = self:Val("GridSize")
-    for _, size in table.reverse_ipairs(self._grid_sizes) do
+    for _, size in table.reverse_ipairs(self._parent._grid_sizes) do
         if size < current_size then
             current_size = size
             break
@@ -308,7 +295,7 @@ The editor will now use this format and any old map will need to be converted. C
         {_meta = "mission", path = "mission", script_data_type = cusxml},
         {_meta = "nav_data", path = "nav_manager_data", script_data_type = xml},
         {_meta = "world_sounds", path = "world_sounds", script_data_type = xml},
-        {_meta = "world_cameras", path = "world_cameras", script_data_type = cusxml},
+        {_meta = "world_cameras", path = "world_cameras", script_data_type = xml},
         {_meta = "massunit", path = "massunit", reload = true},
     }
     local worlddef = managers.worlddefinition
@@ -359,14 +346,8 @@ The editor will now use this format and any old map will need to be converted. C
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
         self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, xml))
 
-        local wcd = deep_clone(worlddef._world_cameras_data)
-        if wcd.sequences and #wcd.sequences == 0 then
-            wcd.sequences = nil
-        end
-        if wcd.worldcameras and #wcd.worldcameras == 0 then
-            wcd.worldcameras = nil
-        end
-        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(wcd, cusxml))
+        managers.worldcamera:save()
+        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data, xml))
 
         self:save_cover_data(include)
         self:save_nav_data(include)

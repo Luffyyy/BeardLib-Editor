@@ -21,9 +21,13 @@ function EditorState:at_enter()
 	end
 end
 
-function EditorState:at_exit()
+function EditorState:at_exit(new_state)
 	if Global.editor_mode then
-		managers.editor:set_enabled(false)
-		managers.mission:activate()
+		if new_state:name() == "world_camera" then
+			managers.editor:world_camera_disable()
+		else
+			managers.editor:set_enabled(false)
+			managers.mission:activate()
+		end
 	end
 end
