@@ -77,6 +77,7 @@ function WorldDefinition:create(layer, offset)
 	end
 
 	if layer == "ai" and self._definition.ai then
+		BLE:SetLoadingText("Creating AI layer")
 		for _, values in ipairs(self._definition.ai) do
 			local unit = self:_create_ai_editor_unit(values, offset)
 
@@ -87,6 +88,7 @@ function WorldDefinition:create(layer, offset)
 	end
 
 	if layer == "ai" or layer == "all" then
+		BLE:SetLoadingText("Creating AI layer")
 		if self._definition.ai_nav_graphs then
 			self:_load_ai_nav_graphs(self._definition.ai_nav_graphs, offset)
 			Application:cleanup_thread_garbage()
@@ -121,6 +123,7 @@ function WorldDefinition:create(layer, offset)
 	Application:check_termination()
 
 	if layer == "mission_scripts" then
+		BLE:SetLoadingText("Creating Scripts")
 		return_data.scripts = return_data.scripts or {}
 
 		if self._definition.mission_scripts then
@@ -143,6 +146,7 @@ function WorldDefinition:create(layer, offset)
 	end
 
 	if layer == "mission" then
+		BLE:SetLoadingText("Creating Mission Elements")
 		if self._definition.mission then
 			for _, values in ipairs(self._definition.mission) do
 				table.insert(return_data, self:_create_mission_unit(values, offset))
@@ -159,6 +163,7 @@ function WorldDefinition:create(layer, offset)
 	end
 
 	if (layer == "brush" or layer == "all") and self._definition.brush then
+		BLE:SetLoadingText("Creating Brushes")
 		self:_create_massunit(self._definition.brush, offset)
 	end
 
@@ -171,6 +176,7 @@ function WorldDefinition:create(layer, offset)
 			environment.environment_areas = {}
 			environment.environment_values.environment = "core/environments/default"
 		end
+		BLE:SetLoadingText("Creating Environment")
 		self:_create_environment(environment, offset)
 
 		return_data = environment
@@ -188,7 +194,7 @@ function WorldDefinition:create(layer, offset)
 
 	if layer == "statics" or layer == "all" then
 		local is_editor = Application:editor()
-
+		BLE:SetLoadingText("Creating Statics")
 		if self._definition.statics then
 			for _, values in ipairs(self._definition.statics) do
 				local unit = self:_create_statics_unit(values, offset)
@@ -200,6 +206,8 @@ function WorldDefinition:create(layer, offset)
 
 		for name, continent in pairs(self._continent_definitions) do
 			if continent.statics then
+				local s = "Creating Continent: %s"
+				BLE:SetLoadingText(string.format(s, name))
 				for _, values in ipairs(continent.statics) do
 					local unit = self:_create_statics_unit(values, offset)
 					if unit then
@@ -265,7 +273,8 @@ end
 function WorldDef:spawn_quick(return_data, offset)
 	offset = offset or Vector3()
 	if self._needed_to_spawn then
-		for _, values in ipairs(self._needed_to_spawn) do
+		BLE:SetLoadingText("Creating Instances")
+		for i, values in ipairs(self._needed_to_spawn) do
 			local unit = self:_create_statics_unit(values, offset)
 			if unit and return_data then
 				table.insert(return_data, unit)
