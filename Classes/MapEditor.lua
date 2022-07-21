@@ -36,6 +36,7 @@ function Editor:init(data)
     self._disable_portals = true
     self._script_debug = true
     self._running_simulation = false
+    self._grid_altitude = 0
 
     self._grid_sizes = {
 		1,
@@ -725,6 +726,7 @@ function Editor:update_snap_rotation(value)
 end
 function Editor:set_disable_portals(value) self._disable_portals = value end
 function Editor:set_script_debug(value) self._script_debug = value end
+function Editor:set_grid_altitude(altitude) self._grid_altitude = altitude end
 
 function Editor:hide_units() 
     local selected_units = self:selected_units()
@@ -843,6 +845,7 @@ function Editor:set_camera_far_range(range) return self:camera():set_far_range(r
 function Editor:hidden_units() return self._hidden_units end
 function Editor:disable_portals() return self._enabled and self._disable_portals end
 function Editor:script_debug() return self._script_debug end
+function Editor:grid_altitude() return self._grid_altitude end
 
 
 function Editor:cam_spawn_pos()
@@ -1023,7 +1026,8 @@ function Editor:current_position()
             local n = ray.normal
             local x = math.round(p.x / grid_size + n.x) * grid_size
             local y = math.round(p.y / grid_size + n.y) * grid_size
-            current_pos = Vector3(x, y, p.z)
+            local z = p.z + self:grid_altitude()
+            current_pos = Vector3(x, y, z)
 
             if alive(unit) and alt() then
                 local u_rot = unit:rotation()
@@ -1037,7 +1041,7 @@ function Editor:current_position()
     else
         p2 = self:get_cursor_look_point(100)
         if p1.z - p2.z ~= 0 then
-            local t = (p1.z - 0) / (p1.z - p2.z)
+            local t = (p1.z - self:grid_altitude()) / (p1.z - p2.z)
             local p = p1 + (p2 - p1) * t
             if t < 1000 and t > -1000 then
                 local x = math.round(p.x / grid_size) * grid_size
@@ -1054,7 +1058,8 @@ end
 local v0 = Vector3()
 function Editor:update_camera(t, dt)
     local shft = shift()
-    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused() or self._camera_locked)
+    local move_flying = BLE.Options:GetValue("Map/OnlyMoveWhileFlying")
+    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused() or self._camera_locked) and (not move_flying or shft and move_flying) 
     if not move or not shft then
         managers.mouse_pointer:_activate()
     end

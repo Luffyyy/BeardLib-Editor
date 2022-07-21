@@ -17,6 +17,7 @@ end
 function Static:enable()
     Static.super.enable(self)
     self:bind_opt("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    self:bind_opt("Deselect", ClassClbk(self, "deselect_unit"))
     self:bind_opt("CopyUnit", ClassClbk(self, "CopySelection"))
     self:bind_opt("PasteUnit", ClassClbk(self, "Paste"))
     self:bind_opt("TeleportToSelection", ClassClbk(self, "KeyFPressed"))
@@ -28,7 +29,10 @@ function Static:enable()
     self:bind_opt("RotateSpawnDummyPitch", ClassClbk(self, "RotateSpawnDummyPitch"))
     self:bind_opt("RotateSpawnDummyRoll", ClassClbk(self, "RotateSpawnDummyRoll"))
     self:bind_opt("SettleUnits", ClassClbk(self, "SettleUnits"))
+    self:bind_opt("ResetRotation", ClassClbk(self, "reset_rotation"))
     self:bind_opt("HideUnits", ClassClbk(self._parent, "hide_units"))
+    self:bind_opt("IncreaseGridAltitude", ClassClbk(self, "IncreaseGridAltitude"))
+    self:bind_opt("DecreaseGridAltitude", ClassClbk(self, "DecreaseGridAltitude"))
 end
 
 function Static:get_grabbed_unit()
@@ -55,6 +59,15 @@ function Static:RotateSpawnDummyRoll()
         unit:set_rotation(unit:rotation() * Rotation(0, 0, self:Val("RotateSpawnDummy")))
     end
 end
+
+function Static:IncreaseGridAltitude()
+    self._parent:set_grid_altitude(self._parent:grid_altitude() + self._parent:grid_size())
+end
+
+function Static:DecreaseGridAltitude()
+    self._parent:set_grid_altitude(self._parent:grid_altitude() - self._parent:grid_size())
+end
+
 function Static:SettleUnits()
     self:StorePreviousPosRot()
     local selected_units = self:selected_units()
@@ -71,6 +84,21 @@ function Static:SettleUnits()
         end
     end
     self:recalc_all_locals()
+end
+
+function Static:reset_rotation()
+    self:StorePreviousPosRot()
+    local selected_units = self:selected_units()
+    for i, unit in pairs(selected_units) do
+        if alive(unit) then
+		    local yaw = not ctrl() and unit:rotation():yaw() or 0
+
+            local rot = Rotation(yaw, 0, 0)
+            BLE.Utils:SetPosition(unit, unit:position(), rot)
+        end
+	end
+    self:recalc_all_locals()
+    self:update_positions()
 end
 
 function Static:mouse_pressed(button, x, y)
@@ -151,12 +179,15 @@ function Static:finish_grabbing()
     self:set_title(self._original_title)
     self._original_title = nil
     self:update_ignored_collisions()
+    self._parent:set_grid_altitude(0)
     transform:SetEnabled(true)
 end
 
 function Static:deselect_unit(item) 
-    self:set_unit(true) 
-    self:GetPart("select"):reload_menus()
+    if not self._parent:get_dummy_or_grabbed_unit() and not self._parent:is_using_widget() then
+        self:set_unit(true) 
+        self:GetPart("select"):reload_menus()
+    end
 end
 
 function Static:mouse_released(button, x, y)
@@ -388,6 +419,7 @@ function Static:start_grabbing()
        self:set_title("Press: LMB to place, RMB to cancel")
        self:GetPart("menu"):set_tabs_enabled(false)
        self:GetItem("Transform"):SetEnabled(false)
+       self._parent:set_grid_altitude(0)
    end
 end
 
