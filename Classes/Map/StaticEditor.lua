@@ -435,7 +435,7 @@ function Static:build_positions_items(cannot_be_saved, cannot_be_prefab)
                 self._ignore_raycast[unit:unit_data().unit_id] = true
             end
         end
-    end, nil, {32, 96, 32, 32}, {help = "Ignore Raycast Once"})
+    end, nil, BLE.Utils.EditorIcons.ignore_raycast, {help = "Ignore Raycast Once"})
 
     transform:Vec3Rot("", ClassClbk(self, "set_unit_data"), nil, nil, {on_click = ClassClbk(self, "StorePreviousPosRot"), step = self:GetPart("opt")._menu:GetItem("GridSize"):Value()})
 end

@@ -402,7 +402,7 @@ function WorldCamTool:update_point_list()
             local div = self._point_list:divider("Point "..i)
             div:tb_imgbtn("Delete", ClassClbk(self, "delete_point", i), nil, icons.cross, {help = "Delete point", highlight_color = Color.red})
             div:tb_imgbtn("Move", ClassClbk(self, "move_point", i), nil, icons.reset_settings, {help = "Move point to current camera location"})
-            div:tb_imgbtn("Goto", ClassClbk(self, "goto_point", i), nil, icons.teleport, {help = "Goto point"})
+            div:tb_imgbtn("Goto", ClassClbk(self, "goto_point", i), nil, icons.jump_cam, {help = "Goto point"})
         end
     end
 	self._holder:AlignItems(true)
@@ -418,13 +418,7 @@ function WorldCamTool:add_point()
             local cam = managers.editor._vp:camera()
 
             camera:add_point(cam:position(), cam:rotation())
-
-            local i = #camera:get_points()
-            local icons = BLE.Utils.EditorIcons
-            local div = self._point_list:divider("Point "..i)
-            div:tb_imgbtn("Delete", ClassClbk(self, "delete_point", i), nil, icons.cross, {help = "Delete point", highlight_color = Color.red})
-            div:tb_imgbtn("Move", ClassClbk(self, "move_point", i), nil, icons.reset_settings, {help = "Move point"})
-            div:tb_imgbtn("Goto", ClassClbk(self, "goto_point", i), nil, icons.teleport, {help = "Goto point"})
+			self:update_point_list()
         else
             BLE.Utils:Notify("Error!", "Cameras with the Bezier curve type can only have up to 4 points.")
         end

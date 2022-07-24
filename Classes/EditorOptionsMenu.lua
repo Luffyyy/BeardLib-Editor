@@ -5,6 +5,7 @@ function Options:init()
 	local EMenu = BLE.Menu
 	local icons =  BLE.Utils.EditorIcons
 	local page = EMenu:make_page("Options", nil, {scrollbar = false})
+	self._elem_colors = O:GetValue("Map/ElementColorGroups")
 	ItemExt:add_funcs(self, page)
 	local w = page:ItemsWidth(2, 0)
 	local h = page:ItemsHeight(2, 6)
@@ -66,10 +67,13 @@ function Options:init()
 	visual:colorbox("ToolbarBackgroundColor", ClassClbk(self, "set_clbk"), O:GetValue("ToolbarBackgroundColor"))
 	visual:colorbox("ToolbarButtonsColor", ClassClbk(self, "set_clbk"), O:GetValue("ToolbarButtonsColor"))
 	visual:separator()
-    visual:colorbox("ElementsColor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementsColor"))
+	visual:slider("ElementsSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementsSize"), {max = 64, min = 16, floats = 0})
 	visual:tickbox("UniqueElementIcons", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/UniqueElementIcons"))
     visual:tickbox("RandomizedElementsColor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RandomizedElementsColor"))
-    visual:slider("ElementsSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementsSize"), {max = 64, min = 16, floats = 0})
+	local colors = visual:group("ElementColors", {enabled = not O:GetValue("Map/RandomizedElementsColor"), auto_align = false})
+	colors:GetToolbar():tb_imgbtn("AddColorGroup", ClassClbk(self, "add_color_group", colors), nil, icons.plus, {img_scale = 0.7, help = "Add new element color group"})
+	colors:colorbox("ElementsColor", ClassClbk(self, "set_map_clbk"), BLE.Options:GetValue("Map/ElementsColor"), {text = "Default", use_alpha = false})
+	self:build_color_groups(colors)
 
 	local input = self:divgroup("Input", {w = w / 2, h = page:ItemsHeight(1, 6), auto_height = false, position = function(item)
 		if alive(main) then
@@ -157,6 +161,128 @@ Clicking 'Yes' will %s the physics settings fix and close the game. After openin
 	end)
 end
 
+function Options:build_color_groups()
+	local icons =  BLE.Utils.EditorIcons
+
+	local item = self:GetItem("ElementColors")
+	item:ClearItems("colors")
+	for name, data in pairs(self._elem_colors) do
+		local text = string.format("%s (%d)", name, #data.elements)
+		local group = item:colorbox(name, ClassClbk(self, "set_color_group"), data.color, {text = text, use_alpha = false, return_hex = true, label = "colors", textbox_offset = 54})
+		group:tb_imgbtn("RemoveGroup", ClassClbk(self, "remove_color_group", name), nil, icons.cross, {img_scale = 0.8, help = "Remove color group"})
+		group:tb_imgbtn("RenameGroup", ClassClbk(self, "rename_color_group", name), nil, icons.pen, {img_scale = 0.8, help = "Rename color group"})
+		group:tb_imgbtn("EditGroup", ClassClbk(self, "edit_color_group", name), nil, icons.settings_gear, {img_scale = 0.8, help = "Set what elements use this color group"})
+	end
+	item:AlignItems(true)
+end
+
+function Options:add_color_group()
+	BLE.InputDialog:Show({title = "Color group name", text = "", callback = function(name)
+        if name == "" then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name cannot be empty!", callback = function()
+                self:add_color_group()
+            end})
+            return
+        elseif name == "Default" or string.begins(name, " ") then
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:add_color_group()
+            end})
+            return
+        elseif self._elem_colors and self._elem_colors[name] then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name already taken!", callback = function()
+                self:add_color_group()
+            end})
+            return
+        end
+
+		self._elem_colors[name] = {color = Color.white, elements = {}}
+		self:build_color_groups()
+		BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
+		BLE.Options:Save()
+    end})
+end
+
+function Options:remove_color_group(name)
+	BLE.Utils:YesNoQuestion("This will remove the element color group!", function()
+		self._elem_colors[name] = nil
+		self:build_color_groups()
+		BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
+		BLE.Options:Save()
+	end)
+end
+
+function Options:set_color_group(item)
+	local name = item:Name()
+	if name and self._elem_colors[name] then
+		self._elem_colors[name].color = item:Value()
+		BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
+		BLE.Options:Save()
+	end
+end
+
+function Options:edit_color_group(name)
+	local list = {}  
+	for _, element in pairs(BLE._config.MissionElements) do
+        local elem_name = element:gsub("Element", "")
+		local available = true
+		for i, group in pairs(self._elem_colors) do
+			if i ~= name and table.contains(group.elements, elem_name) then
+				available = false
+			end
+		end
+		if available then
+			table.insert(list, elem_name)
+		end
+    end
+
+	BLE.SelectDialog:Show({
+        selected_list = self._elem_colors[name].elements,
+        list = list,
+        callback = function(list) 
+			self._elem_colors[name].elements = list
+			self:build_color_groups()
+			BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
+			BLE.Options:Save()
+        end
+    })
+end
+
+function Options:rename_color_group(old_name)
+    local mission = managers.mission
+    BLE.InputDialog:Show({title = "Rename Color group to", text = script, callback = function(name)
+        if name == "" then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name cannot be empty!", callback = function()
+                self:rename_color_group(name)
+            end})
+            return
+        elseif name == "Default" or string.begins(name, " ") then
+            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+                self:rename_color_group(name)
+            end})
+            return
+        elseif self._elem_colors and self._elem_colors[name] then
+            BLE.Dialog:Show({title = "ERROR!", message = "Name already taken", callback = function()
+                self:rename_color_group(name)
+            end})
+            return
+        end
+
+		self._elem_colors[name] = deep_clone(self._elem_colors[old_name])
+        self._elem_colors[old_name] = nil
+		self:build_color_groups()
+		BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
+		BLE.Options:Save()
+    end})
+end
+
+function Options:get_element_color(name)
+	for _, group in pairs(self._elem_colors) do
+		if table.contains(group.elements, name) then
+			return group.color
+		end
+	end
+end
+
 function Options:show_reset_dialog(menu)
 	BLE.Utils:YesNoQuestion("Do you want to reset the selected options?", ClassClbk(self, "reset_options", menu))
 end
@@ -214,6 +340,8 @@ function Options:set_map_clbk(item)
         managers.editor:set_use_quick_access(value)
 	elseif name == "AutoSave" or name == "AutoSaveMinutes" then
         managers.editor.parts.opt:toggle_autosaving()
+	elseif name == "RandomizedElementsColor" then
+		self:GetItem("ElementColors"):SetEnabled(not value)
 	end
 end
 
