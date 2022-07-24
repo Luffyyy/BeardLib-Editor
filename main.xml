@@ -64,6 +64,7 @@
 			<class file="EnvironmentToolEditor.lua"/>
             <class file="GeneralToolEditor.lua"/>
             <class file="DebugToolEditor.lua"/>
+            <class file="WorldCamerasToolEditor.lua"/>
             <class file="HUDCombatDebug.lua"/>
             <classes directory="ParticleEditor">
                 <class file="ParticleEditor.lua"/>
@@ -123,6 +124,8 @@
     	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     	<hook source_file="lib/tweak_data/levelstweakdata" file="Fixes.lua"/>
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
+        <hook source_file="core/lib/managers/coreworldcameramanager" file="Fixes.lua"/>
+        <hook source_file="core/lib/managers/mission/coreelementworldcamera" file="Fixes.lua"/>
         <hook source_file="lib/managers/group_ai_states/groupaistatebesiege" file="GroupAIStateBase.lua"/>
         <hook source_file="lib/managers/group_ai_states/groupaistatebase" file="GroupAIStateBase.lua"/>
         <hook source_file="lib/managers/mission/elementlookattrigger" file="ElementLookAtTrigger.lua"/>
@@ -163,6 +166,13 @@
                 <option type="string" default_value="" name="SelectInstance"/>
                 <option type="string" default_value="" name="SelectGroup"/>
 
+                <option type="string" default_value="left ctrl+1" name="WorldMenu"/>
+                <option type="string" default_value="left ctrl+2" name="SelectionMenu"/>
+                <option type="string" default_value="left ctrl+3" name="SpawnMenu"/>
+                <option type="string" default_value="left ctrl+4" name="SelectMenu"/>
+                <option type="string" default_value="left ctrl+5" name="ToolsMenu"/>
+                <option type="string" default_value="left ctrl+6" name="OptionsMenu"/>
+
                 <option type="string" default_value="left ctrl+shift" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+f" name="TeleportToSelection"/>
                 <option type="string" default_value="left ctrl+c" name="CopyUnit"/>
@@ -170,12 +180,19 @@
                 <option type="string" default_value="left ctrl+s" name="SaveMap"/>
                 <option type="string" default_value="]" name="IncreaseCameraSpeed"/>
                 <option type="string" default_value="[" name="DecreaseCameraSpeed"/>
+
                 <option type="string" default_value="insert" name="ToggleGUI"/>
                 <option type="string" default_value="left ctrl+r" name="ToggleRuler"/>
                 <option type="string" default_value="t" name="ToggleMoveWidget"/>
                 <option type="string" default_value="f10" name="ToggleMapEditor"/>
                 <option type="string" default_value="r" name="ToggleRotationWidget"/>
+                <option type="string" default_value="left ctrl+g" name="ToggleSurfaceMove"/>
+                <option type="string" default_value="f3" name="ToggleEditorUnits"/>
+                <option type="string" default_value="f4" name="ToggleElements"/>
+                <option type="string" default_value="u" name="ToggleSnappoints"/>
+
                 <option type="string" default_value="delete" name="DeleteSelection"/>
+                <option type="string" default_value="left ctrl+d" name="Deselect"/>
 				<option type="string" default_value="left ctrl+z" name="Undo"/>
 				<option type="string" default_value="left ctrl+y" name="Redo"/>
 				<option type="string" default_value="f1" name="ToggleConsole"/>
@@ -189,9 +206,11 @@
                 <option type="string" default_value="space" name="LinkManaged"/>
                 <option type="string" default_value="page up" name="IncreaseGridSize"/>
                 <option type="string" default_value="page down" name="DecreaseGridSize"/>
+                <option type="string" default_value="left shift+page up" name="IncreaseGridAltitude"/>
+                <option type="string" default_value="left shift+page down" name="DecreaseGridAltitude"/>
                 <option type="string" default_value="m" name="OpenManageList"/>
                 <option type="string" default_value="b" name="OpenOnExecutedList"/>
-                <option type="string" default_value="left ctrl+g" name="ToggleSurfaceMove"/>
+                <option type="string" default_value="num enter" name="ResetRotation"/>
             </option_group>
             <option_group name="Map">
                 <option type="Color" default_value="Color(0.28, 0.28, 0.28)" name="ElementsColor"/>
@@ -224,8 +243,9 @@
                 <option type="boolean" default_value="false" name="DrawBodies"/>
                 <option type="boolean" default_value="true" name="ShowElements"/>
                 <option type="boolean" default_value="false" name="KeepMouseActiveWhileFlying"/>
+                <option type="boolean" default_value="false" name="OnlyMoveWhileFlying"/>
                 <option type="boolean" default_value="false" name="SelectEditorGroups"/>
-                <option type="boolean" default_value="false" name="SurfaceMove"/>
+                <option type="boolean" default_value="true" name="SurfaceMove"/>
                 <option type="boolean" default_value="true" name="DrawPatrolPaths"/>
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
                 <option type="boolean" default_value="true" name="ShowHints"/>
@@ -233,6 +253,7 @@
                 <option type="boolean" default_value="true" name="AllowMultiWidgets"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
+                <option name="ElementColorGroups" type="table"/>
                 <option name="OverkillCubemapTools" type="bool" value="true"/>
             </option_group>
         </options>
@@ -461,6 +482,8 @@
         <value_node value="ElementSpawnTeamAI"/>
         <value_node value="ElementForceEndAssaultState"/>
         <value_node value="ElementClock"/>
+        <value_node value="ElementWorldCamera"/>
+        <value_node value="ElementWorldCameraTrigger"/>
 	    <!--value_node value="ElementHeistTimerOperator"/> Removed as they are not actually used, use the non Heist variants.
 	    <value_node value="ElementHeistTimerTrigger"/-->
 	<value_node value="ElementAIGroupType"/>

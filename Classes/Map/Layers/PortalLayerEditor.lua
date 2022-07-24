@@ -394,7 +394,7 @@ function PortalLayer:load_portals()
             local prtl = portals:button("portal_"..portal._name, ClassClbk(self, "clbk_select_portal"), {text = portal._name, label = "portals"})
             prtl:tb_imgbtn("Remove", ClassClbk(self, "remove_portal"), nil, BLE.Utils.EditorIcons.cross, {highlight_color = Color.red, help = "Remove"})
             prtl:tb_imgbtn("Rename", ClassClbk(self, "rename_portal"), nil, BLE.Utils.EditorIcons.pen, {help = "Rename"})
-            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, BLE.Utils.EditorIcons.select, {help = "Auto fill units inside shapes"})
+            prtl:tb_imgbtn("AutoFillUnits", ClassClbk(self, "auto_fill_portal"), nil, BLE.Utils.EditorIcons.portal_add, {help = "Auto fill units inside shapes"})
         end
     end   
 end

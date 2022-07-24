@@ -4,19 +4,6 @@ function Options:init(parent, menu)
     self.super.init(self, parent, menu, "Options")
     self._wanted_elements = {}
     self._save_callbacks = {}
-
-    self._grid_sizes = {
-		1,
-		25,
-		50,
-		100,
-		400,
-		800,
-		1000,
-		1600,
-		2000,
-		10000
-	}
 end
 
 --TODO: cleanup
@@ -74,12 +61,13 @@ function Options:build_default()
         text = "Auto Switch To Selection", help = "Automatically switches to the selection menu when selecting something"
     })
     local surface_key = BLE.Options:GetValue("Input/ToggleSurfaceMove")
-    raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"), {text = string.len(surface_key) > 0 and "Surface Move ("..utf8.to_upper(surface_key)..")" or nil})
+    raycast:tickbox("SurfaceMove", ClassClbk(self, "toggle_surfacemove"), self:Val("SurfaceMove"), {help = "Snap grabbed objects to the grid on the X and Y axis.".. (string.len(surface_key) > 0 and " ("..utf8.to_upper(surface_key)..")" or "")})
     raycast:tickbox("IgnoreFirstRaycast", nil, false)
     raycast:tickbox("SelectEditorGroups", ClassClbk(self, "update_option_value"), self:Val("SelectEditorGroups"))
     raycast:tickbox("SelectInstances", ClassClbk(self, "update_option_value"), self:Val("SelectInstances"))
     raycast:tickbox("SelectAllRaycast", nil, false)
-    raycast:tickbox("UseSnappoints", nil, false, {help = "Snap the grabbed unit onto pre-defined points on other units."})
+    local snappoint_key = BLE.Options:GetValue("Input/ToggleSnappoints")
+    raycast:tickbox("UseSnappoints", nil, false, {help = "Snap the grabbed unit onto pre-defined points on other units."..(string.len(snappoint_key) > 0 and " ("..utf8.to_upper(snappoint_key)..")" or "")})
     raycast:tickbox("EndlessSelection", ClassClbk(self, "update_option_value"), self:Val("EndlessSelection"), {help = "Pressing a unit again will select the unit behind(raycast wise)"})
     raycast:numberbox("EndlessSelectionReset", ClassClbk(self, "update_option_value"), self:Val("EndlessSelectionReset"), {
         help = "How much seconds should the editor wait before reseting the endless selection",
@@ -98,20 +86,17 @@ function Options:enable()
     self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleEditorGUI"), nil, true)
     self:bind_opt("ToggleRuler", ClassClbk(self, "ToggleEditorRuler"))
     self:bind_opt("ToggleLight", ClassClbk(self, "toggle_light"))
+    self:bind_opt("ToggleEditorUnits", ClassClbk(self, "toggle_item", "EditorUnits"))
+    self:bind_opt("ToggleElements", ClassClbk(self, "toggle_item", "ShowElements"))
+    self:bind_opt("ToggleSurfaceMove", ClassClbk(self, "toggle_item", "SurfaceMove"))
+    self:bind_opt("ToggleSnappoints", ClassClbk(self, "toggle_item", "UseSnappoints"))
     self:bind_opt("IncreaseGridSize", ClassClbk(self, "IncreaseGridSize"))
     self:bind_opt("DecreaseGridSize", ClassClbk(self, "DecreaseGridSize"))
-    self:bind_opt("ToggleSurfaceMove", ClassClbk(self, "ToggleSurfaceMove"))
 end
 
 function Options:drop_player() game_state_machine:current_state():freeflight_drop_player(self._parent._camera_pos, Rotation(self._parent._camera_rot:yaw(), 0, 0)) end
 function Options:ToggleEditorGUI() self._parent._menu:Toggle() end
 function Options:ToggleEditorRuler() self._parent:SetRulerPoints() end
-
-function Options:ToggleSurfaceMove()
-    local item = self:GetItem("SurfaceMove")
-    item:SetValue(not item:Value(), true)
-    self._parent:keybind_message("Surface Move "..(item:Value() and "enabled" or "disabled"))
-end
 
 function Options:toggle_light(item) 
     if not item then
@@ -120,6 +105,12 @@ function Options:toggle_light(item)
         self._parent:keybind_message("Head Light "..(item:Value() and "enabled" or "disabled"))
     end
     self._parent:toggle_light(item:Value())
+end
+
+function Options:toggle_item(item_name) 
+    local item = self:GetItem(item_name)
+    item:SetValue(not item:Value(), true)
+    self._parent:keybind_message(string.pretty2(item_name)..(item:Value() and " Enabled" or " Disabled"))
 end
 
 function Options:ChangeCameraSpeed(decrease, incremental)
@@ -165,7 +156,7 @@ end
 
 function Options:IncreaseGridSize()
     local current_size = self:Val("GridSize")
-    for _, size in ipairs(self._grid_sizes) do
+    for _, size in ipairs(self._parent._grid_sizes) do
         if size > current_size then
             current_size = size
             break
@@ -176,7 +167,7 @@ end
 
 function Options:DecreaseGridSize()
     local current_size = self:Val("GridSize")
-    for _, size in table.reverse_ipairs(self._grid_sizes) do
+    for _, size in table.reverse_ipairs(self._parent._grid_sizes) do
         if size < current_size then
             current_size = size
             break
@@ -308,7 +299,7 @@ The editor will now use this format and any old map will need to be converted. C
         {_meta = "mission", path = "mission", script_data_type = cusxml},
         {_meta = "nav_data", path = "nav_manager_data", script_data_type = xml},
         {_meta = "world_sounds", path = "world_sounds", script_data_type = xml},
-        {_meta = "world_cameras", path = "world_cameras", script_data_type = cusxml},
+        {_meta = "world_cameras", path = "world_cameras", script_data_type = xml},
         {_meta = "massunit", path = "massunit", reload = true},
     }
     local worlddef = managers.worlddefinition
@@ -359,14 +350,8 @@ The editor will now use this format and any old map will need to be converted. C
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
         self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, xml))
 
-        local wcd = deep_clone(worlddef._world_cameras_data)
-        if wcd.sequences and #wcd.sequences == 0 then
-            wcd.sequences = nil
-        end
-        if wcd.worldcameras and #wcd.worldcameras == 0 then
-            wcd.worldcameras = nil
-        end
-        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(wcd, cusxml))
+        managers.worldcamera:save()
+        self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data, xml))
 
         self:save_cover_data(include)
         self:save_nav_data(include)

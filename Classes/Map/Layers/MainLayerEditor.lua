@@ -137,7 +137,7 @@ function MainLayerEditor:build_bookmarks()
     toolbar:tb_imgbtn("NewBookmark", ClassClbk(self, "new_bookmark"), tx, icons.plus, {help = "Save current camera location as a bookmark"})
     if world_data.camera_bookmarks then
         local bookmark = bookmarks:divider("default", {align_method = "grid_from_right", border_color = not world_data.camera_bookmarks.default and Color.green or nil, offset = {8, 4}})
-        bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", "default"), nil, icons.teleport, {help = "Jump to bookmark"})
+        bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", "default"), nil, icons.jump_cam, {help = "Jump to bookmark"})
 
         for name, data in pairs(world_data.camera_bookmarks) do
             if type(data) == "table" and data.position and data.rotation then
@@ -146,7 +146,7 @@ function MainLayerEditor:build_bookmarks()
 
                 bookmark:tb_imgbtn("RemoveBookmark", ClassClbk(self, "remove_bookmark", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove Bookmark"})
                 bookmark:tb_imgbtn("Settings", ClassClbk(self, "open_bookmark_settings", name), nil, icons.settings_gear, {help = "Bookmark Settings"})
-                bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", name), nil, icons.teleport, {help = "Jump to bookmark"})
+                bookmark:tb_imgbtn("JumpToBookmark", ClassClbk(self, "jump_to_bookmark", name), nil, icons.jump_cam, {help = "Jump to bookmark"})
             end
         end
     end
@@ -206,7 +206,7 @@ function MainLayerEditor:jump_to_bookmark(name)
         if bookmark and type(bookmark) == "table" then
             managers.editor:set_camera(bookmark.position, bookmark.rotation)
         else
-            managers.editor:set_camera(Vector3(864, -789, 458), Rotation(54.8002, -21.7002, 8.53774e-007))
+            managers.editor:set_camera(Vector3(-210, 655, 475), Rotation(-135, -40, 0))
         end
          managers.editor:keybind_message("Jumped to "..name)
     end

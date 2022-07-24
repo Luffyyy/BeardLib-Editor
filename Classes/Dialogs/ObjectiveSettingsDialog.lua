@@ -47,7 +47,7 @@ function ObjectiveSettingsDialog:SetAmount(item)
 end
 
 function ObjectiveSettingsDialog:hide(success)
-    if success then
+    if success and self._current.id ~= "" then
         if self._add_current then
             table.insert(self._objectives, self._current)
         end

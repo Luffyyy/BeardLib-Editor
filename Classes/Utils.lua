@@ -22,7 +22,7 @@ Utils.EditorIcons = {
     collapse_all = {128, 0, 32, 32},
     help = {164, 68, 56, 56},
     alert = {304, 0, 48, 48},
-    settings_gear = {320, 448, 64, 64},
+	settings_gear = {224, 192, 32, 32},
     select = {64, 0, 32, 32},
     select_all = {128, 160, 32, 32},
     copy = {64, 96, 32, 32},
@@ -34,7 +34,7 @@ Utils.EditorIcons = {
     browse_file = {128, 32, 32, 32},
     grid = {466, 18, 28, 28},
     snap_rotation = {416, 18, 32, 32},
-    ignore_raycast = {451, 115, 42, 42},
+    ignore_raycast = {454, 119, 35, 35},
     show_elements = {464, 64, 32, 32},
     editor_units = {416, 64, 32, 32},
     rotation_widget = {0, 128, 64, 64},
@@ -43,7 +43,14 @@ Utils.EditorIcons = {
     teleport_selection = {368, 64, 32, 32},
     local_transform = {391, 118, 36, 36},
     global_transform = {336, 112, 32, 32},
-    grab = {160, 224, 32, 32}
+    grab = {160, 224, 32, 32},
+    play = {160, 192, 32, 32},
+    stop = {192, 192, 32, 32},
+    pause = {192, 224, 32, 32},
+	portal_add = {128, 192, 32, 32},
+	placeholder = {448, 448, 64, 64},
+	jump_cam = {224, 224, 32, 32},
+	invisible = {256, 192, 32, 32}
 }
 
 Utils.ElementIcons = {
@@ -241,7 +248,9 @@ Utils.ElementIcons = {
 	UnloadStatic = {768, 256},
 	RelativeTeleport = {704, 384},
 	RelativeTeleportTarget = {896, 384},
-	SlowMotion = {960, 384}
+	SlowMotion = {960, 384},
+    WorldCamera = {512, 0},
+    WorldCameraTrigger = {640, 448}
 }
 
 --- Contains words of units that do have ene_ in them, however aren't actually spawnable enemies. Used to filter out that list further

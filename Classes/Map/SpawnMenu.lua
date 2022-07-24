@@ -89,6 +89,7 @@ function SpawnMenu:mouse_pressed(button, x, y)
             return true
         end
     elseif button == Idstring("1") and (self._currently_spawning or self._currently_spawning_element or self._currently_orientating) then
+        self._parent:set_grid_altitude(0)
         self:remove_dummy_unit()
         self._currently_orientating = nil
         self._currently_spawning = nil

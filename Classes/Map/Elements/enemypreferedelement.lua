@@ -8,14 +8,12 @@ EditorEnemyPreferedAdd.LINK_ELEMENTS = {
 function EditorEnemyPreferedAdd:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementEnemyPreferedAdd"
-	self._element.values.spawn_groups = {}
-	self._element.values.spawn_points = {}
 end
 
 function EditorEnemyPreferedAdd:_build_panel()
 	self:_create_panel()
-	self:BuildElementsManage("spawn_groups", nil, {"ElementSpawnEnemyGroup"})
-	self:BuildElementsManage("spawn_points", nil, {"ElementSpawnEnemyDummy"})
+	self:BuildElementsManage("spawn_groups", nil, {"ElementSpawnEnemyGroup"}, ClassClbk(self, "nil_if_empty"))
+	self:BuildElementsManage("spawn_points", nil, {"ElementSpawnEnemyDummy"}, ClassClbk(self, "nil_if_empty"))
 end
 
 function EditorEnemyPreferedAdd:update_selected(t, dt)
@@ -56,13 +54,19 @@ function EditorEnemyPreferedAdd:update_selected(t, dt)
 	end
 end
 
+function EditorEnemyPreferedAdd:nil_if_empty(value_name)
+	if self._element.values[value_name] and #self._element.values[value_name] == 0 then
+		self._element.values[value_name] = nil
+	end
+end
+
 function EditorEnemyPreferedAdd:link_managed(unit)
 	if alive(unit) and unit:mission_element() then
 		local element = unit:mission_element().element
 		if element.class == "ElementSpawnEnemyGroup" then
-			self:AddOrRemoveManaged("spawn_groups", {element = element}, nil)
+			self:AddOrRemoveManaged("spawn_groups", {element = element}, nil, ClassClbk(self, "nil_if_empty"))
 		elseif element.class == "ElementSpawnEnemyDummy" then
-			self:AddOrRemoveManaged("spawn_points", {element = element}, nil)
+			self:AddOrRemoveManaged("spawn_points", {element = element}, nil, ClassClbk(self, "nil_if_empty"))
 		end
 	end
 end

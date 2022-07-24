@@ -48,7 +48,7 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
         is_page = not clbk,
         enabled = enabled,
         cannot_be_enabled = enabled == false,
-        on_callback = ClassClbk(self, "select_tab", clbk or false),
+        on_callback = ClassClbk(self, "select_tab", name, clbk or false),
         disabled_alpha = 0.2,
         w = self._tab_size,
         h = self._menu:H(),
@@ -57,7 +57,8 @@ function UpperMenu:Tab(name, texture, texture_rect, clbk, s, enabled)
     })
 end
 
-function UpperMenu:select_tab(clbk, item)
+function UpperMenu:select_tab(tab, clbk, item)
+    item = item or self._menu:GetItem(tab)
     if clbk then
         clbk(item)
     else
@@ -100,4 +101,14 @@ end
 function UpperMenu:save()
     self._parent:Log("Saving Map..")
     BLE.Utils:GetPart("opt"):save()
+end
+
+function UpperMenu:enable()
+    UpperMenu.super.enable(self)
+    self:bind_opt("WorldMenu", ClassClbk(self, "select_tab", "world"))
+    self:bind_opt("SelectionMenu", ClassClbk(self, "select_tab", "static"))
+    self:bind_opt("SpawnMenu", ClassClbk(self, "select_tab", "spawn"))
+    self:bind_opt("SelectMenu", ClassClbk(self, "select_tab", "select"))
+    self:bind_opt("ToolsMenu", ClassClbk(self, "select_tab", "tools"))
+    self:bind_opt("OptionsMenu", ClassClbk(self, "select_tab", "opt"))
 end

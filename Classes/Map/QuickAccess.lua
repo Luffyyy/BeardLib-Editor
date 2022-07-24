@@ -29,8 +29,8 @@ function QuickAccess:init(parent, menu)
 
     local icons = BLE.Utils.EditorIcons
     self._values = {
-        {name = "SnapRotation", rect = icons.snap_rotation, reversed = reversed, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees"},
-        {name = "GridSize", rect = icons.grid, reversed = not reversed, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters"}
+        {name = "SnapRotation", rect = icons.snap_rotation, items = self._parent._snap_rotations, reversed = reversed, max = 360, default = 90, help = "Sets the amount(in degrees) that the unit will rotate", help2 = "Reset snap rotation to 90 degrees (Right Click to open list)"},
+        {name = "GridSize", rect = icons.grid, items = self._parent._grid_sizes, reversed = not reversed, max = 10000, default = 100, help = "Sets the amount(in centimeters) that the unit will move", help2 = "Reset grid size to 100 centimeters (Right click to open list)"}
     }
 
     self._toggles = {
@@ -80,7 +80,18 @@ end
 function QuickAccess:NumberBox(parent, name, params)
 
     local width = self._menu:Items()[1]:W() / 2
-
+    local items = {}
+    if params.items then
+        for _, item in ipairs(params.items) do
+            local itembtn = {
+                text = tostring(item),
+                on_callback = function()
+                    self:ResetNumberBox(name, item)
+                end
+            }
+            table.insert(items, 1, itembtn)
+        end
+    end
     local holder = parent:holder(name.."_panel", {
         offset = 0,
         w = width,
@@ -89,7 +100,7 @@ function QuickAccess:NumberBox(parent, name, params)
         align_method = params.reversed and "grid" or "grid_from_right_reversed"
     })
 
-    holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H(), help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
+    holder:tb_imgbtn(name.."_icon", ClassClbk(self, "ResetNumberBox", name, params.default), nil, params.rect, {offset = 0, border_bottom = true, size = holder:H(), items = items, help = params.help2, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
     holder:numberbox(name, ClassClbk(self, "SetOptionValue"), self:value(name), {offset = 0, w = (width-parent:H())-1, size = holder:H() * 0.75, h = holder:H(), text_offset = 0, min = 1, max = params.max, floats = 0, text = false, help = params.help, background_color = BLE.Options:GetValue("ToolbarButtonsColor")})
 end
 
