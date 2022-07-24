@@ -166,9 +166,10 @@ function Options:build_color_groups()
 
 	local item = self:GetItem("ElementColors")
 	item:ClearItems("colors")
+	local h = item:TextHeight() * 0.8
 	for name, data in pairs(self._elem_colors) do
 		local text = string.format("%s (%d)", name, #data.elements)
-		local group = item:colorbox(name, ClassClbk(self, "set_color_group"), data.color, {text = text, use_alpha = false, return_hex = true, label = "colors", textbox_offset = 54})
+		local group = item:colorbox(name, ClassClbk(self, "set_color_group"), data.color, {text = text, use_alpha = false, return_hex = true, label = "colors", textbox_offset = h*3})
 		group:tb_imgbtn("RemoveGroup", ClassClbk(self, "remove_color_group", name), nil, icons.cross, {img_scale = 0.8, help = "Remove color group"})
 		group:tb_imgbtn("RenameGroup", ClassClbk(self, "rename_color_group", name), nil, icons.pen, {img_scale = 0.8, help = "Rename color group"})
 		group:tb_imgbtn("EditGroup", ClassClbk(self, "edit_color_group", name), nil, icons.settings_gear, {img_scale = 0.8, help = "Set what elements use this color group"})

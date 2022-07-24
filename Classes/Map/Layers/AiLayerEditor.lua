@@ -80,10 +80,12 @@ function AiEditor:loaded_continents()
 end
 
 function AiEditor:save()
-    self._parent:data().ai_settings = {
-        ai_settings = self._ai_settings,
-        ai_data = managers.ai_data:save_data()
-    }
+    if not Global.editor_safe_mode then
+        self._parent:data().ai_settings = {
+            ai_settings = self._ai_settings,
+            ai_data = managers.ai_data:save_data()
+        }
+    end
 end
 
 function AiEditor:reset_selected_units()
