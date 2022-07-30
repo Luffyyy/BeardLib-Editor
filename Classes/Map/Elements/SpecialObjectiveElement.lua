@@ -32,7 +32,6 @@ function EditorSpecialObjective:create_element()
 	self._element.values.path_stance = "none"
 	self._element.values.pose = "none"
 	self._element.values.so_action = "none"
-	self._element.values.interrupt_objective = false
 	self._element.values.search_position = self._element.values.position
 	self._element.values.search_distance = 0
 	self._element.values.interval = ElementSpecialObjective._DEFAULT_VALUES.interval
@@ -49,6 +48,7 @@ function EditorSpecialObjective:create_element()
 	self._element.values.followup_elements = {}
 	self._element.values.spawn_instigator_ids = {}
 	self._element.values.test_unit = "default"	
+    self._element.values.interrupt_objective = false
 end
 
 function EditorSpecialObjective:draw_links()
@@ -150,7 +150,7 @@ end
 function EditorSpecialObjective:test_element()
     if not managers.navigation:is_data_ready() then
         BLE.Utils:Notify(
-            Global.frame_panel,
+            "ERROR!",
             "Can't test spawn unit without ready navigation data (AI-graph)"
         )
 
@@ -262,10 +262,9 @@ end
 function EditorSpecialObjective:generate_search_position(item)
     if not managers.navigation:is_data_ready() then
         BLE.Utils:Notify(
-            Global.frame_panel,
+            "ERROR!",
             "Can't generate search position without ready navigation data (AI-graph)"
         )
-
         return
     end
     local anim_set = AnimationManager:animation_set(Idstring("anims/units/enemies/cop/cop_def"))
@@ -386,16 +385,16 @@ function EditorSpecialObjective:_build_panel()
     local tb = search:GetToolbar()
     tb:tb_imgbtn("generate_search_pos", ClassClbk(self, "generate_search_position"), nil, BLE.Utils.EditorIcons.browse_file, {help = "Automatically set search position based on the end point of the So Action animation. May not always give correct results and should only be used for navlinks!"})
 	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
-	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
-	self:BooleanCtrl("align_position", {text = "Align position"})
+	self:BooleanCtrl("align_rotation")
+	self:BooleanCtrl("align_position")
 	self:BooleanCtrl("needs_pos_rsrv", {text = "Reserve position"})
-	self:BooleanCtrl("interrupt_objective", {text = "Interrupt objective", help = "Interrupt objective when element is beeing disabled or when using operation 'remove'?"})
-	self:BooleanCtrl("repeatable", {text = "Repeatable"})
-	self:BooleanCtrl("use_instigator", {text = "Use instigator"})
-	self:BooleanCtrl("forced", {text = "Forced"})
-	self:BooleanCtrl("no_arrest", {text = "No Arrest"})
+	self:BooleanCtrl("repeatable")
+	self:BooleanCtrl("use_instigator")
+	self:BooleanCtrl("forced")
+	self:BooleanCtrl("no_arrest")
 	self:BooleanCtrl("scan", {text = "Idle scan"})
 	self:BooleanCtrl("allow_followup_self", {text = "Allow self-followup"})
+    self:BooleanCtrl("interrupt_objective", {text = "Interrupt Objectives When Disabled", help = "Allow interrupting of objectives if the element is disabled or removed"})
 	local none = {"none"}
 	self:ComboCtrl("ai_group", table.list_add(none, ElementSpecialObjective._AI_GROUPS), {help = "Select an ai group."})
     self:ComboCtrl("so_action", table.list_add(none, CopActionAct._act_redirects.SO, CopActionAct._act_redirects.script, self._AI_SO_types), {help = "Select a action that the unit should start with."})
