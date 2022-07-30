@@ -366,7 +366,7 @@ end
 
 function PortalLayer:load_portal_shapes()
     local group = self._holder:GetItem("Shapes")
-    if group then
+    if group and self._selected_portal then
         group:ClearItems("Shapes")
         for i=1, #self._selected_portal._shapes do
             local btn = group:button("shape_" .. tostring(i), ClassClbk(self, "select_shape"), {label = "Shapes"})

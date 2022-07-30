@@ -431,6 +431,7 @@ function MissionScriptEditor:BuildUnitsManage(value_name, table_data, update_clb
 		single_select = opt.single_select,
 		need_name_id = opt.need_name_id,
 		combo_free_typing = opt.combo_free_typing,
+		ignore_unit_id = opt.ignore_unit_id,
 		table_data = table_data
 	}), table.merge({text = "Manage "..string.pretty(value_name, true).." List(units)", help = "Decide which units are in this list"}, opt))
 	if not group then
@@ -654,7 +655,7 @@ function MissionScriptEditor:OpenUnitsManageDialog(params)
 		if not ud then
 			return false
 		end
-		return not ud.instance and ud.unit_id ~= 0 and (not params.check_unit or params.check_unit(unit))
+		return not ud.instance and (params.ignore_unit_id or ud.unit_id ~= 0) and (not params.check_unit or params.check_unit(unit))
 	end)
 	local static = self:part("static")
 	self:OpenManageListDialog(params, units,
@@ -950,7 +951,7 @@ function MissionScriptEditor:AddOrRemoveManaged(value_name, data, params, clbk)
 		local unit = data.unit
 		local element = data.element
 		local instance = data.instance
-		id = (unit and unit:unit_data().unit_id) or instance or (element and element.id)
+		id = (unit and (params.need_name_id and unit:unit_data().name_id or unit:unit_data().unit_id)) or instance or (element and element.id)
 		tdata = data
 	else
 		id = data
