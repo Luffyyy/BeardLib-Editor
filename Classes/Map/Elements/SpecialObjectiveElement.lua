@@ -32,6 +32,7 @@ function EditorSpecialObjective:create_element()
 	self._element.values.path_stance = "none"
 	self._element.values.pose = "none"
 	self._element.values.so_action = "none"
+	self._element.values.interrupt_objective = false
 	self._element.values.search_position = self._element.values.position
 	self._element.values.search_distance = 0
 	self._element.values.interval = ElementSpecialObjective._DEFAULT_VALUES.interval
@@ -259,6 +260,14 @@ function EditorSpecialObjective:link_managed(unit)
 end
 
 function EditorSpecialObjective:generate_search_position(item)
+    if not managers.navigation:is_data_ready() then
+        BLE.Utils:Notify(
+            Global.frame_panel,
+            "Can't generate search position without ready navigation data (AI-graph)"
+        )
+
+        return
+    end
     local anim_set = AnimationManager:animation_set(Idstring("anims/units/enemies/cop/cop_def"))
     local action_id = Idstring(self._element.values.so_action)
 
@@ -380,6 +389,7 @@ function EditorSpecialObjective:_build_panel()
 	self:BooleanCtrl("align_rotation", {text = "Align rotation"})
 	self:BooleanCtrl("align_position", {text = "Align position"})
 	self:BooleanCtrl("needs_pos_rsrv", {text = "Reserve position"})
+	self:BooleanCtrl("interrupt_objective", {text = "Interrupt objective", help = "Interrupt objective when element is beeing disabled or when using operation 'remove'?"})
 	self:BooleanCtrl("repeatable", {text = "Repeatable"})
 	self:BooleanCtrl("use_instigator", {text = "Use instigator"})
 	self:BooleanCtrl("forced", {text = "Forced"})
