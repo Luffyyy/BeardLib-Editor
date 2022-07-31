@@ -8,13 +8,16 @@ function AiEditor:init(parent)
     AiEditor.super.init(self, parent, "AiLayerEditor")
 
     self._draw_helpers = {
-        { name = "quads", needs_unit = true, dont_disable = true },
-        { name = "doors" },
-        { name = "blockers" },
-        { name = "vis_graph", needs_unit = true },
-        { name = "coarse_graph" },
-        { name = "nav_links" },
-        { name = "covers" }
+        { name = "segments", text = "Segments", enabled = true },
+        { name = "quads", text = "Quads" },
+        { name = "doors", text = "Doors" },
+        { name = "coarse_graph", text = "Coarse Graph" },
+        { name = "obstacles", text = "Obstacles" },
+        { name = "nav_links", text = "Navigation Links" },
+        { name = "covers", text = "Covers" },
+        { name = "pos_rsrv", text = "Pos Reservations" },
+        { name = "blockers", text = "Splitters", needs_unit = true },
+        { name = "vis_graph", text = "Vis Graph", needs_unit = true }
     }
 
     self._brush = Draw:brush()
@@ -38,7 +41,7 @@ function AiEditor:init(parent)
     --self:_init_ai_settings()
     --self:_init_mop_settings()
     self._patrol_path_brush = Draw:brush()
-    self._only_draw_selected_patrol_path = false
+    self._only_draw_selected_patrol_path = true
     self._default_values = { all_visible = true }
 end
 
@@ -136,7 +139,8 @@ function AiEditor:build_menu()
     graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"), {size_by_text = true})
     graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {size_by_text = true})
 
-    local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Debugging [Toggle what to draw]" })
+    local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Visualization" })
+    navigation_debug:GetToolbar():lbl("SegID", {text = "No Segment", size_by_text = true, foreground = navigation_debug.foreground, auto_foreground = false})
     local group = navigation_debug:pan("Draw", {align_method = "grid"})
 
     self:_build_draw_data(group)
@@ -149,12 +153,19 @@ function AiEditor:build_menu()
         self._group_states,
         table.get_key(self._group_states, self:data().ai_settings.group_state))
 
-    local ai_data = self._holder:group("AIData", {text = "AI Data"})
-    ai_data:tickbox("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"))
+    local ai_data = self._holder:group("AIData", {text = "Patrol Paths", auto_align = false})
+    --ai_data:tickbox("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"))
     ai_data:GetToolbar():tb_imgbtn("CreateNew",
         ClassClbk(self, "_create_new_patrol_path"),
         tx, EU.EditorIcons["plus"], {help = "Create new patrol path"}
     )
+    ai_data:GetToolbar():tb_imgbtn("Draw", ClassClbk(self, "set_draw_patrol_paths"), tx, EU.EditorIcons.eye, {help = "Toggle Visibility", enabled_alpha = self:Val("DrawPatrolPaths") and 1 or 0.5})
+
+    ai_data:pan("PatrolPaths", {max_height = 120})
+    local points = ai_data:group("PatrolPoints", {enabled = false, max_height = 200})
+    points:GetToolbar():tb_imgbtn("CreateNewPoint", function()
+        spawn:begin_spawning(self._patrol_point_unit)
+    end, tx, EU.EditorIcons["plus"], {help = "Create new patrol point"})
 
     self:_build_ai_data(ai_data)
 
@@ -166,7 +177,10 @@ function AiEditor:build_menu()
 end
 
 function AiEditor:set_draw_patrol_paths(item)
-    self:set_value("DrawPatrolPaths", item:Value())
+    self:set_value("DrawPatrolPaths", not self:Val("DrawPatrolPaths"))
+    local alpha = self:Val("DrawPatrolPaths") and 1 or 0.5
+    item.enabled_alpha = alpha
+    item:SetEnabled(item.enabled)
 end
 
 function AiEditor:_build_draw_data(group)
@@ -174,23 +188,27 @@ function AiEditor:_build_draw_data(group)
     local w = group.w / 2
 
     local unit = self:selected_unit()
+
+    self._draw_options["fast_drawing"] = group:tickbox("UseFastDrawing", ClassClbk(self, "_draw_nav_segments"), self:Val("FastAIDrawing"), {
+        help = "Draw all visualization options instantly, can have an effect on performance",
+        offset = 0, 
+        enabled = true 
+    })
+    --group:tickbox("Segments", nil, true, { w = w, items_size = 15, offset = 0})
     for _, data in pairs(self._draw_helpers) do
-        local needs_unit_text = ""
         local should_enable = true
         if data.needs_unit then
             if alive(unit) and unit:name() == self._nav_surface_unit then
-                needs_unit_text = ("(seg id: %i)"):format(unit:unit_data().unit_id)
                 should_enable = true
             else
-                needs_unit_text = "(no seg)"
                 should_enable = false or (data.dont_disable and true or false)
             end
         end
 
         self._draw_options[data.name] = group:tickbox(
-            data.name .. (needs_unit_text),
+            data.text,
             ClassClbk(self, "_draw_nav_segments"),
-            false,
+            data.enabled or false,
             { w = w, items_size = 15, offset = 0, enabled = should_enable }
         )
     end
@@ -200,30 +218,68 @@ function AiEditor:_build_ai_data(ai_data)
     local patrol_paths = managers.ai_data:all_patrol_paths()
     local has_items = false
     local spawn = self:GetPart("spawn")
+
+    local paths = ai_data:GetItem("PatrolPaths")
     for name, points in pairs(patrol_paths) do
         has_items = true
-        local patrol_path = ai_data:group(name, {label = "patrol_path"})
-        patrol_path:GetToolbar():tb_imgbtn("DeletePath", ClassClbk(self, "_delete_patrol_path", name),
+        local text = string.format("%s [%d]", name, #points.points)
+        local patrol_path = paths:button(name, ClassClbk(self, "_select_patrol_path", ai_data, name), {text = text, border_left = name == self._current_patrol_path, label = "patrol_path"})
+        patrol_path:tb_imgbtn("DeletePath", ClassClbk(self, "_delete_patrol_path", name),
             tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
         )
+        --    tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+        --)
+        --has_items = true
+        --local patrol_path = ai_data:group(name, {label = "patrol_path"})
+        --patrol_path:GetToolbar():tb_imgbtn("DeletePath", ClassClbk(self, "_delete_patrol_path", name),
+        --    tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+        --)
 
-        patrol_path:GetToolbar():tb_imgbtn("CreateNewPoint", function()
-            spawn:begin_spawning(self._patrol_point_unit)
-            self._selected_path = name
-        end, tx, EU.EditorIcons["plus"], {help = "Create new patrol point"})
+        --patrol_path:GetToolbar():tb_imgbtn("CreateNewPoint", function()
+        --    spawn:begin_spawning(self._patrol_point_unit)
+        --    self._current_patrol_path = name
+        --end, tx, EU.EditorIcons["plus"], {help = "Create new patrol point"})
 
-        for i, v in ipairs(points.points) do
-            local patrol_point = patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
-                text = string.format("[%d] Unit ID: %d", i, v.unit_id)
-            })
-            patrol_point:tb_imgbtn("DeletePoint", ClassClbk(self, "_delete_patrol_point", v.unit),
-                tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
-            )
-        end
+        --for i, v in ipairs(points.points) do
+        --    local patrol_point = patrol_path:button(name .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
+        --        text = string.format("[%d] Unit ID: %d", i, v.unit_id)
+        --    })
+        --    patrol_point:tb_imgbtn("DeletePoint", ClassClbk(self, "_delete_patrol_point", v.unit),
+        --        tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+        --    )
+        --end
     end
     if not has_items then
         ai_data:lbl("No paths exist", {label = "patrol_path"})
     end
+    ai_data:AlignItems(true)
+end
+
+function AiEditor:_build_patrol_points(ai_data)
+    local points = ai_data:GetItem("PatrolPoints")
+    points:ClearItems("patrol_points")
+    if not self._current_patrol_path then
+        points:SetEnabled(false)
+        ai_data:AlignItems(true)
+        return
+    end
+    
+    points:SetEnabled(true)
+    local path = managers.ai_data:patrol_path(self._current_patrol_path)
+    for i, v in ipairs(path.points) do
+        local patrol_point = points:button(self._current_patrol_path .. "_" .. i, ClassClbk(self, "_select_patrol_point", v.unit), {
+            text = string.format("[%d] Unit ID: %d", i, v.unit_id),
+            label = "patrol_points"
+        })
+        patrol_point:tb_imgbtn("DeletePoint", ClassClbk(self, "_delete_patrol_point", v.unit),
+            tx, EU.EditorIcons["cross"], { highlight_color = Color.red }
+        )
+    end
+
+    if #path.points == 0 then
+        points:lbl("No points exist", {label = "patrol_points"})
+    end
+    ai_data:AlignItems(true)
 end
 
 function AiEditor:build_unit_menu()
@@ -358,6 +414,7 @@ function AiEditor:unit_deleted(unit)
         managers.navigation:delete_nav_segment(unit:unit_data().unit_id)
     elseif unit:name() == self._patrol_point_unit:id() then
         managers.ai_data:delete_point_by_unit(unit)
+        self:update_ai_data()
     end
 
     table.delete(self._units, unit)
@@ -374,22 +431,23 @@ function AiEditor:update_draw_data(unit)
         return
     end
 
+    local seg_id = self._holder:GetItem("SegID")
+    local seg_text = "No Segment"
+    if alive(unit) and unit:name() == self._nav_surface_unit then
+        seg_text = ("Segment ID: %i"):format(unit:unit_data().unit_id)
+    end
+    if seg_text ~= seg_id:Text() then
+        seg_id:SetText(seg_text)
+    end
+
     for _, data in pairs(self._draw_helpers) do
-        local needs_unit_text = ""
         local should_enable = data.dont_disable
         if data.needs_unit then
             if alive(unit) and unit:name() == self._nav_surface_unit then
-                needs_unit_text = ("(seg id: %i)"):format(unit:unit_data().unit_id)
                 should_enable = true
-            else
-                needs_unit_text = "(no seg)"
             end
 
-            local text = data.name .. needs_unit_text
             local opt = self._draw_options[data.name]
-            if text ~= opt:Text() then
-                opt:SetText(text)
-            end
             opt:SetEnabled(should_enable)
         end
     end
@@ -397,13 +455,18 @@ end
 
 function AiEditor:update_ai_data()
     local ai_data = self._holder:GetItem("AIData")
-    ai_data:ClearItems("patrol_path")
+    ai_data:GetItem("PatrolPaths"):ClearItems("patrol_path")
+    ai_data:GetItem("PatrolPoints"):ClearItems("patrol_points")
 
     self:_build_ai_data(ai_data)
+    self:_build_patrol_points(ai_data)
 end
 
 function AiEditor:update(t, dt)
     if self:Val("DrawPatrolPaths") then
+        self:_draw_patrol_paths(t, dt)
+    end
+    if self._draw_options.segments:Value() then
         self:_draw(t, dt)
     end
 end
@@ -458,8 +521,6 @@ function AiEditor:_draw(t, dt)
             end
         end
     end
-
-    self:_draw_patrol_paths(t, dt)
 end
 
 function AiEditor:_draw_surface(unit, t, dt, a, r, g, b)
@@ -559,6 +620,9 @@ function AiEditor:_clear_selected_nav_segment()
 end
 
 function AiEditor:_draw_nav_segments(item)
+    if item:Name() == "UseFastDrawing" then
+        self:set_value("FastAIDrawing", item:Value())
+    end
     if managers.navigation then
         managers.navigation:set_debug_draw_state(self._draw_options)
     end
@@ -577,9 +641,19 @@ function AiEditor:_create_new_patrol_path()
                 self:_create_new_patrol_path()
             else
                 self:update_ai_data()
+                self:_select_patrol_path(self._holder:GetItem("AIData"), name)
             end
         end
     })
+end
+
+function AiEditor:_select_patrol_path(ai_data, path_name)
+    self._current_patrol_path = self._current_patrol_path ~= path_name and path_name or nil
+
+    for _, path_item in pairs(ai_data:GetItem("PatrolPaths"):Items()) do
+        path_item:SetBorder({left = path_item.name == self._current_patrol_path})
+    end 
+    self:_build_patrol_points(ai_data)
 end
 
 function AiEditor:_delete_patrol_path(path_name)
@@ -591,9 +665,9 @@ function AiEditor:_delete_patrol_path(path_name)
         self:GetPart("select"):reload_menu("unit")
 
         managers.ai_data:remove_patrol_path(path_name)
-        self:update_ai_data()
 
         self._current_patrol_path = nil
+        self:update_ai_data()
 
         self:save()
     end)
@@ -637,7 +711,7 @@ function AiEditor:do_spawn_unit(unit_path, ud)
     local unit = managers.worlddefinition:create_unit(shared_data, Idstring("ai"))
 
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
-        managers.ai_data:add_patrol_point(self._selected_path, unit)
+        managers.ai_data:add_patrol_point(self._current_patrol_path, unit)
     end
 
     table.insert(self._units, unit)
@@ -649,7 +723,7 @@ end
 
 function AiEditor:_add_patrol_point(unit)
     if alive(unit) and unit:name() == self._patrol_point_unit:id() then
-        managers.ai_data:add_patrol_point(self._selected_path, unit)
+        managers.ai_data:add_patrol_point(self._current_patrol_path, unit)
     end
 
     -- don't care if it is alive i guess
@@ -803,6 +877,6 @@ function AiEditor:_visibility_graph_done(build_type)
     self:part("opt"):save_nav_data(nil, build_type == "selected")
 end
 
-function AiEditor:can_unit_be_selected()
-    return self:Val("DrawPatrolPaths")
+function AiEditor:can_unit_be_selected(unit)
+    return (unit == self._patrol_point_unit:id() and self:Val("DrawPatrolPaths")) or (unit == self._nav_surface_unit and self._draw_options.segments:Value())
 end

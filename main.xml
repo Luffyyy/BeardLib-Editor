@@ -247,6 +247,7 @@
                 <option type="boolean" default_value="false" name="SelectEditorGroups"/>
                 <option type="boolean" default_value="true" name="SurfaceMove"/>
                 <option type="boolean" default_value="true" name="DrawPatrolPaths"/>
+                <option type="boolean" default_value="true" name="FastAIDrawing"/>
                 <option type="boolean" default_value="true" name="PostProcessingEffects"/>
                 <option type="boolean" default_value="true" name="ShowHints"/>
                 <option type="boolean" default_value="true" name="RotationInfo"/>

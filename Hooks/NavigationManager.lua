@@ -48,7 +48,7 @@ function NavigationManager:update(t, dt)
 			local options = self._draw_enabled
 			local data = self._draw_data
 			if data and type(options) == "table" then
-				local progress = math.clamp((t - data.start_t) / (data.duration * 0.5), 0, 1)
+				local progress = self._use_fast_drawing and 1 or math.clamp((t - data.start_t) / (data.duration * 0.5), 0, 1)
                 if options.quads then
                     self:_draw_rooms(progress)
                 end
@@ -56,7 +56,10 @@ function NavigationManager:update(t, dt)
                     self:_draw_doors(progress)
                 end
                 if options.blockers then
-                    --self:_draw_nav_blockers() Some crashing issues with this
+                    self:_draw_nav_blockers()
+                end
+				if options.obstacles then
+                    self:_draw_nav_obstacles()
                 end
                 if options.vis_graph then
                     self:_draw_visibility_groups(progress)
@@ -70,7 +73,10 @@ function NavigationManager:update(t, dt)
                 if options.covers then
                     self:_draw_covers()
                 end
-				if progress == 1 then
+				if options.pos_rsrv then
+					self:_draw_pos_reservations(t)
+				end
+				if not self._use_fast_drawing and progress == 1 then
 					self._draw_data.start_t = t
 				end
 			end
@@ -79,17 +85,66 @@ function NavigationManager:update(t, dt)
 	self:_commence_coarce_searches(t)
 end
 
+function NavigationManager:_init_draw_data()
+	local data = {}
+	local duration = not self._use_fast_drawing and 10 or nil
+	data.duration = duration
+	local brush = {
+		door = Draw:brush(Color(0.1, 0, 1, 1), duration),
+		room_diag = Draw:brush(Color(1, 0.5, 0.5, 0), duration),
+		room_diag_disabled = Draw:brush(Color(0.5, 0.7, 0, 0), duration),
+		room_diag_obstructed = Draw:brush(Color(0.5, 0.5, 0, 0.5), duration),
+		room_border = Draw:brush(Color(0, 0.3, 0.3, 0.8), duration),
+		room_fill = Draw:brush(Color(0.3, 0.3, 0.3, 0.8), duration),
+		room_fill_disabled = Draw:brush(Color(0.3, 0.8, 0.3, 0.3), duration),
+		room_fill_obstructed = Draw:brush(Color(0.3, 0.8, 0, 0.8), duration),
+		coarse_graph = Draw:brush(Color(0.2, 0.9, 0.9, 0.2)),
+		vis_graph_rooms = Draw:brush(Color(0.6, 0.5, 0.2, 0.9), duration),
+		vis_graph_node = Draw:brush(Color(1, 0.6, 0, 0.9), duration),
+		vis_graph_links = Draw:brush(Color(0.2, 0.8, 0.1, 0.6), duration),
+		obstacles = Draw:brush(Color(0.3, 1, 0, 1)),
+		blocked = Draw:brush(Color(1, 1, 1, 1))
+	}
+
+	brush.blocked:set_font(Idstring("fonts/font_medium"), 30)
+
+	data.brush = brush
+	local offsets = {
+		Vector3(-1, -1),
+		Vector3(-1, 1),
+		Vector3(1, -1),
+		Vector3(1, 1)
+	}
+	data.offsets = offsets
+	data.next_draw_i_room = 1
+	data.next_draw_i_door = 1
+	data.next_draw_i_coarse = 1
+	data.next_draw_i_vis = 1
+	self._draw_data = data
+end
+
 function NavigationManager:set_debug_draw_state(options)
     local temp = {}
+	local fast_drawing = true
     if type(options) == "table" then
         for k, option in pairs(options) do
             if type(option) == "table" then
-                temp[k] = option.value
+				if k == "fast_drawing" then
+					fast_drawing = option.value
+				else
+                	temp[k] = option.value
+				end
             end
         end 
-        options = temp
+
+		if table.size(temp) > 0 then
+        	options = temp
+		else
+			options = nil
+		end
     end
-    if options and not self._draw_enabled then
+    if options and (not self._draw_enabled or fast_drawing ~= self._use_fast_drawing) then
+		self._use_fast_drawing = fast_drawing
         self:_init_draw_data()
         self._draw_data.start_t = TimerManager:game():time()
     end
@@ -120,3 +175,39 @@ end
 
 function NavigationManager:_safe_remove_unit(unit) end
 function NavigationManager:remove_AI_blocker_units() end
+
+function NavigationManager:_draw_nav_blockers()
+	if self._builder._helper_blockers then
+		local nav_segments = self._builder._nav_segments
+		local registered_blockers = self._builder._helper_blockers
+		local all_blockers = World:find_units_quick("all", 15)
+
+		for _, blocker_unit in ipairs(all_blockers) do
+			local id = blocker_unit:unit_data().unit_id
+
+			if registered_blockers[id] then
+				local draw_pos = blocker_unit:oobb() and blocker_unit:oobb():center() or blocker_unit:position()
+				local nav_segment = registered_blockers[id]
+
+				if nav_segments and nav_segments[nav_segment] and self._selected_segment == nav_segment then
+					Application:draw(blocker_unit, 1, 0, 0)
+					Application:draw_cylinder(draw_pos, nav_segments[nav_segment].pos, 2, 0.8, 0.1, 0)
+				end
+			end
+		end
+	end
+end
+
+function NavigationManager:_draw_nav_obstacles()
+	if self._obstacles then
+		local draw = self._draw_data
+		local brushes = draw and draw.brush
+		for id, obstacle_data in ipairs(self._obstacles) do
+			local unit = obstacle_data.unit
+			if alive(unit) then
+				Application:draw(unit, 1, 0, 1)
+				brushes.obstacles:unit(unit)
+			end
+		end
+	end
+end 
