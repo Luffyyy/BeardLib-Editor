@@ -56,7 +56,7 @@ function NavigationManager:update(t, dt)
                     self:_draw_doors(progress)
                 end
                 if options.blockers then
-                    --self:_draw_nav_blockers() Some crashing issues with this
+                    self:_draw_nav_obstacles()
                 end
                 if options.vis_graph then
                     self:_draw_visibility_groups(progress)
@@ -120,3 +120,16 @@ end
 
 function NavigationManager:_safe_remove_unit(unit) end
 function NavigationManager:remove_AI_blocker_units() end
+
+function NavigationManager:_draw_nav_obstacles()
+	local unit_brush = Draw:brush(Color(0.5, 1, 0.25, 1))
+	if self._obstacles then
+		for id, obstacle_data in ipairs(self._obstacles) do
+			local unit = obstacle_data.unit
+			if alive(unit) then
+				Application:draw(unit, 1, 0.25, 1)
+				unit_brush:unit(unit)
+			end
+		end
+	end
+end
