@@ -353,7 +353,9 @@ function ProjectManager:create_new_map(name)
     ProjectNarrativeEditor:new(self._project, nil, {name = name, no_reload = true, final_callback = function(success, data)
         if success then
             ProjectLevelEditor:new(self._project, nil, {name = name, chain = data.chain, final_callback = function(success)
-                if not success then
+                if success then
+                    self:load_mods()
+                else
                     self._project:reload_mod()
                 end
             end})
