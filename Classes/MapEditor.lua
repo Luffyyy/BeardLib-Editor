@@ -24,6 +24,9 @@ function Editor:init(data)
     self._screen_borders = Utils:GetConvertedResolution()
     self._mul = 80
     self._vp = BLE._vp
+    self._listener_id = BLE._listener_id
+    self._sound_check_object = BLE._sound_check_object
+    self._mute_source = BLE._mute_source
     self._camera_object = BLE._camera_object
 	self._camera_pos = self._camera_object:position()
 	self._camera_rot = self._camera_object:rotation()
@@ -36,7 +39,13 @@ function Editor:init(data)
     self._disable_portals = true
     self._script_debug = true
     self._running_simulation = false
+    self._listener_always_enabled = false
     self._grid_altitude = 0
+
+    self._mute_states = {
+		current = false,
+		wanted = true
+	}
 
     self._grid_sizes = {
 		1,
@@ -575,9 +584,15 @@ function Editor:set_enabled(enabled)
     if enabled then
         self._menu:Enable()
         managers.hud:set_disabled()
+        self:sound_check_object_active(true)
+        self:set_listener_active(true)
+        self:set_wanted_mute(true)
     else
         self._menu:Disable()
         managers.hud:set_enabled()
+        self:sound_check_object_active(false)
+        self:set_listener_active(false)
+        self:set_wanted_mute(false)
     end
     self._vp:set_active(enabled)
     if type(managers.enemy) == "table" then
@@ -796,6 +811,10 @@ function Editor:destroy()
             manager:destroy()
         end
     end
+    self:sound_check_object_active(false)
+    self:set_listener_active(false)
+    self:set_listener_enabled(false)
+    self:set_wanted_mute(false)
     managers.editor = nil
     if alive(self._move_widget._widget) then
         World:delete_unit(self._move_widget._widget)
@@ -1395,6 +1414,50 @@ function Editor:update_post_effects()
             pe.off()
         end
     end
+end
+
+function Editor:set_listener_enabled(enabled)
+	enabled = self._listener_always_enabled or enabled
+
+	managers.listener:set_listener_enabled(self._listener_id, enabled)
+end
+
+function Editor:set_listener_always_enabled(enabled)
+	self._listener_always_enabled = enabled
+end
+
+function Editor:listener_always_enabled()
+	return self._listener_always_enabled
+end
+
+function Editor:set_wanted_mute(mute)
+	self._mute_states.wanted = mute
+	if self._running_simulation and self._mute_states.wanted ~= self._mute_states.current then
+		if self._mute_states.wanted and self:enabled() and BLE.Options:GetValue("Map/MuteSoundsInEditor") then
+			self._mute_source:post_event("mute_global")
+		else
+			self._mute_source:post_event("unmute_global")
+		end
+
+		self._mute_states.current = self._mute_states.wanted
+	end
+end
+
+function Editor:sound_check_object_active(active)
+    active = not self._running_simulation and active
+	managers.sound_environment:set_check_object_active(self._sound_check_object, active)
+end
+
+function Editor:set_listener_active(active)
+	if active and not self._running_simulation then
+		if not self._listener_activation_id then
+			self._listener_activation_id = managers.listener:activate_set("main", "editor")
+		end
+	elseif self._listener_activation_id then
+		managers.listener:deactivate_set(self._listener_activation_id)
+
+		self._listener_activation_id = nil
+	end
 end
 
 

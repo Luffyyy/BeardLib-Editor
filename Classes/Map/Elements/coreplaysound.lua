@@ -16,3 +16,38 @@ function EditorPlaySound:_build_panel()
 	self:BooleanCtrl("use_instigator", {help = "Play on instigator"})
 	self:BooleanCtrl("interrupt", {help = "Interrupt existing sound"})
 end
+
+function EditorPlaySound:test_element()
+	if self._element.values.sound_event then
+		managers.editor:set_wanted_mute(false)
+		managers.editor:set_listener_enabled(true)
+
+		if self._ss then
+			self._ss:stop()
+		else
+			self._ss = SoundDevice:create_source(self._unit:unit_data().name_id)
+		end
+
+		self._ss:set_position(self._unit:position())
+		self._ss:set_orientation(self._unit:rotation())
+		self._ss:post_event(self._element.values.sound_event, ClassClbk(self, "stop_test_element"), self._unit, "end_of_event")
+	end
+end
+
+function EditorPlaySound:stop_test_element()
+	managers.editor:set_wanted_mute(true)
+	managers.editor:set_listener_enabled(false)
+
+	if self._ss then
+		self._ss:stop()
+	end
+end
+
+function EditorPlaySound:destroy()
+	self:stop_test_element()
+	if self._ss then
+		self._ss:stop()
+		self._ss:delete()
+		self._ss = nil
+	end
+end

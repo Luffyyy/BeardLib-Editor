@@ -136,6 +136,12 @@ elseif F == "jobmanager" then
 		end
 		return {Global.current_mission_filter} or self:current_stage_data().mission_filter
 	end
+	
+	Hooks:PostHook(JobManager, "stop_sounds", "EditorUnmuteWanted", function(self)
+		if managers.editor then
+			managers.editor:set_wanted_mute(false)
+		end
+	end)
 elseif F == "coreworldcameramanager" then
 	function CoreWorldCameraManager:save()
 		local worldcameras = {}

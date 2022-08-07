@@ -7,5 +7,5 @@ function EditorGlobalEventTrigger:create_element()
 end
 function EditorGlobalEventTrigger:_build_panel()
 	self:_create_panel()
-	self:ComboCtrl("global_event", table.list_add({"none"}, managers.mission:get_global_event_list()), {help = "Select a global event from the combobox"})
+	self:ComboCtrl("global_event", table.list_add({"none"}, managers.mission:get_global_event_list()), {help = "Select a global event from the combobox", free_typing = true})
 end

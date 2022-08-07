@@ -252,6 +252,7 @@
                 <option type="boolean" default_value="true" name="ShowHints"/>
                 <option type="boolean" default_value="true" name="RotationInfo"/>
                 <option type="boolean" default_value="true" name="AllowMultiWidgets"/>
+                <option type="boolean" default_value="false" name="MuteSoundsInEditor"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
                 <option name="ElementColorGroups" type="table"/>

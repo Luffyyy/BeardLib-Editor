@@ -20,24 +20,47 @@ function EditorFilter:create_element()
 	self._element.values.mode_control = true
 end
 
+function EditorFilter:init(...)
+	EditorFilter.super.init(self, ...)
+	self:_check_convertion()
+end
+
+function EditorFilter:_check_convertion()
+	if self._element.values.difficulty_overkill_290 == nil then
+		self._element.values.difficulty_overkill_290 = self._element.values.difficulty_overkill_145
+	end
+
+	if self._element.values.difficulty_easy_wish == nil then
+		self._element.values.difficulty_easy_wish = self._element.values.difficulty_overkill_290
+	end
+
+	if self._element.values.difficulty_sm_wish == nil then
+		self._element.values.difficulty_sm_wish = self._element.values.difficulty_overkill_290
+	end
+end
+
 function EditorFilter:_build_panel()
 	self:_create_panel()
-	self:Text("Difficulty")
-	self:BooleanCtrl("difficulty_easy", {text = "Easy"})
-	self:BooleanCtrl("difficulty_normal", {text = "Normal"})
-	self:BooleanCtrl("difficulty_hard", {text = "Hard"})
-	self:BooleanCtrl("difficulty_overkill", {text = "Very Hard"})
-	self:BooleanCtrl("difficulty_overkill_145", {text = "Overkill"})
-	self:BooleanCtrl("difficulty_easy_wish", {text = "Mayhem"})
-	self:BooleanCtrl("difficulty_overkill_290", {text = "Death Wish"})
-	self:BooleanCtrl("difficulty_sm_wish", {text = "Death Sentence"})
-	self:BooleanCtrl("one_down", {text = "One Down"})
-	self:Text("Players")    
-	self:BooleanCtrl("player_1", {text = "One Player"})
-	self:BooleanCtrl("player_2", {text = "Two Players"})
-	self:BooleanCtrl("player_3", {text = "Three Players"})
-	self:BooleanCtrl("player_4", {text = "Four Players"})
-	self:Text("Mode")   
-	self:BooleanCtrl("mode_control", {text = "Control"})
-	self:BooleanCtrl("mode_assault", {text = "Assault"})
+
+	local difficulty = self._class_group:group("Difficulty", {align_method = "grid"})
+	self:BooleanCtrl("difficulty_easy", {text = "Easy", group = difficulty})
+	self:BooleanCtrl("difficulty_normal", {text = "Normal", group = difficulty})
+	self:BooleanCtrl("difficulty_hard", {text = "Hard", group = difficulty})
+	self:BooleanCtrl("difficulty_overkill", {text = "Very Hard", group = difficulty})
+	self:BooleanCtrl("difficulty_overkill_145", {text = "Overkill", group = difficulty})
+	self:BooleanCtrl("difficulty_easy_wish", {text = "Mayhem", group = difficulty})
+	self:BooleanCtrl("difficulty_overkill_290", {text = "Death Wish", group = difficulty})
+	self:BooleanCtrl("difficulty_sm_wish", {text = "Death Sentence", group = difficulty})
+	difficulty:separator()
+	self:BooleanCtrl("one_down", {text = "One Down", group = difficulty})
+
+	local players = self._class_group:group("Players", {align_method = "grid"}) 
+	self:BooleanCtrl("player_1", {text = "One Player", group = players})
+	self:BooleanCtrl("player_2", {text = "Two Players", group = players})
+	self:BooleanCtrl("player_3", {text = "Three Players", group = players})
+	self:BooleanCtrl("player_4", {text = "Four Players", group = players})
+
+	local mode = self._class_group:group("Mode", {align_method = "grid"}) 
+	self:BooleanCtrl("mode_control", {text = "Control", group = mode})
+	self:BooleanCtrl("mode_assault", {text = "Assault", group = mode})
 end

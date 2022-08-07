@@ -27,6 +27,7 @@ function Options:init()
     main:tickbox("SaveWarningAfterGameStarted", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveWarningAfterGameStarted"), {
 		help = "Show a warning message when trying to save after play testing started the heist, where you can allow or disable saving for that session"
 	})
+	main:tickbox("MuteSoundsInEditor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/MuteSoundsInEditor"), {text = "Mute Sounds In Editor During Playtest", help = "Switching to editor mode while playtesting is active will mute all sounds. They will get unmuted again when switching back to play mode."})
 	main:separator()
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/KeepMouseActiveWhileFlying"))
 	main:tickbox("OnlyMoveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/OnlyMoveWhileFlying"))

@@ -9,6 +9,11 @@ function SndLayer:init(parent)
 end
 
 function SndLayer:set_visible(visible)
+	if visible and not self:active() then
+		self:activate()
+	elseif not visible and self:active() then
+		self:deactivate()
+	end
     EnvironmentLayerEditor.super.set_visible(self, visible)
 end
 
@@ -300,7 +305,7 @@ function SndLayer:do_spawn_unit(unit_path, mud)
 			if emitter and not alive(emitter:unit()) then
 				emitter:set_unit(unit)
 			end
-			if not emitter or emitter:unit() ~= unit then
+			if not emitter or (emitter.unit and emitter:unit() ~= unit) then
 				ud.emitter = managers.sound_environment:add_emitter(emitter and emitter:get_params() or {})
 				ud.emitter:set_unit(unit)
 			end
@@ -309,7 +314,7 @@ function SndLayer:do_spawn_unit(unit_path, mud)
 			if emitter and not alive(emitter:unit()) then
 				emitter:set_unit(unit)
 			end
-			if not emitter or emitter:unit() ~= unit then
+			if not emitter or (emitter.unit and emitter:unit() ~= unit) then
 				ud.emitter = managers.sound_environment:add_area_emitter(emitter and emitter:save_level_data() or {})
 				ud.emitter:set_unit(unit)
 			end
@@ -318,7 +323,7 @@ function SndLayer:do_spawn_unit(unit_path, mud)
 			if area and not alive(area:unit()) then
 				area:set_unit(unit)
 			end
-			if not area or area:unit() ~= unit then
+			if not area or (area.unit and area:unit() ~= unit) then
 				ud.environment_area = managers.sound_environment:add_area(area and area:get_params() or {})
 				ud.environment_area:set_unit(unit)
 			end
@@ -399,17 +404,15 @@ function SndLayer:set_sound_emitter_parameters()
 end
 
 function SndLayer:activate()
-	SoundLayerEditor.super.activate(self)
-	--managers.editor:set_listener_enabled(true)
-	--managers.editor:set_wanted_mute(false)
+	--SoundLayerEditor.super.activate(self)
+	managers.editor:set_listener_enabled(true)
+	managers.editor:set_wanted_mute(false)
 end
 
-function SndLayer:deactivate(params)
-	--managers.editor:set_listener_enabled(false)
-	SoundLayerEditor.super.deactivate(self)
-	if not params or not params.simulation then
-		--managers.editor:set_wanted_mute(true)
-	end
+function SndLayer:deactivate()
+	--SoundLayerEditor.super.deactivate(self)
+	managers.editor:set_listener_enabled(false)
+	managers.editor:set_wanted_mute(true)
 end
 
 function SndLayer:can_unit_be_selected(unit)

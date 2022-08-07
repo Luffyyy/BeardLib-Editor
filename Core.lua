@@ -118,6 +118,23 @@ function BLE:InitManagers(data)
             self._vp:set_camera(self._camera_object)
         end
 
+        if not self._listener_id then
+        	self._listener_id = managers.listener:add_listener("editor", self._vp:camera(), self._vp:camera(), nil, true)
+	        self._activate_listener_id = nil
+
+            managers.listener:add_set("editor", {
+                "editor"
+            })
+
+            self._sound_check_object = managers.sound_environment:add_check_object({
+                primary = true,
+                active = true,
+                object = self._vp:camera()
+            })
+
+            self._mute_source = SoundDevice:create_source("editor_mute")
+        end
+
         self.MapEditor = MapEditor:new(data.editor)
         table.insert(self.Updaters, self.MapEditor)
     end

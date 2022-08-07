@@ -42,7 +42,7 @@ function Shape:update_size(item)
 end
 
 function ShapeBox:create_panel(clss, group)
-	(group or clss):Shape(string.len(self._name) == 0 and "Shape" or self._name, _G.ClassClbk(self, "update_size"), self._properties, {no_radius = true})
+	(group or clss):Shape("Shape", _G.ClassClbk(self, "update_size"), self._properties, {no_radius = true})
 end
 
 function Shape:position()

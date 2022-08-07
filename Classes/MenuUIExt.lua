@@ -334,7 +334,11 @@ end
 
 function ItemExt:CopyAxis(item)
 	local menu = item.parent.parent
-	Application:set_clipboard(tostring(menu:Value()))
+	local value = menu:Value()
+	if type_name(value) == "table" and value._shape then
+		value = string.format("{_shape = true, width = %d, height = %d, depth = %d, radius = %d}", value.width, value.height, value.depth, value.radius)
+	end
+	Application:set_clipboard(tostring(value))
 	managers.editor:keybind_message(menu:Name() .. " copied to clipboard")
 end
 
@@ -345,7 +349,7 @@ function ItemExt:PasteAxis(item)
 	pcall(function()
 		result = loadstring("return " .. paste)()
 	end)
-	if result and type(result) == "table" and result._is_a_shape or type_name(result) == menu.value_type then
+	if result and type_name(result) == menu.value_type or (menu.value_type == "Shape" and result._shape) then
 		menu:SetValue(result, true)
 		managers.editor:keybind_message(menu:Name() .. " pasted from clipboard")
 	else
@@ -363,6 +367,9 @@ function ItemExt:RoundAxis(item)
 	elseif type_name(value) == "Rotation" then
 		local rot = Rotation(math.round(value:yaw()), math.round(value:pitch()), math.round(value:roll()))
 		menu:SetValue(rot, true)
+	elseif type_name(value) == "table" and menu.value_type == "Shape" and value._shape then
+		local shape = {width = math.round(value.width), height = math.round(value.height), depth = math.round(value.depth), radius = math.round(value.radius)}
+		menu:SetValue(shape, true)
 	end
 end
 function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
@@ -476,10 +483,11 @@ function ItemExt:Shape(name, clbk, value, o)
 	local icons = BLE.Utils.EditorIcons
 	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
 	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
+	TB:tb_imgbtn("r", ClassClbk(self, "RoundAxis"), nil, icons.round_number, {help = "Round W,H,D Values"})
 	local controls = {"width", "height", "depth", "radius"}
 	local items = {}
 	for i, control in pairs(controls) do
-		items[i] = p:numberbox(control:sub(1,1), function()
+		items[i] = p:numberbox(control:sub(1,1):upper(), function()
 			p:RunCallback()
 		end, value and value[control] or 0, {w = p:ItemsWidth() / 3 - p:OffsetX(), control_slice = 0.8, visible = not p.no_radius or control ~= "radius"})
 	end
