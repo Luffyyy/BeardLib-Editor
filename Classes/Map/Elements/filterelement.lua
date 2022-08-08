@@ -21,8 +21,10 @@ function EditorFilter:create_element()
 end
 
 function EditorFilter:init(...)
-	EditorFilter.super.init(self, ...)
+	local unit = EditorFilter.super.init(self, ...)
 	self:_check_convertion()
+
+	return unit
 end
 
 function EditorFilter:_check_convertion()
