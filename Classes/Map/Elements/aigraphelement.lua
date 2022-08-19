@@ -42,7 +42,7 @@ end
 function EditorAIGraph:_build_panel()
 	self:_create_panel()
 	self:BuildUnitsManage("graph_ids", nil, nil, {text = "Graph Units", check_unit = ClassClbk(self, "check_unit")})
-	local operation = self:ComboCtrl("operation", NavigationManager.nav_states)
+	local operation = self:ComboCtrl("operation", table.list_add(NavigationManager.nav_states, NavigationManager.nav_meta_operations))
 	local filter_group = self:ComboCtrl("filter_group", table.list_add({"none"}, ElementSpecialObjective._AI_GROUPS), {help = "Select a custom filter group."})
 	self:Text("The operation defines what to do with the selected graphs.\n\"Forbid Custom\" marks the selected graphs as disabled for that specific type of units.")
 

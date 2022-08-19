@@ -27,7 +27,7 @@ end
 function EditorLookAtTrigger:_build_panel()
 	self:_create_panel()
 	self:NumberCtrl("interval", {min = 0.01, help = "Set the check interval for the look at, in seconds"})
-	self:NumberCtrl("sensitivity", {max = 0.999, min = 0.5})
+	self:NumberCtrl("sensitivity", {max = 0.99999, floats = 5, min = 0.5})
 	self:NumberCtrl("distance", {min = 0, help = "(Optional) Sets a distance to use with the check (in meters)"})
 	self:BooleanCtrl("in_front", {text = "Only in front"})
 	self:Text([[
