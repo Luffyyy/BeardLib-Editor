@@ -39,8 +39,13 @@ function SearchList:do_search(no_reset_page, no_clear, t)
         local search = item:Value():lower():split(",")
         self._search = {}
         for _, s in pairs(search) do
-            s = s:escape_special()
-            table.insert(self._search, s)
+            local add = s:split("+")
+            local t = {}
+            for _, ss in pairs(add) do
+                ss = ss:escape_special()
+                table.insert(t, ss)
+            end
+            table.insert(self._search, t)
         end
         self._filtered = {}
         self:do_search_list()
@@ -148,7 +153,13 @@ function SearchList:check_search(check)
         return true
     else
         for _, search in pairs(self._search) do
-            if check:match(search) then
+            local all_match = true
+            for _, s in pairs(search) do
+                if not check:match(s) then
+                    all_match = false
+                end
+            end
+            if all_match then
                 return true
             end
         end

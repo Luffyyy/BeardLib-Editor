@@ -61,6 +61,10 @@ function EditorSpecialObjective:update(t, dt)
 	EditorSpecialObjective.super.update(self, t, dt)
 end
 
+function EditorSpecialObjective:destroy()
+	self:stop_test_element()
+end
+
 function EditorSpecialObjective:update_selected(t, dt)
     if not alive(self._unit) then
         return
@@ -147,7 +151,7 @@ function EditorSpecialObjective:_draw_follow_up()
 	end
 end
 
-function EditorSpecialObjective:test_element()
+function EditorSpecialObjective:test_element(item, loop)
     if not managers.navigation:is_data_ready() then
         BLE.Utils:Notify(
             "ERROR!",
@@ -155,7 +159,11 @@ function EditorSpecialObjective:test_element()
         )
 
         return
+    elseif not self._unit then
+        return
     end
+
+    self:stop_test_element(loop)
 
     local spawn_unit_name = nil
 
@@ -221,25 +229,36 @@ function EditorSpecialObjective:test_element()
     t.values.followup_elements = nil
     t.values.trigger_on = 'none'
     t.values.spawn_instigator_ids = nil
+    t.values.action_duration_min = 0
+    t.values.action_duration_max = 0
     t.values.enabled = true
+    if string.begins(t.values.so_action, "AI") then
+        t.values.so_action = "none"
+    end
     self._script = MissionScript:new({elements = {}})
     self._so_class = ElementSpecialObjective:new(self._script, t)
     self._so_class._values.align_position = nil
     self._so_class._values.align_rotation = nil
 
     self._so_class:on_executed(enemy)
+    
+    if self._class_group:GetItemValue("LoopTestAnimation") then
+        self._so_class:add_event_callback("complete", ClassClbk(self, "test_element", item, true))
+    end
 
-    self._start_test_t = Application:time()
+    if not loop then
+        self._start_test_t = Application:time()
+    end
 end
 
-function EditorSpecialObjective:stop_test_element()
+function EditorSpecialObjective:stop_test_element(loop)
     for _, enemy in ipairs(self._enemies) do
         if alive(enemy) then
             enemy:set_slot(0)
         end
     end
 
-    if self._start_test_t then
+    if type(loop) ~= "boolean" and self._start_test_t then
         log('Stop test time', Application:time() - (self._start_test_t or 0))
 
         self._start_test_t = nil
@@ -384,7 +403,8 @@ function EditorSpecialObjective:_build_panel()
     local search = self:Vector3Ctrl("search_position")
     local tb = search:GetToolbar()
     tb:tb_imgbtn("generate_search_pos", ClassClbk(self, "generate_search_position"), nil, BLE.Utils.EditorIcons.browse_file, {help = "Automatically set search position based on the end point of the So Action animation. May not always give correct results and should only be used for navlinks!"})
-	self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
+	self._class_group:tickbox("LoopTestAnimation", function(item) BLE.Options:SetValue("Map/LoopTestAnimation", item:Value()) end, BLE.Options:GetValue("Map/LoopTestAnimation"))
+    self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation")
 	self:BooleanCtrl("align_position")
 	self:BooleanCtrl("needs_pos_rsrv", {text = "Reserve position"})
@@ -397,7 +417,17 @@ function EditorSpecialObjective:_build_panel()
     self:BooleanCtrl("interrupt_objective", {text = "Interrupt Objectives When Disabled", help = "Allow interrupting of objectives if the element is disabled or removed"})
 	local none = {"none"}
 	self:ComboCtrl("ai_group", table.list_add(none, ElementSpecialObjective._AI_GROUPS), {help = "Select an ai group."})
-    self:ComboCtrl("so_action", table.list_add(none, CopActionAct._act_redirects.SO, CopActionAct._act_redirects.script, self._AI_SO_types), {help = "Select a action that the unit should start with."})
+    self:ComboCtrl("so_action", table.list_add(none, CopActionAct._act_redirects.SO, CopActionAct._act_redirects.script, self._AI_SO_types), {
+        help = "Select a action that the unit should start with.", 
+        not_close = true, 
+        searchbox = true, 
+        fit_text = true, 
+        on_callback = function(item) 
+            self:set_element_data(item)
+            self:test_element(item)
+        end, 
+        close_callback = ClassClbk(self, "stop_test_element")
+    })
     local path_names = {}
     for k,_ in pairs(managers.ai_data:all_patrol_paths()) do
         path_names[#path_names + 1] = k

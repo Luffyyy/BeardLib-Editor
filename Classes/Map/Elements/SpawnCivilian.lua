@@ -21,7 +21,16 @@ end
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
 	self:PathCtrl("enemy", "unit", '/civ_', "dummy_corpse", {text = "Civilian"})
-	self:ComboCtrl("state", table.list_add(clone(CopActionAct._act_redirects.civilian_spawn), {"none"}))
+	self:ComboCtrl("state", table.list_add(clone(CopActionAct._act_redirects.civilian_spawn), {"none"}), {
+		not_close = true, 
+        searchbox = true, 
+        fit_text = true, 
+        on_callback = function(item) 
+            self:set_element_data(item)
+            self:test_element(item)
+        end, 
+        close_callback = ClassClbk(self, "stop_test_element")
+	})
 	local pickups = table.map_keys(tweak_data.pickups)
 	table.insert(pickups, "none")
 	self:ComboCtrl("force_pickup", pickups)

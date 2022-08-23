@@ -17,5 +17,5 @@ function EditorCarry:_build_panel()
 		"filter_only",
 		"poof"
 	})
-	self:ComboCtrl("type_filter", table.list_add({"none"}, tweak_data.carry:get_carry_ids()))
+	self:ComboCtrl("type_filter", table.list_add({"none"}, tweak_data.carry:get_carry_ids()), {not_close = true, searchbox = true, fit_text = true})
 end

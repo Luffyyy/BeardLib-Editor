@@ -22,12 +22,26 @@ function EditorSpawnEnemyDummy:create_element()
 	self._element.values.team = "default"
 end
 
-function EditorSpawnEnemyDummy:test_element() 
-	
+function EditorSpawnEnemyDummy:destroy()
+	self:stop_test_element()
+end
+
+function EditorSpawnEnemyDummy:test_element(loop) 
 	if not managers.navigation:is_data_ready() then
+		BLE.Utils:Notify(
+            "ERROR!",
+            "Can't test spawn unit without ready navigation data (AI-graph)"
+        )
 		return
 	end
+
+	if not self._unit then
+		return
+	end
+
 	if self._element.values.enemy ~= "none" and managers.groupai:state():is_AI_enabled() then
+		self:stop_test_element(loop)
+
 		local unit = safe_spawn_unit(Idstring(self._element.values.enemy), self._unit:position(), self._unit:rotation())
 		if not unit then
 			return
@@ -37,6 +51,7 @@ function EditorSpawnEnemyDummy:test_element()
 		local team_id = self:_resolve_team(unit)
 		managers.groupai:state():set_char_team(unit, team_id)
 		local action_desc = ElementSpawnEnemyDummy._create_action_data(self:get_spawn_anim())
+
 		unit:movement():action_request(action_desc)
 		unit:movement():set_position(unit:position())
 	end
@@ -46,7 +61,7 @@ function EditorSpawnEnemyDummy:get_spawn_anim()
 	return self._element.values.spawn_action
 end
 
-function EditorSpawnEnemyDummy:stop_test_element()
+function EditorSpawnEnemyDummy:stop_test_element(loop)
 	for _, enemy in ipairs(self._enemies) do
 		if alive(enemy) then enemy:set_slot(0) end
 	end
@@ -59,13 +74,23 @@ function EditorSpawnEnemyDummy:_build_panel()
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")
-	self:ComboCtrl("spawn_action", spawn_action_options)
+	self:ComboCtrl("spawn_action", spawn_action_options, {
+		not_close = true, 
+        searchbox = true, 
+        fit_text = true, 
+        on_callback = function(item) 
+            self:set_element_data(item)
+            self:test_element(item)
+        end, 
+        close_callback = ClassClbk(self, "stop_test_element")
+	})
 	self:NumberCtrl("interval", {floats = 2, min = 0, help = "Used to specify how often this spawn can be used. 0 means no interval"})
 	self:NumberCtrl("voice", {
 		floats = 0,
 		min = 0,
 		max = 5, 
-		text = "Voice variant. 1-5. 0 for random."
+		text = "Voice variant",
+		help = "1-5. 0 for random"
 	})
 	self:ComboCtrl("accessibility", ElementSpawnEnemyDummy.ACCESSIBILITIES, {help = "Only units with this movement type will be spawned from this element."})
 	local pickups = table.map_keys(tweak_data.pickups)

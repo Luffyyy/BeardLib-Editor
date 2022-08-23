@@ -17,7 +17,17 @@ end
  
 function EditorTeammateComment:_build_panel()
 	self:_create_panel()
-	self:ComboCtrl("comment", table.list_add({"none"}, managers.groupai:state().teammate_comment_names), {help = "Select a comment"})
+	self:ComboCtrl("comment", table.list_add({"none"}, managers.groupai:state().teammate_comment_names), {
+		help = "Select a comment", 
+		not_close = true, 
+        searchbox = true, 
+        fit_text = true,
+		on_callback = function(item) 
+            self:set_element_data(item)
+            self:test_element(item)
+        end, 
+        close_callback = ClassClbk(self, "stop_test_element")
+	})
 	self:BooleanCtrl("close_to_element", {text = "Play close to element"})
 	self:BooleanCtrl("use_instigator", {text = "Play on instigator"})
 	self._instigator_alert = self:Alert("Do not use when the expected instigator is not a Player or an AI otherwise the game will crash!")
@@ -42,7 +52,7 @@ function EditorTeammateComment:update_selected(t, dt)
 end
 
 function EditorTeammateComment:test_element()
-	if self._element.values.comment then
+	if self._element.values.comment and self._unit then
 		managers.editor:set_wanted_mute(false)
 		managers.editor:set_listener_enabled(true)
 

@@ -272,6 +272,9 @@ function PortalLayer:rename_portal(item)
             return
         end
         managers.portal:rename_unit_group(item.parent.text, name)
+        if self._selected_portal and self._selected_portal._name == item.parent.text then
+            self._selected_portal = nil
+        end
         self:load_portals()
         self:save() 
     end})
@@ -280,6 +283,9 @@ end
 function PortalLayer:remove_portal(item)
     BLE.Utils:YesNoQuestion("This will remove the portal", function()
         managers.portal:remove_unit_group(item.parent.text)
+        if self._selected_portal and self._selected_portal._name == item.parent.text then
+            self._selected_portal = nil
+        end
         self:load_portals()
         self:save()   
     end)
