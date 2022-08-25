@@ -66,6 +66,7 @@ UnitSpawnList = UnitSpawnList or class(SpawnSearchList)
 function UnitSpawnList:init(parent)
     UnitSpawnList.super.init(self, parent)
 
+    self._options:GetToolbar():tb_imgbtn("LoadSettings", ClassClbk(self, "load_settings_dialog"), nil, BLE.Utils.EditorIcons.settings_gear, {help = "Asset Load Options"})
     self._options:tickbox("ShortUnitPaths", ClassClbk(self, "set_short_unit_paths"), BLE.Options:GetValue("Map/ShortUnitPaths"), {help = "Shortens the paths in this list"})
     self._options:tickbox("ShowLoadedUnitsOnly", ClassClbk(self, "do_search", false, false), false, {help = "Filters the list to show only units that are loaded."})
     self._options:tickbox("LoadWithPackages", nil, false, {
@@ -133,6 +134,11 @@ function UnitSpawnList:do_load(unit)
     else
         assets:quick_load_from_db("unit", unit, begin_spawning)
     end
+end
+
+function UnitSpawnList:load_settings_dialog()
+    local assets = self:GetPart("assets")
+    assets:load_settings_dialog()
 end
 
 ------------------------------------- Elements -------------------------------------------

@@ -20,7 +20,10 @@ end
 
 function EditorSpawnCivilian:_build_panel()
 	self:_create_panel()
-	self:PathCtrl("enemy", "unit", '/civ_', "dummy_corpse", {text = "Civilian"})
+	self:PathCtrl("enemy", "unit", '/civ_', "dummy_corpse", {
+		text = "Civilian",
+		extra_info = {load = true}
+	})
 	self:ComboCtrl("state", table.list_add(clone(CopActionAct._act_redirects.civilian_spawn), {"none"}), {
 		not_close = true, 
         searchbox = true, 
@@ -55,4 +58,24 @@ function EditorSpawnCivilian:_resolve_team(unit)
 	else
 		return self._element.values.team
 	end
+end
+
+local unit_ids = Idstring("unit")
+function EditorSpawnCivilian:set_element_data(item, ...)
+	if item.name == "force_pickup" then
+		local assets = self:GetPart("assets")
+		local id = item:SelectedItem()
+		local typ = "unit"
+		if not assets or id == "none" or id == "no_pickup" then
+			return
+		end
+
+		local unit = tweak_data.pickups[id].unit
+		local path = BLE.Utils:Unhash(unit, typ)
+
+		if path and not assets:is_asset_loaded(typ, path) then
+			assets:quick_load_from_db(typ, path, nil, nil, {load = true})
+		end
+	end
+	EditorSpawnCivilian.super.set_element_data(self, item, ...)
 end

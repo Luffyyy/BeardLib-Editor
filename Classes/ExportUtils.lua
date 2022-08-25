@@ -27,17 +27,19 @@ function Utils:init(config)
     if config.fallback_to_db_assets then
         self._fallback_to_db_assets = true
     end
+    
+    self._load_settings = BLE.Options:GetValue("Map/AssetLoadSettings")
 end
 
 function Utils:Add(config, ext, path, exclude, extra_info)
-	if exclude and exclude[ext] then
+	if (exclude and exclude[ext]) or (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) then
         return
     end
     table.insert(config, {_meta = ext, path = path, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 function Utils:AddForceLoaded(config, ext, path, exclude, extra_info)
-	if exclude and exclude[ext] then
+    if (exclude and exclude[ext]) or (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) then
         return
     end
     table.insert(config, {_meta = ext, path = path, load = true, extra_info = self.pack_extra_info and extra_info or nil})
@@ -91,11 +93,12 @@ function Utils:ParseXml(ext, path, scriptdata)
     return EditorUtils:ParseXml(ext, path, scriptdata)
 end
 
-function Utils:GetDependencies(ext, path, ignore_default, exclude)
-    exclude = exclude or {texture = true, model = true, cooked_physics = true, animation = true}
+function Utils:GetDependencies(ext, path, ignore_default, exclude, extra_info)
+    exclude = exclude or self._load_settings.exclude or {texture = true, model = true, cooked_physics = true, animation = true}
+    extra_info = extra_info or {}
 	local config = {}
 
-	if Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude) then
+	if (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) or (Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude, extra_info)) then
         return false
 	end
 

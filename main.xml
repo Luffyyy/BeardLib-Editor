@@ -41,6 +41,7 @@
 		<classes directory="Dialogs">
 			<class file="AssetsManagerDialog.lua"/>
 			<class file="ExportDialog.lua"/>
+            <class file="LoadSettingsDialog.lua"/>
 			<class file="ObjectivesManagerDialog.lua"/>
 			<class file="SelectListDialogValue.lua"/>
 			<class file="ContinentSettingsDialog.lua"/>
@@ -254,6 +255,7 @@
                 <option type="boolean" default_value="true" name="AllowMultiWidgets"/>
                 <option type="boolean" default_value="false" name="MuteSoundsInEditor"/>
                 <option type="boolean" default_value="false" name="LoopTestAnimation"/>
+                <option type="table" name="AssetLoadSettings"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>
                 <option name="ElementColorGroups" type="table"/>

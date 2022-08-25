@@ -313,7 +313,7 @@ function ItemExt:pathbox(name, callback, value, typ, o)
 			callback = function(path)
 				local assets = managers.editor.parts.assets
 				if not assets:is_asset_loaded(typ, path) then
-					assets:quick_load_from_db(typ, path)
+					assets:quick_load_from_db(typ, path, nil, o.exclude, o.extra_info and clone(o.extra_info))
 				end
 				tb:SetValue(path, true)
 				if not o.not_close then

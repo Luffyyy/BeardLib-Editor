@@ -70,7 +70,9 @@ end
 
 function EditorSpawnEnemyDummy:_build_panel()
 	self:_create_panel()
-	self:PathCtrl("enemy", "unit", "/ene_", BLE.Utils.EnemyBlacklist)
+	self:PathCtrl("enemy", "unit", "/ene_", BLE.Utils.EnemyBlacklist, {
+		extra_info = {load = true}
+	})
 	self:BooleanCtrl("participate_to_group_ai")
 	local spawn_action_options = clone(CopActionAct._act_redirects.enemy_spawn)
 	table.insert(spawn_action_options, "none")
@@ -115,6 +117,20 @@ function EditorSpawnEnemyDummy:set_element_data(item, ...)
 				assets:find_package(unit, "unit", true, ClassClbk(self, "set_element_data", item))
 			end}})
 			return
+		end
+	elseif item.name == "force_pickup" then
+		local assets = self:GetPart("assets")
+		local id = item:SelectedItem()
+		local typ = "unit"
+		if not assets or id == "none" or id == "no_pickup" then
+			return
+		end
+
+		local unit = tweak_data.pickups[id].unit
+		local path = BLE.Utils:Unhash(unit, typ)
+
+		if path and not assets:is_asset_loaded(typ, path) then
+			assets:quick_load_from_db(typ, path, nil, nil, {load = true})
 		end
 	end
 	EditorSpawnEnemyDummy.super.set_element_data(self, item, ...)

@@ -4,6 +4,9 @@ AssetsManagerDialog._no_reshaping_menu = true
 AssetsManagerDialog.ImportHelp = [[
 This will search for dependencies that the asset requires in order to load. Some are optional, some are semi-optional and some are required.
 ]]
+AssetsManagerDialog.LoadSettingsHelp = [[
+This will change what gets loaded and how when spawning a unit or when selecting units inside certain elements.
+]]
 
 local ADD = "add"
 local UNIT_LOAD = "unit_load"
@@ -44,6 +47,7 @@ function AssetsManagerDialog:init(params, menu)
     ItemExt:add_funcs(self)
     self._unready_assets = {}
     self._export_dialog = ExportDialog:new(BLE._dialogs_opt)
+    self._load_settings_dialog = LoadSettingsDialog:new(BLE._dialogs_opt)
 end
 
 function AssetsManagerDialog:Destroy()
@@ -247,6 +251,15 @@ function AssetsManagerDialog:load_from_db_dialog(assets, clbk)
         assets = assets or {[self._tbl._selected.asset_type] = {[self._tbl._selected.name] = true}}
     })
 end
+
+function AssetsManagerDialog:load_settings_dialog(clbk)
+    self._load_settings_dialog:Show({
+        force = true,
+        message = self.LoadSettingsHelp,
+        utils = self._exporter
+    })
+end
+
 function AssetsManagerDialog:toggle_used()
     if not self._tbl._selected then
 		return
@@ -377,17 +390,17 @@ function AssetsManagerDialog:db_has_asset(ext, asset)
     return blt.asset_db.has_file(asset, ext)
 end
 
-function AssetsManagerDialog:quick_load_from_db(ext, asset, clbk)
-    self:load_from_db({[ext] = {[asset] = true}}, nil, false, true, clbk)
+function AssetsManagerDialog:quick_load_from_db(ext, asset, clbk, exclude, extra_info)
+    self:load_from_db({[ext] = {[asset] = true}}, exclude, false, true, clbk, extra_info)
 end
 
-function AssetsManagerDialog:load_from_db(missing_assets, exclude, inc_in_proj, dontask, clbk)
+function AssetsManagerDialog:load_from_db(missing_assets, exclude, inc_in_proj, dontask, clbk, extra_info)
     missing_assets = missing_assets or self._missing_assets
     local config = {}
 	local failed_all = false
 	for ext, assets in pairs(missing_assets) do
 		for asset in pairs(assets) do
-			local cfg = self._exporter:GetDependencies(ext, asset, true, exclude)
+			local cfg = self._exporter:GetDependencies(ext, asset, true, exclude, extra_info)
 			if cfg then
 				table.insert(config, table.merge({_meta = ADD, type = ext, path = asset, from_db = not inc_in_proj and true or nil}, cfg))
 			else
