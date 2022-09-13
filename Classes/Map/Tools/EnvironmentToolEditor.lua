@@ -467,7 +467,7 @@ function EnvTool:feed(handler, viewport, scene)
 		if kpar == "underlay" then
             local assets = self:GetPart("assets")
             --I don't fucking know why but loading scenes just doesn't work
-            if assets:is_asset_loaded("scene", val) then
+            if assets:is_asset_loaded("scene", val) or BLE.Utils:InAllPackage(val, "scene") then
                 set()
             else
                 assets:quick_load_from_db("scene", val, set)

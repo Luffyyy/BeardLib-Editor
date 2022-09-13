@@ -320,16 +320,17 @@ function AiEditor:build_unit_menu()
                 text = "Text: " .. managers.localization:text(self:selected_unit():ai_editor_data().location_id or "location_unknown")
             })
             ai:numberbox("SuspicionMultiplier", ClassClbk(self, "set_unit_data"),
-                unit:ai_editor_data().suspicion_multiplier, {
+                unit:ai_editor_data().suspicion_mul, {
                     min = 1,
                     floats = 1,
-                    help = "multiplier applied to suspicion buildup rate"
+                    help = "Multiplier applied to suspicion buildup rate. Minimum is 1"
                 }
             )
             ai:numberbox("DetectionMultiplier", ClassClbk(self, "set_unit_data"),
-                unit:ai_editor_data().detection_multiplier, {
+                unit:ai_editor_data().detection_mul, {
                     min = 0.01,
-                    help = "multiplier applied to AI detection speed. min is 0.01"
+                    floats = 2,
+                    help = "Multiplier applied to AI detection speed. Minimum is 0.01"
                 }
             )
             S:build_links(unit:unit_data().unit_id)
@@ -369,21 +370,21 @@ function AiEditor:set_unit_data()
         if unit:name() == self._nav_surface_unit then
             unit:ai_editor_data().location_id = S:GetItemValue("LocationId")
 
-            S:GetItem("LocOfLocation"):SetText("Text = " .. managers.localization:text(
-                self:selected_unit():ai_editor_data().location_id or "location_unknown"
+            S:GetItem("LocOfLocation"):SetText("Text: " .. managers.localization:text(
+                unit:ai_editor_data().location_id or "location_unknown"
             ))
             managers.navigation:set_location_ID(
                 unit:unit_data().unit_id,
                 S:GetItemValue("LocationId")
             )
 
-            unit:ai_editor_data().suspicion_multiplier = S:GetItemValue("SuspicionMultiplier")
+            unit:ai_editor_data().suspicion_mul = S:GetItemValue("SuspicionMultiplier")
             managers.navigation:set_suspicion_multiplier(
                 unit:unit_data().unit_id,
                 S:GetItemValue("SuspicionMultiplier")
             )
 
-            unit:ai_editor_data().detection_multiplier = S:GetItemValue("DetectionMultiplier")
+            unit:ai_editor_data().detection_mul = S:GetItemValue("DetectionMultiplier")
             managers.navigation:set_detection_multiplier(
                 unit:unit_data().unit_id,
                 S:GetItemValue("DetectionMultiplier")
