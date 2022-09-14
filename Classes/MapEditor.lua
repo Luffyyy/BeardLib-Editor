@@ -9,7 +9,7 @@ function Editor:init(data)
         PackageManager:load("core/packages/editor")
     end
 
-    self._particle_editor_active = false
+    self._editor_active = false
     self._mapeditor = {}
     self.parts = {}
     self._triggers = {}
@@ -129,9 +129,6 @@ function Editor:init(data)
         if data.last_menu then
             self.parts[data.last_menu]:Switch(true)
         end
-        if data.particle_editor_active then
-            self.parts.tools:get_tool("general"):open_effect_editor()
-        end
         if data.scroll_y_tbl then
             for name, y in pairs(data.scroll_y_tbl) do
                 self.parts[name]._holder:SetScrollY(y)
@@ -142,6 +139,10 @@ function Editor:init(data)
         end
         if data.running_simulation then
             self._running_simulation = data.running_simulation
+        end
+        if data.editor_active then
+            self:set_enabled(true)
+            self.parts.tools:get_tool("general"):open_editor(data.editor_active)
         end
     end
 end
@@ -172,6 +173,7 @@ function Editor:post_init(menu)
         self._mapeditor[n] = manager
     end
     m.particle = ParticleEditor:new(self, menu)
+    --m.preplanning = PreplanningEditor:new(self, menu)
     self._value_info = self._editor_menu:divider("ValueInfo", {
         foreground = Color(1, 0.8, 0.8, 0), 
         visible = false, 
@@ -579,7 +581,7 @@ function Editor:set_enabled(enabled)
     if enabled then
         self._partially_disabled = false
     end
-    self._editor_menu:SetVisible(enabled and not self._particle_editor_active)
+    self._editor_menu:SetVisible(enabled and not self._editor_active)
     self._enabled = enabled
     if enabled then
         self._menu:Enable()
@@ -599,7 +601,7 @@ function Editor:set_enabled(enabled)
         managers.enemy:set_gfx_lod_enabled(not enabled)
     end
     for n, manager in pairs(self.parts) do
-        if enabled and ((self._particle_editor_active and n == "particle") or (not self._particle_editor_active and self._mapeditor[n])) then
+        if enabled and ((self._editor_active and n == self._editor_active) or (not self._editor_active and self._mapeditor[n])) then
             if manager.enable then
                 manager:enable()
             end
@@ -726,7 +728,7 @@ end
 --Short functions
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:set_use_quick_access(value) self.parts.quick:SetVisible(value) end
-function Editor:keybind_message(text) self.parts.status:ShowKeybindMessage(text) end
+function Editor:status_message(text) self.parts.status:StatusMessage(text) end
 function Editor:toggle_local_move() 
     self._use_local_move = not self._use_local_move
     self.parts.quick:update_local_move(self._use_local_move)
@@ -759,7 +761,7 @@ function Editor:on_hide_selected()
     for _, unit in ipairs(clone(self:selected_units())) do
         self:set_unit_visible(unit, false)
     end
-    self:keybind_message("Hidden selected units")
+    self:status_message("Hidden selected units")
 end
 
 function Editor:on_hide_unselected()
@@ -770,7 +772,7 @@ function Editor:on_hide_unselected()
             end
         end
     end
-    self:keybind_message("Hidden all not selected units")
+    self:status_message("Hidden all not selected units")
 end
 
 function Editor:on_unhide_all()
@@ -779,7 +781,7 @@ function Editor:on_unhide_all()
     for _, unit in ipairs(to_hide) do
         self:set_unit_visible(unit, true)
     end
-    self:keybind_message("Unhidden all hidden units")
+    self:status_message("Unhidden all hidden units")
 end
 
 function Editor:set_unit_visible(unit, visible)
@@ -831,7 +833,7 @@ function Editor:destroy()
         last_menu = self._current_menu_name,
         selected_units = #selected_units > 0 and selected_units or nil,
         mission_units = self.parts.mission:units(),
-        particle_editor_active = self._particle_editor_active,
+        editor_active = self._editor_active,
         running_simulation = self._running_simulation,
         scroll_y_tbl = scroll_y_tbl
     }

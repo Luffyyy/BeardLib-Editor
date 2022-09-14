@@ -102,7 +102,7 @@ function Options:toggle_light(item)
     if not item then
         item = self:GetPart("tools"):get_tool("general")._holder:GetItem("UseLight")
         item:SetValue(not item:Value())
-        self._parent:keybind_message("Head Light "..(item:Value() and "enabled" or "disabled"))
+        self._parent:status_message("Head Light "..(item:Value() and "Enabled" or "Disabled"))
     end
     self._parent:toggle_light(item:Value())
 end
@@ -110,14 +110,14 @@ end
 function Options:toggle_item(item_name) 
     local item = self:GetItem(item_name)
     item:SetValue(not item:Value(), true)
-    self._parent:keybind_message(string.pretty2(item_name)..(item:Value() and " Enabled" or " Disabled"))
+    self._parent:status_message(string.pretty2(item_name)..(item:Value() and " Enabled" or " Disabled"))
 end
 
 function Options:ChangeCameraSpeed(decrease, incremental)
     local cam_speed = self:GetItem("CameraSpeed")
     local change = incremental and math.max(cam_speed:Value() * 0.3, 0.1) or ctrl() and 0.1 or 1
     cam_speed:SetValue(cam_speed:Value() + (decrease == true and -change or change), true)
-    self._parent:keybind_message("Camera speed changed to: "..cam_speed:Value())
+    self._parent:status_message("Camera speed changed to: "..cam_speed:Value())
 end
 
 function Options:KeySPressed()
@@ -240,7 +240,7 @@ function Options:save(force_backup, old_include, skip_warning)
 
     if not skip_warning and self:Val("SaveWarningAfterGameStarted") and self._parent._before_state then
         if self._playtest_saving_allowed == false then
-            self._parent:keybind_message("Saving is disabled for this session")
+            self._parent:status_message("Saving is disabled for this session")
             return
         elseif self._playtest_saving_allowed == nil then
             self._playtest_saving_allowed = false

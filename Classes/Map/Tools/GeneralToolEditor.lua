@@ -22,7 +22,8 @@ function GenTool:build_menu()
     local opt = self:GetPart("opt")
 
     local editors = self._holder:divgroup("Editors")
-    editors:button("EffectEditor", ClassClbk(self, "open_effect_editor"))
+    editors:button("EffectEditor", ClassClbk(self, "open_editor", "particle"))
+    --editors:button("PreplanningEditor", ClassClbk(self, "open_editor", "preplanning"))
 
     local game = self._holder:group("Game", groups_opt)
     game:slider("GameSpeed", ClassClbk(self, "set_game_speed"), 1, {max = 10, min = 0.1, step = 0.3, floats = 1, wheel_control = true, help = "High settings can have a negative effect on game logic, use with caution"})
@@ -53,8 +54,8 @@ function GenTool:set_visible(visible)
     end
 end
 
-function GenTool:open_effect_editor()
-    managers.editor._particle_editor_active = true
+function GenTool:open_editor(editor)
+    managers.editor._editor_active = editor
     managers.editor:set_enabled()
 end
 

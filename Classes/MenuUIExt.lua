@@ -339,7 +339,7 @@ function ItemExt:CopyAxis(item)
 		value = string.format("{_shape = true, width = %d, height = %d, depth = %d, radius = %d}", value.width, value.height, value.depth, value.radius)
 	end
 	Application:set_clipboard(tostring(value))
-	managers.editor:keybind_message(menu:Name() .. " copied to clipboard")
+	managers.editor:status_message(menu:Name() .. " copied to clipboard")
 end
 
 function ItemExt:PasteAxis(item)
@@ -351,9 +351,9 @@ function ItemExt:PasteAxis(item)
 	end)
 	if result and type_name(result) == menu.value_type or (menu.value_type == "Shape" and result._shape) then
 		menu:SetValue(result, true)
-		managers.editor:keybind_message(menu:Name() .. " pasted from clipboard")
+		managers.editor:status_message(menu:Name() .. " pasted from clipboard")
 	else
-		managers.editor:keybind_message("Incorrect paste data")
+		managers.editor:status_message("Incorrect paste data")
 	end
 end
 

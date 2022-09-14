@@ -50,7 +50,8 @@ Utils.EditorIcons = {
 	portal_add = {128, 192, 32, 32},
 	placeholder = {448, 448, 64, 64},
 	jump_cam = {224, 224, 32, 32},
-	invisible = {256, 192, 32, 32}
+	invisible = {256, 192, 32, 32},
+    spinner = {0, 192, 64, 64}
 }
 
 Utils.ElementIcons = {

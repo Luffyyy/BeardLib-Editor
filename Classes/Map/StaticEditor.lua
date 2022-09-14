@@ -102,7 +102,7 @@ function Static:reset_rotation()
 end
 
 function Static:mouse_pressed(button, x, y)
-    if not self:enabled() or managers.editor:mouse_busy() then
+    if not self:enabled() or managers.editor:mouse_busy() or self._physics_dialog then
         return
     end
     if button == Idstring("2") then
@@ -1770,7 +1770,8 @@ end
 function Static:can_do_physics(unit)
     if not unit then return false end
     if not alive(unit) then return false end
-
+    
+    if unit:fake() then return false end
     if unit:mission_element() then return false end
     if unit:num_bodies() == 0 then return false end
 
@@ -1781,16 +1782,21 @@ function Static:physics_simulation_dialog()
     if not self:selected_unit() or not self._selected_units or self._grabbed_unit then
         return
     end
+    local status = BLE.Utils:GetPart("status")
 
-    BLE.Dialog:Show({
-        title = "Physics Simulation",
-        message = "Simulating Physics...",
-        callback = ClassClbk(self, "stop_physics_simulation"),
-        no_callback = ClassClbk(self, "stop_physics_simulation"),
-        yes = "End Simulation",
-        position = "RightBottomOffset-",
-        force = true
+    self._physics_dialog = status:StatusDialog("Physics Simulation", nil, {
+        {name="Cancel", callback = ClassClbk(self, "stop_physics_simulation", false)},
+        {name="Accept", callback = ClassClbk(self, "stop_physics_simulation", true)}
     })
+    --BLE.Dialog:Show({
+    --    title = "Physics Simulation",
+    --    message = "Simulating Physics...",
+    --    callback = ClassClbk(self, "stop_physics_simulation"),
+    --    no_callback = ClassClbk(self, "stop_physics_simulation"),
+    --    yes = "End Simulation",
+    --    position = "RightBottomOffset-",
+    --    force = true
+    --})
 
     self:start_physics_simulation()
 end
@@ -1801,17 +1807,25 @@ function Static:start_physics_simulation()
     self._physics_sim_units = clone(self._selected_units)
     self._physics_sim_previous_unit_settings = {}
 
+    self:GetPart("menu"):set_tabs_enabled(false)
+    self._holder:SetEnabled(false)
+
+    local units = 0
     for _, unit in pairs(self._physics_sim_units) do
         if self:can_do_physics(unit) then
             local orientation_object = unit:orientation_object()
 
-            self._physics_sim_previous_unit_settings[unit:editor_id()] = {}
-
+            self._physics_sim_previous_unit_settings[unit:editor_id()] = {
+                position = unit:position(),
+                rotation = unit:rotation(),
+                bodies = {}
+            }
+            units = units + 1
             for i_body = 0, unit:num_bodies() - 1 do
                 local body = unit:body(i_body)
                 local root_object = body:root_object()
 
-                self._physics_sim_previous_unit_settings[unit:editor_id()][i_body] = {
+                self._physics_sim_previous_unit_settings[unit:editor_id()].bodies[i_body] = {
                     collisions_enabled = body:collisions_enabled(),
                     fixed = body:fixed(),
                     keyframed = body:keyframed(),
@@ -1829,14 +1843,23 @@ function Static:start_physics_simulation()
             end
         end
     end
+    self._physics_dialog:GetItem("Sub"):SetText(units.." Unit(s)")
 end
 
-function Static:stop_physics_simulation()
+function Static:stop_physics_simulation(accepted)
+    if self._physics_dialog then
+        self._physics_dialog:Destroy()
+        self._physics_dialog = nil
+
+        self:GetPart("menu"):set_tabs_enabled(true)
+        self._holder:SetEnabled(true)
+    end
+
     for _, unit in pairs(self._physics_sim_units) do
         if self:can_do_physics(unit) then
             local previous_settings = self._physics_sim_previous_unit_settings[unit:editor_id()]
 
-            for i_body, body_settings in pairs(previous_settings) do
+            for i_body, body_settings in pairs(previous_settings.bodies) do
                 local body = unit:body(i_body)
 
                 body:set_collisions_enabled(body_settings.collisions_enabled)
@@ -1851,12 +1874,20 @@ function Static:stop_physics_simulation()
             end
         end
     end
-
+    
     self._selected_units = clone(self._physics_sim_units)
 
     self:update_positions()
     self:recalc_all_locals()
     for _, unit in pairs(self._selected_units) do
-        BLE.Utils:SetPosition(unit, unit:position(), unit:rotation())
+        if self:can_do_physics(unit) then
+            if not accepted then
+                local previous_settings = self._physics_sim_previous_unit_settings[unit:editor_id()]
+                BLE.Utils:SetPosition(unit, previous_settings.position, previous_settings.rotation)
+            else
+                BLE.Utils:SetPosition(unit, unit:position(), unit:rotation())
+            end
+        end
     end
+    self._physics_sim_previous_unit_settings = {}
 end

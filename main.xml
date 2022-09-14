@@ -146,6 +146,7 @@
 			<option type="number" min="300" max="1600" default_value="350" name="MapEditorPanelWidth"/>
 			<option type="number" min="300" max="1600" default_value="500" name="ParticleEditorPanelWidth"/>
 			<option type="number" min="8" max="42" default_value="17" name="MapEditorFontSize"/>
+            <option type="number" min="8" max="32" default_value="15" name="StatusMenuFontSize"/>
             <option type="number" min="18" max="38" default_value="28" name="QuickAccessToolbarSize"/>
             <option type="number" min="1" max="200" default_value="32" name="Scrollspeed"/>
             <option type="number" min="0" max="16" default_value="6" name="BoxesXOffset"/>

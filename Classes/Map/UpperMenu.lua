@@ -84,6 +84,10 @@ function UpperMenu:set_tabs_enabled(enabled)
 end
 
 function UpperMenu:Switch(manager, no_anim)
+    if not self:is_tab_enabled(manager.manager_name) then
+        return
+    end
+
     local item = self:GetItem(manager.manager_name)
     local menu = manager._menu
 

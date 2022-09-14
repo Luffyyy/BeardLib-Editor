@@ -873,7 +873,7 @@ function AiEditor:_visibility_graph_done(build_type)
         self:reenable_disabled_units()
         self:set_selected_unit()
         managers.editor._playtest_forbidden = true
-        managers.editor:keybind_message("Navigation calculation done")
+        managers.editor:status_message("Navigation calculation done")
     end
     self:part("opt"):save_nav_data(nil, build_type == "selected")
 end

@@ -208,7 +208,7 @@ function MainLayerEditor:jump_to_bookmark(name)
         else
             managers.editor:set_camera(Vector3(-210, 655, 475), Rotation(-135, -40, 0))
         end
-         managers.editor:keybind_message("Jumped to "..name)
+         managers.editor:status_message("Jumped to "..name)
     end
 end
 
