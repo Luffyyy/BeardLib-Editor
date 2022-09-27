@@ -989,7 +989,12 @@ function Editor:update(t, dt)
             self.parts.cubemap_creator:update(t, dt)
         end
     end
-    self.parts.tools:disabled_update(t, dt)
+    
+    for n, manager in pairs(self.parts) do
+        if manager.disabled_update then
+            manager:disabled_update(t, dt)
+        end
+    end
 end
 
 function Editor:bind(opt, clbk, in_dialogs)

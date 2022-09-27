@@ -98,7 +98,7 @@ end
 
 function Instance:edit_instance(path, custom)
     path = path:gsub("levels/", ""):gsub("/world", "")
-    local level_data = {name = Global.game_settings.level_id, narr_id = Global.job_manager.current_job, return_bookmark = {position = managers.editor._camera_pos, rotation = managers.editor._camera_rot}}
+    local level_data = {name = Global.game_settings.level_id, narr_id = Global.job_manager.current_job and Global.job_manager.current_job.job_id, return_bookmark = {position = managers.editor._camera_pos, rotation = managers.editor._camera_rot}}
     BLE.LoadLevel:load_level({name = path, instance = level_data, vanilla = not custom})
 end
 

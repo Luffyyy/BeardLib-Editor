@@ -224,6 +224,7 @@ function SndLayer:build_unit_menu()
 				not_close = true, 
 				searchbox = true, 
 				fit_text = true, 
+				free_typing = true
 			})
 			self:set_sound_emitter_parameters()
 		end

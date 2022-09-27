@@ -279,6 +279,13 @@ function Mission:execute_element(element)
     end
 end
 
+function Mission:element_enabled(element)
+    local script = self._scripts[element.script]
+	if script then
+		return script:element(element.id):enabled()
+	end
+end
+
 local tblinsert = table.insert
 local tblremove = table.remove
 local tbldel = table.delete
@@ -540,6 +547,7 @@ end
 function MScript:execute_element(element)
 	self._elements[element.id]:on_executed(managers.player:player_unit())
 end
+
 
 function MScript:create_mission_element_unit(element)
 	local enabled = element.values.position ~= nil

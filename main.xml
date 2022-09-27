@@ -256,6 +256,8 @@
                 <option type="boolean" default_value="true" name="AllowMultiWidgets"/>
                 <option type="boolean" default_value="false" name="MuteSoundsInEditor"/>
                 <option type="boolean" default_value="false" name="LoopTestAnimation"/>
+                <option type="boolean" default_value="false" name="SimplifiedElementHeaders"/>
+                <option type="boolean" default_value="false" name="VisualizeDisabledElements"/>
                 <option type="table" name="AssetLoadSettings"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>

@@ -210,3 +210,16 @@ function MissionEditor:update(t, dt)
         self._current_script:update(t, dt)
     end
 end
+
+function MissionEditor:disabled_update(t, dt)
+    if self:Val("ShowElements") and self:Val("VisualizeDisabledElements") then
+        unit_disabled = Draw:brush(Color(0.15, 1, 0, 0))
+
+        for _, unit in pairs(self:units()) do
+            local element_unit = alive(unit) and unit:mission_element()
+            if element_unit and element_unit:visible() and not managers.mission:element_enabled(element_unit.element) then
+                unit_disabled:body(unit:body(0))
+            end
+        end
+    end
+end
