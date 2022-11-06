@@ -372,7 +372,7 @@ function ParticleEditor:on_close()
 	self._effects_notebook:RemoveAllPages()
 	self._effects = {}
 	self:remove_gizmo()
-	self._parent._particle_editor_active = false
+	self._parent._editor_active = false
 	self._parent:set_enabled()
 end
 

@@ -45,6 +45,7 @@
 			<class file="ObjectivesManagerDialog.lua"/>
 			<class file="SelectListDialogValue.lua"/>
 			<class file="ContinentSettingsDialog.lua"/>
+            <class file="ScriptSettingsDialog.lua"/>
             <class file="BookmarkSettingsDialog.lua"/>
 			<class file="ObjectiveSettingsDialog.lua"/>
 			<class file="MultiSelectListDialog.lua"/>
@@ -231,6 +232,7 @@
                 <option type="boolean" default_value="false" name="AutoSave"/>
                 <option type="number" default_value="5" name="AutoSaveMinutes"/>
                 <option type="boolean" default_value="false" name="SaveBeforePlayTesting"/>
+                <option type="boolean" default_value="false" name="OptimizedFileSaving"/>
                 <option type="boolean" default_value="false" name="SaveWarningAfterGameStarted"/>
                 <option type="boolean" default_value="true" name="RandomizedElementsColor"/>
                 <option type="boolean" default_value="true" name="UniqueElementIcons"/>
@@ -526,6 +528,7 @@
 		<value_node value="world_sounds"/>
 		<value_node value="blacklist"/>
 		<value_node value="prefab"/>
+        <value_node value="world_setting"/>
 	</script_data_types>
     <script_data_formats>
         <value_node value="json"/>

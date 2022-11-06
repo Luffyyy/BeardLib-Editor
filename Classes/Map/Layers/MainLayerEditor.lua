@@ -3,6 +3,7 @@ function MainLayerEditor:init(parent)
 	MainLayerEditor.super.init(self, parent, "MainLayerEditor", {visible = true})
     if BeardLib.current_level then
         self._continent_settings = ContinentSettingsDialog:new(BLE._dialogs_opt)
+        self._script_settings = ScriptSettingsDialog:new(BLE._dialogs_opt)
         self._bookmark_settings = BookmarkSettingsDialog:new(BLE._dialogs_opt)
         self._objectives_manager = ObjectivesManagerDialog:new(BLE._dialogs_opt)
     end
@@ -90,37 +91,74 @@ end
 
 --Continents
 function MainLayerEditor:build_continents()
-    local tx = "textures/editor_icons_df"
     local all_continents = managers.editor._continents
     if all_continents then
         local continents = self._holder:group("Continents")
-        local toolbar = continents:GetToolbar()
-        local all_scripts = table.map_keys(managers.mission._scripts)
-        self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, managers.editor._current_continent) or 1)
-        self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, managers.editor._current_script) or 1)    
+        local cpan = continents:pan("Continents", {max_height = 170, scrollbar = true, scroll_width = 4})
+        local world_settings = continents:group("WorldSettings", {closed = true, size = continents.size * 0.8, inherit_values = {size = continents.size * 0.8}})
+
+        local scripts = self._holder:group("Scripts", {max_height = 100, scrollbar = true, scroll_width = 4})
+        --local all_scripts = table.map_keys(managers.mission._scripts)
+        --self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, managers.editor._current_continent) or 1)
+        --self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, managers.editor._current_script) or 1)    
         local icons = BLE.Utils.EditorIcons
 
-        toolbar:tb_imgbtn("NewContinent", ClassClbk(self, "new_continent"), tx, icons.plus, {help = "Add continent"})
-        for name, data in pairs(managers.worlddefinition._continent_definitions) do
-            local continent = continents:group(name, {text = name, divider_type = table.size(managers.mission._missions[name]) == 0})
-            local ctoolbar = continent:GetToolbar()
-            ctoolbar:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove Continent"})
-            ctoolbar:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Units"})
-            ctoolbar:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), nil, icons.settings_gear, {help = "Continent Settings"})
-            ctoolbar:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), nil, icons.select, {help = "Select All"})
-            ctoolbar:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), nil, icons.plus, {help = "Add mission script"})
-            ctoolbar:tb_imgbtn("SetVisible", function(item) 
-                local alpha = self:toggle_unit_visibility(name) and 1 or 0.5
-                item.enabled_alpha = alpha
-                item:SetEnabled(item.enabled)
-            end, tx, icons.eye, {help = "Toggle Visibility"})
+        continents:GetToolbar():tb_imgbtn("NewContinent", ClassClbk(self, "new_continent"), nil, icons.plus, {help = "Add new Continent"})
+        world_settings:GetToolbar():tb_imgbtn("NewWorldSetting", ClassClbk(self, "new_world_setting"), nil, icons.plus, {help = "Add new World Setting"})
+        scripts:GetToolbar():tb_imgbtn("NewScript", ClassClbk(self, "add_new_mission_script"), nil, icons.plus, {help = "Add new Script"})
+
+        local base_ids = {}
+        for name, data in pairs(managers.worlddefinition._continents) do
+            local locked = data.locked
+            table.insert(base_ids, {base_id = data.base_id, name = name})
+            local continent = cpan:button(name, ClassClbk(self, "set_current_continent", cpan), {
+                text = name, 
+                border_left = locked or managers.editor._current_continent == name,
+                border_color = locked and Color.red or Color.green,
+                private = {background_color = locked and Color.red:with_alpha(0.2) or nil},
+                divider_type = locked,
+                help = "Set as current continent"
+            })
+            --local ctoolbar = continent:GetToolbar()
+            continent:tb_imgbtn("Remove", ClassClbk(self, "remove_continent", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove Continent", visible = not locked})
+            continent:tb_imgbtn("Settings", ClassClbk(self, "open_continent_settings", name), nil, icons.settings_gear, {help = "Continent Settings"})
+            continent:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Units from Continent", visible = not locked})
+            continent:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), nil, icons.select, {help = "Select all Units in Continent", visible = not locked})
+            --continent:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), nil, icons.plus, {help = "Add mission script", visible = not locked})
+            continent:tb_imgbtn("SetVisible", ClassClbk(self, "toggle_unit_visibility", data), nil, icons.eye, {help = "Toggle Visibility", enabled_alpha = data.visible ~= false and 1 or 0.2})
 
             for sname, data in pairs(managers.mission._missions[name]) do
-                local script = continent:divider(sname, {continent = name, align_method = "grid_from_right", border_color = Color.green, text = sname, offset = {8, 4}})
+                local script = scripts:button(sname, ClassClbk(self, "set_current_script", scripts), {
+                    text = sname,
+                    continent = name, 
+                    border_left = managers.editor._current_script == sname, 
+                    border_color = Color.green, 
+                    private = {offset = 2},
+                    help = "Set as current script"
+                })
+                
                 script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), nil, icons.cross, {highlight_color = Color.red, help = "Remove Script"})
-                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Elements"})
-                script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
-                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select All"})
+                script:tb_imgbtn("ScriptSettings", ClassClbk(self, "open_script_settings", name, sname), nil, icons.settings_gear, {help = "Script Settings"})
+                --script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
+                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Elements from Script"})
+                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select all Elements in Script"})
+            end
+        end
+
+        table.sort(base_ids, function(a, b)
+            return a.base_id < b.base_id
+        end)
+
+        for index, data in pairs(base_ids) do
+            continents:GetItem(data.name):SetIndex(index)
+        end
+
+        if managers.worlddefinition._world_settings then
+            for name, data in pairs(managers.worlddefinition._world_settings) do
+                local setting = world_settings:divider(name, {text = name, align_method = "grid_from_right"})
+
+                setting:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_world_setting", name), nil, icons.cross, {highlight_color = Color.red, help = "Remove World Setting"})
+                setting:tb_imgbtn("ScriptSettings", ClassClbk(self, "open_world_settings", name), nil, icons.settings_gear, {help = "World Setting ignored Continents"})
             end
         end
     end
@@ -212,13 +250,25 @@ function MainLayerEditor:jump_to_bookmark(name)
     end
 end
 
-function MainLayerEditor:set_current_script(item)
-    managers.editor._current_script = item:SelectedItem()
-    self:GetPart("mission"):set_elements_vis()
+function MainLayerEditor:set_current_script(menu, item)
+    if managers.editor._current_script ~= item:Name() then
+        managers.editor._current_script = item:Name()
+        self:GetPart("mission"):set_elements_vis()
+        for _, item in pairs(menu:Items()) do
+            item:SetBorder({left = item:Name() == managers.editor._current_script})
+        end
+        managers.editor:status_message("Current script changed to "..managers.editor._current_script)
+    end
 end
 
-function MainLayerEditor:set_current_continent(item) 
-    managers.editor._current_continent = item:SelectedItem()
+function MainLayerEditor:set_current_continent(menu, item) 
+    if managers.editor._current_continent ~= item:Name() then
+        managers.editor._current_continent = item:Name()
+        for _, item in pairs(menu:Items()) do
+            item:SetBorder({left = item:Name() == managers.editor._current_continent})
+        end
+        managers.editor:status_message("Current continent changed to "..managers.editor._current_continent)
+    end
 end
 
 function MainLayerEditor:open_continent_settings(continent)
@@ -226,6 +276,10 @@ function MainLayerEditor:open_continent_settings(continent)
 end
 
 function MainLayerEditor:remove_continent(continent)
+    if continent == "world" then
+        BLE.Utils:Notify("Error!", "Cannot delete the default world continent.")
+        return
+    end
     BLE.Utils:YesNoQuestion("This will remove the continent!", function()
         self:clear_all_units_from_continent(continent, true, true)
         managers.mission._missions[continent] = nil
@@ -236,12 +290,19 @@ function MainLayerEditor:remove_continent(continent)
     end)
 end
 
-function MainLayerEditor:toggle_unit_visibility(units)
-    local visible
-    for _, unit in pairs(self:get_all_units_from_continent(units)) do
-        if alive(unit) then unit:set_visible(not unit:visible()) visible = unit:visible() end
+function MainLayerEditor:toggle_unit_visibility(data, item)
+    data.visible = data.visible == false and true or false
+    local helpers_visible = BLE.Options:GetValue("Map/EditorUnits")
+    for _, unit in pairs(self:get_all_units_from_continent(data.name)) do
+        if alive(unit) then 
+            local ud = unit:unit_data()
+            if type(ud) == "table" and (helpers_visible or not (ud.only_visible_in_editor or ud.only_exists_in_editor)) then
+                unit:set_visible(data.visible) 
+            end
+        end
     end
-    return visible
+    item.enabled_alpha = data.visible and 1 or 0.2
+    item:SetEnabled(item.enabled)
 end
 
 function MainLayerEditor:get_all_units_from_continent(continent)
@@ -280,82 +341,154 @@ function MainLayerEditor:clear_all_units_from_continent(continent, no_refresh, n
 end
 
 function MainLayerEditor:new_continent()
-    local worlddef = managers.worlddefinition
-    BLE.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
-        if name == "" then
-            BLE.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
-                self:new_continent()
-            end})
-            return
-        elseif name == "environments" or string.begins(name, " ") then
-            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:new_continent()
-            end})
-            return
-        elseif worlddef._continent_definitions[name] then
-            BLE.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
-                self:new_continent()
-            end})
-            return
-        end
-        managers.mission._missions[name] = managers.mission._missions[name] or {}
-        worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
-            editor_groups = {},
-            statics = {},
-            values = {workviews = {}}
-        }
-        worlddef._continents[name] = {base_id = worlddef._start_id  * table.size(worlddef._continent_definitions), name = name}
-        managers.editor:load_continents(worlddef._continent_definitions)
-        self:build_menu()
-    end})
+    self._continent_settings:Show({continent = "", new = true, callback = ClassClbk(self, "build_menu")})
+    --local worlddef = managers.worlddefinition
+    --BLE.InputDialog:Show({title = "Continent name", text = "", callback = function(name)
+    --    if name == "" then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Continent name cannot be empty!", callback = function()
+    --            self:new_continent()
+    --        end})
+    --        return
+    --    elseif name == "environments" or string.begins(name, " ") then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+    --            self:new_continent()
+    --        end})
+    --        return
+    --    elseif worlddef._continent_definitions[name] then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Continent name already taken!", callback = function()
+    --            self:new_continent()
+    --        end})
+    --        return
+    --    end
+    --    managers.mission._missions[name] = managers.mission._missions[name] or {}
+    --    worlddef._continent_definitions[name] = managers.worlddefinition._continent_definitions[name] or {
+    --        editor_groups = {},
+    --        statics = {},
+    --        values = {workviews = {}}
+    --    }
+    --    worlddef._continents[name] = {base_id = worlddef._start_id  * table.size(worlddef._continent_definitions), name = name}
+    --    managers.editor:load_continents(worlddef._continent_definitions)
+    --    self:build_menu()
+    --end})
 end
 
-function MainLayerEditor:add_new_mission_script(cname)
-    local mission = managers.mission
-    BLE.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
+function MainLayerEditor:new_world_setting()
+    local worlddef = managers.worlddefinition
+    BLE.InputDialog:Show({title = "World Setting name", text = "", callback = function(name)
         if name == "" then
-            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
-                self:add_new_mission_script(cname)
+            BLE.Dialog:Show({title = "ERROR!", message = "World Setting name cannot be empty!", callback = function()
+                self:new_world_setting()
             end})
             return
         elseif string.begins(name, " ") then
             BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:add_new_mission_script(cname)
+                self:new_world_setting()
             end})
             return
-        elseif mission._scripts[name] then
-            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
-                self:add_new_mission_script(cname)
+        elseif worlddef._world_settings and worlddef._world_settings[name] then
+            BLE.Dialog:Show({title = "ERROR!", message = "World Setting name already taken!", callback = function()
+                self:new_world_setting()
             end})
             return
         end
-
-        if cname == "world" and name ~= "default" and not mission._missions[cname].default then
-            BLE.Dialog:Show({
-                title = "WARNING!", 
-                message = "First mission script name for the world continent must always be named 'default'"
-            })
-
-            name = "default"
+        worlddef._world_settings = worlddef._world_settings or {}
+        worlddef._world_settings[name] = worlddef._world_settings[name] or {}
+        for _, continent in pairs(managers.editor._continents) do
+            worlddef._world_settings[name][continent] = false
         end
-
-        mission._missions[cname][name] = mission._missions[cname][name] or {
-            activate_on_parsed = true,
-            elements = {},
-            instances = {}   
-        }
-        local data = clone(mission._missions[cname][name])
-        data.name = name
-        data.continent = cname
-        if not mission._scripts[name] then
-            mission:_add_script(data)
-        end
-        managers.editor:load_continents(managers.worlddefinition._continent_definitions)
+        managers.editor:load_continents(worlddef._continent_definitions)
+        self:open_world_settings(name)
+        self:build_menu()
     end})
 end
 
+function MainLayerEditor:open_world_settings(world_setting)
+    local selected_list = {}
+    for continent, ignored in pairs(managers.worlddefinition._world_settings[world_setting]) do
+        if ignored then
+            table.insert(selected_list, continent)
+        end
+    end
+
+    BLE.SelectDialog:Show({
+        selected_list = selected_list,
+        list = table.map_values(managers.editor._continents),
+        allow_multi_insert = false,
+        callback = function(items)
+            local ignore_list = {}
+            for _, continent in ipairs(managers.editor._continents) do
+                ignore_list[continent] = table.contains(items, continent)
+            end
+            managers.worlddefinition._world_settings[world_setting] = ignore_list
+        end
+    })
+end
+
+function MainLayerEditor:remove_world_setting(world_setting)
+    BLE.Utils:YesNoQuestion("This will remove the world setting!", function()
+        local level = BeardLib.current_level
+        local project = BLE.MapProject
+        local pname = world_setting..".world_setting"
+        FileIO:Delete(Path:Combine(project:current_level_path(), pname))
+        self:GetPart("opt"):save_local_add_xml()
+
+        managers.worlddefinition._world_settings[world_setting] = nil
+        self:build_menu()
+    end)
+end
+
+function MainLayerEditor:add_new_mission_script()
+
+    self._script_settings:Show({continent = managers.editor._current_continent, script = "", new = true, callback = ClassClbk(self, "build_menu")})
+    --local mission = managers.mission
+    --BLE.InputDialog:Show({title = "Mission script name", text = "", callback = function(name)
+    --    if name == "" then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+    --            self:add_new_mission_script(cname)
+    --        end})
+    --        return
+    --    elseif string.begins(name, " ") then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+    --            self:add_new_mission_script(cname)
+    --        end})
+    --        return
+    --    elseif mission._scripts[name] then
+    --        BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken!", callback = function()
+    --            self:add_new_mission_script(cname)
+    --        end})
+    --        return
+    --    end
+
+    --    if cname == "world" and name ~= "default" and not mission._missions[cname].default then
+    --        BLE.Dialog:Show({
+    --            title = "WARNING!", 
+    --            message = "First mission script name for the world continent must always be named 'default'"
+    --        })
+
+    --        name = "default"
+    --    end
+
+    --    mission._missions[cname][name] = mission._missions[cname][name] or {
+    --        activate_on_parsed = true,
+    --        elements = {},
+    --        instances = {}   
+    --    }
+    --    local data = clone(mission._missions[cname][name])
+    --    data.name = name
+    --    data.continent = cname
+    --    if not mission._scripts[name] then
+    --        mission:_add_script(data)
+    --    end
+    --    managers.editor:load_continents(managers.worlddefinition._continent_definitions)
+    --end})
+end
+
 function MainLayerEditor:remove_script(script, item)
-    BLE.Utils:YesNoQuestion("This will delete the mission script including all elements inside it!", function()
+    if table.size(managers.mission._scripts) <= 1 then
+        BLE.Utils:Notify("Error!", "Cannot delete the only existing script.")
+        return
+    end
+    BLE.Utils:YesNoQuestion("This will delete the script including all elements inside it!", function()
         local mission = managers.mission
         self:_clear_all_elements_from_script(script, item.parent.continent, true, true)
         mission._missions[item.parent.continent][script] = nil
@@ -364,33 +497,37 @@ function MainLayerEditor:remove_script(script, item)
     end)
 end
 
-function MainLayerEditor:rename_script(script, item)
-    local mission = managers.mission
-    BLE.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
-        if name == "" then
-            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
-                self:rename_script(script, item)
-            end})
-            return
-        elseif string.begins(name, " ") then
-            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
-                self:rename_script(script, item)
-            end})
-            return
-        elseif mission._scripts[name] then
-            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
-                self:rename_script(script, item)
-            end})
-            return
-        end
-        mission._scripts[script]._name = name
-        mission._scripts[name] = mission._scripts[script]
-        mission._scripts[script] = nil
-        mission._missions[item.parent.continent][name] = deep_clone(mission._missions[item.parent.continent][script])
-        mission._missions[item.parent.continent][script] = nil
-        managers.editor:load_continents(managers.worlddefinition._continent_definitions)
-    end})
+function MainLayerEditor:open_script_settings(continent, script)
+    self._script_settings:Show({continent = continent, script = script, callback = ClassClbk(self, "build_menu")})
 end
+
+--function MainLayerEditor:rename_script(script, item)
+--    local mission = managers.mission
+--    BLE.InputDialog:Show({title = "Rename Mission script to", text = script, callback = function(name)
+--        if name == "" then
+--            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name cannot be empty!", callback = function()
+--                self:rename_script(script, item)
+--            end})
+--            return
+--        elseif string.begins(name, " ") then
+--            BLE.Dialog:Show({title = "ERROR!", message = "Invalid name", callback = function()
+--                self:rename_script(script, item)
+--            end})
+--            return
+--        elseif mission._scripts[name] then
+--            BLE.Dialog:Show({title = "ERROR!", message = "Mission script name already taken", callback = function()
+--                self:rename_script(script, item)
+--            end})
+--            return
+--        end
+--        mission._scripts[script]._name = name
+--        mission._scripts[name] = mission._scripts[script]
+--        mission._scripts[script] = nil
+--        mission._missions[item.parent.continent][name] = deep_clone(mission._missions[item.parent.continent][script])
+--        mission._missions[item.parent.continent][script] = nil
+--        managers.editor:load_continents(managers.worlddefinition._continent_definitions)
+--    end})
+--end
 
 function MainLayerEditor:clear_all_elements_from_script(script, item)
     self:_clear_all_elements_from_script(script, item.parent.continent)
@@ -516,6 +653,7 @@ end
 function MainLayerEditor:destroy()
     if self._continent_settings then
         self._continent_settings:Destroy()
+        self._script_settings:Destroy()
         self._objectives_manager:Destroy()
     end
 end

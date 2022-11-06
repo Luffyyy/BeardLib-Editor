@@ -586,21 +586,23 @@ function Static:set_unit_simple_values(unit)
     end
     local ud = unit:unit_data()
 
-    ud.disable_shadows = self:GetItem("DisableShadows"):Value()
-    ud.disable_collision = self:GetItem("DisableCollision"):Value()
-    ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value()
-    ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value()
-    ud.delayed_load = self:GetItem("DelayLoading"):Value()
+    ud.disable_shadows = self:GetItem("DisableShadows"):Value() == true or nil
+    ud.disable_collision = self:GetItem("DisableCollision"):Value() == true or nil
+    ud.hide_on_projection_light = self:GetItem("HideOnProjectionLight"):Value() == true or nil
+    ud.disable_on_ai_graph = self:GetItem("DisableOnAIGraph"):Value() == true or nil
+    ud.delayed_load = self:GetItem("DelayLoading"):Value() == true or nil
 
-    for index = 0, unit:num_bodies() - 1 do
-        local body = unit:body(index)
-        if body then
-            body:set_collisions_enabled(not ud.disable_collision)
-            body:set_collides_with_mover(not ud.disable_collision)
+    if managers.editor._running_simulation then
+        for index = 0, unit:num_bodies() - 1 do
+            local body = unit:body(index)
+            if body then
+                body:set_collisions_enabled(not ud.disable_collision)
+                body:set_collides_with_mover(not ud.disable_collision)
+            end
         end
     end
     unit:set_enabled(self:GetItem("Enabled"):Value())
-    unit:set_shadows_disabled(ud.disable_shadows)
+    unit:set_shadows_disabled(ud.disable_shadows == true)
 end
 
 function Static:set_unit_path(unit, path, add)
@@ -912,6 +914,9 @@ function Static:check_unit_ok(unit)
     if ud.unit_id == 0 and ud.name_id == "none" and not ud.name and not ud.position then
         return false
     end
+    if ud.continent and managers.worlddefinition._continents[ud.continent].locked then
+        return false
+    end
     local mission_element = unit:mission_element() and unit:mission_element().element
     local wanted_elements = self:GetPart("opt")._wanted_elements
     if mission_element then
@@ -1149,11 +1154,11 @@ function Static:set_menu_unit(unit)
 	disable_on_ai_graph:SetVisible(not_brush)
 	delayed_load:SetVisible(not_brush)
 
-    disable_shadows:SetValue(unit:unit_data().disable_shadows, false, true)
-    disable_collision:SetValue(unit:unit_data().disable_collision, false, true)
-    hide_on_projection_light:SetValue(unit:unit_data().hide_on_projection_light, false, true)
-	disable_on_ai_graph:SetValue(unit:unit_data().disable_on_ai_graph, false, true)
-	delayed_load:SetValue(unit:unit_data().delayed_load, false, true)
+    disable_shadows:SetValue(unit:unit_data().disable_shadows == true, false, true)
+    disable_collision:SetValue(unit:unit_data().disable_collision == true, false, true)
+    hide_on_projection_light:SetValue(unit:unit_data().hide_on_projection_light == true, false, true)
+	disable_on_ai_graph:SetValue(unit:unit_data().disable_on_ai_graph == true, false, true)
+	delayed_load:SetValue(unit:unit_data().delayed_load == true, false, true)
 
     for _, editor in pairs(self._editors) do
         if editor.set_menu_unit then
@@ -1568,7 +1573,7 @@ function Static:SpawnCopyData(copy_data, prefab)
             v.mission_element_data.id = new_final_id
         elseif v.type == "unit" and v.unit_data.unit_id then
             local new_final_id = managers.worlddefinition:GetNewUnitID(v.unit_data.continent or self._parent._current_continent, (v.wire_data or v.ai_editor_data) and "wire" or "")
-			for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
+            for _, link in pairs(managers.mission:get_links_paths_new(v.unit_data.unit_id, Utils.LinkTypes.Unit, copy_data)) do
                 link.tbl[link.key] = new_final_id
             end
             v.unit_data.unit_id = new_final_id

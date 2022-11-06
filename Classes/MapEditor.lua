@@ -31,6 +31,7 @@ function Editor:init(data)
 	self._camera_pos = self._camera_object:position()
 	self._camera_rot = self._camera_object:rotation()
     self._editor_all = World:make_slot_mask(1, 10, 11, 15, 19, 29, 34, 35, 36, 37, 38, 39)
+    self._go_through_units_before_simulaton_mask = World:make_slot_mask(1, 11, 17, 19, 32, 36, 38)
 	self._con = managers.menu._controller
     self._move_widget = CoreEditorWidgets.MoveWidget:new(self)
     self._rotate_widget = CoreEditorWidgets.RotationWidget:new(self)
@@ -667,7 +668,7 @@ function Editor:load_continents(continents)
     end
     self._continents = {}
     self._current_script = managers.mission._scripts[self._current_script] and self._current_script
-    self._current_continent = continents[self._current_continent] and self._current_continent
+    self._current_continent = continents[self._current_continent] and not managers.worlddefinition._continents[self._current_continent].locked and self._current_continent or nil
     if not self._current_script then
         for script, _ in pairs(managers.mission._scripts) do
             self._current_script = self._current_script or script
@@ -675,7 +676,9 @@ function Editor:load_continents(continents)
         end
     end
     for continent, _ in pairs(continents) do
-        self._current_continent = self._current_continent or continent
+        if not managers.worlddefinition._continents[continent].locked then
+            self._current_continent = self._current_continent or continent
+        end
         table.insert(self._continents, continent)
     end
     for _, manager in pairs(self.parts) do
@@ -789,9 +792,10 @@ function Editor:set_unit_visible(unit, visible)
 		return
 	end
 
-	--if unit:mission_element() then
-	--	unit:mission_element():on_set_visible(visible)
-	--end
+	if unit:mission_element() then
+		unit:mission_element():set_enabled(visible)
+	end
+
 	unit:set_enabled(visible)
 
 	if not unit:enabled() then
@@ -1348,12 +1352,62 @@ function Editor:toggle_playtesting()
         end
     else
         state = "ingame_waiting_for_players"
+    end
+
+    if not self._running_simulation then
         self._running_simulation = true
+        self:go_through_all_units(self._go_through_units_before_simulaton_mask)
+        self:_simulation_disable_continents()
     end
 
     if state then
         game_state_machine:change_state_by_name(state)
     end
+end
+
+function Editor:_simulation_disable_continents()
+	--local t = {}
+
+	--if self._simulation_world_setting_path then
+	--	t = self:parse_simulation_world_setting_path(self._simulation_world_setting_path)
+	--end
+
+    
+	for name, continent in pairs(managers.worlddefinition._continents) do
+        if continent.enabled_in_simulation == false then
+            for _, static in pairs(managers.worlddefinition._continent_definitions[name].statics) do
+                if static.unit_data and static.unit_data.unit_id then
+                    local unit = managers.worlddefinition:get_unit_on_load(static.unit_data.unit_id)
+                    if alive(unit) then
+                        unit:set_enabled(false)
+                    end
+                end
+            end
+        end
+	end  
+end
+
+function Editor:go_through_all_units(mask)
+	local units = World:find_units_quick("all", mask)
+
+	for _, unit in ipairs(units) do
+        local ud = unit:unit_data() 
+		if ud and ud.disable_collision and unit:num_bodies() > 0 then
+            local disable_collision = ud.disable_collision
+
+            for index = 0, unit:num_bodies() - 1 do
+                local body = unit:body(index)
+
+                if body then
+                    body:set_collisions_enabled(not disable_collision)
+                    body:set_collides_with_mover(not disable_collision)
+                    body:set_enabled(not disable_collision)
+                end
+            end
+
+			--self:_project_check_unit(unit)
+		end
+	end
 end
 
 function Editor:set_value_info_pos(position)

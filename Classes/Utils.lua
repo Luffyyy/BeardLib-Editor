@@ -634,6 +634,43 @@ function Utils:IsProjectionLight(unit, light, type)
     return false
 end
 
+function Utils:SaveUnitDataTable(data, script_data_type)
+    if not BLE.Options:GetValue("Map/OptimizedFileSaving") or not data then
+        return
+    end
+    
+    for _, unit in ipairs(data) do
+        local ud = unit.unit_data
+        if ud then
+            local t = {
+                name = ud.name,
+                unit_id = script_data_type == "custom_xml" and tostring(ud.unit_id) or ud.unit_id, --Fix for custom xml ruining the id if its higher than 1000000
+                name_id = ud.name_id,
+                continent = ud.continent,
+                position = ud.position,
+                rotation = ud.rotation,
+                mesh_variation = ud.mesh_variation,
+                material_variation = ud.material,
+                cutscene_actor = ud.cutscene_actor,
+                disable_shadows = ud.disable_shadows or nil,
+                disable_collision = ud.disable_collision or nil,
+                delayed_load = ud.delayed_load or nil,
+                hide_on_projection_light = ud.hide_on_projection_light or nil,
+                disable_on_ai_graph = ud.disable_on_ai_graph or nil,
+                lights = ud.lights,
+                triggers = ud.triggers,
+                editable_gui = ud.editable_gui or nil,
+                projection_light = ud.projection_light,
+                projection_lights = ud.projection_lights,
+                projection_textures = ud.projection_textures,
+                ladder = ud.ladder,
+                zipline = ud.zipline
+            }
+            unit.unit_data = t
+        end
+    end
+end
+
 function Utils:TriggersData(unit)
     local triggers = managers.sequence:get_trigger_list(unit:name())
     if #triggers == 0 then

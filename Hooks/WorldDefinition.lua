@@ -721,8 +721,10 @@ function WorldDef:assign_unit_data(unit, data)
 		return 
 	end
 
-	unit:unit_data().instance = data.instance
-	unit:unit_data().instance_data = managers.world_instance:get_instance_data_by_name(data.instance)
+	if data.instance then
+		unit:unit_data().instance = data.instance
+		unit:unit_data().instance_data = managers.world_instance:get_instance_data_by_name(data.instance)
+	end
 	self:_setup_editor_unit_data(unit, data)
 	self:_setup_unit_id(unit, data)
 	if unit:unit_data().helper_type and unit:unit_data().helper_type ~= "none" then
@@ -735,7 +737,7 @@ function WorldDef:assign_unit_data(unit, data)
 	self:_set_only_visible_in_editor(unit, data)
 	self:_setup_cutscene_actor(unit, data)
 	self:_setup_disable_shadow(unit, data)
-	self:_setup_disable_collision(unit, data)
+	--self:_setup_disable_collision(unit, data)
 	self:_setup_delayed_load(unit, data)
 	self:_setup_hide_on_projection_light(unit, data)
 	self:_setup_disable_on_ai_graph(unit, data)
@@ -870,6 +872,27 @@ function WorldDef:parse_continents(node, t)
 	end
 	BLE:SetLoadingText(string.format(s, "Done", total, total))
 	self:_insert_instances()
+end
+
+function WorldDefinition:_parse_world_setting(world_setting)
+	local level = BeardLib.current_level
+    local project = BLE.MapProject
+
+    if level and project then
+        local add = project:read_xml(level._local_add_path)
+        if add then
+            for _, child in pairs(add) do
+                if type(child) == "table" and child._meta == "world_setting" then
+                    local path = self:world_dir() .. child.path
+
+                    if DB:has("world_setting", path) then
+						self._world_settings = self._world_settings or {}
+                        self._world_settings[child.path] = self:_serialize_to_script("world_setting", path)
+                    end
+                end
+            end
+        end
+    end
 end
 
 function WorldDef:prepare_for_spawn_instance(instance)

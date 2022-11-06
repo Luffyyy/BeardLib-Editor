@@ -132,9 +132,10 @@ function Options:update_option_value(item)
     BLE.Options:SetValue("Map/"..name, value)
     --Clean this too
     if name == "EditorUnits" then
+        local continents = managers.worlddefinition._continents
         for _, unit in pairs(World:find_units_quick("all")) do
             local ud = unit:unit_data()
-            if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor) and not ud.projection_lights then
+            if type(ud) == "table" and (ud.only_visible_in_editor or ud.only_exists_in_editor) and not ud.projection_lights and (ud.continent and continents[ud.continent].visible ~= false) then
                 unit:set_visible(value)
             end
         end
@@ -321,6 +322,8 @@ The editor will now use this format and any old map will need to be converted. C
                 end
             end
         end
+        BLE.Utils:SaveUnitDataTable(world_data.ai, xml)
+        BLE.Utils:SaveUnitDataTable(world_data.wires, xml)
         self:SaveData(map_path, "world.world", FileIO:ConvertToScriptData(world_data, xml))
 
         for _, mission in pairs(managers.mission._missions) do
@@ -336,7 +339,10 @@ The editor will now use this format and any old map will need to be converted. C
         end
 
         local missions = {}
-        for name, data in pairs(worlddef._continent_definitions) do
+        local continent_definitions = BeardLib.Utils.XML:Clean(deep_clone(worlddef._continent_definitions))
+        for name, data in pairs(continent_definitions) do
+            BLE.Utils:SaveUnitDataTable(data.statics, cusxml)
+
             local dir = Path:Combine(map_path, name)
             local continent_file = name .. ".continent"
             local mission_file = name .. ".mission"
@@ -347,12 +353,26 @@ The editor will now use this format and any old map will need to be converted. C
             missions[name] = {file = Path:Combine(name, name)}
         end
 
-        self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(BeardLib.Utils:RemoveMetas(worlddef._continents), cusxml))
+        local continents = BeardLib.Utils:RemoveMetas(deep_clone(worlddef._continents))
+        if cusxml == "custom_xml" then --Fix for custom xml ruining the id if its higher than 1000000
+            for _, data in pairs(continents) do
+                data.base_id = tostring(data.base_id)
+            end
+        end
+        self:SaveData(map_path, "continents.continents", FileIO:ConvertToScriptData(continents, cusxml))
         self:SaveData(map_path, "mission.mission", FileIO:ConvertToScriptData(missions, cusxml))
         self:SaveData(map_path, "world_sounds.world_sounds", FileIO:ConvertToScriptData(worlddef._sound_data or {}, xml))
 
         managers.worldcamera:save()
         self:SaveData(map_path, "world_cameras.world_cameras", FileIO:ConvertToScriptData(worlddef._world_cameras_data, xml))
+
+        if worlddef._world_settings then
+            for name, data in pairs(worlddef._world_settings) do 
+                local setting_file = name .. ".world_setting"
+                table.insert(include, {_meta = "world_setting", path = name, script_data_type = xml})
+                self:SaveData(map_path, setting_file, FileIO:ConvertToScriptData(data, xml))
+            end
+        end
 
         self:save_cover_data(include)
         self:save_nav_data(include)
