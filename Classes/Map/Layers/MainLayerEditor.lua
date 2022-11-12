@@ -127,21 +127,23 @@ function MainLayerEditor:build_continents()
             --continent:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), nil, icons.plus, {help = "Add mission script", visible = not locked})
             continent:tb_imgbtn("SetVisible", ClassClbk(self, "toggle_unit_visibility", data), nil, icons.eye, {help = "Toggle Visibility", enabled_alpha = data.visible ~= false and 1 or 0.2})
 
-            for sname, data in pairs(managers.mission._missions[name]) do
-                local script = scripts:button(sname, ClassClbk(self, "set_current_script", scripts), {
-                    text = sname,
-                    continent = name, 
-                    border_left = managers.editor._current_script == sname, 
-                    border_color = Color.green, 
-                    private = {offset = 2},
-                    help = "Set as current script"
-                })
-                
-                script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), nil, icons.cross, {highlight_color = Color.red, help = "Remove Script"})
-                script:tb_imgbtn("ScriptSettings", ClassClbk(self, "open_script_settings", name, sname), nil, icons.settings_gear, {help = "Script Settings"})
-                --script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
-                script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Elements from Script"})
-                script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select all Elements in Script"})
+            if  managers.mission and managers.mission._missions and managers.mission._missions[name] then
+                for sname, data in pairs(managers.mission._missions[name]) do
+                    local script = scripts:button(sname, ClassClbk(self, "set_current_script", scripts), {
+                        text = sname,
+                        continent = name, 
+                        border_left = managers.editor._current_script == sname, 
+                        border_color = Color.green, 
+                        private = {offset = 2},
+                        help = "Set as current script"
+                    })
+                    
+                    script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), nil, icons.cross, {highlight_color = Color.red, help = "Remove Script"})
+                    script:tb_imgbtn("ScriptSettings", ClassClbk(self, "open_script_settings", name, sname), nil, icons.settings_gear, {help = "Script Settings"})
+                    --script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
+                    script:tb_imgbtn("ClearElements", ClassClbk(self, "clear_all_elements_from_script", sname), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Elements from Script"})
+                    script:tb_imgbtn("SelectElements", ClassClbk(self, "select_all_units_from_script", sname), nil, icons.select, {help = "Select all Elements in Script"})
+                end
             end
         end
 
