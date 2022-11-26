@@ -650,7 +650,7 @@ function Utils:SaveUnitDataTable(data, script_data_type)
                 position = ud.position,
                 rotation = ud.rotation,
                 mesh_variation = ud.mesh_variation,
-                material_variation = ud.material,
+                material_variation = ud.material or ud.material_variation,
                 cutscene_actor = ud.cutscene_actor,
                 disable_shadows = ud.disable_shadows or nil,
                 disable_collision = ud.disable_collision or nil,

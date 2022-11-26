@@ -217,7 +217,7 @@ function MissionEditor:disabled_update(t, dt)
 
         for _, unit in pairs(self:units()) do
             local element_unit = alive(unit) and unit:mission_element()
-            if element_unit and element_unit:visible() and not managers.mission:element_enabled(element_unit.element) then
+            if element_unit and element_unit:visible() and not managers.mission:element_enabled(element_unit.element) and unit:num_bodies() > 0 then
                 unit_disabled:body(unit:body(0))
             end
         end
