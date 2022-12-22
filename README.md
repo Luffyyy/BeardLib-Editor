@@ -18,8 +18,8 @@ In order to enable matchmaking, you must disable the physics fix through the edi
 If you install the dev branch, make sure you have the latest BeardLib commit https://github.com/simon-wh/PAYDAY-2-BeardLib it's possible that branch uses unreleased features not found in the public (MWS) version.
 
 ## Guides
-https://www.youtube.com/playlist?list=PLRSASA7UrjTsX1WWG6kStRTK51DKSEDPn
-https://wiki.modworkshop.net/books/payday-2/chapter/beardlib-editor
+https://www.youtube.com/playlist?list=PLRSASA7UrjTsX1WWG6kStRTK51DKSEDPn \
+https://wiki.modworkshop.net/books/beardlib-editor-tutorials
 
 ## Report a Bug/Request a Feature
 https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
