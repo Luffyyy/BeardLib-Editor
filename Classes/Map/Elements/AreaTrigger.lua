@@ -21,10 +21,12 @@ function EditorAreaTrigger:create_element()
 	self._element.values.radius = 250
 	self._element.values.spawn_unit_elements = {}
 	self._element.values.amount = "1"
+	self._element.values.instigator_name = ""
 	self._element.values.use_shape_element_ids = nil
 	self._element.values.use_disabled_shapes = false
 	self._element.values.rules_element_ids = nil
 	self._element.values.unit_ids = nil
+	self._element.values.substitute_object = ""
 end
 
 function EditorAreaTrigger:set_shape_property(item)
@@ -137,18 +139,36 @@ end
 
 function EditorAreaTrigger:create_values_ctrlrs(disable)
 	self:NumberCtrl("interval", {min = 0.01, help ="Set the check interval for the area, in seconds."})
+	
 	if not disable or not disable.trigger_type then
 		self:ComboCtrl("trigger_on", {"on_enter", "on_exit", "both", "on_empty", "while_inside"})
 	end
+
 	if not disable or not disable.instigator then
 		local instigator, _ = self:ComboCtrl("instigator", managers.mission:area_instigator_categories(), {help = "Select an instigator type for the area"})
 		self._instigator_ctrlr = instigator
 		local unit_ids = self._element.values.unit_ids
 		self._instigator_ctrlr:SetEnabled(not unit_ids or not next(unit_ids))
 	end
+
 	if not disable or not disable.amount then
 		self:ComboCtrl("amount", {"1", "2", "3", "4", "all"}, {help = "Select how many are required to trigger area"})
 	end
+
+	if not disable or not disable.instigator_name then
+		self:ComboCtrl("instigator_name", {
+			"trip_mine",
+			"ecm_jammer",
+			"ammo_bag",
+			"doctor_bag",
+			"bodybags_bag"
+		}, {help = "Select which units will trigger the area (equipment only)"})
+	end
+
+	if not disable or not disable.substitute_object then
+		self:StringCtrl("substitute_object", {help = "Named object's position will replace it's parent when checking against this trigger area"})
+	end
+
 	self._use_disabled_shapes = self:BooleanCtrl("use_disabled_shapes")
 end
 
