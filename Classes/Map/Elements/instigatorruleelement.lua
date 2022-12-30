@@ -31,7 +31,7 @@ function EditorInstigatorRule:_update_rules_panel()
 	local data = t.rules[instigator]
 	if instigator == "player" then
 		self:ListSelector("states", managers.player:player_states(), {label = "rules", data = data})
-		self:ListSelector("carry_ids", table.map_keys(tweak_data.equipments.specials), {label = "rules", data = data})
+		self:ListSelector("carry_ids", tweak_data.carry:get_carry_ids(), {label = "rules", data = data})
 		self:ListSelector("mission_equipment", table.map_keys(tweak_data.equipments.specials), {label = "rules", data = data})
 	elseif instigator == "enemies" then
 		self:ListSelector("enemy_names", BLE.Utils:GetUnits({slot = 12}), {label = "rules", data = data})
