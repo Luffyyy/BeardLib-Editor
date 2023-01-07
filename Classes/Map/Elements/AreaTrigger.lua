@@ -117,6 +117,9 @@ function EditorAreaTrigger:set_element_data(params, ...)
 	EditorAreaTrigger.super.set_element_data(self, params, ...)
 	if params.name == "shape_type" then
 		self:set_shape_type(self)
+	elseif params.name == "instigator" then
+		self._instigator_name_ctrlr:SetVisible(params:SelectedItem() == "equipment")
+		self._holder:AlignItems(true)
 	end
 end
 
@@ -151,18 +154,19 @@ function EditorAreaTrigger:create_values_ctrlrs(disable)
 		self._instigator_ctrlr:SetEnabled(not unit_ids or not next(unit_ids))
 	end
 
-	if not disable or not disable.amount then
-		self:ComboCtrl("amount", {"1", "2", "3", "4", "all"}, {help = "Select how many are required to trigger area"})
-	end
-
 	if not disable or not disable.instigator_name then
-		self:ComboCtrl("instigator_name", {
+		local instigator = self._element.values.instigator
+		self._instigator_name_ctrlr = self:ComboCtrl("instigator_name", {
 			"trip_mine",
 			"ecm_jammer",
 			"ammo_bag",
 			"doctor_bag",
 			"bodybags_bag"
-		}, {help = "Select which units will trigger the area (equipment only)"})
+		}, {help = "Select which units will trigger the area (equipment only)", visible = instigator and instigator == "equipment"})
+	end
+
+	if not disable or not disable.amount then
+		self:ComboCtrl("amount", {"1", "2", "3", "4", "all"}, {help = "Select how many are required to trigger area"})
 	end
 
 	if not disable or not disable.substitute_object then
