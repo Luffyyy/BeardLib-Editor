@@ -260,6 +260,7 @@
                 <option type="boolean" default_value="false" name="LoopTestAnimation"/>
                 <option type="boolean" default_value="false" name="SimplifiedElementHeaders"/>
                 <option type="boolean" default_value="false" name="VisualizeDisabledElements"/>
+                <option type="number" min="1" max="2" default_value="1" name="DisableCollisionBehavior"/>
                 <option type="table" name="AssetLoadSettings"/>
                 <option name="ShortUnitPaths" type="bool" value="false"/>
                 <option name="FavoriteItems" type="table"/>

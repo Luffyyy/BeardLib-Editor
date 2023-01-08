@@ -31,6 +31,7 @@ function Options:init()
 		help = "Clean up unnecessary data from files when saving. Reduces file size but can increase save times. (Experimental Feature)"
 	})
 	main:tickbox("MuteSoundsInEditor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/MuteSoundsInEditor"), {text = "Mute Sounds In Editor During Playtest", help = "Switching to editor mode while playtesting is active will mute all sounds. They will get unmuted again when switching back to play mode."})
+	main:combobox("DisableCollisionBehavior", ClassClbk(self, "set_map_clbk"), {"Only during Playtest", "Always"}, O:GetValue("Map/DisableCollisionBehavior"), {help = "When to disable the collisions of units with the 'Disable Collision' setting. This will make the unit unselectable."})
 	main:separator()
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/KeepMouseActiveWhileFlying"))
 	main:tickbox("OnlyMoveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/OnlyMoveWhileFlying"))
@@ -38,11 +39,11 @@ function Options:init()
     main:tickbox("ShowHints", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ShowHints"), {help = "Shows hints in the main tab of the world menu"})
 	main:tickbox("RotationInfo", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RotationInfo"), {help = "Shows how much you are rotating the current selection by"})
 	main:tickbox("RemoveOldLinks", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/RemoveOldLinks"), {
-        text = "Remove Old Links Of Copied Elements",
+		text = "Remove Old Links Of Copied Elements",
         help = "Should the editor remove old links(ex: elements inside the copied element's on_executed list that are not part of the copy) when copy pasting elements"
     })
 	main:tickbox("AllowMultiWidgets", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/AllowMultiWidgets"), {
-        text = "Allow Multiple Active Widgets",
+		text = "Allow Multiple Active Widgets",
         help = "When activating the Move or the Rotation Widgets, should the other one be allowed to stay active, or deactivate automatically."
     })
 	main:separator()

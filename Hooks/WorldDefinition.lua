@@ -737,7 +737,9 @@ function WorldDef:assign_unit_data(unit, data)
 	self:_set_only_visible_in_editor(unit, data)
 	self:_setup_cutscene_actor(unit, data)
 	self:_setup_disable_shadow(unit, data)
-	--self:_setup_disable_collision(unit, data)
+	if BLE.Options:GetValue("Map/DisableCollisionBehavior") == 2 then
+		self:_setup_disable_collision(unit, data)
+	end
 	self:_setup_delayed_load(unit, data)
 	self:_setup_hide_on_projection_light(unit, data)
 	self:_setup_disable_on_ai_graph(unit, data)
