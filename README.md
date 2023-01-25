@@ -19,7 +19,8 @@ If you install the dev branch, make sure you have the latest BeardLib commit htt
 
 ## Guides
 https://www.youtube.com/playlist?list=PLRSASA7UrjTsX1WWG6kStRTK51DKSEDPn \
-https://wiki.modworkshop.net/books/beardlib-editor-tutorials
+https://wiki.modworkshop.net/books/beardlib-editor-tutorials \
+https://www.payday2maps.net/guides/
 
 ## Report a Bug/Request a Feature
 https://github.com/simon-wh/PAYDAY-2-BeardLib-Editor/issues
@@ -35,13 +36,13 @@ We're looking for developers that will work together on the editor.
 
 Your best friend in all of this is knowing how to look for the pieces of code that correspond to parts of the editor. Be it in the decompiled files of the game or the editor's code.
 
-Make sure you are using a good code editor like VSCode. This will allow you to quickly search the code and the decompiled code of the game https://github.com/mwSora/payday-2-luajit.
+Make sure you are using a good code editor like VSCode. This will allow you to quickly search the code and the decompiled code of the game https://github.com/steam-test1/Payday-2-LuaJIT-Complete.
 
 Make sure you have an empty file called developer.txt in the mods folder (turns on the console) and run the following command: blt.forcepcalls(true) - this let's you not crash the moment you hit a random error. 
 
 The editor is equipped with a code refresher, editing any file will refresh parts of the editor.
 
-The real editor uses what is called in the decompiled code 'EWS' (really just search). Unfortunately we don't have access to this kind of GUI and porting it is easier said than done. Instead of that we use https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI and have a class that simplfies the process of creation a little https://github.com/Luffyyy/BeardLib-Editor/blob/master/Classes/MenuUIExt.lua 
+The real editor uses what is called in the decompiled code 'EWS' ('External Window System', based on wxWidgets). Unfortunately porting this kind of GUI is easier said than done. Instead of that we use https://github.com/simon-wh/PAYDAY-2-BeardLib/wiki/MenuUI and have a class that simplfies the process of creation a little https://github.com/Luffyyy/BeardLib-Editor/blob/master/Classes/MenuUIExt.lua 
 
 ## Generating the Data Files
 If the hashlist/game gets updated you can update the data files yourself by doing the following:
