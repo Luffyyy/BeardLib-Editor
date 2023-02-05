@@ -14,7 +14,7 @@ local difficulty_loc = {
 function LoadLevelMenu:init(data)
 	data = data or {}
 	local menu = BLE.Menu
-	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2})
+	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2, auto_align = false})
 	ItemExt:add_funcs(self)
 	local filters = self:holder("Filters", {align_method = "grid", inherit_values = {size_by_text = true, offset = 0}})
 	local w = filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla):Width()
@@ -33,6 +33,11 @@ function LoadLevelMenu:init(data)
 
 	self._levels = self:pan("LevelList", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
 	self:load_levels()
+
+	filters:AlignItems()
+	load_options:AlignItems()
+	self._levels:AlignItems()
+	self:AlignItems()
 end
 
 function LoadLevelMenu:Destroy()

@@ -43,7 +43,7 @@ function SConverter:init()
         end
     end
     local menu = BLE.Menu
-    self._menu = menu:make_page("ScriptData")
+    self._menu = menu:make_page("ScriptData", nil, {auto_align = false})
     ItemExt:add_funcs(self)
     self:CreateRootItems()
 end
@@ -141,6 +141,9 @@ function SConverter:RefreshFilesAndFolders()
             end
         end
     end
+
+    self._menu:AlignItems()
+    holder:AlignItems()
     foldersgroup:AlignItems(true)
     filesgroup:AlignItems(true)
 end
@@ -174,6 +177,8 @@ function SConverter:CreateScriptDataFileOption()
     self:combobox("To", nil, BeardLib.Utils:GetSubValues(self.script_file_to_types, "name"), selected_from)
     self:button("Convert", ClassClbk(self, "ConvertClick"))
     self:button("Cancel", ClassClbk(self, "FolderClick"), {base_path = self.current_script_path})
+
+    self._menu:AlignItems()
 end
 
 function SConverter:CreateRootItems()
@@ -181,6 +186,7 @@ function SConverter:CreateRootItems()
     for i, path_data in pairs(self.script_data_paths) do
         self:button(path_data.name, ClassClbk(self, "FolderClick"), {text = path_data.name, base_path = path_data.path, assets = path_data.assets})
     end
+    self._menu:AlignItems()
 end
 
 function SConverter:BackToRoot(item)

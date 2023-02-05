@@ -1,7 +1,7 @@
 AboutMenu = AboutMenu or class()
 function AboutMenu:init()
 	local EMenu = BLE.Menu
-	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16, scrollbar = false}))
+	ItemExt:add_funcs(self, EMenu:make_page("About", nil, {align_method = "centered_grid", items_size = 16, scrollbar = false, auto_align=false}))
 	self:getmenu():Image({
 		name = "Logo",
 		icon_w = 128,
@@ -30,6 +30,9 @@ function AboutMenu:init()
     link_button("Editor Wiki", "https://wiki.modworkshop.net/books/beardlib-editor-tutorials")
     link_button("PD2M Guides", "https://payday2maps.net/guides/")
     link_button("Feedback", "https://github.com/Luffyyy/BeardLib-Editor/issues")
+
+    info:AlignItems()
+    self:AlignItems()
 end
 
 function AboutMenu:Load(data)
