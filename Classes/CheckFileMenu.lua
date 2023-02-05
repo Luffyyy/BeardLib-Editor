@@ -4,7 +4,7 @@ function CheckFileMenu:init(data)
     self:Load(data)
 
     local EMenu = BLE.Menu
-    self._menu = EMenu:make_page("Check file", nil, {scrollbar = false, align_method = "centered_grid"})
+    self._menu = EMenu:make_page("Check file", nil, {scrollbar = false, align_method = "centered_grid", auto_align=false})
     ItemExt:add_funcs(self, self._menu)
     self:lbl("Having trouble finding out why a unit or other file isn't loading properly? You can check it here!", {text_align = "center"})
     self:textbox("Path", ClassClbk(self, "FixPath"), self._last_dir, {text = false, w = 650, border_size = 4})
@@ -12,6 +12,8 @@ function CheckFileMenu:init(data)
     self:small_button("BrowseDirectory", ClassClbk(self, "OpneFileBrowser", true))
     self:small_button("Check", ClassClbk(self, "CheckFile"))
     self._holder = self:pan("ErrorsHolder", {max_height = 600})
+
+    self:AlignItems()
 end
 
 function CheckFileMenu:small_button(name, clbk)

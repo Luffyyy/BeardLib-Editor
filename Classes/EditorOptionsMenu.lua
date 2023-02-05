@@ -4,7 +4,7 @@ function Options:init()
 	local O = BLE.Options
 	local EMenu = BLE.Menu
 	local icons =  BLE.Utils.EditorIcons
-	local page = EMenu:make_page("Options", nil, {scrollbar = false})
+	local page = EMenu:make_page("Options", nil, {scrollbar = false, auto_align=false})
 	self._elem_colors = O:GetValue("Map/ElementColorGroups")
 	ItemExt:add_funcs(self, page)
 	local w = page:ItemsWidth(2, 0)
@@ -52,6 +52,9 @@ function Options:init()
 	main:numberbox("InstanceIndexSize", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/InstanceIndexSize"), {max = 100000, floats = 0, min = 1, help = "Sets the default index size for instances."})
 	main:numberbox("Scrollspeed", ClassClbk(self, "set_clbk"), O:GetValue("Scrollspeed"), {max = 100, floats = 1, min = 1})
 
+	main:GetToolbar():AlignItems()
+	main:AlignItems()
+
 	local visual = self:divgroup("Visual", {w = w / 2, auto_height = false, h = h * 1/2})
 	visual:GetToolbar():tb_imgbtn("ResetVisualOptions", ClassClbk(self, "show_reset_dialog", visual), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset visual settings"})
 	visual:tickbox("GUIOnRight", ClassClbk(self, "set_clbk"), O:GetValue("GUIOnRight"), {text = "Place Editor GUI on the right side"})
@@ -81,6 +84,9 @@ function Options:init()
 	colors:GetToolbar():tb_imgbtn("AddColorGroup", ClassClbk(self, "add_color_group", colors), nil, icons.plus, {img_scale = 0.7, help = "Add new element color group"})
 	colors:colorbox("ElementsColor", ClassClbk(self, "set_map_clbk"), BLE.Options:GetValue("Map/ElementsColor"), {text = "Default", use_alpha = false})
 	self:build_color_groups(colors)
+
+	visual:GetToolbar():AlignItems()
+	visual:AlignItems()
 
 	local input = self:divgroup("Input", {w = w / 2, h = page:ItemsHeight(1, 6), auto_height = false, position = function(item)
 		if alive(main) then
@@ -146,6 +152,11 @@ function Options:init()
 	keybind("SpawnPrefab")
 	keybind("SelectInstance")
 	keybind("SelectGroup")
+
+	input:GetToolbar():AlignItems()
+	input:AlignItems()
+
+	self:AlignItems()
 end
 
 function Options:show_disable_physics_fix_dialog()
