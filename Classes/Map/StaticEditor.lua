@@ -258,16 +258,20 @@ function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
 	self:set_title("Selection")
     local quick = self:group("QuickActions", {align_method = "grid"})
     quick:s_btn("Deselect", ClassClbk(self, "deselect_unit"))
-    quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"))
+    quick:s_btn("DeleteSelection", ClassClbk(self, "delete_selected_dialog"), {highlight_color = Color.red, auto_foreground = false, foreground_highlight = Color.white})
     if not cannot_be_prefab then
         quick:s_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
     end
     if not cannot_be_saved then
+        if self:unit_value("name") then
+            self:build_unit_editing()
+        end
         quick:s_btn("AddToCurrentPortal", ClassClbk(self, "add_unit_to_portal"))
         quick:s_btn("RemoveFromCurrentPortal", ClassClbk(self, "remove_unit_from_portal"))
         self:group("Group", {align_method = "grid"}) --lmao
 		self:build_group_options()
     end
+
 end
 
 function Static:build_group_options()
@@ -310,6 +314,36 @@ function Static:build_group_options()
         else
             group:Destroy()
         end
+    end
+end
+
+local ids_0 = Idstring("0")
+function Static:build_unit_editing()
+    local quick = self:GetItem("QuickActions")
+    local tb = quick:GetToolbar()
+
+    tb:tb_imgbtn("ReloadUnit", ClassClbk(self, "on_reload_units"), nil, BLE.Utils.EditorIcons.reload_double, {help = self._built_multi and "Reload units" or "Reload unit"})
+    if not self._built_multi then
+        local items = {
+            {
+                text = "Open unit folder",
+                on_callback = ClassClbk(self._parent, "on_open_unit_file", {type = "folder"})
+            },
+            {
+                text = "Open .material_config file",
+                on_callback = ClassClbk(self._parent, "on_open_unit_file", {type = "material_config"})
+            },
+            {
+                text = "Open .object file",
+                on_callback = ClassClbk(self._parent, "on_open_unit_file", {type = "object"})
+            },
+            {
+                text = "Open .unit file",
+                on_callback = ClassClbk(self._parent, "on_open_unit_file", {type = "unit"})
+            }
+        }
+        tb:tb_imgbtn("OpenMaterialConfig", ClassClbk(self._parent, "open_selected_material_config"), nil, BLE.Utils.EditorIcons.sweden, {help = "Edit material config"})
+        tb:tb_imgbtn("OpenUnitFile", nil, nil, BLE.Utils.EditorIcons.external, {help = "Open unit files", click_btn = "", open_list_key = ids_0, items = items})
     end
 end
 
@@ -1303,6 +1337,74 @@ function Static:remove_unit_from_portal()
     else
         Utils:Notify("Error", "No portal selected")
     end
+end
+
+function Static:prepare_replace(names)
+    local data = {}
+	local units = {}
+    
+    for _, name in ipairs(names) do
+        local slot = PackageManager:unit_data(name:id()):slot()
+
+        for _, unit in ipairs(World:find_units_quick("disabled", "all", slot)) do
+            local ud = unit:unit_data()
+			if unit:name() == name:id() and ud and not ud.instance and (unit:enabled() or (ud.name_id and ud.continent)) then
+                local unit_params = {
+                    type = "unit",
+                    unit_data = unit:unit_data() and deep_clone(unit:unit_data()) or nil,
+                    wire_data = unit:wire_data() and deep_clone(unit:wire_data()) or nil,
+                    ai_editor_data = unit:ai_editor_data() and deep_clone(unit:ai_editor_data()) or nil,
+                }
+
+                table.insert(data, unit_params)
+                table.insert(units, unit)
+			end
+		end
+    end
+
+    for _, unit in ipairs(units) do
+        managers.worlddefinition:remove_name_id(unit)
+        managers.worlddefinition:RemoveUnitID(unit, unit:unit_data().continent)
+        managers.editor:DeleteUnit(unit, true)
+	end
+
+    return data
+end
+
+function Static:recreate_units(data)
+    self:reset_selected_units()
+
+    local units = {}
+    for _, params in ipairs(data) do
+        local unit_name = params.unit_data.name
+
+        local new_unit = managers.editor:SpawnUnit(params.unit_data.name, params, true, params.unit_data.unit_id)
+        
+        Utils:SetPosition(new_unit, params.unit_data.position, params.unit_data.rotation)
+        table.insert(units, new_unit)
+    end
+end
+
+function Static:on_reload_units()
+    Utils:YesNoQuestion("This will reload all selected units from disk. Changes that make the unit invalid can result in crashes.", function()  
+		local names = {}
+        for _, unit in ipairs(self:selected_units()) do
+			if alive(unit) and unit:unit_data() and not unit:fake() then
+				local name = unit:unit_data().name
+
+                local asset = BeardLib.Managers.File:Get("unit", name)
+				if not table.contains(names, name) and asset and asset.file then
+					table.insert(names, name)
+				end
+			end
+		end
+
+        if #names > 0 then
+            self._parent:reload_units(names)
+        else
+            Utils:Notify("ERROR!", "Vanilla units cannot be reloaded!")
+        end
+    end)
 end
 
 function Static:add_unit_to_portal()

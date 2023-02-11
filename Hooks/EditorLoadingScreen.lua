@@ -8,7 +8,7 @@ function es:init(gui, res, p, layer)
 		self._indicator = panel:bitmap({
 			name = "indicator",
 			texture = "textures/editor_icons_df",
-			texture_rect = {0, 192, 64, 64},
+			texture_rect = {320, 64, 64, 64},
 			w = 32,
 			h = 32,
 			layer = 100
@@ -24,7 +24,7 @@ function es:update(...)
 		self:do_editor_stuff() 	
 		
 		local args = {...}
-		self._indicator:rotate(-180 * args[3])
+		self._indicator:rotate(180 * args[3])
 	else
 		es.super.update(self, ...)
 	end

@@ -43,7 +43,7 @@ function QuickAccess:init(parent, menu)
 
     self._buttons = {
         {name = "GeneralOptions", rect = icons.settings_gear, offset = reversed and 0, callback = "open_options", help = "General Options"},
-        {name = "Deselect", rect = icons.cross_box, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
+        {name = "Deselect", rect = icons.deselect, callback = "deselect_unit", help = "Deselect", enabled = normal and self._parent._has_fix},
         {name = "TeleportPlayer", rect = icons.teleport, callback = "drop_player", help = "Teleport Player To Camera Position", enabled = normal and self._parent._has_fix},
         {name = "TeleportToSelection", rect = icons.teleport_selection, items = {}, callback = "open_teleport_menu", help = "Teleport Camera To...", enabled = normal and self._parent._has_fix},
         {name = "LocalTransform", rect = icons.local_transform, offset = reversed and {2,0} or 0, callback = "toggle_local_move", help = "Local Transform Orientation", enabled = normal and self._parent._has_fix}

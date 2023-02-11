@@ -22,6 +22,7 @@ function GenTool:build_menu()
     local opt = self:GetPart("opt")
 
     local editors = self._holder:divgroup("Editors")
+    editors:button("MaterialConfigEditor", ClassClbk(self, "open_editor", "material"))
     editors:button("EffectEditor", ClassClbk(self, "open_editor", "particle"))
     --editors:button("PreplanningEditor", ClassClbk(self, "open_editor", "preplanning"))
 

@@ -125,7 +125,7 @@ function MainLayerEditor:build_continents()
             continent:tb_imgbtn("ClearUnits", ClassClbk(self, "clear_all_units_from_continent", name), nil, icons.trash, {highlight_color = Color.red, help = "Delete all Units from Continent", visible = not locked})
             continent:tb_imgbtn("SelectUnits", ClassClbk(self, "select_all_units_from_continent", name), nil, icons.select, {help = "Select all Units in Continent", visible = not locked})
             --continent:tb_imgbtn("AddScript", ClassClbk(self, "add_new_mission_script", name), nil, icons.plus, {help = "Add mission script", visible = not locked})
-            continent:tb_imgbtn("SetVisible", ClassClbk(self, "toggle_unit_visibility", data), nil, icons.eye, {help = "Toggle Visibility", enabled_alpha = data.visible ~= false and 1 or 0.2})
+            continent:tb_visbtn("SetVisible", ClassClbk(self, "toggle_unit_visibility", data), data.visible ~= false, {help = "Toggle Visibility"})
 
             if  managers.mission and managers.mission._missions and managers.mission._missions[name] then
                 for sname, data in pairs(managers.mission._missions[name]) do
@@ -303,8 +303,6 @@ function MainLayerEditor:toggle_unit_visibility(data, item)
             end
         end
     end
-    item.enabled_alpha = data.visible and 1 or 0.2
-    item:SetEnabled(item.enabled)
 end
 
 function MainLayerEditor:get_all_units_from_continent(continent)

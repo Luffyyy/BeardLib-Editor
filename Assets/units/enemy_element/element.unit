@@ -5,7 +5,9 @@
   <dependencies />
   <extensions>
     <extension name="unit_data" class="ScriptUnitData" />
-    <extension name="mission_element" class="MissionElementUnit" />
+    <extension name="mission_element" class="MissionElementUnit">
+      <var name="_noicon" value="true" />
+    </extension>
   </extensions>
   <sounds>
     <default_soundsource />

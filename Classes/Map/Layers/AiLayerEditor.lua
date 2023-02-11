@@ -159,7 +159,7 @@ function AiEditor:build_menu()
         ClassClbk(self, "_create_new_patrol_path"),
         tx, EU.EditorIcons["plus"], {help = "Create new patrol path"}
     )
-    ai_data:GetToolbar():tb_imgbtn("Draw", ClassClbk(self, "set_draw_patrol_paths"), tx, EU.EditorIcons.eye, {help = "Toggle Visibility", enabled_alpha = self:Val("DrawPatrolPaths") and 1 or 0.5})
+    ai_data:GetToolbar():tb_visbtn("Draw", ClassClbk(self, "set_draw_patrol_paths"), self:Val("DrawPatrolPaths"), {help = "Toggle Visibility"})
 
     ai_data:pan("PatrolPaths", {max_height = 120})
     local points = ai_data:group("PatrolPoints", {enabled = false, max_height = 200})
@@ -178,9 +178,6 @@ end
 
 function AiEditor:set_draw_patrol_paths(item)
     self:set_value("DrawPatrolPaths", not self:Val("DrawPatrolPaths"))
-    local alpha = self:Val("DrawPatrolPaths") and 1 or 0.5
-    item.enabled_alpha = alpha
-    item:SetEnabled(item.enabled)
 end
 
 function AiEditor:_build_draw_data(group)

@@ -477,7 +477,7 @@ function BrushLayerEditor:build_menu()
     local controls = self._holder:group("Main", {align_method = "grid", auto_height = false, h = h*1/2})
 	local tb = controls:GetToolbar()
 
-	tb:tb_imgbtn("RepositionAll", ClassClbk(self, "reposition_all"), nil, {32, 96, 32, 32}, {help = "Tries to reposition all brushes down or to the sides"})
+	tb:tb_imgbtn("RepositionAll", ClassClbk(self, "reposition_all"), nil, icons.repos_brush, {help = "Tries to reposition all brushes down or to the sides"})
 	tb:tb_imgbtn("ClearSelected", ClassClbk(self, "clear_unit"), nil, icons.cross_box, {help = "Clear all selected brushes"})
 	tb:tb_imgbtn("ClearAll", ClassClbk(self, "clear_all"), nil, icons.trash, {help = "Clear all brushes"})
 

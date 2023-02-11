@@ -95,7 +95,7 @@ function PortalLayer:build_menu()
     local portals = self._holder:group("Portals", {h = h, auto_height = false})
     portals:GetToolbar():tb_imgbtn("NewPortal", ClassClbk(self, "add_portal"), nil, BLE.Utils.EditorIcons.plus, {help = "Add a New Portal"})
     local units = self._holder:group("Units", {enabled = false})
-    units:GetToolbar():tb_imgbtn("ToggleVisibility", ClassClbk(self, "toggle_units_visible"), nil, BLE.Utils.EditorIcons.eye, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Toggle Visibility"})
+    units:GetToolbar():tb_visbtn("ToggleVisibility", ClassClbk(self, "toggle_units_visible"), self._units_visible, {help = "Toggle Visibility"})
     units:GetToolbar():tb_imgbtn("SelectUnits", ClassClbk(self, "select_portalled_units"), nil, BLE.Utils.EditorIcons.select, {enabled_alpha = self._units_visible and 1 or 0.5, help = "Select all units inside portal"})
     units:tickbox("HighlightUnitsInPortal", nil, true)
     units:button("ManageUnitsInPortal", ClassClbk(self, "manage_units"))
@@ -432,10 +432,6 @@ function PortalLayer:toggle_units_visible(item)
         if unit and alive(unit) then
             unit:set_enabled(self._units_visible)
         end
-    end
-    if item then
-        item.enabled_alpha = self._units_visible and 1 or 0.5
-        item:SetEnabled(item.enabled)
     end
 end
 

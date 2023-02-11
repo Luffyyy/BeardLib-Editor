@@ -8,54 +8,84 @@ local Utils = BLE.Utils
 
 Utils.EditorIcons = {
     texture = "textures/editor_icons_df",
-    trash = {0, 0, 32, 32},
-    pen = {32, 0, 32, 32},
-    cross = {101, 5, 22, 22},
-    cross_box = {0, 96, 32, 32},
-    arrow_up = {0, 32, 32, 32},
-    arrow_down = {32, 32, 32, 32},
-    arrow_left = {0, 64, 32, 32},
-    arrow_right = {32, 64, 32, 32},
-    plus = {65, 33, 30, 30},
-    minus = {97, 33, 30, 30},
-    eye = {96, 64, 32, 32},
-    collapse_all = {128, 0, 32, 32},
-    help = {164, 68, 56, 56},
-    alert = {304, 0, 48, 48},
-	settings_gear = {224, 192, 32, 32},
-    select = {64, 0, 32, 32},
-    select_all = {128, 160, 32, 32},
-    copy = {64, 96, 32, 32},
-    paste = {96, 96, 32, 32},
-    round_number = {128, 96, 32, 32},
-    reset_settings = {64, 64, 32, 32},
-    dots = {128, 128, 32, 32},
-    list = {128, 64, 32, 32},
-    browse_file = {128, 32, 32, 32},
-    grid = {466, 18, 28, 28},
-    snap_rotation = {416, 18, 32, 32},
-    ignore_raycast = {454, 119, 35, 35},
-    show_elements = {464, 64, 32, 32},
-    editor_units = {416, 64, 32, 32},
-    rotation_widget = {0, 128, 64, 64},
-    move_widget = {64, 128, 64, 64},
-    teleport = {368, 16, 32, 32},
-    teleport_selection = {368, 64, 32, 32},
-    local_transform = {391, 118, 36, 36},
-    global_transform = {336, 112, 32, 32},
-    grab = {160, 224, 32, 32},
-    play = {160, 192, 32, 32},
-    stop = {192, 192, 32, 32},
-    pause = {192, 224, 32, 32},
-	portal_add = {128, 192, 32, 32},
-	placeholder = {448, 448, 64, 64},
-	jump_cam = {224, 224, 32, 32},
-	invisible = {256, 192, 32, 32},
-    spinner = {0, 192, 64, 64}
+	upper_world = {0, 0, 64, 64},
+	upper_static = {64, 0, 64, 64},
+	upper_spawn = {128, 0, 64, 64},
+	upper_select = {192, 0, 64, 64},
+	upper_tools = {256, 0, 64, 64},
+	upper_opt = {320, 0, 64, 64},
+	upper_save = {384, 0, 64, 64},
+	upper_env = {448, 0, 64, 64},
+	mm_ble_menu = {64, 64, 48, 48},
+	mm_last_lvl = {128, 64, 48, 48},
+	alert = {0, 64, 48, 48},
+	help = {192, 64, 56, 56},
+	info = {256, 64, 56, 56},
+	spinner = {320, 64, 64, 64},
+	
+	grid = {2, 194, 28, 28},
+	snap_rotation = {32, 192, 32, 32},
+	move_widget = {64, 192, 32, 32},
+	rotation_widget = {96, 192, 32, 32},
+	editor_units = {128, 192, 32, 32},
+	show_elements = {160, 192, 32, 32},
+	ignore_raycast = {192, 192, 32, 32},
+	global_transform = {230, 192, 32, 32},
+	local_transform = {270, 188, 36, 36},
+	teleport_selection = {320, 192, 32, 32},
+	teleport = {353, 192, 31, 32},
+	deselect = {384, 192, 32, 32},
+	
+	arrow_up = {0, 256, 32, 32},
+    arrow_down = {32, 256, 32, 32},
+    arrow_left = {64, 256, 32, 32},
+    arrow_right = {96, 256, 32, 32},
+	plus = {128, 256, 32, 32},
+    minus = {160, 256, 32, 32},
+    trash = {192, 256, 32, 32},
+	cross = {229, 261, 22, 22},
+	reset_settings = {256, 256, 32, 32},
+	settings_gear = {288, 256, 32, 32},
+	collapse_all = {320, 256, 32, 32},
+	select = {352, 256, 32, 32},
+    pen = {384, 256, 32, 32},
+	copy = {416, 256, 32, 32},
+    paste = {448, 256, 32, 32},
+    round_number = {480, 256, 32, 32},
+	
+	grab = {0, 288, 32, 32},
+	eye = {32, 288, 32, 32},
+	invisible = {64, 288, 32, 32},
+	select_all = {96, 288, 32, 32},
+	portal_add = {128, 288, 32, 32},
+    cross_box = {160, 288, 32, 32},
+	repos_brush = {192, 288, 32, 32},
+	browse_file = {224, 288, 32, 32},
+    dots = {256, 288, 32, 32},
+    list = {288, 288, 32, 32},
+    play = {320, 288, 32, 32},
+	pause = {352, 288, 32, 32},
+    stop = {384, 288, 32, 32},
+	jump_cam = {416, 288, 32, 32},
+	star = {448, 288, 32, 32},
+	sweden = {480, 288, 32, 32},
+    
+	reload_double = {0, 320, 32, 32},
+	reload = {32, 320, 32, 32},
+	reload_unit = {64, 320, 32, 320},
+	folder = {96, 320, 32, 32},
+	open_folder = {128, 320, 32, 32},
+	empty_document = {160, 320, 32, 32},
+	document = {192, 320, 32, 32},
+	external = {224, 320, 32, 32},
+	
+	placeholder = {448, 448, 64, 64}
 }
 
 Utils.ElementIcons = {
 	texture = "textures/element_icons_df",
+    default = {768, 960},
+    selected = {704, 960},
 	MissionScript = {0,0},
 	Random = {64,0},
 	Toggle = {128,0},
@@ -905,6 +935,48 @@ end
 
 function Utils:ReadConfig(file)
     return FileIO:ReadScriptData(file, "custom_xml", true)
+end
+
+function Utils:ReloadAssets(files, clbk)
+    if not files or #files <= 0 then
+        return
+    end
+
+    for _, asset in ipairs(files) do
+        if asset.file then
+            BeardLib.Managers.File:RemoveFile(asset.type, asset.path)
+            BeardLib.Managers.File:UnloadAsset(asset.type, asset.path)
+        end
+    end
+
+    --Small delay to make sure all the files have been unloaded
+    BeardLib:AddDelayedCall("BLEReloadAssets", 0.1, function()
+        local uid = Idstring("unit")
+
+        local units = {}
+        local reloaded_assets = 0
+        for _, asset in ipairs(files) do
+            if asset.file then
+                BeardLib.Managers.File:AddFile(asset.type, asset.path, asset.file)
+                
+                if asset.type == uid then
+                    table.insert(units, asset.path)
+                end
+                reloaded_assets = reloaded_assets + 1
+            end
+        end
+        
+        for _, unit in ipairs(units) do
+            PackageManager:reload(uid, unit)
+            managers.sequence:reload(unit, true)
+        end
+
+        if clbk then
+            clbk()
+        end
+        
+        managers.editor:status_message("Successfully reloaded "..reloaded_assets.." assets")
+    end, true)
 end
 
 FakeObject = FakeObject or class()

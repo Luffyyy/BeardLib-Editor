@@ -55,6 +55,29 @@ function ItemExt:tb_imgbtn(name, callback, texture, rect, o)
 	}, o))
 end
 
+function ItemExt:tb_visbtn(name, callback, value, o)
+	local offset = self:ConvertOffset(o and o.offset or 4)
+	local s = (o and o.size or self:H()) - offset[1]*2
+	return self:ImageButton(table.merge({
+		name = name,
+		on_callback = function(p)
+			p.value = not p.value
+
+			p:SetEnabledAlpha(p.value and 1 or 0.5)
+			p:SetImage(BLE.Utils.EditorIcons.texture, BLE.Utils.EditorIcons[p.value and "eye" or "invisible"])
+			callback(p)
+		end,
+		auto_foreground = false,
+		offset = offset,
+		w = s,
+		h = s,
+		img_scale = 0.6,
+		value = value,
+		texture = BLE.Utils.EditorIcons.texture,
+		texture_rect = BLE.Utils.EditorIcons[value and "eye" or "invisible"]
+	}, o))
+end
+
 function ItemExt:tb_btn(name, callback, o)    
 	return self:Button(table.merge({
 		name = name,

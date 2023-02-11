@@ -4,13 +4,13 @@ function UpperMenu:init(parent, menu)
     self._parent = parent
     local normal = not Global.editor_safe_mode
     self._tabs = {
-        {name = "world", rect = {0, 448, 64, 64}},
-        {name = "static", rect = {192, 448, 64, 64}, enabled = normal},
-        {name = "spawn", rect = {64, 448, 64, 64}, enabled = normal},
-        {name = "select", rect = {128, 448, 64, 64}, enabled = normal},
-        {name = "tools", rect = {256, 448, 64, 64}, enabled = normal},
-        {name = "opt", rect = {320, 448, 64, 64}},
-        {name = "save", rect = {383, 448, 64, 64}, callback = ClassClbk(self, "save"), enabled = normal},
+        {name = "world", icon = "upper_world"},
+        {name = "static", icon = "upper_static", enabled = normal},
+        {name = "spawn", icon = "upper_spawn", enabled = normal},
+        {name = "select", icon = "upper_select", enabled = normal},
+        {name = "tools", icon = "upper_tools", enabled = normal},
+        {name = "opt", icon = "upper_opt"},
+        {name = "save", icon = "upper_save", callback = ClassClbk(self, "save"), enabled = normal},
     }
     local w = BLE.Options:GetValue("MapEditorPanelWidth")
     self._menu = menu:Menu({
@@ -31,9 +31,10 @@ function UpperMenu:init(parent, menu)
 end
 
 function UpperMenu:build_tabs()
+    local icons = BLE.Utils.EditorIcons or {}
     for _, tab in pairs(self._tabs) do
         local s = self._menu:H()
-        local t = self:Tab(tab.name, "textures/editor_icons_df", tab.rect, tab.callback, s, tab.enabled)
+        local t = self:Tab(tab.name, icons.texture, icons[tab.icon], tab.callback, s, tab.enabled)
         if tab.name:match("_widget_toggle") then
             self:update_toggle(t)
         end

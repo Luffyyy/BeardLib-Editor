@@ -71,6 +71,11 @@
             <classes directory="ParticleEditor">
                 <class file="ParticleEditor.lua"/>
             </classes>
+            <classes directory="MaterialEditor">
+                <class file="MaterialEditor.lua"/>
+                <class file="MaterialEditorPanel.lua"/>
+                <class file="MaterialEditorParameters.lua"/>
+            </classes>
         </classes>
 
 		<classes directory="Map">

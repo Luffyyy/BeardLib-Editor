@@ -270,8 +270,8 @@ end
 --- Reloads a mod by unloading it and letting BeardLib load it again.
 --- @param mod_name string
 function ProjectManager:reload_mod(mod_name)
-    local mod = BeardLib.managers.MapFramework._loaded_mods[mod_name]
-    if mod._modules then
+    local mod = BeardLib.managers.MapFramework:GetModByName(mod_name)
+    if mod and mod._modules then
         for _, module in pairs(mod._modules) do
             module.Registered = false
         end

@@ -7,9 +7,13 @@ function MissionElementUnit:init(unit)
     if root == nil then
         return
     end
+    
+    if self._noicon then
+        managers.occlusion:remove_occlusion(self._unit)
+    end
 
     self._gui = World:newgui()
-    local pos = root:position() - Vector3(iconsize / 2, iconsize / 2, 0)
+    local pos = root:position() - Vector3(iconsize / 2, iconsize / 2, self._noicon and -unit:bounding_sphere_radius() + iconsize / 4 or 0)
     self._ws = self._gui:create_linked_workspace(iconsize / 2, iconsize / 2, root, pos, Vector3(iconsize, 0, 0), Vector3(0, iconsize, 0))
     self._ws:set_billboard(self._ws.BILLBOARD_BOTH)
     local colors = {
@@ -28,7 +32,7 @@ function MissionElementUnit:init(unit)
     }
 
     self._color = EditorPart:Val("RandomizedElementsColor") and colors[math.random(1, #colors)] or EditorPart:Val("ElementsColor")
-    local texture, rect = "textures/editor_icons_df", {225, 1, 62, 62}
+    local texture, rect = BLE.Utils:GetElementIcon("default")
     local size = iconsize / 4
     local font_size = iconsize / 8
     self._icon = self._ws:panel():bitmap({
@@ -37,6 +41,7 @@ function MissionElementUnit:init(unit)
         render_template = "OverlayVertexColorTextured",
         color = self._color,
         rotation = 360,
+        visible = not self._noicon,
         y = font_size,
         x = font_size,
         w = size,
@@ -44,7 +49,7 @@ function MissionElementUnit:init(unit)
     }) 
     self._text = self._ws:panel():text({
         render_template = "OverlayVertexColorTextured",
-        font = "fonts/font_large_mf",
+        font = tweak_data.menu.pd2_large_font,
         font_size = font_size,
         w = iconsize / 2,
         h = font_size,
@@ -78,7 +83,7 @@ function MissionElementUnit:update_icon()
             self:set_color(Color:from_hex(editor_color))
         end
 
-        if EditorPart:Val("UniqueElementIcons") and texture and texture_rect then
+        if EditorPart:Val("UniqueElementIcons") and texture and texture_rect and not self._noicon then
             self._icon:set_image(texture, unpack(texture_rect))
             self._icon_outline = self._icon_outline or self._ws:panel():bitmap({
                 texture = texture,
@@ -118,7 +123,8 @@ function MissionElementUnit:select()
     if self._icon_outline then
         self._icon_outline:set_color(self._color*2)
     else
-        self._icon:set_texture_rect(161, 1, 62, 62)
+        local _, rect = BLE.Utils:GetElementIcon("selected")
+        self._icon:set_texture_rect(unpack(rect))
     end
 end
 
@@ -126,7 +132,8 @@ function MissionElementUnit:unselect()
     if self._icon_outline then
         self._icon_outline:set_color(Color.black)
     else
-        self._icon:set_texture_rect(225, 1, 62, 62)
+        local _, rect = BLE.Utils:GetElementIcon("default")
+        self._icon:set_texture_rect(unpack(rect))
     end
 end
 

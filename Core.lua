@@ -13,6 +13,7 @@ function BLE:Init()
 	self.DialogsDirectory = Path:CombineDir(self.ClassDirectory, "Dialogs")
     self.MapClassesDir = Path:CombineDir(self.ClassDirectory, "Map")
     self.ProjectClassesDir = Path:CombineDir(self.ClassDirectory, "Project")
+    self.TempDir = Path:CombineDir(self.ModPath, "Tools/temp")
 
 	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
 	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
@@ -50,6 +51,7 @@ function BLE:MapEditorCodeReload()
     self:Dofiles(Path:Combine(self.MapClassesDir, "Layers"))
     self:Dofiles(Path:Combine(self.MapClassesDir, "Tools"))
     self:Dofiles(Path:Combine(self.MapClassesDir, "Tools/ParticleEditor"))
+    self:Dofiles(Path:Combine(self.MapClassesDir, "Tools/MaterialEditor"))
     self:Dofiles(self.ProjectClassesDir)
     self:Dofiles(self.DialogsDirectory)
 
@@ -198,6 +200,8 @@ function BLE:InitManagers(data)
         end
         self:LoadCustomAssets()
     end
+
+    self:ClearTempFolder()
 end
 
 function BLE:LoadCustomAssets()
@@ -234,6 +238,12 @@ function BLE:LoadCustomAssets()
                 end
             end
         end
+    end
+end
+
+function BLE:ClearTempFolder()
+    for _, file in pairs(FileIO:GetFiles(self.TempDir)) do
+        FileIO:Delete(Path:Combine(self.TempDir, file))
     end
 end
 

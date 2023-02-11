@@ -174,6 +174,7 @@ function Editor:post_init(menu)
         self._mapeditor[n] = manager
     end
     m.particle = ParticleEditor:new(self, menu)
+    m.material = MaterialEditor:new(self, menu)
     --m.preplanning = PreplanningEditor:new(self, menu)
     self._value_info = self._editor_menu:divider("ValueInfo", {
         foreground = Color(1, 0.8, 0.8, 0), 
@@ -842,6 +843,105 @@ function Editor:destroy()
         scroll_y_tbl = scroll_y_tbl
     }
 end
+
+function Editor:on_open_unit_file(data)
+	if alive(self:selected_unit()) then
+		local unit = self:selected_unit()
+
+		local u_name = unit:name()
+        local unit_data = PackageManager:unit_data(u_name)
+		local lookup = nil
+
+		if data.type == "unit" then
+			lookup = u_name
+		elseif data.type == "object" then
+			lookup = unit_data and unit_data:model()
+		elseif data.type == "material_config" then
+			lookup = unit_data and unit_data:material_config()
+        elseif data.type == "folder" then
+            local asset = BeardLib.Managers.File:Get("unit", u_name)
+            if asset and asset.file then
+                local base_path = string.gsub(Application:base_path(), "\\", "/")
+                local file = Path:GetDirectory(asset.file)
+                
+                Application:shell_explore_to_folder(Path:Combine(base_path, file))
+            else
+                self:status_message("Cannot open unit folder")
+            end
+            return
+		end
+        
+		if not lookup then
+			return
+		end
+
+        local asset = BeardLib.Managers.File:Get(data.type, lookup)
+        if not asset or not asset.file then
+            self:status_message("Cannot open " .. data.type .. " file")
+            return
+        end
+
+        local full_path = Path:Combine(string.gsub(Application:base_path(), "\\", "/"), asset.file)
+
+        if FileIO:FileExists(full_path) then
+            os.execute('start "" "'..full_path..'"')
+        else
+            self:status_message(data.type .. " file doesn't exist")
+        end
+	end
+end
+
+function Editor:open_selected_material_config()
+    self._editor_active = "material"
+    self:set_enabled()
+    self.parts.material:on_open_selection()
+end
+
+function Editor:reload_units(unit_names, skip_replace_units)
+    if not unit_names or #unit_names <= 0 then
+		return
+	end
+
+    --BLE.Dialog:Show({title = "Processing", message = "Reloading units", no = false, yes = false, force = true})
+    local reload_data = nil
+
+    if not skip_replace_units then
+        reload_data = self.parts.static:prepare_replace(unit_names)
+    end
+
+    local files = {}
+
+    for _, unit_name in ipairs(unit_names) do
+        local unit_path = unit_name:id()
+        local unit_data = PackageManager:unit_data(unit_path)
+        
+        local sequence_path = unit_data:sequence_manager_filename()
+        local material_config_path = unit_data:material_config()
+        local model_path = unit_data:model()
+
+        if sequence_path then
+            local sequence_file = BeardLib.Managers.File:Get("sequence_manager", sequence_path)
+            table.insert(files, {path = sequence_path, file = sequence_file.file, type = Idstring("sequence_manager")})
+        end
+
+        if material_config_path then
+            local material_config_file = BeardLib.Managers.File:Get("material_config", material_config_path)
+            table.insert(files, {path = material_config_path, file = material_config_file.file, type = Idstring("material_config")})
+        end
+
+        local unit_file = BeardLib.Managers.File:Get("unit", unit_path)
+        local model_file = BeardLib.Managers.File:Get("model", model_path)
+        local object_file = BeardLib.Managers.File:Get("object", model_path)
+        
+        table.insert(files, {path = unit_path, file = unit_file.file, type = Idstring("unit")})
+        table.insert(files, {path = model_path, file = object_file.file, type = Idstring("object")})
+        table.insert(files, {path = model_path, file = model_file.file, type = Idstring("model")})
+    end
+
+    Utils:ReloadAssets(files, not skip_replace_units and ClassClbk(self.parts.static, "recreate_units", reload_data))
+    --BLE.Dialog:Hide()
+end
+
 function Editor:add_element(element, item) self.parts.mission:add_element(element) end
 function Editor:Log(...) self.parts.console:Log(...) end
 function Editor:output(...) self:Log(...) end
