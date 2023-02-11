@@ -263,9 +263,7 @@ function Static:build_quick_buttons(cannot_be_saved, cannot_be_prefab)
         quick:s_btn("CreatePrefab", ClassClbk(self, "add_selection_to_prefabs"))
     end
     if not cannot_be_saved then
-        if self:unit_value("name") then
-            self:build_unit_editing()
-        end
+        self:build_unit_editing()
         quick:s_btn("AddToCurrentPortal", ClassClbk(self, "add_unit_to_portal"))
         quick:s_btn("RemoveFromCurrentPortal", ClassClbk(self, "remove_unit_from_portal"))
         self:group("Group", {align_method = "grid"}) --lmao
@@ -319,6 +317,10 @@ end
 
 local ids_0 = Idstring("0")
 function Static:build_unit_editing()
+    if not self:selected_unit() or not self:unit_value("name") then
+        return
+    end
+    
     local quick = self:GetItem("QuickActions")
     local tb = quick:GetToolbar()
 
