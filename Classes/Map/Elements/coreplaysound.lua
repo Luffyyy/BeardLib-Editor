@@ -7,6 +7,7 @@ function EditorPlaySound:create_element()
 	self._element.values.append_prefix = false
 	self._element.values.use_instigator = false
 	self._element.values.interrupt = true
+	self._element.values.use_play_func = false
 end
 function EditorPlaySound:_build_panel()
 	self:_create_panel()
@@ -15,6 +16,7 @@ function EditorPlaySound:_build_panel()
 	self:BooleanCtrl("append_prefix", {help = "Append unit prefix"})
 	self:BooleanCtrl("use_instigator", {help = "Play on instigator"})
 	self:BooleanCtrl("interrupt", {help = "Interrupt existing sound"})
+	self:BooleanCtrl("use_play_func", {help = "Use 'play' function in unit sound extension instead of 'say'"})
 end
 
 function EditorPlaySound:test_element()

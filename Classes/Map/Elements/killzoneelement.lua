@@ -12,6 +12,8 @@ function EditorKillZone:_build_panel()
 		"sniper",
 		"gas",
 		"fire",
-        "kill"
+        "kill",
+		"laser",
+		"electricity"
 	})
 end
