@@ -62,7 +62,7 @@ function CubemapCreator:create_projection_light(type)
 	if type == "all" then
 		for _, unit in pairs(World:find_units_quick("all")) do
 			if alive(unit) and unit:unit_data() and unit:unit_data().name then
-				local light_name = BLE.Utils:HasProjectionLight(unit, "shadow_projection")
+				local light_name = BLE.Utils:HasAnyProjectionLight(unit)
 
 				if light_name then
 					table.insert(units, {
@@ -75,7 +75,7 @@ function CubemapCreator:create_projection_light(type)
 	elseif type == "selected" then
 		local s_units = self:selected_units()
 		for _, unit in pairs(s_units) do
-			local light_name = BLE.Utils:HasProjectionLight(unit, "shadow_projection")
+			local light_name = BLE.Utils:HasAnyProjectionLight(unit)
 
 			if light_name then
 				table.insert(units, {
