@@ -87,8 +87,13 @@ function MaterialEditor:enable()
 	self._menu:SetVisible(true)
 	self:bind_opt("Undo", ClassClbk(self, "on_undo"))
     self:bind_opt("Redo", ClassClbk(self, "on_redo"))
+	self:bind_opt("ToggleGUI", ClassClbk(self, "ToggleGUI"))
 	self:_load_shader_dropdown()
 end
+
+function MaterialEditor:ToggleGUI() 
+	self._menu:SetVisible(not self._menu:Visible())
+ end
 
 function MaterialEditor:on_close_material()
 	local cur = self:current_material()

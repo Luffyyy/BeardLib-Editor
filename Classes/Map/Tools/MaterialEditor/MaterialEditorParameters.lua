@@ -168,7 +168,7 @@ function MaterialEditorRenderTemplate:on_toggle_customize(apply)
 		end
 	end
 
-	self._parent:AlignItems(true)
+	self:update_live()
 end
 
 function MaterialEditorRenderTemplate:build_shader_options(shader_options)
