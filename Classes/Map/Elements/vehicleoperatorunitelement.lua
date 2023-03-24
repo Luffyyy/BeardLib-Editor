@@ -1,5 +1,19 @@
 EditorVehicleOperator = EditorVehicleOperator or class(MissionScriptEditor)
 EditorVehicleOperator.WEIRD_ELEMENTS_VALUE = true
+EditorVehicleOperator.ACTIONS = {
+	"none",
+	"lock",
+	"unlock",
+	"secure",
+	"break_down",
+	"repair",
+	"damage",
+	"activate",
+	"deactivate",
+	"block",
+	"enable_player_exit",
+	"disable_player_exit"
+}
 function EditorVehicleOperator:create_element()
 	self.super.create_element(self)
 	self._element.class = "ElementVehicleOperator"
@@ -29,8 +43,9 @@ end
 function EditorVehicleOperator:_build_panel()
 	self:_create_panel()
 	self:BuildUnitsManage("elements", nil, nil, {text = "Manage Vehicles List", check_unit = ClassClbk(self, "check_unit")})
-	self:ComboCtrl("operation", {"none","lock","unlock","secure","break_down","repair","damage","activate","deactivate","block"}, {help = "Select an operation for the selected vehicles"})
+	self:ComboCtrl("operation", EditorVehicleOperator.ACTIONS, {help = "Select an operation for the selected vehicles"})
 	self:NumberCtrl("damage", {floats = 0, min = 1, help = "Specify the amount of damage."})
+	self:BooleanCtrl("use_instigator")
 
 	self:Text("Choose an operation to perform on the selected vehicles")
 end
