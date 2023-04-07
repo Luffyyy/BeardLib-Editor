@@ -595,7 +595,7 @@ function MScript:delete_element(element)
 end
 
 function MScript:debug_output(debug, color)
-	if managers.editor then
+	if managers.editor and managers.mission:persistent_debug_enabled() then
 		Utils:GetPart("console"):LogMission(debug:gsub('%%', '%'))
 		managers.mission:add_persistent_debug_output(Application:date("%X") .. ": " .. debug, color)
 	end
