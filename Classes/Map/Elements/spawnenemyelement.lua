@@ -122,15 +122,13 @@ function EditorSpawnEnemyDummy:set_element_data(item, ...)
 		local assets = self:GetPart("assets")
 		local id = item:SelectedItem()
 		local typ = "unit"
-		if not assets or id == "none" or id == "no_pickup" then
-			return
-		end
+		if assets and not (id == "none" or id == "no_pickup") then
+			local unit = tweak_data.pickups[id].unit
+			local path = BLE.Utils:Unhash(unit, typ)
 
-		local unit = tweak_data.pickups[id].unit
-		local path = BLE.Utils:Unhash(unit, typ)
-
-		if path and not assets:is_asset_loaded(typ, path) then
-			assets:quick_load_from_db(typ, path, nil, nil, {load = true})
+			if path and not assets:is_asset_loaded(typ, path) then
+				assets:quick_load_from_db(typ, path, nil, nil, {load = true})
+			end
 		end
 	end
 	EditorSpawnEnemyDummy.super.set_element_data(self, item, ...)
