@@ -79,7 +79,7 @@ function MissionElementUnit:update_icon()
         local texture, texture_rect = BLE.Utils:GetElementIcon(element_name)
 
         local editor_color = self.element.editor_color or BLE.EditorOptions:get_element_color(element_name)
-        if editor_color and editor_color:len() > 0 then
+        if editor_color and editor_color.len and editor_color:len() > 0 then
             self:set_color(Color:from_hex(editor_color))
         end
 
