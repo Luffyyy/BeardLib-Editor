@@ -147,7 +147,7 @@ function MaterialEditorPanel:destroy()
 end
 
 function MaterialEditorPanel:on_save()
-	local path = self._material_config_path
+	local path = self._material_config_path or ""
 
 	if not self._material_config_file then
 		local asset = BeardLibFileManager:Get("material_config", path)

@@ -8,6 +8,7 @@ function EditorVehicleBoarding:create_element()
 	self._element.class = "ElementVehicleBoarding"
     self._element.values.vehicle = nil
 	self._element.values.operation = "embark"
+	self._element.values.teleport_points = {}
 
 	self._seat_list = {}
 end
@@ -20,6 +21,7 @@ function EditorVehicleBoarding:_build_panel(disable_params)
         single_select = true,
         not_table = true
     })
+	self:BuildElementsManage("teleport_points", nil, {"ElementTeleportPlayer"})
 
 	self:ComboCtrl("operation", {
         "embark", 
@@ -34,6 +36,8 @@ function EditorVehicleBoarding:link_managed(unit)
 	if alive(unit) then
 		if self:check_unit(unit) and unit:unit_data() then
 			self:AddOrRemoveManaged("vehicle", {unit = unit}, {not_table = true}, ClassClbk(self, "set_vehicle"))
+		elseif unit:mission_element() and unit:mission_element().element.class == "ElementTeleportPlayer" then
+			self:AddOrRemoveManaged("teleport_points", {element = unit:mission_element().element})
 		end
 	end
 end
@@ -67,6 +71,24 @@ function EditorVehicleBoarding:draw_links()
 				from_unit = self._unit,
 				to_unit = unit
 			})
+		end
+	end
+
+	if self._element.values.teleport_points then
+		for _, id in ipairs(self._element.values.teleport_points) do
+			local unit = self:GetPart('mission'):get_element_unit(id)
+
+			if alive(unit) then
+				local r, g, b = unit:mission_element():get_link_color()
+
+				self:draw_link({
+					from_unit = self._unit,
+					to_unit = unit,
+					r = r,
+					g = g,
+					b = b
+				})
+			end
 		end
 	end
 end

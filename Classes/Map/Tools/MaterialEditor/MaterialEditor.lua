@@ -492,7 +492,7 @@ end
 
 function MaterialEditor:get_material()
 	local cur = self:current_material()
-	if cur then
+	if cur and cur:current_material_config() then
 		local config_name = Idstring(cur:current_material_config())
 		local material_name = cur:current_material_name()
 		if config_name and material_name then

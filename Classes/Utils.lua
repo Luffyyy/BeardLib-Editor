@@ -248,6 +248,7 @@ Utils.ElementIcons = {
 	ExecuteCode = {896, 64},
 	FakeAssaultState = {960, 64},
 	Flashlight = {64, 960},
+    FailureVariant = {640, 384},
 	GameDirection = {64, 960},
 	Heat = {64, 960},
 	InstigatorOperator = {512, 128},

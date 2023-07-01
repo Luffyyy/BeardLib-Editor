@@ -353,6 +353,7 @@ local element_rules = {
 		"Stopwatch_value_ids",
 		"included_units",
 		"excluded_units",
+		"teleport_points",
 		"target"
 	},
 	tbl_value_keys = {{"on_executed", "id"}}

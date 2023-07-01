@@ -62,6 +62,7 @@ EditorTimerOperator.LINK_ELEMENTS = {"elements"}
 EditorTimerOperator.CLASS = "ElementTimerOperator"
 EditorTimerOperator.MODULE = "CoreElementTimer"
 EditorTimerOperator.ELEMENT_FILTER = {"ElementTimer", "ElementHeistTimer"}
+EditorTimerOperator.INSTANCE_VAR_NAMES = {{type = "number", value = "time"}}
 function EditorTimerOperator:create_element()
 	EditorTimerOperator.super.create_element(self)
 	self._element.values.operation = "none"

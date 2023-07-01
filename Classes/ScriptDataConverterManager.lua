@@ -117,7 +117,7 @@ function SConverter:RefreshFilesAndFolders()
     end
 
     local holder = self:pan("Holder", {align_method = "grid"})
-    local w,h = (holder:ItemsWidth() - 16) / 2, self._menu:Height() - holder:Y()  - 8
+    local w, h = (holder:ItemsWidth() - 16) / 2, self._menu:Height() - holder:Panel():world_y()  - 80
     local foldersgroup = holder:group("Folders", {w = w, h = h, auto_height = false, auto_align = false})
     local filesgroup = holder:group("Files", {w = w, h = h, auto_height = false, auto_align = false})
     local files, folders = self:GetFilesAndFolders(self.current_script_path)

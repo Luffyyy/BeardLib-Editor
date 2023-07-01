@@ -16,6 +16,8 @@ function EditorBlackscreenVariant:_get_params()
 	return tbl
 end
 
+-------------------------------------------------------------------------------------
+
 EditorEndscreenVariant = EditorEndscreenVariant or class(EditorBlackscreenVariant)
 function EditorEndscreenVariant:create_element()
 	EditorBlackscreenVariant.super.create_element(self)
@@ -26,4 +28,18 @@ end
 function EditorEndscreenVariant:_build_panel()
 	self:_create_panel()
 	self:ComboCtrl("variant", self:_get_params(), {help = "Select variant, from level_tweak_data.level.outro_event"})
+end
+
+-------------------------------------------------------------------------------------
+
+EditorFailureVariant = EditorFailureVariant or class(EditorBlackscreenVariant)
+function EditorFailureVariant:create_element()
+	EditorBlackscreenVariant.super.create_element(self)
+	self._element.class = "ElementFailureVariant"
+	self._element.values.variant = "0" 
+end
+
+function EditorFailureVariant:_build_panel()
+	self:_create_panel()
+	self:ComboCtrl("variant", self:_get_params(), {help = "Select variant, from level_tweak_data.level.failure_music"})
 end

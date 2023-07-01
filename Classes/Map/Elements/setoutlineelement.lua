@@ -16,6 +16,7 @@ function EditorSetOutline:_build_panel()
 	}
 	self:BuildElementsManage("elements", nil, self.ELEMENT_FILTER)
 	self:BooleanCtrl("set_outline", {text = "Enable outline"})
+	self:ComboCtrl("outline_type", ContourExt.indexed_types)
 	self:BooleanCtrl("use_instigator", {text = "Instigator only"})
 	self:BooleanCtrl("clear_previous", {text = "Clear previous outlines"})
 end

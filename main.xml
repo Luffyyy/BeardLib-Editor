@@ -387,6 +387,7 @@
         <value_node value="ElementAwardAchievment"/>
         <value_node value="ElementBainState"/>
         <value_node value="ElementEndscreenVariant"/>
+        <value_node value="ElementFailureVariant"/>
         <value_node value="ElementBlackscreenVariant"/>
         <value_node value="ElementBlurZone"/>
         <value_node value="ElementCarry"/>
