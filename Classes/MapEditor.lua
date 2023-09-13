@@ -1545,12 +1545,12 @@ function Editor:change_visualization(viz)
 	end
 
 	for _, vp in ipairs(managers.viewport:viewports()) do
-        local render_params = vp:render_params()
-        local scene = render_params and render_params[1]
+		local render_params = vp:render_params()
+		local scene = render_params and render_params[1]
 
-        if scene == "World" then
-		    vp:set_visualization_mode(viz)
-        end
+		if scene == "World" then
+			vp:set_visualization_mode(viz)
+		end
 	end
 end
 
