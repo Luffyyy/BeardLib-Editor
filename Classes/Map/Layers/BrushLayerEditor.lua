@@ -20,6 +20,7 @@ function BrushLayerEditor:init(parent)
 	self._overide_surface_normal = false
 	self._brush_on_editor_bodies = false
 	self._amount_dirty = true
+	self._short_names = true
 
 	--self:load_unit_map_from_vector(CoreEditorUtils.layer_type("brush"))
 
@@ -27,6 +28,11 @@ function BrushLayerEditor:init(parent)
 	self._brush_slot_mask = managers.slot:get_mask("brushes")
 	self._unit_brushes = {}
 	self._brush_units = clone(BLE.Brushes)
+
+	if self._brush_units and #self._brush_units > 0 then
+		table.sort(self._brush_units)
+	end
+
 	self._selected_unit_names = {}
 	self._brushed_path = "core/temp/editor_temp/brushes"
 
@@ -245,6 +251,18 @@ function BrushLayerEditor:set_visibility(cb)
 	self._visible = cb:get_value()
 
 	MassUnitManager:set_visibility(self._visible)
+end
+
+function BrushLayerEditor:_set_show_placed(cb)
+	self._show_placed = cb:get_value()
+
+	self:search_units()
+end
+
+function BrushLayerEditor:_set_short_names(cb)
+	self._short_names = cb:get_value()
+
+	self:search_units()
 end
 
 function BrushLayerEditor:select()
@@ -496,10 +514,14 @@ function BrushLayerEditor:build_menu()
     controls:tickbox("brush_on_editor_bodies", up, self._brush_on_editor_bodies, {text = "Brush on Editor Bodies", size_by_text = true})
     controls:tickbox("Visible", ClassClbk(self, "set_visibility"), self._visible, {size_by_text = true})
 
+	controls:tickbox("ShowPlacedBrushesOnly", ClassClbk(self, "_set_show_placed"), self._show_placed, {size_by_text = true})
+	controls:tickbox("ShortUnitPaths", ClassClbk(self, "_set_short_names"), self._short_names, {size_by_text = true})
+
 	local debug = controls:group("Debug", {align_method = "grid", closed = true})
 
     debug:tickbox("debug_draw_unit_orientation", up, self._debug_draw_unit_orientation, {text = "Draw unit orientations"})
     --debug:s_btn("OpenDebugList", ClassClbk(self, "_on_gui_open_debug_list"), {enabled = false})
+
 
 	self._debug_units_total = debug:lbl("Total Units:", {size_by_text = true})
 	self._debug_units_unique = debug:lbl("Unique Units:", {size_by_text = true})
@@ -525,8 +547,20 @@ function BrushLayerEditor:search_units(item)
 	local search = item:Value():lower():escape_special()
 	self._unit_list:ClearItems("units")
 	for _, name in pairs(self._brush_units) do
-		if name:lower():match(search) then
-			self._unit_list:button(name, ClassClbk(self, "select_unit"), {label = "units", text = name:gsub("units/", "")})
+		local match = name:lower():match(search)
+		if self._show_placed and match then
+			local positions = self:unit_positions(name)
+			match = #positions > 0
+		end
+
+		if match then
+			local display_name = name:gsub("units/", "")
+			if self._short_names then
+				display_name = BLE.Utils:ShortPath(name, 1)
+			end
+
+			local selected = table.contains(self._selected_unit_names, name)
+			self._unit_list:button(name, ClassClbk(self, "select_unit"), {label = "units", text = display_name, help = name, border_left = selected})
 		end
 	end
 	self._unit_list:AlignItems()
@@ -636,6 +670,46 @@ function BrushLayerEditor:select_unit(item)
 	end
 end
 
+function BrushLayerEditor:select_hovered_units()
+	local from = managers.editor:get_cursor_look_point(0)
+	local to = managers.editor:get_cursor_look_point(5000)
+	local ray_type = self._brush_on_editor_bodies and "body editor" or "body"
+
+	local ray = managers.editor:select_unit_by_raycast(self._place_slot_mask, ray_type)
+	if not ray then
+		return
+	end
+
+	self._selected_unit_names = {}
+
+	local base = ray.position - ray.normal * 40 - ray.normal * self._offset
+	local tip = ray.position + ray.normal * self._brush_height + ray.normal * self._offset
+
+	local units = World:find_units_quick("cylinder", base, tip, self._brush_size, self._brush_slot_mask)
+	if #units == 0 then
+		return
+	end
+	
+	for _, unit in ipairs(units) do
+		local name = BLE.Utils:Unhash(unit:name(), "unit")
+		
+		if table.contains(self._selected_unit_names, name) then
+			table.delete(self._selected_unit_names, name)
+		else
+			table.insert(self._selected_unit_names, name)
+		end
+	end		
+	
+	for _, unit_item in pairs(self._unit_list:Items()) do
+		unit_item:SetBorder({left = table.contains(self._selected_unit_names, unit_item.name)})
+	end
+	
+	self._brush_names = {}
+	for _, unit_name in ipairs(self._selected_unit_names) do
+		table.insert(self._brush_names, unit_name)
+	end
+end
+
 function BrushLayerEditor:select_brush(item)
 	for _, brush_item in pairs(self._brush_list:Items()) do
 		brush_item:SetBorder({left = brush_item.name == item.name})
@@ -695,6 +769,8 @@ function BrushLayerEditor:mouse_pressed(b, x, y)
         self:spray_units()
     elseif b == Idstring("1") then
         self:erase_units()
+	elseif b == Idstring("2") then
+        self:select_hovered_units()
 	elseif b == Idstring("mouse wheel up") then
 		self._brush_size = math.clamp(self._brush_size+10, 1, 1000)
 		self._radius_ctrl:SetValue(self._brush_size)
