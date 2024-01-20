@@ -311,6 +311,13 @@ function EditorSpecialObjective:generate_search_position(item)
     end
 end
 
+function EditorSpecialObjective:reset_search_position(item)
+	local menu = item.parent.parent
+	self._element.values.search_position = self._element.values.position
+	self:GetItem("search_position"):SetValue(self._element.values.position)
+	menu:SetValue(self._element.values.position, true)
+end
+
 function EditorSpecialObjective:apply_preset(item)
 	local selection = item:SelectedItem()
 	BLE.Utils:YesNoQuestion("This will apply the access flag preset " .. (selection or ""), function()
@@ -403,6 +410,7 @@ function EditorSpecialObjective:_build_panel()
     local search = self:Vector3Ctrl("search_position")
     local tb = search:GetToolbar()
     tb:tb_imgbtn("generate_search_pos", ClassClbk(self, "generate_search_position"), nil, BLE.Utils.EditorIcons.browse_file, {help = "Automatically set search position based on the end point of the So Action animation. May not always give correct results and should only be used for navlinks!"})
+	tb:tb_imgbtn("reset_search_pos", ClassClbk(self, "reset_search_position"), nil, BLE.Utils.EditorIcons.waypoint, {help = "Set search position back to element position."})
 	self._class_group:tickbox("LoopTestAnimation", function(item) BLE.Options:SetValue("Map/LoopTestAnimation", item:Value()) end, BLE.Options:GetValue("Map/LoopTestAnimation"))
     self:BooleanCtrl("is_navigation_link", {text = "Navigation link"})
 	self:BooleanCtrl("align_rotation")
