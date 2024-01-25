@@ -78,6 +78,7 @@ Utils.EditorIcons = {
 	empty_document = {160, 320, 32, 32},
 	document = {192, 320, 32, 32},
 	external = {224, 320, 32, 32},
+	waypoint = {256, 320, 32, 32},
 	
 	placeholder = {448, 448, 64, 64}
 }
