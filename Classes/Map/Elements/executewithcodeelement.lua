@@ -9,7 +9,7 @@ function EditorExecuteCode:_build_panel()
 	self:_create_panel()
     self._class_group:info([[
 Define a file that this element should execute. The file should return a function. Example: 
-return function(instigator, mod)
+return function(instigator, mod, argument)
     log("Hello instigator and mod", tostring(instigator), tostring(mod))
 end
 If you want to avoid executing the on_executed of this element, return false from that function.
