@@ -380,6 +380,41 @@ function ItemExt:PasteAxis(item)
 	end
 end
 
+function ItemExt:RandomizeYaw(item)
+	local menu = item.parent.parent
+	local value = menu:Value()
+	local random_rot = math.round(math.random(0, 360))
+	local rot = Rotation(random_rot, value:pitch(), value:roll())
+	menu:SetValue(rot, true)
+end
+
+function ItemExt:OffsetGrid(item)
+	local menu = item.parent.parent
+	local value = menu:Value()
+	local offset = managers.editor._grid_size / 2
+	local new_x = value.x + offset
+	local new_y = value.y + offset
+	
+	local vect = mvector3.copy(value)
+	mvector3.set_static(vect, new_x, new_y, value.z)
+	menu:SetValue(vect, true)
+end
+
+function ItemExt:Reset(item)
+	local menu = item.parent.parent
+	local value = menu:Value()
+	if type_name(value) == "Vector3" then
+		local vect = mvector3.copy(value)
+		mvector3.set_static(vect, 0, 0, 0)
+		menu:SetValue(vect, true)
+	elseif type_name(value) == "Rotation" then
+		local rot = Rotation(0, 0, 0)
+		menu:SetValue(rot, true)
+	elseif type_name(value) == "table" and menu.value_type == "Shape" and value._shape then
+		managers.editor:status_message("Not available for shapes")
+	end	
+end
+
 function ItemExt:RoundAxis(item)
 	local menu = item.parent.parent
 	local value = menu:Value()
@@ -395,6 +430,7 @@ function ItemExt:RoundAxis(item)
 		menu:SetValue(shape, true)
 	end
 end
+
 function ItemExt:Vec3Rot(name, clbk, pos, rot, o)
 	o = o or {}
 	if o.use_gridsnap_step then
@@ -418,6 +454,8 @@ function ItemExt:Vector3(name, clbk, value, o)
 	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
 	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
 	TB:tb_imgbtn("r", ClassClbk(self, "RoundAxis"), nil, icons.round_number, {help = "Round X,Y,Z Values"})
+	TB:tb_imgbtn("r", ClassClbk(self, "OffsetGrid"), nil, icons.repos_brush, {help = "half off-grid"})
+	-- TB:tb_imgbtn("r", ClassClbk(self, "Reset"), nil, icons.cross, {help = "Reset To 0"})
 	local controls = {"x", "y", "z"}
 	local items = {}
 	for i, control in pairs(controls) do
@@ -466,6 +504,8 @@ function ItemExt:Rotation(name, clbk, value, o)
 	TB:tb_imgbtn("p", ClassClbk(self, "PasteAxis"), nil, icons.paste, {help = "Paste"})
 	TB:tb_imgbtn("c", ClassClbk(self, "CopyAxis"), nil, icons.copy, {help = "Copy"})
 	TB:tb_imgbtn("r", ClassClbk(self, "RoundAxis"), nil, icons.round_number, {help = "Round Y,P,R Values"})
+	TB:tb_imgbtn("r", ClassClbk(self, "Reset"), nil, icons.cross, {help = "Reset To 0"})
+	TB:tb_imgbtn("r", ClassClbk(self, "RandomizeYaw"), nil, icons.reload, {help = "Randomize Yaw"})
 
 	local controls = {"yaw", "pitch", "roll"}
 	local items = {}
