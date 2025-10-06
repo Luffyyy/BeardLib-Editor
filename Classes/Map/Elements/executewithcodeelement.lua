@@ -27,6 +27,7 @@ If you want to avoid executing the on_executed of this element, return false fro
         end
     })
     self:ComboCtrl("use_path", {"mod", "level", "full"})
+    self:StringCtrl("argument")
 end
 
 EditorExecuteWithCode = EditorExecuteWithCode or class(MissionScriptEditor)
