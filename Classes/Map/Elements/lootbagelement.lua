@@ -4,10 +4,11 @@ EditorLootBag._test_units = {}
 function EditorLootBag:create_element()
     self.super.create_element(self)	
     self._element.class = "ElementLootBag"
-	self._element.values.spawn_dir = Vector3(0, 0, 1)
+	self._element.values.spawn_dir = Vector3(0, 0, -1)
 	self._element.values.push_multiplier = 0
 	self._element.values.carry_id = "none"
 	self._element.values.from_respawn = false
+	self._element.values.zipline_unit_id = nil
 end
 
 function EditorLootBag:test_element()
@@ -59,17 +60,56 @@ function EditorLootBag:update(t, dt)
 	local from = self._element.values.position
 	local to = from + self._element.values.spawn_dir * 100000
 	local ray = World:raycast("ray", from, to)
-	if ray and ray.unit then
+	if ray and ray.unit and not self._element.values.zipline_unit_id then
 		Application:draw_sphere(ray.position, 25, 1, 0, 0)
 		Application:draw_arrow(self._element.values.position, self._element.values.position + self._element.values.spawn_dir * 50, 0.75, 0.75, 0.75, 0.1)
 	end
 	EditorLootBag.super.update(self, t, dt)
 end
 
+function EditorLootBag:update_selected(t, dt)
+	if self._element.values.zipline_unit_id then
+		local id = self._element.values.zipline_unit_id
+		local unit = managers.worlddefinition:get_unit(id)
+		if alive(unit) then
+			self:draw_link({
+				g = 0.75,
+				b = 0,
+				r = 0,
+				from_unit = self._unit,
+				to_unit = unit
+			})
+			Application:draw(unit, 0, 0.75, 0)
+		else
+			self._element.values.zipline_unit_id = nil
+		end
+	end
+end
 
+function EditorLootBag:link_managed(unit)
+	if alive(unit) then
+		if self:check_unit(unit) and unit:unit_data() then
+			self:AddOrRemoveManaged("zipline_unit_id", {unit = unit}, {not_table = true})
+		end
+	end
+end
+
+function EditorLootBag:check_unit(unit)
+	return unit:zipline() and unit:zipline():is_usage_type_bag()
+end
+
+function EditorLootBag:reset_spawn_dir()
+	self._element.values.spawn_dir = Vector3(0, 0, -1)
+end
 
 function EditorLootBag:_build_panel()
 	self:_create_panel()
+	self:BuildUnitsManage("zipline_unit_id", nil, nil, {
+		text = "Zipline Unit",
+		single_select = true,
+		not_table = true,
+		check_unit = ClassClbk(self, "check_unit")
+	})
 	self:NumberCtrl("push_multiplier", {floats = 1, min = 0, help = "Use this to add a velocity to a physic push on the spawned unit"})
 	self:ComboCtrl("carry_id", table.list_add({"none"}, tweak_data.carry:get_carry_ids()), {
 		help = "Select a carry_id to be created.", 
@@ -79,6 +119,8 @@ function EditorLootBag:_build_panel()
 	})
 	self:BooleanCtrl("from_respawn")
 	self:Text("This element can spawn loot bags, control the spawn direction using your arrow keys")
+
+	self:tb_btn("Reset Push Direction", ClassClbk(self, "reset_spawn_dir"))
 end
 
 EditorLootBagTrigger = EditorLootBagTrigger or class(MissionScriptEditor)
