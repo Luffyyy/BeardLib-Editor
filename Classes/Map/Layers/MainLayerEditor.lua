@@ -39,15 +39,11 @@ function MainLayerEditor:build_menu()
     if Global.editor_loaded_instance and type(Global.editor_loaded_instance) == "table" then
         local return_button = self._holder:button("ReturnToLevel", ClassClbk(BLE.LoadLevel, "load_level", Global.editor_loaded_instance), {
             text = "Return to original level (".. tostring(Global.editor_loaded_instance.name)..")",
-            border_left = true, 
-            border_color = Color.yellow, 
-            min_height = 24, 
+            border_left = true,
+            border_color = Color.yellow,
+            min_height = 24,
             text_offset = {4, 4, 32, 4}})
         return_button:tb_imgbtn("Alert", nil, nil, BLE.Utils.EditorIcons.alert, {divider_type = true, img_scale = 0.8, w = 24, h = 24})
-    end
-    
-    if not managers.editor._has_fix then
-        self._holder:alert("Physics settings fix is not enabled!\nPlease enable it through the BLE settings menu\nSome features will not work.")
     end
 
     local load_db = self._holder:divgroup("LoadFromDatabase", {align_method = "grid"})
@@ -100,7 +96,7 @@ function MainLayerEditor:build_continents()
         local scripts = self._holder:group("Scripts", {max_height = 100, scrollbar = true, scroll_width = 4})
         --local all_scripts = table.map_keys(managers.mission._scripts)
         --self._current_continent = continents:combobox("CurrentContinent", ClassClbk(self, "set_current_continent"), all_continents, table.get_key(all_continents, managers.editor._current_continent) or 1)
-        --self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, managers.editor._current_script) or 1)    
+        --self._current_script = continents:combobox("CurrentScript", ClassClbk(self, "set_current_script"), all_scripts, table.get_key(all_scripts, managers.editor._current_script) or 1)
         local icons = BLE.Utils.EditorIcons
 
         continents:GetToolbar():tb_imgbtn("NewContinent", ClassClbk(self, "new_continent"), nil, icons.plus, {help = "Add new Continent"})
@@ -112,7 +108,7 @@ function MainLayerEditor:build_continents()
             local locked = data.locked
             table.insert(base_ids, {base_id = data.base_id, name = name})
             local continent = cpan:button(name, ClassClbk(self, "set_current_continent", cpan), {
-                text = name, 
+                text = name,
                 border_left = locked or managers.editor._current_continent == name,
                 border_color = locked and Color.red or Color.green,
                 private = {background_color = locked and Color.red:with_alpha(0.2) or nil},
@@ -131,13 +127,13 @@ function MainLayerEditor:build_continents()
                 for sname, data in pairs(managers.mission._missions[name]) do
                     local script = scripts:button(sname, ClassClbk(self, "set_current_script", scripts), {
                         text = sname,
-                        continent = name, 
-                        border_left = managers.editor._current_script == sname, 
-                        border_color = Color.green, 
+                        continent = name,
+                        border_left = managers.editor._current_script == sname,
+                        border_color = Color.green,
                         private = {offset = 2},
                         help = "Set as current script"
                     })
-                    
+
                     script:tb_imgbtn("RemoveScript", ClassClbk(self, "remove_script", sname), nil, icons.cross, {highlight_color = Color.red, help = "Remove Script"})
                     script:tb_imgbtn("ScriptSettings", ClassClbk(self, "open_script_settings", name, sname), nil, icons.settings_gear, {help = "Script Settings"})
                     --script:tb_imgbtn("Rename", ClassClbk(self, "rename_script", sname), nil, icons.pen, {help = "Rename Script"})
@@ -263,7 +259,7 @@ function MainLayerEditor:set_current_script(menu, item)
     end
 end
 
-function MainLayerEditor:set_current_continent(menu, item) 
+function MainLayerEditor:set_current_continent(menu, item)
     if managers.editor._current_continent ~= item:Name() then
         managers.editor._current_continent = item:Name()
         for _, item in pairs(menu:Items()) do
@@ -296,10 +292,10 @@ function MainLayerEditor:toggle_unit_visibility(data, item)
     data.visible = data.visible == false and true or false
     local helpers_visible = BLE.Options:GetValue("Map/EditorUnits")
     for _, unit in pairs(self:get_all_units_from_continent(data.name)) do
-        if alive(unit) then 
+        if alive(unit) then
             local ud = unit:unit_data()
             if type(ud) == "table" and (helpers_visible or not (ud.only_visible_in_editor or ud.only_exists_in_editor)) then
-                unit:set_visible(data.visible) 
+                unit:set_visible(data.visible)
             end
         end
     end
@@ -461,7 +457,7 @@ function MainLayerEditor:add_new_mission_script()
 
     --    if cname == "world" and name ~= "default" and not mission._missions[cname].default then
     --        BLE.Dialog:Show({
-    --            title = "WARNING!", 
+    --            title = "WARNING!",
     --            message = "First mission script name for the world continent must always be named 'default'"
     --        })
 
@@ -471,7 +467,7 @@ function MainLayerEditor:add_new_mission_script()
     --    mission._missions[cname][name] = mission._missions[cname][name] or {
     --        activate_on_parsed = true,
     --        elements = {},
-    --        instances = {}   
+    --        instances = {}
     --    }
     --    local data = clone(mission._missions[cname][name])
     --    data.name = name

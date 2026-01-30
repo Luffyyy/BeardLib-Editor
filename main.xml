@@ -1,4 +1,4 @@
-<mod 
+<mod
 		name="BeardLib-Editor"
 		global_key="BLE"
 		ignore_errors="true"
@@ -128,7 +128,6 @@
         <hook source_file="lib/managers/navigationmanager" file="NavigationManager.lua"/>
         <hook source_file="lib/managers/navfieldbuilder" file="NavFieldBuilder.lua"/>
         <hook source_file="core/lib/managers/viewport/environment/coreenvironmentmanager" file="EnvironmentManager.lua"/>
-    	<hook source_file="lib/network/matchmaking/networkmatchmakingsteam" file="NetworkMatchMakingSteam.lua"/>
     	<hook source_file="lib/tweak_data/levelstweakdata" file="Fixes.lua"/>
     	<hook source_file="lib/managers/jobmanager" file="Fixes.lua"/>
         <hook source_file="core/lib/managers/coreworldcameramanager" file="Fixes.lua"/>
@@ -139,7 +138,7 @@
         <hook source_file="lib/managers/menu/menucomponentmanager" file="LoadLastLevelButton.lua"/>
     </Hooks>
     <Options build_menu="false" early_post_init="true">
-        <options>                
+        <options>
             <option type="number" default_value="3" name="LevelsColumns"/>
             <option type="Color" default_value="Color('4272d9')" name="AccentColor"/>
             <option type="Color" default_value="Color('99333333')" name="BackgroundColor"/>
@@ -163,7 +162,7 @@
             <option name="LastConvertedFile" type="string"/>
             <option name="GUIOnRight" type="bool" value="false"/>
             <option name="ToolbarPosition" type="number" min="1" max="3" default_value="1"/>
-            
+
             <option_group name="Input">
                 <option type="string" default_value="1" name="SpawnUnit"/>
                 <option type="string" default_value="2" name="SpawnElement"/>
@@ -314,7 +313,7 @@
 	    <value_node value="ElementBLCustomAchievement"/>
         <value_node value="ElementRelativeTeleport"/>
         <value_node value="ElementRelativeTeleportTarget"/>
-        
+
         <!--Normal-->
         <value_node value="ElementSideJobAward"/>
         <value_node value="ElementSideJobFilter"/>

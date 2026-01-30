@@ -14,7 +14,6 @@ function Options:init()
 	main:GetToolbar():tb_imgbtn("ResetMainOptions", ClassClbk(self, "show_reset_dialog", main), nil, icons.reset_settings, {img_scale = 0.7, help = "Reset main settings"})
 	main:button("ResetAllOptions", ClassClbk(self, "show_reset_dialog", page))
 	main:button("ReloadEditor", ClassClbk(self, "reload"), {help = "A reload button if you wish to see your changes in effect faster. Pleae don't use this when actually working on a project."})
-	main:button(FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and "EnablePhysicsFix" or "DisablePhysicsFix", ClassClbk(self, "show_disable_physics_fix_dialog"))
 
 	main:separator()
 	main:numberbox("AutoSaveMinutes", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/AutoSaveMinutes"), {help = "Set the time for auto saving"})
@@ -159,26 +158,6 @@ function Options:init()
 	self:AlignItems()
 end
 
-function Options:show_disable_physics_fix_dialog()
-	local file = "mods/saves/BLEDisablePhysicsFix"
-	local disabled = FileIO:Exists(file)
-	BLE.Utils:YesNoQuestion(string.format([[
-Since the editor requires an edit to the physics settings of the game, and such edit can lead to crashing other players (or cause unwanted bugs), the editor also disables online play.
-
-Do note however, the editor will not work properly without said fixes. So once you're done playing and wish to continue using the editor, please turn on this option.
-
-Clicking 'Yes' will %s the physics settings fix and close the game. After opening the game again, online play will be %s.
-]], disabled and "enable" or "disable", disabled and "disabled" or "enabled")
-, function()
-		if disabled then
-			FileIO:Delete(file)
-		else
-			FileIO:WriteTo(file, "", "w")
-		end
-		setup:quit()
-	end)
-end
-
 function Options:build_color_groups()
 	local icons =  BLE.Utils.EditorIcons
 
@@ -242,7 +221,7 @@ function Options:set_color_group(item)
 end
 
 function Options:edit_color_group(name)
-	local list = {}  
+	local list = {}
 	for _, element in pairs(BLE._config.MissionElements) do
         local elem_name = element:gsub("Element", "")
 		local available = true
@@ -259,7 +238,7 @@ function Options:edit_color_group(name)
 	BLE.SelectDialog:Show({
         selected_list = self._elem_colors[name].elements,
         list = list,
-        callback = function(list) 
+        callback = function(list)
 			self._elem_colors[name].elements = list
 			self:build_color_groups()
 			BLE.Options:SetValue("Map/ElementColorGroups", self._elem_colors)
@@ -309,7 +288,7 @@ function Options:show_reset_dialog(menu)
 end
 
 function Options:Load(data)
-    
+
 end
 
 function Options:Destroy()
