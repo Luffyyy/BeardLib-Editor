@@ -15,9 +15,8 @@ function BLE:Init()
     self.ProjectClassesDir = Path:CombineDir(self.ClassDirectory, "Project")
     self.TempDir = Path:CombineDir(self.ModPath, "Tools/temp")
 
-	self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
-	self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
-    self.HasFix = not FileIO:Exists("mods/saves/BLEDisablePhysicsFix") and FileIO:Exists(self.ModPath.."supermod.xml")
+    self.PrefabsDirectory = Path:CombineDir(BeardLib.config.maps_dir, "prefabs")
+    self.ElementsDir = Path:CombineDir(self.MapClassesDir, "Elements")
     self.UsableAssets = {"unit", "effect", "environment", "scene"}
 
     Hooks:Add("MenuUpdate", "BeardLibEditorMenuUpdate", ClassClbk(BLE, "Update"))
@@ -33,10 +32,6 @@ function BLE:Init()
         self:GeneratePackageData()
         FileIO:Delete(packages_file)
     end
-end
-
-function BLE:RunningFix()
-    return self.HasFix
 end
 
 function BLE:Dofiles(path)
@@ -93,6 +88,12 @@ function BLE:InitManagers(data)
         self:LoadHashlist()
     end
 
+    if Global.editor_mode then
+        Application:set_force_editor_physics_bodies(true)
+    else
+        Application:set_force_editor_physics_bodies(false)
+    end
+
     Hooks:PostHook(MenuCallbackHandler, "change_resolution", "reload_to_fix_res", function()
         BeardLib:AddDelayedCall("FixEditorResolution", 0.5, ClassClbk(BLE, "MapEditorCodeReload"), true)
     end)
@@ -106,7 +107,7 @@ function BLE:InitManagers(data)
     self.ColorDialog = ColorDialog:new(self._dialogs_opt)
     self.InputDialog = InputDialog:new(self._dialogs_opt)
     self.FBD = FileBrowserDialog:new(self._dialogs_opt)
-    self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)    
+    self.MSLD = MultiSelectListDialog:new(self._dialogs_opt)
 
     if Global.editor_mode then
         if not self._vp then
@@ -337,7 +338,7 @@ function BLE:GeneratePackageData()
                     end
                     if typ then -- Added typ check here
                         paths[typ] = paths[typ] or {}
-    
+
                         if DB:has(typ, path) then
                             paths[typ][path] = true
                             if pkg then

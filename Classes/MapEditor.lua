@@ -60,7 +60,7 @@ function Editor:init(data)
 		2000,
 		10000
 	}
-    
+
     self._snap_rotations = {
 		1,
 		2,
@@ -82,7 +82,6 @@ function Editor:init(data)
     self:_init_head_lamp()
 
     self:set_use_surface_move(BLE.Options:GetValue("Map/SurfaceMove"))
-    self:check_has_fix()
 
     self._idstrings = {
         ["@ID4f01cba97e94239b@"] = "x",
@@ -177,9 +176,9 @@ function Editor:post_init(menu)
     m.material = MaterialEditor:new(self, menu)
     --m.preplanning = PreplanningEditor:new(self, menu)
     self._value_info = self._editor_menu:divider("ValueInfo", {
-        foreground = Color(1, 0.8, 0.8, 0), 
-        visible = false, 
-        size_by_text = true, 
+        foreground = Color(1, 0.8, 0.8, 0),
+        visible = false,
+        size_by_text = true,
         border_left = false
     })
 
@@ -195,9 +194,7 @@ function Editor:post_init(menu)
     m.world:Switch()
 
     menu.mouse_move = ClassClbk(m.static, "mouse_moved")
-    if self._has_fix then
-        m.quick:toggle_widget("move")
-    end
+    m.quick:toggle_widget("move")
 
     TimerManager:pausable():set_multiplier(1)
 	TimerManager:game_animation():set_multiplier(1)
@@ -208,7 +205,7 @@ function Editor:animate_bg_fade()
     if not self._menu then
         return
     end
-    
+
     local bg = self._menu._panel:rect({
         name = "Background",
         layer = 10000,
@@ -223,13 +220,6 @@ function Editor:animate_bg_fade()
         end,
         wait = 0.5,
     })
-end
-
-function Editor:check_has_fix()
-    local unit = World:spawn_unit(Idstring("core/units/move_widget/move_widget"), Vector3())
-    self._has_fix = World:raycast("ray", unit:position(), unit:position():with_z(100), "ray_type", "widget", "target_unit", unit) ~= nil
-    unit:set_enabled(false)
-    unit:set_slot(0)
 end
 
 function Editor:_init_post_effects()
@@ -478,7 +468,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
     else
         t = BLE.Utils:GetUnitType(unit_path)
         local ud = old_unit and old_unit.unit_data
-        local wd = old_unit and old_unit.wire_data 
+        local wd = old_unit and old_unit.wire_data
         local ad = old_unit and old_unit.ai_editor_data
         data = {
             unit_data = {
@@ -498,7 +488,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
                 projection_light = ud and ud.projection_light,
                 projection_lights = ud and ud.projection_lights,
                 projection_textures = ud and ud.projection_textures,
-                triggers = ud and ud.triggers, 
+                triggers = ud and ud.triggers,
                 editable_gui = ud and ud.editable_gui,
                 ladder = ud and ud.ladder,
                 zipline = ud and ud.zipline,
@@ -509,7 +499,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
             data.wire_data = wd or {
                 slack = 0,
                 target_pos = data.unit_data.position,
-                target_rot = Rotation() 
+                target_rot = Rotation()
             }
         elseif t == Idstring("ai") then
             -- hack for now. patrol points dont have ai_editor_data but are still ai
@@ -519,7 +509,7 @@ function Editor:SpawnUnit(unit_path, old_unit, add, unit_id, no_select)
                     visibilty_include_filter = {},
                     location_id = "location_unknown",
                     suspicion_mul = 1,
-                    detection_mul = 1                
+                    detection_mul = 1
                 }
             end
         end
@@ -652,7 +642,7 @@ function Editor:set_unit_rotations(rot)
     end
 end
 
-function Editor:set_unit_position(unit, pos, rot) 
+function Editor:set_unit_position(unit, pos, rot)
     local ud = unit:unit_data()
     rot = rot or ud.rotation
     if pos then
@@ -733,12 +723,12 @@ end
 function Editor:set_use_surface_move(value) self._use_surface_move = value end
 function Editor:set_use_quick_access(value) self.parts.quick:SetVisible(value) end
 function Editor:status_message(text) self.parts.status:StatusMessage(text) end
-function Editor:toggle_local_move() 
+function Editor:toggle_local_move()
     self._use_local_move = not self._use_local_move
     self.parts.quick:update_local_move(self._use_local_move)
 end
-function Editor:update_snap_rotation(value) 
-    self._snap_rotation = tonumber(value) 
+function Editor:update_snap_rotation(value)
+    self._snap_rotation = tonumber(value)
     for _, manager in pairs(self.parts) do
         if manager.update_snap_rotation then
             manager:update_snap_rotation()
@@ -749,10 +739,10 @@ function Editor:set_disable_portals(value) self._disable_portals = value end
 function Editor:set_script_debug(value) self._script_debug = value end
 function Editor:set_grid_altitude(altitude) self._grid_altitude = altitude end
 
-function Editor:hide_units() 
+function Editor:hide_units()
     local selected_units = self:selected_units()
 
-    if alt() then 
+    if alt() then
         self:on_unhide_all()
     elseif shift() then
         self:on_hide_unselected()
@@ -809,6 +799,7 @@ function Editor:set_unit_visible(unit, visible)
 end
 
 function Editor:destroy()
+    Application:set_force_editor_physics_bodies(false)
     local scroll_y_tbl = {}
     for name, manager in pairs(self.parts) do
         if alive(manager._holder) then
@@ -863,14 +854,14 @@ function Editor:on_open_unit_file(data)
             if asset and asset.file then
                 local base_path = string.gsub(Application:base_path(), "\\", "/")
                 local file = Path:GetDirectory(asset.file)
-                
+
                 Application:shell_explore_to_folder(Path:Combine(base_path, file))
             else
                 self:status_message("Cannot open unit folder")
             end
             return
 		end
-        
+
 		if not lookup then
 			return
 		end
@@ -914,7 +905,7 @@ function Editor:reload_units(unit_names, skip_replace_units)
     for _, unit_name in ipairs(unit_names) do
         local unit_path = unit_name:id()
         local unit_data = PackageManager:unit_data(unit_path)
-        
+
         local sequence_path = unit_data:sequence_manager_filename()
         local material_config_path = unit_data:material_config()
         local model_path = unit_data:model()
@@ -932,7 +923,7 @@ function Editor:reload_units(unit_names, skip_replace_units)
         local unit_file = BeardLib.Managers.File:Get("unit", unit_path)
         local model_file = BeardLib.Managers.File:Get("model", model_path)
         local object_file = BeardLib.Managers.File:Get("object", model_path)
-        
+
         table.insert(files, {path = unit_path, file = unit_file.file, type = Idstring("unit")})
         table.insert(files, {path = model_path, file = object_file.file, type = Idstring("object")})
         table.insert(files, {path = model_path, file = model_file.file, type = Idstring("model")})
@@ -1067,7 +1058,7 @@ function Editor:update(t, dt)
                     manager:update(t, dt)
                 end
             end
-            
+
             -- Check binds
             local allowed = not BeardLib.managers.dialog:DialogOpened()
             local not_focused = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Typing())
@@ -1093,7 +1084,7 @@ function Editor:update(t, dt)
             self.parts.cubemap_creator:update(t, dt)
         end
     end
-    
+
     for n, manager in pairs(self.parts) do
         if manager.disabled_update then
             manager:disabled_update(t, dt)
@@ -1189,7 +1180,7 @@ local v0 = Vector3()
 function Editor:update_camera(t, dt)
     local shft = shift()
     local move_flying = BLE.Options:GetValue("Map/OnlyMoveWhileFlying")
-    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused() or self._camera_locked) and (not move_flying or shft and move_flying) 
+    local move = not (self._menu:Focused() or BeardLib.managers.dialog:Menu():Focused() or self._camera_locked) and (not move_flying or shft and move_flying)
     if not move or not shft then
         managers.mouse_pointer:_activate()
     end
@@ -1265,7 +1256,7 @@ function Editor:update_widgets(t, dt)
                 if self._last_rot ~= nil then
                     self:set_unit_rotations(self._last_rot)
                     self._last_rot = nil
-                end               
+                end
                 BLE.Utils:SetPosition(self._rotate_widget._widget, widget_pos, widget_rot)
                 self._rotate_widget:update(t, dt)
             end
@@ -1294,7 +1285,7 @@ end
 function Editor:update_snappoints(t, dt)
     local pos = self._current_pos
     local unit = self:get_dummy_or_grabbed_unit()
-    
+
     if alive(unit) and self.parts.opt:get_value("UseSnappoints") and pos and unit.find_units then
 		local r = self.parts.opt:get_value("SnappointRange")
 
@@ -1318,7 +1309,7 @@ function Editor:update_snappoints(t, dt)
                         table.insert(self._snap_table, Idstring(id))
                     end
                 end
-                
+
                 for _, o in ipairs(objects) do
                     if table.contains(self._snap_table, o:name()) then
                         table.insert(aligns, o)
@@ -1386,7 +1377,7 @@ function Editor:draw_ruler(t, dt)
 	Application:draw_line(start_pos, end_pos, 1, 1, 1)
     if end_pos then
         self:set_value_info(self._ruler_dist)
-	    self:set_value_info_pos(self:world_to_screen(end_pos)) 
+	    self:set_value_info_pos(self:world_to_screen(end_pos))
         --self._brush:text(end_pos + Vector3(0, 0, 45), tostring(self._ruler_dist))
     end
 end
@@ -1472,7 +1463,7 @@ function Editor:_simulation_disable_continents()
 	--	t = self:parse_simulation_world_setting_path(self._simulation_world_setting_path)
 	--end
 
-    
+
 	for name, continent in pairs(managers.worlddefinition._continents) do
         if continent.enabled_in_simulation == false then
             for _, static in pairs(managers.worlddefinition._continent_definitions[name].statics) do
@@ -1484,14 +1475,14 @@ function Editor:_simulation_disable_continents()
                 end
             end
         end
-	end  
+	end
 end
 
 function Editor:go_through_all_units(mask)
 	local units = World:find_units_quick("all", mask)
 
 	for _, unit in ipairs(units) do
-        local ud = unit:unit_data() 
+        local ud = unit:unit_data()
 		if ud and ud.disable_collision and unit:num_bodies() > 0 then
             local disable_collision = ud.disable_collision
 
