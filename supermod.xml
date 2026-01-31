@@ -1,8 +1,4 @@
 <?xml version="1.0"?>
 <mod>
-	<tweak definition="physics.xml" />
-    <wren>
-        <init file="PhysicsPatcher"/>
-    </wren>
 	<native_module platform="mswindows" filename="Tools/lfs_sblt.dll" />
 </mod>
