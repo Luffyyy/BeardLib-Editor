@@ -72,27 +72,27 @@ function EnvTool:build_menu()
 
     --FOG
 	local fog = self._holder:group("Fog")
-	
+
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:colorbox("fog_start_color", nil, nil, {text = "Start color", ret_vec = true}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:colorbox("fog_far_low_color", nil, nil, {text = "Far low color", ret_vec = true}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:slider("fog_min_range", nil, 1, {text = "Min range", min = 0, max = 5000, floats = 1}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:slider("fog_min_range", nil, 1, {text = "Min range", min = -6000, max = 6000, floats = 1}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:slider("fog_max_range", nil, 1, {text = "Max range", min = 0, max = 500000, floats = 1}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", fog:slider("fog_max_density", nil, 1, {text = "Max density", min = 0, max = 1}))
 
     --SKY DOME LIGHT
     local skydome = self._holder:group("Sky Dome Light")
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:colorbox("sky_top_color", nil, nil, {text = "Top color", ret_vec = true}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:slider("sky_top_color_scale", nil, 1, {text = "Top scale", step = 0.1, min = 0, max = 10}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:slider("sky_top_color_scale", nil, 1, {text = "Top scale", step = 0.1, min = 0, max = 50}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:colorbox("sky_bottom_color", nil, nil, {text = "Bottom color", ret_vec = true}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:slider("sky_bottom_color_scale", nil, 1, {text = "Bottom scale", step = 0.1, min = 0, max = 10}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", skydome:slider("sky_bottom_color_scale", nil, 1, {text = "Bottom scale", step = 0.1, min = 0, max = 50}))
 
     -- AMBIENT
     local ambient = self._holder:group("Ambient")
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:colorbox("ambient_color", nil, nil, {text = "Color", ret_vec = true}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_color_scale", nil, 1, {text = "Color scale", step = 0.1, min = 0, max = 10}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_color_scale", nil, 1, {text = "Color scale", step = 0.1, min = 0, max = 50}))
     self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_scale", nil, 1, {text = "Scale", step = 0.1, min = 0, max = 1}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_falloff_scale", nil, 1, {text = "Falloff scale", step = 0.1, min = 0, max = 10}))
-    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("effect_light_scale", nil, 1, {text = "Effect lighting scale", step = 0.1, min = 0, max = 10}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("ambient_falloff_scale", nil, 1, {text = "Falloff scale", step = 0.1, min = 0, max = 50}))
+    self:add_post_processors_param("deferred", "deferred_lighting", "apply_ambient", ambient:slider("effect_light_scale", nil, 1, {text = "Effect lighting scale", step = 0.1, min = 0, max = 50}))
 
     -- BLOOM
     local bloom = self._holder:group("Bloom")
@@ -111,7 +111,7 @@ function EnvTool:build_menu()
     -- TEXTURES
     local textures = self._holder:group("Underlay / Textures", {control_slice = 0.5})
     self:add_sky_param(textures:pathbox("underlay", nil, "", "scene", {not_close = true, loaded = true, text = "Underlay", check = function(entry)
-        return not (entry:match("core/levels") or entry:match("levels/zone")) 
+        return not (entry:match("core/levels") or entry:match("levels/zone"))
     end}))
     self:add_sky_param(textures:pathbox("sky_texture", nil, "", "texture", {not_close = true, text = "Sky Texture"}))
     self:add_sky_param(textures:pathbox("global_texture", nil, "", "texture", {not_close = true, text = "Cubemap"}))
@@ -388,7 +388,7 @@ function EnvTool:add_post_processors_param(pro, effect, mod, gui)
     self._posteffect.post_processors[pro].effects[effect].modifiers[mod] = self._posteffect.post_processors[pro].effects[effect].modifiers[mod] or {}
     self._posteffect.post_processors[pro].effects[effect].modifiers[mod].params = self._posteffect.post_processors[pro].effects[effect].modifiers[mod].params or {}
     self._posteffect.post_processors[pro].effects[effect].modifiers[mod].params[gui.name] = gui
- 
+
     local processor = managers.viewport:first_active_viewport():vp():get_post_processor_effect("World", Idstring(pro))
     if processor then
         local key = Idstring("post_effect/" .. pro .. "/" .. effect .. "/" .. mod .. "/" .. gui.name):key()
