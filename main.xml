@@ -8,7 +8,7 @@
 		min_lib_ver="4.5"
 		core_class="Core.lua"
 	>
-    <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor-master" dont_delete="true"/>
+    <AssetUpdates provider="github" custom_name="GitHub Update" branch="master" id="Luffyyy/BeardLib-Editor" dont_delete="true"/>
     <AssetUpdates id="25270" provider="modworkshop" custom_name="Data Files" folder_name="Data" install_directory="$ModPath$" name="DataFilesUpdate"/>
     <load_first Options="true"/>
     <Classes directory="Classes">
