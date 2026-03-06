@@ -136,8 +136,8 @@ function AiEditor:build_menu()
             )
         )
     ]]
-    graphs:button("ClearAll", ClassClbk(self, "_clear_graphs"), {size_by_text = true})
-    graphs:button("ClearSelected", ClassClbk(self, "_clear_selected_nav_segment"), {size_by_text = true})
+    graphs:button("DeleteAll", ClassClbk(self, "_clear_graphs"), {size_by_text = true})
+    graphs:button("DeleteSelected", ClassClbk(self, "_clear_selected_nav_segment"), {size_by_text = true})
 
     local navigation_debug = graphs:group("NavigationDebug", { text = "Navigation Visualization" })
     navigation_debug:GetToolbar():lbl("SegID", {text = "No Segment", size_by_text = true, foreground = navigation_debug.foreground, auto_foreground = false})
@@ -188,8 +188,8 @@ function AiEditor:_build_draw_data(group)
 
     self._draw_options["fast_drawing"] = group:tickbox("UseFastDrawing", ClassClbk(self, "_draw_nav_segments"), self:Val("FastAIDrawing"), {
         help = "Draw all visualization options instantly, can have an effect on performance",
-        offset = 0, 
-        enabled = true 
+        offset = 0,
+        enabled = true
     })
     --group:tickbox("Segments", nil, true, { w = w, items_size = 15, offset = 0})
     for _, data in pairs(self._draw_helpers) do
@@ -260,7 +260,7 @@ function AiEditor:_build_patrol_points(ai_data)
         ai_data:AlignItems(true)
         return
     end
-    
+
     points:SetEnabled(true)
     local path = managers.ai_data:patrol_path(self._current_patrol_path)
     for i, v in ipairs(path.points) do
@@ -650,7 +650,7 @@ function AiEditor:_select_patrol_path(ai_data, path_name)
 
     for _, path_item in pairs(ai_data:GetItem("PatrolPaths"):Items()) do
         path_item:SetBorder({left = path_item.name == self._current_patrol_path})
-    end 
+    end
     self:_build_patrol_points(ai_data)
 end
 
@@ -820,7 +820,7 @@ function AiEditor:build_nav_segments(build_type)
 
             local unit_full_name = unit_id .. " [" .. editor_id .. "]"
             BLE.Utils:Notify("Error!", "Found a nav surface unit with a duplicate ID: " .. tostring(unit_full_name) .. "\nPlease delete it before proceeding")
-            
+
             self:reenable_disabled_units()
             return
         end
