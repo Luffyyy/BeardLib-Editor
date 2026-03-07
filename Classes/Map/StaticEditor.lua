@@ -12,6 +12,8 @@ function Static:init(parent, menu)
     self._set_elements = {}
     self._nav_surface = Idstring("core/units/nav_surface/nav_surface")
     self._widget_slot_mask = World:make_slot_mask(1)
+    self._temp_unit_pos = nil
+    self._temp_unit_rot = nil
 end
 
 function Static:enable()
@@ -380,6 +382,7 @@ function Static:build_unit_editor_menu()
     self:build_positions_items()
     self:build_extension_items()
     self:build_physics_items()
+    self:build_animated_vehicle_items()
 end
 
 function Static:build_unit_main_values()
@@ -1859,6 +1862,112 @@ function Static:remove_polyline()
 
 		self._polyline = nil
 	end
+end
+
+function Static:is_vehicle()
+    local is_vehicle = false
+    local unit = self._selected_units[1]
+    local AnimatedVehicleBase = getmetatable(unit:base()) == AnimatedVehicleBase
+    if AnimatedVehicleBase then
+        is_vehicle = true
+    end
+    return is_vehicle
+end
+
+function Static:build_animated_vehicle_items()
+    if not self:is_vehicle() then
+        return
+    end
+
+    local unit = self._selected_units[1]
+    local reset_sequence = unit:damage() and unit:damage():has_sequence("__reset_animation__")
+    local animvehicle = self:group("AnimatedVehicle", {index = 3})
+    local anims_box = animvehicle:combobox("Animation")
+    local mesh_variations = table.list_union(managers.sequence:get_editable_state_sequence_list(unit:name()), managers.sequence:get_triggable_sequence_list(unit:name()))
+    local anims = {}
+    local whitelist = {
+        "anim_",
+        "arrive",
+        "enter",
+        "exit",
+        "leave",
+        "heli_",
+        "redi_",
+        "takeoff",
+        "flyin",
+        "flyout",
+        "hover",
+        "circulate",
+        "door",
+        "helper"
+    }
+
+    -- this sucks but it works
+    for i, seq in pairs(mesh_variations) do
+        local is_valid = false
+
+        for i, word in ipairs(whitelist) do
+            if string.find(seq, word) then
+                is_valid = true
+                break
+            end
+        end
+
+        if is_valid and not string.find(seq, "state") then
+            table.insert(anims, seq)
+        end
+    end
+
+    table.sort(anims)
+    anims_box:SetItems(anims)
+    animvehicle:s_btn("PlayAnimation", ClassClbk(self, "vehicle_play_anim"), {size_by_text = true, help = "Plays the currently selected animation.\n(Warning, this can mess up your unit's position if used while an animation is currently playing.)"})
+    animvehicle:s_btn("ResetAnimation", ClassClbk(self, "vehicle_anim_reset"), {size_by_text = true, help = "Stops the animation and reverts the unit back to it's original position."})
+    animvehicle:s_btn("SavePosition", ClassClbk(self, "vehicle_save_pos"), {size_by_text = true, help = "Temporarily save the unit's current position"})
+    animvehicle:s_btn("ResetPosition", ClassClbk(self, "vehicle_reset_pos"), {enabled = false, size_by_text = true, help = "Revert back to the saved position"})
+    if not reset_sequence then
+        self:GetItem("ResetAnimation"):SetEnabled(false)
+        self:GetItem("SavePosition"):SetEnabled(false)
+    end
+end
+
+function Static:vehicle_anim_reset()
+    local unit = self._selected_units[1]
+    if unit:damage() and unit:damage():has_sequence("__reset_animation__") then
+        unit:damage():run_sequence_simple("__reset_animation__")
+    end
+end
+
+function Static:vehicle_play_anim()
+    local sequence = self:GetItem("Animation"):SelectedItem()
+    if not sequence then
+        managers.editor:status_message("No animation selected")
+        return
+    end
+
+    local unit = self._selected_units[1]
+    if unit:damage() and unit:damage():has_sequence(sequence) then
+        managers.editor:status_message("Playing: " .. sequence)
+        unit:damage():run_sequence_simple(sequence)
+    end
+end
+
+function Static:vehicle_save_pos()
+    local unit = self._selected_units[1]
+    self._temp_unit_pos = unit:position()
+    self._temp_unit_rot = unit:rotation()
+    self:GetItem("ResetPosition"):SetEnabled(true)
+    local x = string.format("%.0f", self._temp_unit_pos[1])
+    local y = string.format("%.0f", self._temp_unit_pos[2])
+    local z = string.format("%.0f", self._temp_unit_pos[3])
+    local saved_pos = x .. ", " .. y .. ", " .. z
+    self:GetItem("SavePosition"):SetText("Save Position (Saved at: " .. saved_pos .. ")")
+    log(saved_pos)
+end
+
+function Static:vehicle_reset_pos()
+    self:vehicle_anim_reset()
+    local unit = self._selected_units[1]
+    BLE.Utils:SetPosition(unit, self._temp_unit_pos, self._temp_unit_rot)
 end
 
 function Static:build_physics_items()
