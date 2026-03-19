@@ -10,34 +10,130 @@ local difficulty_loc = {
 	"menu_difficulty_apocalypse",
 	"menu_difficulty_sm_wish"
 }
+local edit_tag = "[Currently editing] "
+local view_tag = "[Currently viewing] "
+local favorite_levels = BLE.Options:GetValue("FavoriteLevels")
 
 function LoadLevelMenu:init(data)
 	data = data or {}
 	local menu = BLE.Menu
 	self._menu = menu:make_page("Levels", nil, {scrollbar = false, index = 2, auto_align = false})
 	ItemExt:add_funcs(self)
-	local filters = self:holder("Filters", {align_method = "grid", inherit_values = {size_by_text = true, offset = 0}})
-	local w = filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla):Width()
-	w = w + filters:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true)):Width()
-	w = w + filters:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true)):Width()
-	filters:textbox("Search", ClassClbk(self, "search_levels"), nil, {w = filters:ItemsWidth() - w, index = 1, control_slice = 0.85, offset = 0})
+	local page = self._menu
+	local gap = 10
+	local gap2 = gap / 2
+	local sidebar_width = 350
+	local sb_off = {offset = {4, 0}}
+	local main_width = page:W() - sidebar_width - gap
+	local sidebar = self:holder("sidebar", {
+		align_method = "normal",
+		w = sidebar_width,
+		h = page:H(),
+		offset = {0, 0},
+		auto_align = true,
+	})
+	local main = self:holder("main", {
+		w = main_width,
+		h = page:H(),
+		offset = {0, 0},
+		position = {sidebar:Right() + gap, sidebar:Top()}
+	})
+	
+	local filters = sidebar:group("Filters", {
+		align_method = "normal",
+		offset = 0,
+		inherit_values = sb_off
+	})
+	filters:textbox("Search", ClassClbk(self, "search_levels"), nil, {control_slice = 0.75})
+	filters:tickbox("Vanilla", ClassClbk(self, "load_levels"), data.vanilla)
+	filters:tickbox("Custom", ClassClbk(self, "load_levels"), NotNil(data.custom, true))
+	filters:tickbox("Narratives", ClassClbk(self, "load_levels"), NotNil(data.narratives, true))
 
-	local load_options = self:pan("LoadOptions", {align_method = "grid", auto_height = true, inherit_values = {offset = 0}})
-    local third_w = load_options:ItemsWidth() / 3
-	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true, w = third_w, offset = 0})
-	load_options:numberbox("MissionFilter", nil, nil, {w = third_w, floats = 0, offset = 0, help = "Set a mission filter to be forced on the level, 0 uses the default filter."})
-	load_options:tickbox("OneDown", nil, data.one_down, {w = third_w, offset = 0})
-    load_options:tickbox("Safemode", nil, data.safemode, {w = third_w})
-    load_options:tickbox("CheckLoadTime", nil, data.load_time, {w = third_w})
-	load_options:tickbox("LogSpawnedUnits", nil, data.log_spawned, {w = third_w})
+	local load_options = sidebar:group("LoadOptions", {
+		align_method = "normal",
+		offset = {0, gap2},
+		inherit_values = sb_off
+	})
+	load_options:combobox("Difficulty", nil, difficulty_loc, 1, {items_localized = true, items_pretty = true})
+	load_options:numberbox("MissionFilter", nil, nil, {floats = 0, help = "Set a mission filter to be forced on the level, 0 uses the default filter."})
+	load_options:tickbox("OneDown", nil, data.one_down)
+    load_options:tickbox("Safemode", nil, data.safemode)
+    load_options:tickbox("CheckLoadTime", nil, data.load_time)
+	load_options:tickbox("LogSpawnedUnits", nil, data.log_spawned)
 
-	self._levels = self:pan("LevelList", {auto_align = false, offset = 8, h = self._menu:ItemsHeight() - load_options:Bottom() - 16, auto_height = false})
+	local quick_access = sidebar:group("QuickAccess", {
+		align_method = "normal",
+		offset = {0, gap2},
+		inherit_values = sb_off
+	})
+	local last_loaded = BLE.Options:GetValue("LastLoaded").name or "none"
+	local last_loaded_exist = tweak_data.levels[last_loaded] and true or false
+	local last_loaded_button = quick_access:button(last_loaded, ClassClbk(self, "load_level"), {
+		text = "Last Loaded Level: " .. last_loaded
+	})
+	last_loaded_button:SetEnabled(last_loaded_exist)
+	
+	local favorites = sidebar:group("Favorites", {
+		align_method = "normal",
+		offset = {0, gap2},
+		inherit_values = sb_off,
+		h = page:H() - filters:H() - load_options:H() - quick_access:H() - gap2 * 3,
+		auto_height = false
+	})
+	self:fill_favorites()
+
+	self._levels = main:pan("LevelList", {
+		auto_align = false, 
+		offset = 0, 
+		h = main:H(), 
+		auto_height = false
+	})
 	self:load_levels()
 
 	filters:AlignItems()
+	main:AlignItems()
 	load_options:AlignItems()
 	self._levels:AlignItems()
 	self:AlignItems()
+end
+
+function LoadLevelMenu:fill_favorites()
+	local favorites = self:GetItem("Favorites")
+	favorites:ClearItems()
+
+	for i, id in pairs(favorite_levels) do
+		local level_exists = tweak_data.levels[id] and true or false
+		local load_level = level_exists and ClassClbk(self, "load_level") or nil
+		local o = {
+			items = {
+				{text = "Remove from favorites", on_callback = ClassClbk(self, "remove_favorite", id) },
+			}
+		}
+		if not level_exists then
+			o.enabled_alpha = 0.5
+			o.help = "This level does not exist and can't be loaded.\nYou can still remove it from the favorites."
+		end
+		favorites:button(id, load_level, o)
+	end
+end
+
+function LoadLevelMenu:add_favorite(id)
+	if table.contains(favorite_levels, id) then
+		log("[BeardLib-Editor] " .. id .. " is already favorited")
+		return
+	end
+	table.insert(favorite_levels, id)
+	self:fill_favorites()
+end
+
+function LoadLevelMenu:remove_favorite(id)
+	for i, level in pairs(favorite_levels) do
+		if level == id then
+			table.remove(favorite_levels, i)
+		end
+	end
+	BLE.Options:SetValue("FavoriteLevels", favorite_levels)
+	self:fill_favorites()
 end
 
 function LoadLevelMenu:Destroy()
@@ -94,11 +190,25 @@ end
 local texture_ids = Idstring("texture")
 
 function LoadLevelMenu:load_levels()
+	if Global.editor_mode then
+		local current_level = Global.level_data and Global.level_data.level_id or "none"
+		log("[BeardLib-Editor] Currently editing level: " .. current_level)
+	end
+	
 	if self:GetItemValue("Narratives") then
 		self:do_load_narratives()
 	else
 		self:do_load_levels()
 	end
+end
+
+function LoadLevelMenu:is_editing(level)
+	local current_level = Global.level_data and Global.level_data.level_id
+	local match = false
+	if current_level == level then
+		match = true
+	end
+	return match
 end
 
 function LoadLevelMenu:do_load_levels()
@@ -112,7 +222,26 @@ function LoadLevelMenu:do_load_levels()
 		local level = tweak_data.levels[id]
 		if level then
 			if (level.custom and custom) or (not level.custom and vanilla) then
-				levels:button(id, ClassClbk(self, "load_level"), {text = (level.name_id and loc:text(level.name_id) or "").."/"..id, vanilla = not level.custom})
+				local o = {
+					text = (level.name_id and loc:text(level.name_id) or "").."  /  "..id, 
+					vanilla = not level.custom,
+					items = {
+						{text = "Add to favorites", on_callback = ClassClbk(self, "add_favorite", id) } 
+					}
+				}
+				if self:is_editing(id) then
+					if o.vanilla then
+						o.text = view_tag .. o.text
+					else
+						o.text = edit_tag .. o.text
+					end
+					o.background_color = Color.green:with_alpha(0.1)
+					o.border_left = true
+					o.border_size = 2
+					o.border_color = Color.green
+					o.index = 1
+				end
+				levels:button(id, ClassClbk(self, "load_level"), o)
 			end
 		end
 	end
@@ -121,7 +250,19 @@ function LoadLevelMenu:do_load_levels()
 		for path, instance in pairs(BeardLib.managers.MapFramework._loaded_instances) do
 			local id = instance._config.id
 			path = path:gsub("levels/", ""):gsub("/world", "")
-			levels:button(path, ClassClbk(self, "load_level"), {text = path, instance = true})
+			local o = {
+				text = path,
+				instance = true
+			}
+			if self:is_editing(path) then
+				o.text = edit_tag .. o.text
+				o.background_color = Color.green:with_alpha(0.1)
+				o.border_left = true
+				o.border_size = 2
+				o.border_color = Color.green
+				o.index = 1
+			end
+			levels:button(path, ClassClbk(self, "load_level"), o)
 		end
 	end
 
@@ -129,7 +270,20 @@ function LoadLevelMenu:do_load_levels()
 		for _, path in pairs(BLE.Utils:GetEntries({type = "world"})) do
 			if path:match("levels/instances") then
 				path = path:gsub("levels/", ""):gsub("/world", "")
-				levels:button(path, ClassClbk(self, "load_level"), {text = path, vanilla = true, instance = true})
+				local o = {
+					text = path,
+					vanilla = true,
+					instance = true
+				}
+				if self:is_editing(path) then
+					o.text = view_tag .. o.text
+					o.background_color = Color.green:with_alpha(0.1)
+					o.border_left = true
+					o.border_size = 2
+					o.border_color = Color.green
+					o.index = 1
+				end
+				levels:button(path, ClassClbk(self, "load_level"), o)
 			end
 		end
 	end
@@ -182,14 +336,30 @@ function LoadLevelMenu:do_load_narratives()
 	local function level_button(id, narr_id, menu)
 		local level_t = tweak_data.levels[id]
 		if level_t and level_t.world_name then
-			menu:button(id, load_level, {
+			local o = {
 				text = loc:text(level_t.name_id) .." / " .. id,
 				name = id,
 				narr_id = narr_id,
 				vanilla = not level_t.custom,
 				offset = {12, 4},
 				label = "LevelList",
-			})
+				items = {
+					{text = "Add to favorite", on_callback = ClassClbk(self, "add_favorite", id) } 
+				}
+			}
+			if self:is_editing(id) then
+				if o.vanilla then
+					o.text = view_tag .. o.text
+				else
+					o.text = edit_tag .. o.text
+				end
+				o.background_color = Color.green:with_alpha(0.1)
+				o.border_left = true
+				o.border_size = 2
+				o.border_color = Color.green
+				self:GetItem(o.narr_id.."_holder"):SetIndex(1)
+			end
+			menu:button(id, load_level, o)
 		end
 	end
 	for narr_id, narr in pairs(tweak_data.narrative.jobs) do

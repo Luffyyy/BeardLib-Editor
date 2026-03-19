@@ -20,7 +20,7 @@ function Options:init()
     main:tickbox("AutoSave", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/AutoSave"), {help = "Saves your map automatically, unrecommended for large maps."})
     main:tickbox("SaveBeforePlayTesting", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveBeforePlayTesting"), {help = "Saves your map as soon as you playtest your map"})
     main:tickbox("SaveMapFilesInBinary", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveMapFilesInBinary"), {
-		help = "Saving your map files in binary cuts down in map file size which is highly recommended for release!"
+		help = "Saving your map files in binary cuts down in map file size which is highly recommended for release! Keep this disabled while developing your heist for easier debugging."
 	})
     main:tickbox("BackupMaps", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/BackupMaps"))
     main:tickbox("SaveWarningAfterGameStarted", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/SaveWarningAfterGameStarted"), {
@@ -30,6 +30,9 @@ function Options:init()
 		help = "Clean up unnecessary data from files when saving. Reduces file size but can increase save times. (Experimental Feature)"
 	})
 	main:tickbox("MuteSoundsInEditor", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/MuteSoundsInEditor"), {text = "Mute Sounds In Editor During Playtest", help = "Switching to editor mode while playtesting is active will mute all sounds. They will get unmuted again when switching back to play mode."})
+	main:tickbox("ElementExecuteSound", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/ElementExecuteSound"), {
+		help = "Sound effect when manually executing an element in the editor"
+	})
 	main:combobox("DisableCollisionBehavior", ClassClbk(self, "set_map_clbk"), {"Only during Playtest", "Always"}, O:GetValue("Map/DisableCollisionBehavior"), {help = "When to disable the collisions of units with the 'Disable Collision' setting. This will make the unit unselectable."})
 	main:separator()
     main:tickbox("KeepMouseActiveWhileFlying", ClassClbk(self, "set_map_clbk"), O:GetValue("Map/KeepMouseActiveWhileFlying"))

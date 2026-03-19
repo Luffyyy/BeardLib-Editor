@@ -87,6 +87,31 @@ function MissionScriptEditor:_build_panel()
 	self:_create_panel()
 end
 
+function MissionScriptEditor:editor_execute_element(element)
+	managers.mission:execute_element(element)
+
+	local sound = BLE.Options:GetOption("Map/ElementExecuteSound").value
+	if sound then
+		managers.editor:set_wanted_mute(false)
+		managers.editor:set_listener_enabled(true)
+		if self._ss then
+			self._ss:stop()
+		else
+			self._ss = SoundDevice:create_source("element")
+		end
+		self._ss:post_event("menu_enter", ClassClbk(self, "mute"), nil, "end_of_event")
+	end
+end
+
+function MissionScriptEditor:mute()
+	managers.editor:set_wanted_mute(true)
+	managers.editor:set_listener_enabled(false)
+
+	if self._ss then
+		self._ss:stop()
+	end
+end
+
 function MissionScriptEditor:_create_panel()
 	if alive(self._main_group) then
 		return
@@ -104,7 +129,7 @@ function MissionScriptEditor:_create_panel()
 	quick_buttons:s_btn("Deselect", ClassClbk(self, "deselect_element"))    
 	quick_buttons:s_btn("Delete", ClassClbk(SE, "delete_selected_dialog"))
     quick_buttons:s_btn("CreatePrefab", ClassClbk(SE, "add_selection_to_prefabs"))
-	quick_buttons:s_btn("Execute", ClassClbk(managers.mission, "execute_element", self._element))
+	quick_buttons:s_btn("Execute", ClassClbk(self, "editor_execute_element", self._element))
 	if self.test_element then
 		quick_buttons:s_btn("Test", ClassClbk(self, "test_element"))
 		quick_buttons:s_btn("StopTesting", ClassClbk(self, "stop_test_element"))

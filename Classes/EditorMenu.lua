@@ -1,13 +1,12 @@
 EditorMenu = EditorMenu or class()
 function EditorMenu:init(load)
     self._menus = {}
-    local accent_color = BLE.Options:GetValue("AccentColor")
 	self._main_menu = MenuUI:new({
         name = "Editor",
         layer = 1500,
         auto_foreground = true,
         highlight_image = true,
-        accent_color = accent_color,
+        accent_color = BLE.Options:GetValue("AccentColor"),
         full_bg_color = BLE.Options:GetValue("BackgroundColor"),
         highlight_color = BLE.Options:GetValue("ItemsHighlight"),
         background_color = BLE.Options:GetValue("BackgroundColor"),
@@ -61,7 +60,7 @@ function EditorMenu:make_page(name, clbk, opt)
         inherit_values = {
             full_bg_color = BLE.Options:GetValue("BoxesBackgroundColor"),
         },
-        h = self._main_menu._panel:h() - 40,
+        h = self._main_menu._panel:h() - self._tabs:H() - 12, -- subtracting the sum of both offset values to make an even padding around the tab
     }, opt or {}))
     self:s_btn(name_lower, clbk or ClassClbk(self, "select_page", name), {index = index, text = name, highlight_color = self._menus[name_lower].highlight_color, offset = 6})
 
