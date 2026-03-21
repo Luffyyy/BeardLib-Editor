@@ -218,7 +218,7 @@ function AssetsManagerDialog:show_packages()
                 local custom = CustomPackageManager.custom_packages[package:key()] ~= nil
                 local size = not custom and BLE.Utils:GetPackageSize(package)
                 if size or custom then
-                    local text = custom and string.format("%s(custom)", package, size) or string.format("%s(%.3fmb)", package, size)
+                    local text = custom and string.format("%s (custom)", package, size) or string.format("%s(%.3fmb)", package, size)
                     local pkg = packages:divider(package, {text = text, label = "packages"})
                     pkg:tb_imgbtn("RemovePackage", ClassClbk(self, "remove_package", package), nil, BLE.Utils.EditorIcons.cross)
                 end
@@ -291,7 +291,7 @@ function AssetsManagerDialog:find_package(path, typ, dontask, clbk)
 		local items = {}
 
         for _, pkg in pairs(BLE.Utils:GetPackages(path or self._tbl._selected.name, typ or self._tbl._selected.asset_type, true)) do
-            local text = pkg.custom and string.format("%s(custom)", pkg.name) or string.format("%s(%.3fmb)", pkg.name, pkg.package_size)
+            local text = pkg.custom and string.format("%s (custom)", pkg.name) or string.format("%s(%.3fmb)", pkg.name, pkg.package_size)
             table.insert(items, {name = text, package_size = pkg.package_size, package = pkg.name})
 		end
 
@@ -854,7 +854,7 @@ function AssetsManagerDialog:set_unit_selected(item)
             if name:sub(1, 6) == "levels" then
                 name = BLE.Utils:ShortPath(name, 3)
             end
-            local pkg_s = pkg.custom and string.format("%s(custom)", name) or string.format("%s(%.3fmb)", name, pkg.package_size)
+            local pkg_s = pkg.custom and string.format("%s (custom)", name) or string.format("%s(%.3fmb)", name, pkg.package_size)
             load_from = load_from.."\n"..pkg_s
         end
         if BLE.Utils.core_units[asset] then
