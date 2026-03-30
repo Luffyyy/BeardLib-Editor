@@ -85,7 +85,8 @@ UnitSpawnList.BLACKLIST = {
     "/msk_",
     "/npc_",
     "/npc_",
-    "/ene_"
+    "/ene_",
+    "/civ_"
 }
 function UnitSpawnList:do_search_list()
     local loaded_only = self._options:GetItemValue("ShowLoadedUnitsOnly")
