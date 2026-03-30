@@ -457,7 +457,8 @@ end
 
 function Utils:InAllPackage(asset, type, packages)
     for name, package in pairs(packages or BLE.DBPackages) do
-        if name:begins("all_") and package[type] and package[type][asset] then
+        -- Soundbanks are a lovely exception, in that they need loading through dyn_resource. excluding them for dynamic PlaySound loading
+        if name:begins("all_") and package[type] and package[type][asset] and not type == "bnk" then
             return true
         end
     end

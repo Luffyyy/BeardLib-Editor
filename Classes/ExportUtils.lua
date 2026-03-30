@@ -102,6 +102,7 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude, extra_info)
         return false
 	end
 
+
     local dyn = managers.dyn_resource
     local temp = deep_clone(config)
     config = {}
@@ -412,12 +413,19 @@ function Utils:ReadEnvironment(path, config, exclude, extra_info)
 	return tbl ~= nil
 end
 
+function Utils:ReadSoundbank(path, config, exclude, extra_info)
+    extra_info.load = false
+    self:AddForceLoaded(config, "bnk", path, exclude, extra_info)
+    return true
+end
+
 Utils.Reading = {
     unit = Utils.ReadUnit,
 	scene = Utils.ReadScene,
 	environment = Utils.ReadEnvironment,
     object = Utils.ReadObject,
     effect = Utils.ReadEffect,
+    bnk = Utils.ReadSoundbank,
     material_config = Utils.ReadMaterialConfig,
     sequence_manager = Utils.ReadSequenceManager,
     animation_def = Utils.ReadAnimationDefintion,
