@@ -39,6 +39,7 @@ function EditorPlaySound:_build_panel()
 	self:tickbox("Play on select", callback(self, self, "clbk_toggle_test_on_select"), true, {
 		help = "Whether to play the event when selecting it in the combobox"
 	})
+	self._test_on_select = true
 end
 
 function EditorPlaySound:test_element()
@@ -83,6 +84,7 @@ end
 
 function EditorPlaySound:clbk_bank_sound_id_selected(item)
 	self._element.values.sound_event = item:SelectedItem()
+	
 	if self._test_on_select then
 		self:test_element()
 	end
