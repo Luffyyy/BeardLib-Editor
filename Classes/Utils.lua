@@ -879,7 +879,7 @@ function Utils:GetUnits(params)
     local not_types = params.not_types
     for unit in pairs(BLE.DBPaths.unit) do
 		local slot_fine = not slot or self:InSlot(unit, slot)
-		slot_fine = slot_fine and not not_in_slot or not self:InSlot(unit, not_in_slot)
+        slot_fine = slot_fine and (not not_in_slot or not self:InSlot(unit, not_in_slot))
         local unit_fine = (not check or check(unit))
         local unit_type = self:GetUnitType(unit)
         local type_fine = (not type or unit_type == Idstring(type)) and (not not_types or not table.contains(not_types, unit_type))
