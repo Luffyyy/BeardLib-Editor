@@ -32,14 +32,14 @@ function Utils:init(config)
 end
 
 function Utils:Add(config, ext, path, exclude, extra_info)
-	if (exclude and exclude[ext]) or (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) then
+	if (exclude and exclude[ext]) or (not self._load_settings.base_assets and ext ~= "bnk" and EditorUtils:InAllPackage(path, ext)) then
         return
     end
     table.insert(config, {_meta = ext, path = path, extra_info = self.pack_extra_info and extra_info or nil})
 end
 
 function Utils:AddForceLoaded(config, ext, path, exclude, extra_info)
-    if (exclude and exclude[ext]) or (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) then
+    if (exclude and exclude[ext]) or (not self._load_settings.base_assets and ext ~= "bnk" and EditorUtils:InAllPackage(path, ext)) then
         return
     end
     table.insert(config, {_meta = ext, path = path, load = true, extra_info = self.pack_extra_info and extra_info or nil})
@@ -98,9 +98,10 @@ function Utils:GetDependencies(ext, path, ignore_default, exclude, extra_info)
     extra_info = extra_info or {}
 	local config = {}
 
-	if (not self._load_settings.base_assets and EditorUtils:InAllPackage(path, ext)) or (Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude, extra_info)) then
+	if (not self._load_settings.base_assets and ext ~= "bnk" and EditorUtils:InAllPackage(path, ext)) or (Utils.Reading[ext] and not Utils.Reading[ext](self, path, config, exclude, extra_info)) then
         return false
 	end
+
 
     local dyn = managers.dyn_resource
     local temp = deep_clone(config)
@@ -412,12 +413,19 @@ function Utils:ReadEnvironment(path, config, exclude, extra_info)
 	return tbl ~= nil
 end
 
+function Utils:ReadSoundbank(path, config, exclude, extra_info)
+    extra_info.load = false
+    self:AddForceLoaded(config, "bnk", path, exclude, extra_info)
+    return true
+end
+
 Utils.Reading = {
     unit = Utils.ReadUnit,
 	scene = Utils.ReadScene,
 	environment = Utils.ReadEnvironment,
     object = Utils.ReadObject,
     effect = Utils.ReadEffect,
+    bnk = Utils.ReadSoundbank,
     material_config = Utils.ReadMaterialConfig,
     sequence_manager = Utils.ReadSequenceManager,
     animation_def = Utils.ReadAnimationDefintion,
