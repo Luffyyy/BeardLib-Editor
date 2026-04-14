@@ -124,6 +124,7 @@ Utils.ElementIcons = {
 	CounterFilter = {64, 256},
 	CounterTrigger = {128, 256},
 	CounterOperator = {192, 256},
+    CounterReset = {64, 960},
 	Stopwatch = {256, 256},
 	StopwatchFilter = {320, 256},
 	StopwatchTrigger = {384, 256},

@@ -27,6 +27,7 @@ end
 
 function EditorCounterReset:_build_panel(panel, panel_sizer)
 	self:_create_panel()
-	self:BuildElementsManage("elements", nil, {"ElementCounter"})
-	self:NumberCtrl("counter_target", {min = 0, floats = 0})
+	self:BuildElementsManage("elements", nil, {"ElementCounter"}, nil, {enabled=false})
+	self:NumberCtrl("counter_target", {min = 0, floats = 0, enabled=false})
+	self:Alert('This element does not work.\nUse CounterOperator with the operation set to "reset" instead.')
 end
