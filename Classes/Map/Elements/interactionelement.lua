@@ -111,6 +111,7 @@ function EditorInteraction:clean_tweakdata()
 	local tweakdata = table.map_keys(tweak_data.interaction)
 	local invalid_tweakdata_ids = {
 		CULLING_DISTANCE = true,
+		DEFAULT_INTERACTION_DOT = true,
 		INTERACT_DISTANCE = true,
 		MAX_INTERACT_DISTANCE = true
 	}
