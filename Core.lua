@@ -278,6 +278,7 @@ function BLE:LoadHashlist()
         self.WorldSounds = Global.WorldSounds
         self.DefaultAssets = Global.DefaultAssets
         self.Brushes = Global.Brushes
+        self.WwiseBanks = Global.WwiseBanks
         self:log("DBPaths already loaded")
 	else
         self.DBPaths = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "Paths.bin"), "binary")
@@ -285,6 +286,7 @@ function BLE:LoadHashlist()
         self.WorldSounds = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "WorldSounds.bin"), "binary")
         self.Brushes = string.split(FileIO:ReadFrom(Path:Combine(self.DataDirectory, "Brushes.txt"), "r"), "\n")
         self.DefaultAssets = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "DefaultAssets.bin"), "binary")
+        self.WwiseBanks = FileIO:ReadScriptData(Path:Combine(self.DataDirectory, "WwiseBanks.bin"), "binary")
 
         self:log("Successfully loaded DBPaths, It took %.2f seconds", os.clock() - t)
         Global.DBPaths = self.DBPaths
@@ -292,6 +294,7 @@ function BLE:LoadHashlist()
         Global.WorldSounds = self.WorldSounds
         Global.DefaultAssets = self.DefaultAssets
         Global.Brushes = self.Brushes
+        Global.WwiseBanks = self.WwiseBanks
     end
     local script_data_types = clone(self._config.script_data_types)
     for _, pkg in pairs(CustomPackageManager.custom_packages) do
