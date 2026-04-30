@@ -46,6 +46,7 @@ function EditorDialogue:_build_panel()
         searchbox = true, 
         fit_text = true,
 		on_callback = function(item) 
+			self:check_load_dialogue_soundbank(item)
             self:set_element_data(item)
             self:test_element(item)
         end, 
@@ -57,4 +58,16 @@ function EditorDialogue:_build_panel()
 	self:BooleanCtrl("use_instigator", {help = "Play on instigator"})
 	self:BooleanCtrl("can_not_be_muted", {help = "This dialogue will play regardless of if the player has disabled contractor VO"})
 	self:BooleanCtrl("play_on_player_instigator_only", {help = "This dialogue will only play on the player that triggers it"})
+end
+function EditorDialogue:check_load_dialogue_soundbank(item)
+	local dialogue = string.gsub(string.gsub(item:SelectedItem(), "Play_", ""), "Stop_", "")
+	local assets = managers.editor.parts.assets
+
+	for bank,_ in pairs(Global.WwiseBanks) do
+		if Global.WwiseBanks[bank]["events"] then
+			if table.contains(Global.WwiseBanks[bank]["events"], "Play_" .. dialogue) and not assets:is_asset_loaded("bnk", "soundbanks/" .. bank) then
+				assets:quick_load_from_db("bnk", "soundbanks/" .. bank, nil, nil, {load = true})
+			end
+		end
+	end
 end
